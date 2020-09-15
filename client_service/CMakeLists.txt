@@ -1,0 +1,4 @@
+add_subdirectory(shared)
+add_subdirectory(game_event_watcher)
+add_subdirectory(process_watcher)
+add_subdirectory(service)
