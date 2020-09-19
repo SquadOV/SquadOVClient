@@ -1,0 +1,5 @@
+VALORANT_GAME_MODE(Standard, 96BD3920-4F36-D026-2B28-C683EB0BCAC5, /Game/GameModes/Bomb/BombGameMode.BombGameMode_C)
+VALORANT_GAME_MODE(Deathmatch, A8790EC5-4237-F2F0-E93B-08A8E89865B2, /Game/GameModes/Deathmatch/DeathmatchGameMode.DeathmatchGameMode_C)
+VALORANT_GAME_MODE(Onboarding, D2B4E425-4CAB-8D95-EB26-BB9B444551DC, /Game/GameModes/NewPlayerExperience/NPEGameMode.NPEGameMode_C)
+VALORANT_GAME_MODE(Spike Rush, E921D1E6-416B-C31F-1291-74930C330B7B, /Game/GameModes/QuickBomb/QuickBombGameMode.QuickBombGameMode_C)
+VALORANT_GAME_MODE(PRACTICE, E2DC3878-4FE5-D132-28F8-3D8C259EFCC6, /Game/GameModes/ShootingRange/ShootingRangeGameMode.ShootingRangeGameMode_C)

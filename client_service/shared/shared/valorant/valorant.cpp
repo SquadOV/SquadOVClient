@@ -1,6 +1,20 @@
 #include "shared/valorant/valorant.h"
+#include "shared/strings/strings.h"
 
 namespace shared::valorant {
+
+EValorantMap mapIdToValorantMap(const std::string& id) {
+    if (id == "/Game/Maps/Ascent/Ascent") {
+        return EValorantMap::Ascent;
+    } else if (id == "/Game/Maps/Triad/Triad") {
+        return EValorantMap::Haven;
+    } else if (id == "/Game/Maps/Duality/Duality") {
+        return EValorantMap::Bind;
+    } else if (id == "/Game/Maps/Bonsai/Bonsai") {
+        return EValorantMap::Split;
+    }
+    return EValorantMap::Unknown;
+}
 
 EValorantMap codenameToValorantMap(const std::string& codename) {
     if (codename == "Ascent") {
@@ -43,5 +57,6 @@ bool isGameMap(EValorantMap map) {
     }    
     return false;
 }
+
 
 }

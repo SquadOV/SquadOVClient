@@ -1,0 +1,13 @@
+prefix=C:/Program Files (x86)/SquadOVClient
+exec_prefix=C:/Program Files (x86)/SquadOVClient
+libdir=C:/Program Files (x86)/SquadOVClient/lib
+sharedlibdir=C:/Program Files (x86)/SquadOVClient/lib
+includedir=C:/Program Files (x86)/SquadOVClient/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.2.11
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}

@@ -28,7 +28,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     }
     CloseHandle(hProcess);
 
-    return std::make_unique<process_watcher::process::Process>(std::string(szProcessName));
+    return std::make_unique<process_watcher::process::Process>(std::string(szProcessName), id);
 }
 
 #endif

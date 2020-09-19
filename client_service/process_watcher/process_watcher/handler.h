@@ -1,11 +1,13 @@
 #pragma once
 #include <memory>
+#include "process_watcher/process/process.h"
 
 namespace process_watcher {
 
 class ProcessWatchHandler {
 public:
-    virtual void onProcessStarts() = 0;
+    virtual ~ProcessWatchHandler() {}
+    virtual void onProcessStarts(const process::Process& p) = 0;
     virtual void onProcessStops() = 0;
 };
 

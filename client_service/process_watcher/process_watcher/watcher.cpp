@@ -10,7 +10,8 @@ namespace process_watcher {
 
 void ProcessWatcher::beginWatchingGame(shared::EGame game, ProcessWatchHandlerPtr&& handler) {
     std::cout << "Starting to Watch for: " << shared::gameToString(game) << std::endl;
-
+    
+    std::unique_lock<std::shared_mutex> guard(_mapMutex);
     if (_gameToWatcher.find(game) != _gameToWatcher.end()) {
         throw std::runtime_error("Can only have 1 watcher per game.");
         return;
@@ -19,12 +20,13 @@ void ProcessWatcher::beginWatchingGame(shared::EGame game, ProcessWatchHandlerPt
     _gameToWatcher[game] = std::move(handler);
 }
 
-void ProcessWatcher::start() const {
-    std::thread watcher([this](){
+void ProcessWatcher::start() {
+    _running = true;
+    _watchThread = std::thread([this](){
         using namespace std::chrono_literals;
 
         std::unordered_map<shared::EGame, bool> allLastCheckState;
-        while (true) {
+        while (_running) {
             // Get a sorted list of running processes from the OS.
             std::vector<process::Process> processes;
             const bool success = process::listRunningProcesses(processes);
@@ -34,18 +36,20 @@ void ProcessWatcher::start() const {
                 throw std::runtime_error("Failed to list running processes.");
             }
 
+            std::shared_lock<std::shared_mutex> guard(_mapMutex);
             for (const auto& kvp : _gameToWatcher) {
                 const auto detector = games::createDetectorForGame(kvp.first);
 
                 // Check to see if the game is running (OS-dependent).
                 const bool lastCheckedState = allLastCheckState[kvp.first];
-                const bool isRunning = detector->checkIsRunning(processes);
+                size_t processIndex = 0;
+                const bool isRunning = detector->checkIsRunning(processes, &processIndex);
                 
                 // Check to see if the running state is the different from the last checked state
                 // to fire off the appropriate event.
                 if (isRunning != lastCheckedState) {
                     if (isRunning) {
-                        kvp.second->onProcessStarts();
+                        kvp.second->onProcessStarts(processes[processIndex]);
                     } else {
                         kvp.second->onProcessStops();
                     }
@@ -57,8 +61,7 @@ void ProcessWatcher::start() const {
             std::this_thread::sleep_for(500ms); 
         }
     });
-
-    watcher.join();
+    _watchThread.join();
 }
 
 }

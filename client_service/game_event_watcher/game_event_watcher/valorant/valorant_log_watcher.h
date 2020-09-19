@@ -22,6 +22,7 @@ enum class EValorantLogEvents {
     RoundBuyStart,
     RoundPlayStart,
     // Events meant for internal use.
+    PvpServer,  // Event for when we determine what the PVP API server is.
     RSOLogin,
 };
 
@@ -39,6 +40,8 @@ struct ClientLogState {
 
     bool isLoggedIn() const;
 };
+bool operator==(const ClientLogState& a, const ClientLogState& b);
+bool operator!=(const ClientLogState& a, const ClientLogState& b);
 
 class ValorantLogWatcher {
 public:

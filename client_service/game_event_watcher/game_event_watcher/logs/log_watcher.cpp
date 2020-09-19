@@ -32,7 +32,7 @@ LogWatcher::~LogWatcher() {
 }
 
 void LogWatcher::watchWorker() {
-    if (_waitForNewFile) {
+    if (_waitForNewFile || !fs::exists(_path.string())) {
         while (true) {
             const auto now = fs::file_time_type::clock::now();
             const auto lastWriteTime = fs::last_write_time(_path);
@@ -45,7 +45,8 @@ void LogWatcher::watchWorker() {
             }
 
             std::cout << "\tDeferring log watcher due to a diff of " << diff.count() << " seconds." << std::endl;
-            std::this_thread::sleep_for(15ms);
+            std::this_thread::sleep_for(1s);
+            std::cout << "\t\tRestart watching: " << _path.string() << std::endl;
         }
     }
 
@@ -54,6 +55,17 @@ void LogWatcher::watchWorker() {
     if (!logStream.is_open()) {
         throw std::runtime_error("Failed to open log.");
     }
+
+    // Create another thread to open up the file every once in awhile.
+    // Not sure why this is needed but some programs (e.g. Riot's client) won't actually flush
+    // to the file unless this happens.
+    std::thread pollThread([this](){
+        while (!_isFinished) {
+            std::ifstream tmp(_path.string());
+            tmp.seekg(0, tmp.end);
+            std::this_thread::sleep_for(1s);
+        }
+    });
 
     LogLinesDelta lineBuffer;
 
@@ -74,7 +86,6 @@ void LogWatcher::watchWorker() {
 #else
         throw std::runtime_error("Unsupported OS for LogWatcher.");
 #endif
-
     while (!_isFinished) {
         logStream.clear();
         // Read all available changes.
@@ -115,7 +126,7 @@ void LogWatcher::watchWorker() {
             }
 
             BYTE* rawNotif = buffer.get();
-            while (!!rawNotif) {
+            while (!!rawNotif && !_isFinished) {
                 FILE_NOTIFY_INFORMATION* notif = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(rawNotif);
 
                 if (notif->Action == FILE_ACTION_MODIFIED) {
@@ -141,13 +152,10 @@ void LogWatcher::watchWorker() {
                 // If we get here we didn't receive a notification about the file in question.
                 std::this_thread::sleep_for(10ms);
             }
-
-            if (!_isFinished) {
-                break;
-            }
         }
 #endif
     }
+    pollThread.join();
 }
 
 }

@@ -10,8 +10,8 @@
 
 namespace game_event_watcher {
 
-// Callback receives a vector of strings - one for each new line that was added.
 using LogLinesDelta = std::vector<std::string>;
+// Callback receives a vector of strings - one for each new line that was added.
 using LogChangeCallback = std::function<void(const LogLinesDelta&)>;
 
 class LogWatcher {

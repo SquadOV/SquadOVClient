@@ -1,7 +1,11 @@
+add_subdirectory(shared/valorant/content)
+
 SET(SRCS
     shared/games.cpp
     shared/valorant/valorant.cpp
     shared/time.cpp
+    shared/strings/strings.cpp
+    shared/filesystem/common_paths.cpp
 )
 
 SET(HEADERS
@@ -10,6 +14,8 @@ SET(HEADERS
     shared/riot/riot.h
     shared/constants.h
     shared/time.h
+    shared/strings/strings.h
+    shared/filesystem/common_paths.h
 )
 
 add_library(squadov_shared
@@ -17,6 +23,7 @@ add_library(squadov_shared
     ${SRCS}
     ${HEADERS}
 )
+add_dependencies(squadov_shared valorant-v1.08)
 
 target_include_directories(squadov_shared
     PUBLIC

@@ -4,6 +4,13 @@
 
 namespace shared::valorant {
 
+enum class EValorantRoundState {
+    Buy,
+    Play,
+    Unknown
+};
+
+// EValorantMap
 enum class EValorantMap {
     Ascent,
     Bind,
@@ -14,12 +21,8 @@ enum class EValorantMap {
     Unknown
 };
 
-enum class EValorantRoundState {
-    Buy,
-    Play
-};
-
 EValorantMap codenameToValorantMap(const std::string& codename);
+EValorantMap mapIdToValorantMap(const std::string& id);
 std::string mapToName(EValorantMap map);
 bool isGameMap(EValorantMap map);
 

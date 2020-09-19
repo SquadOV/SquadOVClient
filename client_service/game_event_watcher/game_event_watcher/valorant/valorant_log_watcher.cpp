@@ -71,9 +71,10 @@ bool parseGameLogHTTPQuery(const std::string& line, ValorantHTTPQueryData& data)
     return true;
 }
 
-std::string getMatchIdFromCoreGameFetchMatch(const std::string& url) {
+std::string getMatchIdFromGameFetchMatch(const std::string& url) {
     // General structure: https://glz-na-1.na.a.pvp.net/core-game/v1/matches/MATCH_ID
-    const std::string match = "/core-game/v1/matches/";
+    // or: https://glz-na-1.na.a.pvp.net/pregame/v1/matches/a1934cc5-0bb7-4f9e-84c7-2f62f7798feb
+    const std::string match = "/v1/matches/";
     const auto matchIdx = url.find(match);
     if (matchIdx == std::string::npos) {
         return "";
@@ -126,7 +127,7 @@ bool parseXmppRSOToken(const tinyxml2::XMLDocument& doc, std::string& token) {
 
 bool parseXmppEntitlementToken(const tinyxml2::XMLDocument& doc, std::string& token) {
     // Look for the entitlements case.
-    // <iq type="set" id="xmpp_entitlements_0">
+    // <iq type="set" id="">
     //    <entitlements>
     //        <token>...</token>
     //    </entitlements>
@@ -139,7 +140,7 @@ bool parseXmppEntitlementToken(const tinyxml2::XMLDocument& doc, std::string& to
     const std::string iqType = iqNode->Attribute("type");
     const std::string iqId = iqNode->Attribute("id");
 
-    if (iqType != "set" || iqId != "xmpp_entitlements_0") {
+    if (iqType != "set") {
         return false;
     }
 
@@ -172,7 +173,7 @@ bool parseXmppPuuid(const tinyxml2::XMLDocument& doc, std::string& puuid) {
     const std::string iqType = iqNode->Attribute("type");
     const std::string iqId = iqNode->Attribute("id");
 
-    if (iqType != "result" || iqId != "_xmpp_bind1") {
+    if (iqType != "result") {
         return false;
     }
 
@@ -206,7 +207,7 @@ bool parseXmppUsernameTag(const tinyxml2::XMLDocument& doc, std::string& usernam
     const std::string iqType = iqNode->Attribute("type");
     const std::string iqId = iqNode->Attribute("id");
 
-    if (iqType != "result" || iqId != "_xmpp_session1") {
+    if (iqType != "result") {
         return false;
     }
 
@@ -228,6 +229,15 @@ bool parseXmppUsernameTag(const tinyxml2::XMLDocument& doc, std::string& usernam
 }
 
 namespace game_event_watcher {
+
+bool operator==(const ClientLogState& a, const ClientLogState& b) {
+    return a.entitlementToken == b.entitlementToken &&
+        a.rsoToken == b.rsoToken &&
+        a.user == b.user;
+}
+bool operator!=(const ClientLogState& a, const ClientLogState& b) {
+    return !(a == b);
+}
 
 bool ClientLogState::isLoggedIn() const {
     return !rsoToken.empty() &&
@@ -297,9 +307,14 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                 
                 if (_gameLogState.isInMatch != previousState.isInMatch) {
                     if (_gameLogState.isInMatch) {
-                        notify(EValorantLogEvents::MatchStart, data.logTime, nullptr);
+                        notify(EValorantLogEvents::MatchStart, data.logTime, &_gameLogState);
                     } else {
                         notify(EValorantLogEvents::MatchEnd, data.logTime, &_gameLogState);
+
+                        // We should be able to clear out the state at this point since the client
+                        // should have processed the state data and since the game ended we know we can
+                        // start anew with the next game.
+                        _gameLogState = GameLogState{};
                     }
                 }
             }
@@ -320,14 +335,15 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         if (!parsed) {
             ValorantHTTPQueryData data;
             if (parseGameLogHTTPQuery(line, data)) {
-                if (data.queryName == "CoreGame_FetchMatch" && data.method == "GET") {
-                    _gameLogState.matchId = getMatchIdFromCoreGameFetchMatch(data.url);
+                if (data.queryName == "CoreGame_FetchMatch" || data.queryName == "Pregame_GetMatch") {
+                    _gameLogState.matchId = getMatchIdFromGameFetchMatch(data.url);
                     parsed = true;
                 } else if (data.queryName == "DisplayNameService_UpdatePlayer") {
                     // Use this query to determine the API server to hit since it'll be
                     // fired near the beginning of the log using the same API server we can use
                     // to get the match history and such.
                     _gameLogState.apiServer = getApiServer(data.url);
+                    notify(EValorantLogEvents::PvpServer, shared::nowUtc(), &_gameLogState.apiServer);
                     parsed = true;
                 }
             }
@@ -372,9 +388,10 @@ finish_xmpp_parse:
             continue;
         }
 
-        if (_clientLogState.isLoggedIn() != previousState.isLoggedIn()) {
+        // This needs to be called repeatedly to detect changes to the entitlement token.
+        if (_clientLogState != previousState) {
             if (_clientLogState.isLoggedIn()) {
-                // The time here doesn't really matter so just use the current time whatever it is and not hte log time.
+                // The time here doesn't really matter so just use the current time whatever it is and not the log time.
                 notify(EValorantLogEvents::RSOLogin, shared::nowUtc(), &_clientLogState);
             }
         }

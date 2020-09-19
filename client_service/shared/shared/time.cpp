@@ -16,8 +16,18 @@ TimePoint strToTime(const std::string& dt, const std::string& format) {
     return ret;
 }
 
-std::string timeToStr(const TimePoint& tm) {
-    return date::format("%F %T", tm);
+std::string timeToStr(const TimePoint& tm, bool withMs) {
+    return date::format(
+        withMs ? "%F %H:%M:%S" : "%F %H:%M:%S.000",
+        tm);
+}
+
+std::string fnameTimeToStr(const TimePoint& tm) {
+    return date::format("%F-%H.%M.%S", tm);
+}
+
+bool isTimeValid(const TimePoint& tm) {
+    return tm != TimePoint::max();
 }
 
 }
