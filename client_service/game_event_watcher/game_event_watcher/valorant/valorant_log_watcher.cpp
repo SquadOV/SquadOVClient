@@ -313,8 +313,11 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
 
                         // We should be able to clear out the state at this point since the client
                         // should have processed the state data and since the game ended we know we can
-                        // start anew with the next game.
-                        _gameLogState = GameLogState{};
+                        // start anew with the next game. Clear out everything besides the apiServer since
+                        // that should stay the same.
+                        _gameLogState.isInMatch = false;
+                        _gameLogState.matchId = "";
+                        _gameLogState.matchMap = shared::valorant::EValorantMap::Unknown;
                     }
                 }
             }

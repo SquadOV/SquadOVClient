@@ -98,7 +98,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 
     // When the match starts, we de facto start the first buy round too.
     onValorantBuyStart(eventTime, nullptr);
-    _recorder->start();
+    _recorder->start(state->matchId);
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {

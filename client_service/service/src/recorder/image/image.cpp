@@ -1,14 +1,24 @@
 #include "recorder/image/image.h"
 
+#include <cstring>
 #include <png.h>
 #include "shared/errors/error.h"
 
 namespace service::recorder::image {
 
 void Image::initializeImage(size_t width, size_t height) {
-    _buffer.reset(new uint8_t[width * height * bytesPerPixel()]);
     _width = width;
     _height = height;
+    
+    _buffer.reset(new uint8_t[numBytes()]);
+    memset(_buffer.get(), 0, numBytes());
+}
+
+void Image::copyFrom(const Image& img) {
+    assert(width() == img.width());
+    assert(height() == img.height());
+    assert(bytesPerPixel() == img.bytesPerPixel());
+    std::memcpy(_buffer.get(), img.buffer(), numBytes());
 }
 
 void Image::saveToFile(const std::filesystem::path& path) const {

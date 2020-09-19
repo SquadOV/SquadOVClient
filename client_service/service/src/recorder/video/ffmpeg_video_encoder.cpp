@@ -3,7 +3,10 @@
 #include "shared/errors/error.h"
 
 #include <cstdio>
+#include <chrono>
 #include <iostream>
+#include <thread>
+#include <mutex>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -16,6 +19,7 @@ extern "C" {
 }
 
 #define DEBUG_IMAGES 0
+#define LOG_FRAME_TIME 0
 
 namespace service::recorder::video {
 namespace {
@@ -51,9 +55,14 @@ public:
     FfmpegVideoEncoderImpl(const std::filesystem::path& path);
     ~FfmpegVideoEncoderImpl();
 
-    void initialize(size_t width, size_t height);
-    void addVideoFrame(long long frameMs, const service::recorder::image::Image& frame);
+    void initialize(size_t fps, size_t width, size_t height);
+    void addVideoFrame(const service::recorder::image::Image& frame);
+
+    void start();
+    void stop();
 private:
+    void swapBuffers();
+
     std::filesystem::path _path;
 
     // AV Output
@@ -66,10 +75,22 @@ private:
     AVCodecContext* _vcodecContext = nullptr;
     AVFrame* _vframe = nullptr;
     SwsContext* _sws = nullptr;
+
+    // Front and back buffering to support constant frame rate videos.
+    std::thread _encodingThread;
+    bool _running = false;
+    std::chrono::milliseconds _msPerFrame;
+
+    std::unique_ptr<service::recorder::image::Image> _frontBuffer;
+
+    std::mutex _backMutex;
+    std::unique_ptr<service::recorder::image::Image> _backBuffer;
+    bool _backBufferDirty = false;
 };
 
 FfmpegVideoEncoderImpl::FfmpegVideoEncoderImpl(const std::filesystem::path& path):
     _path(path) {
+    _path.replace_extension(std::filesystem::path(".mp4"));
 
     _avformat = av_guess_format(nullptr, _path.string().c_str(), nullptr);
     if (!_avformat) {
@@ -79,29 +100,9 @@ FfmpegVideoEncoderImpl::FfmpegVideoEncoderImpl(const std::filesystem::path& path
     if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, _path.string().c_str()) < 0) {
         THROW_ERROR("Failed to allocate AV context.");
     }
-
-    // Force us to use VP8 for speed although slightly worse quality.
-    _vcodec = avcodec_find_encoder_by_name("libvpx");
-    if (!_vcodec) {
-        THROW_ERROR("Failed to find the video codec.");
-    }
-
-    _vstream = avformat_new_stream(_avcontext, _vcodec);
-    if (!_vstream) {
-        THROW_ERROR("Failed to create video stream.");
-    }
-
-    _vcodecContext = avcodec_alloc_context3(_vcodec);
-    if (!_vcodecContext) {
-        THROW_ERROR("Failed to allocate video context.");
-    }
 }
 
 FfmpegVideoEncoderImpl::~FfmpegVideoEncoderImpl() {
-    // Flush packets from encoder.
-    encode(_vcodecContext, _avcontext, nullptr, _vstream);
-    av_write_trailer(_avcontext);
-
     sws_freeContext(_sws);
     avio_closep(&_avcontext->pb);
     av_frame_free(&_vframe);
@@ -109,32 +110,71 @@ FfmpegVideoEncoderImpl::~FfmpegVideoEncoderImpl() {
     avformat_free_context(_avcontext);
 }
 
-void FfmpegVideoEncoderImpl::initialize(size_t width, size_t height) {
-    _vcodecContext->width = static_cast<int>(width);
-    _vcodecContext->height = static_cast<int>(height);
-    _vcodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
-    _vcodecContext->bit_rate = 6000000;
-    _vcodecContext->thread_count = 16;
+void FfmpegVideoEncoderImpl::initialize(size_t fps, size_t width, size_t height) {
+    // Try to use hardware encoding first. If not fall back on mpeg4.
+    const std::string encodersToUse[] = {
+        "h264_amf",
+        "h264_nvenc",
+        "mpeg4"
+    };
 
-    // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.
-    _vcodecContext->time_base = AVRational{1, 1000};
-    _vcodecContext->framerate = AVRational{0, 1};
-    _vstream->time_base = _vcodecContext->time_base;
+    bool foundEncoder = false;
+    for (const auto& enc : encodersToUse) {
+        try {
+            _vcodec = avcodec_find_encoder_by_name(enc.c_str());
+            if (!_vcodec) {
+                THROW_ERROR("Failed to find the video codec.");
+            }
+            
+            _vcodecContext = avcodec_alloc_context3(_vcodec);
+            if (!_vcodecContext) {
+                THROW_ERROR("Failed to allocate video context.");
+            }
 
-    // This can be high since we're only dealing with local videos for now.
-    _vcodecContext->gop_size = 10;
-    _vcodecContext->max_b_frames = 1;
-    
-    // Actually initialize the codec context.
-    AVDictionary *options = nullptr;
-    av_dict_set_int(&options, "deadline", 1, 0);
-    av_dict_set_int(&options, "cpu-used", 8, 0);
+            _vcodecContext->width = static_cast<int>(width);
+            _vcodecContext->height = static_cast<int>(height);
+            _vcodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+            _vcodecContext->bit_rate = 6000000;
+            _vcodecContext->thread_count = 16;
 
-    const auto ret = avcodec_open2(_vcodecContext, _vcodec, &options);
-    if (ret < 0) {
-        THROW_ERROR("Failed to initialize video context");
+            // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.
+            _vcodecContext->time_base = AVRational{1, static_cast<int>(fps)};
+            _vcodecContext->framerate = AVRational{static_cast<int>(fps), 1};
+
+            // This can be high since we're only dealing with local videos for now.
+            _vcodecContext->gop_size = 10;
+            _vcodecContext->max_b_frames = 1;
+            
+            // Actually initialize the codec context.
+            AVDictionary *options = nullptr;
+
+            if (_vcodecContext->codec_id == AV_CODEC_ID_H264) {
+                av_dict_set(&options, "preset", "medium", 0);
+            }
+
+            const auto ret = avcodec_open2(_vcodecContext, _vcodec, &options);
+            if (ret < 0) {
+                THROW_ERROR("Failed to initialize video context");
+            }
+
+            foundEncoder = true;
+            std::cout << "FFmpeg Found Encoder: " << enc << std::endl;
+            break;
+        } catch (...) {
+            avcodec_free_context(&_vcodecContext);
+        }
     }
 
+    if (!foundEncoder) {
+        THROW_ERROR("Failed to find a valid encoder.");
+    }
+
+    _vstream = avformat_new_stream(_avcontext, _vcodec);
+    if (!_vstream) {
+        THROW_ERROR("Failed to create video stream.");
+    }
+
+    _vstream->time_base = _vcodecContext->time_base;
     avcodec_parameters_from_context(_vstream->codecpar, _vcodecContext);
 
     if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -181,14 +221,16 @@ void FfmpegVideoEncoderImpl::initialize(size_t width, size_t height) {
     if (!_sws) {
         THROW_ERROR("Failed to create SWS context.");
     }
+    
+    _frontBuffer = std::make_unique<recorder::image::Image>();
+    _backBuffer = std::make_unique<recorder::image::Image>();
+
+    _frontBuffer->initializeImage(width, height);
+    _backBuffer->initializeImage(width, height);
+    _msPerFrame = std::chrono::milliseconds(static_cast<size_t>(1.0 / fps * 1000.0));
 }
 
-void FfmpegVideoEncoderImpl::addVideoFrame(long long frameMs, const service::recorder::image::Image& frame) {
-    if (av_frame_make_writable(_vframe) < 0) {
-        THROW_ERROR("Failed to make video frame writeable.");
-    }
-    _vframe->pts = frameMs;
-
+void FfmpegVideoEncoderImpl::addVideoFrame(const service::recorder::image::Image& frame) {
 #if DEBUG_IMAGES
     {
         std::cout << "HANDLE IMAGE: " << frameMs << std::endl;
@@ -198,11 +240,97 @@ void FfmpegVideoEncoderImpl::addVideoFrame(long long frameMs, const service::rec
     }
 #endif
 
-    // Convert the RGB image to YUV for encoding.
-    const auto* buffer = frame.buffer();
-    const int bufferStride[1] = { static_cast<int>(frame.width() * frame.bytesPerPixel()) };
-    sws_scale(_sws, &buffer, bufferStride, 0, static_cast<int>(frame.height()), _vframe->data, _vframe->linesize);
-    encode(_vcodecContext, _avcontext, _vframe, _vstream);
+    std::unique_lock<std::mutex> guard(_backMutex);
+    _backBuffer->copyFrom(frame);
+    _backBufferDirty = true;
+}
+
+void FfmpegVideoEncoderImpl::swapBuffers() {
+    std::unique_lock<std::mutex> guard(_backMutex);
+    if (!_backBufferDirty) {
+        return;
+    }
+    _frontBuffer.swap(_backBuffer);
+    _backBufferDirty = false;
+}
+
+void FfmpegVideoEncoderImpl::start() {
+    // Start a thread to send frames and packets to the underlying encoder.
+    // Some encoders (e.g. H264_NVENC) don't play nicely with variable framerate
+    // so we need to force the variable framerate input that we'll get to be
+    // a constant framerate. To do this we use "double buffering" where the
+    // video encoder thread writes to the encoder using the front buffer while
+    // the application writes to the video encoder using the back buffer. The
+    // video encoder thread will run every 1/fps seconds. When the thread ticks
+    // the encoder thread will swap the front and back buffer and send the new
+    // front buffer to the ffmpeg encoder to write out to the file.
+    _running = true;
+    _encodingThread = std::thread([this](){
+        const auto start = std::chrono::high_resolution_clock::now();
+        auto refFrameTime = start;
+        int64_t frameNum = 0;
+        
+        while (_running) {
+            const auto now = std::chrono::high_resolution_clock::now();
+            bool skipFrame = false;
+
+            // If "now" is before the refFrameTime then we want to wait until
+            // refFrameTime. But if "now" is after refFrameTime then we skip a frame
+            // to ensure that we stay on track.
+            if (now < refFrameTime) {
+                std::this_thread::sleep_until(refFrameTime);
+            } else {
+                skipFrame = true;
+            }
+
+#if LOG_FRAME_TIME
+            const auto taskNow = std::chrono::high_resolution_clock::now();
+#endif
+
+            // These two should happen regardless of whether or not we skip a frame.
+            // refFrameTime needs to be incremented because we want to write to the next frame.
+            // Need to set vframe pts to what the frame would have already been so that the frameNum
+            // counter keeps updating so when the frame is no longer skipped, we're inserting the data
+            // at the right frame. swapBuffers should be called because we should want the latest of
+            // whatever the user has written in the front buffer.
+            refFrameTime += _msPerFrame;
+            _vframe->pts = frameNum++;
+            swapBuffers();
+
+            if (skipFrame) {
+                continue;
+            }
+
+            if (av_frame_make_writable(_vframe) < 0) {
+                THROW_ERROR("Failed to make video frame writeable.");
+            }
+
+            // Convert the RGB image to YUV for encoding.
+            const auto* buffer = _frontBuffer->buffer();
+            const int bufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
+            sws_scale(_sws, &buffer, bufferStride, 0, static_cast<int>(_frontBuffer->height()), _vframe->data, _vframe->linesize);
+            encode(_vcodecContext, _avcontext, _vframe, _vstream);
+        
+#if LOG_FRAME_TIME
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            std::cout << "FFMPEG Encode: " << numMs << "ms" << std::endl;
+#endif
+        }
+    });
+}
+
+void FfmpegVideoEncoderImpl::stop() {
+    if (!_running) {
+        return;
+    }
+
+    _running = false;
+    _encodingThread.join();
+
+    // Flush packets from encoder.
+    encode(_vcodecContext, _avcontext, nullptr, _vstream);
+    av_write_trailer(_avcontext);
 }
 
 FfmpegVideoEncoder::FfmpegVideoEncoder(const std::filesystem::path& path):
@@ -212,12 +340,20 @@ FfmpegVideoEncoder::FfmpegVideoEncoder(const std::filesystem::path& path):
 
 FfmpegVideoEncoder::~FfmpegVideoEncoder() = default;
 
-void FfmpegVideoEncoder::addVideoFrame(long long frameMs, const service::recorder::image::Image& frame) {
-    _impl->addVideoFrame(frameMs, frame);
+void FfmpegVideoEncoder::addVideoFrame(const service::recorder::image::Image& frame) {
+    _impl->addVideoFrame(frame);
 }
 
-void FfmpegVideoEncoder::initialize(size_t width, size_t height) {
-    _impl->initialize(width, height);
+void FfmpegVideoEncoder::initialize(size_t fps, size_t width, size_t height) {
+    _impl->initialize(fps, width, height);
+}
+
+void FfmpegVideoEncoder::start() {
+    _impl->start();
+}
+
+void FfmpegVideoEncoder::stop() {
+    _impl->stop();
 }
 
 }

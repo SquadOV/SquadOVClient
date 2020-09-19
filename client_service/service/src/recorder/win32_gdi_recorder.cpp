@@ -9,10 +9,13 @@
 
 namespace fs = std::filesystem;
 
-#define LOG_FRAME_TIME 1
+#define LOG_FRAME_TIME 0
 #ifdef _WIN32
 
 namespace {
+
+constexpr size_t desiredFps = 60;
+constexpr double msPerFrame = 1.0 / desiredFps * 1000.0;
 
 struct EnumData {
     DWORD pid;
@@ -101,7 +104,8 @@ void Win32GdiRecorderInstance::startRecording(video::VideoEncoder* encoder) {
                 DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
                 bmfHeader.bfSize = dwSizeofDIB;
 
-                encoder->initialize(width, height);
+                encoder->initialize(desiredFps, width, height);
+                encoder->start();
             }
             HBITMAP oldHbm = (HBITMAP)SelectObject(hdcMem, hbm);
 
@@ -128,24 +132,25 @@ void Win32GdiRecorderInstance::startRecording(video::VideoEncoder* encoder) {
                 DIB_RGB_COLORS);
             
             const auto endCapture = TickClock::now();
-            const auto frameMs = std::chrono::duration_cast<std::chrono::milliseconds>(endCapture - recordStart).count();
 #if LOG_FRAME_TIME
             const auto gdiElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(endCapture - startFrame).count();
 #endif
-            encoder->addVideoFrame(frameMs, frame);
+            encoder->addVideoFrame(frame);
 
             const auto endFrame = TickClock::now();
             const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(endFrame - startFrame).count();
             
 #if LOG_FRAME_TIME
-            std::cout << "Frame Time - GDI:" << gdiElapsed << " + FFMPEG:" << numMs << std::endl;
+            std::cout << "Frame Time - GDI:" << gdiElapsed << " + Queue Encode:" << (numMs - gdiElapsed) << std::endl;
 #endif
 
             // top out at 60hz? probably not ever going to be a problem with GDI.
-            if (numMs < 16) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(16 - numMs));
+            if (numMs < size_t(msPerFrame)) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(size_t(msPerFrame) - numMs));
             }
         }
+
+        encoder->stop();
 
         DeleteObject(hbm);    
         
@@ -162,7 +167,7 @@ bool tryInitializeWin32GdiRecorder(RecorderInstancePtr& output, DWORD pid) {
     // If we don't find the window, we can afford to wait a little bit before
     // determining the window can't be found as the user might have just
     // started the game so it's still in the process of creating the window.
-    const auto maxDelay = std::chrono::milliseconds(15000);
+    const auto maxDelay = std::chrono::milliseconds(120000);
     auto delay = std::chrono::milliseconds(0);
     const auto step = std::chrono::milliseconds(1000);
 

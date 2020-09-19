@@ -13,17 +13,19 @@ public:
     uint8_t* buffer() { return _buffer.get(); }
     const uint8_t* buffer() const { return _buffer.get(); }
     
+    size_t numBytes() const { return width() * height() * bytesPerPixel(); }
     size_t width() const { return _width; }
     size_t height() const { return _height; }
     size_t bytesPerPixel() const { return 4; }
 
     void initializeImage(size_t width, size_t height);
+    void copyFrom(const Image& img);
     void saveToFile(const std::filesystem::path& path) const;
 
 private:
-    std::unique_ptr<uint8_t[]> _buffer;
     size_t _width = 0;
     size_t _height = 0;
+    std::unique_ptr<uint8_t[]> _buffer;
 };
 
 }

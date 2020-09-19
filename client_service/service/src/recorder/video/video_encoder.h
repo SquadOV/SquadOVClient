@@ -14,8 +14,11 @@ public:
     virtual ~VideoEncoder() {}
 
     const std::filesystem::path& path() const { return _path; }
-    virtual void initialize(size_t width, size_t height) = 0;
-    virtual void addVideoFrame(long long frameMs, const service::recorder::image::Image& frame) = 0;
+    virtual void initialize(size_t fps, size_t width, size_t height) = 0;
+    virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
+
+    virtual void start() = 0;
+    virtual void stop() = 0;
 
 private:
     std::filesystem::path _path;

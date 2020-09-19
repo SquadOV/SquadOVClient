@@ -29,7 +29,7 @@ public:
     );
     ~GameRecorder();
 
-    std::filesystem::path start();
+    std::filesystem::path start(const std::string& matchId);
     void stop();
 
 private:

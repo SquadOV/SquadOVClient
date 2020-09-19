@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <sstream>
 
 #define THROW_ERROR(x) \

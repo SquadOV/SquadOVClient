@@ -27,7 +27,6 @@ GameRecorder::GameRecorder(
 }
 
 GameRecorder::~GameRecorder() {
-    stop();
 }
 
 void GameRecorder::createInstance() {
@@ -40,14 +39,15 @@ void GameRecorder::createInstance() {
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
 }
 
-fs::path GameRecorder::start() {
+fs::path GameRecorder::start(const std::string& matchId) {
     if (!!_instance && !!_encoder) {
         return _encoder->path();
     }
 
-    // Generate an appropriate new filename for the video.
+    // Generate an appropriate new filename for the video. Let the
+    // encoder take care of the details of the extension and what not.
     std::ostringstream fname;
-    fname << shared::fnameTimeToStr(shared::nowUtc()) << ".webm";
+    fname << matchId;
 
     const fs::path videoPath = _outputFolder / fs::path(fname.str());
     
@@ -64,6 +64,7 @@ void GameRecorder::stop() {
         return;
     }
     _instance->stopRecording();
+    _encoder->stop();
     _encoder.reset(nullptr);
     _instance.reset(nullptr);
 }
