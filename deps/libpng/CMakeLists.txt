@@ -457,7 +457,7 @@ endif(NOT AWK OR ANDROID)
 set(libpng_public_hdrs
   png.h
   pngconf.h
-  "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.h"
+  "${CMAKE_CURRENT_SOURCE_DIR}/pnglibconf.h"
 )
 set(libpng_private_hdrs
   pngpriv.h

@@ -5,6 +5,6 @@
 namespace shared::filesystem {
 
 std::filesystem::path getSquadOvFolder();
-std::filesystem::path getSquadOvVideoFolder();
+std::filesystem::path getSquadOvRecordFolder();
 
 }

@@ -2,22 +2,13 @@
 
 #include "process_watcher/process/process.h"
 #include "shared/games.h"
-#include "recorder/video/video_encoder.h"
+#include "recorder/encoder/av_encoder.h"
+#include "recorder/video/video_recorder.h"
+#include "recorder/audio/portaudio_audio_recorder.h"
 #include <filesystem>
 #include <memory>
 
 namespace service::recorder {
-
-class RecorderInstance {
-public:
-    virtual ~RecorderInstance() {}
-    virtual void startRecording(video::VideoEncoder* encoder) = 0;
-    virtual void stopRecording() = 0;
-    
-protected:
-    
-};
-using RecorderInstancePtr = std::unique_ptr<RecorderInstance>;
 
 // Records a video of the specified game.
 class GameRecorder {
@@ -33,14 +24,16 @@ public:
     void stop();
 
 private:
-    void createInstance();
+    void createVideoRecorder();
 
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;
     shared::EGame _game;
 
-    RecorderInstancePtr _instance;
-    video::VideoEncoderPtr _encoder;
+    encoder::AvEncoderPtr _encoder;
+    video::VideoRecorderPtr _vrecorder;
+    audio::AudioRecorderPtr _aoutRecorder;
+    audio::AudioRecorderPtr _ainRecorder;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

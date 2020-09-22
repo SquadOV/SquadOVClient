@@ -332,9 +332,11 @@ DatabaseApi::~DatabaseApi() {
 
 void DatabaseApi::storeValorantAccount(const shared::riot::RiotUser& user) const {
     std::ostringstream sql;
-    sql << "INSERT INTO valorant_accounts (puuid, username, tag) \
+    sql << "BEGIN EXCLUSIVE TRANSACTION;"
+        << "INSERT INTO valorant_accounts (puuid, username, tag) \
             VALUES ('" << user.puuid << "', '" << user.username << "', '" << user.tag << "') \
-            ON CONFLICT DO NOTHING;";
+            ON CONFLICT DO NOTHING;"
+        << "COMMIT TRANSACTION;";
 
     Sqlite3ErrorMessage errMsg;
     if (sqlite3_exec(_db, sql.str().c_str(), nullptr, nullptr, errMsg.buffer()) != SQLITE_OK) {
@@ -344,7 +346,9 @@ void DatabaseApi::storeValorantAccount(const shared::riot::RiotUser& user) const
 
 void DatabaseApi::storeValorantMatch(const service::valorant::ValorantMatch* match) const {
     std::ostringstream sql;
+    sql << "BEGIN EXCLUSIVE TRANSACTION;";
     insertValorantMatchSql(sql, match);
+    sql << "COMMIT TRANSACTION;";
 
     Sqlite3ErrorMessage errMsg;
     if (sqlite3_exec(_db, sql.str().c_str(), nullptr, nullptr, errMsg.buffer()) != SQLITE_OK) {
@@ -365,7 +369,9 @@ bool DatabaseApi::isValorantAccountSynced(const std::string& puuid) const {
 
 void DatabaseApi::markValorantAccountSync(const std::string& puuid) const {
     std::ostringstream sql;
-    sql << "UPDATE valorant_accounts SET matches_synced = 1 WHERE puuid = '" << puuid << "';";
+    sql << "BEGIN EXCLUSIVE TRANSACTION;"
+        << "UPDATE valorant_accounts SET matches_synced = 1 WHERE puuid = '" << puuid << "';"
+        << "COMMIT TRANSACTION;";
 
     Sqlite3ErrorMessage errMsg;
     if (sqlite3_exec(_db, sql.str().c_str(), nullptr, nullptr, errMsg.buffer()) != SQLITE_OK) {

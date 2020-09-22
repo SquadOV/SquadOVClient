@@ -13,7 +13,8 @@ public:
     uint8_t* buffer() { return _buffer.get(); }
     const uint8_t* buffer() const { return _buffer.get(); }
     
-    size_t numBytes() const { return width() * height() * bytesPerPixel(); }
+    size_t numBytes() const { return numBytesPerRow() * height(); }
+    size_t numBytesPerRow() const { return width() * bytesPerPixel(); }
     size_t width() const { return _width; }
     size_t height() const { return _height; }
     size_t bytesPerPixel() const { return 4; }
@@ -21,6 +22,9 @@ public:
     void initializeImage(size_t width, size_t height);
     void copyFrom(const Image& img);
     void saveToFile(const std::filesystem::path& path) const;
+    bool isInit() const { return _width > 0 && _height > 0; }
+
+    void fillAlpha(uint8_t v);
 
 private:
     size_t _width = 0;

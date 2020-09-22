@@ -7,10 +7,11 @@ SET(SRCS
     src/database/api.cpp
     src/http/http_client.cpp
     src/recorder/game_recorder.cpp
-    src/recorder/win32_gdi_recorder.cpp
-    src/recorder/video/ffmpeg_video_encoder.cpp
-    src/recorder/video/ffmpeg_utils.c
+    src/recorder/video/win32_gdi_recorder.cpp
+    src/recorder/encoder/ffmpeg_av_encoder.cpp
+    src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
+    src/recorder/audio/portaudio_audio_recorder.cpp
 )
 
 SET(HEADERS
@@ -21,9 +22,17 @@ SET(HEADERS
     src/database/api.h
     src/http/http_client.h
     src/recorder/game_recorder.h
-    src/recorder/win32_gdi_recorder.h
-    src/recorder/video/ffmpeg_video_encoder.h
+    src/recorder/video/video_recorder.h
+    src/recorder/video/win32_gdi_recorder.h
+    src/recorder/encoder/ffmpeg_av_encoder.h
+    src/recorder/encoder/ffmpeg_utils.h
+    src/recorder/encoder/av_encoder.h
     src/recorder/image/image.h
+    src/recorder/audio/audio_recorder.h
+    src/recorder/audio/audio_packet_view.h
+    src/recorder/audio/audio_packet_properties.h
+    src/recorder/audio/fixed_size_audio_packet.h
+    src/recorder/audio/portaudio_audio_recorder.h
 )
 
 add_executable(squadov_client_service
@@ -41,8 +50,10 @@ target_include_directories(squadov_client_service
     ${CMAKE_SOURCE_DIR}/deps/json/single_include
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
     ${CMAKE_SOURCE_DIR}/deps/libpng
+    ${CMAKE_SOURCE_DIR}/deps/portaudio/include
     ${OPENSSL_INCLUDE_DIR}
     ${FFMPEG_INCLUDE_DIR}
+    ${Boost_INCLUDE_DIRS}
 )
 
 target_link_libraries(squadov_client_service
@@ -54,6 +65,7 @@ target_link_libraries(squadov_client_service
     date-tz
     sqlite3
     png
+    portaudio
     ZLIB::ZLIB
     ${OPENSSL_LIBRARIES}
     ${FFMPEG_LIBRARIES}

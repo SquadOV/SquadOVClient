@@ -9,6 +9,7 @@
 #include <curl/curl.h>
 #include <filesystem>
 #include <iostream>
+#include <portaudio.h>
 #include <thread>
 
 extern "C" {
@@ -29,9 +30,12 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list v1) {
 
 
 int main(int argc, char** argv) {
-
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         throw std::runtime_error("Failed to initialize CURL.");
+    }
+
+    if (Pa_Initialize() != paNoError) {
+        throw std::runtime_error("Failed to initialize PortAudio.");
     }
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
@@ -42,9 +46,9 @@ int main(int argc, char** argv) {
     const auto db = std::make_unique<service::database::DatabaseApi>(dbFname.string());
 
     // Start process watcher to watch for our supported games.
-    
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>(db.get()));
     watcher.start();
 
     curl_global_cleanup();
+    Pa_Terminate();
 }

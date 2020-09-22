@@ -48,7 +48,7 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
     _db(db),
     _process(p) {
     // Initialize recorder to pull from the game window (but don't start recording until a game starts).
-    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::filesystem::getSquadOvVideoFolder(), shared::EGame::Valorant);
+    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::filesystem::getSquadOvRecordFolder(), shared::EGame::Valorant);
 
     // Initialize Valorant data. Pull in account information and populate
     // match history/account data in the database as needed.

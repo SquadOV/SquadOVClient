@@ -3,4 +3,4 @@ add_library(sqlite3 SHARED
     sqlite3.c
 )
 
-target_compile_definitions(sqlite3 PUBLIC "-DNO_TCL")
+target_compile_definitions(sqlite3 PUBLIC "NO_TCL" "SQLITE_API=__declspec(dllexport)")

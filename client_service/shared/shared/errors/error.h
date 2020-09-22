@@ -4,6 +4,6 @@
 #include <sstream>
 
 #define THROW_ERROR(x) \
-    std::ostringstream err; \
-    err << x; \
-    throw std::runtime_error(err.str());
+    {std::ostringstream _err; \
+    _err << x; \
+    throw std::runtime_error(_err.str());};

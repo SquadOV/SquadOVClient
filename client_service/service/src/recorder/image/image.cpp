@@ -4,6 +4,8 @@
 #include <png.h>
 #include "shared/errors/error.h"
 
+#include <iostream>
+
 namespace service::recorder::image {
 
 void Image::initializeImage(size_t width, size_t height) {
@@ -19,6 +21,15 @@ void Image::copyFrom(const Image& img) {
     assert(height() == img.height());
     assert(bytesPerPixel() == img.bytesPerPixel());
     std::memcpy(_buffer.get(), img.buffer(), numBytes());
+}
+
+void Image::fillAlpha(uint8_t v) {
+    for (auto h = 0; h < height(); ++h) {
+        for (auto w = 0; w < width(); ++w) {
+            const auto idx = h * numBytesPerRow() + w * bytesPerPixel() + 3;
+            _buffer[idx] = v;
+        }
+    }
 }
 
 void Image::saveToFile(const std::filesystem::path& path) const {

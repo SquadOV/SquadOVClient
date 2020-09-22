@@ -15,9 +15,9 @@ std::filesystem::path getSquadOvFolder() {
     return appDataDir / std::filesystem::path("SquadOV");;
 }
 
-std::filesystem::path getSquadOvVideoFolder() {
+std::filesystem::path getSquadOvRecordFolder() {
     const auto appData = getSquadOvFolder();
-    return appData / std::filesystem::path("Videos");
+    return appData / std::filesystem::path("Record");
 }
 
 }
