@@ -29,6 +29,9 @@ void ValorantApi::initializePvpServer(const std::string& server) {
 }
 
 void ValorantApi::reinitTokens(const std::string& rsoToken, const std::string& entitlementToken) {
+    _rsoToken = rsoToken;
+    _entitlementToken = entitlementToken;
+
     if (!_pvpClient) {
         return;
     }
@@ -125,9 +128,6 @@ std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std:
         } else {
             THROW_ERROR("\tFailed to get match details: " << matchId);
         }
-
-        // Pretty excessive sleep but this is being done in its own thread so probably OK.
-        std::this_thread::sleep_for(1s);
     }
 
     return ret;

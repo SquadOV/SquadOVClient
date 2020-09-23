@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include <nlohmann/json.hpp>
+#include <ostream>
 #include <unordered_map>
 #include <vector>
 
@@ -213,7 +214,7 @@ public:
     const std::string& gameMode() const { return _gameMode; }
     const std::string& map() const { return _map; }
     bool isRanked() const { return _isRanked; }
-    const std::string& customGameName() const { return _customGameName; }
+    const std::string& provisioningFlowID() const { return _provisioningFlowID; }
     const std::string& gameVersion() const { return _gameVersion; }
     const long long startTime() const { return _startTime; }
     const std::string& matchId() const { return _matchId; }
@@ -234,7 +235,7 @@ private:
     std::string _gameMode;
     std::string _map;
     bool _isRanked = false;
-    std::string _customGameName;
+    std::string _provisioningFlowID;
     std::string _gameVersion;
     long long _startTime = 0;
     std::string _matchId;
@@ -248,5 +249,12 @@ private:
     std::vector<ValorantMatchDamagePtr> _damage;
 };
 using ValorantMatchDetailsPtr = std::unique_ptr<ValorantMatchDetails>;
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchDetails& details);
+std::ostream& operator<<(std::ostream& out, const ValorantMatchDamage& dmg);
+std::ostream& operator<<(std::ostream& out, const ValorantMatchKill& kill);
+std::ostream& operator<<(std::ostream& out, const ValorantMatchRound& round);
+std::ostream& operator<<(std::ostream& out, const ValorantMatchPlayer& player);
+std::ostream& operator<<(std::ostream& out, const ValorantMatchTeam& team);
 
 }

@@ -31,7 +31,7 @@ CREATE TABLE valorant_matches (
     gameMode TEXT NOT NULL,
     map TEXT NOT NULL,
     is_ranked INTEGER NOT NULL,
-    custom_game_name TEXT NOT NULL,
+    provisioning_flow_id TEXT NOT NULL,
     game_version TEXT NOT NULL,
     server_start_time_utc INTEGER NOT NULL,
     start_time_utc TEXT,

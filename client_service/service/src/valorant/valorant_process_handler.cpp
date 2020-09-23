@@ -114,6 +114,9 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
         std::cerr << "\tUNEXPECTED MATCH END (match or api nullptr)." << std::endl;
         return;
     }
+
+    // Make sure the recorder doesn't capture the delay in grabbing the match details from the API.
+    _recorder->stop();
     
     // Make sure we're still referring to the same game before trying to
     // fill in the match details.
@@ -129,52 +132,57 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
     // Reset the current match. If the check above fails, then this is the only thing that
     // happens which is fine since we don't care about the game anymore since something weird happened.
     _currentMatch.reset(nullptr);
-    _recorder->stop();
 }
 
 void ValorantProcessHandlerInstance::backfillMatchHistory() {
-    // If the total number of matches we have stored in the database doesn't match
-    // the number of matches given to us by Riot's API then we know we aren't synced properly.
-    size_t apiNumMatches = 0;
-    _api->getLatestMatchId(_currentUser.puuid, &apiNumMatches);
+    // If some exception is thrown and we fail to backfill just log it and move on since
+    // we can always just try again later.
+    try {
+        // If the total number of matches we have stored in the database doesn't match
+        // the number of matches given to us by Riot's API then we know we aren't synced properly.
+        size_t apiNumMatches = 0;
+        _api->getLatestMatchId(_currentUser.puuid, &apiNumMatches);
 
-    if (!apiNumMatches) {
-        return;
-    }
-
-    const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid);
-    if (dbNumMatches == apiNumMatches) {
-        return;
-    }
-
-    // If the number of API matches don't match the number of matches we have stored in the database
-    // then we know we need to do a sync. Figure out which matches are the ones that are different!
-    std::vector<std::string> allApiMatchIds = _api->getMatchHistoryIds(_currentUser.puuid);
-    std::vector<std::string> diffMatchIds;
-    std::copy_if(allApiMatchIds.begin(), allApiMatchIds.end(), std::back_inserter(diffMatchIds), [this](const std::string& matchId){
-        return !_db->isValorantMatchStored(matchId);
-    });
-    
-    // If _isCurrentlyBackfilling is true, then compare_exchange_strong returns false so we can return
-    // because a backfill task is already in progress. If _isCurrentlyBackfilling is false, the exchange
-    // happens and the function returns true.
-    bool isBackfilling = false;
-    if (!_isCurrentlyBackfilling.compare_exchange_strong(isBackfilling, true)) {
-        return;
-    }
-
-    std::thread backFillThread([this, diffMatchIds](){
-        // Get their full match history and store each game's match details.
-        try {
-            for (const auto& matchId : diffMatchIds) {
-                ValorantMatch match(std::move(*_api->getMatchDetails(matchId)));
-                _db->storeValorantMatch(&match);
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Failed to backfill: " << e.what() << std::endl;
+        if (!apiNumMatches) {
+            return;
         }
-    });
-    backFillThread.detach();
+
+        const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid);
+        if (dbNumMatches == apiNumMatches) {
+            return;
+        }
+
+        // If the number of API matches don't match the number of matches we have stored in the database
+        // then we know we need to do a sync. Figure out which matches are the ones that are different!
+        std::vector<std::string> allApiMatchIds = _api->getMatchHistoryIds(_currentUser.puuid);
+        std::vector<std::string> diffMatchIds;
+        std::copy_if(allApiMatchIds.begin(), allApiMatchIds.end(), std::back_inserter(diffMatchIds), [this](const std::string& matchId){
+            return !_db->isValorantMatchStored(matchId);
+        });
+        
+        // If _isCurrentlyBackfilling is true, then compare_exchange_strong returns false so we can return
+        // because a backfill task is already in progress. If _isCurrentlyBackfilling is false, the exchange
+        // happens and the function returns true.
+        bool isBackfilling = false;
+        if (!_isCurrentlyBackfilling.compare_exchange_strong(isBackfilling, true)) {
+            return;
+        }
+
+        std::thread backFillThread([this, diffMatchIds](){
+            // Get their full match history and store each game's match details.
+            try {
+                for (const auto& matchId : diffMatchIds) {
+                    ValorantMatch match(std::move(*_api->getMatchDetails(matchId)));
+                    _db->storeValorantMatch(&match);
+                }
+            } catch (const std::exception& e) {
+                std::cerr << "Failed to backfill: " << e.what() << std::endl;
+            }
+        });
+        backFillThread.detach();
+    } catch (std::exception& ex) {
+        std::cerr << "Failed to perform Valorant backfill: " << ex.what() << std::endl;
+    }
 }
 
 void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint& eventTime, const void*) {
@@ -216,9 +224,11 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
     } else {
         _api->reinitTokens(state->rsoToken, state->entitlementToken);
 
-        // Might need to do a backfill if the user has been running VALORANT for a long time
-        // and the first attempt at trying to backfill failed using an old token.
-        backfillMatchHistory();
+        if (_api->ready()) {
+            // Might need to do a backfill if the user has been running VALORANT for a long time
+            // and the first attempt at trying to backfill failed using an old token.
+            backfillMatchHistory();
+        }
     }
 
     // Should store this user in the database if they don't exist already.

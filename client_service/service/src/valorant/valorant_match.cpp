@@ -23,6 +23,10 @@ ValorantMatch::ValorantMatch(ValorantMatchDetails&& details):
 
 void ValorantMatch::populateMatchDetailsFromApi(const ValorantApi* api) {
     auto apiDetails = api->getMatchDetails(_matchId);
+    // Didn't work - oops. Merge this in later I guess.
+    if (!apiDetails) {
+        return;
+    }
     _details.mergeWithApi(apiDetails.get());
 }
 

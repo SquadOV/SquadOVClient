@@ -33,7 +33,7 @@ void ValorantMatchDetails::parseFromJson(const std::string& json) {
 void ValorantMatchDetails::parseMatchInfoJson(const nlohmann::json& obj) {
     _map = obj["mapId"].get<std::string>();
     _gameMode = obj["gameMode"].get<std::string>();
-    _customGameName = obj["customGameName"].get<std::string>();
+    _provisioningFlowID = obj["provisioningFlowID"].get<std::string>();
     _isRanked = obj["isRanked"].get<bool>();
     _gameVersion = obj["gameVersion"].get<std::string>();
     _startTime = obj["gameStartMillis"].get<long long>() / 1000;
@@ -163,7 +163,7 @@ void ValorantMatchDetails::mergeWithApi(ValorantMatchDetails* other) {
     _gameMode = other->_gameMode;
     _map = other->_map;
     _isRanked = other->_isRanked;
-    _customGameName = other->_customGameName;
+    _provisioningFlowID = other->_provisioningFlowID;
     _gameVersion = other->_gameVersion;
 
     _players = std::move(other->_players);
@@ -201,6 +201,94 @@ void ValorantMatchDetails::nextRoundStateWithTimestamp(const shared::TimePoint& 
     } else {
         // Technically there's something that's gone horribly wrong here.
     }
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchDetails& details) {
+    out << "MATCH: " << details.matchId() << std::endl
+        << "\tGame Mode: " << details.gameMode() << std::endl
+        << "\tMap: " << details.map() << std::endl
+        << "\tIs Ranked: " << details.isRanked() << std::endl
+        << "\tProvisioning Flow ID: " << details.provisioningFlowID() << std::endl
+        << "\tGame Version: " << details.gameVersion() << std::endl
+        << "\tStart Time: " << details.startTime() << std::endl;
+
+    out << "TOTAL PLAYERS: " << details.players().size() << std::endl;
+    for (const auto& [puuid, player] : details.players()) {
+        out << *player;
+    }
+
+    out << "TOTAL TEAMS: " << details.teams().size() << std::endl;
+    for (const auto& [teamId, team] : details.teams()) {
+        out << *team;
+    }
+
+    out << "TOTAL ROUNDS: " << details.rounds().size() << std::endl;
+    for (const auto& round : details.rounds()) {
+        out << *round;
+    }
+
+    out << "TOTAL KILLS: " << details.kills().size() << std::endl;
+    for (const auto& kills : details.kills()) {
+        out << *kills;
+    }
+
+    out << "TOTAL DAMAGE: " << details.damage().size() << std::endl;
+    for (const auto& dmg : details.damage()) {
+        out << *dmg;
+    }
+
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchDamage& dmg) {
+    out << "DAMAGE FROM " << dmg.instigatorPuuid() << " to " << dmg.receiverPuuid() << std::endl
+        << "\tRound: " << dmg.roundNum() << std::endl
+        << "\tDamage: " << dmg.damage() << std::endl
+        << "\tHeadshots: " << dmg.headshots() << std::endl
+        << "\tBodyshots: " << dmg.bodyshots() << std::endl
+        << "\tLegshots: " << dmg.legshots() << std::endl;
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchKill& kill) {
+    out << "KILL BY " << kill.killerPuuid() << " on " << kill.victimPuuid() << std::endl
+        << "\tRound: " << kill.round() << " at " << kill.roundTime() << std::endl
+        << "\tUsing: " << kill.damageType() << " - " << kill.damageItem() << "[Secondary: " << kill.killSecondaryFire() << "]" << std::endl;
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchRound& round) {
+    out << "ROUND " << round.roundNum() << std::endl;
+    out << "\tWinner: " << round.teamWinner() << std::endl;
+    if (round.didPlant()) {
+        out << "\tBOMB PLANTED AT " << round.plantRoundTime() << " by " << round.planterPuuid() << std::endl;
+    }
+
+    if (round.didDefuse()) {
+        out << "\tBOMB DEFUSED AT " << round.defuseRoundTime() << " by " << round.defuserPuuid() << std::endl;
+    }
+
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchPlayer& player) {
+    out << "PLAYER: " << player.puuid() << std::endl
+        << "\tTeam: " << player.teamId() << std::endl
+        << "\tAgent: " << player.agentId() << std::endl
+        << "\tTier: " << player.competitiveTier() << std::endl
+        << "\tCombat Score: " << player.stats().totalCombatScore << std::endl
+        << "\tRounds Played: " << player.stats().roundsPlayed << std::endl
+        << "\tKills: " << player.stats().kills << std::endl
+        << "\tDeaths: " << player.stats().deaths << std::endl
+        << "\tAssists: " << player.stats().assists << std::endl;
+    return out;
+}
+
+std::ostream& operator<<(std::ostream& out, const ValorantMatchTeam& team) {
+    out << "TEAM: " << team.teamId() << std::endl
+        << "\tWon: " << team.won() << std::endl
+        << "\tRounds: " << team.roundsWon() << " / " << team.roundsPlayed() << std::endl;
+    return out;
 }
 
 }

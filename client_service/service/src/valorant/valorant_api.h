@@ -19,6 +19,7 @@ public:
     ValorantApi(const std::string& rsoToken, const std::string& entitlementToken);
     void initializePvpServer(const std::string& server);
     void reinitTokens(const std::string& rsoToken, const std::string& entitlementToken);
+    bool ready() const { return !!_pvpClient; }
 
     // Get match details - round info, kills. Who's on what team. The score. Damage done. Everything.
     ValorantMatchDetailsPtr getMatchDetails(const std::string& matchId) const;

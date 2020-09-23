@@ -40,16 +40,19 @@ bool parseGameLogMapChange(const std::string& line, ValorantMapChangeData& data)
 
 struct ValorantRoundData {
     shared::TimePoint logTime;
-    double time;
+    double clientTime;
+    double serverTime;
 };
-const std::regex roundStartRegex("\\[(.*?):\\d{3}\\].*?Gameplay started at local time (.*) \\(server time .*\\)");
+
+const std::regex roundStartRegex("\\[(.*?):\\d{3}\\].*?Gameplay started at local time (.*) \\(server time (.*)\\)");
 bool parseRoundChange(const std::string& line, ValorantRoundData& data) {
     std::smatch matches;
     if (!std::regex_search(line, matches, roundStartRegex)) {
         return false;
     }
     data.logTime = shared::strToTime(matches[1].str(), valorantLogDtFormat);
-    data.time = std::stod(matches[2].str());
+    data.clientTime = std::stod(matches[2].str());
+    data.serverTime = std::stod(matches[3].str());
     return true;
 }
 
@@ -122,6 +125,32 @@ bool parseXmppRSOToken(const tinyxml2::XMLDocument& doc, std::string& token) {
     }
 
     token = rsoTokenNode->GetText();
+    return true;
+}
+
+bool parseXmppAccessToken(const tinyxml2::XMLDocument& doc, std::string& token) {
+    // Look for the access token case which should be equivalent to the RSO token.
+    // <iq>
+    //    <query>
+    //      <access-token>...</access-token>
+    //    </query>
+    // </iq>
+    const auto iqNode = doc.FirstChildElement("iq");
+    if (!iqNode) {
+        return false;
+    }
+
+    const auto queryNode = iqNode->FirstChildElement("query");
+    if (!queryNode) {
+        return false;
+    }
+
+    const auto accessTokenNode = queryNode->FirstChildElement("access-token");
+    if (!accessTokenNode) {
+        return false;
+    }
+
+    token = accessTokenNode->GetText();
     return true;
 }
 
@@ -295,8 +324,12 @@ ValorantLogWatcher::ValorantLogWatcher() {
 }
 
 void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
+    // First do a pass to parse the lines we get.
+    // Do a state chance detection *AFTER* the parse so that we can detect
+    // actual changes and not just initial state due to reading the log in for the first time.
+    const GameLogState previousState = _gameLogState;
+
     for (const auto& line : lines) {
-        const GameLogState previousState = _gameLogState;
         bool parsed = false;
         {
             ValorantMapChangeData data;
@@ -326,7 +359,9 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         if (!parsed) {
             ValorantRoundData data;
             if (parseRoundChange(line, data)) {
-                if (data.time < shared::EPSILON) {
+                // Need to use server time and not client time here because in a real game
+                // the client tiem might not start at 0.0.
+                if (data.serverTime < shared::EPSILON) {
                     notify(EValorantLogEvents::RoundBuyStart, data.logTime, nullptr);
                 } else {
                     notify(EValorantLogEvents::RoundPlayStart, data.logTime, nullptr);
@@ -355,53 +390,58 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
 }
 
 void ValorantLogWatcher::onClientLogChange(const LogLinesDelta& lines) {
+    const ClientLogState previousState = _clientLogState;
     for (const auto& line : lines) {
         bool parsed = false;
-        const ClientLogState previousState = _clientLogState;
 
         {
             ValorantXmppData data;
             if (parseClientLogXmpp(line, data)) {
 
                 if (parseXmppRSOToken(data.packet, _clientLogState.rsoToken)) {
-                    goto success_xmpp_parse;
+                    parsed = true;
+                }
+
+                if (!parsed && parseXmppAccessToken(data.packet, _clientLogState.rsoToken)) {
+                    parsed = true;
                 }
                 
-                if (parseXmppEntitlementToken(data.packet, _clientLogState.entitlementToken)) {
-                    goto success_xmpp_parse;
+                if (!parsed && parseXmppEntitlementToken(data.packet, _clientLogState.entitlementToken)) {
+                    parsed = true;
                 }
 
-                if (parseXmppPuuid(data.packet, _clientLogState.user.puuid)) {
-                    goto success_xmpp_parse;
+                if (!parsed && parseXmppPuuid(data.packet, _clientLogState.user.puuid)) {
+                    parsed = true;
                 }
 
-                if (parseXmppUsernameTag(data.packet, _clientLogState.user.username, _clientLogState.user.tag)) {
-                    goto success_xmpp_parse;
+                if (!parsed && parseXmppUsernameTag(data.packet, _clientLogState.user.username, _clientLogState.user.tag)) {
+                    parsed = true;
                 }
-
-                goto finish_xmpp_parse;
-success_xmpp_parse:
-                parsed = true;
-finish_xmpp_parse:
-                ;
             }
         }
 
         if (!parsed) {
             continue;
         }
+    }
 
-        // This needs to be called repeatedly to detect changes to the entitlement token.
-        if (_clientLogState != previousState) {
-            if (_clientLogState.isLoggedIn()) {
-                // The time here doesn't really matter so just use the current time whatever it is and not the log time.
-                notify(EValorantLogEvents::RSOLogin, shared::nowUtc(), &_clientLogState);
-            }
+    // This needs to be called repeatedly to detect changes to the entitlement token.
+    if (_clientLogState != previousState) {
+        if (_clientLogState.isLoggedIn()) {
+            // The time here doesn't really matter so just use the current time whatever it is and not the log time.
+            notify(EValorantLogEvents::RSOLogin, shared::nowUtc(), &_clientLogState);
         }
     }
 }
 
 void ValorantLogWatcher::notify(EValorantLogEvents event, const shared::TimePoint& eventTime, const void* data) const {
+    // Don't notify if the event time has drifted too far (probably due to reading a log that existed already).
+    const auto maxDiff = std::chrono::seconds(10);
+    const auto diff = shared::nowUtc() - eventTime;
+    if (diff > maxDiff) {
+        return;
+    }
+
     for (const auto& cb : _callbacks.at(event)) {
         cb(eventTime, data);
     }
