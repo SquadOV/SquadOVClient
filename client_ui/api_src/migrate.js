@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 3
+const CURRENT_DB_VERSION = 2
 
 async function migrateDb(db) {
     return new Promise(resolve => {
@@ -140,14 +140,6 @@ CREATE TABLE valorant_match_round_player_stats (
     FOREIGN KEY (match_id, puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE
 );
 `) 
-                }
-
-                if (currentVersion < 3) {
-                    // Need to keep track of whether we've synced the VALORANT account already.
-                    db.run(`
-ALTER TABLE valorant_accounts
-ADD COLUMN matches_synced INTEGER NOT NULL DEFAULT 0; 
-                    `)
                 }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)

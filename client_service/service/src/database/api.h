@@ -22,8 +22,8 @@ public:
     // Valorant related functions.
     void storeValorantAccount(const shared::riot::RiotUser& user) const;
     void storeValorantMatch(const service::valorant::ValorantMatch* match) const;
-    bool isValorantAccountSynced(const std::string& puuid) const;
-    void markValorantAccountSync(const std::string& puuid) const;
+    size_t totalValorantMatchesForPuuid(const std::string& puuid) const;
+    bool isValorantMatchStored(const std::string& matchId) const;
 
 private:
     sqlite3* _db = nullptr;

@@ -22,6 +22,8 @@ public:
 
     // Get match details - round info, kills. Who's on what team. The score. Damage done. Everything.
     ValorantMatchDetailsPtr getMatchDetails(const std::string& matchId) const;
+    std::string getLatestMatchId(const std::string& puuid, size_t* numMatches = nullptr) const;
+    std::vector<std::string> getMatchHistoryIds(const std::string& puuid) const;
     std::vector<ValorantMatchDetailsPtr> getFullMatchHistory(const std::string& puuid) const;
 
 private:

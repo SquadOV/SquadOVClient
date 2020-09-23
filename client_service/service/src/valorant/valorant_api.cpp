@@ -23,6 +23,9 @@ void ValorantApi::initializePvpServer(const std::string& server) {
     _pvpClient = std::make_unique<http::HttpClient>(fullHost.str());
     _pvpClient->setBearerAuthToken(_rsoToken.c_str());
     _pvpClient->setHeaderKeyValue("X-Riot-Entitlements-JWT", _entitlementToken);
+
+    // 120 seconds per 100 tasks
+    _pvpClient->setRateLimit(1.2);
 }
 
 void ValorantApi::reinitTokens(const std::string& rsoToken, const std::string& entitlementToken) {
@@ -49,10 +52,9 @@ ValorantMatchDetailsPtr ValorantApi::getMatchDetails(const std::string& matchId)
     return match;
 }
 
-std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std::string& puuid) const {
+std::vector<std::string> ValorantApi::getMatchHistoryIds(const std::string& puuid) const {
     constexpr int numPerRequest = 20;
     int startIndex = 0;
-    std::vector<ValorantMatchDetailsPtr> ret;
     std::vector<std::string> matches;
 
     while (true) {
@@ -65,7 +67,7 @@ std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std:
         const auto result = _pvpClient->Get(path.str().c_str());
         if (result->status != 200) {
             THROW_ERROR("\tFailed to get match history: " << result->status << "\t" << result->curlError);
-            return ret;
+            return matches;
         }
 
         const auto parsedJson = nlohmann::json::parse(result->body);
@@ -80,10 +82,40 @@ std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std:
         }
 
         startIndex = endIndex;
-
-        // Put in sleeps to try to avoid running afoul of any sort of rate limiting that might exist.
-        std::this_thread::sleep_for(500ms);
     }
+
+    return matches;
+}
+
+std::string ValorantApi::getLatestMatchId(const std::string& puuid, size_t* numMatches) const {
+    std::ostringstream path;
+    path << "/match-history/v1/history/" << puuid
+        << "?startIndex=" << 0
+        << "&endIndex=" << 1;
+    
+    const auto result = _pvpClient->Get(path.str().c_str());
+    if (result->status != 200) {
+        THROW_ERROR("\tFailed to get match history: " << result->status << "\t" << result->curlError);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    const auto total = parsedJson["Total"].get<int>();
+    if (!!numMatches) {
+        *numMatches = static_cast<size_t>(total);
+    }
+
+    if (total == 0) {
+        return "";
+    }
+
+    return parsedJson["History"][0]["MatchID"].get<std::string>();
+}
+
+
+std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std::string& puuid) const {
+    std::vector<ValorantMatchDetailsPtr> ret;
+    std::vector<std::string> matches = getMatchHistoryIds(puuid);
 
     for (const auto& matchId : matches) {
         auto details = getMatchDetails(matchId);

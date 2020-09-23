@@ -1,8 +1,11 @@
 #include "http/http_client.h"
 
+#include "shared/constants.h"
+
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 namespace service::http {
 namespace {
@@ -59,6 +62,7 @@ private:
 
 HttpClient::HttpClient(const std::string& baseUri):
     _baseUri(baseUri) {
+    _lastRequestTime = shared::nowUtc();
 }
 
 HttpClient::~HttpClient() {
@@ -75,11 +79,38 @@ void HttpClient::setHeaderKeyValue(const std::string& key, const std::string& va
 }
 
 HttpResponsePtr HttpClient::Get(const std::string& path) const {
+    tickRateLimit();
+
     std::ostringstream fullPath;
     fullPath << _baseUri << path;
 
     HttpRequest req(fullPath.str(), _headers);
     return req.Do();
+}
+
+void HttpClient::tickRateLimit() const {
+    if (_secondsPerTask < shared::EPSILON) {
+        return;
+    }
+
+    const auto now = shared::nowUtc();
+
+    // First check if we need to sleep for some time before executing the request.
+    bool needLimit = false;
+    std::chrono::milliseconds sleepDuration;
+    {
+        std::shared_lock<std::shared_mutex> guard(_rateLimitMutex);
+        const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastRequestTime).count() / 1000.0;
+        needLimit = (elapsedSeconds < _secondsPerTask);
+        sleepDuration = std::chrono::milliseconds(static_cast<long long>((_secondsPerTask - elapsedSeconds) * 1000.0));
+    }
+    
+    if (needLimit) {
+        std::this_thread::sleep_for(sleepDuration);
+    }
+
+    std::unique_lock<std::shared_mutex> guard(_rateLimitMutex);
+    _lastRequestTime = shared::nowUtc();
 }
 
 }

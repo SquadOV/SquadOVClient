@@ -42,7 +42,7 @@ apiServer.start(() => {
         exePath = path.join(path.dirname(app.getPath('exe')), 'service', exeName)
         if (!fs.existsSync(exePath)) {
             if (process.platform == 'win32') {
-                exePath = path.join(process.env.PORTACLE_EXECUTABLE_DIR, 'service', exeName)
+                exePath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'service', exeName)
                 if (!fs.existsSync(exePath)) {
                     exePath = exeName
                 }
@@ -52,6 +52,7 @@ apiServer.start(() => {
         }
     }
 
+    console.log("SPAWN PROCESS: " + exePath);
     let child = spawn(exePath)
     child.stdout.on('data', (data) => {
         console.log(`SERVICE: ${data}`)

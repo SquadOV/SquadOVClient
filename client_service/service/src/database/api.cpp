@@ -356,27 +356,35 @@ void DatabaseApi::storeValorantMatch(const service::valorant::ValorantMatch* mat
     }
 }
 
-bool DatabaseApi::isValorantAccountSynced(const std::string& puuid) const {
+size_t DatabaseApi::totalValorantMatchesForPuuid(const std::string& puuid) const {
     std::ostringstream sql;
-    sql << "SELECT matches_synced FROM valorant_accounts WHERE puuid = '" << puuid << "';";
+    sql << R"|(
+        SELECT COUNT(vm.id)
+        FROM valorant_matches AS vm
+        INNER JOIN valorant_match_players AS vmp
+            ON vmp.match_id = vm.id
+        WHERE vmp.puuid = ')|" << puuid << "';";
 
     SqlStatement stmt(_db, sql.str());
     if (!stmt.hasNext()) {
         return false;
     }
-    return (bool)stmt.getColumn<int>(0);
+    return static_cast<size_t>(stmt.getColumn<int>(0));
 }
 
-void DatabaseApi::markValorantAccountSync(const std::string& puuid) const {
+bool DatabaseApi::isValorantMatchStored(const std::string& matchId) const {
     std::ostringstream sql;
-    sql << "BEGIN EXCLUSIVE TRANSACTION;"
-        << "UPDATE valorant_accounts SET matches_synced = 1 WHERE puuid = '" << puuid << "';"
-        << "COMMIT TRANSACTION;";
+    sql << R"|(
+        SELECT COUNT(vm.id)
+        FROM valorant_matches AS vm
+        WHERE vm.id = ')|" << matchId << "';";
 
-    Sqlite3ErrorMessage errMsg;
-    if (sqlite3_exec(_db, sql.str().c_str(), nullptr, nullptr, errMsg.buffer()) != SQLITE_OK) {
-        THROW_ERROR("Failed to mark account sync: " << errMsg.str());
+    SqlStatement stmt(_db, sql.str());
+    if (!stmt.hasNext()) {
+        return false;
     }
+
+    return (stmt.getColumn<int>(0) > 0);
 }
 
 }
