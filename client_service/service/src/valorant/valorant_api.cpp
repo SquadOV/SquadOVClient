@@ -27,7 +27,7 @@ void ValorantApi::initializePvpServer(const std::string& server) {
 
 void ValorantApi::reinitTokens(const std::string& rsoToken, const std::string& entitlementToken) {
     if (!_pvpClient) {
-        throw std::runtime_error("Can't reinit tokens when the client has not yet been initialized.");
+        return;
     }
 
     _pvpClient->setBearerAuthToken(_rsoToken.c_str());

@@ -3,6 +3,7 @@
 
 #include "shared/errors/error.h"
 #include "shared/time.h"
+#include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
@@ -32,6 +33,10 @@ GameRecorder::~GameRecorder() {
 
 void GameRecorder::createVideoRecorder() {
 #ifdef _WIN32
+    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, _process.pid())) {
+        return;
+    }
+
     if (video::tryInitializeWin32GdiRecorder(_vrecorder, _process.pid())) {
         return;
     }

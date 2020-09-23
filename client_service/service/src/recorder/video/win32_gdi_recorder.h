@@ -5,7 +5,6 @@
 #ifdef _WIN32
 
 #include <Windows.h>
-#include <filesystem>
 #include <thread>
 
 namespace service::recorder::video {

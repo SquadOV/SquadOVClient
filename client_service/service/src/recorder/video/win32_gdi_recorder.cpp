@@ -2,6 +2,7 @@
 
 #include "recorder/image/image.h"
 #include "recorder/encoder/av_encoder.h"
+#include "system/win32/hwnd_utils.h"
 
 #include <iostream>
 #include <chrono>
@@ -17,26 +18,6 @@ namespace {
 
 constexpr size_t desiredFps = 60;
 constexpr double nsPerFrame = 1.0 / desiredFps * 1e+9;
-
-struct EnumData {
-    DWORD pid;
-    HWND out;
-    bool found = false;
-};
-
-BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
-    DWORD refPid;
-    EnumData* data = (EnumData*)param;
-    GetWindowThreadProcessId(hwnd, &refPid);
-
-    if (refPid == data->pid) {
-        data->out = hwnd;
-        data->found = true;
-        return FALSE;
-    } else {
-        return TRUE;
-    }
-}
 
 }
 
@@ -160,29 +141,13 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
 }
 
 bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, DWORD pid) {
-    // Need to first find the window associated with the process.
-    EnumData window;
-    window.pid = pid;
-
-    // If we don't find the window, we can afford to wait a little bit before
-    // determining the window can't be found as the user might have just
-    // started the game so it's still in the process of creating the window.
-    const auto maxDelay = std::chrono::milliseconds(120000);
-    auto delay = std::chrono::milliseconds(0);
-    const auto step = std::chrono::milliseconds(1000);
-
-    while (delay < maxDelay) {
-        EnumWindows(enumWindowCallback, (LPARAM)&window);
-        if (window.found) {
-            output.reset(new Win32GdiRecorderInstance(window.out));
-            return true;
-        }
-
-        std::this_thread::sleep_for(step);
-        delay += step;
+    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
+    if (!wnd) {
+        return false;
     }
-    
-    return false;
+
+    output.reset(new Win32GdiRecorderInstance(wnd));
+    return true;
 }
 
 }

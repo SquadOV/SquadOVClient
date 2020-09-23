@@ -8,10 +8,12 @@ SET(SRCS
     src/http/http_client.cpp
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
+    src/recorder/video/dxgi_desktop_recorder.cpp
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
+    src/system/win32/hwnd_utils.cpp
 )
 
 SET(HEADERS
@@ -24,6 +26,7 @@ SET(HEADERS
     src/recorder/game_recorder.h
     src/recorder/video/video_recorder.h
     src/recorder/video/win32_gdi_recorder.h
+    src/recorder/video/dxgi_desktop_recorder.h
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
@@ -33,6 +36,7 @@ SET(HEADERS
     src/recorder/audio/audio_packet_properties.h
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
+    src/system/win32/hwnd_utils.h
 )
 
 add_executable(squadov_client_service
@@ -77,5 +81,10 @@ if(WIN32)
         TARGET squadov_client_service
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FFMPEG_DLLS} $<TARGET_FILE_DIR:squadov_client_service>
+    )
+
+    target_link_libraries(squadov_client_service
+        d3d11
+        dxgi
     )
 endif()
