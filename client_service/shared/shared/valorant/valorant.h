@@ -18,6 +18,7 @@ enum class EValorantMap {
     Split,
     MainMenu,
     CharacterSelect,
+    Init,
     Unknown
 };
 

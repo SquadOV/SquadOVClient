@@ -24,6 +24,8 @@ private:
     bool _recording = false;    
     std::thread _recordingThread;
 
+    void reacquireDuplicationInterface();
+
     size_t _width = 0;
     size_t _height = 0;
 
@@ -32,6 +34,7 @@ private:
     ID3D11DeviceContext* _context = nullptr;
     IDXGIOutputDuplication* _dupl = nullptr;
     ID3D11Texture2D* _deviceTexture = nullptr;
+    IDXGIOutput1* _dxgiOutput1 = nullptr;
 };
 
 bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, DWORD pid);

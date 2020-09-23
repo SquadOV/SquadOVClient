@@ -28,6 +28,7 @@ enum class EValorantLogEvents {
 
 struct GameLogState {
     bool isInMatch = false;
+    bool stagedMatchEnd = false;
     shared::valorant::EValorantMap matchMap;
     std::string matchId;
     std::string apiServer;

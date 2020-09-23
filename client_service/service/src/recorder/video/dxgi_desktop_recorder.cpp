@@ -93,20 +93,13 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
         THROW_ERROR("Failed to get IDXGIOutput.");
     }
 
-    IDXGIOutput1* dxgiOutput1 = nullptr;
-    hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&dxgiOutput1);
+    hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&_dxgiOutput1);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIOutput1.");
     }
 
-    hr = dxgiOutput1->DuplicateOutput(_device, &_dupl);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to duplicate output.");
-    }
-
-    dxgiOutput1->Release();
-    dxgiOutput1 = nullptr;
-
+    reacquireDuplicationInterface();
+    
     // Create a shared texture that we'll copy the desktop into.
     D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
     sharedDesc.Width = outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left;
@@ -139,6 +132,11 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
         _dupl = nullptr;
     }
 
+    if (!!_dxgiOutput1) {
+        _dxgiOutput1->Release();
+        _dxgiOutput1 = nullptr;
+    }
+
     if (!!_deviceTexture) {
         _deviceTexture->Release();
         _deviceTexture = nullptr;
@@ -152,6 +150,18 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
     if (!!_device) {
         _device->Release();
         _device = nullptr;
+    }
+}
+
+void DxgiDesktopRecorder::reacquireDuplicationInterface() {
+    if (!!_dupl) {
+        _dupl->Release();
+        _dupl = nullptr;        
+    }
+
+    HRESULT hr = _dxgiOutput1->DuplicateOutput(_device, &_dupl);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to duplicate output.");
     }
 }
 
@@ -172,8 +182,12 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
                 continue;
             }
 
+            if (hr == DXGI_ERROR_ACCESS_LOST) {
+                reacquireDuplicationInterface();
+                continue;
+            }
+
             if (hr != S_OK) {
-                std::cerr << " WARNING: AcquireNextFrame failed." << std::endl;
                 continue;
             }
 
@@ -187,7 +201,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             desktopResource->Release();
             desktopResource = nullptr;
             if (hr != S_OK) {
-                std::cerr << " WARNING: failed to obtain ID3D11Texture2D." << std::endl;
                 continue;
             }
 
@@ -202,7 +215,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             D3D11_MAPPED_SUBRESOURCE mappedData;
             hr = _context->Map(_deviceTexture, 0, D3D11_MAP_READ, 0, &mappedData);
             if (hr != S_OK) {
-                std::cerr << " WARNING: failed to map image -- " << hr << std::endl;
                 continue;
             }
 

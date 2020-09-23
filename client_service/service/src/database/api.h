@@ -24,6 +24,8 @@ public:
     void storeValorantMatch(const service::valorant::ValorantMatch* match) const;
     size_t totalValorantMatchesForPuuid(const std::string& puuid) const;
     bool isValorantMatchStored(const std::string& matchId) const;
+    void associateValorantMatchToVideoFile(const std::string& matchId, const std::string& fname) const;
+    bool isValorantVideoAssociatedWithMatch(const std::string& fname) const;
 
 private:
     sqlite3* _db = nullptr;

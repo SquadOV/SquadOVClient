@@ -546,4 +546,36 @@ bool DatabaseApi::isValorantMatchStored(const std::string& matchId) const {
     return (stmt.getColumn<int>(0) > 0);
 }
 
+void DatabaseApi::associateValorantMatchToVideoFile(const std::string& matchId, const std::string& fname) const {
+    std::ostringstream sql;
+    sql << "INSERT INTO valorant_match_videos (match_id, video_path) \
+            VALUES ('" << matchId << "', '" << fname  << "') \
+            ON CONFLICT DO NOTHING;";
+
+    SqlTransaction tx(_db);
+    SqlStatement stmt(_db, sql.str());
+    tx.exec(stmt);
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to store valorant account: " << stmt.errMsg());
+    }
+}
+
+bool DatabaseApi::isValorantVideoAssociatedWithMatch(const std::string& fname) const {
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT COUNT(vmv.match_id)
+        FROM valorant_match_videos AS vmv
+        WHERE vmv.video_path = ')|" << fname << "';";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get if video is assocaited with match: " << stmt.errMsg());
+    }
+
+    return (stmt.getColumn<int>(0) > 0);
+}
+
 }

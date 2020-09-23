@@ -324,35 +324,44 @@ ValorantLogWatcher::ValorantLogWatcher() {
 }
 
 void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
-    // First do a pass to parse the lines we get.
-    // Do a state chance detection *AFTER* the parse so that we can detect
-    // actual changes and not just initial state due to reading the log in for the first time.
-    const GameLogState previousState = _gameLogState;
-
     for (const auto& line : lines) {
+        const GameLogState previousState = _gameLogState;
         bool parsed = false;
         {
             ValorantMapChangeData data;
-            if (parseGameLogMapChange(line, data) && data.ready) {        
+            if (parseGameLogMapChange(line, data) && data.ready) {
                 _gameLogState.matchMap = shared::valorant::codenameToValorantMap(data.map);
-                _gameLogState.isInMatch = (data.ready && !data.complete && previousState.matchId != "" && shared::valorant::isGameMap(_gameLogState.matchMap));
-                parsed = true;
-                
-                if (_gameLogState.isInMatch != previousState.isInMatch) {
-                    if (_gameLogState.isInMatch) {
-                        notify(EValorantLogEvents::MatchStart, data.logTime, &_gameLogState);
-                    } else {
-                        notify(EValorantLogEvents::MatchEnd, data.logTime, &_gameLogState);
+                _gameLogState.isInMatch = (previousState.matchId != "" && shared::valorant::isGameMap(_gameLogState.matchMap));
 
-                        // We should be able to clear out the state at this point since the client
-                        // should have processed the state data and since the game ended we know we can
-                        // start anew with the next game. Clear out everything besides the apiServer since
-                        // that should stay the same.
-                        _gameLogState.isInMatch = false;
-                        _gameLogState.matchId = "";
-                        _gameLogState.matchMap = shared::valorant::EValorantMap::Unknown;
-                    }
+                if (_gameLogState.isInMatch && _gameLogState.matchMap == previousState.matchMap && data.complete) {
+                    // This indicates that we're loading out of a match at this point.
+                    // We're going to assume that this means the game is finished. We're going to
+                    // mark the game as truly finished once they get back to the main menu.
+                    _gameLogState.stagedMatchEnd = true;
+                } else if (_gameLogState.matchMap == shared::valorant::EValorantMap::MainMenu &&
+                    (previousState.isInMatch || previousState.matchMap == shared::valorant::EValorantMap::Init) &&
+                    !_gameLogState.matchId.empty()) {
+                    // We've loaded back into the main menu - fire off the match end event.
+                    // There's two possibilites here: 
+                    //  1) the user just straight left the game
+                    //  2) the game actually ended.
+                    // We should be able to differentiate the two using the "stagedMatchEnd" variable. Leave it
+                    // up to the callback to differentiate.
+                    notify(EValorantLogEvents::MatchEnd, data.logTime, &_gameLogState);
+
+                    // We should be able to clear out the state at this point since the client
+                    // should have processed the state data and since the game ended we know we can
+                    // start anew with the next game. Clear out everything besides the apiServer since
+                    // that should stay the same.
+                    _gameLogState.isInMatch = false;
+                    _gameLogState.matchId = "";
+                    _gameLogState.matchMap = shared::valorant::EValorantMap::Unknown;
+                    _gameLogState.stagedMatchEnd = false;
+                } else if (_gameLogState.isInMatch) {
+                    notify(EValorantLogEvents::MatchStart, data.logTime, &_gameLogState);
                 }
+                
+                parsed = true;
             }
         }
 

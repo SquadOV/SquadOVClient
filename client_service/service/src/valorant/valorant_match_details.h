@@ -124,6 +124,7 @@ public:
 
     const shared::TimePoint& startBuyTime() const { return _startBuyTime; }
     const shared::TimePoint& startPlayTime() const { return _startPlayTime; }
+    shared::valorant::EValorantRoundState currentRoundState() const;
 
     const auto& playerLoadouts() const { return _playerLoadouts; }
     const auto& roundCombatScore() const { return _roundCombatScore; }

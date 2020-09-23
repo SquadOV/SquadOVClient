@@ -18,13 +18,19 @@ EValorantMap mapIdToValorantMap(const std::string& id) {
 
 EValorantMap codenameToValorantMap(const std::string& codename) {
     if (codename == "Ascent") {
-            return EValorantMap::Ascent;
+        return EValorantMap::Ascent;
     } else if (codename == "Triad") {
-            return EValorantMap::Haven;
+        return EValorantMap::Haven;
     } else if (codename == "Duality") {
-            return EValorantMap::Bind;
+        return EValorantMap::Bind;
     } else if (codename == "Bonsai") {
-            return EValorantMap::Split;
+        return EValorantMap::Split;
+    } else if (codename == "MainMenuV2") {
+        return EValorantMap::MainMenu;
+    } else if (codename == "Init"){ 
+        return EValorantMap::Init;
+    } else if (codename == "CharacterSelectPersistentLevel") {
+        return EValorantMap::CharacterSelect;
     }
     return EValorantMap::Unknown;
 }
@@ -43,6 +49,8 @@ std::string mapToName(EValorantMap map) {
             return "Main Menu";
         case EValorantMap::CharacterSelect:
             return "Character Select";
+        case EValorantMap::Init:
+            return "Init";
     }
     return "Unknown";
 }

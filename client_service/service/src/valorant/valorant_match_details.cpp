@@ -181,6 +181,8 @@ void ValorantMatchDetails::mergeWithApi(ValorantMatchDetails* other) {
                 _rounds[i]->_startBuyTime = oldRounds[i]->_startBuyTime;
                 _rounds[i]->_startPlayTime = oldRounds[i]->_startPlayTime;
             }
+        } else {
+            std::cerr << "Mismatch in number of rounds between locally collected data and API." << std::endl;
         }
     }
     _kills = std::move(other->_kills);
@@ -192,15 +194,30 @@ void ValorantMatchDetails::nextRoundStateWithTimestamp(const shared::TimePoint& 
     // want to go to a new round. The input state is "Play" then
     // we should just be transferring the latest round to a new state.
     if (state == shared::valorant::EValorantRoundState::Buy) {
-        auto newRound = std::make_unique<ValorantMatchRound>();
-        newRound->_startBuyTime = tm;
-        _rounds.emplace_back(std::move(newRound));
+        // Only go to the buy state if we're currently *not* in a buy round or
+        // if there are no rounds. This helps us handle the situation in a custom
+        // game restart where the BUY event will be triggered BUT when the game starts
+        // normally the BUY event IS NOT triggered. Yikes.
+        if (_rounds.size() == 0 || _rounds.back()->currentRoundState() != shared::valorant::EValorantRoundState::Buy) {
+            auto newRound = std::make_unique<ValorantMatchRound>();
+            newRound->_startBuyTime = tm;
+            _rounds.emplace_back(std::move(newRound));
+        }
     } else if (_rounds.size() > 0) {
         ValorantMatchRound* latestRound = _rounds.back().get();
         latestRound->_startPlayTime = tm;
     } else {
         // Technically there's something that's gone horribly wrong here.
     }
+}
+
+shared::valorant::EValorantRoundState ValorantMatchRound::currentRoundState() const {
+    if (shared::isTimeValid(_startPlayTime)) {
+        return shared::valorant::EValorantRoundState::Play;
+    } else if (shared::isTimeValid(_startBuyTime)) {
+        return shared::valorant::EValorantRoundState::Buy;
+    }
+    return shared::valorant::EValorantRoundState::Unknown;
 }
 
 std::ostream& operator<<(std::ostream& out, const ValorantMatchDetails& details) {

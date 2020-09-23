@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 2
+const CURRENT_DB_VERSION = 3
 
 async function migrateDb(db) {
     return new Promise(resolve => {
@@ -138,6 +138,15 @@ CREATE TABLE valorant_match_round_player_stats (
     combat_score INTEGER NOT NULL,
     FOREIGN KEY (match_id, round_num) REFERENCES valorant_match_rounds(match_id, round_num) ON DELETE CASCADE,
     FOREIGN KEY (match_id, puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE
+);
+`) 
+                }
+
+                if (currentVersion < 3) {
+                    db.run(`
+CREATE TABLE valorant_match_videos (
+    match_id TEXT NOT NULL UNIQUE REFERENCES valorant_matches(id) ON DELETE CASCADE,
+    video_path TEXT NOT NULL
 );
 `) 
                 }

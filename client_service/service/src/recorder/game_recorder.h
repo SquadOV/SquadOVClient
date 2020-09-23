@@ -21,6 +21,8 @@ public:
     ~GameRecorder();
 
     std::filesystem::path start(const std::string& matchId);
+    const std::filesystem::path& path() const { return _encoder->path(); }
+    const std::filesystem::path& outputFolder() const { return _outputFolder; }
     void stop();
 
 private:
