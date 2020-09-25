@@ -5,6 +5,7 @@
 #include <memory>
 #include <sqlite3.h>
 #include <string>
+#include <vector>
 
 namespace service::valorant {
 
@@ -26,6 +27,7 @@ public:
     bool isValorantMatchStored(const std::string& matchId) const;
     void associateValorantMatchToVideoFile(const std::string& matchId, const std::string& fname) const;
     bool isValorantVideoAssociatedWithMatch(const std::string& fname) const;
+    std::vector<std::string> getMatchIdsForPlayer(const std::string& puuid) const;
 
 private:
     sqlite3* _db = nullptr;

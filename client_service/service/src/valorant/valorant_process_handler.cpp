@@ -10,6 +10,7 @@
 
 #include <atomic>
 #include <iostream>
+#include <unordered_set>
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
@@ -166,7 +167,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 void ValorantProcessHandlerInstance::backfillMatchHistory() {
     // If some exception is thrown and we fail to backfill just log it and move on since
     // we can always just try again later.
-    try {
+    try {      
         // If the total number of matches we have stored in the database doesn't match
         // the number of matches given to us by Riot's API then we know we aren't synced properly.
         size_t apiNumMatches = 0;
@@ -188,6 +189,12 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
         std::copy_if(allApiMatchIds.begin(), allApiMatchIds.end(), std::back_inserter(diffMatchIds), [this](const std::string& matchId){
             return !_db->isValorantMatchStored(matchId);
         });
+        
+        // Yes this can happen sometimes. I don't think Riot's API is very good at returning *every match* you've played in the match history
+        // so it's possible that we'll sometimes get a match in the match history and then lose it some time later.
+        if (diffMatchIds.empty()) {
+            return;
+        }
         
         // If _isCurrentlyBackfilling is true, then compare_exchange_strong returns false so we can return
         // because a backfill task is already in progress. If _isCurrentlyBackfilling is false, the exchange

@@ -38,9 +38,9 @@ public:
 
     bool hasNext() const { return _hasNext && !fail(); }
 
-    virtual void next() {
+    virtual bool next() {
         if (!hasNext()) {
-            return;
+            return false;
         }
 
         const int code = sqlite3_step(_stmt);
@@ -48,7 +48,9 @@ public:
         if (code != SQLITE_DONE && code != SQLITE_OK && code != SQLITE_ROW) {
             _errorCode = code;
             _errMsg = sqlite3_errmsg(_db);
+            return false;
         }
+        return (code != SQLITE_DONE);
     }
 
     template<typename T>
@@ -57,6 +59,12 @@ public:
     template<>
     int getColumn(int i) {
         return sqlite3_column_int(_stmt, i);
+    }
+
+    template<>
+    std::string getColumn(int i) {
+        const auto* txt = sqlite3_column_text(_stmt, i);
+        return std::string((const char*)txt);
     }
 
     bool fail() const { return errorCode() != SQLITE_OK; }
@@ -576,6 +584,30 @@ bool DatabaseApi::isValorantVideoAssociatedWithMatch(const std::string& fname) c
     }
 
     return (stmt.getColumn<int>(0) > 0);
+}
+
+std::vector<std::string> DatabaseApi::getMatchIdsForPlayer(const std::string& puuid) const {
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT match_id
+        FROM valorant_match_players
+        WHERE puuid = ')|" << puuid << "';";
+
+    std::vector<std::string> ret;
+    SqlStatement stmt(_db, sql.str());
+
+    while (stmt.hasNext()) {
+        if (!stmt.next()) {
+            break;
+        }
+
+        if (stmt.fail()) {
+            THROW_ERROR("Failed to get match ids: " << stmt.errMsg());
+        }
+
+        ret.push_back(stmt.getColumn<std::string>(0));
+    }
+    return ret;
 }
 
 }

@@ -93,6 +93,7 @@ class ValorantApiServer {
                         matchId: ele.matchId,
                         matchTime: new Date(ele.matchTime),
                         map: ele.map,
+                        isRanked: ele.isRanked,
                         provisioningFlowId: ele.provisioningFlowId,
                         gameMode: ele.gameMode,
                         patchId: ele.patchId,

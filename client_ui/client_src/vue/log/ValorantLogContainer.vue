@@ -23,7 +23,7 @@
                                 class="mr-4"
                             >
                             </valorant-account-chooser>
-
+<!--
                             <router-link :to="gamesTo">
                                 <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
                                     Games
@@ -47,6 +47,13 @@
                                     Weapons
                                 </v-btn>
                             </router-link>
+-->
+
+                            <v-btn icon @click="refreshAccounts">
+                                <v-icon>
+                                    mdi-refresh
+                                </v-icon>
+                            </v-btn>
                         </div>
                     </v-col>
                 </v-row>
@@ -111,6 +118,7 @@ export default class ValorantLogContainer extends Vue {
     }
 
     @Watch('selectedAccount')
+    @Watch('$route.params.account')
     onSelectAccount() {
         if (!this.selectedAccount) {
             return;
@@ -136,6 +144,7 @@ export default class ValorantLogContainer extends Vue {
     }
 
     @Watch('allAccounts')
+    @Watch('$route.params.account')
     onRefreshAllAccounts() {
         if (!this.allAccounts || this.allAccounts.length === 0) {
             this.selectedAccount = null;
@@ -149,6 +158,7 @@ export default class ValorantLogContainer extends Vue {
         } else {
             this.selectedAccount = this.allAccounts[0]
         }
+
     }
 
     refreshAccounts() {

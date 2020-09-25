@@ -43,12 +43,14 @@ export default class AppNav extends Vue {
                     name: 'Valorant',
                     to: {
                         name: pi.ValorantLogPageId,
+                        params: this.$route.params
                     },
                 },
                 {
                     name: 'Aim Lab',
                     to: {
                         name: pi.AimlabLogPageId,
+                        params: this.$route.params
                     },
                 },
             ]
@@ -60,12 +62,14 @@ export default class AppNav extends Vue {
                     name: 'Graph',
                     to: {
                         name: pi.GraphStatsPageId,
+                        params: this.$route.params
                     },
                 },
                 {
                     name: 'Analysis',
                     to: {
                         name: pi.AnalysisStatsPageId,
+                        params: this.$route.params
                     },
                 }
             ]
