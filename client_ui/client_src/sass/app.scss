@@ -4,3 +4,20 @@
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
 @import "~@fortawesome/fontawesome-free/scss/solid.scss";
+
+.full-height {
+    min-height: 100%;   
+}
+
+.full-parent-height {
+    height: 100%;
+}
+
+a {
+    text-decoration: inherit;
+    color: inherit;
+}
+
+html {
+    overflow: auto !important;
+}

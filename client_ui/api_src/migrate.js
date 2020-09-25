@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 3
+const CURRENT_DB_VERSION = 4
 
 async function migrateDb(db) {
     return new Promise(resolve => {
@@ -149,6 +149,48 @@ CREATE TABLE valorant_match_videos (
     video_path TEXT NOT NULL
 );
 `) 
+                }
+
+                if (currentVersion < 4) {
+                    // Views for easier stat grabbing
+                    db.run(`
+CREATE VIEW view_valorant_player_match_stats (
+    matchId,
+    puuid,
+    rank,
+    kills,
+    deaths,
+    assists,
+    rounds,
+    totalCombatScore,
+    totalDamage,
+    headshots,
+    bodyshots,
+    legshots,
+    won
+)
+AS
+SELECT
+    vmp.match_id,
+    vmp.puuid,
+    vmp.competitive_tier,
+    vmp.kills,
+    vmp.deaths,
+    vmp.assists,
+    vmp.rounds_played,
+    vmp.total_combat_score,
+    SUM(vmd.damage),
+    SUM(vmd.headshots),
+    SUM(vmd.bodyshots),
+    SUM(vmd.legshots),
+    vmt.won
+FROM valorant_match_players AS vmp
+INNER JOIN valorant_match_teams AS vmt
+    ON vmt.match_id = vmp.match_id AND vmt.team_id = vmp.team_id
+LEFT JOIN valorant_match_damage AS vmd
+    ON vmd.instigator_puuid = vmp.puuid AND vmd.match_id = vmp.match_id
+GROUP BY vmp.match_id, vmp.puuid
+`)
                 }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)

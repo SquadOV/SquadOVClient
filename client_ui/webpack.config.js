@@ -2,6 +2,7 @@ const path = require('path');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 
 const cssLoaders = [
     {
@@ -24,7 +25,7 @@ module.exports = {
     target: 'node',
     mode: 'development',
     entry: {
-        app: ['./client_src/js/app.js', './client_src/sass/app.scss']
+        app: ['./client_src/js/app.ts', './client_src/sass/app.scss']
     },
     output: {
         filename: '[name].js',
@@ -33,6 +34,21 @@ module.exports = {
     },
     module: {
         rules: [
+            {
+                test: /\.tsx?$/,
+                use: [
+                    "cache-loader",
+                    "thread-loader",
+                    babelLoader,
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            appendTsSuffixTo: [/\.vue$/],
+                            happyPackMode: true,
+                        }
+                    }
+                ],
+            },
             {
                 test: /\.js$/,
                 use: babelLoader,
@@ -96,13 +112,20 @@ module.exports = {
         new VuetifyLoaderPlugin(),
         new MiniCssExtractPlugin({
             filename: 'style.css'
-        })
+        }),
+        new ForkTsCheckerWebpackPlugin({
+            typescript: {
+                extensions: {
+                    vue: true
+                },
+            },
+        }),
     ],
     resolve: {
         alias: {
             'vue$': 'vue/dist/vue.esm.js',
             '@client': path.resolve(__dirname, 'client_src'),
         },
-        extensions: ['.js', '.vue', '.json', '.scss'],
+        extensions: ['.js', '.vue', '.scss', '.ts'],
     }
 }

@@ -3,6 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval';">
+
         <link href="dist/style.css" rel="stylesheet" type="text/css">
         <title>SquadOV</title>
     </head>
@@ -10,15 +12,10 @@
         <div id="app">
             <v-app>
                 <v-main>
-                    <home-page></home-page>
+                    <app></app>
                 </v-main>
             </v-app>
         </div>
-        <footer>
-            <p class="text-center">
-                Created with <i class="fas fa-heart"></i> by Michael Bao.
-            </p>
-        </footer>
         <script src="dist/app.js"></script>
     </body>
 </html>

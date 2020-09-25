@@ -165,6 +165,8 @@ void ValorantMatchDetails::mergeWithApi(ValorantMatchDetails* other) {
     _isRanked = other->_isRanked;
     _provisioningFlowID = other->_provisioningFlowID;
     _gameVersion = other->_gameVersion;
+    _startTime = other->_startTime;
+    _matchId = other->_matchId;
 
     _players = std::move(other->_players);
     _teams = std::move(other->_teams);

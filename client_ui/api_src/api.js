@@ -5,6 +5,7 @@ const path = require('path')
 const fs = require('fs')
 const { migrateDb } = require('./migrate.js')
 const {app} = require('electron')
+const { ValorantApiServer } = require('./valorant.js')
 
 const checkApiKey = (req, res, next) => {
     const key = process.env.SQUADOV_API_KEY
@@ -41,6 +42,8 @@ class ApiServer {
         this.db = new sqlite3.Database(fname, sqlite3.OPEN_READONLY, (err) => {
             if (!!err) throw err
         })
+
+        this.valorant = new ValorantApiServer(this.db)
     }
 
     constructor() {
@@ -49,22 +52,19 @@ class ApiServer {
             apiKey: crypto.randomBytes(128).toString('base64')
         }
         process.env.SQUADOV_API_KEY = this.apiOptions.apiKey
-
-        this.initBackendDatabase()
     }
 
-    start(onStart) {
+    async start(onStart) {
+        await this.initBackendDatabase()
+
         const restApp = express()
         restApp.use(checkApiKey)
 
-        const valorantRouter = express.Router()
-        valorantRouter.get('/accounts', this.listValorantAccounts.bind(this))
-
-        restApp.use('/valorant', valorantRouter)
+        restApp.use('/valorant', this.valorant.createRouter())
 
         this.server = restApp.listen(0, () => {
             process.env.SQUADOV_API_PORT = this.apiOptions.apiPort = this.server.address().port
-            console.log(`Starting API Server on Port ${this.apiOptions.apiPort} with Key ${this.apiOptions.apiKey}`)
+            console.log(`Starting API Server on Port ${process.env.SQUADOV_API_PORT} with Key ${process.env.SQUADOV_API_KEY}`)
             onStart()
         })
     }
@@ -77,16 +77,6 @@ class ApiServer {
         if (!!this.db) {
             this.db.close()
         }
-    }
-
-    listValorantAccounts(req, res) { 
-        this.db.all(`
-        SELECT *
-        FROM valorant_accounts
-        `, [], (err, rows) => {
-            if (!!err) res.status(500).json({ 'error': err })
-            res.json(rows)
-        })
     }
 }
 

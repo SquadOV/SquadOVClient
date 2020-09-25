@@ -1,0 +1,171 @@
+<template>
+    <loading-container :is-loading="!allAccounts">
+        <template v-slot:default="{ loading }">
+            <div v-if="!loading">
+                <v-row>
+                    <v-col cols="10">
+                        <!-- 
+                            Header div that lets user select accounts and also do some easy stats navigation.
+                        -->
+                        <div class="d-flex align-center">
+                            <v-img
+                                class="mr-4"
+                                src="assets/valorant-logo.png"
+                                max-height="50px"
+                                max-width="50px"
+                                contain
+                            >
+                            </v-img>
+
+                            <valorant-account-chooser
+                                v-model="selectedAccount"
+                                :options="allAccounts"
+                                class="mr-4"
+                            >
+                            </valorant-account-chooser>
+
+                            <router-link :to="gamesTo">
+                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
+                                    Games
+                                </v-btn>
+                            </router-link>
+
+                            <router-link :to="agentsTo"> 
+                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
+                                    Agents
+                                </v-btn>
+                            </router-link>
+
+                            <router-link :to="mapsTo">
+                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
+                                    Maps
+                                </v-btn>
+                            </router-link>
+
+                            <router-link :to="weaponsTo">
+                                <v-btn text :disabled="!hasSelectedAccount">
+                                    Weapons
+                                </v-btn>
+                            </router-link>
+                        </div>
+                    </v-col>
+                </v-row>
+
+                <router-view v-if="hasSelectedAccount"></router-view>
+                <div v-else>
+                    <h2 class="text-center">Open Valorant to automatically sync your accounts to SquadOV!</h2>
+                </div>
+            </div>
+        </template>
+    </loading-container>
+</template>
+
+<script lang="ts">
+
+import Vue from 'vue'
+import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
+import { apiClient, ApiData } from '@client/js/api'
+import { ValorantAccountData } from '@client/js/valorant/valorant_account'
+import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import ValorantAccountChooser from '@client/vue/utility/valorant/ValorantAccountChooser.vue'
+import * as pi from '@client/js/pages'
+
+@Component({
+    components: {
+        LoadingContainer,
+        ValorantAccountChooser
+    }
+})
+export default class ValorantLogContainer extends Vue {
+    allAccounts : ValorantAccountData[] | null = null
+    selectedAccount : ValorantAccountData | null | undefined = null
+
+    get gamesTo() : any {
+        return {
+            name: pi.ValorantLogPageId,
+            params: this.$route.params,
+        }
+    }
+
+    get agentsTo() : any {
+        return {
+            params: this.$route.params,
+        }
+    }
+
+    get mapsTo() : any {
+        return {
+            params: this.$route.params,
+        }
+    }
+
+    get weaponsTo() : any {
+        return {
+            params: this.$route.params,
+        }
+    }
+
+    get hasSelectedAccount(): boolean {
+        return !!this.selectedAccount;
+    }
+
+    @Watch('selectedAccount')
+    onSelectAccount() {
+        if (!this.selectedAccount) {
+            return;
+        }
+
+        if (this.selectedAccount.puuid === this.$route.params.account) {
+            return;
+        }
+
+        const params = {
+            name: this.$route!.name!,
+            params: {
+                account: this.selectedAccount.puuid
+            },
+        }
+
+        if (!this.$route.params.account) {
+            this.$router.replace(params)
+        } else {
+            this.$router.push(params)
+        }
+       
+    }
+
+    @Watch('allAccounts')
+    onRefreshAllAccounts() {
+        if (!this.allAccounts || this.allAccounts.length === 0) {
+            this.selectedAccount = null;
+            return;
+        }
+
+        if (!!this.$route.params.account) {
+            this.selectedAccount = this.allAccounts.find((ele : ValorantAccountData) => {
+                return ele.puuid === this.$route.params.account
+            })
+        } else {
+            this.selectedAccount = this.allAccounts[0]
+        }
+    }
+
+    refreshAccounts() {
+        apiClient.listValorantAccounts().then((resp : ApiData<ValorantAccountData[]>) => {
+            this.allAccounts = resp.data
+        }).catch((err : any) => {
+            console.log('Failed to list valorant accounts: ' + err);
+        })
+    }
+
+    mounted() {
+        this.refreshAccounts()
+    }
+}
+
+</script>
+
+<style scoped>
+
+</style>
