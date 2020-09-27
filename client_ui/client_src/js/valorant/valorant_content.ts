@@ -1,3 +1,4 @@
+import { TouchBarOtherItemsProxy } from 'electron'
 import fs from 'fs'
 
 interface ContentFileMap {
@@ -26,6 +27,7 @@ export class ValorantContent {
     _mapAssetNameToMap : GameMapMap
     _mapAssetPathToMap : GameMapMap
     _gameModes : GameModeMap 
+    _weapons : { [weaponId : string] : string }
 
     constructor(data : any) {
         let jData = JSON.parse(data)
@@ -33,8 +35,8 @@ export class ValorantContent {
 
         this._mapAssetNameToMap = {}
         this._mapAssetPathToMap = {}
-
         this._gameModes = {}
+        this._weapons = {}
 
         for (let agent of jData["Characters"]) {
             this._agents[agent["ID"]] = agent["Name"] 
@@ -48,6 +50,10 @@ export class ValorantContent {
 
         for (let m of jData["GameModes"]) {
             this._gameModes[m["AssetPath"]] = m["Name"] 
+        }
+
+        for (let m of jData["Equips"]) {
+            this._weapons[m["ID"]] = m["Name"]
         }
     }
 
@@ -65,6 +71,10 @@ export class ValorantContent {
 
     gameModeToName(path : string) : string {
         return this._gameModes[path]
+    }
+
+    weaponIdToName(id : string) : string{
+        return this._weapons[id]
     }
 }
 

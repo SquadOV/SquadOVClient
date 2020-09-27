@@ -18,6 +18,7 @@ import GameLog from '@client/vue/GameLog.vue'
 import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
 import ValorantLogContainer from '@client/vue/log/ValorantLogContainer.vue'
 import ValorantGameLog from '@client/vue/log/ValorantGameLog.vue'
+import ValorantMatch from '@client/vue/log/ValorantMatch.vue'
 import AimlabGameLog from '@client/vue/log/AimlabGameLog.vue'
 
 import Performance from '@client/vue/Performance.vue'
@@ -39,7 +40,7 @@ const baseRoutes : any[] = [
                 component: LogGameChooser
             },
             {
-                path: '/valorant/:account?',
+                path: '/valorant/account/:account?',
                 children: [
                     {
                         path: '/',
@@ -48,6 +49,15 @@ const baseRoutes : any[] = [
                     },
                 ],
                 component: ValorantLogContainer,
+            },
+            {
+                path: '/valorant/match/:matchId',
+                name: pi.ValorantMatchPageId,
+                component: ValorantMatch,
+                props: (route : any) => ({
+                    puuid: route.query.account,
+                    matchId: route.params.matchId
+                })
             },
             {
                 path: '/aimlab',

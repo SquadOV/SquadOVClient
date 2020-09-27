@@ -2,7 +2,12 @@ import axios from 'axios'
 
 import { ValorantAccountData } from '@client/js/valorant/valorant_account'
 import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
-import { ValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
+import {
+    ValorantPlayerMatchSummary,
+    ValorantMatchDetails,
+    cleanValorantPlayerMatchSummary,
+    cleanValorantMatchDetails,
+} from '@client/js/valorant/valorant_matches'
 
 const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
     const ogMethod = descriptor.value
@@ -59,8 +64,11 @@ class ApiClient {
     @waitForApiServerSetup
     listValorantMatchesForPlayer(puuid : string) : Promise<ApiData<ValorantPlayerMatchSummary[]>> {
         return axios({
-            ...this.createAxiosConfig(`valorant/matches/${puuid}`),
+            ...this.createAxiosConfig(`valorant/accounts/${puuid}/matches`),
             method: 'get'
+        }).then((resp : ApiData<ValorantPlayerMatchSummary[]>) => {
+            resp.data.forEach(cleanValorantPlayerMatchSummary)
+            return resp
         })
     }
 
@@ -69,6 +77,17 @@ class ApiClient {
         return axios({
             ...this.createAxiosConfig(`valorant/stats/summary/${puuid}`),
             method: 'get'
+        })
+    }
+
+    @waitForApiServerSetup
+    getValorantMatchDetails(matchId : string) : Promise<ApiData<ValorantMatchDetails>> {
+        return axios({
+            ...this.createAxiosConfig(`valorant/matches/${matchId}`),
+            method: 'get'
+        }).then((resp : ApiData<ValorantMatchDetails>) => {
+            cleanValorantMatchDetails(resp.data)
+            return resp
         })
     }
 }

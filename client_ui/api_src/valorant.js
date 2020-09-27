@@ -10,8 +10,8 @@ class ValorantApiServer {
         const valorantRouter = express.Router()
         valorantRouter.get('/accounts', this.listValorantAccounts.bind(this))
         valorantRouter.get('/accounts/:puuid', this.getValorantAccount.bind(this))
-
-        valorantRouter.get('/matches/:puuid', this.listValorantMatches.bind(this))
+        valorantRouter.get('/accounts/:puuid/matches', this.listValorantMatches.bind(this))
+        valorantRouter.get('/matches/:matchId', this.getValorantMatchDetails.bind(this))
 
         valorantRouter.get('/stats/summary/:puuid', this.getPlayerStatsSummary.bind(this))
         return valorantRouter
@@ -91,7 +91,7 @@ class ValorantApiServer {
                 res.json(rows.map((ele) => {
                     return {
                         matchId: ele.matchId,
-                        matchTime: new Date(ele.matchTime),
+                        matchTime: new Date(ele.matchTime * 1000),
                         map: ele.map,
                         isRanked: ele.isRanked,
                         provisioningFlowId: ele.provisioningFlowId,
@@ -153,6 +153,198 @@ class ValorantApiServer {
         `, [req.params['puuid'], req.params['puuid']], (err, row) => {
             if (!!err) res.status(500).json({ 'error': err })
             else res.json(row)            
+        })
+    }
+
+    getValorantMatchDetails(req, res) {
+        const matchId = req.params['matchId']
+        
+        this.db.serialize(() => {
+            let match = {
+                players: [],
+                teams: [],
+                rounds: [],
+                kills: [],
+                damage: [],                
+            }
+            let errs = []
+        
+            this.db.get(`
+                SELECT
+                    vm.id AS "matchId",
+                    vm.server_start_time_utc AS "matchTime",
+                    vm.start_time_utc AS "ovStartTime",
+                    vm.end_time_utc AS "ovEndTime",
+                    vm.map AS "map",
+                    vm.provisioning_flow_id AS "provisioningFlowId",
+                    vm.gameMode AS "gameMode",
+                    vm.game_version AS "patchId",
+                    vm.is_ranked AS "isRanked",
+                    vmv.video_path AS "vodPath"
+                FROM valorant_matches AS vm
+                LEFT JOIN valorant_match_videos AS vmv
+                    ON vmv.match_id = vm.id
+                WHERE vm.id = ?
+            `, [matchId], (e, row) => {
+                if (!!e) {
+                    errs.push(e)
+                    return
+                }
+
+                match = {
+                    ...match,
+                    ...row,
+                }
+
+                match.matchTime = new Date(match.matchTime * 1000)
+                match.ovStartTime = new Date(match.ovStartTime)
+                match.ovEndTime = new Date(match.ovEndTime)
+            })
+
+            this.db.parallelize(() => {
+                this.db.all(`
+                    SELECT
+                        vmp.puuid AS "puuid",
+                        vmp.team_id AS "teamId",
+                        vmp.agent_id AS "agentId",
+                        vmp.competitive_tier AS "competitiveTier",
+                        vmp.total_combat_score AS "totalCombatScore",
+                        vmp.rounds_played AS "roundsPlayed",
+                        vmp.kills AS "kills",
+                        vmp.deaths AS "deaths",
+                        vmp.assists AS "assists"
+                    FROM valorant_match_players AS vmp
+                    WHERE vmp.match_id = ?
+                `, [matchId], (e, rows) => {
+                    if (!!e) {
+                        errs.push(e)
+                        return
+                    }
+
+                    match.players = rows
+                })
+
+                this.db.all(`
+                    SELECT
+                        team_id AS "teamId",
+                        won AS "won",
+                        rounds_won AS "roundsWon",
+                        rounds_played AS "roundsPlayed"
+                    FROM valorant_match_teams
+                    WHERE match_id = ?
+                `, [matchId], (e, rows) => {
+                    if (!!e) {
+                        errs.push(e)
+                        return
+                    }
+
+                    match.teams = rows
+                })
+
+                this.db.all(`
+                    SELECT
+                        round_buy_time_utc AS "startBuyTime",
+                        round_play_time_utc AS "startPlayTime",
+                        round_num AS "roundNum",
+                        plant_round_time AS "plantRoundTime",
+                        planter_puuid AS "planter",
+                        defuse_round_time AS "defuseRoundTime",
+                        defuser_puuid AS "defuser",
+                        team_round_winner AS "roundWinner"
+                    FROM valorant_match_rounds
+                    WHERE match_id = ?
+                    ORDER BY round_num ASC
+                `, [matchId], (e, rows) => {
+                    if (!!e) {
+                        errs.push(e)
+                        return
+                    }
+
+                    match.rounds = rows
+
+                    match.rounds.forEach((rnd) => {
+                        this.db.all(`
+                            SELECT
+                                round_num AS "roundNum",
+                                puuid AS "puuid",
+                                loadout_value AS "loadoutValue",
+                                remaining_money AS "remainingMoney",
+                                spent_money AS "spentMoney",
+                                weapon AS "weapon",
+                                armor AS "armor"
+                            FROM valorant_match_round_player_loadout
+                            WHERE match_id = ? AND round_num = ?
+                        `, [matchId, rnd.roundNum], (e, rows) => {
+                            if (!!e) {
+                                errs.push(e)
+                                return
+                            }
+                            rnd.loadouts = rows
+                        })
+
+                        this.db.all(`
+                            SELECT
+                                round_num AS "roundNum",
+                                puuid AS "puuid",
+                                combat_score AS "combatScore"
+                            FROM valorant_match_round_player_stats
+                            WHERE match_id = ? AND round_num = ?
+                        `, [matchId, rnd.roundNum], (e, rows) => {
+                            if (!!e) {
+                                errs.push(e)
+                                return
+                            }
+                            rnd.roundStats = rows
+                        })
+                    })
+                })
+
+                this.db.all(`
+                    SELECT
+                        round_num AS "roundNum",
+                        round_time AS "roundTime",
+                        damage_type AS "damageType",
+                        damage_item AS "damageItem",
+                        is_secondary_fire AS "secondaryFire",
+                        killer_puuid AS "killer",
+                        victim_puuid AS "victim"
+                    FROM valorant_match_kill
+                    WHERE match_id = ?
+                `, [matchId], (e, rows) => {
+                    if (!!e) {
+                        errs.push(e)
+                        return
+                    }
+
+                    match.kills = rows
+                })
+
+                this.db.all(`
+                    SELECT
+                        round_num AS "roundNum",
+                        damage AS "damage",
+                        headshots AS "headshots",
+                        bodyshots AS "bodyshots",
+                        legshots AS "legshots",
+                        instigator_puuid AS "instigator",
+                        receiver_puuid AS "receiver"
+                    FROM valorant_match_damage
+                    WHERE match_id = ?
+                `, [matchId], (e, rows) => {
+                    if (!!e) {
+                        errs.push(e)
+                        return
+                    }
+
+                    match.damage = rows
+                })
+            })
+
+            // I think this is the only way to figure out when everything ends.
+            this.db.exec(`SELECT 1`, () => {
+                if (errs.length > 0) res.status(500).json({ 'errors' : errs })
+                else res.json(match)
+            })
         })
     }
 }

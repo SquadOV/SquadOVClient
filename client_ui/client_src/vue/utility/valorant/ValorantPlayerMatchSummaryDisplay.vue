@@ -1,60 +1,64 @@
 <template>
-    <v-sheet
-        class="match-summary"
-        rounded
-        :style="style"
-    >
-        <v-row no-gutters>
-            <v-col cols="2" align-self="center">
-                <valorant-agent-icon
-                    :agent="match.agentId"
-                    :width-height="100"
-                    :patch="match.patchId"
-                >
-                </valorant-agent-icon>
-            </v-col>
+    <div>
+        <router-link :to="gameTo">
+            <v-sheet
+                class="match-summary"
+                rounded
+                :style="style"
+            >
+                <v-row no-gutters>
+                    <v-col cols="2" align-self="center">
+                        <valorant-agent-icon
+                            :agent="match.agentId"
+                            :width-height="100"
+                            :patch="match.patchId"
+                        >
+                        </valorant-agent-icon>
+                    </v-col>
 
-            <v-col cols="1" align-self="center">
-                <p :style="wlColorStyle">
-                    {{ match.myTeamScore }} - {{ match.otherTeamScore }}
-                </p>
+                    <v-col cols="1" align-self="center">
+                        <p :style="wlColorStyle">
+                            {{ match.myTeamScore }} - {{ match.otherTeamScore }}
+                        </p>
 
-                <v-chip :style="csRankStyle">{{ csRank }}</v-chip>
-            </v-col>
+                        <v-chip :style="csRankStyle">{{ csRank }}</v-chip>
+                    </v-col>
 
-            <v-col cols="4" align-self="center">
-                <valorant-hit-tracker
-                    :headshots="match.stats.headshots"
-                    :bodyshots="match.stats.bodyshots"
-                    :legshots="match.stats.legshots"
-                >
-                </valorant-hit-tracker>
-            </v-col>
+                    <v-col cols="4" align-self="center">
+                        <valorant-hit-tracker
+                            :headshots="match.stats.headshots"
+                            :bodyshots="match.stats.bodyshots"
+                            :legshots="match.stats.legshots"
+                        >
+                        </valorant-hit-tracker>
+                    </v-col>
 
-            <v-col cols="3" align-self="center">
-                <div>
-                    {{ match.stats.kills }} / {{ match.stats.deaths}} / {{ match.stats.assists }} ({{ kda }})
+                    <v-col cols="3" align-self="center">
+                        <div>
+                            {{ match.stats.kills }} / {{ match.stats.deaths}} / {{ match.stats.assists }} ({{ kda }})
+                        </div>
+
+                        <div>
+                            <span class="stat-label">DPR </span> {{ dpr }}
+                            <span class="stat-label">CSPR </span> {{ cspr }}
+                        </div>
+                    </v-col>
+                </v-row>
+
+                <!-- Game Type (Map) in top right corner -->
+                <div class="mode-div text-overline" :style="queueTypeStyle">
+                    {{ queueType }} ({{ mapName }})
                 </div>
 
-                <div>
-                    <span class="stat-label">DPR </span> {{ dpr }}
-                    <span class="stat-label">CSPR </span> {{ cspr }}
+                <!-- VOD presence indicator in bottom right corner-->
+                <div class="vod-div" v-if="match.hasVod">
+                    <v-icon color="black">
+                        mdi-video
+                    </v-icon>
                 </div>
-            </v-col>
-        </v-row>
-
-        <!-- Game Type (Map) in top right corner -->
-        <div class="mode-div text-overline" :style="queueTypeStyle">
-            {{ queueType }} ({{ mapName }})
-        </div>
-
-        <!-- VOD presence indicator in bottom right corner-->
-        <div class="vod-div" v-if="match.hasVod">
-            <v-icon color="black">
-                mdi-video
-            </v-icon>
-        </div>
-    </v-sheet>
+            </v-sheet>
+        </router-link>
+    </div>
 </template>
 
 <script lang="ts">
@@ -69,6 +73,7 @@ import { getValorantContent } from '@client/js/valorant/valorant_content'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
+import * as pi from '@client/js/pages'
 
 @Component({
     components: {
@@ -79,6 +84,18 @@ import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.
 export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     @Prop({required: true})
     match! : ValorantPlayerMatchSummary
+
+    get gameTo(): any {
+        return {
+            name: pi.ValorantMatchPageId,
+            params: {
+                matchId: this.match.matchId,
+            },
+            query: {
+                account: this.$route.params.account
+            },
+        }
+    }
 
     get csRank() : string {
         return getOrdinal(this.match.csRank)
@@ -104,8 +121,8 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get queueType() : string {
-        let queue = getGameMode(this.match)
-        if (getIsCustom(this.match)) {
+        let queue = getGameMode(this.match.patchId, this.match.gameMode, this.match.isRanked)
+        if (getIsCustom(this.match.provisioningFlowId)) {
             queue = `[Custom] ${queue}`
         }
         return queue
@@ -113,17 +130,17 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get queueTypeStyle() : any {
         let color = ''
-        let queue = getGameMode(this.match)
-        if (getIsCustom(this.match)) {
+        let queue = getGameMode(this.match.patchId, this.match.gameMode, this.match.isRanked)
+        if (getIsCustom(this.match.provisioningFlowId)) {
             color = '#343a40'
         } else if (this.match.isRanked) {
-            color = '#28a745'
+            color = '#6c757d'
         } else if (queue == 'Unrated') {
             color = '#007bff'
         } else if (queue == 'Deathmatch') {
             color = '#17a2b8'
         } else if (queue == 'Spike Rush') {
-            color = '#6c757d'
+            color = '#28a745'
         }
 
         return {
