@@ -45,7 +45,7 @@
                     </valorant-round-timeline>
                 </v-row>
 
-                <v-row no-gutters v-if="numTeams == 2 && !!primaryTeam && !!secondaryTeam && !!currentRound">
+                <v-row no-gutters v-if="numTeams == 2 && !!primaryTeam && !!secondaryTeam && !!currentRound" class="mb-4">
                     <v-col cols="6">
                         <valorant-team-round-display
                             :match="matchWrapper"
@@ -68,8 +68,14 @@
                     </v-col>
                 </v-row>
 
-                <v-row>
-
+                <v-row no-gutters>
+                    <v-col cols="6">
+                        <valorant-full-match-scoreboard
+                            :match="matchWrapper"
+                            :current-player.sync="currentPlayer"
+                        >
+                        </valorant-full-match-scoreboard>
+                    </v-col>
                 </v-row>
             </div>
         </template>
@@ -96,6 +102,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import ValorantRoundEvents from '@client/vue/utility/valorant/ValorantRoundEvents.vue'
 import ValorantRoundTimeline from '@client/vue/utility/valorant/ValorantRoundTimeline.vue'
 import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamRoundDisplay.vue'
+import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFullMatchScoreboard.vue'
 
 @Component({
     components: {
@@ -104,7 +111,8 @@ import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamR
         VideoPlayer,
         ValorantRoundEvents,
         ValorantRoundTimeline,
-        ValorantTeamRoundDisplay
+        ValorantTeamRoundDisplay,
+        ValorantFullMatchScoreboard
     }
 })
 export default class ValorantMatch extends Vue {

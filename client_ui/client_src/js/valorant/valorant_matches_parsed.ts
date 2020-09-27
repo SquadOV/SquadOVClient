@@ -81,7 +81,8 @@ export class ValorantMatchRoundWrapper {
         }).filter((ele : ValorantMatchDamageWrapper) => {
             // Is the receiver of the damage on the kill feed?
             return (this.kills.findIndex((kele : ValorantMatchKillWrapper) => {
-                return kele.victim._p.puuid == ele.receiver._p.puuid
+                return (kele.victim._p.puuid == ele.receiver._p.puuid)
+                    && (kele.killer._p.puuid != puuid)
             }) != -1)
         }).length
     }
@@ -125,7 +126,7 @@ export class ValorantMatchTeamWrapper {
 
     getPlayersDescendingCS() : ValorantMatchPlayerWrapper[] {
         return [...this.players].sort((a : ValorantMatchPlayerWrapper, b : ValorantMatchPlayerWrapper) => {
-            return a._p.totalCombatScore - b._p.totalCombatScore
+            return b._p.totalCombatScore - a._p.totalCombatScore
         })
     }
 }
@@ -183,6 +184,22 @@ export class ValorantMatchDetailsWrapper {
 
         this._damage.forEach((ele : ValorantMatchDamageWrapper) => {
             this._rounds[ele._d.roundNum].damage.push(ele)
+        })
+    }
+
+    getDamageDoneByPlayer(puuid : string) : number {
+        return this._damage.filter((ele : ValorantMatchDamageWrapper) => {
+            return (ele.instigator._p.puuid == puuid)
+        }).reduce((acc, ele) => {
+            return acc + ele._d.damage
+        }, 0)
+    }
+
+    getPlayersDescendingCS() : ValorantMatchPlayerWrapper[] {
+        return this._details.players.map((ele : ValorantMatchPlayer) => {
+            return this._players[ele.puuid]
+        }).sort((a : ValorantMatchPlayerWrapper, b : ValorantMatchPlayerWrapper) => {
+            return b._p.totalCombatScore - a._p.totalCombatScore
         })
     }
 

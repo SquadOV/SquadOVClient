@@ -1,8 +1,8 @@
 <template>
     <v-img
         :src="rankImageFName"
-        max-width="50"
-        max-height="50"
+        :max-width="maxWidthHeight"
+        :max-height="maxWidthHeight"
         contain
     >
     </v-img>
@@ -18,6 +18,9 @@ import { Prop } from 'vue-property-decorator'
 export default class ValorantRankTier extends Vue {
     @Prop({type: Number})
     value!: number
+
+    @Prop({type: Number, default: 50})
+    maxWidthHeight! : number
 
     get rankImageFName() : string {
         return `assets/valorant/ranks/TX_CompetitiveTier_Small_${this.value}.png`
