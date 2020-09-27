@@ -141,6 +141,12 @@ import {
     ValorantMatchPlayerWrapper,
     ValorantMatchKillWrapper
 } from '@client/js/valorant/valorant_matches_parsed'
+import {
+    getBlueTeamColor,
+    getRedTeamColor,
+    getSameTeamColor
+} from '@client/js/valorant/valorant_colors'
+import { Color } from '@client/js/color'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantWeaponAbilityIcon from '@client/vue/utility/valorant/ValorantWeaponAbilityIcon.vue'
 
@@ -190,6 +196,13 @@ export default class ValorantRoundEvents extends Vue {
         return null
     }
 
+    altEventPlayer(e: RoundEvent) : ValorantMatchPlayerWrapper | null {
+        if (!!e.kill) {
+            return e.kill.victim
+        }
+        return null
+    }
+
     eventStyling(e : RoundEvent) : any {
         // IF PLAYER SPECIFIED:
         //  - Green background accent for same team
@@ -202,36 +215,29 @@ export default class ValorantRoundEvents extends Vue {
         if (!eventPlayer) {
             return {}
         }
-        let r = 0
-        let g = 0
-        let b = 0
+        let altPlayer = this.altEventPlayer(e)
+
+        let color : Color = { r : 0, g : 0, b : 0}
         let isSelf = false
         if (!!this.currentPlayer) {
             if (eventPlayer._p.teamId == this.currentPlayer._p.teamId) {
-                r = 76
-                g = 175
-                b = 80
+                color = getSameTeamColor()
             } else {
-                r = 255
-                g = 82
-                b = 82
+                color = getRedTeamColor()
             }
-            isSelf = (eventPlayer._p.puuid == this.currentPlayer._p.puuid)
+            isSelf = (eventPlayer._p.puuid == this.currentPlayer._p.puuid) ||
+                (altPlayer?._p.puuid == this.currentPlayer._p.puuid)
         } else {
             if (eventPlayer._p.teamId == 'Blue') {
-                r = 25
-                g = 118
-                b = 210
+                color = getBlueTeamColor()
             } else if (eventPlayer._p.teamId == 'Red') {
-                r = 255
-                g = 82
-                b = 82
+                color = getRedTeamColor()
             }
         }
 
         
         let style : any = {
-            'background': `linear-gradient(90deg, rgba(${r},${g},${b},0.0) 70%, rgba(${r},${g},${b},0.5) 100%)`
+            'background': `linear-gradient(90deg, rgba(${color.r},${color.g},${color.b},0.0) 70%, rgba(${color.r},${color.g},${color.b},0.5) 100%)`
         }
 
         if (isSelf) {

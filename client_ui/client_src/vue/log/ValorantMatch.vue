@@ -10,7 +10,7 @@
                     </valorant-match-header-summary>
                 </v-row>
 
-                <v-row>
+                <v-row no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
                         <video-player
                             ref="player"
@@ -35,10 +35,37 @@
                     </v-col>
                 </v-row>
 
-                <v-row>
+                <v-row class="my-4">
+                    <valorant-round-timeline
+                        id="round-timeline"
+                        :match="matchWrapper"
+                        :round.sync="currentRoundNum"
+                        :current-player="currentPlayer"
+                    >
+                    </valorant-round-timeline>
                 </v-row>
 
-                <v-row>
+                <v-row no-gutters v-if="numTeams == 2 && !!primaryTeam && !!secondaryTeam && !!currentRound">
+                    <v-col cols="6">
+                        <valorant-team-round-display
+                            :match="matchWrapper"
+                            :round="currentRound"
+                            :current-player="currentPlayer"
+                            :team="primaryTeam"
+                        >
+                        </valorant-team-round-display>
+                    </v-col>
+
+                    <v-col cols="6">
+                        <valorant-team-round-display
+                            :match="matchWrapper"
+                            :round="currentRound"
+                            :current-player="currentPlayer"
+                            :team="secondaryTeam"
+                            mirror
+                        >
+                        </valorant-team-round-display>
+                    </v-col>
                 </v-row>
 
                 <v-row>
@@ -59,20 +86,25 @@ import { ValorantMatchDetails } from '@client/js/valorant/valorant_matches'
 import {
     ValorantMatchDetailsWrapper,
     ValorantMatchRoundWrapper,
-    ValorantMatchPlayerWrapper
+    ValorantMatchPlayerWrapper,
+    ValorantMatchTeamWrapper,
 } from '@client/js/valorant/valorant_matches_parsed'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ValorantMatchHeaderSummary from '@client/vue/utility/valorant/ValorantMatchHeaderSummary.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import ValorantRoundEvents from '@client/vue/utility/valorant/ValorantRoundEvents.vue'
+import ValorantRoundTimeline from '@client/vue/utility/valorant/ValorantRoundTimeline.vue'
+import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamRoundDisplay.vue'
 
 @Component({
     components: {
         LoadingContainer,
         ValorantMatchHeaderSummary,
         VideoPlayer,
-        ValorantRoundEvents
+        ValorantRoundEvents,
+        ValorantRoundTimeline,
+        ValorantTeamRoundDisplay
     }
 })
 export default class ValorantMatch extends Vue {
@@ -125,6 +157,39 @@ export default class ValorantMatch extends Vue {
         }
     }
 
+    get numTeams() : number {
+        if (!this.currentMatch) {
+            return 0
+        }
+        return this.currentMatch.teams.length
+    }
+
+    get primaryTeam() : ValorantMatchTeamWrapper | null {
+        if (!this.currentMatch) {
+            return null
+        }
+
+        if (!this.currentPlayer) {
+            return this.matchWrapper!.getTeam('Blue')
+        } else {
+            return this.matchWrapper!.getPlayerTeam(this.currentPlayer._p.puuid)
+        }
+        return null
+    }
+
+    get secondaryTeam() : ValorantMatchTeamWrapper | null {
+        if (!this.currentMatch) {
+            return null
+        }
+
+        if (!this.currentPlayer) {
+            return this.matchWrapper!.getTeam('Red')
+        } else {
+            return this.matchWrapper!.getOpposingPlayerTeam(this.currentPlayer._p.puuid)
+        }
+        return null
+    }
+
     goToVodTime(tm : Date) {
         // Need to estimate what the video time is based on the given
         // Date and the Date we have for when the match started.
@@ -165,7 +230,10 @@ export default class ValorantMatch extends Vue {
 <style scoped>
 
 #match-vod {
-    min-height: 500px;
+    width: 100%;
+}
+
+#round-timeline {
     width: 100%;
 }
 

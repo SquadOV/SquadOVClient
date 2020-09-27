@@ -3,7 +3,7 @@
         <video v-if="hasVideo" class="video-js vjs-fluid" ref="video">
         </video>
 
-        <v-row class="full-parent-height" justify="center" align="center" v-else>
+        <v-row class="empty-container" justify="center" align="center" v-else>
             <span class="text-h4">No VOD Available.</span>
         </v-row>
     </div>
@@ -58,6 +58,7 @@ export default class VideoPlayer extends Vue {
     toggleHasVideo() {
         if (!this.hasVideo) {
             this.player = null
+            this.$emit('update:playerHeight', 500)
             return
         }
 
@@ -110,6 +111,10 @@ export default class VideoPlayer extends Vue {
 #vod-container {
     width: 100%;
     height: 100%;
+}
+
+.empty-container {
+    height: 500px;
 }
 
 </style>
