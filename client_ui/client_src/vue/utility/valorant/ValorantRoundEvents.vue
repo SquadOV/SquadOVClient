@@ -42,7 +42,7 @@
                     </v-list-item-content>
 
                     <v-list-item-content class="px-4">
-                        <div class="d-flex align-center justify-space-between">
+                        <div class="d-flex align-center justify-space-around">
                             <template v-if="!!eve.kill">
                                 <valorant-agent-icon
                                     :agent="eve.kill.killer._p.agentId"
@@ -147,6 +147,7 @@ import {
     getSameTeamColor
 } from '@client/js/valorant/valorant_colors'
 import { Color } from '@client/js/color'
+import { formatRoundTime } from '@client/js/valorant/valorant_utility'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantWeaponAbilityIcon from '@client/vue/utility/valorant/ValorantWeaponAbilityIcon.vue'
 
@@ -166,6 +167,8 @@ const offsetMs = 1500
     }
 })
 export default class ValorantRoundEvents extends Vue {
+    formatRoundTime : any = formatRoundTime
+
     @Prop({required: true})
     match!: ValorantMatchDetailsWrapper
 
@@ -177,13 +180,6 @@ export default class ValorantRoundEvents extends Vue {
 
     @Prop({type: Boolean, default: false})
     forceDisableGoToEvent! : boolean
-
-    formatRoundTime(ms : number) : string {
-        const totalSeconds = Math.floor(ms / 1000.0)
-        const minutes = `${Math.floor(totalSeconds / 60.0)}`
-        const seconds = `${totalSeconds % 60}`.padStart(2, '0')
-        return `${minutes}:${seconds}`
-    }
 
     eventPlayer(e: RoundEvent) : ValorantMatchPlayerWrapper | null {
         if (!!e.kill) {

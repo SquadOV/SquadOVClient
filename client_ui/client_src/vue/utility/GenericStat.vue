@@ -35,11 +35,15 @@ export default class GenericStat extends Vue {
     @Prop({type: Boolean, default: false})
     percentage! : boolean
 
+    @Prop({type: Boolean, default: false})
+    forceInteger!: boolean
+
     get valueDisplay() : string {
         const v = 
             (this.percentage) ?
                 this.value * 100.0 : this.value
-        const txt = v.toFixed(2)
+        const txt = this.forceInteger ?
+            `${Math.floor(v)}`: v.toFixed(2)
         return (this.percentage) ?
             `${txt}%` : txt
     }

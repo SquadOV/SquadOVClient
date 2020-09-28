@@ -8,6 +8,7 @@ import {
     ValorantMatchDamage,
     ValorantMatchPlayerRoundStat
 } from '@client/js/valorant/valorant_matches'
+import { getValorantContent } from '@client/js/valorant/valorant_content'
 
 export class ValorantMatchDamageWrapper {
     _d : ValorantMatchDamage
@@ -32,6 +33,11 @@ export class ValorantMatchKillWrapper {
         this._k = k
         this.killer = killer
         this.victim = victim
+    }
+
+    get isSelfTeamKill() : boolean {
+        return (this.killer._p.puuid == this.victim._p.puuid) ||
+            (this.killer._p.teamId == this.victim._p.teamId)
     }
 }
 
@@ -102,12 +108,102 @@ export class ValorantMatchRoundWrapper {
     getLoadoutForPlayer(puuid : string) : ValorantMatchLoadout {
         return this.playerToLoadout[puuid]
     }
+
+    get sortedKills() : ValorantMatchKillWrapper[] {
+        return [...this.kills].sort((a : ValorantMatchKillWrapper, b : ValorantMatchKillWrapper) => {
+            return a._k.roundTime - b._k.roundTime
+        })
+    }
 }
 
 export class ValorantMatchPlayerWrapper {
     _p : ValorantMatchPlayer
+    damage : ValorantMatchDamageWrapper[]
+    kills : ValorantMatchKillWrapper[]
+    deaths : ValorantMatchKillWrapper[]
+
     constructor(p : ValorantMatchPlayer) {
         this._p = p
+        this.damage = []
+        this.kills = []
+        this.deaths = []
+    }
+
+    get kda() : number {
+        return (this._p.kills + this._p.assists) / this._p.deaths
+    }
+
+    get cspr() : number {
+        return (this._p.roundsPlayed == 0) ? 0.0 : this._p.totalCombatScore / this._p.roundsPlayed
+    }
+
+    get dpr() : number {
+        return (this._p.roundsPlayed == 0) ? 0.0 : this.damage.reduce((acc : number, curr : ValorantMatchDamageWrapper) => {
+            return acc + curr._d.damage
+        }, 0.0) / this._p.roundsPlayed
+    }
+
+    get headshots() : number {
+        return this.damage.reduce((acc : number, curr : ValorantMatchDamageWrapper) => {
+            return acc + curr._d.headshots
+        }, 0)
+    }
+
+    get bodyshots() : number {
+        return this.damage.reduce((acc : number, curr : ValorantMatchDamageWrapper) => {
+            return acc + curr._d.bodyshots
+        }, 0)
+    }
+
+    get legshots() : number {
+        return this.damage.reduce((acc : number, curr : ValorantMatchDamageWrapper) => {
+            return acc + curr._d.legshots
+        }, 0)
+    }
+
+    get totalShots() : number {
+        return this.headshots + this.bodyshots + this.legshots
+    }
+
+    get hsp() : number {
+        return (this.totalShots == 0) ? 0 : this.headshots / this.totalShots
+    }
+
+    get perRoundKills() : number[] {
+        let killsPerRound : any = {}
+        let maxRound = 0
+        this.kills.forEach((kill : ValorantMatchKillWrapper) => {
+            if (kill._k.roundNum in killsPerRound) {
+                killsPerRound[kill._k.roundNum] += 1
+            } else {
+                killsPerRound[kill._k.roundNum] = 1
+            }
+            maxRound = Math.max(kill._k.roundNum)
+        })
+
+        let ret = new Array(maxRound + 1)
+        for (let i = 0; i < maxRound + 1; i++) {
+            if (i in killsPerRound) {
+                ret[i] = killsPerRound[i]
+            }
+        }
+        return ret
+    }
+
+    get doubleKills() : number {
+        return this.perRoundKills.filter((ele : number) => ele == 2).length
+    }
+
+    get tripleKills() : number {
+        return this.perRoundKills.filter((ele : number) => ele == 3).length
+    }
+
+    get quadraKills() : number {
+        return this.perRoundKills.filter((ele : number) => ele == 4).length
+    }
+
+    get pentaKills() : number {
+        return this.perRoundKills.filter((ele : number) => ele == 5).length
     }
 }
 
@@ -172,6 +268,8 @@ export class ValorantMatchDetailsWrapper {
 
         this._kills.forEach((ele : ValorantMatchKillWrapper) => {
             this._rounds[ele._k.roundNum].kills.push(ele)
+            this._players[ele.killer._p.puuid].kills.push(ele)
+            this._players[ele.victim._p.puuid].deaths.push(ele)
         })
 
         this._damage = this._details.damage.map((ele : ValorantMatchDamage) => {
@@ -184,6 +282,7 @@ export class ValorantMatchDetailsWrapper {
 
         this._damage.forEach((ele : ValorantMatchDamageWrapper) => {
             this._rounds[ele._d.roundNum].damage.push(ele)
+            this._players[ele.instigator._p.puuid].damage.push(ele)
         })
     }
 
@@ -215,6 +314,15 @@ export class ValorantMatchDetailsWrapper {
         return this._players[puuid]
     }
 
+    getPlayerAgentId(puuid : string) : string {
+        return this.getPlayer(puuid)._p.agentId
+    }
+
+    getPlayerAgentName(puuid : string) : string {
+        let cnt = getValorantContent(this._details.patchId)
+        return cnt.agentIdToName(this.getPlayerAgentId(puuid))
+    }
+
     getPlayerTeam(puuid : string) : ValorantMatchTeamWrapper {
         let p = this._players[puuid]
         return this._teams[p._p.teamId]
@@ -244,5 +352,33 @@ export class ValorantMatchDetailsWrapper {
             return null
         }
         return this._rounds[rnd]
+    }
+
+    firstBloods(puuid : string) : number {
+        return this._rounds.reduce((acc : number, ele : ValorantMatchRoundWrapper) => {
+            if (ele.kills.length == 0) {
+                return acc
+            }
+
+            if (ele.sortedKills[0].killer._p.puuid == puuid) {
+                acc += 1
+            }
+
+            return acc
+        }, 0)
+    }
+
+    firstToDie(puuid : string) : number {
+        return this._rounds.reduce((acc : number, ele : ValorantMatchRoundWrapper) => {
+            if (ele.kills.length == 0) {
+                return acc
+            }
+
+            if (ele.sortedKills[0].victim._p.puuid == puuid) {
+                acc += 1
+            }
+
+            return acc
+        }, 0)
     }
 }

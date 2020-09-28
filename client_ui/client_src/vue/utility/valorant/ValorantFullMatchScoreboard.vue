@@ -32,7 +32,7 @@
                     </td>
 
                     <td class="text-center">
-                        {{ item.kills }} / {{ item.deaths }} / {{ item.assists }}
+                        {{ item.kda.kills }} / {{ item.kda.deaths }} / {{ item.kda.assists }}
                     </td>
 
                     <td class="text-center">
@@ -128,8 +128,8 @@ export default class ValorantFullMatchScoreboard extends Vue {
                 value: 'player',
                 align: align,
                 sort: (a : any, b : any) : number => {
-                    let aName = this.agentName(a.player._p.agentId) 
-                    let bName = this.agentName(b.player._p.agentId)
+                    let aName = this.agentName(a._p.agentId) 
+                    let bName = this.agentName(b._p.agentId)
                     if (aName < bName) {
                         return -1
                     } else if (aName > bName) {
@@ -168,9 +168,11 @@ export default class ValorantFullMatchScoreboard extends Vue {
             return {
                 player: ele,
                 rank: ele._p.competitiveTier,
-                kills: ele._p.kills,
-                deaths: ele._p.deaths, 
-                assists: ele._p.assists,
+                kda: {
+                    kills: ele._p.kills,
+                    deaths: ele._p.deaths, 
+                    assists: ele._p.assists,
+                },
                 score: (ele._p.roundsPlayed > 0) ? ele._p.totalCombatScore / ele._p.roundsPlayed : 0,
                 damage: (ele._p.roundsPlayed > 0) ? this.match.getDamageDoneByPlayer(ele._p.puuid) / ele._p.roundsPlayed : 0,
             }

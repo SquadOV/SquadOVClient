@@ -25,7 +25,7 @@
             </template>
 
             <template v-slot:item.kda="{ item }">
-                {{ item.kills }} / {{ item.deaths }} / {{ item.assists }}
+                {{ item.kda.kills }} / {{ item.kda.deaths }} / {{ item.kda.assists }}
             </template>
 
             <template v-slot:item.score="{ item }">
@@ -118,8 +118,8 @@ export default class ValorantTeamRoundDisplay extends Vue {
                 value: 'player',
                 align: align,
                 sort: (a : any, b : any) : number => {
-                    let aName = this.agentName(a.player._p.agentId) 
-                    let bName = this.agentName(b.player._p.agentId)
+                    let aName = this.agentName(a._p.agentId) 
+                    let bName = this.agentName(b._p.agentId)
                     if (aName < bName) {
                         return -1
                     } else if (aName > bName) {
@@ -166,9 +166,11 @@ export default class ValorantTeamRoundDisplay extends Vue {
         return this.team.getPlayersDescendingCS().map((ele : ValorantMatchPlayerWrapper) => {
             return {
                 player: ele,
-                kills: this.round.getKillsForPlayer(ele._p.puuid),
-                deaths: this.round.getDeathsForPlayer(ele._p.puuid),
-                assists: this.round.getAssistsForPlayer(ele._p.puuid),
+                kda: {
+                    kills: this.round.getKillsForPlayer(ele._p.puuid),
+                    deaths: this.round.getDeathsForPlayer(ele._p.puuid),
+                    assists: this.round.getAssistsForPlayer(ele._p.puuid),
+                },
                 score: this.round.getCombatScoreForPlayer(ele._p.puuid),
                 damage: this.round.getDamageDoneByPlayer(ele._p.puuid),
                 loadout: this.round.getLoadoutForPlayer(ele._p.puuid)

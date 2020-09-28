@@ -2,11 +2,14 @@ import { TouchBarOtherItemsProxy } from 'electron'
 import fs from 'fs'
 
 interface ContentFileMap {
-    [patchId : string] : string;
+    [patchId : string] : { static: string, abilities: string};
 }
 
 const contentFiles : ContentFileMap = {
-    'release-01.08-shipping-10-471230': 'assets/valorant/content/v1.08.json',    
+    'release-01.08-shipping-10-471230': {
+        static: 'assets/valorant/content/v1.08.json',    
+        abilities: 'assets/valorant/content/v1.08.Abilities.json'
+    }
 }
 const latestPatch = 'release-01.08-shipping-10-471230'
 
@@ -22,14 +25,18 @@ interface GameModeMap {
     [modeId : string] : string;
 }
 
+export type AbilityKey = "GrenadeAbility" | "Ability1" | "Ability2" | "Ultimate"
 export class ValorantContent {
     _agents : AgentMap
+    _agentAbilities : { [ agentId : string] : {
+        [T in AbilityKey] : string   
+    }}
     _mapAssetNameToMap : GameMapMap
     _mapAssetPathToMap : GameMapMap
     _gameModes : GameModeMap 
     _weapons : { [weaponId : string] : string }
 
-    constructor(data : any) {
+    constructor(data : any, abilityData : any) {
         let jData = JSON.parse(data)
         this._agents = {}
 
@@ -55,6 +62,8 @@ export class ValorantContent {
         for (let m of jData["Equips"]) {
             this._weapons[m["ID"]] = m["Name"]
         }
+
+        this._agentAbilities = JSON.parse(abilityData)
     }
 
     agentIdToName(id : string) : string {
@@ -76,6 +85,10 @@ export class ValorantContent {
     weaponIdToName(id : string) : string{
         return this._weapons[id]
     }
+
+    abilityIdToName(agentId : string, ability : AbilityKey) : string {
+        return this._agentAbilities[this.agentIdToName(agentId)][ability]
+    }
 }
 
 interface ContentMap {
@@ -89,8 +102,9 @@ function loadValorantContent(patchId : string) {
         usablePatch = latestPatch
     }
 
-    let data = fs.readFileSync(contentFiles[usablePatch])
-    let ct = new ValorantContent(data)
+    let data = fs.readFileSync(contentFiles[usablePatch].static)
+    let abilityData = fs.readFileSync(contentFiles[usablePatch].abilities)
+    let ct = new ValorantContent(data, abilityData)
     content[patchId] = ct
 }
 

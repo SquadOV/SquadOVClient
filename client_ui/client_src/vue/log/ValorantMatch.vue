@@ -68,13 +68,22 @@
                     </v-col>
                 </v-row>
 
-                <v-row no-gutters>
-                    <v-col cols="6">
+                <v-row>
+                    <v-col :cols="!!currentPlayer ? 6 : 12">
                         <valorant-full-match-scoreboard
                             :match="matchWrapper"
                             :current-player.sync="currentPlayer"
                         >
                         </valorant-full-match-scoreboard>
+                    </v-col>
+
+                    <v-col cols="6" v-if="!!currentPlayer">
+                        <valorant-match-player-card
+                            :match="matchWrapper"
+                            :current-player="currentPlayer"
+                            @go-to-event="goToVodTime"
+                        >
+                        </valorant-match-player-card>
                     </v-col>
                 </v-row>
             </div>
@@ -103,6 +112,7 @@ import ValorantRoundEvents from '@client/vue/utility/valorant/ValorantRoundEvent
 import ValorantRoundTimeline from '@client/vue/utility/valorant/ValorantRoundTimeline.vue'
 import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamRoundDisplay.vue'
 import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFullMatchScoreboard.vue'
+import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchPlayerCard.vue'
 
 @Component({
     components: {
@@ -112,7 +122,8 @@ import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFu
         ValorantRoundEvents,
         ValorantRoundTimeline,
         ValorantTeamRoundDisplay,
-        ValorantFullMatchScoreboard
+        ValorantFullMatchScoreboard,
+        ValorantMatchPlayerCard
     }
 })
 export default class ValorantMatch extends Vue {
