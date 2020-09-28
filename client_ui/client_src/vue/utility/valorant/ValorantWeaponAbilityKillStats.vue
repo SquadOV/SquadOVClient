@@ -117,7 +117,7 @@ export default class ValorantWeaponAbilityKillStats extends Vue {
         })
 
         return ret.sort((a : any, b : any) => {
-            return a.kills - b.any
+            return b.kills - a.kills
         })
     }
 }
