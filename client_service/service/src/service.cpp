@@ -1,6 +1,7 @@
 #include "process_watcher/watcher.h"
 #include "shared/games.h"
 #include "shared/filesystem/common_paths.h"
+#include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "database/api.h"
 
@@ -47,6 +48,7 @@ int main(int argc, char** argv) {
 
     // Start process watcher to watch for our supported games.
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>(db.get()));
+    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>(db.get()));
     watcher.start();
 
     curl_global_cleanup();

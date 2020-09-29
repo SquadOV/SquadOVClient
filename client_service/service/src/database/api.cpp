@@ -4,135 +4,13 @@
 #include <sstream>
 #include "shared/errors/error.h"
 #include "shared/time.h"
+#include "shared/sqlite/sqlite.h"
 #include "valorant/valorant_match.h"
 #include "valorant/valorant_match_details.h"
 
 #include <iostream>
 
-namespace {
-
-class SqlStatement {
-public:
-    SqlStatement(sqlite3* db, const std::string& statement):
-        _ogStatement(statement),
-        _db(db) {
-        _errorCode = sqlite3_prepare(
-            _db,
-            statement.c_str(),
-            static_cast<int>(statement.size()),
-            &_stmt,
-            NULL
-        );
-        _errMsg = sqlite3_errmsg(_db);
-    }
-
-    virtual ~SqlStatement() {
-        sqlite3_finalize(_stmt);
-    }
-
-    SqlStatement(const SqlStatement&) = delete;
-    SqlStatement& operator=(const SqlStatement&) = delete;
-
-    SqlStatement(SqlStatement&&) = default;
-    SqlStatement& operator=(SqlStatement&&) = default;
-
-    bool hasNext() const { return _hasNext && !fail(); }
-
-    virtual bool next() {
-        if (!hasNext()) {
-            return false;
-        }
-
-        const int code = sqlite3_step(_stmt);
-        _hasNext = (code == SQLITE_ROW);
-        if (code != SQLITE_DONE && code != SQLITE_OK && code != SQLITE_ROW) {
-            _errorCode = code;
-            _errMsg = sqlite3_errmsg(_db);
-            return false;
-        }
-        return (code != SQLITE_DONE);
-    }
-
-    template<typename T>
-    T getColumn(int i) {}
-
-    template<>
-    int getColumn(int i) {
-        return sqlite3_column_int(_stmt, i);
-    }
-
-    template<>
-    std::string getColumn(int i) {
-        const auto* txt = sqlite3_column_text(_stmt, i);
-        return std::string((const char*)txt);
-    }
-
-    bool fail() const { return errorCode() != SQLITE_OK; }
-    int errorCode() const { return _errorCode; }
-    std::string errMsg() const { 
-        std::ostringstream str;
-        str << _errMsg << "[" << _errorCode << " - " << sqlite3_errstr(_errorCode) << "]" << std::endl
-            << "\tStmt: " << _ogStatement;
-        return str.str();
-    }
-
-protected:
-    sqlite3* _db = nullptr;
-
-private:
-    std::string _ogStatement;
-    sqlite3_stmt* _stmt = nullptr;
-    int _errorCode = SQLITE_OK;
-    bool _hasNext = true;
-    std::string _errMsg;
-};
-
-class SqlTransaction {
-public:
-    SqlTransaction(sqlite3* db):
-        _db(db) {
-        SqlStatement begin(_db, "BEGIN IMMEDIATE TRANSACTION;");
-        begin.next();
-    }
-
-    void exec(SqlStatement& stmt) {
-        if (!_commit) {
-            return;
-        }
-        stmt.next();
-        _commit = !stmt.fail();
-        if (!_commit) {
-            _error = stmt.errMsg();
-        }
-    }
-
-    bool fail() const { return !_commit; }
-    std::string errMsg() const { return _error; }
-
-    ~SqlTransaction() {
-        std::string endStmt;
-        if (!_commit) {
-            endStmt = "ROLLBACK;";
-        } else {
-            endStmt = "COMMIT;";
-        }
-
-        SqlStatement end(_db, endStmt);
-        end.next();
-    }
-
-    SqlStatement createStatement(const std::string& str) {
-        return SqlStatement(_db, str);
-    }
-
-private:
-    sqlite3* _db = nullptr;
-    bool _commit = true;
-    std::string _error;
-
-};
-
-}
+using namespace shared::sqlite;
 
 namespace service::database {
 namespace {
@@ -140,6 +18,14 @@ namespace {
 void addNullableTimeSql(std::ostringstream& sql, const shared::TimePoint& tm) {
     if (shared::isTimeValid(tm)) {
         sql << "'" << shared::timeToStr(tm, true) << "'";
+    } else {
+        sql << "null";
+    }
+}
+
+void addNullableString(std::ostringstream& sql, const std::string& str) {
+    if (!str.empty()) {
+        sql << "'" << str << "'";
     } else {
         sql << "null";
     }
@@ -606,6 +492,95 @@ std::vector<std::string> DatabaseApi::getMatchIdsForPlayer(const std::string& pu
         }
 
         ret.push_back(stmt.getColumn<std::string>(0));
+    }
+    return ret;
+}
+
+void DatabaseApi::storeAimlabTask(const shared::aimlab::TaskData& task, const std::string& vodPath) const {
+    std::ostringstream sql;
+    sql << R"|(
+        INSERT INTO aimlab_tasks (
+            id,
+            taskName,
+            mode,
+            score,
+            createDate,
+            version,
+            rawData,
+            vodPath
+        )
+        VALUES (
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
+        ))|";
+
+    SqlTransaction tx(_db);
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, task.taskId);
+    stmt.bindParameter(2, task.taskName);
+    stmt.bindParameter(3, task.mode);
+    stmt.bindParameter(4, task.score);
+    stmt.bindParameter(5, shared::timeToStr(task.createDate, true));
+    stmt.bindParameter(6, task.version);
+    stmt.bindParameter(7, task.rawData);
+    if (vodPath.empty()) {
+        stmt.bindNullParameter(8);
+    } else {
+        stmt.bindParameter(8, vodPath);
+    }
+
+    tx.exec(stmt);
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to store Aim Lab task: " << stmt.errMsg());
+    }
+}
+
+bool DatabaseApi::isAimlabVideoAssociatedWithTask(const std::string& fname) const {
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT COUNT(id)
+        FROM aimlab_tasks
+        WHERE vodPath = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, fname);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get if video is assocaited with match: " << stmt.errMsg());
+    }
+
+    return (stmt.getColumn<int>(0) > 0);
+}
+
+std::vector<int> DatabaseApi::allStoredAimlabTaskIds() const {
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT id
+        FROM aimlab_tasks
+        ORDER BY id DESC)|";
+
+    std::vector<int> ret;
+    SqlStatement stmt(_db, sql.str());
+
+    while (stmt.hasNext()) {
+        if (!stmt.next()) {
+            break;
+        }
+
+        if (stmt.fail()) {
+            THROW_ERROR("Failed to get task ids: " << stmt.errMsg());
+        }
+
+        ret.push_back(stmt.getColumn<int>(0));
     }
     return ret;
 }

@@ -630,6 +630,11 @@ void FfmpegAvEncoderImpl::start() {
     // 60fps without interruption.
     _audioEncodingThread = std::thread([this, start](){
         int64_t frameNum = 0;
+
+        if (!_acodecContext) {
+            return;
+        }
+
         const auto frameSize = _acodecContext->frame_size;
 
         while (_running) {
@@ -721,7 +726,10 @@ void FfmpegAvEncoderImpl::stop() {
 
     // Flush packets from encoder.
     encode(_vcodecContext, _avcontext, nullptr, _vstream);
-    encode(_acodecContext, _avcontext, nullptr, _astream);
+
+    if (!!_acodecContext) {
+        encode(_acodecContext, _avcontext, nullptr, _astream);
+    }
     av_write_trailer(_avcontext);
 }
 

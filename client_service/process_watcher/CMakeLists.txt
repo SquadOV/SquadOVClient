@@ -3,6 +3,7 @@ SET(SRCS
     process_watcher/process/process.cpp
     process_watcher/games/game_process_detector.cpp
     process_watcher/games/valorant_process_detector.cpp
+    process_watcher/games/aimlab_process_detector.cpp
 )
 
 SET(HEADERS
@@ -11,6 +12,7 @@ SET(HEADERS
     process_watcher/process/process.h
     process_watcher/games/game_process_detector.h
     process_watcher/games/valorant_process_detector.h
+    process_watcher/games/aimlab_process_detector.h
 )
 
 add_library(squadov_process_watcher

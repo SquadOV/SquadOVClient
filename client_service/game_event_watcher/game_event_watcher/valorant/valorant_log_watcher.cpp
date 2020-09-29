@@ -301,6 +301,9 @@ ValorantLogWatcher::ValorantLogWatcher() {
     const fs::path gameLogFname = gameLogDir / fs::path("ShooterGame.log");
     _gameLogFilename = gameLogFname;
 
+    // We need to find the latest Riot Client log here because
+    //  1) We assume that a new log file has already been created at this point.
+    //  2) The Riot client log has the time stamp in the filename so the filename isn't consistent.
     auto latestWriteTime = fs::file_time_type::min();
     for (const auto& entry : fs::recursive_directory_iterator(clientLogDir)) {
         const auto path = entry.path();
@@ -347,7 +350,7 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                     //  2) the game actually ended.
                     // We should be able to differentiate the two using the "stagedMatchEnd" variable. Leave it
                     // up to the callback to differentiate.
-                    notify(EValorantLogEvents::MatchEnd, data.logTime, &_gameLogState);
+                    notify(static_cast<int>(EValorantLogEvents::MatchEnd), data.logTime, &_gameLogState);
 
                     // We should be able to clear out the state at this point since the client
                     // should have processed the state data and since the game ended we know we can
@@ -358,7 +361,7 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                     _gameLogState.matchMap = shared::valorant::EValorantMap::Unknown;
                     _gameLogState.stagedMatchEnd = false;
                 } else if (_gameLogState.isInMatch) {
-                    notify(EValorantLogEvents::MatchStart, data.logTime, &_gameLogState);
+                    notify(static_cast<int>(EValorantLogEvents::MatchStart), data.logTime, &_gameLogState);
                 }
                 
                 parsed = true;
@@ -371,9 +374,9 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                 // Need to use server time and not client time here because in a real game
                 // the client tiem might not start at 0.0.
                 if (data.serverTime < shared::EPSILON) {
-                    notify(EValorantLogEvents::RoundBuyStart, data.logTime, nullptr);
+                    notify(static_cast<int>(EValorantLogEvents::RoundBuyStart), data.logTime, nullptr);
                 } else {
-                    notify(EValorantLogEvents::RoundPlayStart, data.logTime, nullptr);
+                    notify(static_cast<int>(EValorantLogEvents::RoundPlayStart), data.logTime, nullptr);
                 }
                 parsed = true;
             }
@@ -390,7 +393,7 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                     // fired near the beginning of the log using the same API server we can use
                     // to get the match history and such.
                     _gameLogState.apiServer = getApiServer(data.url);
-                    notify(EValorantLogEvents::PvpServer, shared::nowUtc(), &_gameLogState.apiServer);
+                    notify(static_cast<int>(EValorantLogEvents::PvpServer), shared::nowUtc(), &_gameLogState.apiServer);
                     parsed = true;
                 }
             }
@@ -438,21 +441,8 @@ void ValorantLogWatcher::onClientLogChange(const LogLinesDelta& lines) {
     if (_clientLogState != previousState) {
         if (_clientLogState.isLoggedIn()) {
             // The time here doesn't really matter so just use the current time whatever it is and not the log time.
-            notify(EValorantLogEvents::RSOLogin, shared::nowUtc(), &_clientLogState);
+            notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &_clientLogState);
         }
-    }
-}
-
-void ValorantLogWatcher::notify(EValorantLogEvents event, const shared::TimePoint& eventTime, const void* data) const {
-    // Don't notify if the event time has drifted too far (probably due to reading a log that existed already).
-    const auto maxDiff = std::chrono::seconds(10);
-    const auto diff = shared::nowUtc() - eventTime;
-    if (diff > maxDiff) {
-        return;
-    }
-
-    for (const auto& cb : _callbacks.at(event)) {
-        cb(eventTime, data);
     }
 }
     

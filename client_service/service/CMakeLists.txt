@@ -1,5 +1,7 @@
 SET(SRCS
     src/service.cpp
+    src/aimlab/aimlab_db_interface.cpp
+    src/aimlab/aimlab_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
     src/valorant/valorant_match.cpp
     src/valorant/valorant_match_details.cpp
@@ -17,6 +19,8 @@ SET(SRCS
 )
 
 SET(HEADERS
+    src/aimlab/aimlab_db_interface.h
+    src/aimlab/aimlab_process_handler.h
     src/valorant/valorant_process_handler.h
     src/valorant/valorant_match.h
     src/valorant/valorant_match_details.h

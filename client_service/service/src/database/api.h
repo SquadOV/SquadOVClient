@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shared/riot/riot.h"
+#include "shared/aimlab/aimlab.h"
 
 #include <memory>
 #include <sqlite3.h>
@@ -28,6 +29,11 @@ public:
     void associateValorantMatchToVideoFile(const std::string& matchId, const std::string& fname) const;
     bool isValorantVideoAssociatedWithMatch(const std::string& fname) const;
     std::vector<std::string> getMatchIdsForPlayer(const std::string& puuid) const;
+
+    // Aim Lab related fucntions.
+    void storeAimlabTask(const shared::aimlab::TaskData& task, const std::string& vodPath) const;
+    bool isAimlabVideoAssociatedWithTask(const std::string& fname) const;
+    std::vector<int> allStoredAimlabTaskIds() const;
 
 private:
     sqlite3* _db = nullptr;

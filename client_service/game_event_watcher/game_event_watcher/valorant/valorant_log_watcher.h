@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game_event_watcher/logs/base_log_watcher.h"
 #include "game_event_watcher/logs/log_watcher.h"
 #include "shared/riot/riot.h"
 #include "shared/valorant/valorant.h"
@@ -44,18 +45,11 @@ struct ClientLogState {
 bool operator==(const ClientLogState& a, const ClientLogState& b);
 bool operator!=(const ClientLogState& a, const ClientLogState& b);
 
-class ValorantLogWatcher {
+class ValorantLogWatcher: public BaseLogWatcher {
 public:
     ValorantLogWatcher();
 
-    using ValorantLogEventCallback = std::function<void(const shared::TimePoint&, const void*)>;
-    void notifyOnEvent(EValorantLogEvents event, const ValorantLogEventCallback& cb) {
-        _callbacks[event].push_back(cb);
-    }
-
 private:
-    void notify(EValorantLogEvents event, const shared::TimePoint& eventTime, const void* data) const;
-
     void onGameLogChange(const LogLinesDelta& lines);
     void onClientLogChange(const LogLinesDelta& lines);
 
@@ -67,8 +61,6 @@ private:
 
     LogWatcherPtr _gameLogWatcher;
     LogWatcherPtr _clientLogWatcher;
-
-    std::unordered_map<EValorantLogEvents, std::vector<ValorantLogEventCallback>> _callbacks;
 };
 
 using ValorantLogWatcherPtr = std::unique_ptr<ValorantLogWatcher>;

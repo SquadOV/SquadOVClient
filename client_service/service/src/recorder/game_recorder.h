@@ -24,6 +24,7 @@ public:
     const std::filesystem::path& path() const { return _encoder->path(); }
     const std::filesystem::path& outputFolder() const { return _outputFolder; }
     void stop();
+    bool isRecording() const { return !!_encoder; }
 
 private:
     void createVideoRecorder();

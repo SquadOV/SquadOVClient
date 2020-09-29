@@ -58,8 +58,8 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
 
     // Initialize Valorant data. Pull in account information and populate
     // match history/account data in the database as needed.
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::RSOLogin, std::bind(&ValorantProcessHandlerInstance::onValorantRSOLogin, this, std::placeholders::_1, std::placeholders::_2));
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::PvpServer, std::bind(&ValorantProcessHandlerInstance::onValorantDetectPvpServer, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::RSOLogin), std::bind(&ValorantProcessHandlerInstance::onValorantRSOLogin, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::PvpServer), std::bind(&ValorantProcessHandlerInstance::onValorantDetectPvpServer, this, std::placeholders::_1, std::placeholders::_2));
 
     // Create a Valorant game event detector.
     // Need to detect
@@ -69,10 +69,10 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
     //  4) Round Start (Play)
     // This is what we use to start/stop recording.
     // When the game end, we retrieve stats and such from the Valorant API.
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::MatchStart, std::bind(&ValorantProcessHandlerInstance::onValorantMatchStart, this, std::placeholders::_1, std::placeholders::_2));
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::MatchEnd, std::bind(&ValorantProcessHandlerInstance::onValorantMatchEnd, this, std::placeholders::_1, std::placeholders::_2));
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::RoundBuyStart, std::bind(&ValorantProcessHandlerInstance::onValorantBuyStart, this, std::placeholders::_1, std::placeholders::_2));
-    _logWatcher->notifyOnEvent(game_event_watcher::EValorantLogEvents::RoundPlayStart, std::bind(&ValorantProcessHandlerInstance::onValorantRoundStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::MatchStart), std::bind(&ValorantProcessHandlerInstance::onValorantMatchStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::MatchEnd), std::bind(&ValorantProcessHandlerInstance::onValorantMatchEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::RoundBuyStart), std::bind(&ValorantProcessHandlerInstance::onValorantBuyStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::RoundPlayStart), std::bind(&ValorantProcessHandlerInstance::onValorantRoundStart, this, std::placeholders::_1, std::placeholders::_2));
 
     cleanup();
 }

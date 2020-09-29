@@ -1,8 +1,9 @@
 #include "shared/filesystem/common_paths.h"
 
+namespace fs = std::filesystem;
 namespace shared::filesystem {
 
-std::filesystem::path getSquadOvFolder() {
+std::filesystem::path getAppDataPath() {
 #ifdef _WIN32
     char* appData;
     size_t len;
@@ -12,12 +13,20 @@ std::filesystem::path getSquadOvFolder() {
 #else
     throw std::runtime_error("Unsupported OS.");
 #endif
-    return appDataDir / std::filesystem::path("SquadOV");;
+    return appDataDir;
+}
+
+std::filesystem::path getSquadOvFolder() {
+    return getAppDataPath() / std::filesystem::path("SquadOV");;
 }
 
 std::filesystem::path getSquadOvRecordFolder() {
     const auto appData = getSquadOvFolder();
     return appData / std::filesystem::path("Record");
+}
+
+std::filesystem::path getAimlabAppDataFolder() {
+    return getAppDataPath().parent_path() / fs::path("LocalLow") / fs::path("Statespace") / fs::path("aimlab_tb");
 }
 
 }

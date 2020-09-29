@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 4
+const CURRENT_DB_VERSION = 5
 
 async function migrateDb(db) {
     return new Promise(resolve => {
@@ -191,6 +191,22 @@ LEFT JOIN valorant_match_damage AS vmd
     ON vmd.instigator_puuid = vmp.puuid AND vmd.match_id = vmp.match_id
 GROUP BY vmp.match_id, vmp.puuid
 `)
+                }
+
+                if (currentVersion < 5) {
+                    // Aim Lab Data
+                    db.run(`
+CREATE TABLE aimlab_tasks (
+    id INTEGER PRIMARY KEY,
+    taskName TEXT NOT NULL,
+    mode INTEGER NOT NULL,
+    score INTEGER NOT NULL,
+    createDate TEXT NOT NULL,
+    version TEXT NOT NULL,
+    rawData TEXT NOT NULL,
+    vodPath TEXT
+)                 
+                    `)
                 }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)
