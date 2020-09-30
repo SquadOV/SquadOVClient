@@ -2,16 +2,10 @@
     <loading-container :is-loading="!allTasks">
         <template v-slot:default="{ loading }">
             <div v-if="!loading">
-                <div
-                    v-for="(item, idx) in allTasks"
-                    class="mb-4"
-                    :key="idx"
+                <aimlab-task-scroller
+                    :tasks="allTasks"
                 >
-                    <aimlab-task-summary-display
-                        :task="item"
-                    >
-                    </aimlab-task-summary-display>
-                </div>
+                </aimlab-task-scroller>
             </div>
         </template>
     </loading-container>
@@ -24,12 +18,12 @@ import Component from 'vue-class-component'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, ApiData } from '@client/js/api'
-import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
+import AimlabTaskScroller from '@client/vue/utility/aimlab/AimlabTaskScroller.vue'
 
 @Component({
     components: {
         LoadingContainer,
-        AimlabTaskSummaryDisplay
+        AimlabTaskScroller
     }
 })
 export default class AimlabGameLog extends Vue {
