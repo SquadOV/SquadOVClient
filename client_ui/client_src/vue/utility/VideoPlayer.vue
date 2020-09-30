@@ -26,6 +26,9 @@ export default class VideoPlayer extends Vue {
     @Prop()
     playerHeight!: number
 
+    @Prop({type : Boolean ,default: false})
+    disableTheater! : boolean
+
     player: videojs.Player | null = null
 
     $refs!: {
@@ -78,25 +81,27 @@ export default class VideoPlayer extends Vue {
             this.$emit('update:playerHeight', this.player!.currentHeight())
         })
 
-        // Construct a custom "theater mode" button a la YouTube 
-        let button = videojs.getComponent('Button')
+        if (!this.disableTheater) {
+            // Construct a custom "theater mode" button a la YouTube 
+            let button = videojs.getComponent('Button')
 
-        //@ts-ignore
-        let theaterModeButtonCls = videojs.extend(button, {
-            constructor: function() {
-                //@ts-ignore
-                button.apply(this, arguments)
-                this.addClass('vjs-icon-square')
-                
-            },
-        })        
-        videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
+            //@ts-ignore
+            let theaterModeButtonCls = videojs.extend(button, {
+                constructor: function() {
+                    //@ts-ignore
+                    button.apply(this, arguments)
+                    this.addClass('vjs-icon-square')
+                    
+                },
+            })        
+            videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
 
-        let controlBar = this.player.getChild('controlBar')!
-        let theaterModeButton = controlBar.addChild('theaterModeButton', {}, 16)
-        theaterModeButton.on('click', () => {
-            this.$emit('toggle-theater-mode')
-        })
+            let controlBar = this.player.getChild('controlBar')!
+            let theaterModeButton = controlBar.addChild('theaterModeButton', {}, 16)
+            theaterModeButton.on('click', () => {
+                this.$emit('toggle-theater-mode')
+            })
+        }
     }
 
     mounted() {

@@ -6,12 +6,16 @@ const fs = require('fs')
 const { migrateDb } = require('./migrate.js')
 const {app} = require('electron')
 const { ValorantApiServer } = require('./valorant.js')
+const { AimlabApiServer } = require('./aimlab.js')
+const { createGraphqlEndpoint } = require('./graphql/graphql.js')
 
 const checkApiKey = (req, res, next) => {
     const key = process.env.SQUADOV_API_KEY
     const auth = req.get('Authorization')
 
-    if (`Bearer ${key}` !== auth) {
+    // Allow the key to come in either the authorization header
+    // or as a URL param.
+    if (`Bearer ${key}` !== auth && req.query.key !== key) {
         res.status(401).json({ error: 'Invalid API Key.' })
         return
     }
@@ -44,12 +48,13 @@ class ApiServer {
         })
 
         this.valorant = new ValorantApiServer(this.db)
+        this.aimlab = new AimlabApiServer(this.db)
     }
 
     constructor() {
         this.apiOptions = {
             apiPort: -1,
-            apiKey: crypto.randomBytes(128).toString('base64')
+            apiKey: !!process.env.SQUADOV_API_KEY ? process.env.SQUADOV_API_KEY : crypto.randomBytes(128).toString('base64')
         }
         process.env.SQUADOV_API_KEY = this.apiOptions.apiKey
     }
@@ -61,8 +66,11 @@ class ApiServer {
         restApp.use(checkApiKey)
 
         restApp.use('/valorant', this.valorant.createRouter())
+        restApp.use('/aimlab', this.aimlab.createRouter())
+        restApp.use('/graphql', createGraphqlEndpoint(this.db))
 
-        this.server = restApp.listen(0, () => {
+        let port = !!process.env.SQUADOV_API_PORT ? parseInt(process.env.SQUADOV_API_PORT) : 0
+        this.server = restApp.listen(port, () => {
             process.env.SQUADOV_API_PORT = this.apiOptions.apiPort = this.server.address().port
             console.log(`Starting API Server on Port ${process.env.SQUADOV_API_PORT} with Key ${process.env.SQUADOV_API_KEY}`)
             onStart()

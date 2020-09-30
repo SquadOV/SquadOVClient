@@ -19,7 +19,9 @@ import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
 import ValorantLogContainer from '@client/vue/log/ValorantLogContainer.vue'
 import ValorantGameLog from '@client/vue/log/ValorantGameLog.vue'
 import ValorantMatch from '@client/vue/log/ValorantMatch.vue'
+
 import AimlabGameLog from '@client/vue/log/AimlabGameLog.vue'
+import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
 
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
@@ -64,6 +66,14 @@ const baseRoutes : any[] = [
                 name: pi.AimlabLogPageId,
                 component: AimlabGameLog,
             },
+            {
+                path: '/aimlab/task/:taskId',
+                name: pi.AimlabMatchPageId,
+                component: AimlabMatch,
+                props: (route : any) => ({
+                    taskId: route.params.taskId
+                })
+            }
         ],
     },
     { 

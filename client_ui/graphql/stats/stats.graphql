@@ -1,0 +1,14 @@
+type AllStats {
+    aimlab: AimlabStats!
+}
+
+enum StatGroupingFn {
+    AVG
+    MAX
+    MIN
+}
+
+enum StatSortDir {
+    ASC
+    DESC
+}

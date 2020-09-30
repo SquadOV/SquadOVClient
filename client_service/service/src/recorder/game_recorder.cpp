@@ -29,6 +29,9 @@ GameRecorder::GameRecorder(
 }
 
 GameRecorder::~GameRecorder() {
+    if (isRecording()) {
+        stop();
+    }
 }
 
 void GameRecorder::createVideoRecorder() {

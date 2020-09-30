@@ -1,4 +1,3 @@
-const { V4MAPPED } = require('dns')
 const express = require('express')
 
 class ValorantApiServer {

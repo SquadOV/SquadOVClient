@@ -1,0 +1,69 @@
+enum AimlabGrouping {
+    AGDATE,
+    AGDATETIME,
+    AGTIME,
+    AGVERSION
+}
+
+type AimlabStats {
+    gridshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    spidershot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    microshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    sixshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    microflex(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    motionshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+    multishot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabSparData!]!
+
+    detection(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabDetectionData!]!
+    
+    decisionshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabDecisionshotData!]!
+    
+    strafetrack(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabTrackData!]!
+    circletrack(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabTrackData!]!
+
+    strafeshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabErbData!]!
+    circleshot(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabErbData!]!
+    
+    linetrace(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabLinetraceData!]!
+    multilinetrace(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabLinetraceData!]!
+
+    pentakill(mode: Int!, group: AimlabGrouping, groupFn: StatGroupingFn, sort: StatSortDir): [AimlabPentakillData!]!
+}
+
+type AimlabSparData {
+    x: String!
+    score: Float!
+    kill: Float!
+    ttk: Float!
+    acc: Float!
+}
+
+type AimlabDetectionData {
+    x: String!
+    score: Float! 
+}
+
+type AimlabDecisionshotData {
+    x: String!
+    score: Float! 
+}
+
+type AimlabTrackData {
+    x: String!
+    score: Float! 
+}
+
+type AimlabErbData {
+    x: String!
+    score: Float! 
+}
+
+type AimlabLinetraceData {
+    x: String!
+    score: Float! 
+}
+
+type AimlabPentakillData {
+    x: String!
+    score: Float!  
+}

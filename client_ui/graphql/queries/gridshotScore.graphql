@@ -1,0 +1,13 @@
+query {
+  stats {
+   	aimlab {
+      gridshot(mode: 10) {
+        score
+        kill
+        ttk
+        acc
+        x
+      }
+    } 
+  }
+}

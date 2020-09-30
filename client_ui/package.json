@@ -56,8 +56,12 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.14.0",
     "axios": "^0.20.0",
+    "echarts": "^4.9.0",
     "electron": "^10.1.2",
     "express": "^4.17.1",
+    "express-graphql": "^0.11.0",
+    "graphql": "^15.3.0",
+    "graphql-tools": "^6.2.3",
     "sqlite3": "^5.0.0",
     "vuetify": "^2.3.10"
   }

@@ -1,0 +1,76 @@
+{
+    "id": "aimlab",
+    "name": "Aimlab",
+    "includeStats": [
+        "assets/stats/aimlab/gridshot.json"
+    ],
+    "commonOptions": [
+        {
+            "id": "aimlab-group-by",
+            "name": "Group By",
+            "variable": "$group",
+            "isEnum": true,
+            "values": [
+                {
+                    "text": "Date",
+                    "value": "AGDATE",
+                    "default": true
+                },
+                {
+                    "text": "Date Time",
+                    "value": "AGDATETIME"
+                },
+                {
+                    "text": "Time",
+                    "value": "AGTIME"
+                },
+                {
+                    "text": "Version",
+                    "value": "AGVERSION"
+                },
+                {
+                    "text": "ID",
+                    "value": null
+                }
+            ]
+        },
+        {
+            "id": "aimlab-group-fn",
+            "name": "Group Function",
+            "variable": "$groupFn",
+            "isEnum": true,
+            "values": [
+                {
+                    "text": "Average",
+                    "value": "AVG",
+                    "default": true
+                },
+                {
+                    "text": "Max",
+                    "value": "MAX"
+                },
+                {
+                    "text": "Min",
+                    "value": "MIN"
+                }
+            ]
+        },
+        {
+            "id": "aimlab-sort",
+            "name": "Sort Direction",
+            "variable": "$sort",
+            "isEnum": true,
+            "values": [
+                {
+                    "text": "Ascending",
+                    "value": "ASC",
+                    "default": true
+                },
+                {
+                    "text": "Descending",
+                    "value": "DESC"
+                }
+            ]
+        }
+    ]
+}

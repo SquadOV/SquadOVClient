@@ -1,0 +1,288 @@
+{
+    "tasks": {
+        "gridshot": {
+            "name": "Gridshot",
+            "icon": "assets/aimlab/tasks/Gridshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_gridshot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_gridshot_ultimate_kills",
+                        "root_aimlab_gridshot_ultimate_ttk",
+                        "root_aimlab_gridshot_ultimate_acc"
+                    ]
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_gridshot_precision_score",
+                    "extraStats": [
+                        "root_aimlab_gridshot_precision_kills",
+                        "root_aimlab_gridshot_precision_ttk",
+                        "root_aimlab_gridshot_precision_acc"
+                    ]
+                },
+                "12": {
+                    "name": "Speed",
+                    "scoreStat": "root_aimlab_gridshot_speed_score",
+                    "extraStats": [
+                        "root_aimlab_gridshot_speed_kill",
+                        "root_aimlab_gridshot_speed_ttk",
+                        "root_aimlab_gridshot_speed_acc"
+                    ]
+                }
+            }
+        },
+        "microshot": {
+            "name": "Microshot",
+            "icon": "assets/aimlab/tasks/Microshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_microshot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_microshot_ultimate_kills",
+                        "root_aimlab_microshot_ultimate_ttk",
+                        "root_aimlab_microshot_ultimate_acc"
+                    ]
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_microshot_precision_score",
+                    "extraStats": [
+                        "root_aimlab_microshot_precision_kills",
+                        "root_aimlab_microshot_precision_ttk",
+                        "root_aimlab_microshot_precision_acc"
+                    ]
+                },
+                "12": {
+                    "name": "Speed",
+                    "scoreStat": "root_aimlab_microshot_speed_score",
+                    "extraStats": [
+                        "root_aimlab_microshot_speed_kill",
+                        "root_aimlab_microshot_speed_ttk",
+                        "root_aimlab_microshot_speed_acc"
+                    ]
+                }
+            }
+        },
+        "sixshot": {
+            "name": "Sixshot",
+            "icon": "assets/aimlab/tasks/Sixshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_sixshot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_sixshot_ultimate_kills",
+                        "root_aimlab_sixshot_ultimate_ttk",
+                        "root_aimlab_sixshot_ultimate_acc"
+                    ]
+                }
+            }
+        },
+        "detection": {
+            "name": "Detection",
+            "icon": "assets/aimlab/tasks/Detection.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_detection_ultimate_score"
+                }
+            } 
+        },
+        "decisionshot": {
+            "name": "Decisionshot",
+            "icon": "assets/aimlab/tasks/Decisionshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_decisionshot_ultimate_score"
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_decisionshot_precision_score"
+                },
+                "12": {
+                    "name": "Speed",
+                    "scoreStat": "root_aimlab_decisionshot_speed_score"
+                }
+            }
+        },
+        "spidershot": {
+            "name": "Spidershot",
+            "icon": "assets/aimlab/tasks/Spidershot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_spidershot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_spidershot_ultimate_kills",
+                        "root_aimlab_spidershot_ultimate_ttk",
+                        "root_aimlab_spidershot_ultimate_acc"
+                    ]
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_spidershot_precision_score",
+                    "extraStats": [
+                        "root_aimlab_spidershot_precision_kills",
+                        "root_aimlab_spidershot_precision_ttk",
+                        "root_aimlab_spidershot_precision_acc"
+                    ]
+                },
+                "12": {
+                    "name": "Speed",
+                    "scoreStat": "root_aimlab_spidershot_speed_score",
+                    "extraStats": [
+                        "root_aimlab_spidershot_speed_kill",
+                        "root_aimlab_spidershot_speed_ttk",
+                        "root_aimlab_spidershot_speed_acc"
+                    ]
+                }
+            }
+        },
+        "motionshot": {
+            "name": "Motionshot",
+            "icon": "assets/aimlab/tasks/Motionshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_motionshot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_motionshot_ultimate_kills",
+                        "root_aimlab_motionshot_ultimate_ttk",
+                        "root_aimlab_motionshot_ultimate_acc"
+                    ]
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_motionshot_precision_score",
+                    "extraStats": [
+                        "root_aimlab_motionshot_precision_kills",
+                        "root_aimlab_motionshot_precision_ttk",
+                        "root_aimlab_motionshot_precision_acc"
+                    ]
+                },
+                "12": {
+                    "name": "Speed",
+                    "scoreStat": "root_aimlab_motionshot_speed_score",
+                    "extraStats": [
+                        "root_aimlab_motionshot_speed_kill",
+                        "root_aimlab_motionshot_speed_ttk",
+                        "root_aimlab_motionshot_speed_acc"
+                    ]
+                }
+            }
+        },
+        "microflex": {
+            "name": "Microflex",
+            "icon": "assets/aimlab/tasks/Microflex.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_microflex_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_microflex_ultimate_kills",
+                        "root_aimlab_microflex_ultimate_ttk",
+                        "root_aimlab_microflex_ultimate_acc"
+                    ]
+                },
+                "11": {
+                    "name": "Precision",
+                    "scoreStat": "root_aimlab_microflex_precision_score",
+                    "extraStats": [
+                        "root_aimlab_microflex_precision_kills",
+                        "root_aimlab_microflex_precision_ttk",
+                        "root_aimlab_microflex_precision_acc"
+                    ]
+                }
+            }
+        },
+        "strafetrack": {
+            "name": "Strafetrack",
+            "icon": "assets/aimlab/tasks/Strafetrack.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_strafetrack_ultimate_score"
+                }
+            } 
+        },
+        "circletrack": {
+            "name": "Circletrack",
+            "icon": "assets/aimlab/tasks/Circletrack.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_circletrack_ultimate_score"
+                }
+            } 
+        },
+        "strafeshot": {
+            "name": "Strafeshot",
+            "icon": "assets/aimlab/tasks/Strafeshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_strafeshot_ultimate_score"
+                }
+            } 
+        },
+        "circleshot": {
+            "name": "Circleshot",
+            "icon": "assets/aimlab/tasks/Circleshot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_circleshot_ultimate_score"
+                }
+            } 
+        },
+        "multishot": {
+            "name": "Multishot",
+            "icon": "assets/aimlab/tasks/Multishot.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_multishot_ultimate_score",
+                    "extraStats": [
+                        "root_aimlab_multishot_ultimate_kills",
+                        "root_aimlab_multishot_ultimate_ttk",
+                        "root_aimlab_multishot_ultimate_acc"
+                    ]
+                }
+            } 
+        },
+        "linetrace": {
+            "name": "Linetrace",
+            "icon": "assets/aimlab/tasks/Linetrace.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_linetrace_ultimate_score"
+                }
+            } 
+        },
+        "multilinetrace": {
+            "name": "Mutlilinetrace",
+            "icon": "assets/aimlab/tasks/Multilinetrace.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_multilinetrace_ultimate_score"
+                }
+            }
+        },
+        "pentakill": {
+            "name": "Pentakill",
+            "icon": "assets/aimlab/tasks/Pentakill.png",
+            "mode": {
+                "10": {
+                    "name": "Ultimate",
+                    "scoreStat": "root_aimlab_pentakill_ultimate_score"
+                }
+            }
+        }
+    }
+}

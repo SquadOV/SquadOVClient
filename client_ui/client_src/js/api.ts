@@ -8,6 +8,8 @@ import {
     cleanValorantPlayerMatchSummary,
     cleanValorantMatchDetails,
 } from '@client/js/valorant/valorant_matches'
+import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
+import { GraphqlQuery } from '@client/js/graphql/graphql'
 
 const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
     const ogMethod = descriptor.value
@@ -35,8 +37,14 @@ export interface ApiData<T> {
     data: T
 }
 
+export interface GraphqlApiData<T> {
+    data: {
+        data: T
+    }
+}
+
 class ApiClient {
-    createAxiosConfig(endpoint : string) {
+    createAxiosConfig(endpoint : string) : any {
         return {
             url: `http://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
             headers: {
@@ -89,6 +97,37 @@ class ApiClient {
             cleanValorantMatchDetails(resp.data)
             return resp
         })
+    }
+
+    @waitForApiServerSetup
+    allAimlabTaskData() : Promise<ApiData<AimlabTaskData[]>> {
+        return axios({
+            ...this.createAxiosConfig(`aimlab/tasks`),
+            method: 'get'
+        }).then((resp : ApiData<AimlabTaskData[]>) => {
+            resp.data.forEach(cleanAimlabTaskData)
+            return resp
+        })
+    }
+
+    @waitForApiServerSetup
+    getAimlabTaskData(id : number) : Promise<ApiData<AimlabTaskData>> {
+        return axios({
+            ...this.createAxiosConfig(`aimlab/tasks/${id}`),
+            method: 'get'
+        }).then((resp : ApiData<AimlabTaskData>) => {
+            cleanAimlabTaskData(resp.data)
+            return resp
+        })
+    }
+
+    @waitForApiServerSetup
+    graphqlRequest(req : GraphqlQuery) : Promise<GraphqlApiData<any>> {
+        let baseConfig : any = this.createAxiosConfig(`graphql`)
+        baseConfig.method = 'post'
+        baseConfig.data = req.generateBody()
+        baseConfig.headers['Content-Type'] = 'application/graphql'
+        return axios(baseConfig)
     }
 }
 

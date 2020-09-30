@@ -203,15 +203,4 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     line-height: 1.2rem !important;
 }
 
-.vod-div {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    background-color: yellow;
-    clip-path: polygon(0 100%, 100% 0, 100% 100%);
-    padding-left: 15px;
-    padding-top: 15px;
-    border-radius: 0px 4px;
-}
-
 </style>
