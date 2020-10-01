@@ -8,6 +8,7 @@ const {app} = require('electron')
 const { ValorantApiServer } = require('./valorant.js')
 const { AimlabApiServer } = require('./aimlab.js')
 const { createGraphqlEndpoint } = require('./graphql/graphql.js')
+const log = require('../log.js')
 
 const checkApiKey = (req, res, next) => {
     const key = process.env.SQUADOV_API_KEY
@@ -72,7 +73,7 @@ class ApiServer {
         let port = !!process.env.SQUADOV_API_PORT ? parseInt(process.env.SQUADOV_API_PORT) : 0
         this.server = restApp.listen(port, () => {
             process.env.SQUADOV_API_PORT = this.apiOptions.apiPort = this.server.address().port
-            console.log(`Starting API Server on Port ${process.env.SQUADOV_API_PORT} with Key ${process.env.SQUADOV_API_KEY}`)
+            log.log(`Starting API Server on Port ${process.env.SQUADOV_API_PORT} with Key ${process.env.SQUADOV_API_KEY}`)
             onStart()
         })
     }

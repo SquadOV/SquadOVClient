@@ -1,15 +1,15 @@
 const CURRENT_DB_VERSION = 7
+const log = require('../log.js')
 
 async function migrateDb(db) {
     return new Promise(resolve => {
         db.get('PRAGMA user_version', [], (err, row) => {
             if (!!err) {
-                console.log('poop prgrama')
                 throw err
             }
     
             const currentVersion = row.user_version
-            console.log(`Migrating DB from v${currentVersion} to v${CURRENT_DB_VERSION}`)
+            log.log(`Migrating DB from v${currentVersion} to v${CURRENT_DB_VERSION}`)
             db.serialize(() => {
                 db.run('BEGIN EXCLUSIVE TRANSACTION;')
                 if (currentVersion < 1) {

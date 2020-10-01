@@ -58,6 +58,7 @@
     "axios": "^0.20.0",
     "echarts": "^4.9.0",
     "electron": "^10.1.2",
+    "electron-log": "^4.2.4",
     "express": "^4.17.1",
     "express-graphql": "^0.11.0",
     "graphql": "^15.3.0",

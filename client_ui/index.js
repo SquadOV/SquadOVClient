@@ -2,6 +2,7 @@ const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
+const log = require('./log.js')
 
 let win
 
@@ -55,7 +56,7 @@ app.on('ready', () => {
             }
         }
     
-        console.log("SPAWN PROCESS: " + exePath);
+        log.log("SPAWN PROCESS: " + exePath);
         let child = spawn(exePath)
         child.stdout.on('data', (data) => {
             console.log(`SERVICE: ${data}`)

@@ -115,3 +115,4 @@ new Vue({
         routes: baseRoutes,
     }),
 }).$mount('#app')
+console.log('Loading Vue Application')
