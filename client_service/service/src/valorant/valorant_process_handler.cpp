@@ -7,6 +7,7 @@
 #include "shared/time.h"
 #include "database/api.h"
 #include "recorder/game_recorder.h"
+#include "shared/log/log.h"
 
 #include <atomic>
 #include <iostream>
@@ -102,10 +103,10 @@ void ValorantProcessHandlerInstance::onValorantDetectPvpServer(const shared::Tim
 
 void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::GameLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Valorant Match Start" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Match Start" << std::endl
         << "\tMap: " << shared::valorant::mapToName(state->matchMap) << std::endl
         << "\tMatchID: " << state->matchId << std::endl
-        << "\tAPI Server: " << state->apiServer << std::endl;
+        << "\tAPI Server: " << state->apiServer << std::endl);
 
     // Don't record on unsupported maps (e.g. the range).
     if (!shared::valorant::isGameMap(state->matchMap)) {
@@ -129,13 +130,13 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::GameLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Valorant Match End" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Match End" << std::endl
         << "\tMap: " << shared::valorant::mapToName(state->matchMap) << std::endl
         << "\tMatchID: " << state->matchId << std::endl
-        << "\tAPI Server: " << state->apiServer << std::endl;
+        << "\tAPI Server: " << state->apiServer << std::endl);
 
     if (!_currentMatch || !_api) {
-        std::cerr << "\tUNEXPECTED MATCH END (match or api nullptr)." << std::endl;
+        LOG_WARNING("\tUNEXPECTED MATCH END (match or api nullptr)." << std::endl);
         return;
     }
 
@@ -173,13 +174,11 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
         size_t apiNumMatches = 0;
         _api->getLatestMatchId(_currentUser.puuid, &apiNumMatches);
 
-        std::cout << "API MATCHES: " << apiNumMatches << std::endl;
         if (!apiNumMatches) {
             return;
         }
 
         const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid, true);
-        std::cout << "DB MATCHES: " << dbNumMatches << std::endl;
         if (dbNumMatches == apiNumMatches) {
             return;
         }
@@ -210,7 +209,6 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
             // Get their full match history and store each game's match details.
             try {
                 for (const auto& matchId : diffMatchIds) {
-                    std::cout << "VALORANT Backfill Match: " << matchId << std::endl;
                     // If this match already exists on the database, make sure we merge so we don't lose our old data.
                     ValorantMatchPtr existingMatch = _db->getValorantMatch(matchId);
                     std::string existingVodPath;
@@ -229,28 +227,28 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
                     }
                 }
             } catch (const std::exception& e) {
-                std::cerr << "Failed to backfill: " << e.what() << std::endl;
+                LOG_WARNING("Failed to backfill: " << e.what() << std::endl);
             }
         });
         backFillThread.detach();
     } catch (std::exception& ex) {
-        std::cerr << "Failed to perform Valorant backfill: " << ex.what() << std::endl;
+        LOG_WARNING("Failed to perform Valorant backfill: " << ex.what() << std::endl);
     }
 }
 
 void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint& eventTime, const void*) {
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Valorant Round BUY Start" << std::endl;
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Round BUY Start" << std::endl);
     if (!_currentMatch) {
-        std::cerr << "\tUNEXPECTED ROUND BUY (match nullptr)." << std::endl;
+        LOG_WARNING("\tUNEXPECTED ROUND BUY (match nullptr)." << std::endl);
         return;
     }
     _currentMatch->goToRoundState(eventTime, shared::valorant::EValorantRoundState::Buy);
 }
 
 void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoint& eventTime, const void*) {
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Valorant Round PLAY Start" << std::endl;
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Round PLAY Start" << std::endl);
     if (!_currentMatch) {
-        std::cerr << "\tUNEXPECTED ROUND START (match nullptr)." << std::endl;
+        LOG_WARNING("\tUNEXPECTED ROUND START (match nullptr)." << std::endl);
         return;
     }
     _currentMatch->goToRoundState(eventTime, shared::valorant::EValorantRoundState::Play);
@@ -258,11 +256,11 @@ void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoin
 
 void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::ClientLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Valorant RSO Login" << std::endl;
-    std::cout << "\tUser: " << state->user.username << "#" << state->user.tag << std::endl;
-    std::cout << "\tPUUID: " << state->user.puuid << std::endl;
-    std::cout << "\tRSO Token: " << state->rsoToken << std::endl;
-    std::cout << "\tEntitlement Token: " << state->entitlementToken << std::endl;
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant RSO Login" << std::endl
+        << "\tUser: " << state->user.username << "#" << state->user.tag << std::endl
+        << "\tPUUID: " << state->user.puuid << std::endl
+        << "\tRSO Token: " << state->rsoToken << std::endl
+        << "\tEntitlement Token: " << state->entitlementToken << std::endl);
 
     // Now that we have the RSO/Entitlement token we know enough to start querying the API.
     _currentUser = state->user;
@@ -300,7 +298,7 @@ void ValorantProcessHandler::onProcessStarts(const process_watcher::process::Pro
         return;
     }
 
-    std::cout << "START VALORANT" << std::endl;
+    LOG_INFO("START VALORANT" << std::endl);
     _instance = std::make_unique<ValorantProcessHandlerInstance>(p, _db);
 }
 
@@ -308,7 +306,7 @@ void ValorantProcessHandler::onProcessStops() {
     if (!_instance) {
         return;
     }
-    std::cout << "STOP VALORANT" << std::endl;
+    LOG_INFO("STOP VALORANT" << std::endl);
     _instance.reset(nullptr);
 }
 

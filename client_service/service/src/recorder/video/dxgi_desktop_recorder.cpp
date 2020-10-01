@@ -3,6 +3,7 @@
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/image/image.h"
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 #include "system/win32/hwnd_utils.h"
 
 #include <iostream>
@@ -123,7 +124,7 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
 
     TCHAR windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
-    std::cout << "DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl;
+    LOG_INFO("DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl);
 }
 
 DxgiDesktopRecorder::~DxgiDesktopRecorder() {
@@ -240,10 +241,10 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             const auto copyNs = std::chrono::duration_cast<std::chrono::nanoseconds>(sendToEncoderTm - postAcquireTm).count();
             const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - sendToEncoderTm).count();
 
-            std::cout << "Frame Time - DXGI:" << std::endl
+            LOG_INFO("Frame Time - DXGI:" << std::endl
                 << "\tAcquire:" << timeToAcquireNs * 1.0e-6 << std::endl
                 << "\tCopy:" << copyNs * 1.0e-6  << std::endl
-                << "\tEncode:" << encodeNs * 1.0e-6  << std::endl;
+                << "\tEncode:" << encodeNs * 1.0e-6  << std::endl);
 #endif
 
             // Limit our frames to 60hz so that we don't unnecessarily create frames.
@@ -273,7 +274,7 @@ bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, DWORD pid) {
     try {
         output.reset(new DxgiDesktopRecorder(wnd));
     } catch (std::exception& ex) {
-        std::cerr << "Failed to enable Dxgi Desktop Recording: " << ex.what() << std::endl;
+        LOG_WARNING("Failed to enable Dxgi Desktop Recording: " << ex.what() << std::endl);
         return false;
     }
 

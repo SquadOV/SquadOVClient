@@ -4,6 +4,7 @@
 
 #include "shared/strings/strings.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/log/log.h"
 
 namespace fs = std::filesystem;
 
@@ -85,7 +86,7 @@ AimlabLogWatcher::AimlabLogWatcher() {
     const fs::path gameLogDir = shared::filesystem::getAimlabAppDataFolder();
 
     _logPath = gameLogDir / fs::path("Player.log");
-    std::cout << "AIM LAB Game Log: " << _logPath.string() << std::endl;
+    LOG_INFO("AIM LAB Game Log: " << _logPath.string() << std::endl);
 
     using std::placeholders::_1;
     _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), true);

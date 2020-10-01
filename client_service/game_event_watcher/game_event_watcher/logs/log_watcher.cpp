@@ -1,6 +1,7 @@
 #include "game_event_watcher/logs/log_watcher.h"
 
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -46,9 +47,9 @@ void LogWatcher::watchWorker() {
                 break;
             }
 
-            std::cout << "\tDeferring log watcher due to a diff of " << diff.count() << " seconds." << std::endl;
+            LOG_INFO("\tDeferring log watcher due to a diff of " << diff.count() << " seconds." << std::endl);
             std::this_thread::sleep_for(1s);
-            std::cout << "\t\tRestart watching: " << _path.string() << std::endl;
+            LOG_INFO("\t\tRestart watching: " << _path.string() << std::endl);
         }
     }
 

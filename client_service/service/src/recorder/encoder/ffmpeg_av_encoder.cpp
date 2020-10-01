@@ -2,6 +2,7 @@
 
 #include "recorder/audio/fixed_size_audio_packet.h"
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 
 #include <boost/lockfree/queue.hpp>
 #include <cstdio>
@@ -311,7 +312,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             }
 
             foundEncoder = true;
-            std::cout << "FFmpeg Found Encoder: " << enc << std::endl;
+            LOG_INFO("FFmpeg Found Encoder: " << enc << std::endl);
             break;
         } catch (...) {
             avcodec_free_context(&_vcodecContext);
@@ -621,7 +622,7 @@ void FfmpegAvEncoderImpl::start() {
 #if LOG_FRAME_TIME
             const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
             const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            std::cout << "FFMPEG Encode: " << numMs << "ms [SKIP:" << skipFrame << "]" << std::endl;
+            LOG_INFO("FFMPEG Encode: " << numMs << "ms [SKIP:" << skipFrame << "]" << std::endl);
 #endif
         }
     });

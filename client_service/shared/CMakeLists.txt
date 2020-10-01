@@ -4,6 +4,7 @@ SET(SRCS
     shared/time.cpp
     shared/strings/strings.cpp
     shared/filesystem/common_paths.cpp
+    shared/log/log.cpp
     shared/sqlite/sqlite.cpp
     shared/aimlab/aimlab.cpp
 )
@@ -16,6 +17,7 @@ SET(HEADERS
     shared/time.h
     shared/strings/strings.h
     shared/filesystem/common_paths.h
+    shared/log/log.h
     shared/sqlite/sqlite.h
     shared/aimlab/aimlab.h
 )

@@ -3,6 +3,7 @@
 #include "recorder/image/image.h"
 #include "recorder/encoder/av_encoder.h"
 #include "system/win32/hwnd_utils.h"
+#include "shared/log/log.h"
 
 #include <iostream>
 #include <chrono>
@@ -31,7 +32,7 @@ Win32GdiRecorderInstance::Win32GdiRecorderInstance(HWND window):
     // For debugging print ouf the window name that we're recording from.
     TCHAR windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
-    std::cout << "Win32 GDI Recording Window: " << windowTitle << std::endl;
+    LOG_INFO("Win32 GDI Recording Window: " << windowTitle << std::endl);
 }
 
 void Win32GdiRecorderInstance::stopRecording() {
@@ -100,7 +101,7 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
             );
 
             if (!ok) {
-                std::cerr << " WARNING: BitBlt failed." << std::endl;
+                LOG_WARNING("BitBlt failed." << std::endl);
                 continue;
             } 
  
@@ -124,7 +125,7 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
             const auto numNs = std::chrono::duration_cast<std::chrono::nanoseconds>(endFrame - startFrame).count();
             
 #if LOG_FRAME_TIME
-            std::cout << "Frame Time - GDI:" << gdiElapsed * 1.0e-6 << " + Queue Encode:" << (numMs - gdiElapsed) * 1.0e-6  << std::endl;
+            LOG_INFO("Frame Time - GDI:" << gdiElapsed * 1.0e-6 << " + Queue Encode:" << (numMs - gdiElapsed) * 1.0e-6  << std::endl);
 #endif
 
             // top out at 60hz? probably not ever going to be a problem with GDI.

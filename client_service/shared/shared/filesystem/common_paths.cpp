@@ -27,6 +27,16 @@ std::filesystem::path getSquadOvRecordFolder() {
     return appData / std::filesystem::path("Record");
 }
 
+std::filesystem::path getSquadOvLogFolder() {
+    const auto appData = getSquadOvFolder();
+    return appData / std::filesystem::path("Logs");
+}
+
+std::filesystem::path getSquadOvServiceLogFolder() {
+    const auto appData = getSquadOvLogFolder();
+    return appData / std::filesystem::path("Service");
+}
+
 std::filesystem::path getAimlabAppDataFolder() {
     return getAppDataPath().parent_path() / fs::path("LocalLow") / fs::path("Statespace") / fs::path("aimlab_tb");
 }

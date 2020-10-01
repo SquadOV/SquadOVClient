@@ -1,5 +1,5 @@
 #include "valorant/valorant_match_details.h"
-
+#include "shared/log/log.h"
 #include <iostream>
 
 namespace service::valorant {
@@ -194,7 +194,7 @@ void ValorantMatchDetails::mergeWithApi(ValorantMatchDetails* other) {
                 _rounds[i]->_startPlayTime = oldRounds[i]->_startPlayTime;
             }
         } else {
-            std::cerr << "Mismatch in number of rounds between locally collected data and API." << std::endl;
+            LOG_WARNING("Mismatch in number of rounds between locally collected data and API." << std::endl);
         }
     }
     _kills = std::move(other->_kills);

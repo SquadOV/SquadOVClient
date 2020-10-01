@@ -16,4 +16,10 @@ std::string timeToStr(const TimePoint& tm, bool withMs = false);
 std::string fnameTimeToStr(const TimePoint& tm);
 bool isTimeValid(const TimePoint& tm);
 
+template<typename T>
+TimePoint convertTime(const T& tm) {
+    return std::chrono::time_point_cast<TimePoint::duration>(tm - T::clock::now()
+              + TimePoint::clock::now());
+}
+
 }

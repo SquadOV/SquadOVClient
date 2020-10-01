@@ -1,6 +1,7 @@
 #include "http/http_client.h"
 
 #include "shared/constants.h"
+#include "shared/log/log.h"
 
 #include <curl/curl.h>
 #include <iostream>
@@ -20,7 +21,7 @@ class HttpRequest {
 public:
     HttpRequest(const std::string& uri, const Headers& headers) {
         _curl = curl_easy_init();
-        std::cout << "CURL REQUEST TO: " << uri << std::endl;
+        LOG_INFO("CURL REQUEST TO: " << uri << std::endl);
         curl_easy_setopt(_curl, CURLOPT_URL, uri.c_str());
     
         for (const auto& [key, value] : headers) {

@@ -1,6 +1,7 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/audio/audio_packet_view.h"
 
@@ -91,7 +92,7 @@ PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir
     }
 
     _exists = true;
-    std::cout << "Found Audio Device [" << audioDeviceDirectionToStr(_dir) << "]: " << di->name << " CHANNELS: " << di->maxInputChannels << std::endl;
+    LOG_INFO("Found Audio Device [" << audioDeviceDirectionToStr(_dir) << "]: " << di->name << " CHANNELS: " << di->maxInputChannels << std::endl);
     _streamParams.device = defaultDevice;
     _streamParams.suggestedLatency = di->defaultLowInputLatency;
     _streamParams.hostApiSpecificStreamInfo = nullptr;

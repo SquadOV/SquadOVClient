@@ -2,6 +2,7 @@
 #include "process_watcher/games/game_process_detector.h"
 #include "process_watcher/process/process.h"
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 
 #include <iostream>
 #include <chrono>
@@ -10,7 +11,7 @@
 namespace process_watcher {
 
 void ProcessWatcher::beginWatchingGame(shared::EGame game, ProcessWatchHandlerPtr&& handler) {
-    std::cout << "Starting to Watch for: " << shared::gameToString(game) << std::endl;
+    LOG_INFO("Starting to Watch for: " << shared::gameToString(game) << std::endl);
     
     std::unique_lock<std::shared_mutex> guard(_mapMutex);
     if (_gameToWatcher.find(game) != _gameToWatcher.end()) {

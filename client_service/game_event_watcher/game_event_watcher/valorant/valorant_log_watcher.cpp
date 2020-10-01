@@ -2,6 +2,7 @@
 
 #include "shared/constants.h"
 #include "shared/errors/error.h"
+#include "shared/log/log.h"
 
 #include <chrono>
 #include <filesystem>
@@ -318,8 +319,8 @@ ValorantLogWatcher::ValorantLogWatcher() {
         }
     }
 
-    std::cout << "VALORANT Game Log: " << _gameLogFilename.string() << std::endl;
-    std::cout << "VALORANT Client Log: " << _clientLogFilename.string() << std::endl;
+    LOG_INFO("VALORANT Game Log: " << _gameLogFilename.string() << std::endl);
+    LOG_INFO("VALORANT Client Log: " << _clientLogFilename.string() << std::endl);
 
     using std::placeholders::_1;
     _gameLogWatcher = std::make_unique<LogWatcher>(_gameLogFilename, std::bind(&ValorantLogWatcher::onGameLogChange, this, _1), true);

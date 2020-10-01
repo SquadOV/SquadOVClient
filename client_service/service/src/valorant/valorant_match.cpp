@@ -1,6 +1,7 @@
 #include "valorant/valorant_match.h"
 #include "valorant/valorant_api.h"
 
+#include "shared/log/log.h"
 #include <iostream>
 
 namespace service::valorant {
@@ -27,7 +28,7 @@ void ValorantMatch::populateMatchDetailsFromApi(const ValorantApi* api) {
     auto apiDetails = api->getMatchDetails(_matchId);
     // Didn't work - oops. Merge this in later I guess.
     if (!apiDetails) {
-        std::cerr << "Failed to populate match details from API: " << _matchId << std::endl;
+        LOG_WARNING("Failed to populate match details from API: " << _matchId << std::endl);
         return;
     }
     _details.mergeWithApi(apiDetails.get());

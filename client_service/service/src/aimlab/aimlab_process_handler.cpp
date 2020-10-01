@@ -2,6 +2,7 @@
 
 #include "shared/filesystem/common_paths.h"
 #include "shared/time.h"
+#include "shared/log/log.h"
 #include "database/api.h"
 #include "recorder/game_recorder.h"
 #include "game_event_watcher/aimlab/aimlab_log_watcher.h"
@@ -97,7 +98,7 @@ void AimlabProcessHandlerInstance::backfill() {
             ++m;
             continue;
         } else {
-            std::cerr << "AIM LAB BACKFILL ERROR. UNKNOWN TASK: " << mTasks[m] << std::endl;
+            LOG_WARNING("AIM LAB BACKFILL ERROR. UNKNOWN TASK: " << mTasks[m] << std::endl);
         }
     }
 }
@@ -114,10 +115,10 @@ void AimlabProcessHandlerInstance::cleanup() {
 
 void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Aim Lab Task Start" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Start" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
         << "\tMap: " << state->taskMap << std::endl
-        << "\tVersion: " << state->gameVersion << std::endl;
+        << "\tVersion: " << state->gameVersion << std::endl);
 
     // Need to generate a unique filename since we don't actually ahve the task ID that AimLab will store at this point.
     std::ostringstream fname;
@@ -127,10 +128,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Aim Lab Task Kill" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Kill" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
         << "\tMap: " << state->taskMap << std::endl
-        << "\tVersion: " << state->gameVersion << std::endl;
+        << "\tVersion: " << state->gameVersion << std::endl);
 
     if (_recorder->isRecording()) {
         const auto oldPath = _recorder->path();
@@ -141,10 +142,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
 
 void AimlabProcessHandlerInstance::onAimlabTaskRestart(const shared::TimePoint& eventTime, const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Aim Lab Task Restart" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Restart" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
         << "\tMap: " << state->taskMap << std::endl
-        << "\tVersion: " << state->gameVersion << std::endl;
+        << "\tVersion: " << state->gameVersion << std::endl);
 
     // Stop recording. Delete the old video. Start recording again.
     onAimlabTaskKill(eventTime, rawData);
@@ -153,10 +154,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskRestart(const shared::TimePoint& 
 
 void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& eventTime,const void* rawData) {
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
-    std::cout << "[" << shared::timeToStr(eventTime) << "] Aim Lab Task Finish" << std::endl
+    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Finish" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
         << "\tMap: " << state->taskMap << std::endl
-        << "\tVersion: " << state->gameVersion << std::endl;
+        << "\tVersion: " << state->gameVersion << std::endl);
 
     // Pull record of the latest task done from AimLab's database and
     // associate that in our database with the recorded video. Also store
@@ -172,7 +173,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
         for (auto i = 0; i < 10; ++i) {
             try {
                 const auto lastData = _aimlab->getLatestTaskData();
-                std::cout << "Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl;
+                LOG_INFO("Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl);
 
                 // If we weren't recording that means the task was already killed.
                 _db->storeAimlabTask(lastData, path.string());
@@ -205,7 +206,7 @@ void AimlabProcessHandler::onProcessStarts(const process_watcher::process::Proce
         return;
     }
 
-    std::cout << "START AIMLAB" << std::endl;
+    LOG_INFO("START AIMLAB" << std::endl);
     _instance = std::make_unique<AimlabProcessHandlerInstance>(p, _db);
 }
 
@@ -213,7 +214,8 @@ void AimlabProcessHandler::onProcessStops() {
     if (!_instance) {
         return;
     }
-    std::cout << "STOP AIMLAB" << std::endl;
+    
+    LOG_INFO("STOP AIMLAB" << std::endl);
     _instance.reset(nullptr);
 }
 
