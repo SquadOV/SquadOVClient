@@ -63,5 +63,4 @@ SqlTransaction::~SqlTransaction() {
     end.next();
 }
 
-
 }

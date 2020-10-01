@@ -1,5 +1,7 @@
 #include "process_watcher/process/process.h"
 
+#include "shared/errors/error.h"
+
 #include <algorithm>
 #include <memory>
 #ifdef _WIN32
@@ -58,7 +60,7 @@ bool listRunningProcesses(std::vector<Process>& out) {
         out.emplace_back(*ptr);
     }
 #else
-    throw std::runtime_error("Unsupported OS for listing processes.");
+    THROW_ERROR("Unsupported OS for listing processes.");
 #endif
 
     std::sort(out.begin(), out.end(), [](const Process& a, const Process& b) {

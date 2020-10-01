@@ -196,8 +196,14 @@ class ValorantApiServer {
                 }
 
                 match.matchTime = new Date(match.matchTime * 1000)
-                match.ovStartTime = new Date(match.ovStartTime)
-                match.ovEndTime = new Date(match.ovEndTime)
+
+                if (!!match.ovStartTime) {
+                    match.ovStartTime = new Date(match.ovStartTime)
+                }
+
+                if (!!match.ovEndTime) {
+                    match.ovEndTime = new Date(match.ovEndTime)
+                }
             })
 
             this.db.parallelize(() => {

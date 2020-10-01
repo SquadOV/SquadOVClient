@@ -26,9 +26,16 @@ class ValorantMatchLoadout;
 class ValorantMatchTeam {
 public:
     const std::string& teamId() const { return _teamId; }
+    void setTeamId(const std::string& s) { _teamId = s ;}
+
     bool won() const { return _won; }
+    void setWon(bool w) { _won = w; }
+
     int roundsWon() const { return _roundsWon; }
+    void setRoundsWon(int w) { _roundsWon = w; }
+
     int roundsPlayed() const { return _roundsPlayed; }
+    void setRoundsPlayed(int p) { _roundsPlayed = p; }
 
     friend class ValorantMatchDetails;
 private:
@@ -57,10 +64,23 @@ public:
         int assists = 0;
     };
     const std::string& teamId() const { return _team->teamId(); }
+    void setTeam(const ValorantMatchTeam* team) { _team = team; } 
+
     const std::string& puuid() const { return _puuid; }
+    void setPuuid(const std::string& puuid) { _puuid = puuid; }
+
     const std::string& agentId() const { return _characterId; }
+    void setAgentId(const std::string& agentId) { _characterId = agentId; }
+
     const PlayerStats& stats() const { return _stats; }
+    void setStatCombatScore(int s) { _stats.totalCombatScore = s; }
+    void setStatRoundsPlayed(int s) { _stats.roundsPlayed = s; }
+    void setStatKills(int s) { _stats.kills = s; }
+    void setStatDeaths(int s) { _stats.deaths = s; }
+    void setStatAssists(int s) { _stats.assists = s; }
+
     int competitiveTier() const { return _competitiveTier; }
+    void setCompetitiveTier(int s) { _competitiveTier = s; }
 
     friend class ValorantMatchDetails;
     
@@ -88,12 +108,25 @@ using ValorantMatchPlayerPtr = std::unique_ptr<ValorantMatchPlayer>;
 class ValorantMatchLoadout {
 public:
     int loadoutValue() const { return _loadoutValue; }
+    void setLoadoutValue(int v) { _loadoutValue = v; }
+
     int remainingMoney() const { return _remainingMoney; }
+    void setRemainingMoney(int v) { _remainingMoney = v; }
+
     int spentMoney() const { return _spentMoney; }
+    void setSpentMoney(int v) { _spentMoney = v; }
+
     const std::string& weapon() const { return _weapon; }
+    void setWeapon(const std::string& w) { _weapon = w; }
+
     const std::string& armor() const { return _armor; }
+    void setArmor(const std::string& w) { _armor = w; }
+    
     int roundNum() const { return _roundNum; }
+    void setRoundNum(int r) { _roundNum = r; }
+
     const std::string& puuid() const { return _owner->puuid(); }
+    void setOwner(const ValorantMatchPlayer* owner) { _owner = owner; }
 
     friend class ValorantMatchDetails;
 private:
@@ -111,23 +144,40 @@ using ValorantMatchLoadoutPtr = std::unique_ptr<ValorantMatchLoadout>;
 class ValorantMatchRound {
 public:
     int roundNum() const { return _roundNum; }
+    void setRoundNum(int i) { _roundNum = i; }
 
     bool didPlant() const { return _plantRoundTime > 0; }
+
     int plantRoundTime() const { return _plantRoundTime; }
+    void setPlantTime(int i) { _plantRoundTime = i; }
+
     const std::string& planterPuuid() const { return !!_planter ? _planter->puuid() : shared::strings::cEmptyString; }
+    void setPlanter(const ValorantMatchPlayer* p) { _planter = p; }
 
     bool didDefuse() const { return _defuseRoundTime > 0; }
+
     int defuseRoundTime() const { return _defuseRoundTime; }
+    void setDefuseTime(int i) { _defuseRoundTime = i; }
+
     const std::string& defuserPuuid() const { return !!_defuser ? _defuser->puuid() : shared::strings::cEmptyString; }
+    void setDefuser(const ValorantMatchPlayer* p) { _defuser = p; }
 
     const std::string& teamWinner() const { return _roundWinner; }
+    void setTeamWinner(const std::string& w) { _roundWinner = w; }
 
     const shared::TimePoint& startBuyTime() const { return _startBuyTime; }
+    void setStartBuyTime(const shared::TimePoint& p) { _startBuyTime = p; }
+
     const shared::TimePoint& startPlayTime() const { return _startPlayTime; }
+    void setStartPlayTime(const shared::TimePoint& p) { _startPlayTime = p; }
+
     shared::valorant::EValorantRoundState currentRoundState() const;
 
     const auto& playerLoadouts() const { return _playerLoadouts; }
+    void setLoadouts(std::vector<ValorantMatchLoadoutPtr>&& loadouts);
+
     const auto& roundCombatScore() const { return _roundCombatScore; }
+    void setCombatScores(const std::unordered_map<std::string, int>& cs) { _roundCombatScore = cs; }
 
     friend class ValorantMatchDetails;
 private:
@@ -157,12 +207,25 @@ using ValorantMatchRoundPtr = std::unique_ptr<ValorantMatchRound>;
 class ValorantMatchKill {
 public:
     int roundTime() const { return _roundTime; }
+    void setRoundTime(int v) { _roundTime = v; }
+
     int round() const { return _round; }
+    void setRound(int v) { _round = v; }
+
     const std::string& damageType() const { return _damageType; }
+    void setDamageType(const std::string& v) { _damageType = v; }
+
     const std::string& damageItem() const { return _damageItem; }
+    void setDamageItem(const std::string& v) { _damageItem = v; }
+
     bool killSecondaryFire() const { return _killSecondaryFire; }
+    void setKillSecondaryFire(bool v) { _killSecondaryFire = v; }
+
     const std::string& killerPuuid() const { return _killer->puuid(); }
+    void setKiller(const ValorantMatchPlayer* p) { _killer = p; }
+
     const std::string& victimPuuid() const { return _victim->puuid(); }
+    void setVictim(const ValorantMatchPlayer* p) { _victim = p; }
 
     friend class ValorantMatchDetails;
 private:
@@ -180,13 +243,25 @@ using ValorantMatchKillPtr = std::unique_ptr<ValorantMatchKill>;
 class ValorantMatchDamage {
 public:
     int roundNum() const { return _roundNum; }
+    void setRoundNum(int v) { _roundNum = v; }
+
     int damage() const { return _damage; }
+    void setDamage(int v) { _damage = v; }
+
     int legshots() const { return _legshots; }
+    void setLegshots(int v) { _legshots = v; }
+
     int bodyshots() const { return _bodyshots; }
+    void setBodyshots(int v) { _bodyshots = v; }
+
     int headshots() const { return _headshots; }
+    void setHeadshots(int v) { _headshots = v; }
 
     const std::string& instigatorPuuid() const { return _instigator->puuid(); }
+    void setInstigator(const ValorantMatchPlayer* v) { _instigator = v; }
+
     const std::string& receiverPuuid() const { return _receiver->puuid(); }
+    void setReceiver(const ValorantMatchPlayer* v) { _receiver = v; }
 
     friend class ValorantMatchDetails;
 private:
@@ -213,18 +288,43 @@ public:
     void mergeWithApi(ValorantMatchDetails* other);
 
     const std::string& gameMode() const { return _gameMode; }
+    void setGameMode(const std::string& s) { _gameMode = s; }
+
     const std::string& map() const { return _map; }
+    void setMap(const std::string& m) { _map = m; }
+
     bool isRanked() const { return _isRanked; }
+    void setIsRanked(bool b) { _isRanked = b; }
+
     const std::string& provisioningFlowID() const { return _provisioningFlowID; }
+    void setProvisioningFlowID(const std::string& s) { _provisioningFlowID = s; }
+
     const std::string& gameVersion() const { return _gameVersion; }
+    void setGameVersion(const std::string& v) { _gameVersion = v; }
+
     const long long startTime() const { return _startTime; }
+    void setStartTime(long long s) { _startTime = s; }
+
     const std::string& matchId() const { return _matchId; }
+    void setMatchId(const std::string& m) { _matchId = m; }
+
+    const std::string& rawApiData() const { return _rawApiData; }
+    void setRawApiData(const std::string& m) { _rawApiData = m; }
 
     const std::unordered_map<std::string, ValorantMatchPlayerPtr>& players() const { return _players; }
+    void setPlayers(std::vector<ValorantMatchPlayerPtr>& p);
+
     const std::unordered_map<std::string, ValorantMatchTeamPtr>& teams() const { return _teams; }
+    void setTeams(std::vector<ValorantMatchTeamPtr>& t);
+
     const std::vector<ValorantMatchRoundPtr>& rounds() const { return _rounds; }
+    void setRounds(std::vector<ValorantMatchRoundPtr>&& r);
+
     const std::vector<ValorantMatchKillPtr>& kills() const { return _kills; }
+    void setKills(std::vector<ValorantMatchKillPtr>&& k);
+
     const std::vector<ValorantMatchDamagePtr>& damage() const { return _damage; }
+    void setDamage(std::vector<ValorantMatchDamagePtr>&& d);
 
 private:
     void parseMatchInfoJson(const nlohmann::json& obj);
@@ -240,6 +340,7 @@ private:
     std::string _gameVersion;
     long long _startTime = 0;
     std::string _matchId;
+    std::string _rawApiData;
 
     // puuid to player
     std::unordered_map<std::string, ValorantMatchPlayerPtr> _players;

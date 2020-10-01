@@ -4,6 +4,7 @@
 #include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "database/api.h"
+#include "shared/errors/error.h"
 
 #include <chrono>
 #include <cstdio>
@@ -32,11 +33,11 @@ void ffmpeg_log_callback(void* ptr, int level, const char* fmt, va_list v1) {
 
 int main(int argc, char** argv) {
     if (curl_global_init(CURL_GLOBAL_ALL)) {
-        throw std::runtime_error("Failed to initialize CURL.");
+        THROW_ERROR("Failed to initialize CURL.");
     }
 
     if (Pa_Initialize() != paNoError) {
-        throw std::runtime_error("Failed to initialize PortAudio.");
+        THROW_ERROR("Failed to initialize PortAudio.");
     }
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.

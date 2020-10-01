@@ -1,7 +1,7 @@
 #include "game_event_watcher/valorant/valorant_log_watcher.h"
 
 #include "shared/constants.h"
-
+#include "shared/errors/error.h"
 
 #include <chrono>
 #include <filesystem>
@@ -291,11 +291,11 @@ ValorantLogWatcher::ValorantLogWatcher() {
     const fs::path gameLogDir = localAppDataDir / fs::path("VALORANT") / fs::path("Saved") / fs::path("Logs");
     const fs::path clientLogDir = localAppDataDir / fs::path("Riot Games") / fs::path("Riot Client") / fs::path("Logs") / fs::path("Riot Client Logs");
 #else
-    throw std::runtime_error("Unsupported OS for Valorant Log Watcher.");
+    THROW_ERROR("Unsupported OS for Valorant Log Watcher.");
 #endif
 
     if (!fs::exists(gameLogDir) || !fs::exists(clientLogDir)) {
-        throw std::runtime_error("Failed to find either the game log directory or client log directory.");
+        THROW_ERROR("Failed to find either the game log directory or client log directory.");
     }
 
     const fs::path gameLogFname = gameLogDir / fs::path("ShooterGame.log");

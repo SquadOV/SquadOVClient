@@ -4,7 +4,16 @@
 
 namespace service::valorant {
 
+void ValorantMatchRound::setLoadouts(std::vector<ValorantMatchLoadoutPtr>&& loadouts) {
+    _playerLoadouts.clear();
+    for (auto& l : loadouts) {
+        _playerLoadouts[l->puuid()] = std::move(l);
+    }
+}
+
 void ValorantMatchDetails::parseFromJson(const std::string& json) {
+    _rawApiData = json;
+    
     const auto parsedJson = nlohmann::json::parse(json);
     
     const auto matchInfo = parsedJson["matchInfo"];
@@ -167,6 +176,7 @@ void ValorantMatchDetails::mergeWithApi(ValorantMatchDetails* other) {
     _gameVersion = other->_gameVersion;
     _startTime = other->_startTime;
     _matchId = other->_matchId;
+    _rawApiData = other->_rawApiData;
 
     _players = std::move(other->_players);
     _teams = std::move(other->_teams);
@@ -203,6 +213,7 @@ void ValorantMatchDetails::nextRoundStateWithTimestamp(const shared::TimePoint& 
         if (_rounds.size() == 0 || _rounds.back()->currentRoundState() != shared::valorant::EValorantRoundState::Buy) {
             auto newRound = std::make_unique<ValorantMatchRound>();
             newRound->_startBuyTime = tm;
+            newRound->_roundNum = static_cast<int>(_rounds.size() + 1);
             _rounds.emplace_back(std::move(newRound));
         }
     } else if (_rounds.size() > 0) {
@@ -211,6 +222,32 @@ void ValorantMatchDetails::nextRoundStateWithTimestamp(const shared::TimePoint& 
     } else {
         // Technically there's something that's gone horribly wrong here.
     }
+}
+
+void ValorantMatchDetails::setPlayers(std::vector<ValorantMatchPlayerPtr>& players) {
+    _players.clear();
+    for (auto& p : players) {
+        _players[p->puuid()] = std::move(p);
+    }
+}
+
+void ValorantMatchDetails::setTeams(std::vector<ValorantMatchTeamPtr>& teams) {
+    _teams.clear();
+    for (auto& t : teams) {
+        _teams[t->teamId()] = std::move(t);
+    }
+}
+
+void ValorantMatchDetails::setRounds(std::vector<ValorantMatchRoundPtr>&& r) {
+    _rounds = std::move(r);
+}
+
+void ValorantMatchDetails::setKills(std::vector<ValorantMatchKillPtr>&& k) {
+    _kills = std::move(k);
+}
+
+void ValorantMatchDetails::setDamage(std::vector<ValorantMatchDamagePtr>&& d) {
+    _damage = std::move(d);
 }
 
 shared::valorant::EValorantRoundState ValorantMatchRound::currentRoundState() const {

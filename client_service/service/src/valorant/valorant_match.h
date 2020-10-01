@@ -28,7 +28,9 @@ public:
     const std::string& matchId() const { return _matchId; }
     const shared::TimePoint& endTime() const { return _endTime; }
     bool isFinished() const { return _endTime != (shared::TimePoint::max)(); }
+    
     const ValorantMatchDetails& details() const { return _details; }
+    void setDetails(ValorantMatchDetails&& details) { _details = std::move(details); }
 
     void goToRoundState(const shared::TimePoint& tm, shared::valorant::EValorantRoundState state);
     void finishMatch(const shared::TimePoint& tm);

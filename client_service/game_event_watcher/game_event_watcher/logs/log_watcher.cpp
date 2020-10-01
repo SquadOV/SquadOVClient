@@ -1,5 +1,7 @@
 #include "game_event_watcher/logs/log_watcher.h"
 
+#include "shared/errors/error.h"
+
 #ifdef _WIN32
 #include <windows.h>
 #include <fileapi.h>
@@ -53,7 +55,7 @@ void LogWatcher::watchWorker() {
     // Open file for reading via the C++ STDLIB.
     std::ifstream logStream(_path.string());
     if (!logStream.is_open()) {
-        throw std::runtime_error("Failed to open log.");
+        THROW_ERROR("Failed to open log.");
     }
 
     // Create another thread to open up the file every once in awhile.
@@ -84,7 +86,7 @@ void LogWatcher::watchWorker() {
         NULL
     );
 #else
-        throw std::runtime_error("Unsupported OS for LogWatcher.");
+        THROW_ERROR("Unsupported OS for LogWatcher.");
 #endif
     while (!_isFinished) {
         logStream.clear();

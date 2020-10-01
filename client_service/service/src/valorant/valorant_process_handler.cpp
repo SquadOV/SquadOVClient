@@ -173,11 +173,13 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
         size_t apiNumMatches = 0;
         _api->getLatestMatchId(_currentUser.puuid, &apiNumMatches);
 
+        std::cout << "API MATCHES: " << apiNumMatches << std::endl;
         if (!apiNumMatches) {
             return;
         }
 
-        const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid);
+        const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid, true);
+        std::cout << "DB MATCHES: " << dbNumMatches << std::endl;
         if (dbNumMatches == apiNumMatches) {
             return;
         }
@@ -208,8 +210,23 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
             // Get their full match history and store each game's match details.
             try {
                 for (const auto& matchId : diffMatchIds) {
-                    ValorantMatch match(std::move(*_api->getMatchDetails(matchId)));
-                    _db->storeValorantMatch(&match);
+                    std::cout << "VALORANT Backfill Match: " << matchId << std::endl;
+                    // If this match already exists on the database, make sure we merge so we don't lose our old data.
+                    ValorantMatchPtr existingMatch = _db->getValorantMatch(matchId);
+                    std::string existingVodPath;
+
+                    if (!!existingMatch) {
+                        existingMatch->populateMatchDetailsFromApi(_api.get());
+                        existingVodPath = _db->getVodFilenameForValorantMatch(matchId);
+                    } else {
+                        auto apiDetails = _api->getMatchDetails(matchId);
+                        existingMatch = std::make_unique<ValorantMatch>(std::move(*apiDetails));
+                    }
+
+                    _db->storeValorantMatch(existingMatch.get());
+                    if (!existingVodPath.empty()) {
+                        _db->associateValorantMatchToVideoFile(existingMatch->matchId(), existingVodPath);
+                    }
                 }
             } catch (const std::exception& e) {
                 std::cerr << "Failed to backfill: " << e.what() << std::endl;

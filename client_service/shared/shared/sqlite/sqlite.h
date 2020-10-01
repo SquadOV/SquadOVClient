@@ -49,10 +49,19 @@ public:
         return sqlite3_column_int(_stmt, i);
     }
 
+    bool isColumnNull(int i) {
+        return (sqlite3_column_type(_stmt, i) == SQLITE_NULL);
+    }
+
     template<>
     std::string getColumn(int i) {
         const auto* txt = sqlite3_column_text(_stmt, i);
         return std::string((const char*)txt);
+    }
+
+    template<>
+    long long getColumn(int i) {
+        return static_cast<long long>(sqlite3_column_int64(_stmt, i));
     }
 
     shared::TimePoint getTimeColumnFromString(int i, const std::string& format) {

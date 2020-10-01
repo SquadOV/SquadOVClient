@@ -1,5 +1,7 @@
 #include "shared/filesystem/common_paths.h"
 
+#include "shared/errors/error.h"
+
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 
@@ -11,7 +13,7 @@ std::filesystem::path getAppDataPath() {
     const std::filesystem::path appDataDir(appData);
     free(appData);
 #else
-    throw std::runtime_error("Unsupported OS.");
+    THROW_ERROR("Unsupported OS.");
 #endif
     return appDataDir;
 }

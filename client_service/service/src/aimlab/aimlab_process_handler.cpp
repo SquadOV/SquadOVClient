@@ -161,17 +161,35 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     // Pull record of the latest task done from AimLab's database and
     // associate that in our database with the recorded video. Also store
     // a copy in our own database.
-    const auto lastData = _aimlab->getLatestTaskData();
-    std::cout << "Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl;
-
-    std::string vodPath = "";
     if (_recorder->isRecording()) {
         const auto path = _recorder->path();
         _recorder->stop();
-        vodPath = path.string();
-    }
 
-    _db->storeAimlabTask(lastData, vodPath);
+        // It might take a few tries to grab the data from the SQLite database.
+        // I'm assuming it's because Aim Lab will write exclusively to the database
+        // and if we try to read from the databse during time it'll fail.
+        bool success = false;
+        for (auto i = 0; i < 10; ++i) {
+            try {
+                const auto lastData = _aimlab->getLatestTaskData();
+                std::cout << "Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl;
+
+                // If we weren't recording that means the task was already killed.
+                _db->storeAimlabTask(lastData, path.string());
+                success = true;
+                break;
+            } catch (...) {
+                // Don't retry immediately. Wait 10 seconds in total and hopefully
+                // we'll get through....
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }
+
+        if (!success) {
+            // Failed to pull data - hopefully we never get here but just remove the video.
+            std::filesystem::remove(path);
+        }
+    }
 }
 
 AimlabProcessHandler::AimlabProcessHandler(const service::database::DatabaseApi* db):

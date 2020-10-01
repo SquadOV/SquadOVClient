@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 5
+const CURRENT_DB_VERSION = 7
 
 async function migrateDb(db) {
     return new Promise(resolve => {
@@ -94,6 +94,7 @@ CREATE TABLE valorant_match_round_player_loadout (
     spent_money INTEGER NOT NULL,
     weapon TEXT NOT NULL,
     armor TEXT NOT NULL,
+    PRIMARY KEY (match_id, round_num, puuid),
     FOREIGN KEY (match_id, puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE,
     FOREIGN KEY (match_id, round_num) REFERENCES valorant_match_rounds(match_id, round_num) ON DELETE CASCADE
 );
@@ -136,6 +137,7 @@ CREATE TABLE valorant_match_round_player_stats (
     round_num INTEGER NOT NULL,
     puuid TEXT NOT NULL,
     combat_score INTEGER NOT NULL,
+    PRIMARY KEY (match_id, round_num, puuid),
     FOREIGN KEY (match_id, round_num) REFERENCES valorant_match_rounds(match_id, round_num) ON DELETE CASCADE,
     FOREIGN KEY (match_id, puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE
 );
@@ -206,6 +208,14 @@ CREATE TABLE aimlab_tasks (
     rawData TEXT NOT NULL,
     vodPath TEXT
 )                 
+                    `)
+                }
+
+                if (currentVersion < 6) {
+                    // Store raw Valorant match data for future processing if needed.
+                    db.run(`
+ALTER TABLE valorant_matches
+ADD COLUMN raw_api_data TEXT            
                     `)
                 }
     

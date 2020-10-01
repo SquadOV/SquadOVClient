@@ -103,13 +103,13 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                 restartFlag = true;
             }
             continue;
-        } else if (parseTaskMode(ln, _state.taskMode)) {
+        } else if (_state.inTask && parseTaskMode(ln, _state.taskMode)) {
             continue;
-        } else if (parseTaskMap(ln, _state.taskMap)) {
+        } else if (_state.inTask && parseTaskMap(ln, _state.taskMap)) {
             continue;
-        } else if (parseTaskName(ln, _state.taskName)) {
+        } else if (_state.inTask && parseTaskName(ln, _state.taskName)) {
             continue;
-        } else if (parseGameVersion(ln, _state.gameVersion)) {
+        } else if (_state.inTask && parseGameVersion(ln, _state.gameVersion)) {
             continue;            
         } else if (parseFinishTask(ln)) {
             _state = AimlabLogState{};
@@ -137,7 +137,7 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         notify(static_cast<int>(EAimlabLogEvents::KillTask), shared::nowUtc(), (void*)&previousState);
     } else if (restartFlag) {
         notify(static_cast<int>(EAimlabLogEvents::RestartTask), shared::nowUtc(), (void*)&_state);
-    } if (_state.isInTask()) {
+    } else if (_state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::StartTask), shared::nowUtc(), (void*)&_state);
     } else {
         notify(static_cast<int>(EAimlabLogEvents::FinishTask), shared::nowUtc(), (void*)&previousState);

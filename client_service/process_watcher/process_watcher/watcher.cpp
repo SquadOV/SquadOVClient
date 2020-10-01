@@ -1,6 +1,7 @@
 #include "process_watcher/watcher.h"
 #include "process_watcher/games/game_process_detector.h"
 #include "process_watcher/process/process.h"
+#include "shared/errors/error.h"
 
 #include <iostream>
 #include <chrono>
@@ -13,7 +14,7 @@ void ProcessWatcher::beginWatchingGame(shared::EGame game, ProcessWatchHandlerPt
     
     std::unique_lock<std::shared_mutex> guard(_mapMutex);
     if (_gameToWatcher.find(game) != _gameToWatcher.end()) {
-        throw std::runtime_error("Can only have 1 watcher per game.");
+        THROW_ERROR("Can only have 1 watcher per game.");
         return;
     }
 
@@ -33,7 +34,7 @@ void ProcessWatcher::start() {
 
             if (!success) {
                 // If this fails something probably went very wrong.
-                throw std::runtime_error("Failed to list running processes.");
+                THROW_ERROR("Failed to list running processes.");
             }
 
             std::shared_lock<std::shared_mutex> guard(_mapMutex);

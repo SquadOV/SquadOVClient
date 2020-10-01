@@ -321,7 +321,8 @@ void insertValorantMatchSql(SqlTransaction& tx, const service::valorant::Valoran
                 game_version,
                 server_start_time_utc,
                 start_time_utc,
-                end_time_utc
+                end_time_utc,
+                raw_api_data
             )
             VALUES ()|"
                 << "'" << match->matchId() << "', " 
@@ -334,6 +335,8 @@ void insertValorantMatchSql(SqlTransaction& tx, const service::valorant::Valoran
     addNullableTimeSql(sql, match->startTime());
     sql << ", ";
     addNullableTimeSql(sql, match->endTime());
+    sql << "," << std::endl;
+    addNullableString(sql, details.rawApiData());
     sql << ");" << std::endl;
 
     SqlStatement stmt = tx.createStatement(sql.str());
@@ -373,7 +376,16 @@ void insertValorantMatchSql(SqlTransaction& tx, const service::valorant::Valoran
 
 DatabaseApi::DatabaseApi(const std::string& dbFname) {
     if (sqlite3_open(dbFname.c_str(), &_db) != SQLITE_OK) {
-        throw std::runtime_error("Failed to open database.");
+        THROW_ERROR("Failed to open database.");
+    }
+
+    // What the actual fuck sqlite. Need to enable foreign keys or else we won't get
+    // propagation of deletes and what not via cascade.
+    SqlStatement stmt(_db, "PRAGMA foreign_keys = ON;");
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to enable foreign keys.");
     }
 }
 
@@ -398,6 +410,18 @@ void DatabaseApi::storeValorantAccount(const shared::riot::RiotUser& user) const
 
 void DatabaseApi::storeValorantMatch(const service::valorant::ValorantMatch* match) const {
     SqlTransaction tx(_db);
+
+    // First *delete the match if it exists*.
+    // Assume that the incoming match is always a suitable replacement.
+    // The VOD path is not included in this so it's up to the caller to make sure
+    // the VOD path is replaced. Shitty design? Yes. :(
+    SqlStatement stmt(_db, "DELETE FROM valorant_matches WHERE id = ?");
+    stmt.bindParameter(1, match->matchId());
+    tx.exec(stmt);
+    if (tx.fail()) {
+        THROW_ERROR("Failed to delete valorant match: " << tx.errMsg());
+    }
+
     insertValorantMatchSql(tx, match);
 
     if (tx.fail()) {
@@ -405,17 +429,373 @@ void DatabaseApi::storeValorantMatch(const service::valorant::ValorantMatch* mat
     }
 }
 
-size_t DatabaseApi::totalValorantMatchesForPuuid(const std::string& puuid) const {
+service::valorant::ValorantMatchPtr DatabaseApi::getValorantMatch(const std::string& matchId) const {
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            id,
+            gameMode,
+            map,
+            is_ranked,
+            provisioning_flow_id,
+            game_version,
+            server_start_time_utc,
+            start_time_utc,
+            end_time_utc,
+            raw_api_data
+        FROM valorant_matches WHERE id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (!stmt.hasNext()) {
+        return nullptr;
+    }
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get stored match: " << stmt.errMsg());
+    }
+
+    shared::TimePoint startTime = shared::TimePoint::max();
+    if (!stmt.isColumnNull(7)) {
+        startTime = stmt.getTimeColumnFromString(7, "%F %H:%M:%S.000");
+    }
+
+    shared::TimePoint endTime = shared::TimePoint::max();
+    if (!stmt.isColumnNull(8)) {
+        endTime = stmt.getTimeColumnFromString(8, "%F %H:%M:%S.000");
+    }
+
+    auto match = std::make_unique<service::valorant::ValorantMatch>(
+        startTime,
+        shared::valorant::mapIdToValorantMap(stmt.getColumn<std::string>(2)),
+        matchId
+    );
+    match->finishMatch(endTime);
+
+    service::valorant::ValorantMatchDetails details;
+    details.setGameMode(stmt.getColumn<std::string>(1));
+    details.setMap(stmt.getColumn<std::string>(2));
+    details.setIsRanked(stmt.getColumn<int>(3));
+    details.setProvisioningFlowID(stmt.getColumn<std::string>(4));
+    details.setGameVersion(stmt.getColumn<std::string>(5));
+    details.setStartTime(stmt.getColumn<long long>(6));
+    details.setMatchId(stmt.getColumn<std::string>(0));
+
+    if (!stmt.isColumnNull(9)) {
+        details.setRawApiData(stmt.getColumn<std::string>(9));
+    }
+
+    {
+        auto teams = getValorantMatchTeams(matchId, details);
+        details.setTeams(teams);
+    }
+
+    {
+        auto players = getValorantMatchPlayers(matchId, details);
+        details.setPlayers(players);
+    }
+
+    details.setRounds(getValorantMatchRounds(matchId, details));
+    details.setKills(getValorantMatchKills(matchId, details));
+    details.setDamage(getValorantMatchDamage(matchId, details));
+
+    match->setDetails(std::move(details));
+    return match;
+}
+
+
+std::vector<service::valorant::ValorantMatchPlayerPtr> DatabaseApi::getValorantMatchPlayers(const std::string& matchId, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchPlayerPtr> players;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            team_id,
+            puuid,
+            agent_id,
+            competitive_tier,
+            total_combat_score,
+            rounds_played,
+            kills,
+            deaths,
+            assists
+        FROM valorant_match_players WHERE match_id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match players: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto player = std::make_unique<service::valorant::ValorantMatchPlayer>();
+        player->setTeam(details.teams().at(stmt.getColumn<std::string>(0)).get());
+        player->setPuuid(stmt.getColumn<std::string>(1));
+        player->setAgentId(stmt.getColumn<std::string>(2));
+        player->setCompetitiveTier(stmt.getColumn<int>(3));
+        player->setStatCombatScore(stmt.getColumn<int>(4));
+        player->setStatRoundsPlayed(stmt.getColumn<int>(5));
+        player->setStatKills(stmt.getColumn<int>(6));
+        player->setStatDeaths(stmt.getColumn<int>(7));
+        player->setStatAssists(stmt.getColumn<int>(8));
+        players.emplace_back(std::move(player));
+        stmt.next();
+    }
+
+    return players;
+}
+
+std::vector<service::valorant::ValorantMatchTeamPtr> DatabaseApi::getValorantMatchTeams(const std::string& matchId, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchTeamPtr> teams;
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            team_id,
+            won,
+            rounds_won,
+            rounds_played
+        FROM valorant_match_teams WHERE match_id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match teams: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto team = std::make_unique<service::valorant::ValorantMatchTeam>();
+        team->setTeamId(stmt.getColumn<std::string>(0));
+        team->setWon(stmt.getColumn<int>(1));
+        team->setRoundsWon(stmt.getColumn<int>(2));
+        team->setRoundsPlayed(stmt.getColumn<int>(3));
+        teams.emplace_back(std::move(team));
+        stmt.next();
+    }
+    return teams;
+}
+
+std::vector<service::valorant::ValorantMatchRoundPtr> DatabaseApi::getValorantMatchRounds(const std::string& matchId, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchRoundPtr> rounds;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            round_num,
+            plant_round_time,
+            planter_puuid,
+            defuse_round_time,
+            defuser_puuid,
+            team_round_winner,
+            round_buy_time_utc,
+            round_play_time_utc
+        FROM valorant_match_rounds WHERE match_id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match rounds: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto round = std::make_unique<service::valorant::ValorantMatchRound>();
+        round->setRoundNum(stmt.getColumn<int>(0));
+        
+        if (!stmt.isColumnNull(1) && !stmt.isColumnNull(2)) {
+            round->setPlantTime(stmt.getColumn<int>(1));
+            round->setPlanter(details.players().at(stmt.getColumn<std::string>(2)).get());
+        }
+
+        if (!stmt.isColumnNull(3) && !stmt.isColumnNull(4)) {
+            round->setDefuseTime(stmt.getColumn<int>(3));
+            round->setDefuser(details.players().at(stmt.getColumn<std::string>(4)).get());
+        }
+
+        round->setTeamWinner(stmt.getColumn<std::string>(5));
+
+        if (!stmt.isColumnNull(6)) {
+            round->setStartBuyTime(stmt.getTimeColumnFromString(6, "%F %H:%M:%S.000"));
+        }
+
+        if (!stmt.isColumnNull(7)) {
+            round->setStartBuyTime(stmt.getTimeColumnFromString(7, "%F %H:%M:%S.000"));
+        }
+
+        round->setLoadouts(getValorantMatchRoundLoadouts(matchId, round->roundNum(), details));
+        round->setCombatScores(getValorantMatchRoundStats(matchId, round->roundNum()));
+
+        rounds.emplace_back(std::move(round));
+        stmt.next();
+    }
+
+    return rounds;
+}
+
+std::vector<service::valorant::ValorantMatchLoadoutPtr> DatabaseApi::getValorantMatchRoundLoadouts(const std::string& matchId, int roundNum, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchLoadoutPtr> loadouts;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            puuid,
+            loadout_value,
+            remaining_money,
+            spent_money,
+            weapon,
+            armor
+        FROM valorant_match_round_player_loadout WHERE match_id = ? AND round_num = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.bindParameter(2, roundNum);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match round loadouts: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto loadout = std::make_unique<service::valorant::ValorantMatchLoadout>();
+        loadout->setOwner(details.players().at(stmt.getColumn<std::string>(0)).get());
+        loadout->setLoadoutValue(stmt.getColumn<int>(1));
+        loadout->setRemainingMoney(stmt.getColumn<int>(2));
+        loadout->setSpentMoney(stmt.getColumn<int>(3));
+        loadout->setWeapon(stmt.getColumn<std::string>(4));
+        loadout->setArmor(stmt.getColumn<std::string>(5));
+
+        loadouts.emplace_back(std::move(loadout));
+        stmt.next();
+    }
+    return loadouts;
+}
+
+std::unordered_map<std::string, int> DatabaseApi::getValorantMatchRoundStats(const std::string& matchId, int roundNum) const {
+    std::unordered_map<std::string, int> scores;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            puuid,
+            combat_score
+        FROM valorant_match_round_player_stats WHERE match_id = ? AND round_num = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.bindParameter(2, roundNum);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match round stats: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        scores[stmt.getColumn<std::string>(0)] = stmt.getColumn<int>(1);
+        stmt.next();
+    }
+    return scores;
+}
+
+std::vector<service::valorant::ValorantMatchKillPtr> DatabaseApi::getValorantMatchKills(const std::string& matchId, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchKillPtr> kills;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            round_num,
+            killer_puuid,
+            victim_puuid,
+            round_time,
+            damage_type,
+            damage_item,
+            is_secondary_fire
+        FROM valorant_match_kill WHERE match_id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match kills: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto kill = std::make_unique<service::valorant::ValorantMatchKill>();
+        kill->setRoundTime(stmt.getColumn<int>(3));
+        kill->setRound(stmt.getColumn<int>(0));
+        kill->setDamageType(stmt.getColumn<std::string>(4));
+        kill->setDamageItem(stmt.getColumn<std::string>(5));
+        kill->setKillSecondaryFire(stmt.getColumn<int>(6));
+        kill->setKiller(details.players().at(stmt.getColumn<std::string>(1)).get());
+        kill->setVictim(details.players().at(stmt.getColumn<std::string>(2)).get());
+
+        kills.emplace_back(std::move(kill));
+        stmt.next();
+    }
+    return kills;
+}
+
+std::vector<service::valorant::ValorantMatchDamagePtr> DatabaseApi::getValorantMatchDamage(const std::string& matchId, const service::valorant::ValorantMatchDetails& details) const {
+    std::vector<service::valorant::ValorantMatchDamagePtr> damage;
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT 
+            round_num,
+            instigator_puuid,
+            receiver_puuid,
+            damage,
+            legshots,
+            bodyshots,
+            headshots
+        FROM valorant_match_damage WHERE match_id = ?)|";
+
+    SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to get match damage: " << stmt.errMsg());
+    }
+
+    while(stmt.hasNext()) {
+        auto dmg = std::make_unique<service::valorant::ValorantMatchDamage>();
+        dmg->setRoundNum(stmt.getColumn<int>(0));
+        dmg->setDamage(stmt.getColumn<int>(3));
+        dmg->setLegshots(stmt.getColumn<int>(4));
+        dmg->setBodyshots(stmt.getColumn<int>(5));
+        dmg->setHeadshots(stmt.getColumn<int>(6));
+        dmg->setInstigator(details.players().at(stmt.getColumn<std::string>(1)).get());
+        dmg->setReceiver(details.players().at(stmt.getColumn<std::string>(2)).get());
+
+        damage.emplace_back(std::move(dmg));
+        stmt.next();
+    }
+    return damage;
+}
+
+size_t DatabaseApi::totalValorantMatchesForPuuid(const std::string& puuid, bool withApiData) const {
     std::ostringstream sql;
     sql << R"|(
         SELECT COUNT(vm.id)
         FROM valorant_matches AS vm
         INNER JOIN valorant_match_players AS vmp
             ON vmp.match_id = vm.id
-        WHERE vmp.puuid = ')|" << puuid << "';";
+        WHERE vmp.puuid = ?)|";
+
+    if (withApiData) {
+        sql << " AND vm.raw_api_data IS NOT NULL";
+    }
 
     SqlStatement stmt(_db, sql.str());
-    stmt.next();
+    stmt.bindParameter(1, puuid);
+    stmt.next(); 
 
     if (stmt.fail()) {
         THROW_ERROR("Failed to get total valorant matches: " << stmt.errMsg());
@@ -428,9 +808,10 @@ bool DatabaseApi::isValorantMatchStored(const std::string& matchId) const {
     sql << R"|(
         SELECT COUNT(vm.id)
         FROM valorant_matches AS vm
-        WHERE vm.id = ')|" << matchId << "';";
+        WHERE vm.id = ? AND vm.raw_api_data IS NOT NULL)|";
 
     SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, matchId);
     stmt.next();
 
     if (stmt.fail()) {
@@ -453,6 +834,22 @@ void DatabaseApi::associateValorantMatchToVideoFile(const std::string& matchId, 
     if (stmt.fail()) {
         THROW_ERROR("Failed to store valorant account: " << stmt.errMsg());
     }
+}
+
+std::string DatabaseApi::getVodFilenameForValorantMatch(const std::string& matchId) const {
+    SqlStatement stmt(_db, "SELECT video_path FROM valorant_match_videos WHERE match_id = ?");
+    stmt.bindParameter(1, matchId);
+    stmt.next();
+
+    if (!stmt.hasNext()) {
+        return "";
+    }
+
+    if (stmt.fail()) {
+        THROW_ERROR("Failed to store valorant match vod: " << stmt.errMsg());
+    }
+
+    return stmt.getColumn<std::string>(0);
 }
 
 bool DatabaseApi::isValorantVideoAssociatedWithMatch(const std::string& fname) const {
