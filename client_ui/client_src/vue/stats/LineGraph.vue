@@ -57,7 +57,13 @@ export default class LineGraph extends Vue {
                     lineStyle: {
                         color: '#FFFFFF'
                     }
-                }
+                },
+                min: (value: any) => {
+                    return Math.floor(value.min - (value.max - value.min) * 0.01)
+                },
+                max: (value: any) => {
+                    return Math.ceil(value.max + (value.max - value.min) * 0.01)
+                },
             },
             dataZoom: [
                 {

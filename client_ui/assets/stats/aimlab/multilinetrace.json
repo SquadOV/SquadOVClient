@@ -1,0 +1,7 @@
+{
+    "id": "multilinetrace",
+    "name": "Multilinetrace",
+    "includeStats": [
+        "assets/stats/aimlab/multilinetrace/ultimate.json"
+    ]
+}

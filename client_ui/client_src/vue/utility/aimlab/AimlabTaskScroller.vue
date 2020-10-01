@@ -9,7 +9,7 @@
         </aimlab-task-summary-display>
 
         <v-btn
-            v-if="!loadedAllMatches"
+            v-if="!loadedAllTasks"
             color="primary"
             block
             @click="loadMore"  

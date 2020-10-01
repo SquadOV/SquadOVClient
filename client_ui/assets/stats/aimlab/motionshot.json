@@ -1,0 +1,9 @@
+{
+    "id": "motionshot",
+    "name": "Motionshot",
+    "includeStats": [
+        "assets/stats/aimlab/motionshot/precision.json",
+        "assets/stats/aimlab/motionshot/speed.json",
+        "assets/stats/aimlab/motionshot/ultimate.json"
+    ]
+}

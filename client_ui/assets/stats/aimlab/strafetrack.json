@@ -1,0 +1,7 @@
+{
+    "id": "strafetrack",
+    "name": "Strafetrack",
+    "includeStats": [
+        "assets/stats/aimlab/strafetrack/ultimate.json"
+    ]
+}

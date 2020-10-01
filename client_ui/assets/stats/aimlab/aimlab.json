@@ -2,7 +2,22 @@
     "id": "aimlab",
     "name": "Aimlab",
     "includeStats": [
-        "assets/stats/aimlab/gridshot.json"
+        "assets/stats/aimlab/gridshot.json",
+        "assets/stats/aimlab/microshot.json",
+        "assets/stats/aimlab/sixshot.json",
+        "assets/stats/aimlab/detection.json",
+        "assets/stats/aimlab/decisionshot.json",
+        "assets/stats/aimlab/spidershot.json",
+        "assets/stats/aimlab/motionshot.json",
+        "assets/stats/aimlab/microflex.json",
+        "assets/stats/aimlab/strafetrack.json",
+        "assets/stats/aimlab/circletrack.json",
+        "assets/stats/aimlab/strafeshot.json",
+        "assets/stats/aimlab/circleshot.json",
+        "assets/stats/aimlab/multishot.json",
+        "assets/stats/aimlab/linetrace.json",
+        "assets/stats/aimlab/multilinetrace.json",
+        "assets/stats/aimlab/pentakill.json"
     ],
     "commonOptions": [
         {

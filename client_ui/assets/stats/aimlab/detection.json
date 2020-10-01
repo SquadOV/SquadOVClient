@@ -1,0 +1,7 @@
+{
+    "id": "detection",
+    "name": "Detection",
+    "includeStats": [
+        "assets/stats/aimlab/detection/ultimate.json"
+    ]
+}

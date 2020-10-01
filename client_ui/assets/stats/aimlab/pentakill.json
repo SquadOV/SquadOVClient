@@ -1,0 +1,7 @@
+{
+    "id": "pentakill",
+    "name": "Pentakill",
+    "includeStats": [
+        "assets/stats/aimlab/pentakill/ultimate.json"
+    ]
+}

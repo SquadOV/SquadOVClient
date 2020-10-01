@@ -1,0 +1,7 @@
+{
+    "id": "sixshot",
+    "name": "Sixshot",
+    "includeStats": [
+        "assets/stats/aimlab/sixshot/ultimate.json"
+    ]
+}

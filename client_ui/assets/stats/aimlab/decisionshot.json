@@ -1,0 +1,9 @@
+{
+    "id": "decisionshot",
+    "name": "Decisionshot",
+    "includeStats": [
+        "assets/stats/aimlab/decisionshot/precision.json",
+        "assets/stats/aimlab/decisionshot/speed.json",
+        "assets/stats/aimlab/decisionshot/ultimate.json"
+    ]
+}

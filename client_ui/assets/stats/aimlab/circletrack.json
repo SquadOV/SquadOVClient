@@ -1,0 +1,7 @@
+{
+    "id": "circletrack",
+    "name": "Circletrack",
+    "includeStats": [
+        "assets/stats/aimlab/circletrack/ultimate.json"
+    ]
+}

@@ -1,0 +1,250 @@
+{
+    "id": "speed",
+    "name": "Speed",
+    "stats": [
+        {
+            "id": "score",
+            "name": "Score",
+            "graphql": {
+                "node": "stats",
+                "children": [
+                    {
+                        "node": "aimlab",
+                        "children": [
+                            {
+                                "node": "multishot",
+                                "args": [
+                                    {
+                                        "key": "mode",
+                                        "value": 12
+                                    },
+                                    {
+                                        "key": "group",
+                                        "value": "$group",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "groupFn",
+                                        "value": "$groupFn",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "sort",
+                                        "value": "$sort",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "node": "x"
+                                    },
+                                    {
+                                        "node": "score"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "xPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "x"
+            ],
+            "yPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "score"
+            ]
+        },
+        {
+            "id": "kills",
+            "name": "Total Kills",
+            "graphql": {
+                "node": "stats",
+                "children": [
+                    {
+                        "node": "aimlab",
+                        "children": [
+                            {
+                                "node": "multishot",
+                                "args": [
+                                    {
+                                        "key": "mode",
+                                        "value": 12
+                                    },
+                                    {
+                                        "key": "group",
+                                        "value": "$group",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "groupFn",
+                                        "value": "$groupFn",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "sort",
+                                        "value": "$sort",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "node": "x"
+                                    },
+                                    {
+                                        "node": "kill"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "xPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "x"
+            ],
+            "yPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "kill"
+            ]
+        },
+        {
+            "id": "ttk",
+            "name": "Time-to-Kill (ms)",
+            "graphql": {
+                "node": "stats",
+                "children": [
+                    {
+                        "node": "aimlab",
+                        "children": [
+                            {
+                                "node": "multishot",
+                                "args": [
+                                    {
+                                        "key": "mode",
+                                        "value": 12
+                                    },
+                                    {
+                                        "key": "group",
+                                        "value": "$group",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "groupFn",
+                                        "value": "$groupFn",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "sort",
+                                        "value": "$sort",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "node": "x"
+                                    },
+                                    {
+                                        "node": "ttk"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "xPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "x"
+            ],
+            "yPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "ttk"
+            ]
+        },
+        {
+            "id": "acc",
+            "name": "Accuracy",
+            "graphql": {
+                "node": "stats",
+                "children": [
+                    {
+                        "node": "aimlab",
+                        "children": [
+                            {
+                                "node": "multishot",
+                                "args": [
+                                    {
+                                        "key": "mode",
+                                        "value": 12
+                                    },
+                                    {
+                                        "key": "group",
+                                        "value": "$group",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "groupFn",
+                                        "value": "$groupFn",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    },
+                                    {
+                                        "key": "sort",
+                                        "value": "$sort",
+                                        "isVariable": true,
+                                        "isEnum": true
+                                    }
+                                ],
+                                "children": [
+                                    {
+                                        "node": "x"
+                                    },
+                                    {
+                                        "node": "acc"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            "xPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "x"
+            ],
+            "yPath": [
+                "stats",
+                "aimlab",
+                "multishot",
+                "acc"
+            ]
+        }
+    ]
+}
