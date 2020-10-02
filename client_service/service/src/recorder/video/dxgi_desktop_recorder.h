@@ -24,6 +24,7 @@ private:
     bool _recording = false;    
     std::thread _recordingThread;
 
+    void initialize();
     void reacquireDuplicationInterface();
 
     size_t _width = 0;

@@ -11,6 +11,8 @@
 #define LOG_FRAME_TIME 0
 #ifdef _WIN32
 
+using namespace std::chrono_literals;
+
 namespace service::recorder::video {
 
 namespace {
@@ -44,8 +46,41 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
         THROW_ERROR("Failed to create D3D11 device.");
     }
 
+    TCHAR windowTitle[1024];
+    GetWindowTextA(_window, windowTitle, 1024);
+    LOG_INFO("DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl);
+}
+
+DxgiDesktopRecorder::~DxgiDesktopRecorder() {
+    if (!!_dupl) {
+        _dupl->Release();
+        _dupl = nullptr;
+    }
+
+    if (!!_dxgiOutput1) {
+        _dxgiOutput1->Release();
+        _dxgiOutput1 = nullptr;
+    }
+
+    if (!!_deviceTexture) {
+        _deviceTexture->Release();
+        _deviceTexture = nullptr;
+    }
+
+    if (!!_context) {
+        _context->Release();
+        _context = nullptr;
+    }
+
+    if (!!_device) {
+        _device->Release();
+        _device = nullptr;
+    }
+}
+
+void DxgiDesktopRecorder::initialize() {
     IDXGIDevice* dxgiDevice = nullptr;
-    hr = _device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    HRESULT hr = _device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIDevice.");
     }
@@ -58,17 +93,16 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
     dxgiDevice->Release();
     dxgiDevice = nullptr;
 
-    // IDXGIOutput represents a monitor output. We need to grab the output that
-    // corresponds to the monitor the input window is on.
-    HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
-    if (!refMonitor) {
-        THROW_ERROR("Failed to get reference monitor.");
+    // Wait for the window to become unminimized so that we can grab the correct monitor.
+    while (IsIconic(_window)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100ms));
     }
 
-    // Enforce that the HWND we're referring to is in full screen mode. If the HWND
-    // isn't full screen then falling back on GDI is more than sufficient.
-    if (!service::system::win32::isFullscreen(_window, refMonitor)) {
-        THROW_ERROR("The input HWND is not fullscreen.");
+    // IDXGIOutput represents a monitor output. We need to grab the output that
+    // corresponds to the monitor the input window is on.
+    HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTOPRIMARY);
+    if (!refMonitor) {
+        THROW_ERROR("Failed to get reference monitor.");
     }
 
     IDXGIOutput* dxgiOutput = nullptr;
@@ -121,37 +155,6 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
     if (hr != S_OK) {
         THROW_ERROR("Failed to create device texture: " << hr);
     }
-
-    TCHAR windowTitle[1024];
-    GetWindowTextA(_window, windowTitle, 1024);
-    LOG_INFO("DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl);
-}
-
-DxgiDesktopRecorder::~DxgiDesktopRecorder() {
-    if (!!_dupl) {
-        _dupl->Release();
-        _dupl = nullptr;
-    }
-
-    if (!!_dxgiOutput1) {
-        _dxgiOutput1->Release();
-        _dxgiOutput1 = nullptr;
-    }
-
-    if (!!_deviceTexture) {
-        _deviceTexture->Release();
-        _deviceTexture = nullptr;
-    }
-
-    if (!!_context) {
-        _context->Release();
-        _context = nullptr;
-    }
-
-    if (!!_device) {
-        _device->Release();
-        _device = nullptr;
-    }
 }
 
 void DxgiDesktopRecorder::reacquireDuplicationInterface() {
@@ -169,6 +172,11 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
 void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* encoder) {
     _recording = true;
     _recordingThread = std::thread([this, encoder](){ 
+        // Only initialize once we get into the recording thread since we'll need to wait
+        // for the window to be not minimizd. This is fine since we'll just be writing black
+        // frames until the window is unminimized which is fine!
+        initialize();
+
         service::recorder::image::Image frame;
         frame.initializeImage(_width, _height);
 
@@ -189,6 +197,13 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             }
 
             if (hr != S_OK) {
+                continue;
+            }
+
+            // We really only care about recording when the user is playing the game so
+            // when the window is minimized just ignore what's been recorded.
+            if (IsIconic(_window)) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
                 continue;
             }
 

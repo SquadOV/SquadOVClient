@@ -59,19 +59,20 @@ std::filesystem::path GameRecorder::start(const std::string& matchId) {
     const fs::path matchPath = _outputFolder / fs::path(fname.str());
     _encoder.reset(new encoder::FfmpegAvEncoder(matchPath));
 
+    // Initialize streams in the encoder here. Use hard-coded options for to record
+    // video at 1080p@60fps. 
+    // TODO: Make some more quality controls for video/audio available here.
+    _encoder->initializeVideoStream(60, 1920, 1080);
+
     // Create recorders to capture
     //   1) The video captured from the game.
     //   2) The audio from the user's system.
     //   3) The audio from the user's microphone (if any).
     createVideoRecorder();
+    _vrecorder->startRecording(_encoder.get());
+    
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
     _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));
-
-    // Initialize streams in the encoder here. Use hard-coded options for to record
-    // video at 1080p@60fps. 
-    // TODO: Make some more quality controls for video/audio available here.
-    _encoder->initializeVideoStream(60, 1920, 1080);
-    _vrecorder->startRecording(_encoder.get());
 
     // For each audio stream we need to first start recording on the audio side to determine
     // the audio stream properties (e.g. # of samples, # of channels, sample rate) and then pass

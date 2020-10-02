@@ -73,12 +73,12 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
             const auto height = rcClient.bottom-rcClient.top;
 
             // Means we're probably minimized.
-            if (width == 0 || height == 0) {
+            if (IsIconic(_window) || width == 0 || height == 0) {
+                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
                 continue;
             }
 
             if (!hbm) {
-
                 hbm = CreateCompatibleBitmap(hdcWindow, width, height);
                 frame.initializeImage(width, height);
                 bi.biWidth = width;
