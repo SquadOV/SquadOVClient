@@ -25,8 +25,7 @@ import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
 
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
-import GraphStats from '@client/vue/performance/GraphStats.vue'
-import AnalysisStats from '@client/vue/performance/AnalysisStats.vue'
+import VizStats from '@client/vue/performance/VizStats.vue'
 
 import * as pi from '@client/js/pages'
 
@@ -86,18 +85,22 @@ const baseRoutes : any[] = [
                 component: PerformanceComponentChooser,
             },
             {
-                path: '/graph',
-                name: pi.GraphStatsPageId,
-                component: GraphStats,
-            },
-            {
-                path: '/analysis',
-                name: pi.AnalysisStatsPageId,
-                component: AnalysisStats,
+                path: '/visualization',
+                name: pi.VizStatsPageId,
+                component: VizStats,
             },
         ]
     },
 ]
+
+const router = new VueRouter({
+    routes: baseRoutes,
+})
+
+router.beforeEach((to : any, from : any, next : any) => {
+    console.log(`Navigate ${from.path} => ${to.path}`)
+    next()
+})
 
 new Vue({
     el: '#app',
@@ -111,8 +114,6 @@ new Vue({
             dark: true,
         },
     }),
-    router: new VueRouter({
-        routes: baseRoutes,
-    }),
+    router: router,
 }).$mount('#app')
 console.log('Loading Vue Application')

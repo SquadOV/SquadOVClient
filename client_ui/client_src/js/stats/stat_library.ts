@@ -2,28 +2,31 @@ const libFname = 'assets/stats/library.json'
 import fs from 'fs'
 import { GraphqlPathData, GraphqlSingleNodePath, GraphqlAlias, GraphqlVariable } from '@client/js/graphql/graphql'
 
+export interface StatValue {
+    text: string
+    value: any
+    default?: boolean
+    type?: string
+}
+
 export interface StatOption {
     id: string
     name: string
     variable: string
     isEnum? : boolean
-    values: {
-        text: string
-        value: any
-        default?: boolean
-    }[]
+    values: StatValue[]
 }
 
 export interface StatOptionValueMap {
     options: StatOption[]
-    values: {[ optId : string ] : any}
+    values: {[ optId : string ] : StatValue}
 }
 
 export function createGraphqlVariables(map : StatOptionValueMap) : GraphqlVariable[] {
     return map.options.map((ele : StatOption) => {
         return {
             key: ele.variable,
-            value: map.values[ele.id],
+            value: map.values[ele.id].value,
         }
     })    
 }
@@ -37,6 +40,7 @@ interface StatObjectData {
     name: string
     graphql: GraphqlPathData
     options?: StatOption[]
+    optionForX? : string // Which option to use to determine the type of the X axis for the stat.
 
     xPath: GraphqlSingleNodePath
     yPath: GraphqlSingleNodePath
@@ -48,6 +52,7 @@ interface StatLibraryFileData {
     includeStats?: string[]
     stats?: StatObjectData[]
     commonOptions?: StatOption[]
+    optionForX? : string
 }
 
 // Holds a mapping of stat keys to stat objects which are what we need to
@@ -61,6 +66,10 @@ class StatLibrary {
 
     exists(stat: string) : boolean {
         return this.statMap.has(stat)
+    }
+
+    get allStats() : string[] {
+        return this.stats.map((ele: StatObjectData) => ele.id)
     }
 
     getStatOptions(stat: string) : StatOption[] | undefined {
@@ -89,6 +98,13 @@ class StatLibrary {
             return undefined
         }
         return this.statMap.get(stat)?.id
+    }
+
+    getStatOptionForX(stat : string) : string | undefined {
+        if (!this.exists(stat)) {
+            return undefined
+        }
+        return this.statMap.get(stat)?.optionForX
     }
 
     getStatXPath(stat : string, alias: GraphqlAlias | null = null) : GraphqlSingleNodePath | undefined {
@@ -123,10 +139,11 @@ class StatLibrary {
         return path
     }
 
-    constructor(rawData : StatLibraryFileData, prefix: string = '', path: string = '', options: StatOption[] = []) {
+    constructor(rawData : StatLibraryFileData, prefix: string = '', path: string = '', options: StatOption[] = [], optionForX: string | undefined = undefined) {
         let currentPrefix = (prefix.length > 0) ? `${prefix}_${rawData.id}` : rawData.id
         let currentPath = (path.length > 0) ? `${path}/${rawData.name}` : rawData.name
         let currentOptions = !!rawData.commonOptions ? [...rawData.commonOptions, ...options] : options
+        let newOptionForX = !!rawData.optionForX ? rawData.optionForX : optionForX
 
         this.statMap = new Map<string, StatObjectData>()
         this.stats = []
@@ -134,7 +151,7 @@ class StatLibrary {
         if (!!rawData.includeStats) {
             for (let inc of rawData.includeStats) {
                 let rawData = fs.readFileSync(inc, {encoding: 'utf-8'})
-                let lib = new StatLibrary(JSON.parse(rawData), currentPrefix, currentPath, currentOptions)
+                let lib = new StatLibrary(JSON.parse(rawData), currentPrefix, currentPath, currentOptions, newOptionForX)
                 this.stats.push(...lib.stats)
             }
         }
@@ -145,6 +162,7 @@ class StatLibrary {
                 ret.id = `${currentPrefix}_${ele.id}`
                 ret.name = `${currentPath}/${ele.name}`
                 ret.options = !!ret.options ? [...currentOptions, ...ret.options] : currentOptions
+                ret.optionForX = !!ret.optionForX ? ret.optionForX : newOptionForX
                 return ret
             }))
         }

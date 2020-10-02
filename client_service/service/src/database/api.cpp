@@ -17,7 +17,7 @@ namespace {
 
 void addNullableTimeSql(std::ostringstream& sql, const shared::TimePoint& tm) {
     if (shared::isTimeValid(tm)) {
-        sql << "'" << shared::timeToStr(tm, true) << "'";
+        sql << "'" << shared::timeToStr(tm) << "'";
     } else {
         sql << "null";
     }
@@ -924,7 +924,7 @@ void DatabaseApi::storeAimlabTask(const shared::aimlab::TaskData& task, const st
     stmt.bindParameter(2, task.taskName);
     stmt.bindParameter(3, task.mode);
     stmt.bindParameter(4, task.score);
-    stmt.bindParameter(5, shared::timeToStr(task.createDate, true));
+    stmt.bindParameter(5, shared::timeToStr(task.createDate));
     stmt.bindParameter(6, task.version);
     stmt.bindParameter(7, task.rawData);
     if (vodPath.empty()) {

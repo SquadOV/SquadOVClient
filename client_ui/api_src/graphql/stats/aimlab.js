@@ -17,7 +17,7 @@ class AimlabStatQueryBuilder {
         } else if (this.group == 'AGVERSION') {
             return 'version'
         } else {
-            return 'ROW_NUMBER() OVER (ORDER BY id ASC)'
+            return 'ROW_NUMBER() OVER (ORDER BY datetime(createDate) ASC)'
         }
     }
 
@@ -30,7 +30,9 @@ class AimlabStatQueryBuilder {
 
     get sortSql() {
         if (!this.sort || !this.group) {
-            return 'ORDER BY id ASC'
+            // Technically nort sorting by ID but more in line with what the user
+            // would expect.
+            return 'ORDER BY datetime(createDate) ASC'
         }
         return `ORDER BY ${this.xColumn} ${this.sort}`
     }
@@ -91,7 +93,7 @@ class AimlabDetectionDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}
@@ -110,7 +112,7 @@ class AimlabDecisionshotDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}
@@ -129,7 +131,7 @@ class AimlabTrackDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}
@@ -148,7 +150,7 @@ class AimlabErbDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}
@@ -167,7 +169,7 @@ class AimlabLinetraceDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}
@@ -186,7 +188,7 @@ class AimlabPentakillDataQueryBuilder extends AimlabStatQueryBuilder {
         let str = `
             SELECT
                 ${this.xColumn} AS x,
-                ${this.combinedColumn('score')} AS score,
+                ${this.combinedColumn('score')} AS score
             FROM aimlab_tasks
             WHERE taskName = '${this.task}' AND mode = ?
             ${this.groupSql}

@@ -19,6 +19,7 @@
         "assets/stats/aimlab/multilinetrace.json",
         "assets/stats/aimlab/pentakill.json"
     ],
+    "optionForX": "aimlab-group-by",
     "commonOptions": [
         {
             "id": "aimlab-group-by",
@@ -29,23 +30,28 @@
                 {
                     "text": "Date",
                     "value": "AGDATE",
-                    "default": true
+                    "default": true,
+                    "type": "time"
                 },
                 {
                     "text": "Date Time",
-                    "value": "AGDATETIME"
+                    "value": "AGDATETIME",
+                    "type": "time"
                 },
                 {
                     "text": "Time",
-                    "value": "AGTIME"
+                    "value": "AGTIME",
+                    "type": "time"
                 },
                 {
                     "text": "Version",
-                    "value": "AGVERSION"
+                    "value": "AGVERSION",
+                    "type": "category"
                 },
                 {
                     "text": "ID",
-                    "value": null
+                    "value": null,
+                    "type": "category"
                 }
             ]
         },

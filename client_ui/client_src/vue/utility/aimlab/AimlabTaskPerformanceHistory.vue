@@ -6,6 +6,7 @@
 
         <v-tab-item>
             <stat-container
+                class="pa-4"
                 :stats="[content.getTaskCommonScoreStat(task.taskName, task.mode)]"
                 :title="getStatTitle(content.getTaskCommonScoreStat(task.taskName, task.mode))"
             >
@@ -31,6 +32,7 @@
                         :key="idx"
                     >
                         <stat-container
+                            class="pa-4"
                             :stats="[stat]"
                             :title="getStatTitle(stat)"
                         >

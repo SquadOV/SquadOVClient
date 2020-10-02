@@ -1,6 +1,6 @@
 <template>
-    <v-container fluid class="full-parent-height">
-        <h1>Performance</h1>
+    <v-container fluid class="full-parent-height d-flex">
+        <router-view></router-view>
     </v-container>
 </template>
 

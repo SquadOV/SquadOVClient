@@ -59,19 +59,12 @@ export default class AppNav extends Vue {
             name: 'Performance',
             children: [
                 {
-                    name: 'Graph',
+                    name: 'Visualization',
                     to: {
-                        name: pi.GraphStatsPageId,
+                        name: pi.VizStatsPageId,
                         params: this.$route.params
                     },
                 },
-                {
-                    name: 'Analysis',
-                    to: {
-                        name: pi.AnalysisStatsPageId,
-                        params: this.$route.params
-                    },
-                }
             ]
         },
     ]

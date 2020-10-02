@@ -10,8 +10,9 @@
                 v-if="!!opt.isEnum"
                 :key="index"
                 hide-details
-                :items="opt.values"
+                :items="getItemsForOption(opt)"
                 class="mr-4"
+                :value-comparator="cmpFn"
             >
             </v-select>
         </template>
@@ -23,7 +24,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { StatOption, StatOptionValueMap } from '@client/js/stats/stat_library'
+import { StatOption, StatValue, StatOptionValueMap } from '@client/js/stats/stat_library'
 
 @Component
 export default class StatOptionsChooser extends Vue {
@@ -32,6 +33,19 @@ export default class StatOptionsChooser extends Vue {
 
     get availableOptions() : StatOption[] {
         return this.optionValues.options
+    }
+
+    getItemsForOption(opt : StatOption) : any[] {
+        return opt.values.map((ele : StatValue) => ({
+            text: ele.text,
+            value: ele,
+        }))
+    }
+
+    cmpFn(a : StatValue, b : any) : boolean {
+        // I THINK THERE'S A BUG IN VUETIFY HERE.
+        // b gets passed as StatValue.value rather than just StatValue...
+        return a.value === b
     }
 }
 

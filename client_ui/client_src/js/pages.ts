@@ -7,5 +7,4 @@ export const AimlabLogPageId = 'aimlabLogs'
 export const AimlabMatchPageId = 'aimlabMatch'
 
 export const PerformancePageId = 'performance'
-export const GraphStatsPageId = 'graph'
-export const AnalysisStatsPageId = 'analysis'
+export const VizStatsPageId = 'visualization'

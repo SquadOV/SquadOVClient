@@ -4,8 +4,13 @@
             <div v-if="!loading">
                 <aimlab-task-scroller
                     :tasks="allTasks"
+                    v-if="allTasks.length > 0"
                 >
                 </aimlab-task-scroller>
+
+                <div class="text-center" v-else>
+                    <span class="text-h5">No Aim Lab tasks found.</span>
+                </div>
             </div>
         </template>
     </loading-container>

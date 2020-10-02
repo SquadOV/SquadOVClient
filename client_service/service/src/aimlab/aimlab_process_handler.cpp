@@ -90,6 +90,7 @@ void AimlabProcessHandlerInstance::backfill() {
 
     while (n < nTasks.size()) {
         if (m >= mTasks.size() || nTasks[n] > mTasks[m]) {
+            LOG_INFO("Backfilling Aim Lab Task: " << nTasks[n] << std::endl);
             const auto taskData = _aimlab->getTaskDataFromId(nTasks[n]);
             _db->storeAimlabTask(taskData, "");
             ++n;

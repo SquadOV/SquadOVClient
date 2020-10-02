@@ -1,12 +1,66 @@
 <template>
-    <div class="pa-4">
-        <div class="mb-2">
+    <div class="d-flex flex-column flex-grow-1">
+        <div class="d-flex align-center mb-2">
             <span class="text-h5">{{ title }}</span>
+
+            <v-dialog
+                v-model="showHideAddStats"
+                persistent
+                max-width="40%"
+            >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn
+                        icon
+                        color="primary"
+                        v-if="editable"
+                        v-bind="attrs"
+                        v-on="on"
+                    >
+                        <v-icon>
+                            mdi-plus
+                        </v-icon>
+                    </v-btn>
+                </template>
+                
+                <v-card>
+                    <v-card-title>
+                        Select Stats to Visualize
+                    </v-card-title>
+                    <v-divider></v-divider>
+
+                    <stat-chooser
+                        class="stat-container-div"
+                        v-model="statsToAdd"
+                        :available-stats="allAvailableStats"
+                    >
+                    </stat-chooser>
+
+                    <v-card-actions>
+                        <v-btn
+                            @click="showHideAddStats = false"
+                            color="error"
+                        >
+                            Cancel
+                        </v-btn>
+
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            v-if="statsToAdd.length > 0"
+                            color="success"
+                            @click="addStats"
+                        >
+                            Add
+                        </v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+            
         </div>
  
         <div
-            class="d-flex align-center"
-            v-for="(st, idx) in stats"
+            class="d-flex align-center mb-4"
+            v-for="(st, idx) in localStats"
             :key="idx"
         >
             <span
@@ -21,6 +75,16 @@
                 :option-values="statValues[st]"
             >
             </stat-options-chooser>
+
+            <v-btn icon
+                color="error"
+                @click="removeStat(st)"
+                v-if="editable"
+            >
+                <v-icon>
+                    mdi-delete
+                </v-icon>
+            </v-btn>
         </div>
 
         <slot v-bind:data="seriesData"></slot>
@@ -39,10 +103,12 @@ import StatLibrary, { MultiStatOptionValueMap, StatOptionValueMap, createGraphql
 import { loadStatXYSeriesDataFromGraphql, StatXYSeriesData } from '@client/js/stats/series_data'
 
 import StatOptionsChooser from '@client/vue/stats/StatOptionsChooser.vue'
+import StatChooser from '@client/vue/utility/stats/StatChooser.vue'
 
 @Component({
     components: {
-        StatOptionsChooser
+        StatOptionsChooser,
+        StatChooser
     }
 })
 export default class StatContainer extends Vue {
@@ -51,14 +117,56 @@ export default class StatContainer extends Vue {
     @Prop({type: Array})
     stats! : string[]
 
+    // We can't depend on a 'stats' array being passed in so the input 'stats'
+    // array is just used as an initial state for the actual stats array, localStats.
+    localStats: string[] = []
+    statsToAdd: string[] = []
+
     @Prop({default: 'Graph'})
     title!: string
+
+    @Prop({type: Boolean, default: false})
+    editable!: boolean
+    showHideAddStats : boolean = false
 
     seriesData: (StatXYSeriesData | null)[] = []
     statValues: MultiStatOptionValueMap | null = null
 
+    get statSet() : Set<string> {
+        return new Set<string>(this.localStats)
+    }
+
+    get allAvailableStats() : string[] {
+        return StatLibrary.allStats.filter((ele : string) => {
+            return !this.statSet.has(ele)
+        })
+    }
+
+    addStats() {
+        this.localStats.push(...this.statsToAdd)
+        this.statsToAdd = []
+        this.showHideAddStats = false
+    }
+
+    removeStat(st : string) {
+        let idx = this.localStats.findIndex((ele: string) => ele == st)
+        if (idx == -1) {
+            return
+        }
+        this.localStats.splice(idx, 1)
+    }
+
+    @Watch('stats')
+    syncToLocalStats() {
+        if (!!this.stats) {
+            this.localStats = [...this.stats]
+        } else {
+            this.localStats = []
+        }
+    }
+
     get validStats() : string[] {
-        return this.stats.filter((st :string) => {
+        return this.localStats.filter((st :string) => {
             return StatLibrary.exists(st)
         })
     }
@@ -70,7 +178,7 @@ export default class StatContainer extends Vue {
         return StatLibrary.getStatName(st)!
     }
     
-    @Watch('stats')
+    @Watch('localStats')
     regenerateStatOptions() {
         let options : MultiStatOptionValueMap = {}
 
@@ -86,7 +194,7 @@ export default class StatContainer extends Vue {
                 let defaultValue : any = null
                 for (let val of opt.values) {
                     if (!!val.default) {
-                        defaultValue = val.value
+                        defaultValue = val
                     }
                 }
                 map.values[opt.id] = defaultValue
@@ -100,7 +208,8 @@ export default class StatContainer extends Vue {
 
     @Watch('statValues', {deep: true})
     refreshStats() {
-        if (!this.statValues) {
+        if (!this.statValues || this.validStats.length == 0) {
+            this.seriesData = []
             return
         }
 
@@ -117,9 +226,19 @@ export default class StatContainer extends Vue {
                     alias: StatLibrary.getStatId(st)!,
                     original: 'stats'
                 }
+
+                let id = StatLibrary.getStatId(st)!
+                let optionValues = this.statValues![id]
+
                 const xPath = StatLibrary.getStatXPath(st, alias)!
                 const yPath = StatLibrary.getStatYPath(st, alias)!
-                return loadStatXYSeriesDataFromGraphql(resp.data.data, xPath, yPath)
+                return loadStatXYSeriesDataFromGraphql(
+                    resp.data.data,
+                    xPath,
+                    yPath,
+                    optionValues.values[StatLibrary.getStatOptionForX(st)!].type!,
+                    StatLibrary.getStatName(st)!,
+                )
             })
         }).catch((err: any) => {
             console.log('Failed to perform GraphQL query: ', err)
@@ -127,6 +246,7 @@ export default class StatContainer extends Vue {
     }
 
     mounted() {
+        this.syncToLocalStats()
         this.regenerateStatOptions()
     }
 }
@@ -134,5 +254,10 @@ export default class StatContainer extends Vue {
 </script>
 
 <style scoped>
+
+.stat-container-div {
+    max-height: 70vh;
+    overflow-y: auto;
+}
 
 </style>
