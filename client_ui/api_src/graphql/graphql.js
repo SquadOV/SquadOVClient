@@ -16,8 +16,8 @@ module.exports.createGraphqlEndpoint = function(db) {
     let fullSchemaData = []
 
     for (let f of schemaFiles) {
-        let finalFname = process.env.NODE_ENV === 'development' ?
-            f : path.join(process.resourcesPath, f)
+        let finalFname = process.env.NODE_ENV === 'production' ?
+            path.join(process.resourcesPath, f) : f
         let data = fs.readFileSync(finalFname)
         fullSchemaData.push(data)
     }

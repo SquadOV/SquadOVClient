@@ -6,7 +6,7 @@
 
         <v-tab-item>
             <stat-container
-                class="pa-4"
+                class="pa-4 task-stat-container"
                 :stats="[content.getTaskCommonScoreStat(task.taskName, task.mode)]"
                 :title="getStatTitle(content.getTaskCommonScoreStat(task.taskName, task.mode))"
             >
@@ -32,7 +32,7 @@
                         :key="idx"
                     >
                         <stat-container
-                            class="pa-4"
+                            class="pa-4 task-stat-container"
                             :stats="[stat]"
                             :title="getStatTitle(stat)"
                         >
@@ -89,5 +89,9 @@ export default class AimlabTaskPerformanceHistory extends Vue {
 </script>
 
 <style scoped>
+
+.task-stat-container {
+    height: 600px;
+}
 
 </style>

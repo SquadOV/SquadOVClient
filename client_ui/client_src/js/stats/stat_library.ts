@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { GraphqlPathData, GraphqlSingleNodePath, GraphqlAlias, GraphqlVariable } from '@client/js/graphql/graphql'
 const path = require('path')
-const libFname = process.env.NODE_ENV === 'development' ? 'assets/stats/library.json' : path.join(process.resourcesPath, 'assets/stats/library.json')
+const libFname = process.env.NODE_ENV === 'production' ?  path.join(process.resourcesPath, 'assets/stats/library.json') : 'assets/stats/library.json'
 
 export interface StatValue {
     text: string
@@ -151,8 +151,8 @@ class StatLibrary {
         
         if (!!rawData.includeStats) {
             for (let inc of rawData.includeStats) {
-                let finalInc = process.env.NODE_ENV === 'development' ? 
-                    inc : path.join(process.resourcesPath, inc)
+                let finalInc = process.env.NODE_ENV === 'production' ? 
+                    path.join(process.resourcesPath, inc) : inc
                 let rawData = fs.readFileSync(finalInc, {encoding: 'utf-8'})
                 let lib = new StatLibrary(JSON.parse(rawData), currentPrefix, currentPath, currentOptions, newOptionForX)
                 this.stats.push(...lib.stats)
