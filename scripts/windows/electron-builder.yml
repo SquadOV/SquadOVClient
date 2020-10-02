@@ -8,6 +8,10 @@ directories:
 
 win:
   target: "nsis"
+  publish: 
+    - provider: github
+      owner: "SquadOV"
+      repo: "SquadOV-Release"
 
 files:
   - from: "dist/production"

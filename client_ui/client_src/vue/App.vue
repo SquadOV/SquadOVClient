@@ -8,7 +8,7 @@
 
         <footer class="flex-grow-0">
             <p class="text-center ma-0 text-overline">
-                Created with <i class="fas fa-heart"></i> by Michael "b3h47pte" Bao.
+                SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by Michael "b3h47pte" Bao.
             </p>
         </footer>
     </div>
@@ -19,6 +19,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
+import { version } from '@client/../package.json'
 
 @Component({
     components: {
@@ -26,7 +27,7 @@ import AppNav from '@client/vue/AppNav.vue'
     }
 })
 export default class App extends Vue {
-
+    version: string = version
 }
 
 </script>

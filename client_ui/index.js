@@ -5,6 +5,11 @@ const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 
+if (app.isPackaged) {
+    const { autoUpdater } = require("electron-updater")
+    autoUpdater.checkForUpdatesAndNotify()
+}
+
 let win
 
 function start() {
