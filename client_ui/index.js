@@ -3,6 +3,7 @@ const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
 const log = require('./log.js')
+const { dialog } = require('electron')
 
 let win
 
@@ -28,14 +29,19 @@ const { ApiServer } = require('./api_src/api')
 
 let apiServer = new ApiServer()
 
+
+function quit() {
+    apiServer.close()
+    app.quit()
+}
+
 app.on('ready', () => {
     apiServer.start(() => {
         // Start auxiliary service that'll handle waiting for games to run and
         // collecting the relevant information and sending it to the database.
         // Search for the proper executable file.
         //  1) The file specified by the environment variable: SQUADOV_SERVICE_EXE
-        //  2) Relative to the current working directory: service/squadov_client_service.exe
-        //  3) Assume it's in the PATH
+        //  2) Relative to the current working directory: resources/service/squadov_client_service.exe
         let exeName = ''
         if (process.platform == 'win32') {
             exeName = 'squadov_client_service.exe'
@@ -43,16 +49,16 @@ app.on('ready', () => {
     
         let exePath = process.env.SQUADOV_SERVICE_EXE
         if (!fs.existsSync(exePath)) {
-            exePath = path.join(path.dirname(app.getPath('exe')), 'service', exeName)
+            exePath = path.join(path.dirname(app.getPath('exe')), 'resources', 'service', exeName)
             if (!fs.existsSync(exePath)) {
-                if (process.platform == 'win32') {
-                    exePath = path.join(process.env.PORTABLE_EXECUTABLE_DIR, 'service', exeName)
-                    if (!fs.existsSync(exePath)) {
-                        exePath = exeName
-                    }
-                } else {
-                    exePath = exeName
-                }
+                dialog.showMessageBoxSync({
+                    type: 'error',
+                    title: 'SquadOV Installation Error',
+                    message: 'Failed to back the client service executable for SquadOV. Please check that SquadOV was installed correctly. Reinstall if necessary.'
+                })
+
+                quit()
+                return
             }
         }
     
@@ -71,6 +77,5 @@ app.on('ready', () => {
 })
 
 app.on('window-all-closed', () => {
-    apiServer.close()
-    app.quit()
+    quit()
 });

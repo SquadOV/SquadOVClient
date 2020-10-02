@@ -1,6 +1,7 @@
-const libFname = 'assets/stats/library.json'
 import fs from 'fs'
 import { GraphqlPathData, GraphqlSingleNodePath, GraphqlAlias, GraphqlVariable } from '@client/js/graphql/graphql'
+const path = require('path')
+const libFname = process.env.NODE_ENV === 'development' ? 'assets/stats/library.json' : path.join(process.resourcesPath, 'assets/stats/library.json')
 
 export interface StatValue {
     text: string
@@ -139,9 +140,9 @@ class StatLibrary {
         return path
     }
 
-    constructor(rawData : StatLibraryFileData, prefix: string = '', path: string = '', options: StatOption[] = [], optionForX: string | undefined = undefined) {
+    constructor(rawData : StatLibraryFileData, prefix: string = '', inPath: string = '', options: StatOption[] = [], optionForX: string | undefined = undefined) {
         let currentPrefix = (prefix.length > 0) ? `${prefix}_${rawData.id}` : rawData.id
-        let currentPath = (path.length > 0) ? `${path}/${rawData.name}` : rawData.name
+        let currentPath = (inPath.length > 0) ? `${inPath}/${rawData.name}` : rawData.name
         let currentOptions = !!rawData.commonOptions ? [...rawData.commonOptions, ...options] : options
         let newOptionForX = !!rawData.optionForX ? rawData.optionForX : optionForX
 
@@ -150,7 +151,9 @@ class StatLibrary {
         
         if (!!rawData.includeStats) {
             for (let inc of rawData.includeStats) {
-                let rawData = fs.readFileSync(inc, {encoding: 'utf-8'})
+                let finalInc = process.env.NODE_ENV === 'development' ? 
+                    inc : path.join(process.resourcesPath, inc)
+                let rawData = fs.readFileSync(finalInc, {encoding: 'utf-8'})
                 let lib = new StatLibrary(JSON.parse(rawData), currentPrefix, currentPath, currentOptions, newOptionForX)
                 this.stats.push(...lib.stats)
             }

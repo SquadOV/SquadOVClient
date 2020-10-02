@@ -5,8 +5,11 @@
   "main": "index.js",
   "scripts": {
     "build": "webpack",
+    "prodbuild": "webpack --mode=production",
     "watch": "webpack --watch",
-    "start": "electron ."
+    "start": "electron .",
+    "dist": "electron-builder",
+    "pack": "electron-builder --dir"
   },
   "repository": {
     "type": "git",
@@ -30,6 +33,8 @@
     "cache-loader": "^4.1.0",
     "css-loader": "^4.3.0",
     "date-fns": "^2.16.1",
+    "electron": "^10.1.3",
+    "electron-builder": "^22.8.1",
     "fibers": "^5.0.0",
     "file-loader": "^6.1.0",
     "fork-ts-checker-webpack-plugin": "^5.2.0",
@@ -57,7 +62,6 @@
     "@fortawesome/fontawesome-free": "^5.14.0",
     "axios": "^0.20.0",
     "echarts": "^4.9.0",
-    "electron": "^10.1.2",
     "electron-log": "^4.2.4",
     "express": "^4.17.1",
     "express-graphql": "^0.11.0",

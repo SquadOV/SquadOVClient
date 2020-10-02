@@ -4,6 +4,7 @@ const { mergeResolvers } = require('@graphql-tools/merge');
 const { resolvers: StatsResolver  } = require('./stats.js')
 const { resolvers: AimlabStatsResolver } = require('./stats/aimlab.js')
 const fs = require('fs')
+const path = require('path')
 
 const schemaFiles = [
     'graphql/query.graphql',
@@ -13,8 +14,11 @@ const schemaFiles = [
 
 module.exports.createGraphqlEndpoint = function(db) {
     let fullSchemaData = []
+
     for (let f of schemaFiles) {
-        let data = fs.readFileSync(f)
+        let finalFname = process.env.NODE_ENV === 'development' ?
+            f : path.join(process.resourcesPath, f)
+        let data = fs.readFileSync(finalFname)
         fullSchemaData.push(data)
     }
 

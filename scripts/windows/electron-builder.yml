@@ -1,0 +1,34 @@
+appId: "squadov.squadov.app.2020-10-2-ca944f74f897977254f8ccd5d61ff4b48ce71056"
+productName: "SquadOV"
+copyright: "Copyright © 2020 Michael Bao"
+
+directories:
+  app: "."
+  output: "package/${os}/${arch}/${version}"
+
+win:
+  target: "nsis"
+
+files:
+  - from: "dist/production"
+    to: "dist"
+  - from: "assets"
+    to: "assets"
+    filter:
+      - "**/*"
+      - "!**/*.json"
+  - "index.html"
+  - "index.js"
+  - "log.js"
+  - "rendererLog.js"
+  - "api_src/**/*"
+  - "package.json"
+
+extraResources:
+  - "graphql/**/*"
+  - from: "assets"
+    to: "assets"
+    filter:
+      - "**/*.json"
+  - from: "../build/bin/Release"
+    to: "service"

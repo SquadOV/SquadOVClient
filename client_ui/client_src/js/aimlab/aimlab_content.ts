@@ -1,6 +1,7 @@
 import fs from 'fs'
 
-const aimlabContentFile = 'assets/aimlab/content.json'
+const path = require('path')
+const aimlabContentFile =  process.env.NODE_ENV === 'development' ? 'assets/aimlab/content.json' : path.join(process.resourcesPath, 'assets/aimlab/content.json')
 
 interface AimlabRawData {
     tasks: {

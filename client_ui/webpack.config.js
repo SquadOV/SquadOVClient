@@ -21,7 +21,7 @@ const babelLoader = {
     }
 }
 
-module.exports = {
+let config = {
     target: 'node',
     mode: 'development',
     entry: {
@@ -30,7 +30,7 @@ module.exports = {
     output: {
         filename: '[name].js',
         path: path.resolve(__dirname, 'dist'),
-        publicPath: '/dist/',
+        publicPath: '/dist',
     },
     module: {
         rules: [
@@ -128,4 +128,13 @@ module.exports = {
         },
         extensions: ['.js', '.vue', '.scss', '.ts'],
     }
+}
+
+module.exports = (env, argv) => {
+    if (argv.mode === 'production') {
+        config.mode = 'production'
+        config.output.path = path.resolve(__dirname, 'dist', 'production')
+        config.output.publicPath = '/dist/production'
+    }
+    return config
 }

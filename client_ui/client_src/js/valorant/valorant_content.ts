@@ -1,5 +1,6 @@
 import { TouchBarOtherItemsProxy } from 'electron'
 import fs from 'fs'
+const path = require('path')
 
 interface ContentFileMap {
     [patchId : string] : { static: string, abilities: string};
@@ -7,8 +8,12 @@ interface ContentFileMap {
 
 const contentFiles : ContentFileMap = {
     'release-01.08-shipping-10-471230': {
-        static: 'assets/valorant/content/v1.08.json',    
-        abilities: 'assets/valorant/content/v1.08.Abilities.json'
+        static: process.env.NODE_ENV === 'development' ?  
+            'assets/valorant/content/v1.08.json' :
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.08.json'),
+        abilities: process.env.NODE_ENV === 'development' ?  
+            'assets/valorant/content/v1.08.Abilities.json' :
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.08.Abilities.json')
     }
 }
 const latestPatch = 'release-01.08-shipping-10-471230'
