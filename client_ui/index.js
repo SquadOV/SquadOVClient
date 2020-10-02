@@ -20,7 +20,10 @@ function start() {
     win.setMenu(null)
     win.setMenuBarVisibility(false)
     win.loadFile('index.html')
-    win.webContents.toggleDevTools()
+
+    if (!app.isPackaged) {
+        win.webContents.toggleDevTools()
+    }
 }
 
 // Start a local API server that'll be used manage our connections to the

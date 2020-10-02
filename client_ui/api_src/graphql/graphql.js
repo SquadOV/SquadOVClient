@@ -5,7 +5,7 @@ const { resolvers: StatsResolver  } = require('./stats.js')
 const { resolvers: AimlabStatsResolver } = require('./stats/aimlab.js')
 const fs = require('fs')
 const path = require('path')
-
+const {app} = require('electron')
 const schemaFiles = [
     'graphql/query.graphql',
     'graphql/stats/stats.graphql',
@@ -16,7 +16,7 @@ module.exports.createGraphqlEndpoint = function(db) {
     let fullSchemaData = []
 
     for (let f of schemaFiles) {
-        let finalFname = process.env.NODE_ENV === 'production' ?
+        let finalFname = app.isPackaged ?
             path.join(process.resourcesPath, f) : f
         let data = fs.readFileSync(finalFname)
         fullSchemaData.push(data)
