@@ -66,13 +66,13 @@
             <span
                 class="text-subtitle mr-4"
             >
-                {{ getStateName(st) }}
+                {{ getStateName(st.stat) }} {{ st.id }}
             </span>
 
             <stat-options-chooser
                 class="flex-grow-1"
                 v-if="!!statValues"
-                :option-values="statValues[st]"
+                :option-values="statValues[st.alias]"
             >
             </stat-options-chooser>
 
@@ -105,6 +105,12 @@ import { loadStatXYSeriesDataFromGraphql, StatXYSeriesData } from '@client/js/st
 import StatOptionsChooser from '@client/vue/stats/StatOptionsChooser.vue'
 import StatChooser from '@client/vue/utility/stats/StatChooser.vue'
 
+interface UniqueStatId {
+    stat: string
+    id : number
+    alias: string
+}
+
 @Component({
     components: {
         StatOptionsChooser,
@@ -112,6 +118,10 @@ import StatChooser from '@client/vue/utility/stats/StatChooser.vue'
     }
 })
 export default class StatContainer extends Vue {
+    // A unique ID for each stat that we add so that we can
+    // transfer stat options whenever a stat gets added/removed.
+    statCounter: number = 0
+
     // These are the stats to pull and obtain series data for.
     // These stats will be made available to the slot display.
     @Prop({type: Array})
@@ -119,7 +129,7 @@ export default class StatContainer extends Vue {
 
     // We can't depend on a 'stats' array being passed in so the input 'stats'
     // array is just used as an initial state for the actual stats array, localStats.
-    localStats: string[] = []
+    localStats: UniqueStatId[] = []
     statsToAdd: string[] = []
 
     @Prop({default: 'Graph'})
@@ -132,24 +142,27 @@ export default class StatContainer extends Vue {
     seriesData: (StatXYSeriesData | null)[] = []
     statValues: MultiStatOptionValueMap | null = null
 
-    get statSet() : Set<string> {
-        return new Set<string>(this.localStats)
-    }
-
     get allAvailableStats() : string[] {
-        return StatLibrary.allStats.filter((ele : string) => {
-            return !this.statSet.has(ele)
-        })
+        // Don't filter by stats that were already added because users may want
+        // to view each stat differently (avg vs min vs max etc).
+        return StatLibrary.allStats
     }
 
     addStats() {
-        this.localStats.push(...this.statsToAdd)
+        this.localStats.push(...this.statsToAdd.map((ele : string) => {
+            this.statCounter += 1
+            return {
+                stat: ele,
+                id: this.statCounter,
+                alias: `${ele}_${this.statCounter}`   
+            }   
+        }))
         this.statsToAdd = []
         this.showHideAddStats = false
     }
 
-    removeStat(st : string) {
-        let idx = this.localStats.findIndex((ele: string) => ele == st)
+    removeStat(st : UniqueStatId) {
+        let idx = this.localStats.findIndex((ele: UniqueStatId) => ele.id == st.id)
         if (idx == -1) {
             return
         }
@@ -159,15 +172,16 @@ export default class StatContainer extends Vue {
     @Watch('stats')
     syncToLocalStats() {
         if (!!this.stats) {
-            this.localStats = [...this.stats]
+            this.statsToAdd = [...this.stats]
+            this.addStats()
         } else {
             this.localStats = []
         }
     }
 
-    get validStats() : string[] {
-        return this.localStats.filter((st :string) => {
-            return StatLibrary.exists(st)
+    get validStats() : UniqueStatId[] {
+        return this.localStats.filter((st :UniqueStatId) => {
+            return StatLibrary.exists(st.stat)
         })
     }
 
@@ -180,27 +194,33 @@ export default class StatContainer extends Vue {
     
     @Watch('localStats')
     regenerateStatOptions() {
+        let oldOptions : MultiStatOptionValueMap | null = this.statValues
         let options : MultiStatOptionValueMap = {}
 
         for (let st of this.validStats) {
-            let statOptions = StatLibrary.getStatOptions(st)!
-            let map : StatOptionValueMap = {
-                options: statOptions,
-                values: {},
-            }
-
-            // Populate the map with default values.
-            for (let opt of statOptions) {
-                let defaultValue : any = null
-                for (let val of opt.values) {
-                    if (!!val.default) {
-                        defaultValue = val
-                    }
+            // Use the old values if it exists.
+            if (!!oldOptions && st.alias in oldOptions) {
+                options[st.alias] = oldOptions[st.alias]
+            } else {                    
+                let statOptions = StatLibrary.getStatOptions(st.stat)!
+                let map : StatOptionValueMap = {
+                    options: statOptions,
+                    values: {},
                 }
-                map.values[opt.id] = defaultValue
-            }
 
-            options[st] = map
+                // Populate the map with default values.
+                for (let opt of statOptions) {
+                    let defaultValue : any = null
+                    for (let val of opt.values) {
+                        if (!!val.default) {
+                            defaultValue = val
+                        }
+                    }
+                    map.values[opt.id] = defaultValue
+                }
+
+                options[st.alias] = map
+            }
         }
 
         this.statValues = options
@@ -214,30 +234,29 @@ export default class StatContainer extends Vue {
         }
 
         let query = new GraphqlQuery()
+        let idx = 0
         for (let st of this.validStats) {
-            let id = StatLibrary.getStatId(st)!
-            query.addPath(id, StatLibrary.getStatGraphqlPath(st)!)
-            query.addVariables(id, createGraphqlVariables(this.statValues[id]))
+            query.addPath(st.alias, StatLibrary.getStatGraphqlPath(st.stat)!)
+            query.addVariables(st.alias, createGraphqlVariables(this.statValues[st.alias]))
+            idx += 1
         }
 
         apiClient.graphqlRequest(query).then((resp : GraphqlApiData<any>) => {
-            this.seriesData = this.validStats.map((st: string): StatXYSeriesData | null => {
+            this.seriesData = this.validStats.map((st: UniqueStatId): StatXYSeriesData | null => {
                 const alias: GraphqlAlias = {
-                    alias: StatLibrary.getStatId(st)!,
+                    alias: st.alias,
                     original: 'stats'
                 }
 
-                let id = StatLibrary.getStatId(st)!
-                let optionValues = this.statValues![id]
-
-                const xPath = StatLibrary.getStatXPath(st, alias)!
-                const yPath = StatLibrary.getStatYPath(st, alias)!
+                let optionValues = this.statValues![st.alias]
+                const xPath = StatLibrary.getStatXPath(st.stat, alias)!
+                const yPath = StatLibrary.getStatYPath(st.stat, alias)!
                 return loadStatXYSeriesDataFromGraphql(
                     resp.data.data,
                     xPath,
                     yPath,
-                    optionValues.values[StatLibrary.getStatOptionForX(st)!].type!,
-                    StatLibrary.getStatName(st)!,
+                    optionValues.values[StatLibrary.getStatOptionForX(st.stat)!].type!,
+                    `${StatLibrary.getStatName(st.stat)!} ${st.id}`,
                 )
             })
         }).catch((err: any) => {

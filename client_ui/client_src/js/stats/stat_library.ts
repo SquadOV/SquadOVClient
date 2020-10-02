@@ -112,7 +112,7 @@ class StatLibrary {
             return undefined
         }
 
-        let path = this.statMap.get(stat)!.xPath
+        let path = [...this.statMap.get(stat)!.xPath]
         if (!!alias) {
             for (let i = 0; i < path.length; ++i) {
                 if (path[i] == alias.original) {
@@ -128,7 +128,7 @@ class StatLibrary {
             return undefined
         }
 
-        let path = this.statMap.get(stat)!.yPath
+        let path = [...this.statMap.get(stat)!.yPath]
         if (!!alias) {
             for (let i = 0; i < path.length; ++i) {
                 if (path[i] == alias.original) {
