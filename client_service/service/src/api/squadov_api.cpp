@@ -10,9 +10,10 @@ namespace service::api {
 
 SquadovApi::SquadovApi() {
     std::ostringstream host;
-    host << "http://127.0.0.1:" << shared::getEnv("SQUADOV_API_PORT");
+    host << "https://127.0.0.1:" << shared::getEnv("SQUADOV_API_PORT");
     _client = std::make_unique<http::HttpClient>(host.str());
     _client->setBearerAuthToken(shared::getEnv("SQUADOV_API_KEY"));
+    _client->enableSelfSigned();
 }
 
 shared::riot::RiotRsoToken SquadovApi::refreshValorantRsoToken(const std::string& puuid) const {

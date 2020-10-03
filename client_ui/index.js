@@ -27,6 +27,15 @@ function quit() {
     app.quit()
 }
 
+app.on('certificate-error', (event, contents, url, error, certificate, callback) => {
+    if (url.startsWith(`https://127.0.0.1:${process.env.SQUADOV_API_PORT}`)) {
+        event.preventDefault()
+        callback(true)
+    } else {
+        callback(false)
+    }
+})
+
 app.on('ready', async () => {
     
     win= new BrowserWindow({

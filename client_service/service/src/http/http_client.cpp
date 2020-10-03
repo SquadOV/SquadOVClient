@@ -19,7 +19,7 @@ size_t curlStringStreamCallback(char* ptr, size_t size, size_t nmemb, void* user
 
 class HttpRequest {
 public:
-    HttpRequest(const std::string& uri, const Headers& headers) {
+    HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned) {
         _curl = curl_easy_init();
         LOG_INFO("CURL REQUEST TO: " << uri << std::endl);
         curl_easy_setopt(_curl, CURLOPT_URL, uri.c_str());
@@ -31,6 +31,10 @@ public:
         }
 
         curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+
+        if (allowSelfSigned) {
+            curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0);
+        }
     }
 
     ~HttpRequest() {
@@ -93,7 +97,7 @@ HttpResponsePtr HttpClient::Get(const std::string& path) const {
         // Need to sepaarate out this so modifying the headers
         // map isn't blocked by how long the request takes to run.
         std::shared_lock<std::shared_mutex> guard(_headerMutex);
-        req.reset(new HttpRequest(fullPath.str(), _headers));
+        req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned));
     }
     return req->Do();
 }

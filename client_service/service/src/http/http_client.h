@@ -29,11 +29,14 @@ public:
 
     void setBearerAuthToken(const std::string& token);
     void setHeaderKeyValue(const std::string& key, const std::string& value);
+    void enableSelfSigned() { _allowSelfSigned = true; }
 
     HttpResponsePtr Get(const std::string& path) const;
 
 private:
     void tickRateLimit() const;
+    // TLS
+    bool _allowSelfSigned = false;
     // Rate limiting
     double _secondsPerTask = 0.0;
     // Unix time

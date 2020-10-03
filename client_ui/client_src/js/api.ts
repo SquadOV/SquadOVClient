@@ -46,10 +46,10 @@ export interface GraphqlApiData<T> {
 class ApiClient {
     createAxiosConfig(endpoint : string) : any {
         return {
-            url: `http://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
+            url: `https://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
             headers: {
                 'Authorization': `Bearer ${process.env.SQUADOV_API_KEY}`
-            }
+            },
         }
     }
 
