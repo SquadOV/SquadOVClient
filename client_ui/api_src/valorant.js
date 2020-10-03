@@ -1,4 +1,6 @@
 const express = require('express')
+const { RiotRsoTokenRetriever }  = require('./riot/rso.js')
+const { encryptPassword, decryptPassword } = require('./password.js')
 
 class ValorantApiServer {
     constructor(db) {
@@ -8,7 +10,10 @@ class ValorantApiServer {
     createRouter() {
         const valorantRouter = express.Router()
         valorantRouter.get('/accounts', this.listValorantAccounts.bind(this))
+        valorantRouter.post('/accounts', this.createValorantAccount.bind(this))
         valorantRouter.get('/accounts/:puuid', this.getValorantAccount.bind(this))
+        valorantRouter.put('/accounts/:puuid', this.editValorantAccount.bind(this))
+
         valorantRouter.get('/accounts/:puuid/matches', this.listValorantMatches.bind(this))
         valorantRouter.get('/matches/:matchId', this.getValorantMatchDetails.bind(this))
 
@@ -18,7 +23,12 @@ class ValorantApiServer {
     
     listValorantAccounts(req, res) { 
         this.db.all(`
-        SELECT *
+        SELECT
+            puuid,
+            username,
+            tag,
+            login,
+            encrypted_password AS "encryptedPassword"
         FROM valorant_accounts
         `, [], (err, rows) => {
             if (!!err) res.status(500).json({ 'error': err })
@@ -28,12 +38,86 @@ class ValorantApiServer {
 
     getValorantAccount(req, res) {
         this.db.get(`
-            SELECT *
+            SELECT
+                puuid,
+                username,
+                tag,
+                login,
+                encrypted_password AS "encryptedPassword"
             FROM valorant_accounts
             WHERE puuid = ?
         `, [req.params['puuid']], (err, row) => {
             if (!!err) res.status(500).json({ 'error': err })
             else res.json(row)            
+        })
+    }
+
+    createValorantAccount(req, res) {
+        // Verify that the username/password combination works by
+        // attempting to obtain an RSO token.
+        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, user}) => {
+            this.db.serialize(() => {
+                this.db.run('BEGIN EXCLUSIVE TRANSACTION;')
+                this.db.run(`
+                    INSERT INTO valorant_accounts (
+                        puuid,
+                        username,
+                        tag,
+                        login,
+                        encrypted_password
+                    )
+                    VALUES (
+                        ?,
+                        ?,
+                        ?,
+                        ?,
+                        ?
+                    )
+                `, [
+                    user.puuid,
+                    user.username,
+                    user.tag,
+                    req.body.login,
+                    encryptPassword(req.body.password)
+                ])
+                this.db.exec('COMMIT TRANSACTION;')
+
+                req.params['puuid'] = user.puuid
+                this.getValorantAccount(req, res)
+            })
+        }).catch((err) => {
+            res.status(500).json({'error': err})
+        })
+    }
+
+    editValorantAccount(req, res) {
+        // Verify that the username/password combination works by
+        // attempting to obtain an RSO token AND make sure that the
+        // puuid matches the specified PUUID.
+        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, user}) => {
+            const refPuuid = req.params.puuid
+            if (refPuuid !== user.puuid) {
+                res.status(500).json({'error': `PUUID mismatch: ${refPuuid} vs ${user.puuid}`})
+                return
+            }
+
+            this.db.serialize(() => {
+                this.db.run('BEGIN EXCLUSIVE TRANSACTION;')
+                this.db.run(`
+                    UPDATE valorant_accounts
+                    SET login = ?,
+                        encrypted_password = ?
+                    WHERE puuid = ?
+                `, [
+                    req.body.login,
+                    encryptPassword(req.body.password),
+                    user.puuid,
+                ])
+                this.db.exec('COMMIT TRANSACTION;')
+                this.getValorantAccount(req, res)
+            })
+        }).catch((err) => {
+            res.status(500).json({'error': err})
         })
     }
 

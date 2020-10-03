@@ -8,18 +8,9 @@
                             Header div that lets user select accounts and also do some easy stats navigation.
                         -->
                         <div class="d-flex align-center">
-                            <v-img
-                                class="mr-4"
-                                src="assets/valorant-logo.png"
-                                max-height="50px"
-                                max-width="50px"
-                                contain
-                            >
-                            </v-img>
-
                             <valorant-account-chooser
                                 v-model="selectedAccount"
-                                :options="allAccounts"
+                                :options.sync="allAccounts"
                                 class="mr-4"
                             >
                             </valorant-account-chooser>
@@ -59,9 +50,11 @@
                 </v-row>
 
                 <router-view v-if="hasSelectedAccount"></router-view>
-                <div v-else>
-                    <h2 class="text-center">Open Valorant to automatically sync your accounts to SquadOV!</h2>
-                </div>
+                <v-row  justify="center" align="center" v-else>
+                    <v-col cols="8">
+                        <h2 class="text-center">Click the plus button to add a Valorant account, then start playing games of Valorant and SquadOV will automatically sync your VODs and match history.</h2>
+                    </v-col>
+                </v-row>
             </div>
         </template>
     </loading-container>

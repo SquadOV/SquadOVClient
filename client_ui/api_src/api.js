@@ -44,7 +44,7 @@ class ApiServer {
         await migrateDb(initDb)
         initDb.close()
     
-        this.db = new sqlite3.Database(fname, sqlite3.OPEN_READONLY, (err) => {
+        this.db = new sqlite3.Database(fname, sqlite3.OPEN_READWRITE, (err) => {
             if (!!err) throw err
         })
 
@@ -64,6 +64,7 @@ class ApiServer {
         await this.initBackendDatabase()
 
         const restApp = express()
+        restApp.use(express.json())
         restApp.use(checkApiKey)
 
         restApp.use('/valorant', this.valorant.createRouter())

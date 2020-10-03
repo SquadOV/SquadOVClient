@@ -62,6 +62,30 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
+    editValorantAccount(puuid : string, login : string, password : string) : Promise<ApiData<ValorantAccountData>> {
+        return axios({
+            ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
+            method: 'put',
+            data: {
+                login,
+                password
+            }
+        })
+    }
+
+    @waitForApiServerSetup
+    newValorantAccount(login : string, password : string) : Promise<ApiData<ValorantAccountData>> {
+        return axios({
+            ...this.createAxiosConfig('valorant/accounts'),
+            method: 'post',
+            data: {
+                login,
+                password
+            }
+        })
+    }
+
+    @waitForApiServerSetup
     getValorantAccount(puuid : string) : Promise<ApiData<ValorantAccountData>> {  
         return axios({
             ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
