@@ -33,17 +33,8 @@ struct GameLogState {
     shared::valorant::EValorantMap matchMap;
     std::string matchId;
     std::string apiServer;
+    std::string puuid;
 };
-
-struct ClientLogState {
-    std::string rsoToken;
-    std::string entitlementToken;
-    shared::riot::RiotUser user;
-
-    bool isLoggedIn() const;
-};
-bool operator==(const ClientLogState& a, const ClientLogState& b);
-bool operator!=(const ClientLogState& a, const ClientLogState& b);
 
 class ValorantLogWatcher: public BaseLogWatcher {
 public:
@@ -51,16 +42,10 @@ public:
 
 private:
     void onGameLogChange(const LogLinesDelta& lines);
-    void onClientLogChange(const LogLinesDelta& lines);
 
     std::filesystem::path _gameLogFilename;
-    std::filesystem::path _clientLogFilename;
-
     GameLogState _gameLogState;
-    ClientLogState _clientLogState;
-
     LogWatcherPtr _gameLogWatcher;
-    LogWatcherPtr _clientLogWatcher;
 };
 
 using ValorantLogWatcherPtr = std::unique_ptr<ValorantLogWatcher>;

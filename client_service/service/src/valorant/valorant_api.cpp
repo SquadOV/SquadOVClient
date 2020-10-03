@@ -1,6 +1,7 @@
 #include "valorant/valorant_api.h"
 
 #include "shared/errors/error.h"
+#include "api/squadov_api.h"
 
 #include <chrono>
 #include <iostream>
@@ -11,9 +12,14 @@ using namespace std::literals::chrono_literals;
 
 namespace service::valorant {
 
-ValorantApi::ValorantApi(const std::string& rsoToken, const std::string& entitlementToken):
-    _rsoToken(rsoToken),
-    _entitlementToken(entitlementToken) {
+ValorantApi::ValorantApi(const shared::riot::RiotRsoToken& token):
+    _token(token) {
+    refreshToken();
+}
+
+ValorantApi::~ValorantApi() {
+    _running = false;
+    _refreshThread.join();
 }
 
 void ValorantApi::initializePvpServer(const std::string& server) {
@@ -21,23 +27,41 @@ void ValorantApi::initializePvpServer(const std::string& server) {
     fullHost << "https://" << server;
 
     _pvpClient = std::make_unique<http::HttpClient>(fullHost.str());
-    _pvpClient->setBearerAuthToken(_rsoToken.c_str());
-    _pvpClient->setHeaderKeyValue("X-Riot-Entitlements-JWT", _entitlementToken);
+    _pvpClient->setBearerAuthToken(_token.rsoToken.c_str());
+    _pvpClient->setHeaderKeyValue("X-Riot-Entitlements-JWT", _token.entitlementsToken);
 
     // 120 seconds per 100 tasks
     _pvpClient->setRateLimit(1.2);
 }
 
-void ValorantApi::reinitTokens(const std::string& rsoToken, const std::string& entitlementToken) {
-    _rsoToken = rsoToken;
-    _entitlementToken = entitlementToken;
+void ValorantApi::refreshToken() {
+    // Create a thread that'll sleep until the token is about to expire, then try to 
+    // refresh it.
+    _refreshThread = std::thread([this](){
+        while (true) {
+            // First check if the token is expired. We'll say the token is expired if we're within 
+            // 1 minute of being expired. Should account for any potential drift and allow us to
+            // always maintain a valid token.
+            const bool isExpired = (_token.expires - shared::nowUtc()) < std::chrono::minutes(1);
 
-    if (!_pvpClient) {
-        return;
-    }
+            // If not, sleep. However don't sleep until the token is expired as that might be
+            // an hour away and the program might want to quit out of this loop earlier than that.
+            if (!isExpired) {
+                std::this_thread::sleep_for(1s);
+                continue;
+            }
 
-    _pvpClient->setBearerAuthToken(_rsoToken.c_str());
-    _pvpClient->setHeaderKeyValue("X-Riot-Entitlements-JWT", _entitlementToken);
+            // If the token is expired by our metric then refresh the token using our API.
+            _token = service::api::getGlobalApi()->refreshValorantRsoToken(_token.puuid);
+            if (!!_pvpClient) {
+                _pvpClient->setBearerAuthToken(_token.rsoToken.c_str());
+                _pvpClient->setHeaderKeyValue("X-Riot-Entitlements-JWT", _token.entitlementsToken);
+            }
+
+            // Sleep for some time afterwards as we know the token is OK now.
+            std::this_thread::sleep_for(1s);
+        }
+    });
 }
 
 ValorantMatchDetailsPtr ValorantApi::getMatchDetails(const std::string& matchId) const {

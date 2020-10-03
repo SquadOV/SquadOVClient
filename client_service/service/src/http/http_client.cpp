@@ -72,10 +72,13 @@ HttpClient::~HttpClient() {
 void HttpClient::setBearerAuthToken(const std::string& token) {
     std::ostringstream str;
     str << "Bearer " << token;
+
+    std::unique_lock<std::shared_mutex> guard(_headerMutex);
     _headers["Authorization"] = str.str();
 }
 
 void HttpClient::setHeaderKeyValue(const std::string& key, const std::string& value) {
+    std::unique_lock<std::shared_mutex> guard(_headerMutex);
     _headers[key] = value;
 }
 
@@ -85,8 +88,14 @@ HttpResponsePtr HttpClient::Get(const std::string& path) const {
     std::ostringstream fullPath;
     fullPath << _baseUri << path;
 
-    HttpRequest req(fullPath.str(), _headers);
-    return req.Do();
+    std::unique_ptr<HttpRequest> req;
+    {
+        // Need to sepaarate out this so modifying the headers
+        // map isn't blocked by how long the request takes to run.
+        std::shared_lock<std::shared_mutex> guard(_headerMutex);
+        req.reset(new HttpRequest(fullPath.str(), _headers));
+    }
+    return req->Do();
 }
 
 void HttpClient::tickRateLimit() const {

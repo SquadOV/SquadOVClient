@@ -41,6 +41,8 @@ private:
     mutable std::shared_mutex _rateLimitMutex;
 
     std::string _baseUri;
+
+    mutable std::shared_mutex _headerMutex;
     Headers _headers;
 };
 

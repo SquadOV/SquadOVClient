@@ -1,5 +1,6 @@
 SET(SRCS
     src/service.cpp
+    src/api/squadov_api.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
@@ -19,6 +20,7 @@ SET(SRCS
 )
 
 SET(HEADERS
+    src/api/squadov_api.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
     src/valorant/valorant_process_handler.h

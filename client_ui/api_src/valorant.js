@@ -12,6 +12,7 @@ class ValorantApiServer {
         valorantRouter.get('/accounts', this.listValorantAccounts.bind(this))
         valorantRouter.post('/accounts', this.createValorantAccount.bind(this))
         valorantRouter.get('/accounts/:puuid', this.getValorantAccount.bind(this))
+        valorantRouter.get('/accounts/:puuid/rso', this.getValorantAccountTokens.bind(this))
         valorantRouter.put('/accounts/:puuid', this.editValorantAccount.bind(this))
 
         valorantRouter.get('/accounts/:puuid/matches', this.listValorantMatches.bind(this))
@@ -33,6 +34,26 @@ class ValorantApiServer {
         `, [], (err, rows) => {
             if (!!err) res.status(500).json({ 'error': err })
             else res.json(rows)
+        })
+    }
+
+    getValorantAccountTokens(req, res) {
+        // Get the login information stored in the database.
+        this.db.get(`
+            SELECT login, encrypted_password AS "encryptedPassword"
+            FROM valorant_accounts
+            WHERE puuid = ?
+        `, [req.params['puuid']], (err, row) => {
+            if (!!err) {
+                res.status(500).json({'error': err})
+                return
+            }
+
+            new RiotRsoTokenRetriever(row.login, decryptPassword(row.encryptedPassword)).obtain(true).then(({rso, user}) => {
+                res.json(rso)
+            }).catch((err) => {
+                res.status(500).json({'error': err})
+            })
         })
     }
 

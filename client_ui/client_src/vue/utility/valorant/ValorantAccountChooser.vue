@@ -106,7 +106,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { ValorantAccountData } from '@client/js/valorant/valorant_account'
-import { apiClient, ApiData } from '@client/js/api' }
+import { apiClient, ApiData } from '@client/js/api'
 
 import ValorantAccountCreation from '@client/vue/utility/valorant/ValorantAccountCreation.vue'
 

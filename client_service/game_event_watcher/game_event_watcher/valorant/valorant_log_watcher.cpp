@@ -10,7 +10,6 @@
 #include <regex>
 #include <stdlib.h>
 #include <string>
-#include <tinyxml2.h>
 
 namespace fs = std::filesystem;
 using namespace std::literals::chrono_literals;
@@ -75,6 +74,17 @@ bool parseGameLogHTTPQuery(const std::string& line, ValorantHTTPQueryData& data)
     return true;
 }
 
+const std::regex loggedInRegex("LogShooterGameUserSettings: Logged in user changed: (.*)");
+bool parseLoggedInChange(const std::string& line, std::string& puuid) {
+    std::smatch matches;
+    if (!std::regex_search(line, matches, loggedInRegex)) {
+        return false;
+    }
+
+    puuid = matches[1].str();
+    return true;
+}
+
 std::string getMatchIdFromGameFetchMatch(const std::string& url) {
     // General structure: https://glz-na-1.na.a.pvp.net/core-game/v1/matches/MATCH_ID
     // or: https://glz-na-1.na.a.pvp.net/pregame/v1/matches/a1934cc5-0bb7-4f9e-84c7-2f62f7798feb
@@ -96,186 +106,9 @@ std::string getApiServer(const std::string& url) {
     return url.substr(httpsOffset, slashIndex - httpsOffset);
 }
 
-struct ValorantXmppData {
-    tinyxml2::XMLDocument packet;
-};
-const std::regex xmppRegex("chat: XmppTcpSocket.*xmpp: (.*)");
-bool parseClientLogXmpp(const std::string& line, ValorantXmppData& data) {
-    std::smatch matches;
-    if (!std::regex_search(line, matches, xmppRegex)) {
-        return false;
-    }
-
-    data.packet.Parse(matches[1].str().c_str());
-    return true;
-}
-
-bool parseXmppRSOToken(const tinyxml2::XMLDocument& doc, std::string& token) {
-    // Look for the RSO token case.
-    // <auth>
-    //    <rso_token>...</rso_token>
-    // </auth>
-    const auto authNode = doc.FirstChildElement("auth");
-    if (!authNode) {
-        return false;
-    }
-
-    const auto rsoTokenNode = authNode->FirstChildElement("rso_token");
-    if (!rsoTokenNode) {
-        return false;
-    }
-
-    token = rsoTokenNode->GetText();
-    return true;
-}
-
-bool parseXmppAccessToken(const tinyxml2::XMLDocument& doc, std::string& token) {
-    // Look for the access token case which should be equivalent to the RSO token.
-    // <iq>
-    //    <query>
-    //      <access-token>...</access-token>
-    //    </query>
-    // </iq>
-    const auto iqNode = doc.FirstChildElement("iq");
-    if (!iqNode) {
-        return false;
-    }
-
-    const auto queryNode = iqNode->FirstChildElement("query");
-    if (!queryNode) {
-        return false;
-    }
-
-    const auto accessTokenNode = queryNode->FirstChildElement("access-token");
-    if (!accessTokenNode) {
-        return false;
-    }
-
-    token = accessTokenNode->GetText();
-    return true;
-}
-
-bool parseXmppEntitlementToken(const tinyxml2::XMLDocument& doc, std::string& token) {
-    // Look for the entitlements case.
-    // <iq type="set" id="">
-    //    <entitlements>
-    //        <token>...</token>
-    //    </entitlements>
-    // </iq>
-    const auto iqNode = doc.FirstChildElement("iq");
-    if (!iqNode) {
-        return false;
-    }
-
-    const std::string iqType = iqNode->Attribute("type");
-    const std::string iqId = iqNode->Attribute("id");
-
-    if (iqType != "set") {
-        return false;
-    }
-
-    const auto entitleNode = iqNode->FirstChildElement("entitlements");
-    if (!entitleNode) {
-        return false;
-    }
-
-    const auto tokenNode = entitleNode->FirstChildElement("token");
-    if (!tokenNode) {
-        return false;
-    }
-
-    token = tokenNode->GetText();
-    return true;
-}
-
-bool parseXmppPuuid(const tinyxml2::XMLDocument& doc, std::string& puuid) {
-    // Look for the puuid case.
-    // <iq id='_xmpp_bind1' type='result'>
-    //     <bind>
-    //         <jid>...@</jid>
-    //     </bind>
-    // </iq>
-    const auto iqNode = doc.FirstChildElement("iq");
-    if (!iqNode) {
-        return false;
-    }
-
-    const std::string iqType = iqNode->Attribute("type");
-    const std::string iqId = iqNode->Attribute("id");
-
-    if (iqType != "result") {
-        return false;
-    }
-
-    const auto bindNode = iqNode->FirstChildElement("bind");
-    if (!bindNode) {
-        return false;
-    }
-
-    const auto jidNode = bindNode->FirstChildElement("jid");
-    if (!jidNode) {
-        return false;
-    }
-
-    const std::string jid = jidNode->GetText();
-    puuid = jid.substr(0, jid.find("@"));
-    return true;
-}
-
-bool parseXmppUsernameTag(const tinyxml2::XMLDocument& doc, std::string& username, std::string& tag) {    
-    // Look for the username/tag case.
-    // <iq id='_xmpp_session1' type='result'>
-    //     <session>
-    //         <id name='...' tagline='...' />
-    //     </session>
-    // </iq>
-    const auto iqNode = doc.FirstChildElement("iq");
-    if (!iqNode) {
-        return false;
-    }
-
-    const std::string iqType = iqNode->Attribute("type");
-    const std::string iqId = iqNode->Attribute("id");
-
-    if (iqType != "result") {
-        return false;
-    }
-
-    const auto sessionNode = iqNode->FirstChildElement("session");
-    if (!sessionNode) {
-        return false;
-    }
-
-    const auto idNode  = sessionNode->FirstChildElement("id");
-    if (!idNode) {
-        return false;
-    }
-
-    username = idNode->Attribute("name");
-    tag = idNode->Attribute("tagline");
-    return true;
-}
-
 }
 
 namespace game_event_watcher {
-
-bool operator==(const ClientLogState& a, const ClientLogState& b) {
-    return a.entitlementToken == b.entitlementToken &&
-        a.rsoToken == b.rsoToken &&
-        a.user == b.user;
-}
-bool operator!=(const ClientLogState& a, const ClientLogState& b) {
-    return !(a == b);
-}
-
-bool ClientLogState::isLoggedIn() const {
-    return !rsoToken.empty() &&
-        !entitlementToken.empty() &&
-        !user.puuid.empty() &&
-        !user.username.empty() &&
-        !user.tag.empty();
-}
 
 ValorantLogWatcher::ValorantLogWatcher() {
     // Find log files which are stored in (Windows)
@@ -290,41 +123,20 @@ ValorantLogWatcher::ValorantLogWatcher() {
     free(localAppData);
 
     const fs::path gameLogDir = localAppDataDir / fs::path("VALORANT") / fs::path("Saved") / fs::path("Logs");
-    const fs::path clientLogDir = localAppDataDir / fs::path("Riot Games") / fs::path("Riot Client") / fs::path("Logs") / fs::path("Riot Client Logs");
 #else
     THROW_ERROR("Unsupported OS for Valorant Log Watcher.");
 #endif
 
-    if (!fs::exists(gameLogDir) || !fs::exists(clientLogDir)) {
-        THROW_ERROR("Failed to find either the game log directory or client log directory.");
+    if (!fs::exists(gameLogDir)) {
+        THROW_ERROR("Failed to find either the game log directory.");
     }
 
     const fs::path gameLogFname = gameLogDir / fs::path("ShooterGame.log");
     _gameLogFilename = gameLogFname;
-
-    // We need to find the latest Riot Client log here because
-    //  1) We assume that a new log file has already been created at this point.
-    //  2) The Riot client log has the time stamp in the filename so the filename isn't consistent.
-    auto latestWriteTime = fs::file_time_type::min();
-    for (const auto& entry : fs::recursive_directory_iterator(clientLogDir)) {
-        const auto path = entry.path();
-        if (path.extension() != ".log") {
-            continue;
-        }
-
-        const auto lastWriteTime = fs::last_write_time(path);
-        if (lastWriteTime > latestWriteTime) {
-            latestWriteTime = lastWriteTime;
-            _clientLogFilename = path;
-        }
-    }
-
     LOG_INFO("VALORANT Game Log: " << _gameLogFilename.string() << std::endl);
-    LOG_INFO("VALORANT Client Log: " << _clientLogFilename.string() << std::endl);
 
     using std::placeholders::_1;
     _gameLogWatcher = std::make_unique<LogWatcher>(_gameLogFilename, std::bind(&ValorantLogWatcher::onGameLogChange, this, _1), true);
-    _clientLogWatcher = std::make_unique<LogWatcher>(_clientLogFilename, std::bind(&ValorantLogWatcher::onClientLogChange, this, _1));
 }
 
 void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
@@ -399,50 +211,12 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                 }
             }
         }
-    }
-}
-
-void ValorantLogWatcher::onClientLogChange(const LogLinesDelta& lines) {
-    const ClientLogState previousState = _clientLogState;
-    for (const auto& line : lines) {
-        bool parsed = false;
-
-        {
-            ValorantXmppData data;
-            if (parseClientLogXmpp(line, data)) {
-
-                if (parseXmppRSOToken(data.packet, _clientLogState.rsoToken)) {
-                    parsed = true;
-                }
-
-                if (!parsed && parseXmppAccessToken(data.packet, _clientLogState.rsoToken)) {
-                    parsed = true;
-                }
-                
-                if (!parsed && parseXmppEntitlementToken(data.packet, _clientLogState.entitlementToken)) {
-                    parsed = true;
-                }
-
-                if (!parsed && parseXmppPuuid(data.packet, _clientLogState.user.puuid)) {
-                    parsed = true;
-                }
-
-                if (!parsed && parseXmppUsernameTag(data.packet, _clientLogState.user.username, _clientLogState.user.tag)) {
-                    parsed = true;
-                }
-            }
-        }
 
         if (!parsed) {
-            continue;
-        }
-    }
-
-    // This needs to be called repeatedly to detect changes to the entitlement token.
-    if (_clientLogState != previousState) {
-        if (_clientLogState.isLoggedIn()) {
-            // The time here doesn't really matter so just use the current time whatever it is and not the log time.
-            notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &_clientLogState);
+            if (parseLoggedInChange(line, _gameLogState.puuid)) {
+                notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &_gameLogState.puuid);
+                parsed = true;
+            }
         }
     }
 }

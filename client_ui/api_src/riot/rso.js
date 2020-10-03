@@ -14,8 +14,8 @@ class RiotRsoToken {
     constructor(token, entitlements, expires) {
         this.token = token
         this.entitlements = entitlements
-        this.expires = expires
-        this.user
+        this.expires = new Date()
+        this.expires.setTime(this.expires.getTime() + (expires * 1000))
     }
 }
 
@@ -25,7 +25,7 @@ class RiotRsoTokenRetriever {
         this._password = password
     }
 
-    obtain() {
+    obtain(ignoreUserInfo) {
         return new Promise(async (resolve, reject) => {
             const authInst = axios.create({
                 baseURL: 'https://auth.riotgames.com/api/v1/authorization',
@@ -69,20 +69,23 @@ class RiotRsoTokenRetriever {
 
                 const entitlementToken = entitleResp.data.entitlements_token
 
-                // Finally grab the user info so we know who the hell this is.
-                // This needs to more flexible to accomodate other regions but MEH. In the ideal case this isn't here anyway so this is fine for now.
-                const userResp = await axios.post('https://pd.na.a.pvp.net/name-service/v1/players', {}, {
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'X-Riot-Entitlements-JWT': entitlementToken,
-                    }
-                })
-
-                resolve({
+                let ret = {
                     rso: new RiotRsoToken(accessToken, entitlementToken, accessExpires),
-                    user: new RiotRsoUser(userResp.data.GameName, userResp.data.TagLine, userResp.data.Subject),
-                })
+                }
 
+                if (!ignoreUserInfo) {
+                    // Finally grab the user info so we know who the hell this is.
+                    // This needs to more flexible to accomodate other regions but MEH. In the ideal case this isn't here anyway so this is fine for now.
+                    const userResp = await axios.post('https://pd.na.a.pvp.net/name-service/v1/players', {}, {
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'X-Riot-Entitlements-JWT': entitlementToken,
+                        }
+                    })    
+                    ret.user = new RiotRsoUser(userResp.data.GameName, userResp.data.TagLine, userResp.data.Subject)
+                }
+                
+                resolve(ret)
             } catch (err) {
                 // TOO MUCH INFO GETS DUMPED HERE SO DON'T PASS BACK ERR.
                 reject('Failed to obtain RSO Token')

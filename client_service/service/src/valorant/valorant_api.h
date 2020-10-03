@@ -1,10 +1,12 @@
 #pragma once
 
 #include "valorant/valorant_match_details.h"
+#include "shared/riot/riot.h"
 #include "http/http_client.h"
 
 #include <memory>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -16,9 +18,9 @@ struct CommonApiOptions {
 
 class ValorantApi {
 public:
-    ValorantApi(const std::string& rsoToken, const std::string& entitlementToken);
+    explicit ValorantApi(const shared::riot::RiotRsoToken& token);
+    ~ValorantApi();
     void initializePvpServer(const std::string& server);
-    void reinitTokens(const std::string& rsoToken, const std::string& entitlementToken);
     bool ready() const { return !!_pvpClient; }
 
     // Get match details - round info, kills. Who's on what team. The score. Damage done. Everything.
@@ -28,8 +30,11 @@ public:
     std::vector<ValorantMatchDetailsPtr> getFullMatchHistory(const std::string& puuid) const;
 
 private:
-    std::string _rsoToken;
-    std::string _entitlementToken;
+    void refreshToken();
+
+    bool _running = true;
+    std::thread _refreshThread;
+    shared::riot::RiotRsoToken _token;
     std::unique_ptr<http::HttpClient> _pvpClient;
 };
 

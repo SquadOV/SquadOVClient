@@ -8,6 +8,7 @@
 #include "database/api.h"
 #include "recorder/game_recorder.h"
 #include "shared/log/log.h"
+#include "api/squadov_api.h"
 
 #include <atomic>
 #include <iostream>
@@ -255,35 +256,31 @@ void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoin
 }
 
 void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint& eventTime, const void* rawData) {
-    const auto* state = reinterpret_cast<const game_event_watcher::ClientLogState*>(rawData);
+    // When we detect this login event, we only get the PUUID. We'll need to query our own API to get an RSO token and entitlements token
+    // to use.
+    const auto* puuid = reinterpret_cast<const std::string*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant RSO Login" << std::endl
-        << "\tUser: " << state->user.username << "#" << state->user.tag << std::endl
-        << "\tPUUID: " << state->user.puuid << std::endl
-        << "\tRSO Token: " << state->rsoToken << std::endl
-        << "\tEntitlement Token: " << state->entitlementToken << std::endl);
+        << "\tPUUID: " << *puuid << std::endl);
 
-    // Now that we have the RSO/Entitlement token we know enough to start querying the API.
-    _currentUser = state->user;
+    try {
+        const auto token = service::api::getGlobalApi()->refreshValorantRsoToken(*puuid);
 
-    if (!_api) {
-        _api = std::make_unique<ValorantApi>(state->rsoToken, state->entitlementToken);
-        if (!_pendingPvpServer.empty()) {
-            _api->initializePvpServer(_pendingPvpServer);
-            backfillMatchHistory();
-            _pendingPvpServer = "";
+        // Now that we have the RSO/Entitlement token we know enough to start querying the API.
+        // Only need to give the token to the API object once as the object will take care of
+        // auto-refreshing the token for us....
+        if (!_api) {
+            _api = std::make_unique<ValorantApi>(token);
+            if (!_pendingPvpServer.empty()) {
+                _api->initializePvpServer(_pendingPvpServer);
+                backfillMatchHistory();
+                _pendingPvpServer = "";
+            }
         }
-    } else {
-        _api->reinitTokens(state->rsoToken, state->entitlementToken);
 
-        if (_api->ready()) {
-            // Might need to do a backfill if the user has been running VALORANT for a long time
-            // and the first attempt at trying to backfill failed using an old token.
-            backfillMatchHistory();
-        }
+        _currentUser = service::api::getGlobalApi()->getRiotUserFromPuuid(*puuid);
+    } catch (std::exception& ex) {
+        LOG_ERROR("Failed to refresh Valorant RSO token: " << ex.what());
     }
-
-    // Should store this user in the database if they don't exist already.
-    _db->storeValorantAccount(_currentUser);
 }
 
 ValorantProcessHandler::ValorantProcessHandler(const service::database::DatabaseApi* db):
