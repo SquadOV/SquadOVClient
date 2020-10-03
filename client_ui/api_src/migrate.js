@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 7
+const CURRENT_DB_VERSION = 8
 const log = require('../log.js')
 
 async function migrateDb(db) {
@@ -7,7 +7,7 @@ async function migrateDb(db) {
             if (!!err) {
                 throw err
             }
-    
+            
             const currentVersion = row.user_version
             log.log(`Migrating DB from v${currentVersion} to v${CURRENT_DB_VERSION}`)
             db.serialize(() => {
@@ -218,13 +218,24 @@ ALTER TABLE valorant_matches
 ADD COLUMN raw_api_data TEXT            
                     `)
                 }
+
+                if (currentVersion < 8) {
+                    db.run(`
+ALTER TABLE valorant_accounts
+ADD COLUMN login TEXT
+                    `)
+
+                    db.run(`
+ALTER TABLE valorant_accounts
+ADD COLUMN encrypted_password TEXT
+                    `)
+                }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)
                 db.exec('COMMIT TRANSACTION;')
             })
             resolve()
         })
-        
     })
 
 }

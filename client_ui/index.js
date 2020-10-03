@@ -4,6 +4,7 @@ const fs = require('fs')
 const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
+const { createVerifyEncryptionPasswordFlow } = require('./password.js')
 
 if (app.isPackaged) {
     const { autoUpdater } = require("electron-updater")
@@ -13,22 +14,7 @@ if (app.isPackaged) {
 let win
 
 function start() {
-
-    win = new BrowserWindow({
-        width: 1280,
-        height: 720,
-        webPreferences: {
-            nodeIntegration: true,
-        }
-    })
-
-    win.setMenu(null)
-    win.setMenuBarVisibility(false)
     win.loadFile('index.html')
-
-    if (!app.isPackaged) {
-        win.webContents.toggleDevTools()
-    }
 }
 
 // Start a local API server that'll be used manage our connections to the
@@ -36,14 +22,32 @@ function start() {
 const { ApiServer } = require('./api_src/api')
 
 let apiServer = new ApiServer()
-
-
 function quit() {
     apiServer.close()
     app.quit()
 }
 
-app.on('ready', () => {
+app.on('ready', async () => {
+    
+    win= new BrowserWindow({
+        width: 1280,
+        height: 720,
+        webPreferences: {
+            nodeIntegration: true,
+        }
+    })
+
+    if (!app.isPackaged) {
+        win.webContents.toggleDevTools()
+    }
+
+    win.setMenu(null)
+    win.setMenuBarVisibility(false)
+
+    // DO NOT GO ANY FURTHER UNTIL WE HAVE A PASSWORD
+    // SECURE ENVIRONMENT SETUP.
+    await createVerifyEncryptionPasswordFlow(win)
+
     apiServer.start(() => {
         // Start auxiliary service that'll handle waiting for games to run and
         // collecting the relevant information and sending it to the database.
@@ -62,7 +66,7 @@ app.on('ready', () => {
                 dialog.showMessageBoxSync({
                     type: 'error',
                     title: 'SquadOV Installation Error',
-                    message: 'Failed to back the client service executable for SquadOV. Please check that SquadOV was installed correctly. Reinstall if necessary.'
+                    message: 'Failed to find the client service executable for SquadOV. Please check that SquadOV was installed correctly. Reinstall if necessary.'
                 })
 
                 quit()
@@ -83,7 +87,3 @@ app.on('ready', () => {
         start()
     })
 })
-
-app.on('window-all-closed', () => {
-    quit()
-});

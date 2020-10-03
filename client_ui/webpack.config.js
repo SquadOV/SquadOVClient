@@ -22,10 +22,11 @@ const babelLoader = {
 }
 
 let config = {
-    target: 'node',
+    target: 'electron-renderer',
     mode: 'development',
     entry: {
-        app: ['./client_src/js/app.ts', './client_src/sass/app.scss']
+        app: ['./client_src/js/app.ts', './client_src/sass/app.scss'],
+        password: ['./client_src/js/passwordApp.ts', './client_src/sass/app.scss'],
     },
     output: {
         filename: '[name].js',
@@ -111,7 +112,7 @@ let config = {
         new VueLoaderPlugin(),
         new VuetifyLoaderPlugin(),
         new MiniCssExtractPlugin({
-            filename: 'style.css'
+            filename: '[name].css'
         }),
         new ForkTsCheckerWebpackPlugin({
             typescript: {
