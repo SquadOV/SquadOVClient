@@ -96,25 +96,18 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
     const AimlabLogState previousState = _state;
     bool restartFlag = false;
     bool killFlag = false;
-
     for (const auto& ln : lines) {
         if (parseStartTask(ln)) {
             _state.inTask = true;
             if (previousState.isInTask()) {
                 restartFlag = true;
             }
-            continue;
         } else if (_state.inTask && parseTaskMode(ln, _state.taskMode)) {
-            continue;
         } else if (_state.inTask && parseTaskMap(ln, _state.taskMap)) {
-            continue;
         } else if (_state.inTask && parseTaskName(ln, _state.taskName)) {
-            continue;
-        } else if (_state.inTask && parseGameVersion(ln, _state.gameVersion)) {
-            continue;            
+        } else if (_state.inTask && parseGameVersion(ln, _state.gameVersion)) {        
         } else if (parseFinishTask(ln)) {
             _state = AimlabLogState{};
-            continue;
         } else if (parseUnloadTask(ln)) {
             // Force the task to go into a stopped state.
             // SEt the kill flag since we need the consumer
@@ -122,7 +115,6 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
             // currently think they're tracking.
             _state = AimlabLogState{};
             killFlag = true;
-            continue;
         }
     }
 
@@ -134,9 +126,9 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
     // We've detected a change! We just need to detect changes in the return of
     // 'isInTask' (rather than the inTask boolean) to make sure we've picked up all
     // the information about being in a game.
-    if (killFlag) {
+    if (killFlag && !_state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::KillTask), shared::nowUtc(), (void*)&previousState);
-    } else if (restartFlag) {
+    } else if (restartFlag && _state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::RestartTask), shared::nowUtc(), (void*)&_state);
     } else if (_state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::StartTask), shared::nowUtc(), (void*)&_state);
