@@ -1,6 +1,6 @@
 {
   "name": "squadov_client_ui",
-  "version": "0.0.2",
+  "version": "0.0.5",
   "description": "Electron UI for SquadOV",
   "main": "index.js",
   "scripts": {
@@ -40,7 +40,6 @@
     "file-loader": "^6.1.0",
     "fork-ts-checker-webpack-plugin": "^5.2.0",
     "mini-css-extract-plugin": "^0.11.2",
-    "node-forge": "^0.10.0",
     "node-sass": "^4.14.1",
     "regenerator-runtime": "^0.13.7",
     "sass": "^1.26.11",
@@ -71,6 +70,7 @@
     "express-graphql": "^0.11.0",
     "graphql": "^15.3.0",
     "graphql-tools": "^6.2.3",
+    "node-forge": "^0.10.0",
     "sqlite3": "^5.0.0",
     "tough-cookie": "^4.0.0",
     "vuetify": "^2.3.10"

@@ -11,6 +11,8 @@ import {
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { GraphqlQuery } from '@client/js/graphql/graphql'
 
+import { ipcRenderer } from 'electron'
+
 const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
     const ogMethod = descriptor.value
     descriptor.value = async function(...args : any[]) {
@@ -19,8 +21,12 @@ const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
 
         while (port === undefined || key === undefined) {
             console.log(`Could not find port or key for SQUADOV service...port ${port} key ${key}`)
-            port = process.env.SQUADOV_API_PORT
-            key = process.env.SQUADOV_API_KEY
+            
+            // Need to listen to port/key messages from the main process just in case that gets set late...
+            const [newPort, newKey] = ipcRenderer.sendSync('apiServer')
+            port = process.env.SQUADOV_API_PORT = newPort
+            key = process.env.SQUADOV_API_KEY = newKey
+
             await new Promise(resolve => setTimeout(resolve, 100))
         }
 

@@ -11,6 +11,7 @@ const { createGraphqlEndpoint } = require('./graphql/graphql.js')
 const log = require('../log.js')
 const { generateSelfSignedKeyCert } = require('./https')
 const https = require('https')
+const { ipcMain } = require('electron')
 
 const checkApiKey = (req, res, next) => {
     const key = process.env.SQUADOV_API_KEY
@@ -25,6 +26,10 @@ const checkApiKey = (req, res, next) => {
 
     next()
 }
+
+ipcMain.on('apiServer', (event) => {
+    event.returnValue = [process.env.SQUADOV_API_PORT, process.env.SQUADOV_API_KEY]
+})
 
 class ApiServer {
     async initBackendDatabase() {
