@@ -155,7 +155,15 @@ void ValorantMatchDetails::parseKillsJson(const nlohmann::json& obj) {
         kill->_damageItem = kdata["finishingDamage"]["damageItem"].get<std::string>();
         kill->_killSecondaryFire = kdata["finishingDamage"]["isSecondaryFireMode"].get<bool>();
 
-        auto killer = _players[kdata["killer"].get<std::string>()].get();
+        // Killer could be null/empty...let's do the cop out and just ignore it for now
+        // by doing a blanket statement where we just search for the player. If we can't find
+        // them then OH WELL~.
+        const auto kString = kdata["killer"].get<std::string>();
+        if (_players.find(kString) == _players.end()) {
+            continue;
+        }
+
+        auto killer = _players[kString].get();
         kill->_killer = killer;
         killer->_kills.push_back(kill.get());
 

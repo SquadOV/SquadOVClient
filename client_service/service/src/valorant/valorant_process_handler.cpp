@@ -206,7 +206,7 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
             return;
         }
 
-        LOG_INFO("Starting backfill [ " << apiNumMatches << " API GAMES][" << dbNumMatches << " DB GAMES] of " << diffMatchIds.size() << " games.");
+        LOG_INFO("Starting backfill [" << apiNumMatches << " API GAMES][" << dbNumMatches << " DB GAMES] of " << diffMatchIds.size() << " games." << std::endl);
 
         std::thread backFillThread([this, diffMatchIds](){
             // Get their full match history and store each game's match details.
