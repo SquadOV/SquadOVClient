@@ -21,97 +21,99 @@
             </v-tab>
 
             <v-tab-item>
-                <v-row no-gutters>
-                    <v-col cols="6">
-                        <generic-stat
-                            name="KDA"
-                            desc="(Kills + Deaths) / Assists"
-                            :value="currentPlayer.kda"
-                        >
-                        </generic-stat>
+                <v-container fluid>
+                    <v-row no-gutters>
+                        <v-col cols="6">
+                            <generic-stat
+                                name="KDA"
+                                desc="(Kills + Deaths) / Assists"
+                                :value="currentPlayer.kda"
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="HS %"
-                            desc="Headshot Percentage"
-                            :value="currentPlayer.hsp"
-                            percentage
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="HS %"
+                                desc="Headshot Percentage"
+                                :value="currentPlayer.hsp"
+                                percentage
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="FB"
-                            desc="First Bloods"
-                            :value="match.firstBloods(currentPlayer._p.puuid)"
-                            force-integer
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="FB"
+                                desc="First Bloods"
+                                :value="match.firstBloods(currentPlayer._p.puuid)"
+                                force-integer
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="DK"
-                            desc="Double Kills"
-                            :value="currentPlayer.doubleKills"
-                            force-integer
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="DK"
+                                desc="Double Kills"
+                                :value="currentPlayer.doubleKills"
+                                force-integer
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="QK"
-                            desc="Quadra Kills"
-                            :value="currentPlayer.quadraKills"
-                            force-integer
-                        >
-                        </generic-stat>
-                    </v-col>
+                            <generic-stat
+                                name="QK"
+                                desc="Quadra Kills"
+                                :value="currentPlayer.quadraKills"
+                                force-integer
+                            >
+                            </generic-stat>
+                        </v-col>
 
-                    <v-col cols="6">
-                        <generic-stat
-                            name="DPR"
-                            desc="Average Damage Per Round"
-                            :value="currentPlayer.dpr"
-                        >
-                        </generic-stat>
+                        <v-col cols="6">
+                            <generic-stat
+                                name="DPR"
+                                desc="Average Damage Per Round"
+                                :value="currentPlayer.dpr"
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="CSPR"
-                            desc="Average Combat Score Per Round"
-                            :value="currentPlayer.cspr"
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="CSPR"
+                                desc="Average Combat Score Per Round"
+                                :value="currentPlayer.cspr"
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="FTD"
-                            desc="First To Die"
-                            :value="match.firstToDie(currentPlayer._p.puuid)"
-                            force-integer
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="FTD"
+                                desc="First To Die"
+                                :value="match.firstToDie(currentPlayer._p.puuid)"
+                                force-integer
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="TK"
-                            desc="Triple Kills"
-                            :value="currentPlayer.tripleKills"
-                            force-integer
-                        >
-                        </generic-stat>
+                            <generic-stat
+                                name="TK"
+                                desc="Triple Kills"
+                                :value="currentPlayer.tripleKills"
+                                force-integer
+                            >
+                            </generic-stat>
 
-                        <generic-stat
-                            name="PK"
-                            desc="Penta Kills"
-                            :value="currentPlayer.pentaKills"
-                            force-integer
-                        >
-                        </generic-stat>
-                    </v-col>
-                </v-row>
+                            <generic-stat
+                                name="PK"
+                                desc="Penta Kills"
+                                :value="currentPlayer.pentaKills"
+                                force-integer
+                            >
+                            </generic-stat>
+                        </v-col>
+                    </v-row>
 
-                <v-row>
-                    <valorant-hit-tracker
-                        :headshots="currentPlayer.headshots"
-                        :bodyshots="currentPlayer.bodyshots"
-                        :legshots="currentPlayer.legshots"
-                    >
-                    </valorant-hit-tracker>
-                </v-row>
+                    <v-row no-gutters>
+                        <valorant-hit-tracker
+                            :headshots="currentPlayer.headshots"
+                            :bodyshots="currentPlayer.bodyshots"
+                            :legshots="currentPlayer.legshots"
+                        >
+                        </valorant-hit-tracker>
+                    </v-row>
+                </v-container>
             </v-tab-item>
 
             <v-tab>
