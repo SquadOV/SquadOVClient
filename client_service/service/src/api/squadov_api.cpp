@@ -9,10 +9,12 @@
 namespace service::api {
 
 SquadovApi::SquadovApi() {
+    // TODO: Need some better way of communicating this OR just removing it altogether and not
+    // having this reliance.
     std::ostringstream host;
-    host << "https://127.0.0.1:" << shared::getEnv("SQUADOV_API_PORT");
+    host << "https://127.0.0.1:" << shared::getEnv("SQUADOV_API_PORT", "50000");
     _client = std::make_unique<http::HttpClient>(host.str());
-    _client->setBearerAuthToken(shared::getEnv("SQUADOV_API_KEY"));
+    _client->setBearerAuthToken(shared::getEnv("SQUADOV_API_KEY", "AAAAA"));
     _client->enableSelfSigned();
 }
 

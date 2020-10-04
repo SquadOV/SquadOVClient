@@ -9,6 +9,7 @@ class ValorantApiServer {
 
     createRouter() {
         const valorantRouter = express.Router()
+        valorantRouter.use(express.json())
         valorantRouter.get('/accounts', this.listValorantAccounts.bind(this))
         valorantRouter.post('/accounts', this.createValorantAccount.bind(this))
         valorantRouter.get('/accounts/:puuid', this.getValorantAccount.bind(this))

@@ -4,6 +4,6 @@
 
 namespace shared {
 
-std::string getEnv(const std::string& key);
+std::string getEnv(const std::string& key, std::string default = "");
 
 }

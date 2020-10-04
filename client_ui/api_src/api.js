@@ -71,7 +71,6 @@ class ApiServer {
         await this.initBackendDatabase()
 
         const restApp = express()
-        restApp.use(express.json())
         restApp.use(checkApiKey)
 
         restApp.use('/valorant', this.valorant.createRouter())

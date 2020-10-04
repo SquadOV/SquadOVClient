@@ -7,6 +7,7 @@ class AimlabApiServer {
 
     createRouter() {
         const aimlabRouter = express.Router()
+        aimlabRouter.use(express.json())
         aimlabRouter.get('/tasks', this.listAimlabTasks.bind(this))
         aimlabRouter.get('/tasks/:taskId', this.getAimlabTask.bind(this))
         return aimlabRouter
