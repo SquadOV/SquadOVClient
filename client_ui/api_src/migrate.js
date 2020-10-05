@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 8
+const CURRENT_DB_VERSION = 9
 const log = require('../log.js')
 
 async function migrateDb(db) {
@@ -229,6 +229,39 @@ ADD COLUMN login TEXT
 ALTER TABLE valorant_accounts
 ADD COLUMN encrypted_password TEXT
                     `)
+                }
+
+                if (currentVersion < 9) {
+                    // valorant_match_rounds team winner needs to be nullable since that'll happen in the case where we're unable to sync the match details from Riot.
+                    db.run(`
+CREATE TABLE valorant_match_rounds_new (
+    match_id TEXT NOT NULL REFERENCES valorant_matches(id) ON DELETE CASCADE,
+    round_num INTEGER NOT NULL,
+    plant_round_time INTEGER,
+    planter_puuid TEXT,
+    defuse_round_time INTEGER,
+    defuser_puuid TEXT,
+    team_round_winner TEXT,
+    round_buy_time_utc TEXT,
+    round_play_time_utc TEXT,
+    PRIMARY KEY (match_id, round_num),
+    FOREIGN KEY (match_id, planter_puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE,
+    FOREIGN KEY (match_id, defuser_puuid) REFERENCES valorant_match_players(match_id, puuid) ON DELETE CASCADE,
+    FOREIGN KEY (match_id, team_round_winner) REFERENCES valorant_match_teams(match_id, team_id) ON DELETE CASCADE
+);                    
+                    `)
+
+                    db.run(`
+INSERT INTO valorant_match_rounds_new SELECT * FROM valorant_match_rounds;                    
+                    `)
+
+                    db.run(`
+DROP TABLE valorant_match_rounds;
+                    `)
+
+                    db.run(`
+ALTER TABLE valorant_match_rounds_new RENAME TO valorant_match_rounds;
+                    `)                    
                 }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)

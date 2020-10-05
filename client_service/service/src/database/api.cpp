@@ -204,9 +204,9 @@ void insertValorantRoundSql(SqlTransaction& tx, const std::string& matchId, cons
         } else {
             sql << "null, null";
         }
-        sql << ", "
-            << "'" << round->teamWinner() << "', ";
-
+        sql << ", ";
+        addNullableString(sql, round->teamWinner());
+        sql << ", ";
         addNullableTimeSql(sql, round->startBuyTime());
         sql << ", ";
 

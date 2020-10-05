@@ -35,7 +35,8 @@ public:
     void goToRoundState(const shared::TimePoint& tm, shared::valorant::EValorantRoundState state);
     void finishMatch(const shared::TimePoint& tm);
 
-    void populateMatchDetailsFromApi(const ValorantApi* api);
+    // Returns whether or not this was successful.
+    bool populateMatchDetailsFromApi(const ValorantApi* api);
 private:
     shared::TimePoint _startTime;
     shared::valorant::EValorantMap _map;

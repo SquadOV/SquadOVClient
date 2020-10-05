@@ -37,6 +37,7 @@
                             <v-row justify="center" align="center" v-else>
                                 <span class="text-h5">
                                     No games found. Open Valorant and play a game to sync your matches.
+                                    If you just added the account and Valorant is running, you will need to <span class="font-weight-bold">restart</span> Valorant for this to work.
                                 </span>
                             </v-row>
                         </div>

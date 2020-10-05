@@ -50,6 +50,11 @@ class ValorantApiServer {
                 return
             }
 
+            if (!row) {
+                res.status(500).json({'error': 'Unknown user.'})
+                return
+            }
+
             new RiotRsoTokenRetriever(row.login, decryptPassword(row.encryptedPassword)).obtain(true).then(({rso, user}) => {
                 res.json(rso)
             }).catch((err) => {

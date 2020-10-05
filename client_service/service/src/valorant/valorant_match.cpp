@@ -24,14 +24,15 @@ ValorantMatch::ValorantMatch(ValorantMatchDetails&& details):
     _endTime(shared::TimePoint::max()) {
 }
 
-void ValorantMatch::populateMatchDetailsFromApi(const ValorantApi* api) {
+bool ValorantMatch::populateMatchDetailsFromApi(const ValorantApi* api) {
     auto apiDetails = api->getMatchDetails(_matchId);
     // Didn't work - oops. Merge this in later I guess.
     if (!apiDetails) {
         LOG_WARNING("Failed to populate match details from API: " << _matchId << std::endl);
-        return;
+        return false;
     }
     _details.mergeWithApi(apiDetails.get());
+    return true;
 }
 
 void ValorantMatch::goToRoundState(const shared::TimePoint& tm, shared::valorant::EValorantRoundState state) {
