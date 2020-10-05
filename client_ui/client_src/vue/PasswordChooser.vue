@@ -142,6 +142,15 @@ export default class PasswordChooser extends Vue {
         this.inProgress = true
         if (this.needCreatePassword) {
             let hash = bcryptjs.hashSync(this.pwInput, saltRounds)
+
+            // Need to create directory if it doesn't exist.
+            const dir = path.dirname(this.hashFname)
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, {
+                    recursive: true,
+                })
+            }
+
             fs.writeFileSync(this.hashFname, hash, {
                 encoding: 'utf-8',
                 mode: 0o644,
