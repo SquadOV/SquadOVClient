@@ -256,8 +256,29 @@ class ValorantApiServer {
             WHERE vvpms.puuid = ?
             GROUP BY vvpms.puuid
         `, [req.params['puuid'], req.params['puuid']], (err, row) => {
-            if (!!err) res.status(500).json({ 'error': err })
-            else res.json(row)            
+            if (!!err) {
+                res.status(500).json({ 'error': err })
+            } else {
+                if (!row) {
+                    // No row means no games played so just zeros all around.
+                    res.json({
+                        rank : 0,
+                        kills : 0,
+                        deaths : 0,
+                        assists : 0,
+                        rounds : 0,
+                        totalCombatScore : 0,
+                        totalDamage : 0,
+                        headshots: 0,
+                        bodyshots : 0,
+                        legshots : 0,
+                        wins: 0,
+                        games: 0
+                    })
+                } else {
+                    res.json(row)
+                }
+            }
         })
     }
 

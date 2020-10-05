@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex align-center">
-        <v-tooltip bottom offset-y v-if="!isValorantAccountValid">
+        <v-tooltip v-if="!!value && !isValorantAccountValid" bottom offset-y>
             <template v-slot:activator="{on, attrs}">
                 <v-icon v-bind="attrs" v-on="on" color="warning">
                     mdi-alert
@@ -24,6 +24,7 @@
         </v-select>
 
         <v-dialog
+            v-if="!!value"
             v-model="showHideEdit"
             persistent
             max-width="40%"
@@ -122,7 +123,7 @@ export default class ValorantAccountChooser extends Vue {
     }
 
     @Prop({required: true})
-    value! : ValorantAccountData
+    value! : ValorantAccountData | null
 
     @Prop({type: Array, required: true})
     options! : ValorantAccountData[]
@@ -132,7 +133,7 @@ export default class ValorantAccountChooser extends Vue {
     showHideAccountError : boolean = false
 
     get isValorantAccountValid() : boolean {
-        return !!this.value.login && !!this.value.encryptedPassword
+        return !!this.value?.login && !!this.value?.encryptedPassword
     }
 
     get items() : any[] {
@@ -143,9 +144,13 @@ export default class ValorantAccountChooser extends Vue {
     }
 
     onEditValorantAccount(username : string, password : string) {
+        if (!this.value) {
+            return
+        }
+
         apiClient.editValorantAccount(this.value.puuid, username, password).then((resp : ApiData<ValorantAccountData>) => {
-            Vue.set(this.value, 'login', resp.data.login)
-            Vue.set(this.value, 'encryptedPassword', resp.data.encryptedPassword)
+            Vue.set(this.value!, 'login', resp.data.login)
+            Vue.set(this.value!, 'encryptedPassword', resp.data.encryptedPassword)
             this.showHideEdit = false
         }).catch((err : any ) => {
             this.showHideAccountError = true

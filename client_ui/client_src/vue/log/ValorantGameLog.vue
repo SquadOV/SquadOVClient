@@ -9,7 +9,7 @@
                 <!-- 
                     Stats highlight.
                 -->
-                <loading-container :is-loading="!playerStats || !account">
+                <loading-container :is-loading="!playerStats">
                     <template v-slot:default="{ loading }">
                         <valorant-player-card 
                             v-if="!loading"
@@ -29,9 +29,16 @@
                     <template v-slot:default="{ loading }">
                         <div v-if="!loading">
                             <valorant-match-scroller
+                                v-if="allMatches.length > 0"
                                 :matches="allMatches"
                             >
                             </valorant-match-scroller>
+
+                            <v-row justify="center" align="center" v-else>
+                                <span class="text-h5">
+                                    No games found. Open Valorant and play a game to sync your matches.
+                                </span>
+                            </v-row>
                         </div>
                     </template>
                 </loading-container>
