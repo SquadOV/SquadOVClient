@@ -1,6 +1,6 @@
-appId: "squadov.squadov.app.2020-10-5-75391dfab40008757074f0f14509882bf1f1f4ec"
+appId: "squadov.squadov.app.2020-10-6-189b665abf8d7caf68e59a8b3dc78f2fca2a7dcf"
 productName: "SquadOV"
-copyright: "Copyright © 2020 Michael Bao"
+copyright: "Copyright © 2020 GRCHive, Inc."
 
 directories:
   app: "."

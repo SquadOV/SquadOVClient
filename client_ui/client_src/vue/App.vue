@@ -8,7 +8,7 @@
 
         <footer class="flex-grow-0">
             <p class="text-center ma-0 text-overline">
-                SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by Michael "b3h47pte" Bao.
+                SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by GRCHive, Inc.
             </p>
         </footer>
     </div>
