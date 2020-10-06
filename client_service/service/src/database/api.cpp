@@ -618,7 +618,9 @@ std::vector<service::valorant::ValorantMatchRoundPtr> DatabaseApi::getValorantMa
             round->setDefuser(details.players().at(stmt.getColumn<std::string>(4)).get());
         }
 
-        round->setTeamWinner(stmt.getColumn<std::string>(5));
+        if (!stmt.isColumnNull(5)) {
+            round->setTeamWinner(stmt.getColumn<std::string>(5));
+        }
 
         if (!stmt.isColumnNull(6)) {
             round->setStartBuyTime(stmt.getTimeColumnFromString(6, "%F %H:%M:%S.000"));

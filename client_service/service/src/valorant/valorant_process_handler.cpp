@@ -121,7 +121,7 @@ void ValorantProcessHandlerInstance::backfillThreadJob() {
             std::string existingVodPath;
 
             if (!!existingMatch) {
-                if (!existingMatch->populateMatchDetailsFromApi(_api.get())) {
+                if (!existingMatch->populateMatchDetailsFromApi(_api.get())) {  
                     addMatchesToBackfill({matchId});
                 }
                 existingVodPath = _db->getVodFilenameForValorantMatch(matchId);
