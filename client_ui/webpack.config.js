@@ -49,10 +49,12 @@ let config = {
                         }
                     }
                 ],
+                exclude: /node_modules/,
             },
             {
                 test: /\.js$/,
                 use: babelLoader,
+                exclude: /node_modules/,
             },
             {
                 test: /\.vue$/,
@@ -61,7 +63,8 @@ let config = {
                     options: {
                         optimizeSSR: false
                     }
-                }
+                },
+                exclude: /node_modules/,
             },
             {
                 test: /\.css$/,
