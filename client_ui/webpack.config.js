@@ -27,6 +27,7 @@ let config = {
     entry: {
         app: ['./client_src/js/app.ts', './client_src/sass/app.scss'],
         password: ['./client_src/js/passwordApp.ts', './client_src/sass/app.scss'],
+        login: ['./client_src/js/loginApp.ts', './client_src/sass/app.scss'],
     },
     output: {
         filename: '[name].js',
@@ -74,6 +75,7 @@ let config = {
             {
                 test: /\.scss$/,
                 use: [
+                    'vue-style-loader',
                     ...cssLoaders,
                     {
                         loader: 'sass-loader',
@@ -81,7 +83,6 @@ let config = {
                             sourceMap: true,
                             implementation: require('sass'),
                             sassOptions: {
-                                fiber: require('fibers'),
                                 indentedSyntax: false
                             }
                         }
@@ -91,14 +92,13 @@ let config = {
             {
                 test: /\.sass$/,
                 use: [
+                    'vue-style-loader',
                     ...cssLoaders,
                     {
                         loader: 'sass-loader',
                         options: { 
-                            sourceMap: true,
                             implementation: require('sass'),
                             sassOptions: {
-                                fiber: require('fibers'),
                                 indentedSyntax: true
                             }
                         }

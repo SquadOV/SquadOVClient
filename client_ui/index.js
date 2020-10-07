@@ -4,7 +4,7 @@ const fs = require('fs')
 const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
-const { createVerifyEncryptionPasswordFlow } = require('./password.js')
+const { loginFlow } = require('./login.js')
 
 if (app.isPackaged) {
     const { autoUpdater } = require("electron-updater")
@@ -37,7 +37,6 @@ app.on('certificate-error', (event, contents, url, error, certificate, callback)
 })
 
 app.on('ready', async () => {
-    
     win= new BrowserWindow({
         width: 1280,
         height: 720,
@@ -53,9 +52,14 @@ app.on('ready', async () => {
     win.setMenu(null)
     win.setMenuBarVisibility(false)
 
-    // DO NOT GO ANY FURTHER UNTIL WE HAVE A PASSWORD
-    // SECURE ENVIRONMENT SETUP.
-    await createVerifyEncryptionPasswordFlow(win)
+    // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
+    try {
+        await loginFlow(win)
+    } catch (ex) {
+        log.log('User chose not to login...good bye.')
+        quit()
+        return
+    }
 
     apiServer.start(() => {
         // Start auxiliary service that'll handle waiting for games to run and
