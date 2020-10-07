@@ -56,6 +56,7 @@ interface LoginInput {
 
 export interface LoginOutput {
     sessionId: string
+    verified: boolean | null
 }
 
 interface RegisterInput {
@@ -64,7 +65,21 @@ interface RegisterInput {
     email: string
 }
 
+export interface CheckVerificationOutput {
+    verified: boolean | null
+}
+
 class ApiClient {
+    _sessionId: string | null
+
+    constructor() {
+        this._sessionId = null
+    }
+
+    setSessionId(s : string) {
+        this._sessionId = s
+    }
+
     createAxiosConfig(endpoint : string) : any {
         return {
             url: `https://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
@@ -75,9 +90,17 @@ class ApiClient {
     }
 
     createWebAxiosConfig() : any {
-        return {
+        let ret : any = {
             baseURL: API_URL,
         }
+
+        if (!!this.setSessionId) {
+            ret.headers = {
+                'X-SQUADOV-SESSION-ID': this._sessionId,
+            }
+        }
+
+        return ret
     }
 
     @waitForApiServerSetup
@@ -181,12 +204,20 @@ class ApiClient {
         return axios(baseConfig)
     }
 
-    login(inp : LoginInput) : Promise<LoginOutput> {
+    login(inp : LoginInput) : Promise<ApiData<LoginOutput>> {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
     }
 
     register(inp : RegisterInput) : Promise<void> {
         return axios.post('auth/register', inp, this.createWebAxiosConfig())
+    }
+
+    resendVerification() : Promise<void> {
+        return axios.post('auth/verify/resend', {}, this.createWebAxiosConfig())
+    }
+
+    checkVerification() : Promise<ApiData<CheckVerificationOutput>> {
+        return axios.get('auth/verify', this.createWebAxiosConfig())
     }
 }
 

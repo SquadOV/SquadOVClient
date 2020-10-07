@@ -10,6 +10,7 @@ import VueRouter from 'vue-router'
 
 import Login from '@client/vue/auth/Login.vue'
 import Register from '@client/vue/auth/Register.vue'
+import EmailVerify from '@client/vue/auth/EmailVerify.vue'
 
 Vue.use(Vuetify)
 Vue.use(VueRouter)
@@ -21,6 +22,11 @@ const baseRoutes : any[] = [
         props: (route : any) => ({
             reg: route.query.reg
         })
+    },
+    { 
+        path: '/verify',
+        name: 'verify',
+        component: EmailVerify,
     },
     { path: '/register', name: 'register', component: Register },
 ]

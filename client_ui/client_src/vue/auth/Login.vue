@@ -85,7 +85,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { ipcRenderer } from 'electron'
-import { apiClient } from '@client/js/api'
+import { apiClient, ApiData, LoginOutput } from '@client/js/api'
 
 @Component
 export default class Login extends Vue {
@@ -141,9 +141,25 @@ export default class Login extends Vue {
         apiClient.login({
             username: this.username,
             password: this.password,
-        }).then(() => {
+        }).then((resp : ApiData<LoginOutput>) => {
+            // Successful login - store the session ID.
+            ipcRenderer.send('obtain-session', resp.data.sessionId)
+
+            // Forcefully set session ID on the Api client just in case
+            // we're going to the email verification check page.
+            apiClient.setSessionId(resp.data.sessionId)
+
+            if (!!resp.data.verified) {
+                // We can close out the login app now.
+                ipcRenderer.send('finish-login')
+            } else {
+                // Redirect to a screen to wait for email verification.
+                this.$router.push({
+                    name: 'verify'
+                })
+            }
         }).catch((err : any) => {
-            if (err.response.status == 401) {
+            if (!!err.response && err.response.status === 401) {
                 this.showHideAuthError = true
             } else {
                 console.log('Login failure: ', err)
