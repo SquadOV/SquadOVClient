@@ -49,6 +49,21 @@ export interface GraphqlApiData<T> {
     }
 }
 
+interface LoginInput {
+    username: string
+    password: string
+}
+
+export interface LoginOutput {
+    sessionId: string
+}
+
+interface RegisterInput {
+    username: string
+    password: string
+    email: string
+}
+
 class ApiClient {
     createAxiosConfig(endpoint : string) : any {
         return {
@@ -56,6 +71,12 @@ class ApiClient {
             headers: {
                 'Authorization': `Bearer ${process.env.SQUADOV_API_KEY}`
             },
+        }
+    }
+
+    createWebAxiosConfig() : any {
+        return {
+            baseURL: API_URL,
         }
     }
 
@@ -158,6 +179,14 @@ class ApiClient {
         baseConfig.data = req.generateBody()
         baseConfig.headers['Content-Type'] = 'application/graphql'
         return axios(baseConfig)
+    }
+
+    login(inp : LoginInput) : Promise<LoginOutput> {
+        return axios.post('auth/login', inp, this.createWebAxiosConfig())
+    }
+
+    register(inp : RegisterInput) : Promise<void> {
+        return axios.post('auth/register', inp, this.createWebAxiosConfig())
     }
 }
 

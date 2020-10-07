@@ -1,6 +1,15 @@
 <template>
     <v-container fluid class="full-parent-height">
         <v-row class="full-parent-height" justify="center" align="center">
+            <v-alert
+                id="registrationAlert"
+                v-model="showRegistrationBanner"
+                dismissible
+                type="success"
+            >
+                You have successfully registered with SquadOV! Login below to get started.
+            </v-alert>
+
             <v-col cols="8">
                 <h1 class="mb-4">Login to SquadOV</h1>
 
@@ -51,6 +60,22 @@
                 </div>
             </v-col>
         </v-row>
+
+        <v-snackbar
+            v-model="showHideGenericError"
+            :timeout="5000"
+            color="error"
+        >
+            Login failed. Please try again shortly.
+        </v-snackbar>
+
+        <v-snackbar
+            v-model="showHideAuthError"
+            :timeout="5000"
+            color="error"
+        >
+            Incorrect username/password. Please try again.
+        </v-snackbar>
     </v-container>
 </template>
 
@@ -58,11 +83,32 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
+import { Watch, Prop } from 'vue-property-decorator'
 import { ipcRenderer } from 'electron'
+import { apiClient } from '@client/js/api'
 
 @Component
 export default class Login extends Vue {
+    // If we get to the login page and 'reg'
+    // is also passed in (non-empty) then that
+    // means that the user just successfully registered
+    // using this as the username.
+    @Prop({default: ''})
+    reg!: string
+    showRegistrationBanner: boolean = false
+    showHideGenericError: boolean = false
+    showHideAuthError: boolean = false
+
+    @Watch('reg')
+    onSyncReg() {
+        if (this.reg === '' ) {
+            return
+        }
+
+        this.username = this.reg
+        this.showRegistrationBanner = true
+    }
+
     formValid: boolean = false
     inProgress: boolean = false
     username: string = ''
@@ -87,7 +133,24 @@ export default class Login extends Vue {
         }
     }
 
-    login() {}
+    mounted() {
+        this.onSyncReg()
+    }
+
+    login() {
+        apiClient.login({
+            username: this.username,
+            password: this.password,
+        }).then(() => {
+        }).catch((err : any) => {
+            if (err.response.status == 401) {
+                this.showHideAuthError = true
+            } else {
+                console.log('Login failure: ', err)
+                this.showHideGenericError = true
+            }
+        })
+    }
 
     forgotPassword() {
         // User needs to have put in an email so we know where to send the validation email to.
@@ -106,5 +169,10 @@ export default class Login extends Vue {
 </script>
 
 <style scoped>
+
+#registrationAlert {
+    position: absolute;
+    top: 20px;
+}
 
 </style>

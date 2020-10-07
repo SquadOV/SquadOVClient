@@ -4,8 +4,8 @@
   "description": "Electron UI for SquadOV",
   "main": "index.js",
   "scripts": {
-    "build": "webpack",
-    "prodbuild": "webpack --mode=production",
+    "build": "webpack --config ./webpack/dev.config.js",
+    "prodbuild": "webpack --config ./webpack/prod.config.js",
     "watch": "webpack --watch",
     "start": "electron .",
     "dist": "electron-builder",
@@ -58,7 +58,8 @@
     "vue-template-compiler": "^2.6.12",
     "vuetify-loader": "^1.6.0",
     "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12"
+    "webpack-cli": "^3.3.12",
+    "webpack-merge": "^5.2.0"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.14.0",

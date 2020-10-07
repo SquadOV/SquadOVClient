@@ -14,7 +14,14 @@ import Register from '@client/vue/auth/Register.vue'
 Vue.use(Vuetify)
 Vue.use(VueRouter)
 const baseRoutes : any[] = [
-    { path: '/', name: 'login', component: Login },
+    { 
+        path: '/',
+        name: 'login',
+        component: Login,
+        props: (route : any) => ({
+            reg: route.query.reg
+        })
+    },
     { path: '/register', name: 'register', component: Register },
 ]
 
