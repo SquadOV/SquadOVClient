@@ -24,6 +24,12 @@
                 </v-list-item>
             </v-list>
         </v-menu>
+
+        <v-spacer></v-spacer>
+
+        <v-btn @click="logout" text>
+            Logout
+        </v-btn>
     </v-app-bar>
 </template>
 
@@ -32,6 +38,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import * as pi from '@client/js/pages'
+import { apiClient } from '@client/js/api'
+import { ipcRenderer } from 'electron'
 
 @Component
 export default class AppNav extends Vue {
@@ -73,6 +81,16 @@ export default class AppNav extends Vue {
         return {
             name: pi.DashboardPageId,
         }
+    }
+
+    logout() {
+        apiClient.logout().then(() => {
+        }).catch((err : any) => {
+            console.log('Failed to logout: {}', err)
+        }).finally(() => {
+            // The user should feel like they logged out regardless of what happened on the server.
+            ipcRenderer.sendSync('logout')
+        })
     }
 }
 

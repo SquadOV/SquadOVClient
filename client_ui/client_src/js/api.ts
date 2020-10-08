@@ -229,6 +229,10 @@ class ApiClient {
             }
         })
     }
+
+    logout() : Promise<void> {
+        return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()
