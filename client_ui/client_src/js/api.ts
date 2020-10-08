@@ -220,6 +220,15 @@ class ApiClient {
     checkVerification() : Promise<ApiData<CheckVerificationOutput>> {
         return axios.get('auth/verify', this.createWebAxiosConfig())
     }
+
+    forgotPassword(loginId : string) : Promise<void> {
+        return axios.get('auth/forgotpw', {
+            ...this.createWebAxiosConfig(),
+            params: {
+                loginId,
+            }
+        })
+    }
 }
 
 export let apiClient = new ApiClient()

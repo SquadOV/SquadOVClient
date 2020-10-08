@@ -16,7 +16,7 @@
                         <span>
                             This password is used to securely encrypt sensitive data locally on your machine.
                             Please select a strong password.
-                            Keep this password safe, it can not be reset or recovered.
+                            Keep this password safe, it can not be reset or recovered and is SEPARATE from your account password.
                         </span>
                     </v-tooltip>
                 </div>

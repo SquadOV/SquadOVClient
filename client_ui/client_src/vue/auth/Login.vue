@@ -62,11 +62,19 @@
         </v-row>
 
         <v-snackbar
+            v-model="showHideResetPasswordSuccess"
+            :timeout="5000"
+            color="success"
+        >
+            You were sent an email with a link to reset your password if the given username/email exists in our system.
+        </v-snackbar>
+
+        <v-snackbar
             v-model="showHideGenericError"
             :timeout="5000"
             color="error"
         >
-            Login failed. Please try again shortly.
+            Oops! Something went wrong. Please try again shortly.
         </v-snackbar>
 
         <v-snackbar
@@ -98,6 +106,7 @@ export default class Login extends Vue {
     showRegistrationBanner: boolean = false
     showHideGenericError: boolean = false
     showHideAuthError: boolean = false
+    showHideResetPasswordSuccess: boolean = false
 
     @Watch('reg')
     onSyncReg() {
@@ -178,7 +187,13 @@ export default class Login extends Vue {
             return
         }
 
-        // If the email exists, send a request to the server.
+        // If the email exists, send a request to the server to send a password reset email.
+        apiClient.forgotPassword(this.username).then(() => {
+            this.showHideResetPasswordSuccess = true
+        }).catch((err : any) => {
+            console.log('Failed to reset password: ', err)
+            this.showHideGenericError = true
+        })
     }
 }
 
