@@ -10,11 +10,6 @@ module.exports.loginFlow =  function(win) {
     return new Promise((resolve, reject) => {
         win.loadFile('login.html')
 
-        ipcMain.once('obtain-session', (event, [session, userId]) => {
-            process.env.SQUADOV_SESSION_ID = session
-            process.env.SQUADOV_USER_ID = userId
-        })
-
         ipcMain.once('finish-login', (event, arg) => {
             resolve()
         })

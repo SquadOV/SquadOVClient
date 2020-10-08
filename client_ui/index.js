@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain} = require('electron')
+const {app, BrowserWindow, ipcMain, session} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
@@ -24,18 +24,14 @@ ipcMain.on('request-app-folder', (event) => {
 
 // Start a local API server that'll be used manage our connections to the
 // database that holds all the information we want to retrieve.
-const { ApiServer } = require('./api_src/api')
+const { ApiServer } = require('./api_src/api');
+const { fixSchemaAst } = require('graphql-tools');
 
 let apiServer = new ApiServer()
 function quit() {
     apiServer.close()
     app.quit()
 }
-
-ipcMain.on('logout', () => {
-    app.relaunch()
-    quit()    
-})
 
 app.on('certificate-error', (event, contents, url, error, certificate, callback) => {
     if (url.startsWith(`https://127.0.0.1:${process.env.SQUADOV_API_PORT}`)) {
@@ -83,6 +79,47 @@ function setAppDataFolderFromEnv() {
     }
 }
 
+function getSessionPath() {
+    return path.join(app.getPath('appData'), 'SquadOV', 'session.json')
+}
+
+ipcMain.on('logout', () => {
+    const sessionPath = getSessionPath()
+    if (fs.existsSync(sessionPath)) {
+        fs.unlinkSync(sessionPath)
+    }
+    app.relaunch()
+    quit()    
+})
+
+// Returns true is a session was loaded successfuly.
+function loadSession() {
+    const sessionPath = getSessionPath()
+    if (!fs.existsSync(sessionPath)) {
+        return false
+    }
+
+    const data = JSON.parse(fs.readFileSync(sessionPath))
+    process.env.SQUADOV_SESSION_ID = data.sessionId
+    process.env.SQUADOV_USER_ID = data.userId
+    return true
+}
+
+function saveSession() {
+    fs.writeFileSync(getSessionPath(), JSON.stringify({
+        sessionId: process.env.SQUADOV_SESSION_ID,
+        userId: process.env.SQUADOV_USER_ID,
+    }), {
+        encoding: 'utf-8',
+    })
+}
+
+ipcMain.on('obtain-session', (event, [session, userId]) => {
+    process.env.SQUADOV_SESSION_ID = session
+    process.env.SQUADOV_USER_ID = userId
+    saveSession()
+})
+
 app.on('ready', async () => {
     win= new BrowserWindow({
         width: 1280,
@@ -99,15 +136,18 @@ app.on('ready', async () => {
     win.setMenu(null)
     win.setMenuBarVisibility(false)
 
-    // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
-    try {
-        await loginFlow(win)
-    } catch (ex) {
-        log.log('User chose not to login...good bye: ', ex)
-        quit()
-        return
+    if (!loadSession()) {
+        // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
+        try {
+            await loginFlow(win)
+        } catch (ex) {
+            log.log('User chose not to login...good bye: ', ex)
+            quit()
+            return
+        }
+        log.log(`OBTAINED SESSION: ${process.env.SQUADOV_SESSION_ID} - USER ID: ${process.env.SQUADOV_USER_ID}`)
+        saveSession()
     }
-    log.log(`OBTAINED SESSION: ${process.env.SQUADOV_SESSION_ID} - USER ID: ${process.env.SQUADOV_USER_ID}`)
 
     // Set the environment variable SQUADOV_USER_APP_FOLDER to specify which folder to store *ALL* this user's data in.
     setAppDataFolderFromEnv()
