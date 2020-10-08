@@ -97,13 +97,16 @@ class ApiClient {
 
         if (!!this.setSessionId) {
             ret.headers = {
-                'X-SQUADOV-SESSION-ID': this._sessionId,
+                'x-squadov-session-id': this._sessionId,
             }
         }
 
         return ret
     }
 
+    //
+    // Legay Local API
+    //
     @waitForApiServerSetup
     listValorantAccounts() : Promise<ApiData<ValorantAccountData[]>> {
         return axios({
@@ -205,6 +208,9 @@ class ApiClient {
         return axios(baseConfig)
     }
 
+    //
+    // Web server API
+    //
     login(inp : LoginInput) : Promise<ApiData<LoginOutput>> {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
     }
@@ -236,3 +242,24 @@ class ApiClient {
 }
 
 export let apiClient = new ApiClient()
+
+const sessionSetHeader = 'x-squadov-set-session-id'
+function parseResponseHeaders(headers : any) {
+    if (!(sessionSetHeader in headers)) {
+        return
+    }
+
+    const newSessionId = headers[sessionSetHeader]
+    apiClient.setSessionId(newSessionId)
+
+    // Also need to notify the main process so that it can communicate with the local service somehow.
+    ipcRenderer.sendSync('refresh-session', newSessionId)
+}
+
+axios.interceptors.response.use((resp) => {
+    parseResponseHeaders(resp.headers)
+    return resp
+}, (err) => {
+    parseResponseHeaders(err.response.headers)
+    return Promise.reject(err)
+})

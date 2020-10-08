@@ -120,6 +120,18 @@ ipcMain.on('obtain-session', (event, [session, userId]) => {
     saveSession()
 })
 
+ipcMain.on('refresh-session', (event, session) => {
+    process.env.SQUADOV_SESSION_ID = session
+    saveSession()
+})
+
+ipcMain.on('request-session', (event) => {
+    event.returnValue = {
+        sessionId: process.env.SQUADOV_SESSION_ID,
+        userId: process.env.SQUADOV_USER_ID,
+    }
+})
+
 app.on('ready', async () => {
     win= new BrowserWindow({
         width: 1280,

@@ -28,6 +28,9 @@ import PerformanceComponentChooser from '@client/vue/performance/PerformanceComp
 import VizStats from '@client/vue/performance/VizStats.vue'
 
 import * as pi from '@client/js/pages'
+import { ipcRenderer } from 'electron'
+import { apiClient, ApiData } from '@client/js/api'
+import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 
 const baseRoutes : any[] = [
     { path: '/', name: pi.DashboardPageId, component: Dashboard },
@@ -100,6 +103,23 @@ const router = new VueRouter({
 router.beforeEach((to : any, from : any, next : any) => {
     console.log(`Navigate ${from.path} => ${to.path}`)
     next()
+})
+
+// As soon as the app starts we need to query the main process for
+// the session ID properly initialize the API client
+// so that it's authenticated with the web server. After that, send out
+// an immediate request to obtain the current user profile and store it in the
+// Vuex storage to make it available to the frontend.
+let session : {
+    sessionId: string,
+    userId: string
+} = ipcRenderer.sendSync('request-session')
+apiClient.setSessionId(session.sessionId)
+getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+
+}).catch((err : any ) => {
+    // Uhhhhhhhhhhhhhhhhhhhhhhh....?
+    console.log('Failed to obtain user: ', err)
 })
 
 new Vue({
