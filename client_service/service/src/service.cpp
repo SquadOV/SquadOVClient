@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
     av_log_set_callback(ffmpegLogCallback);
 
     // Connect to the database which should be in the predefined spot in the APPDATA (or its OS equivalent) folder.
-    const fs::path dbFname = shared::filesystem::getSquadOvFolder() / fs::path("squadov.db");
+    const fs::path dbFname = shared::filesystem::getSquadOvUserFolder() / fs::path("squadov.db");
     const auto db = std::make_unique<service::database::DatabaseApi>(dbFname.string());
 
     // Start process watcher to watch for our supported games.

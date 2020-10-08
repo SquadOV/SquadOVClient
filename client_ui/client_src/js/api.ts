@@ -55,6 +55,7 @@ interface LoginInput {
 }
 
 export interface LoginOutput {
+    userId: number
     sessionId: string
     verified: boolean | null
 }

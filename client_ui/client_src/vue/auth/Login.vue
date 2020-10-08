@@ -143,7 +143,7 @@ export default class Login extends Vue {
             password: this.password,
         }).then((resp : ApiData<LoginOutput>) => {
             // Successful login - store the session ID.
-            ipcRenderer.send('obtain-session', resp.data.sessionId)
+            ipcRenderer.send('obtain-session', [resp.data.sessionId, resp.data.userId])
 
             // Forcefully set session ID on the Api client just in case
             // we're going to the email verification check page.

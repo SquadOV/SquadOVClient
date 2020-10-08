@@ -32,18 +32,8 @@ ipcMain.on('apiServer', (event) => {
 })
 
 class ApiServer {
-    async initBackendDatabase() {
-        const dirname = path.join(app.getPath('appData'), 'SquadOV')
-        if (!fs.existsSync(dirname)) {
-            fs.mkdir(dirname, {
-                recursive: true,
-                mode: 0o755,
-            }, (err) => {
-                if (!!err) throw err
-            })
-        }
-    
-        const fname = path.join(dirname, 'squadov.db')
+    async initBackendDatabase() {    
+        const fname = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'squadov.db')
     
         let initDb = new sqlite3.Database(fname, sqlite3.OPEN_READWRITE | sqlite3.OPEN_CREATE, (err) => {
             if (!!err) throw err

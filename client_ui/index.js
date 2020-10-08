@@ -1,10 +1,11 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
+const { createVerifyEncryptionPasswordFlow} = require('./password.js')
 
 if (app.isPackaged) {
     const { autoUpdater } = require("electron-updater")
@@ -16,6 +17,10 @@ let win
 function start() {
     win.loadFile('index.html')
 }
+
+ipcMain.on('request-app-folder', (event) => {
+    event.returnValue = process.env.SQUADOV_USER_APP_FOLDER
+})
 
 // Start a local API server that'll be used manage our connections to the
 // database that holds all the information we want to retrieve.
@@ -35,6 +40,43 @@ app.on('certificate-error', (event, contents, url, error, certificate, callback)
         callback(false)
     }
 })
+
+function setAppDataFolderFromEnv() {
+    process.env.SQUADOV_USER_APP_FOLDER = path.join(app.getPath('appData'), 'SquadOV', `${process.env.SQUADOV_USER_ID}`)
+
+    if (!fs.existsSync(process.env.SQUADOV_USER_APP_FOLDER)) {
+        fs.mkdirSync(process.env.SQUADOV_USER_APP_FOLDER, {
+            recursive: true
+        })
+
+        // Check if there's an existing installation. If so, migrate everything into this new folder.
+        // Note that *eveyrthing* here excludes the log folder. That should stay in the non-user specified folder.
+        let oldInstallPath = path.join(app.getPath('appData'), 'SquadOV')
+        let oldDbPath = path.join(oldInstallPath, 'squadov.db')
+        if (fs.existsSync(oldDbPath)) {
+            fs.renameSync(
+                oldDbPath,
+                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'squadov.db'),
+            )
+        }
+
+        let oldVerifyPath = path.join(oldInstallPath, 'verify.bcrypt')
+        if (fs.existsSync(oldVerifyPath)) {
+            fs.renameSync(
+                oldVerifyPath,
+                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'verify.bcrypt'),
+            )
+        }
+
+        let oldRecordPath = path.join(oldInstallPath, 'Record')
+        if (fs.existsSync(oldRecordPath)) {
+            fs.renameSync(
+                oldRecordPath,
+                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'Record'),
+            )
+        }
+    }
+}
 
 app.on('ready', async () => {
     win= new BrowserWindow({
@@ -56,10 +98,25 @@ app.on('ready', async () => {
     try {
         await loginFlow(win)
     } catch (ex) {
-        log.log('User chose not to login...good bye.')
+        log.log('User chose not to login...good bye: ', ex)
         quit()
         return
     }
+    log.log(`OBTAINED SESSION: ${process.env.SQUADOV_SESSION_ID} - USER ID: ${process.env.SQUADOV_USER_ID}`)
+
+    // Set the environment variable SQUADOV_USER_APP_FOLDER to specify which folder to store *ALL* this user's data in.
+    setAppDataFolderFromEnv()
+
+    // THEN HAVE THE USER VERIFY THEIR LOCAL PASSWORD.
+    // This is *different* form their account password. It cannot be reset.
+    try {
+        await createVerifyEncryptionPasswordFlow(win)
+    } catch(ex) {
+        log.log('User chose not to input/create password...good bye: ', ex)
+        quit()
+        return
+    }
+    log.log(`OBTAINED ENCRYPTION PASSWORD`)
 
     apiServer.start(() => {
         // Start auxiliary service that'll handle waiting for games to run and
