@@ -16,3 +16,5 @@ add_subdirectory(libpng)
 
 set(PA_ENABLE_DEBUG_OUTPUT OFF)
 add_subdirectory(portaudio)
+
+add_subdirectory(libzmq)

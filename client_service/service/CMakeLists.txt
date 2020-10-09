@@ -17,6 +17,7 @@ SET(SRCS
     src/recorder/image/image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
     src/system/win32/hwnd_utils.cpp
+    src/zeromq/zeromq.cpp
 )
 
 SET(HEADERS
@@ -43,6 +44,7 @@ SET(HEADERS
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
     src/system/win32/hwnd_utils.h
+    src/zeromq/zeromq.h
 )
 
 add_executable(squadov_client_service
@@ -61,6 +63,8 @@ target_include_directories(squadov_client_service
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
     ${CMAKE_SOURCE_DIR}/deps/libpng
     ${CMAKE_SOURCE_DIR}/deps/portaudio/include
+    ${CMAKE_SOURCE_DIR}/deps/cppzmq
+    ${CMAKE_SOURCE_DIR}/deps/libzmq/include
     ${OPENSSL_INCLUDE_DIR}
     ${FFMPEG_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
@@ -76,6 +80,7 @@ target_link_libraries(squadov_client_service
     sqlite3
     png
     portaudio
+    libzmq
     ZLIB::ZLIB
     ${OPENSSL_LIBRARIES}
     ${FFMPEG_LIBRARIES}

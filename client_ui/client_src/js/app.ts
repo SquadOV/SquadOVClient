@@ -110,16 +110,20 @@ router.beforeEach((to : any, from : any, next : any) => {
 // so that it's authenticated with the web server. After that, send out
 // an immediate request to obtain the current user profile and store it in the
 // Vuex storage to make it available to the frontend.
-let session : {
+ipcRenderer.invoke('request-session').then((session : {
     sessionId: string,
     userId: string
-} = ipcRenderer.sendSync('request-session')
-apiClient.setSessionId(session.sessionId)
-getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
-
-}).catch((err : any ) => {
-    // Uhhhhhhhhhhhhhhhhhhhhhhh....?
-    console.log('Failed to obtain user: ', err)
+}) => {
+    apiClient.setSessionId(session.sessionId)
+    getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+    }).catch((err : any ) => {
+        // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
+        // the stored session is garbage and so we have no way to recover
+        // unless the user re-logs in. There's a chance that the API might have failed
+        // so don't bother trying to do a proper API logout.
+        console.log('Failed to obtain user: ', err)
+        ipcRenderer.sendSync('logout')
+    })
 })
 
 new Vue({

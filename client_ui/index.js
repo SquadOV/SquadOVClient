@@ -22,6 +22,11 @@ ipcMain.on('request-app-folder', (event) => {
     event.returnValue = process.env.SQUADOV_USER_APP_FOLDER
 })
 
+// Start a local ZeroMQ server that'll be used for IPC between the electron client
+// and the underlying local client service.
+const { ZeroMQServerClient } = require('./zeromq')
+let zeromqServer = new ZeroMQServerClient()
+
 // Start a local API server that'll be used manage our connections to the
 // database that holds all the information we want to retrieve.
 const { ApiServer } = require('./api_src/api');
@@ -29,6 +34,7 @@ const { fixSchemaAst } = require('graphql-tools');
 
 let apiServer = new ApiServer()
 function quit() {
+    zeromqServer.close()
     apiServer.close()
     app.quit()
 }
@@ -114,25 +120,48 @@ function saveSession() {
     })
 }
 
+function updateSession(sessionId, sendIpc) {
+    process.env.SQUADOV_SESSION_ID = sessionId
+    saveSession()
+
+    log.log('UPDATE SESSION: ' , sessionId)
+    if (!!sendIpc) {
+        zeromqServer.updateSessionId(sessionId)
+    }
+}
+
+zeromqServer.on('session-id', (sessionId) => {
+    updateSession(sessionId, false)
+})
+
+// This is the initial session obtainment from logging in. Loading it from storage will
+// directly call loadSession(). This event ONLY happens in the Login UI.
 ipcMain.on('obtain-session', (event, [session, userId]) => {
     process.env.SQUADOV_SESSION_ID = session
     process.env.SQUADOV_USER_ID = userId
     saveSession()
 })
 
+// This event gets called when the UI obtains a new session ID from the API server.
+// This can happen when/if the session expires and the API server refreshes it and gives us
+// a new one.
 ipcMain.on('refresh-session', (event, session) => {
-    process.env.SQUADOV_SESSION_ID = session
-    saveSession()
+    updateSession(session, true)
 })
 
-ipcMain.on('request-session', (event) => {
-    event.returnValue = {
+// This event gets called when the primary app UI loads up for the first time
+// and needs to retrieve what the current session ID and user ID are.
+ipcMain.handle('request-session', () => {
+    return {
         sessionId: process.env.SQUADOV_SESSION_ID,
         userId: process.env.SQUADOV_USER_ID,
     }
 })
 
-app.on('ready', async () => {
+app.on('ready', async () => {    
+    await zeromqServer.start()
+    zeromqServer.run()
+
     win= new BrowserWindow({
         width: 1280,
         height: 720,

@@ -253,7 +253,7 @@ function parseResponseHeaders(headers : any) {
     apiClient.setSessionId(newSessionId)
 
     // Also need to notify the main process so that it can communicate with the local service somehow.
-    ipcRenderer.sendSync('refresh-session', newSessionId)
+    ipcRenderer.send('refresh-session', newSessionId)
 }
 
 axios.interceptors.response.use((resp) => {
