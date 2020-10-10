@@ -14,10 +14,9 @@ module.exports = (env, argv) => {
                 parallel: true,
             })],
         },  
-        devtool: "source-map",
         plugins: [
             new webpack.DefinePlugin({
-                'API_URL': '"http://api.squadov.gg"',
+                'API_URL': '"http://api.staging.squadov.gg"',
             })
         ],
         output: {
