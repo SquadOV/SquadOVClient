@@ -16,7 +16,7 @@
                         <span>
                             This password is used to securely encrypt sensitive data locally on your machine.
                             Please select a strong password.
-                            Keep this password safe, it can not be reset or recovered.
+                            Keep this password safe, it can not be reset or recovered and is SEPARATE from your account password.
                         </span>
                     </v-tooltip>
                 </div>
@@ -117,12 +117,12 @@ export default class PasswordChooser extends Vue {
     }
 
     get hashFname() : string {
-        if (!process.env.APPDATA) {
-            // Um?? Not windows. Derp.
-            this.onError('Failed to find APPDATA env variable.')
+        let folder = ipcRenderer.sendSync('request-app-folder')
+        if (!folder) {
+            this.onError('Failed to get user app folder.')
             return ''
         }
-        return path.join(process.env.APPDATA, 'SquadOV', 'verify.bcrypt')
+        return path.join(folder, 'verify.bcrypt')
     }
 
     reloadPasswordHash() {

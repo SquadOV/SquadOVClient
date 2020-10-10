@@ -23,10 +23,13 @@ files:
       - "!**/*.json"
   - "index.html"
   - "password.html"
+  - "login.html"
   - "index.js"
   - "password.js"
+  - "login.js"
   - "log.js"
   - "rendererLog.js"
+  - "zeromq.js"
   - "api_src/**/*"
   - "package.json"
 

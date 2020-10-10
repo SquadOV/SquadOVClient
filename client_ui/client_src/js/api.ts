@@ -49,7 +49,38 @@ export interface GraphqlApiData<T> {
     }
 }
 
+interface LoginInput {
+    username: string
+    password: string
+}
+
+export interface LoginOutput {
+    userId: number
+    sessionId: string
+    verified: boolean | null
+}
+
+interface RegisterInput {
+    username: string
+    password: string
+    email: string
+}
+
+export interface CheckVerificationOutput {
+    verified: boolean | null
+}
+
 class ApiClient {
+    _sessionId: string | null
+
+    constructor() {
+        this._sessionId = null
+    }
+
+    setSessionId(s : string) {
+        this._sessionId = s
+    }
+
     createAxiosConfig(endpoint : string) : any {
         return {
             url: `https://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
@@ -59,6 +90,23 @@ class ApiClient {
         }
     }
 
+    createWebAxiosConfig() : any {
+        let ret : any = {
+            baseURL: API_URL,
+        }
+
+        if (!!this.setSessionId) {
+            ret.headers = {
+                'x-squadov-session-id': this._sessionId,
+            }
+        }
+
+        return ret
+    }
+
+    //
+    // Legay Local API
+    //
     @waitForApiServerSetup
     listValorantAccounts() : Promise<ApiData<ValorantAccountData[]>> {
         return axios({
@@ -159,6 +207,59 @@ class ApiClient {
         baseConfig.headers['Content-Type'] = 'application/graphql'
         return axios(baseConfig)
     }
+
+    //
+    // Web server API
+    //
+    login(inp : LoginInput) : Promise<ApiData<LoginOutput>> {
+        return axios.post('auth/login', inp, this.createWebAxiosConfig())
+    }
+
+    register(inp : RegisterInput) : Promise<void> {
+        return axios.post('auth/register', inp, this.createWebAxiosConfig())
+    }
+
+    resendVerification() : Promise<void> {
+        return axios.post('auth/verify/resend', {}, this.createWebAxiosConfig())
+    }
+
+    checkVerification() : Promise<ApiData<CheckVerificationOutput>> {
+        return axios.get('auth/verify', this.createWebAxiosConfig())
+    }
+
+    forgotPassword(loginId : string) : Promise<void> {
+        return axios.get('auth/forgotpw', {
+            ...this.createWebAxiosConfig(),
+            params: {
+                loginId,
+            }
+        })
+    }
+
+    logout() : Promise<void> {
+        return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()
+
+const sessionSetHeader = 'x-squadov-set-session-id'
+function parseResponseHeaders(headers : any) {
+    if (!(sessionSetHeader in headers)) {
+        return
+    }
+
+    const newSessionId = headers[sessionSetHeader]
+    apiClient.setSessionId(newSessionId)
+
+    // Also need to notify the main process so that it can communicate with the local service somehow.
+    ipcRenderer.send('refresh-session', newSessionId)
+}
+
+axios.interceptors.response.use((resp) => {
+    parseResponseHeaders(resp.headers)
+    return resp
+}, (err) => {
+    parseResponseHeaders(err.response.headers)
+    return Promise.reject(err)
+})

@@ -1,29 +1,25 @@
 #include "shared/filesystem/common_paths.h"
 
 #include "shared/errors/error.h"
+#include "shared/env.h"
 
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 
 std::filesystem::path getAppDataPath() {
-#ifdef _WIN32
-    char* appData;
-    size_t len;
-    _dupenv_s(&appData, &len, "APPDATA");
-    const std::filesystem::path appDataDir(appData);
-    free(appData);
-#else
-    THROW_ERROR("Unsupported OS.");
-#endif
-    return appDataDir;
+    return fs::path(shared::getEnv("APPDATA"));
 }
 
 std::filesystem::path getSquadOvFolder() {
     return getAppDataPath() / std::filesystem::path("SquadOV");;
 }
 
+std::filesystem::path getSquadOvUserFolder() {
+    return fs::path(shared::getEnv("SQUADOV_USER_APP_FOLDER"));
+}
+
 std::filesystem::path getSquadOvRecordFolder() {
-    const auto appData = getSquadOvFolder();
+    const auto appData = getSquadOvUserFolder();
     return appData / std::filesystem::path("Record");
 }
 

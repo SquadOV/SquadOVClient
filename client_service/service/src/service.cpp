@@ -4,6 +4,7 @@
 #include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "database/api.h"
+#include "zeromq/zeromq.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 
@@ -62,11 +63,18 @@ int main(int argc, char** argv) {
         THROW_ERROR("Failed to initialize PortAudio.");
     }
 
+    // Start running the ZeroMQ server for IPC communication with the frontend.
+    service::zeromq::ZeroMQServerClient zeroMqServerClient;
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, [](const std::string& msg){
+        LOG_INFO("RECEIVED NEW SESSION ID: " << msg << std::endl);
+    });
+    zeroMqServerClient.start();
+
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
     av_log_set_callback(ffmpegLogCallback);
 
     // Connect to the database which should be in the predefined spot in the APPDATA (or its OS equivalent) folder.
-    const fs::path dbFname = shared::filesystem::getSquadOvFolder() / fs::path("squadov.db");
+    const fs::path dbFname = shared::filesystem::getSquadOvUserFolder() / fs::path("squadov.db");
     const auto db = std::make_unique<service::database::DatabaseApi>(dbFname.string());
 
     // Start process watcher to watch for our supported games.
