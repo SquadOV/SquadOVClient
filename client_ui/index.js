@@ -30,7 +30,6 @@ let zeromqServer = new ZeroMQServerClient()
 // Start a local API server that'll be used manage our connections to the
 // database that holds all the information we want to retrieve.
 const { ApiServer } = require('./api_src/api');
-const { fixSchemaAst } = require('graphql-tools');
 
 let apiServer = new ApiServer()
 function quit() {
