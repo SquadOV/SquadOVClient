@@ -203,6 +203,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
+                _dupl->ReleaseFrame();
                 std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
                 continue;
             }
@@ -217,6 +218,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             desktopResource->Release();
             desktopResource = nullptr;
             if (hr != S_OK) {
+                _dupl->ReleaseFrame();
                 continue;
             }
 
