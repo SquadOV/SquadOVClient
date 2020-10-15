@@ -5,8 +5,10 @@
 #include "valorant/valorant_process_handler.h"
 #include "database/api.h"
 #include "zeromq/zeromq.h"
+#include "shared/env.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "api/squadov_api.h"
 
 #include <boost/stacktrace.hpp>
 #include <chrono>
@@ -63,12 +65,20 @@ int main(int argc, char** argv) {
         THROW_ERROR("Failed to initialize PortAudio.");
     }
 
+    std::cout << "USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl;
+
     // Start running the ZeroMQ server for IPC communication with the frontend.
     service::zeromq::ZeroMQServerClient zeroMqServerClient;
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, [](const std::string& msg){
-        LOG_INFO("RECEIVED NEW SESSION ID: " << msg << std::endl);
+        service::api::getGlobalApi()->setSessionId(msg);
     });
     zeroMqServerClient.start();
+
+    service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
+        zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
+    });
+
+    service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
     av_log_set_callback(ffmpegLogCallback);

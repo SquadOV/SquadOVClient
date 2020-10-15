@@ -7,10 +7,10 @@ namespace service::recorder::encoder {
 class FfmpegAvEncoderImpl;
 class FfmpegAvEncoder : public AvEncoder {
 public:
-    explicit FfmpegAvEncoder(const std::filesystem::path& path);
+    explicit FfmpegAvEncoder(const std::string& streamUrl);
     ~FfmpegAvEncoder();
 
-    const std::filesystem::path& path() const override;
+    const std::string& streamUrl() const override;
     void initializeVideoStream(size_t fps, size_t width, size_t height) override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;

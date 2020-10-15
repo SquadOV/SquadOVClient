@@ -1,6 +1,7 @@
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 
 #include "recorder/audio/fixed_size_audio_packet.h"
+#include "shared/env.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 
@@ -28,7 +29,6 @@ extern "C" {
 #include "recorder/encoder/ffmpeg_utils.h"
 }
 
-#define DEBUG_IMAGES 0
 #define LOG_FRAME_TIME 0
 
 using namespace std::chrono_literals;
@@ -89,10 +89,10 @@ void encode(AVCodecContext* cctx, AVFormatContext* fctx, AVFrame* frame, AVStrea
 
 class FfmpegAvEncoderImpl {
 public:
-    FfmpegAvEncoderImpl(const std::filesystem::path& path);
+    explicit FfmpegAvEncoderImpl(const std::string& streamUrl);
     ~FfmpegAvEncoderImpl();
 
-    const std::filesystem::path& path() const { return _path; }
+    const std::string& streamUrl() const { return _streamUrl; }
     void initializeVideoStream(size_t fps, size_t width, size_t height);
     void addVideoFrame(const service::recorder::image::Image& frame);
     void getVideoDimensions(size_t& width, size_t& height);
@@ -109,7 +109,7 @@ private:
     AVFrame* createAudioFrame() const;
     bool hasAudioFrameAvailable() const;
 
-    std::filesystem::path _path;
+    std::string _streamUrl;
 
     // AV Output
     AVOutputFormat* _avformat = nullptr;
@@ -226,16 +226,15 @@ void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSampl
     }
 }
 
-FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::filesystem::path& path):
-    _path(path) {
-    _path.replace_extension(std::filesystem::path(".mp4"));
+FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
+    _streamUrl(streamUrl) {
 
-    _avformat = av_guess_format(nullptr, _path.string().c_str(), nullptr);
+    _avformat = av_guess_format("flv", nullptr, nullptr);
     if (!_avformat) {
-        THROW_ERROR("Failed to find the AV format for:" << path.extension().string());
+        THROW_ERROR("Failed to find the FLV format.");
     }
 
-    if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, _path.string().c_str()) < 0) {
+    if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, nullptr) < 0) {
         THROW_ERROR("Failed to allocate AV context.");
     }
 }
@@ -310,6 +309,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             if (ret < 0) {
                 THROW_ERROR("Failed to initialize video context");
             }
+            av_dict_free(&options);
 
             foundEncoder = true;
             LOG_INFO("FFmpeg Found Encoder: " << enc << std::endl);
@@ -358,7 +358,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 }
 
 void FfmpegAvEncoderImpl::initializeAudioStream() {
-    _acodec = avcodec_find_encoder(_avformat->audio_codec);
+    _acodec = avcodec_find_encoder_by_name("aac");
     if (!_acodec) {
         THROW_ERROR("Failed to find the audio codec.");
     }
@@ -498,15 +498,6 @@ void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& f
 
     _backBuffer->copyFrom(frame);
     _backBufferDirty = true;
-
-#if DEBUG_IMAGES
-    {
-        static int frameCnt = 0;
-        std::ostringstream bfname;
-        bfname << _path.string() << "_" << frameCnt++ << "BACK.png";
-        _backBuffer->saveToFile(std::filesystem::path(bfname.str()));
-    }
-#endif
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
@@ -552,7 +543,7 @@ void FfmpegAvEncoderImpl::start() {
     }
 
     // This is what actually gets us to write to a file.
-    if (avio_open(&_avcontext->pb, _path.string().c_str(), AVIO_FLAG_WRITE) < 0) {
+    if (avio_open(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE) < 0) {
         THROW_ERROR("Failed to open video for output");
     }
 
@@ -560,7 +551,7 @@ void FfmpegAvEncoderImpl::start() {
         THROW_ERROR("Failed to write header");
     }
 
-    av_dump_format(_avcontext, 0, _path.string().c_str(), 1);
+    av_dump_format(_avcontext, 0, _streamUrl.c_str(), 1);
 
     // Use this time to sync the audio and video. This time is when our video and audio should start.
     const auto start = AVSyncClock::now();
@@ -734,8 +725,8 @@ void FfmpegAvEncoderImpl::stop() {
     av_write_trailer(_avcontext);
 }
 
-FfmpegAvEncoder::FfmpegAvEncoder(const std::filesystem::path& path):
-    _impl(new FfmpegAvEncoderImpl(path)) {  
+FfmpegAvEncoder::FfmpegAvEncoder(const std::string& streamUrl):
+    _impl(new FfmpegAvEncoderImpl(streamUrl)) {  
 }
 
 FfmpegAvEncoder::~FfmpegAvEncoder() = default;
@@ -760,8 +751,8 @@ void FfmpegAvEncoder::getVideoDimensions(size_t& width, size_t& height) const {
     _impl->getVideoDimensions(width, height);
 }
 
-const std::filesystem::path& FfmpegAvEncoder::path() const {
-    return _impl->path();
+const std::string& FfmpegAvEncoder::streamUrl() const {
+    return _impl->streamUrl();
 }
 
 void FfmpegAvEncoder::initializeAudioStream() {

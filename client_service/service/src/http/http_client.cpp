@@ -3,6 +3,7 @@
 #include "shared/constants.h"
 #include "shared/log/log.h"
 
+#include <boost/algorithm/string.hpp>
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
@@ -11,57 +12,81 @@
 namespace service::http {
 namespace {
 
+class HttpRequest {
+public:
+    HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned);
+    ~HttpRequest();
+    HttpResponsePtr Do();
+private:
+    CURL* _curl = nullptr;
+    curl_slist* _headers = nullptr;
+};
+
 size_t curlStringStreamCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     std::ostringstream& buffer = *reinterpret_cast<std::ostringstream*>(userdata);
     buffer << std::string(ptr, nmemb);
     return nmemb;
 }
 
-class HttpRequest {
-public:
-    HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned) {
-        _curl = curl_easy_init();
-        LOG_INFO("CURL REQUEST TO: " << uri << std::endl);
-        curl_easy_setopt(_curl, CURLOPT_URL, uri.c_str());
+size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userdata) {
+    HttpResponse* resp = reinterpret_cast<HttpResponse*>(userdata);
+    std::string_view header(buffer, size * nitems);
+    const auto total = nitems * size;
     
-        for (const auto& [key, value] : headers) {
-            std::ostringstream h;
-            h << key << ": " << value;
-            _headers = curl_slist_append(_headers, h.str().c_str());
-        }
-
-        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
-
-        if (allowSelfSigned) {
-            curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0);
-        }
+    if (header.find(':') == std::string::npos) {
+        return total;
     }
 
-    ~HttpRequest() {
-        curl_easy_cleanup(_curl);
-        curl_slist_free_all(_headers);
+    std::vector<std::string> parts;
+    boost::split(parts, header, boost::is_any_of(":"));
+    if (parts.size() != 2) {
+        return total;
     }
 
-    HttpResponsePtr Do() {
-        auto resp = std::make_unique<HttpResponse>();
+    resp->headers[std::string(parts[0])] = std::string(parts[1]);
+    return total;
+}
 
-        std::ostringstream buffer;
-        curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &buffer);
-        curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, curlStringStreamCallback);
+HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned) {
+    _curl = curl_easy_init();
+    LOG_INFO("CURL REQUEST TO: " << uri << std::endl);
+    curl_easy_setopt(_curl, CURLOPT_URL, uri.c_str());
 
-        resp->curlError = curl_easy_perform(_curl);
-        if (resp->curlError == CURLE_OK) {
-            curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
-        }
-
-        resp->body = buffer.str();
-        return resp;
+    for (const auto& [key, value] : headers) {
+        std::ostringstream h;
+        h << key << ": " << value;
+        _headers = curl_slist_append(_headers, h.str().c_str());
     }
 
-private:
-    CURL* _curl = nullptr;
-    curl_slist* _headers = nullptr;
-};
+    curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+
+    if (allowSelfSigned) {
+        curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0);
+    }
+}
+
+HttpRequest::~HttpRequest() {
+    curl_easy_cleanup(_curl);
+    curl_slist_free_all(_headers);
+}
+
+HttpResponsePtr HttpRequest::Do() {
+    auto resp = std::make_unique<HttpResponse>();
+
+    std::ostringstream buffer;
+    curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, curlStringStreamCallback);
+    curl_easy_setopt(_curl, CURLOPT_HEADERDATA, resp.get());
+    curl_easy_setopt(_curl, CURLOPT_HEADERFUNCTION, curlHeaderCallback);
+
+    resp->curlError = curl_easy_perform(_curl);
+    if (resp->curlError == CURLE_OK) {
+        curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
+    }
+
+    resp->body = buffer.str();
+    return resp;
+}
 
 }
 
@@ -99,7 +124,14 @@ HttpResponsePtr HttpClient::Get(const std::string& path) const {
         std::shared_lock<std::shared_mutex> guard(_headerMutex);
         req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned));
     }
-    return req->Do();
+
+    auto resp = req->Do();
+    for (const auto& cb : _responseInterceptors) {
+        if (!cb(*resp)) {
+            break;
+        }
+    }
+    return std::move(resp);
 }
 
 void HttpClient::tickRateLimit() const {

@@ -57,7 +57,7 @@ interface LoginInput {
 export interface LoginOutput {
     userId: number
     sessionId: string
-    verified: boolean | null
+    verified: boolean
 }
 
 interface RegisterInput {
@@ -67,7 +67,7 @@ interface RegisterInput {
 }
 
 export interface CheckVerificationOutput {
-    verified: boolean | null
+    verified: boolean
 }
 
 class ApiClient {
@@ -255,6 +255,10 @@ function parseResponseHeaders(headers : any) {
     // Also need to notify the main process so that it can communicate with the local service somehow.
     ipcRenderer.send('refresh-session', newSessionId)
 }
+
+ipcRenderer.on('update-session', (event : any, message : string) => {
+    apiClient.setSessionId(message)
+})
 
 axios.interceptors.response.use((resp) => {
     parseResponseHeaders(resp.headers)

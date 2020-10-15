@@ -82,4 +82,12 @@ void ZeroMQServerClient::addHandler(const std::string& topic, const ZeroMQHandle
     _handlers[topic].push_back(handler);
 }
 
+void ZeroMQServerClient::sendMessage(const std::string& topic, const std::string& message) {
+    std::array<zmq::const_buffer, 2> buffer = {
+        zmq::buffer(topic),
+        zmq::buffer(message)
+    };
+    zmq::send_multipart(_pub, buffer);
+}
+
 }

@@ -47,9 +47,6 @@ class ZeroMQServerClient {
         this._sub.subscribe('session-id')
 
         log.log(`Starting ZeroMQ Server on Port ${this._port}`)
-        if (!app.isPackaged) {
-            log.log(`\tZeroMQ Key: ${process.env.SQUADOV_ZEROMQ_SERVER_KEY}`)
-        }
     }
 
     async run() {

@@ -1,8 +1,10 @@
 #include "recorder/game_recorder.h"
 
-
+#include "shared/base64/encode.h"
 #include "shared/errors/error.h"
+#include "shared/env.h"
 #include "shared/time.h"
+#include "shared/uuid.h"
 #include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
@@ -18,14 +20,9 @@ namespace service::recorder {
 
 GameRecorder::GameRecorder(
     const process_watcher::process::Process& process,
-    const fs::path& outputFolder,
     shared::EGame game):
     _process(process),
-    _outputFolder(outputFolder / fs::path(shared::gameToString(game))),
     _game(game) {
-    if (!fs::exists(_outputFolder)) {
-        fs::create_directories(_outputFolder);
-    }
 }
 
 GameRecorder::~GameRecorder() {
@@ -48,16 +45,21 @@ void GameRecorder::createVideoRecorder() {
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
 }
 
-std::filesystem::path GameRecorder::start(const std::string& matchId) {
-    if (!!_encoder) {
-        return _encoder->path();
+VodIdentifier GameRecorder::start(const std::string& matchId) {
+    if (!!_currentId) {
+        return *_currentId;
     }
 
+    _currentId = std::make_unique<VodIdentifier>();
+    _currentId->matchUuid = matchId;
+    _currentId->userUuid = shared::generateUuidv4();
+    _currentId->videoUuid = shared::generateUuidv4();
+
     // Generate an appropriate new basename for the video and audiot files.
-    std::ostringstream fname;
-    fname << matchId;
-    const fs::path matchPath = _outputFolder / fs::path(fname.str());
-    _encoder.reset(new encoder::FfmpegAvEncoder(matchPath));
+    std::ostringstream rtmpUrl;
+    rtmpUrl << "rtmp://" << shared::getEnv("SQUADOV_INGEST_URL", "127.0.0.1") << "/squadov/"
+        << shared::base64::encode(_currentId->userUuid) << "." << shared::base64::encode(_currentId->videoUuid);
+    _encoder.reset(new encoder::FfmpegAvEncoder(rtmpUrl.str()));
 
     // Initialize streams in the encoder here. Use hard-coded options for to record
     // video at 1080p@60fps. 
@@ -91,7 +93,7 @@ std::filesystem::path GameRecorder::start(const std::string& matchId) {
     }
 
     _encoder->start();
-    return _encoder->path();
+    return *_currentId;
 }
 
 void GameRecorder::stop() {
@@ -112,6 +114,7 @@ void GameRecorder::stop() {
     }
     _encoder->stop();
     _encoder.reset(nullptr);
+    _currentId.reset(nullptr);
 }
 
 }

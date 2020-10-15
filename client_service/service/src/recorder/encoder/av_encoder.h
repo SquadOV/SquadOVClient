@@ -19,7 +19,7 @@ class AvEncoder {
 public:
     virtual ~AvEncoder() {}
 
-    virtual const std::filesystem::path& path() const = 0;
+    virtual const std::string& streamUrl() const = 0;
     virtual void initializeVideoStream(size_t fps, size_t width, size_t height) = 0;
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;

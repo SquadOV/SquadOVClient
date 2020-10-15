@@ -22,6 +22,7 @@ public:
 
     void start();
     void addHandler(const std::string& topic, const ZeroMQHandler& handler);
+    void sendMessage(const std::string& topic, const std::string& message);
 
 private:
     zmq::context_t _ctx;

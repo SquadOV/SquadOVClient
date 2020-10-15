@@ -8,6 +8,8 @@ SET(SRCS
     shared/log/log.cpp
     shared/sqlite/sqlite.cpp
     shared/aimlab/aimlab.cpp
+    shared/uuid.cpp
+    shared/base64/encode.cpp
 )
 
 SET(HEADERS
@@ -22,6 +24,10 @@ SET(HEADERS
     shared/log/log.h
     shared/sqlite/sqlite.h
     shared/aimlab/aimlab.h
+    shared/uuid.h
+    shared/base64/encode.h
+    shared/squadov/session.h
+    shared/squadov/user.h
 )
 
 add_library(squadov_shared
@@ -35,4 +41,5 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/deps/date/include
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
+    ${Boost_INCLUDE_DIRS}
 )
