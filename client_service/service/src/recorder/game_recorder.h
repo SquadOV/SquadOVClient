@@ -11,7 +11,6 @@
 namespace service::recorder {
 
 struct VodIdentifier {
-    std::string matchUuid;
     std::string userUuid;
     std::string videoUuid;
 };
@@ -25,9 +24,10 @@ public:
     );
     ~GameRecorder();
 
-    VodIdentifier start(const std::string& matchId);
+    VodIdentifier start();
     void stop();
     bool isRecording() const { return !!_encoder; }
+    const VodIdentifier& currentId() const { return *_currentId; }
 
 private:
     void createVideoRecorder();

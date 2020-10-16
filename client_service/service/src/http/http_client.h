@@ -8,6 +8,7 @@
 #include <shared_mutex>
 #include <unordered_map>
 #include <vector>
+#include <nlohmann/json.hpp>
 
 struct curl_slist;
 
@@ -25,6 +26,7 @@ using HttpResponsePtr = std::unique_ptr<HttpResponse>;
 // Returns true if the next interceptor should still be run.
 using ResponseInterceptor = std::function<bool(HttpResponse&)>;
 
+class HttpRequest;
 class HttpClient {
 public:
     explicit HttpClient(const std::string& baseUri);
@@ -39,9 +41,14 @@ public:
 
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
 
-    HttpResponsePtr Get(const std::string& path) const;
+    HttpResponsePtr get(const std::string& path) const;
+    HttpResponsePtr post(const std::string& path, const nlohmann::json& body) const;
+    HttpResponsePtr del(const std::string& path) const;
 
 private:
+    using MethodRequestCallback = std::function<void(HttpRequest&)>;
+    HttpResponsePtr sendRequest(const std::string& path, const MethodRequestCallback& cb) const;
+
     void tickRateLimit() const;
     // TLS
     bool _allowSelfSigned = false;

@@ -20,6 +20,10 @@ std::string timeToStr(const TimePoint& tm) {
     return date::format("%F %H:%M:%S", tm);
 }
 
+std::string timeToIso(const TimePoint& tm) {
+    return date::format("%FT%TZ", tm);
+}
+
 std::string fnameTimeToStr(const TimePoint& tm) {
     return date::format("%F-%H.%M.%S", tm);
 }

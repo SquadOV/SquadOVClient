@@ -3,6 +3,7 @@
 #include "shared/filesystem/common_paths.h"
 #include "shared/time.h"
 #include "shared/log/log.h"
+#include "api/squadov_api.h"
 #include "database/api.h"
 #include "recorder/game_recorder.h"
 #include "game_event_watcher/aimlab/aimlab_log_watcher.h"
@@ -35,6 +36,7 @@ private:
 
     service::recorder::GameRecorderPtr _recorder;
     AimlabDbInterfacePtr _aimlab;
+    shared::TimePoint _taskStartTime;
 };
 
 AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher::process::Process& p, const service::database::DatabaseApi* db):
@@ -90,6 +92,7 @@ void AimlabProcessHandlerInstance::backfill() {
             LOG_INFO("Backfilling Aim Lab Task: " << nTasks[n] << std::endl);
             const auto taskData = _aimlab->getTaskDataFromId(nTasks[n]);
             _db->storeAimlabTask(taskData, "");
+            service::api::getGlobalApi()->uploadAimlabTask(taskData);
             ++n;
         } else if (nTasks[n] == mTasks[m]) {
             ++n;
@@ -97,6 +100,8 @@ void AimlabProcessHandlerInstance::backfill() {
             continue;
         } else {
             LOG_WARNING("AIM LAB BACKFILL ERROR. UNKNOWN TASK: " << mTasks[m] << std::endl);
+            ++n;
+            ++m;
         }
     }
 }
@@ -108,10 +113,8 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
         << "\tMap: " << state->taskMap << std::endl
         << "\tVersion: " << state->gameVersion << std::endl);
 
-    // Need to generate a unique filename since we don't actually ahve the task ID that AimLab will store at this point.
-    std::ostringstream fname;
-    fname << state->taskName << "-" << state->taskMode << "-" << shared::fnameTimeToStr(eventTime);
-    _recorder->start(fname.str());
+    _recorder->start();
+    _taskStartTime = eventTime;
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {
@@ -122,9 +125,9 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
         << "\tVersion: " << state->gameVersion << std::endl);
 
     if (_recorder->isRecording()) {
-        //const auto oldPath = _recorder->path();
+        const auto vodId = _recorder->currentId();
         _recorder->stop();
-        //std::filesystem::remove(oldPath);
+        service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
     }
 }
 
@@ -151,7 +154,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     // associate that in our database with the recorded video. Also store
     // a copy in our own database.
     if (_recorder->isRecording()) {
-        // const auto path = _recorder->path();
+        const auto vodId = _recorder->currentId();
         _recorder->stop();
 
         // It might take a few tries to grab the data from the SQLite database.
@@ -159,24 +162,34 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
         // and if we try to read from the databse during time it'll fail.
         bool success = false;
         for (auto i = 0; i < 10; ++i) {
+            shared::aimlab::TaskData lastData;
             try {
-                const auto lastData = _aimlab->getLatestTaskData();
+                lastData = _aimlab->getLatestTaskData();
                 LOG_INFO("Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl);
-
-                // If we weren't recording that means the task was already killed.
-                _db->storeAimlabTask(lastData, "");
-                success = true;
-                break;
             } catch (...) {
                 // Don't retry immediately. Wait 10 seconds in total and hopefully
                 // we'll get through....
                 std::this_thread::sleep_for(std::chrono::seconds(1));
+                continue;
             }
+
+            _db->storeAimlabTask(lastData, "");
+            const auto matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
+
+            shared::squadov::VodAssociation association;
+            association.matchUuid = matchUuid;
+            association.userUuid = vodId.userUuid;
+            association.videoUuid = vodId.videoUuid;
+            association.startTime = _taskStartTime;
+            association.endTime = eventTime;
+            service::api::getGlobalApi()->associateVod(association);
+            success = true;
+            break;
         }
 
         if (!success) {
             // Failed to pull data - hopefully we never get here but just remove the video.
-            // std::filesystem::remove(path);
+            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
         }
     }
 }

@@ -10,13 +10,16 @@
 #include <thread>
 
 namespace service::http {
-namespace {
 
 class HttpRequest {
 public:
     HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned);
     ~HttpRequest();
-    HttpResponsePtr Do();
+    HttpResponsePtr execute();
+
+    void doDelete();
+    void doPost(const nlohmann::json& body);
+
 private:
     CURL* _curl = nullptr;
     curl_slist* _headers = nullptr;
@@ -70,7 +73,7 @@ HttpRequest::~HttpRequest() {
     curl_slist_free_all(_headers);
 }
 
-HttpResponsePtr HttpRequest::Do() {
+HttpResponsePtr HttpRequest::execute() {
     auto resp = std::make_unique<HttpResponse>();
 
     std::ostringstream buffer;
@@ -88,6 +91,21 @@ HttpResponsePtr HttpRequest::Do() {
     return resp;
 }
 
+void HttpRequest::doDelete() {
+    curl_easy_setopt(_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+}
+
+void HttpRequest::doPost(const nlohmann::json& body) {
+    curl_easy_setopt(_curl, CURLOPT_POST, 1);
+
+    std::ostringstream h;
+    h << "Content-Type: application/json";
+    _headers = curl_slist_append(_headers, h.str().c_str());
+    curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+
+    const std::string jsonBody = body.dump();
+    curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
+    curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
 }
 
 HttpClient::HttpClient(const std::string& baseUri):
@@ -111,7 +129,23 @@ void HttpClient::setHeaderKeyValue(const std::string& key, const std::string& va
     _headers[key] = value;
 }
 
-HttpResponsePtr HttpClient::Get(const std::string& path) const {
+HttpResponsePtr HttpClient::get(const std::string& path) const {
+    return sendRequest(path, nullptr);
+}
+
+HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body) const {
+    return sendRequest(path, [&body](HttpRequest& req){
+        req.doPost(body);
+    });
+}
+
+HttpResponsePtr HttpClient::del(const std::string& path) const {
+    return sendRequest(path, [](HttpRequest& req){
+        req.doDelete();
+    });
+}
+
+HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodRequestCallback& cb) const {
     tickRateLimit();
 
     std::ostringstream fullPath;
@@ -125,7 +159,11 @@ HttpResponsePtr HttpClient::Get(const std::string& path) const {
         req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned));
     }
 
-    auto resp = req->Do();
+    if (!!cb) {
+        cb(*req);
+    }
+
+    auto resp = req->execute();
     for (const auto& cb : _responseInterceptors) {
         if (!cb(*resp)) {
             break;

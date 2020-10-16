@@ -5,6 +5,7 @@
 #include "shared/env.h"
 #include "shared/time.h"
 #include "shared/uuid.h"
+#include "api/squadov_api.h"
 #include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
@@ -45,14 +46,13 @@ void GameRecorder::createVideoRecorder() {
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
 }
 
-VodIdentifier GameRecorder::start(const std::string& matchId) {
+VodIdentifier GameRecorder::start() {
     if (!!_currentId) {
         return *_currentId;
     }
 
     _currentId = std::make_unique<VodIdentifier>();
-    _currentId->matchUuid = matchId;
-    _currentId->userUuid = shared::generateUuidv4();
+    _currentId->userUuid = service::api::getGlobalApi()->getSession().user.uuid;
     _currentId->videoUuid = shared::generateUuidv4();
 
     // Generate an appropriate new basename for the video and audiot files.

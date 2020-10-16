@@ -68,7 +68,7 @@ ValorantMatchDetailsPtr ValorantApi::getMatchDetails(const std::string& matchId)
     std::ostringstream path;
     path << "/match-details/v1/matches/" << matchId;
 
-    const auto result = _pvpClient->Get(path.str().c_str());
+    const auto result = _pvpClient->get(path.str().c_str());
 
     if (result->status != 200) {
         return nullptr;
@@ -91,7 +91,7 @@ std::vector<std::string> ValorantApi::getMatchHistoryIds(const std::string& puui
             << "?startIndex=" << startIndex
             << "&endIndex=" << endIndex;
         
-        const auto result = _pvpClient->Get(path.str().c_str());
+        const auto result = _pvpClient->get(path.str().c_str());
         if (result->status != 200) {
             THROW_ERROR("\tFailed to get match history: " << result->status << "\t" << result->curlError);
             return matches;
@@ -120,7 +120,7 @@ std::string ValorantApi::getLatestMatchId(const std::string& puuid, size_t* numM
         << "?startIndex=" << 0
         << "&endIndex=" << 1;
     
-    const auto result = _pvpClient->Get(path.str().c_str());
+    const auto result = _pvpClient->get(path.str().c_str());
     if (result->status != 200) {
         THROW_ERROR("\tFailed to get match history: " << result->status << "\t" << result->curlError);
         return "";

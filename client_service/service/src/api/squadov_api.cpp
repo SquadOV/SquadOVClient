@@ -54,7 +54,7 @@ void SquadovApi::setSessionId(const std::string& key) {
 shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     const std::string path = "/v1/users/me/profile";
 
-    const auto result = _webClient->Get(path);
+    const auto result = _webClient->get(path);
 
     if (result->status != 200) {
         THROW_ERROR("Failed to get SquadOV user: " << result->status);
@@ -79,7 +79,7 @@ shared::riot::RiotRsoToken SquadovApi::refreshValorantRsoToken(const std::string
     std::ostringstream path;
     path << "/valorant/accounts/" << puuid << "/rso";
 
-    const auto result = _localClient->Get(path.str().c_str());
+    const auto result = _localClient->get(path.str().c_str());
 
     if (result->status != 200) {
         THROW_ERROR("Failed to obtain RSO token: " << result->status);
@@ -100,7 +100,7 @@ shared::riot::RiotUser SquadovApi::getRiotUserFromPuuid(const std::string& puuid
     std::ostringstream path;
     path << "/valorant/accounts/" << puuid;
 
-    const auto result = _localClient->Get(path.str().c_str());
+    const auto result = _localClient->get(path.str().c_str());
 
     if (result->status != 200) {
         THROW_ERROR("Failed to obtain Riot user: " << result->status);
@@ -111,6 +111,76 @@ shared::riot::RiotUser SquadovApi::getRiotUserFromPuuid(const std::string& puuid
     user.username = parsedJson["username"].get<std::string>();
     user.tag = parsedJson["tag"].get<std::string>();
     return user;
+}
+
+std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& rawData) const {
+    const std::string path = "/v1/valorant";
+    const nlohmann::json body = {
+        { "matchId", matchId },
+        { "rawData", rawData }
+    };
+    const auto result = _webClient->post(path, body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to upload Valorant match: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson["matchUuid"].get<std::string>();
+}
+
+std::string SquadovApi::uploadAimlabTask(const shared::aimlab::TaskData& data) const {
+    const std::string path = "/v1/aimlab";
+    const nlohmann::json body = {
+        { "id", data.taskId },
+        { "klutchId", data.klutchId },
+        { "taskName", data.taskName },
+        { "mode", data.mode },
+        { "score", data.score },
+        { "version", data.version },
+        { "createDate", shared::timeToIso(data.createDate) },
+        { "rawData", data.rawData }
+    };
+    const auto result = _webClient->post(path, body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to upload Aim Lab task: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson["matchUuid"].get<std::string>();
+}
+
+void SquadovApi::associateVod(const shared::squadov::VodAssociation& association) const {
+    const std::string path = "/v1/vod";
+
+    const nlohmann::json body = {
+        { "matchUuid", association.matchUuid },
+        { "userUuid", association.userUuid },
+        { "vodUuid", association.videoUuid },
+        { "startTime", shared::timeToIso(association.startTime) },
+        { "endTime", shared::timeToIso(association.endTime  ) },
+    };
+    const auto result = _webClient->post(path, body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to associate VOD: " << result->status);
+        return;
+    }
+}
+
+void SquadovApi::deleteVod(const std::string& vodUuid) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << vodUuid;
+
+    const auto result = _webClient->del(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to delete VOD: " << result->status);
+        return;
+    }
 }
 
 SquadovApi* getGlobalApi() {

@@ -129,6 +129,7 @@ void ValorantProcessHandlerInstance::backfillThreadJob() {
             }
 
             _db->storeValorantMatch(existingMatch.get());
+            service::api::getGlobalApi()->uploadValorantMatch(existingMatch->matchId(), existingMatch->details().rawApiData());
             if (!existingVodPath.empty()) {
                 _db->associateValorantMatchToVideoFile(existingMatch->matchId(), existingVodPath);
             }
@@ -176,15 +177,17 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
     // we *may* be dealing with a case of a custom game restart. In that case we should just completely restart EVERYTHING
     // and just pretend that the old match never happened.
     if (!!_currentMatch && _currentMatch->matchId() == state->matchId) {
+        service::recorder::VodIdentifier id = _recorder->currentId();
         _recorder->stop();
         _currentMatch.reset(nullptr);
+        service::api::getGlobalApi()->deleteVod(id.videoUuid);
     }
 
     _currentMatch = std::make_unique<ValorantMatch>(eventTime, state->matchMap, state->matchId);
 
     // When the match starts, we de facto start the first buy round too.
     onValorantBuyStart(eventTime, nullptr);
-    _recorder->start(state->matchId);
+    _recorder->start();
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
@@ -213,10 +216,18 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 
         // Store match details.
         _db->storeValorantMatch(_currentMatch.get());
+        const auto matchUuid = service::api::getGlobalApi()->uploadValorantMatch(_currentMatch->matchId(), _currentMatch->details().rawApiData());
 
+        const auto& vodId = _recorder->currentId();
         // Associate the match with the video so that we know which video to load later
         // AND so we know which videos to not delete in our cleanup phase.
-        // _db->associateValorantMatchToVideoFile(_currentMatch->matchId(), _recorder->path().string());
+        shared::squadov::VodAssociation association;
+        association.matchUuid = matchUuid;
+        association.userUuid = vodId.userUuid;
+        association.videoUuid = vodId.videoUuid;
+        association.startTime = _currentMatch->startTime();
+        association.endTime = _currentMatch->endTime();
+        service::api::getGlobalApi()->associateVod(association);
     }
 
     _recorder->stop();
