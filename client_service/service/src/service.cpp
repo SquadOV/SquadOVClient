@@ -70,15 +70,26 @@ int main(int argc, char** argv) {
     // Start running the ZeroMQ server for IPC communication with the frontend.
     service::zeromq::ZeroMQServerClient zeroMqServerClient;
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, [](const std::string& msg){
+        std::cout << "RECEIVE SESSION ID: " << msg << std::endl;
         service::api::getGlobalApi()->setSessionId(msg);
     });
     zeroMqServerClient.start();
 
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
+        std::cout << "SEND SESSION ID: " << sessionId << std::endl;
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
     });
 
     service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
+
+    // At this point we can fire off an event letting the UI know that the service is ready.
+    // The reason we need this is because setSessionId will fire off an API request to get the
+    // user's profile. The same call also happens on the UI side to validate the session ID once
+    // the UI starts. However, in the case the session ID is expired then one of these two requests
+    // will have an invalid session ID (the UI one since the backend service is started first) as
+    // the session ID update won't have propagated yet. So the only choice we have is to let the
+    // backend service run first and then only then allow the UI to proceed.
+    zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
     av_log_set_callback(ffmpegLogCallback);

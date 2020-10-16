@@ -7,7 +7,8 @@ const log = require('./log.js')
 // frontend. Using this will set two environment variables:
 //
 // - SQUADOV_ZEROMQ_SERVER_KEY: ZeroMQ CURVE server key to be used as the "curveSeverKey" option.
-// - SQUADOV_ZEROMQ_PORT: The random port used to connect to the ZeroMQ server.
+// - SQUADOV_ZEROMQ_UI_PORT: The random port used for communication from the UI to the backend service.
+// - SQUADOV_ZEROMQ_SERVICE_PORT: The random port used for communication from the backend service to the UI.
 class ZeroMQServerClient {
     constructor() {
         this._pub = new zmq.Publisher()
@@ -34,25 +35,34 @@ class ZeroMQServerClient {
     }
 
     async start() {
-        if (!!process.env.SQUADOV_ZEROMQ_PORT) {
-            await this._pub.bind(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_PORT}`)
+        if (!!process.env.SQUADOV_ZEROMQ_UI_PORT) {
+            await this._pub.bind(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_UI_PORT}`)
         } else {
             await this._pub.bind("tcp://127.0.0.1:0")
         }
 
         // Figure out which port the publisher bound to. Set an
         // environment variable so that the local service knows too.
-        process.env.SQUADOV_ZEROMQ_PORT = this._port = new URL(this._pub.lastEndpoint).port
-        await this._sub.connect(`tcp://127.0.0.1:${this._port}`)
-        this._sub.subscribe('session-id')
+        process.env.SQUADOV_ZEROMQ_UI_PORT = this._port = new URL(this._pub.lastEndpoint).port
+
+        if (!!process.env.SQUADOV_ZEROMQ_SERVICE_PORT) {
+            await this._sub.connect(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_SERVICE_PORT}`)
+        } else {
+            await this._sub.connect(`tcp://127.0.0.1:0`)
+        }
+        process.env.SQUADOV_ZEROMQ_SERVICE_PORT = new URL(this._sub.lastEndpoint).port
+        this._sub.subscribe()
 
         log.log(`Starting ZeroMQ Server on Port ${this._port}`)
+        log.log(`\tExpecting Backend Service ZeroMQ Port ${process.env.SQUADOV_ZEROMQ_SERVICE_PORT}`)
     }
 
     async run() {
         for await (const [topic, msg] of this._sub) {
-            let msgStr = msg.toString('utf-8')
-            if (!(topic in this._handlers)) {
+            let topicStr = topic.toString('utf-8')
+            let msgStr = !!msg ? msg.toString('utf-8') : ''
+            console.log(topicStr, msgStr)
+            if (!(topicStr in this._handlers)) {
                 continue
             }
 

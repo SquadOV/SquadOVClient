@@ -1,5 +1,6 @@
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
+#include "shared/log/log.h"
 
 #include <chrono>
 #include <sstream>
@@ -40,11 +41,20 @@ ZeroMQServerClient::ZeroMQServerClient() {
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 
-    std::ostringstream host;
-    host << "tcp://127.0.0.1:" << shared::getEnv("SQUADOV_ZEROMQ_PORT", "60000");
-    _pub.connect(host.str());
-    _sub.connect(host.str());
-    std::cout << "PORT: " << host.str() << std::endl;
+    {
+        std::ostringstream host;
+        host << "tcp://127.0.0.1:" << shared::getEnv("SQUADOV_ZEROMQ_SERVICE_PORT", "60001");
+        _pub.bind(host.str());
+        LOG_INFO("Publish ZeroMQ on: " << host.str() << std::endl);
+    }
+
+    {
+        std::ostringstream host;
+        host << "tcp://127.0.0.1:" << shared::getEnv("SQUADOV_ZEROMQ_UI_PORT", "60000");
+        _sub.connect(host.str());
+        LOG_INFO("Subscribe ZeroMQ on: " << host.str() << std::endl);
+    }
+    
 }
 
 ZeroMQServerClient::~ZeroMQServerClient() {
@@ -61,6 +71,7 @@ void ZeroMQServerClient::start() {
         std::vector<zmq::message_t> messages;
         while (_running) {
             const auto ret = zmq::recv_multipart(_sub, std::back_inserter(messages));
+
             // TODO: Support variable number of messages here?
             if (ret.has_value() && ret == 2) {
                 // I *believe* the first message should be the topic.

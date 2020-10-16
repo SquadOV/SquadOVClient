@@ -33,7 +33,6 @@ SquadovApi::SquadovApi() {
             if (!_sessionUpdateCallback) {
                 return true;
             }
-
             for (const auto& [key, value] : response.headers) {
                 if (key == SET_SESSION_HEADER_KEY) {
                     _sessionUpdateCallback(value);

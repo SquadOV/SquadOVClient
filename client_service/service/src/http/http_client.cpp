@@ -46,7 +46,9 @@ size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userda
         return total;
     }
 
-    resp->headers[std::string(parts[0])] = std::string(parts[1]);
+    const std::string key = boost::algorithm::trim_copy(std::string(parts[0]));
+    const std::string value = boost::algorithm::trim_copy(std::string(parts[1]));
+    resp->headers[key] = value;
     return total;
 }
 

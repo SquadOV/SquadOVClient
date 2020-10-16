@@ -134,6 +134,12 @@ zeromqServer.on('session-id', (sessionId) => {
     updateSession(sessionId, false)
 })
 
+let backendReady = new Promise((resolve, reject) => {
+    zeromqServer.on('on-ready', () => {
+        resolve()
+    })
+})
+
 // This is the initial session obtainment from logging in. Loading it from storage will
 // directly call loadSession(). This event ONLY happens in the Login UI.
 ipcMain.on('obtain-session', (event, [session, userId]) => {
@@ -204,7 +210,7 @@ app.on('ready', async () => {
     }
     log.log(`OBTAINED ENCRYPTION PASSWORD`)
 
-    apiServer.start(() => {
+    apiServer.start(async () => {
         // Start auxiliary service that'll handle waiting for games to run and
         // collecting the relevant information and sending it to the database.
         // Search for the proper executable file.
@@ -239,6 +245,8 @@ app.on('ready', async () => {
         child.stderr.on('data', (data) => {
             console.log(`SERVICE: ${data}`)
         })
+
+        await backendReady;
 
         start()
     })
