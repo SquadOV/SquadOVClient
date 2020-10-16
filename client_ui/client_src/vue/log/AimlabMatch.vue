@@ -49,7 +49,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 })
 export default class AimlabMatch extends Vue {
     @Prop({required: true})
-    taskId! : number
+    taskId! : string
 
     data : AimlabTaskData | null = null
 

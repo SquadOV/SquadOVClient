@@ -21,13 +21,12 @@ class ZeroMQServerClient {
             // (including the publisher on the local service) is a client for CURVE.
             const serverKp = zmq.curveKeyPair()
             this._serverKey = process.env.SQUADOV_ZEROMQ_SERVER_KEY = serverKp.publicKey
+
             this._pub.curveSecretKey = serverKp.secretKey
             this._pub.curveServer = true
 
-            const clientKp  = zmq.curveKeyPair()
-            this._sub.curveSecretKey = clientKp.secretKey
-            this._sub.curvePublicKey = clientKp.publicKey
-            this._sub.curveServerKey = serverKp.publicKey
+            this._sub.curveSecretKey = serverKp.secretKey
+            this._sub.curveServer = true
         }
 
         this._port = 0
@@ -35,6 +34,10 @@ class ZeroMQServerClient {
     }
 
     async start() {
+        // We do binds on both the pub and sub on the Client ui side as this is guaranteed to have
+        // started first so messages can be immediately sent from the backend service when it starts.
+        // If we connect the sub in the UI then we might miss some of the messages sent from the pub
+        // in the backend service when it starts.
         if (!!process.env.SQUADOV_ZEROMQ_UI_PORT) {
             await this._pub.bind(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_UI_PORT}`)
         } else {
@@ -46,9 +49,9 @@ class ZeroMQServerClient {
         process.env.SQUADOV_ZEROMQ_UI_PORT = this._port = new URL(this._pub.lastEndpoint).port
 
         if (!!process.env.SQUADOV_ZEROMQ_SERVICE_PORT) {
-            await this._sub.connect(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_SERVICE_PORT}`)
+            await this._sub.bind(`tcp://127.0.0.1:${process.env.SQUADOV_ZEROMQ_SERVICE_PORT}`)
         } else {
-            await this._sub.connect(`tcp://127.0.0.1:0`)
+            await this._sub.bind(`tcp://127.0.0.1:0`)
         }
         process.env.SQUADOV_ZEROMQ_SERVICE_PORT = new URL(this._sub.lastEndpoint).port
         this._sub.subscribe()
@@ -61,7 +64,6 @@ class ZeroMQServerClient {
         for await (const [topic, msg] of this._sub) {
             let topicStr = topic.toString('utf-8')
             let msgStr = !!msg ? msg.toString('utf-8') : ''
-            console.log(topicStr, msgStr)
             if (!(topicStr in this._handlers)) {
                 continue
             }
@@ -85,7 +87,8 @@ class ZeroMQServerClient {
     }
 
     close() {
-        this._sub.close()
+        //this._sub.close()
+        this._sub.unbind(this._sub.lastEndpoint)
         this._pub.unbind(this._pub.lastEndpoint)
     }
 }

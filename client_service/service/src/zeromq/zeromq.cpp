@@ -30,6 +30,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
 
     const std::string serverKey = shared::getEnv("SQUADOV_ZEROMQ_SERVER_KEY", "");
     if (!serverKey.empty()) {
+        LOG_INFO("Use ZeroMQ with Server Key" << std::endl);
         _pub.set(zmq::sockopt::curve_serverkey, serverKey);
         generateCurveKeyPairForSocket(_pub);
 
@@ -44,7 +45,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     {
         std::ostringstream host;
         host << "tcp://127.0.0.1:" << shared::getEnv("SQUADOV_ZEROMQ_SERVICE_PORT", "60001");
-        _pub.bind(host.str());
+        _pub.connect(host.str());
         LOG_INFO("Publish ZeroMQ on: " << host.str() << std::endl);
     }
 
@@ -60,6 +61,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
 ZeroMQServerClient::~ZeroMQServerClient() {
     _running = false;
     _subThread.join();
+    //_pub.unbind(_pub.get(zmq::sockopt::last_endpoint));
     _pub.close();
     _sub.close();
     _ctx.close();
@@ -98,7 +100,8 @@ void ZeroMQServerClient::sendMessage(const std::string& topic, const std::string
         zmq::buffer(topic),
         zmq::buffer(message)
     };
-    zmq::send_multipart(_pub, buffer);
+    auto ret = zmq::send_multipart(_pub, buffer);
+    LOG_INFO("Send ZeroMQ Message: " << topic << "\t" << ret.value_or(0) << std::endl);
 }
 
 }

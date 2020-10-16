@@ -7,9 +7,11 @@ import Vuetify, {
     VMain,
 } from 'vuetify/lib'
 import VueRouter from 'vue-router'
+import Vuex from 'vuex'
 
 Vue.use(Vuetify)
 Vue.use(VueRouter)
+Vue.use(Vuex)
 
 import App from '@client/vue/App.vue'
 import Dashboard from '@client/vue/Dashboard.vue'
@@ -31,6 +33,7 @@ import * as pi from '@client/js/pages'
 import { ipcRenderer } from 'electron'
 import { apiClient, ApiData } from '@client/js/api'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
+import { RootStoreOptions } from '@client/js/vuex/store'
 
 const baseRoutes : any[] = [
     { path: '/', name: pi.DashboardPageId, component: Dashboard },
@@ -105,6 +108,8 @@ router.beforeEach((to : any, from : any, next : any) => {
     next()
 })
 
+const store = new Vuex.Store(RootStoreOptions)
+
 // As soon as the app starts we need to query the main process for
 // the session ID properly initialize the API client
 // so that it's authenticated with the web server. After that, send out
@@ -116,6 +121,7 @@ ipcRenderer.invoke('request-session').then((session : {
 }) => {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+        store.commit('setUser' , resp.data)
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover
@@ -139,5 +145,6 @@ new Vue({
         },
     }),
     router: router,
+    store: store,
 }).$mount('#app')
 console.log('Loading Vue Application')

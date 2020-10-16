@@ -43,6 +43,17 @@ export interface ApiData<T> {
     data: T
 }
 
+export interface HalLink {
+    href: string
+}
+
+export interface HalResponse<T> {
+    _links: {
+        [index : string] : HalLink
+    },
+    data: T
+}
+
 export interface GraphqlApiData<T> {
     data: {
         data: T
@@ -178,28 +189,6 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
-    allAimlabTaskData() : Promise<ApiData<AimlabTaskData[]>> {
-        return axios({
-            ...this.createAxiosConfig(`aimlab/tasks`),
-            method: 'get'
-        }).then((resp : ApiData<AimlabTaskData[]>) => {
-            resp.data.forEach(cleanAimlabTaskData)
-            return resp
-        })
-    }
-
-    @waitForApiServerSetup
-    getAimlabTaskData(id : number) : Promise<ApiData<AimlabTaskData>> {
-        return axios({
-            ...this.createAxiosConfig(`aimlab/tasks/${id}`),
-            method: 'get'
-        }).then((resp : ApiData<AimlabTaskData>) => {
-            cleanAimlabTaskData(resp.data)
-            return resp
-        })
-    }
-
-    @waitForApiServerSetup
     graphqlRequest(req : GraphqlQuery) : Promise<GraphqlApiData<any>> {
         let baseConfig : any = this.createAxiosConfig(`graphql`)
         baseConfig.method = 'post'
@@ -238,6 +227,30 @@ class ApiClient {
 
     logout() : Promise<void> {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
+
+    allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/aimlab/user/${params.userId!}`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<AimlabTaskData[]>>) => {
+            resp.data.data.forEach(cleanAimlabTaskData)
+            return resp
+        })
+    }
+
+    getAimlabTaskData(uuid : string) : Promise<ApiData<AimlabTaskData>> {
+        return axios.get(`v1/aimlab/match/${uuid}/task`, this.createWebAxiosConfig()).then((resp : ApiData<AimlabTaskData>) => {
+            cleanAimlabTaskData(resp.data)
+            return resp
+        })
     }
 }
 

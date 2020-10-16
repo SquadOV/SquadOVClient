@@ -2,14 +2,14 @@
     <div>
         <aimlab-task-summary-display
             class="mb-4"
-            v-for="(task, index) in limitedTasks"
+            v-for="(task, index) in tasks"
             :task="task"
             :key="index"
         >
         </aimlab-task-summary-display>
 
         <v-btn
-            v-if="!loadedAllTasks"
+            v-if="canLoadMore"
             color="primary"
             block
             @click="loadMore"  
@@ -27,8 +27,6 @@ import { Prop } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
 
-const loadMoreTasks: number = 20
-
 @Component({
     components: {
         AimlabTaskSummaryDisplay
@@ -38,18 +36,11 @@ export default class AimlabTaskScroller extends Vue {
     @Prop({type: Array, default: []})
     tasks! : AimlabTaskData[]
 
-    maxTaskCount: number = loadMoreTasks
-
-    get loadedAllTasks() : boolean {
-        return this.maxTaskCount >= this.tasks.length
-    }
-
-    get limitedTasks() : AimlabTaskData[] {
-        return this.tasks.slice(0, this.maxTaskCount)
-    }
+    @Prop({type: Boolean})
+    canLoadMore!: boolean
 
     loadMore() {
-        this.maxTaskCount += loadMoreTasks
+        this.$emit('load-more')
     }
 }
 

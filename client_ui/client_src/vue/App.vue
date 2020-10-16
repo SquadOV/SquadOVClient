@@ -1,16 +1,28 @@
 <template>
     <div id="appInner">
-        <app-nav class="flex-grow-0"></app-nav>
-        
-        <div class="flex-grow-1">
-            <router-view></router-view>
-        </div>
+        <template v-if="userLoaded">    
+            <app-nav class="flex-grow-0"></app-nav>
+            
+            <div class="flex-grow-1">
+                <router-view></router-view>
+            </div>
 
-        <footer class="flex-grow-0">
-            <p class="text-center ma-0 text-overline">
-                SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by GRCHive, Inc.
-            </p>
-        </footer>
+            <footer class="flex-grow-0">
+                <p class="text-center ma-0 text-overline">
+                    SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by GRCHive, Inc.
+                </p>
+            </footer>
+        </template>
+        
+        <v-container v-else>
+            <v-row justify="center" align="center">
+                <v-progress-circular
+                    size="64"
+                    indeterminate
+                >
+                </v-progress-circular>
+            </v-row>
+        </v-container>
     </div>
 </template>
 
@@ -28,6 +40,10 @@ import { version } from '@client/../package.json'
 })
 export default class App extends Vue {
     version: string = version
+
+    get userLoaded(): boolean {
+        return !!this.$store.state.currentUser
+    }
 }
 
 </script>
