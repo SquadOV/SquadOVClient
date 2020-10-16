@@ -5,6 +5,10 @@
 
 namespace shared {
 
+TimePoint zeroTime() {
+    return std::chrono::system_clock::from_time_t(0);
+}
+
 TimePoint nowUtc() {
     return std::chrono::system_clock::now();
 }

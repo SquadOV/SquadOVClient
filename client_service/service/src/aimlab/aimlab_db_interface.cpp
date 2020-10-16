@@ -87,7 +87,9 @@ shared::aimlab::TaskData AimlabDbInterface::getTaskDataFromId(int id) const {
     return getTaskDataFromSqlStatement(stmt);
 }
 
-std::vector<int> AimlabDbInterface::getAllTaskDataId() const {
+std::vector<shared::aimlab::TaskData> AimlabDbInterface::getAllTaskDataSince(const shared::TimePoint& tm) const {
+    std::vector<shared::aimlab::TaskData> ret;
+
     std::ostringstream sql;
     sql << R"|(
         SELECT
@@ -100,22 +102,20 @@ std::vector<int> AimlabDbInterface::getAllTaskDataId() const {
             aimlab_version,
             performance
         FROM TaskData
-        ORDER BY taskId DESC)|";
+        WHERE createDate >= ?
+        ORDER BY createDate ASC)|";
 
-    std::vector<int> ret;
-    SqlStatement stmt(_db, sql.str());
+    shared::sqlite::SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, shared::timeToStr(tm));
 
-    while (stmt.hasNext()) {
-        if (!stmt.next()) {
-            break;
-        }
-
-        if (stmt.fail()) {
-            THROW_ERROR("Failed to get task ids: " << stmt.errMsg());
-        }
-
-        ret.push_back(stmt.getColumn<int>(0));
+    if (stmt.fail()) {  
+        THROW_ERROR("Failed to get all Aimlab task data: " << stmt.errMsg());
     }
+
+    while(stmt.next()) {
+        ret.emplace_back(getTaskDataFromSqlStatement(stmt));
+    }
+
     return ret;
 }
 

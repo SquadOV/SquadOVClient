@@ -41,5 +41,6 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/deps/date/include
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
+    ${CMAKE_SOURCE_DIR}/deps/json/single_include
     ${Boost_INCLUDE_DIRS}
 )

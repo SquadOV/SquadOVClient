@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace service::api {
 
@@ -35,6 +36,7 @@ public:
 
     // Aim Lab
     std::string uploadAimlabTask(const shared::aimlab::TaskData& data) const;
+    void bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskData>& data) const;
 
     // VOD
     void associateVod(const shared::squadov::VodAssociation& association) const;

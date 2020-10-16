@@ -1,5 +1,6 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <string>
 #include "shared/time.h"
 
@@ -14,6 +15,8 @@ struct TaskData {
     int score = 0;
     std::string version;
     std::string rawData;
+
+    nlohmann::json toJson() const;
 };
 
 }

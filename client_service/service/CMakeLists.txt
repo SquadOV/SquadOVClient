@@ -18,6 +18,7 @@ SET(SRCS
     src/recorder/audio/portaudio_audio_recorder.cpp
     src/system/win32/hwnd_utils.cpp
     src/zeromq/zeromq.cpp
+    src/local/local_data.cpp
 )
 
 SET(HEADERS
@@ -45,6 +46,7 @@ SET(HEADERS
     src/recorder/audio/portaudio_audio_recorder.h
     src/system/win32/hwnd_utils.h
     src/zeromq/zeromq.h
+    src/local/local_data.h
 )
 
 add_executable(squadov_client_service

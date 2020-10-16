@@ -42,6 +42,11 @@ SquadovApi::SquadovApi() {
             }
             return true;
         });
+
+        // Some backfill tasks might get pretty heavy so put in a rate limit here.
+        // For reference, this is 5 requests per second -- which will translate to about 500 aimlab tasks synced per second
+        // which should be plenty fast.
+        _webClient->setRateLimit(0.2);
     }
 }
 
@@ -132,16 +137,7 @@ std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const st
 
 std::string SquadovApi::uploadAimlabTask(const shared::aimlab::TaskData& data) const {
     const std::string path = "/v1/aimlab";
-    const nlohmann::json body = {
-        { "id", data.taskId },
-        { "klutchId", data.klutchId },
-        { "taskName", data.taskName },
-        { "mode", data.mode },
-        { "score", data.score },
-        { "version", data.version },
-        { "createDate", shared::timeToIso(data.createDate) },
-        { "rawData", data.rawData }
-    };
+    const nlohmann::json body = data.toJson();
     const auto result = _webClient->post(path, body);
 
     if (result->status != 200) {
@@ -151,6 +147,20 @@ std::string SquadovApi::uploadAimlabTask(const shared::aimlab::TaskData& data) c
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson["matchUuid"].get<std::string>();
+}
+
+void SquadovApi::bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskData>& data) const {
+    const std::string path = "/v1/aimlab/bulk";
+    nlohmann::json body = nlohmann::json::array();
+    for (const auto& d : data) {
+        body.emplace_back(d.toJson());
+    }
+
+    const auto result = _webClient->post(path, body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to bulk upload Aim Lab tasks: " << result->status);
+        return;
+    }
 }
 
 void SquadovApi::associateVod(const shared::squadov::VodAssociation& association) const {

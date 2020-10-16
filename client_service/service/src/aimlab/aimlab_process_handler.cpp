@@ -5,6 +5,7 @@
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
 #include "database/api.h"
+#include "local/local_data.h"
 #include "recorder/game_recorder.h"
 #include "game_event_watcher/aimlab/aimlab_log_watcher.h"
 
@@ -58,51 +59,30 @@ AimlabProcessHandlerInstance::~AimlabProcessHandlerInstance() {
 }
 
 void AimlabProcessHandlerInstance::backfill() {
-    // We just need to get a list of tasks in the database that we haven't already processed while being somewhat efficient.
-    // Make two database calls
-    //  1) To get the N tasks stored in the Aim Lab database.
-    //  2) To get the M tasks stored in our database.
-    // We need to check which of the N tasks we haven't already stored in the database.
-    // We want this to be fairly efficient for a large number of tasks (N/M) so we can use an algorithm similar to
-    // how we'd merge two lists.
-    // ASSUMPTION: Both databases return the tasks sorted by task id in reverse order. The M tasks are a
-    //             subset of the N tasks so M <= N.
-    // RUNTIME: O(N + M)
-    // INPUTS: nTasks (array of task ids in aim lab database), mTasks (array of task ids in our database)
-    // ALGORITHM:
-    //  1) n = 0, m = 0
-    //  2a) If nTasks[n] == mTasks[m]: n++, m++ 
-    //      Explanation: Both lists have the same element, don't have to backfill this one.
-    //  2b) If nTasks[n] > mTasks[m]: BACKFILL(nTasks[n]), n++ 
-    //      Explanation: The Aim Lab database found a task that we don't have. We know for a fact that
-    //                   the element can't be found later in mTasks because mTasks is sorted in reverse order
-    //                   so any indices > m would be strictly lower than mTasks[m]. Thus, this task doesn't exist
-    //                   in mTasks.
-    //  2c) If nTasks[n] < mTasks[m]: ERROR.
-    //      Explanation: This means we have a task in our database that doesn't exist in the Aim Lab database. This
-    //                   is an error.
-    std::vector<int> nTasks = _aimlab->getAllTaskDataId();
-    std::vector<int> mTasks = _db->allStoredAimlabTaskIds();
-    
-    size_t n = 0;
-    size_t m = 0;
+    // We need to pass the data inside Aim Lab's database to the API server; however, we want to make sure
+    // we're communicating as little information as possible. I do not believe we can use the Aim Lab database's
+    // ID as a sure-fire way of determining whether or not a change has happened as I believe I have seen
+    // smaller IDs for more recent tasks. Thus, every time we backfill (aka every time Aim Lab is open), we
+    // send all data since the last time we backfilled using the *date time* of the task. We track the last backfill
+    // time in our SQLite database since it already exists. We pull all the task data and then just fire off
+    // everything to the server and leave it to the server to filter out stuff that already exists.
+    const shared::TimePoint lastBackfillTime = service::local::getLocalData()->getLastAimlabBackfillTime();
+    std::vector<shared::aimlab::TaskData> tasksToBackfill = _aimlab->getAllTaskDataSince(lastBackfillTime);
 
-    while (n < nTasks.size()) {
-        if (m >= mTasks.size() || nTasks[n] > mTasks[m]) {
-            LOG_INFO("Backfilling Aim Lab Task: " << nTasks[n] << std::endl);
-            const auto taskData = _aimlab->getTaskDataFromId(nTasks[n]);
-            _db->storeAimlabTask(taskData, "");
-            service::api::getGlobalApi()->uploadAimlabTask(taskData);
-            ++n;
-        } else if (nTasks[n] == mTasks[m]) {
-            ++n;
-            ++m;
-            continue;
-        } else {
-            LOG_WARNING("AIM LAB BACKFILL ERROR. UNKNOWN TASK: " << mTasks[m] << std::endl);
-            ++n;
-            ++m;
+    // We don't want to send too much data at a time so split this vector into chunks and send them one by one.
+    constexpr size_t maxChunkSize = 100;
+    for (size_t i = 0; i < tasksToBackfill.size(); i+= maxChunkSize) {
+        const bool atEnd = (i + maxChunkSize) >= tasksToBackfill.size();
+        std::vector<shared::aimlab::TaskData> tasksToSend(tasksToBackfill.begin() + i, atEnd ? tasksToBackfill.end() : (tasksToBackfill.begin() + i + maxChunkSize));
+        try {
+            service::api::getGlobalApi()->bulkUploadAimlabTasks(tasksToSend);
+        } catch (std::exception& ex) {
+            std::cerr << "Aim Lab Backfill Failure...Delaying: " << ex.what() << std::endl;
+            break;
         }
+
+        // A lot of disk IO here ... but hopefully just a one time thing so not too bad :D
+        service::local::getLocalData()->markAimlabBackfillTime(tasksToSend.back().createDate);
     }
 }
 
