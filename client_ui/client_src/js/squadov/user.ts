@@ -5,6 +5,8 @@ export interface SquadOVUser {
     id: number
     username: string
     email: string
+    verified: boolean
+    uuid: string
 }
 
 export function getSquadOVUser(id : number) : Promise<ApiData<SquadOVUser>> {

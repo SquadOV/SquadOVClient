@@ -5,13 +5,13 @@
                 <aimlab-task-summary-display
                     class="mb-4"
                     :task="data"
+                    :sync-vod.sync="vod"
                 >
                 </aimlab-task-summary-display>
 
                 <video-player
                     class="mb-4"
-                    v-if="!!data.vodPath"
-                    :video-filename="data.vodPath"
+                    v-if="!!vod"
                     id="task-vod"
                     disable-theater
                 >
@@ -33,6 +33,7 @@ import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, ApiData } from '@client/js/api'
+import { VodAssociation } from '@client/js/squadov/vod'
 
 import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
 import AimlabTaskPerformanceHistory from '@client/vue/utility/aimlab/AimlabTaskPerformanceHistory.vue'
@@ -50,6 +51,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 export default class AimlabMatch extends Vue {
     @Prop({required: true})
     taskId! : string
+    vod : VodAssociation | null = null
 
     data : AimlabTaskData | null = null
 

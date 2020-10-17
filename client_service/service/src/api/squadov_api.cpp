@@ -168,7 +168,7 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
     const nlohmann::json body = {
         { "matchUuid", association.matchUuid },
         { "userUuid", association.userUuid },
-        { "vodUuid", association.videoUuid },
+        { "videoUuid", association.videoUuid },
         { "startTime", shared::timeToIso(association.startTime) },
         { "endTime", shared::timeToIso(association.endTime  ) },
     };
@@ -180,9 +180,9 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
     }
 }
 
-void SquadovApi::deleteVod(const std::string& vodUuid) const {
+void SquadovApi::deleteVod(const std::string& videoUuid) const {
     std::ostringstream path;
-    path << "/v1/vod/" << vodUuid;
+    path << "/v1/vod/" << videoUuid;
 
     const auto result = _webClient->del(path.str());
 

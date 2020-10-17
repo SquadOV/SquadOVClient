@@ -12,6 +12,13 @@ if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify()
 }
 
+const baseConfigFname = path.join('config', 'config.json')
+const configFname = app.isPackaged ?
+    path.join(process.resourcesPath, baseConfigFname) : baseConfigFname
+const config = JSON.parse(fs.readFileSync(configFname))
+process.env.SQUADOV_INGEST_URL = config.ingestUrl
+log.log(`INGEST URL: ${process.env.SQUADOV_INGEST_URL}`)
+
 let win
 
 function start() {

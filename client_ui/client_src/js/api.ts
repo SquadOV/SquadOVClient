@@ -10,6 +10,7 @@ import {
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { GraphqlQuery } from '@client/js/graphql/graphql'
+import { VodAssociation, cleanVodAssocationData } from '@client/js/squadov/vod'
 
 import { ipcRenderer } from 'electron'
 
@@ -227,6 +228,13 @@ class ApiClient {
 
     logout() : Promise<void> {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
+
+    findVodFromMatchUserUuid(matchUuid : string, userUuid: string) : Promise<ApiData<VodAssociation>> {
+        return axios.get(`v1/vod/match/${matchUuid}/user/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
+            cleanVodAssocationData(resp.data)
+            return resp
+        })
     }
 
     allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {

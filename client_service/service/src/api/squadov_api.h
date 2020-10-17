@@ -40,7 +40,7 @@ public:
 
     // VOD
     void associateVod(const shared::squadov::VodAssociation& association) const;
-    void deleteVod(const std::string& vodUuid) const;
+    void deleteVod(const std::string& videoUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;

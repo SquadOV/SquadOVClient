@@ -78,6 +78,7 @@ int main(int argc, char** argv) {
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
         std::cout << "SEND SESSION ID: " << sessionId << std::endl;
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
+        service::api::getGlobalApi()->setSessionId(sessionId);
     });
 
     service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
