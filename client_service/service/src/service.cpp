@@ -81,7 +81,18 @@ int main(int argc, char** argv) {
         service::api::getGlobalApi()->setSessionId(sessionId);
     });
 
-    service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
+    try {
+        service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
+    } catch (std::exception& ex) {
+        // This needs to be caught because the session could be completely invalid.
+        // We'll just exit and let the UI handle it gracefully (if needed).
+        LOG_WARNING("Failed to get current user: " << ex.what() << std::endl);
+
+        // This is needed to hand back control to the UI.
+        // Maybe use a specific failure message?
+        zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
+        std::exit(1);
+    }
 
     // At this point we can fire off an event letting the UI know that the service is ready.
     // The reason we need this is because setSessionId will fire off an API request to get the

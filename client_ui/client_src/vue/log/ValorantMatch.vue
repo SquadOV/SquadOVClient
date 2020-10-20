@@ -12,6 +12,7 @@
 
                 <v-row no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
+                        <!--
                         <video-player
                             ref="player"
                             :video-filename="vodFilename"
@@ -20,6 +21,7 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                         >
                         </video-player>
+                        -->
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">

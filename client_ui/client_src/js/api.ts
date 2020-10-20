@@ -10,7 +10,7 @@ import {
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { GraphqlQuery } from '@client/js/graphql/graphql'
-import { VodAssociation, cleanVodAssocationData } from '@client/js/squadov/vod'
+import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
 
 import { ipcRenderer } from 'electron'
 
@@ -234,6 +234,16 @@ class ApiClient {
         return axios.get(`v1/vod/match/${matchUuid}/user/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
             cleanVodAssocationData(resp.data)
             return resp
+        })
+    }
+
+    getVodManifest(videoUuid: string) : Promise<ApiData<VodManifest>> {
+        return axios.get(`v1/vod/${videoUuid}`, this.createWebAxiosConfig())
+    }
+
+    getVodSegment(url : string) : Promise<ApiData<string>> {
+        return axios.get(url, {
+            ...this.createWebAxiosConfig(),
         })
     }
 

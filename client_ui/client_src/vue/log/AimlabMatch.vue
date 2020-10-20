@@ -12,6 +12,7 @@
                 <video-player
                     class="mb-4"
                     v-if="!!vod"
+                    :video-uuid="vod.videoUuid"
                     id="task-vod"
                     disable-theater
                 >

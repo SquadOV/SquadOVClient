@@ -14,6 +14,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
+import { apiClient, ApiData } from '@client/js/api'
+import * as vod from '@client/js/squadov/vod'
 import videojs from 'video.js'
 import fs from 'fs'
 import 'video.js/dist/video-js.css' 
@@ -21,7 +23,13 @@ import 'video.js/dist/video-js.css'
 @Component
 export default class VideoPlayer extends Vue {
     @Prop({required: true})
-    videoFilename! : string | null
+    videoUuid! : string | null
+
+    // Our custom manifest file format that lists all the available options
+    // for video quality as well as the urls to get that particular
+    // file.
+    manifest: vod.VodManifest | null = null
+    videoUri: string | null = null
 
     @Prop()
     playerHeight!: number
@@ -30,23 +38,31 @@ export default class VideoPlayer extends Vue {
     disableTheater! : boolean
 
     player: videojs.Player | null = null
-
     $refs!: {
-        video: HTMLElement
-    }
-
-    get prefixedFilename() : string {
-        if (!this.videoFilename) {
-            return ''
-        }
-        return `file:///${this.videoFilename}`
+        video: HTMLVideoElement
     }
 
     get hasVideo() : boolean {
-        if (!this.videoFilename) {
+        if (!this.videoUuid) {
             return false
         }
-        return fs.existsSync(this.videoFilename)
+        return true
+    }
+
+    @Watch('videoUuid')
+    refreshPlaylist() {
+        this.manifest = null
+        if (!this.hasVideo) {
+            this.setNoVideo()
+            return
+        }
+
+        apiClient.getVodManifest(this.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
+            this.manifest = resp.data
+            this.toggleHasVideo()
+        }).catch((err : any) => {
+            console.log('Failed to obtain VOD manifest: ', err)
+        })
     }
 
     goToTimeMs(tmMs : number) {
@@ -57,26 +73,63 @@ export default class VideoPlayer extends Vue {
         this.player.currentTime(Math.max(Math.floor(tmMs / 1000.0) - 1.0, 0.0))
     }
 
-    @Watch('hasVideo')
-    toggleHasVideo() {
-        if (!this.hasVideo) {
-            this.player = null
-            this.$emit('update:playerHeight', 500)
+    get currentVideoSourceUri() : string {
+        if (!this.manifest) {
+            return ''
+        }
+
+        let track = vod.getVideoQualityTrack(this.manifest!, 'source')
+        if (!track) {
+            return ''
+        }
+        return track.segments[0].uri
+    }
+
+    @Watch('currentVideoSourceUri')
+    refreshVideoSource() {
+        if (this.currentVideoSourceUri == '') {
+            this.videoUri = null
             return
         }
 
+        apiClient.getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<string>) => {
+            this.videoUri = resp.data
+        }).catch((err : any) => {
+            console.log('Failed to get final URL for video.')
+        })
+    }
+
+    @Watch('videoUri')
+    refreshPlayerSources() {
+        if (!this.player) {
+            return
+        }
+
+        if (!!this.videoUri) {
+            this.player.src([
+                {
+                    src: this.videoUri,
+                    type: 'video/mp4',
+                },
+            ])
+        }
+    }
+
+    setNoVideo() {
+        this.$emit('update:playerHeight', 500)
+    }
+
+    // This should only happen once. Manifest updates should be handled by the media source.
+    toggleHasVideo() {
         this.player = videojs(this.$refs.video, {
             controls: true,
             autoplay: false,
             preload: 'auto',
-            sources: [
-                {
-                    src: this.prefixedFilename,
-                    type: 'video/mp4',
-                },
-            ]
         })
 
+        // Just in case videoUri and audioUri got set earlier.
+        this.refreshPlayerSources()
+        
         this.player.on('playerresize', () => {
             this.$emit('update:playerHeight', this.player!.currentHeight())
         })
@@ -91,7 +144,6 @@ export default class VideoPlayer extends Vue {
                     //@ts-ignore
                     button.apply(this, arguments)
                     this.addClass('vjs-icon-square')
-                    
                 },
             })        
             videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
@@ -105,7 +157,7 @@ export default class VideoPlayer extends Vue {
     }
 
     mounted() {
-        this.toggleHasVideo()
+        this.refreshPlaylist()
     }
 }
 
