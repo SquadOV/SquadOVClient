@@ -14,7 +14,7 @@ namespace service::aimlab {
 class AimlabProcessHandlerInstance;
 class AimlabProcessHandler : public process_watcher::ProcessWatchHandler {
 public:
-    explicit AimlabProcessHandler(const service::database::DatabaseApi* db);
+    AimlabProcessHandler();
     ~AimlabProcessHandler();
 
 private:
@@ -22,7 +22,6 @@ private:
     void onProcessStops() override;
 
     std::unique_ptr<AimlabProcessHandlerInstance> _instance;
-    const service::database::DatabaseApi* _db;
 };
 
 }

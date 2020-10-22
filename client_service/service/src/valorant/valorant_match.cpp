@@ -16,35 +16,47 @@ ValorantMatch::ValorantMatch(
     _endTime(shared::TimePoint::max()) {
 }
 
-ValorantMatch::ValorantMatch(ValorantMatchDetails&& details):
-    _startTime(shared::TimePoint::max()),
-    _map(shared::valorant::mapIdToValorantMap(details.map())),
-    _matchId(details.matchId()),
-    _details(std::move(details)),
-    _endTime(shared::TimePoint::max()) {
-}
-
-bool ValorantMatch::populateMatchDetailsFromApi(const ValorantApi* api) {
-    auto apiDetails = api->getMatchDetails(_matchId);
-    // Didn't work - oops. Merge this in later I guess.
-    if (!apiDetails) {
-        LOG_WARNING("Failed to populate match details from API: " << _matchId << std::endl);
-        return false;
-    }
-    _details.mergeWithApi(apiDetails.get());
-    return true;
-}
-
 void ValorantMatch::goToRoundState(const shared::TimePoint& tm, shared::valorant::EValorantRoundState state) {
     if (isFinished()) {
         return;
     }
 
-    _details.nextRoundStateWithTimestamp(tm, state);
+    if (state == shared::valorant::EValorantRoundState::Buy) {
+        ValorantRoundMetadata metadata;
+        metadata.round = _rounds.size();
+        metadata.buyTime = tm;
+        _rounds.push_back(metadata);
+    } else if (state == shared::valorant::EValorantRoundState::Play && _rounds.size() > 0) {
+        _rounds.back().startTime = tm;
+    }
 }
 
 void ValorantMatch::finishMatch(const shared::TimePoint& tm) {
     _endTime = tm;
+}
+
+nlohmann::json ValorantRoundMetadata::toJson(const std::string& matchId, const std::string& puuid) const {
+    nlohmann::json json = nlohmann::json::object();
+    json["matchId"] = matchId;
+    json["puuid"] = puuid;
+    json["round"] = round;
+    json["buyTime"] = shared::timeToIso(buyTime);
+    json["roundTime"] = shared::timeToIso(startTime);
+    return json;
+}
+
+nlohmann::json ValorantMatch::toJson(const std::string& puuid) const {
+    nlohmann::json json = nlohmann::json::object();
+    json["matchId"] = _matchId;
+    json["puuid"] = puuid;
+    json["startTime"] = shared::timeToIso(_startTime);
+    json["endTime"] = shared::timeToIso(_endTime);
+    json["rounds"] = nlohmann::json::array();
+    for (const auto& rnd : _rounds) {
+        json["rounds"].push_back(rnd.toJson(_matchId, puuid));
+    }
+
+    return json;
 }
 
 }

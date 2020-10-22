@@ -4,7 +4,6 @@
 #include "shared/time.h"
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
-#include "database/api.h"
 #include "local/local_data.h"
 #include "recorder/game_recorder.h"
 #include "game_event_watcher/aimlab/aimlab_log_watcher.h"
@@ -20,7 +19,7 @@ namespace service::aimlab {
 
 class AimlabProcessHandlerInstance {
 public:
-    AimlabProcessHandlerInstance(const process_watcher::process::Process& p, const service::database::DatabaseApi* db);
+    explicit AimlabProcessHandlerInstance(const process_watcher::process::Process& p);
     ~AimlabProcessHandlerInstance();
 
 private:
@@ -32,7 +31,6 @@ private:
     void backfill();
 
     game_event_watcher::AimlabLogWatcherPtr _logWatcher;
-    const service::database::DatabaseApi* _db;
     process_watcher::process::Process  _process;
 
     service::recorder::GameRecorderPtr _recorder;
@@ -40,9 +38,8 @@ private:
     shared::TimePoint _taskStartTime;
 };
 
-AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher::process::Process& p, const service::database::DatabaseApi* db):
+AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher::process::Process& p):
     _logWatcher(new game_event_watcher::AimlabLogWatcher),
-    _db(db),
     _process(p),
     _aimlab(new AimlabDbInterface(shared::filesystem::getAimlabAppDataFolder() / fs::path("klutch.bytes"))) {
 
@@ -153,8 +150,8 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
                 continue;
             }
 
-            _db->storeAimlabTask(lastData, "");
             const auto matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
+            service::local::getLocalData()->markAimlabBackfillTime(lastData.createDate);
 
             shared::squadov::VodAssociation association;
             association.matchUuid = matchUuid;
@@ -174,12 +171,8 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     }
 }
 
-AimlabProcessHandler::AimlabProcessHandler(const service::database::DatabaseApi* db):
-    _db(db) {    
-}
-
-AimlabProcessHandler::~AimlabProcessHandler() {
-}
+AimlabProcessHandler::AimlabProcessHandler() = default;
+AimlabProcessHandler::~AimlabProcessHandler() = default;
 
 void AimlabProcessHandler::onProcessStarts(const process_watcher::process::Process& p) {
     // Aimlab already started - can ignore.
@@ -188,7 +181,7 @@ void AimlabProcessHandler::onProcessStarts(const process_watcher::process::Proce
     }
 
     LOG_INFO("START AIMLAB" << std::endl);
-    _instance = std::make_unique<AimlabProcessHandlerInstance>(p, _db);
+    _instance = std::make_unique<AimlabProcessHandlerInstance>(p);
 }
 
 void AimlabProcessHandler::onProcessStops() {

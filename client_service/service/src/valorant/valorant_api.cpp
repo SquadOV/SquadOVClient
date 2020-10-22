@@ -64,7 +64,7 @@ void ValorantApi::refreshToken() {
     });
 }
 
-ValorantMatchDetailsPtr ValorantApi::getMatchDetails(const std::string& matchId) const {
+nlohmann::json ValorantApi::getRawMatchDetails(const std::string& matchId) const {
     std::ostringstream path;
     path << "/match-details/v1/matches/" << matchId;
 
@@ -74,9 +74,7 @@ ValorantMatchDetailsPtr ValorantApi::getMatchDetails(const std::string& matchId)
         return nullptr;
     }
 
-    ValorantMatchDetailsPtr match = std::make_unique<ValorantMatchDetails>();
-    match->parseFromJson(result->body);
-    return match;
+    return nlohmann::json::parse(result->body);
 }
 
 std::vector<std::string> ValorantApi::getMatchHistoryIds(const std::string& puuid) const {
@@ -112,49 +110,6 @@ std::vector<std::string> ValorantApi::getMatchHistoryIds(const std::string& puui
     }
 
     return matches;
-}
-
-std::string ValorantApi::getLatestMatchId(const std::string& puuid, size_t* numMatches) const {
-    std::ostringstream path;
-    path << "/match-history/v1/history/" << puuid
-        << "?startIndex=" << 0
-        << "&endIndex=" << 1;
-    
-    const auto result = _pvpClient->get(path.str().c_str());
-    if (result->status != 200) {
-        THROW_ERROR("\tFailed to get match history: " << result->status << "\t" << result->curlError);
-        return "";
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    const auto total = parsedJson["Total"].get<int>();
-    if (!!numMatches) {
-        *numMatches = static_cast<size_t>(total);
-    }
-
-    if (total == 0) {
-        return "";
-    }
-
-    return parsedJson["History"][0]["MatchID"].get<std::string>();
-}
-
-
-std::vector<ValorantMatchDetailsPtr> ValorantApi::getFullMatchHistory(const std::string& puuid) const {
-    std::vector<ValorantMatchDetailsPtr> ret;
-    std::vector<std::string> matches = getMatchHistoryIds(puuid);
-
-    for (const auto& matchId : matches) {
-        auto details = getMatchDetails(matchId);
-
-        if (!!details) {
-            ret.emplace_back(std::move(details));
-        } else {
-            THROW_ERROR("\tFailed to get match details: " << matchId);
-        }
-    }
-
-    return ret;
 }
 
 }

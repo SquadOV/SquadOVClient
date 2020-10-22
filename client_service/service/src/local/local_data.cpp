@@ -38,6 +38,9 @@ shared::TimePoint LocalData::getLastAimlabBackfillTime() const {
 }
 
 void LocalData::markAimlabBackfillTime(const shared::TimePoint& tm) {
+    if (tm < getLastAimlabBackfillTime()) {
+        return;
+    }
     _data[AIMLAB_BACKFILL_TIME_KEY] = shared::timeToStr(tm);
     flush();
 }

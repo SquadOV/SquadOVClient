@@ -5,9 +5,7 @@ SET(SRCS
     src/aimlab/aimlab_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
     src/valorant/valorant_match.cpp
-    src/valorant/valorant_match_details.cpp
     src/valorant/valorant_api.cpp
-    src/database/api.cpp
     src/http/http_client.cpp
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
@@ -27,9 +25,7 @@ SET(HEADERS
     src/aimlab/aimlab_process_handler.h
     src/valorant/valorant_process_handler.h
     src/valorant/valorant_match.h
-    src/valorant/valorant_match_details.h
     src/valorant/valorant_api.h
-    src/database/api.h
     src/http/http_client.h
     src/recorder/game_recorder.h
     src/recorder/video/video_recorder.h

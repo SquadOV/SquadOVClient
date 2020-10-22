@@ -14,7 +14,7 @@ class ValorantProcessHandlerInstance;
 class ValorantProcessHandler : public process_watcher::ProcessWatchHandler {
 public:
     // These are needed for using the forward declared ValorantProcessHandlerInstance as a unique_ptr.
-    explicit ValorantProcessHandler(const service::database::DatabaseApi* db);
+    ValorantProcessHandler();
     ~ValorantProcessHandler();
 
 private:
@@ -22,7 +22,6 @@ private:
     void onProcessStops() override;
 
     std::unique_ptr<ValorantProcessHandlerInstance> _instance;
-    const service::database::DatabaseApi* _db;
 };
 
 }

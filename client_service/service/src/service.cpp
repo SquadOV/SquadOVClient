@@ -3,7 +3,6 @@
 #include "shared/filesystem/common_paths.h"
 #include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
-#include "database/api.h"
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
 #include "shared/errors/error.h"
@@ -106,13 +105,9 @@ int main(int argc, char** argv) {
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
     av_log_set_callback(ffmpegLogCallback);
 
-    // Connect to the database which should be in the predefined spot in the APPDATA (or its OS equivalent) folder.
-    const fs::path dbFname = shared::filesystem::getSquadOvUserFolder() / fs::path("squadov.db");
-    const auto db = std::make_unique<service::database::DatabaseApi>(dbFname.string());
-
     // Start process watcher to watch for our supported games.
-    watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>(db.get()));
-    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>(db.get()));
+    watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
     watcher.start();
 
     curl_global_cleanup();

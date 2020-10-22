@@ -15,7 +15,6 @@ public:
     // Aim Lab
     shared::TimePoint getLastAimlabBackfillTime() const;
     void markAimlabBackfillTime(const shared::TimePoint& tm);
-
 private:
     void flush();
 

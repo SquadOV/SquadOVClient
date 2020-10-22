@@ -117,12 +117,20 @@ shared::riot::RiotUser SquadovApi::getRiotUserFromPuuid(const std::string& puuid
     return user;
 }
 
-std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& rawData) const {
+std::string SquadovApi::uploadValorantMatch(const std::string& matchId,  const nlohmann::json& rawData, const nlohmann::json& playerData) const {
     const std::string path = "/v1/valorant";
-    const nlohmann::json body = {
+    nlohmann::json body = {
         { "matchId", matchId },
-        { "rawData", rawData }
     };
+
+    if (!rawData.is_null()) {
+        body["rawData"] = rawData.dump();
+    }
+
+    if (!playerData.is_null()) {
+        body["playerData"] = playerData.dump();
+    }
+
     const auto result = _webClient->post(path, body);
 
     if (result->status != 200) {
@@ -132,6 +140,28 @@ std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const st
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson["matchUuid"].get<std::string>();
+}
+
+std::vector<std::string> SquadovApi::obtainMissingValorantMatches(const std::vector<std::string>& ids) const {
+    const std::string path = "/v1/valorant/backfill";
+    nlohmann::json body = nlohmann::json::array();
+    for (const auto& id : ids ) {
+        body.push_back(id);
+    }
+
+    const auto result = _webClient->post(path, body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to obtain matches to backfill: " << result->status);
+        return std::vector<std::string>();
+    }
+
+    std::vector<std::string> ret;
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    for (const auto& v : parsedJson) {
+        ret.push_back(v);
+    }    
+    return ret;
 }
 
 std::string SquadovApi::uploadAimlabTask(const shared::aimlab::TaskData& data) const {

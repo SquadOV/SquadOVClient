@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace service::api {
@@ -32,7 +33,8 @@ public:
     shared::riot::RiotRsoToken refreshValorantRsoToken(const std::string& puuid) const;
     shared::riot::RiotUser getRiotUserFromPuuid(const std::string& puuid) const;
 
-    std::string uploadValorantMatch(const std::string& matchId, const std::string& rawData) const;
+    std::string uploadValorantMatch(const std::string& matchId, const nlohmann::json& rawData, const nlohmann::json& playerData) const;
+    std::vector<std::string> obtainMissingValorantMatches(const std::vector<std::string>& ids) const;
 
     // Aim Lab
     std::string uploadAimlabTask(const shared::aimlab::TaskData& data) const;

@@ -5,9 +5,9 @@
 #include "valorant/valorant_match.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/time.h"
-#include "database/api.h"
 #include "recorder/game_recorder.h"
 #include "shared/log/log.h"
+#include "local/local_data.h"
 #include "api/squadov_api.h"
 
 #include <iostream>
@@ -21,7 +21,7 @@ namespace service::valorant {
 
 class ValorantProcessHandlerInstance {
 public:
-    ValorantProcessHandlerInstance(const process_watcher::process::Process& p, const service::database::DatabaseApi* db);
+    ValorantProcessHandlerInstance(const process_watcher::process::Process& p);
     ~ValorantProcessHandlerInstance();
 
 private:
@@ -42,7 +42,6 @@ private:
     std::string _pendingPvpServer;
 
     ValorantMatchPtr _currentMatch;
-    const service::database::DatabaseApi* _db;
     process_watcher::process::Process  _process;
 
     service::recorder::GameRecorderPtr _recorder;
@@ -59,9 +58,8 @@ private:
     std::queue<std::string> _backfillQueue;
 };
 
-ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_watcher::process::Process& p, const service::database::DatabaseApi* db):
+ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_watcher::process::Process& p):
     _logWatcher(std::make_unique<game_event_watcher::ValorantLogWatcher>()),
-    _db(db),
     _process(p) {
 
     // Initialize recorder to pull from the game window (but don't start recording until a game starts).
@@ -114,25 +112,8 @@ void ValorantProcessHandlerInstance::backfillThreadJob() {
                 continue;
             }
 
-            // If this match already exists on the database, make sure we merge so we don't lose our old data.
-            ValorantMatchPtr existingMatch = _db->getValorantMatch(matchId);
-            std::string existingVodPath;
-
-            if (!!existingMatch) {
-                if (!existingMatch->populateMatchDetailsFromApi(_api.get())) {  
-                    addMatchesToBackfill({matchId});
-                }
-                existingVodPath = _db->getVodFilenameForValorantMatch(matchId);
-            } else {
-                auto apiDetails = _api->getMatchDetails(matchId);
-                existingMatch = std::make_unique<ValorantMatch>(std::move(*apiDetails));
-            }
-
-            _db->storeValorantMatch(existingMatch.get());
-            service::api::getGlobalApi()->uploadValorantMatch(existingMatch->matchId(), existingMatch->details().rawApiData());
-            if (!existingVodPath.empty()) {
-                _db->associateValorantMatchToVideoFile(existingMatch->matchId(), existingVodPath);
-            }
+            auto apiDetails = _api->getRawMatchDetails(matchId);
+            service::api::getGlobalApi()->uploadValorantMatch(matchId, apiDetails, nlohmann::json());
         } catch (const std::exception& e) {
             LOG_WARNING("Failed to backfill: " << e.what() << std::endl);
         }
@@ -208,26 +189,35 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
     // Don't try to to check the the state's match map matches at this point since it'll probably
     // be back at the main menu before we get this event (as expected).
     if (_currentMatch->matchId() == state->matchId && state->stagedMatchEnd) {
-        // Retrieve match details + our rank after the game (if relevant).
-        if (!_currentMatch->populateMatchDetailsFromApi(_api.get())) {
-            addMatchesToBackfill({_currentMatch->matchId()});
-        }
         _currentMatch->finishMatch(eventTime);
 
-        // Store match details.
-        _db->storeValorantMatch(_currentMatch.get());
-        const auto matchUuid = service::api::getGlobalApi()->uploadValorantMatch(_currentMatch->matchId(), _currentMatch->details().rawApiData());
-
         const auto& vodId = _recorder->currentId();
-        // Associate the match with the video so that we know which video to load later
-        // AND so we know which videos to not delete in our cleanup phase.
-        shared::squadov::VodAssociation association;
-        association.matchUuid = matchUuid;
-        association.userUuid = vodId.userUuid;
-        association.videoUuid = vodId.videoUuid;
-        association.startTime = _currentMatch->startTime();
-        association.endTime = _currentMatch->endTime();
-        service::api::getGlobalApi()->associateVod(association);
+
+        try {
+            // Store match details. Upload match without match details first just to get the match populated.
+            // Grab the match via backfill later.
+            const auto matchUuid = service::api::getGlobalApi()->uploadValorantMatch(
+                _currentMatch->matchId(),
+                nlohmann::json(),
+                _currentMatch->toJson(_currentUser.puuid)
+            );
+
+            // Retrieve match details + our rank after the game (if relevant).
+            addMatchesToBackfill({_currentMatch->matchId()});
+            
+            // Associate the match with the video so that we know which video to load later
+            // AND so we know which videos to not delete in our cleanup phase.
+            shared::squadov::VodAssociation association;
+            association.matchUuid = matchUuid;
+            association.userUuid = vodId.userUuid;
+            association.videoUuid = vodId.videoUuid;
+            association.startTime = _currentMatch->startTime();
+            association.endTime = _currentMatch->endTime();
+            service::api::getGlobalApi()->associateVod(association);
+        } catch (...) {
+            // Any errors should result in the VOD being deleted.
+            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        }
     }
 
     _recorder->stop();
@@ -239,29 +229,28 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 
 void ValorantProcessHandlerInstance::backfillMatchHistory() {
     // If some exception is thrown and we fail to backfill just log it and move on since
-    // we can always just try again later.
+    // we can always just try again later. It's tempting to put in something in the local
+    // data to track when the last backfill time was. However that won't work in a way
+    // that's super reliable because of the fact that the backfill happens on a separate thread.
+    // Let's say we have matches A, B, and C (A is the oldest match, C is the newest match).
+    // The obvious way to do track the backfill time is that once we successfully pull the match
+    // and upload it to the API server, we mark the game's start time as the "last backfill time."
+    // However, the way the backfill works is to process all the games in the queue even if a
+    // game fails. This means that if A and C successfully process but B fails, then the next time
+    // we go to backfill, we'll have C's match time as the last backfill time and thus won't
+    // pickup B again. Thus, the only alternative is the query all the user's matches every time
+    // they start VALORANT to see if any backfill tasks are necessary.
     try {      
-        // If the total number of matches we have stored in the database doesn't match
-        // the number of matches given to us by Riot's API then we know we aren't synced properly.
-        size_t apiNumMatches = 0;
-        _api->getLatestMatchId(_currentUser.puuid, &apiNumMatches);
-
-        if (!apiNumMatches) {
-            return;
-        }
-
-        const size_t dbNumMatches = _db->totalValorantMatchesForPuuid(_currentUser.puuid, true);
-        if (dbNumMatches == apiNumMatches) {
-            return;
-        }
-
-        // If the number of API matches don't match the number of matches we have stored in the database
-        // then we know we need to do a sync. Figure out which matches are the ones that are different!
+        // Pull all the matches that VALORANT's API feels like giving us. Send to the server
+        // and return the match IDs that we need to fetch and upload.
         std::vector<std::string> allApiMatchIds = _api->getMatchHistoryIds(_currentUser.puuid);
-        std::vector<std::string> diffMatchIds;
-        std::copy_if(allApiMatchIds.begin(), allApiMatchIds.end(), std::back_inserter(diffMatchIds), [this](const std::string& matchId){
-            return !_db->isValorantMatchStored(matchId);
-        });
+
+        // I believe the valorant API returns match IDs in descending date order (most recent first).
+        // We want to backfill from oldest to newest so that even if some backfill task fails, we'll
+        // still be able to pick it up next time around.
+        std::reverse(allApiMatchIds.begin(), allApiMatchIds.end());
+
+        std::vector<std::string> diffMatchIds = service::api::getGlobalApi()->obtainMissingValorantMatches(allApiMatchIds);
         
         // Yes this can happen sometimes. I don't think Riot's API is very good at returning *every match* you've played in the match history
         // so it's possible that we'll sometimes get a match in the match history and then lose it some time later.
@@ -269,7 +258,7 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
             return;
         }
         
-        LOG_INFO("Starting backfill [" << apiNumMatches << " API GAMES][" << dbNumMatches << " DB GAMES] of " << diffMatchIds.size() << " games." << std::endl);
+        LOG_INFO("Starting backfill of " << diffMatchIds.size() << " VALORANT matches." << std::endl);
         addMatchesToBackfill(diffMatchIds);
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to perform Valorant backfill: " << ex.what() << std::endl);
@@ -326,11 +315,8 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
     _currentUser = service::api::getGlobalApi()->getRiotUserFromPuuid(*puuid);
 }
 
-ValorantProcessHandler::ValorantProcessHandler(const service::database::DatabaseApi* db):
-    _db(db) {    
-}
-ValorantProcessHandler::~ValorantProcessHandler() {
-}
+ValorantProcessHandler::ValorantProcessHandler() = default;
+ValorantProcessHandler::~ValorantProcessHandler() = default;
 
 void ValorantProcessHandler::onProcessStarts(const process_watcher::process::Process& p) {
     // Valorant already started - can ignore.
@@ -339,7 +325,7 @@ void ValorantProcessHandler::onProcessStarts(const process_watcher::process::Pro
     }
 
     LOG_INFO("START VALORANT" << std::endl);
-    _instance = std::make_unique<ValorantProcessHandlerInstance>(p, _db);
+    _instance = std::make_unique<ValorantProcessHandlerInstance>(p);
 }
 
 void ValorantProcessHandler::onProcessStops() {

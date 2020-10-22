@@ -1,10 +1,11 @@
 #pragma once
 
-#include "valorant/valorant_match_details.h"
 #include "shared/riot/riot.h"
+#include "shared/time.h"
 #include "http/http_client.h"
 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -24,10 +25,8 @@ public:
     bool ready() const { return !!_pvpClient; }
 
     // Get match details - round info, kills. Who's on what team. The score. Damage done. Everything.
-    ValorantMatchDetailsPtr getMatchDetails(const std::string& matchId) const;
-    std::string getLatestMatchId(const std::string& puuid, size_t* numMatches = nullptr) const;
+    nlohmann::json getRawMatchDetails(const std::string& matchId) const;
     std::vector<std::string> getMatchHistoryIds(const std::string& puuid) const;
-    std::vector<ValorantMatchDetailsPtr> getFullMatchHistory(const std::string& puuid) const;
 
 private:
     void refreshToken();
