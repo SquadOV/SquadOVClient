@@ -56,7 +56,7 @@ export default class ValorantMatchHeaderSummary extends Vue {
         if (getIsCustom(this.match._details.provisioningFlowId)) {
             queue = `[Custom] ${queue}`
         }
-        return queue
+        return queue!
     }
 
     get style() : any {

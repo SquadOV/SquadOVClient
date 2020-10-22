@@ -119,32 +119,46 @@ export function cleanValorantMatchDetails(m :ValorantMatchDetails) : ValorantMat
 
 export interface ValorantPlayerMatchSummary {
     matchId : string
-    matchTime : Date
-    map : string
-    provisioningFlowId : string
-    gameMode : string
-    win : boolean
-    patchId : string
+    serverStartTimeUtc: Date | null
+    gameMode: string | null
+    map: string | null
+    isRanked: boolean | null
+    provisioningFlowID: string | null
+    gameVersion: string | null
+    characterId: string
+    won: boolean
+    roundsWon: number
+    roundsLost: number
+    combatScoreRank: number
+    competitiveTier: number
+    kills: number
+    deaths: number
+    assists: number
+    roundsPlayed: number
+    totalCombatScore: number
+    totalDamage: number
+    headshots: number
+    bodyshots: number
+    legshots: number
     hasVod: boolean
-    myTeamScore: number
-    otherTeamScore: number
-    isRanked: boolean
-
-    agentId : string
-    stats : ValorantPlayerStatsSummary
-    csRank: number
 }
 
 export function cleanValorantPlayerMatchSummary(m :ValorantPlayerMatchSummary) : ValorantPlayerMatchSummary {
-    m.matchTime = new Date(m.matchTime)
+    if (!!m.serverStartTimeUtc) {
+        m.serverStartTimeUtc = new Date(m.serverStartTimeUtc)
+    }
     return m
 }
 
-export function getGameMode(patchId : string, gameMode: string, isRanked : boolean) {
+export function getGameMode(patchId : string | null, gameMode: string | null, isRanked : boolean | null) : string | null {
+    if (!patchId || !gameMode) {
+        return null
+    }
+
     let cnt = getValorantContent(patchId)
     let mode = cnt.gameModeToName(gameMode)
     if (mode == "Standard") {
-        if (isRanked) {
+        if (!!isRanked) {
             return "Competitive"
         } else {
             return "Unrated"

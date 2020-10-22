@@ -9,16 +9,16 @@
                 <v-row no-gutters>
                     <v-col cols="2" align-self="center">
                         <valorant-agent-icon
-                            :agent="match.agentId"
+                            :agent="match.characterId"
                             :width-height="100"
-                            :patch="match.patchId"
+                            :patch="match.gameVersion"
                         >
                         </valorant-agent-icon>
                     </v-col>
 
                     <v-col cols="1" align-self="center">
                         <p :style="wlColorStyle">
-                            {{ match.myTeamScore }} - {{ match.otherTeamScore }}
+                            {{ match.roundsWon }} - {{ match.roundsLost }}
                         </p>
 
                         <v-chip :style="csRankStyle">{{ csRank }}</v-chip>
@@ -26,16 +26,16 @@
 
                     <v-col cols="4" align-self="center">
                         <valorant-hit-tracker
-                            :headshots="match.stats.headshots"
-                            :bodyshots="match.stats.bodyshots"
-                            :legshots="match.stats.legshots"
+                            :headshots="match.headshots"
+                            :bodyshots="match.bodyshots"
+                            :legshots="match.legshots"
                         >
                         </valorant-hit-tracker>
                     </v-col>
 
                     <v-col cols="3" align-self="center">
                         <div>
-                            {{ match.stats.kills }} / {{ match.stats.deaths}} / {{ match.stats.assists }} ({{ kda }})
+                            {{ match.kills }} / {{ match.deaths}} / {{ match.assists }} ({{ kda }})
                         </div>
 
                         <div>
@@ -65,12 +65,11 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { ValorantPlayerMatchSummary, getGameMode, getIsCustom } from '@client/js/valorant/valorant_matches'
 import { kda, dpr, cspr } from '@client/js/valorant/valorant_player_stats'
 import { getOrdinal } from '@client/js/ordinal'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
-
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import * as pi from '@client/js/pages'
@@ -98,16 +97,16 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get csRank() : string {
-        return getOrdinal(this.match.csRank)
+        return getOrdinal(this.match.combatScoreRank)
     }
 
     get csRankStyle() : any {
         let color = '#424242'
-        if (this.match.csRank == 1) {
+        if (this.match.combatScoreRank == 1) {
             color = '#AF9500'
-        } else if (this.match.csRank == 2) {
+        } else if (this.match.combatScoreRank == 2) {
             color = '#6C7A86'
-        } else if (this.match.csRank == 3) {
+        } else if (this.match.combatScoreRank == 3) {
             color = '#AD8A56'
         }
         return {
@@ -116,13 +115,17 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get winLossColor() : string {
-        let color : string = this.match.win ? '#4CAF50' : '#FF5252'
+        let color : string = this.match.won ? '#4CAF50' : '#FF5252'
         return color
     }
 
     get queueType() : string {
-        let queue = getGameMode(this.match.patchId, this.match.gameMode, this.match.isRanked)
-        if (getIsCustom(this.match.provisioningFlowId)) {
+        let queue = getGameMode(this.match.gameVersion, this.match.gameMode, this.match.isRanked)
+        if (!queue || !this.match.provisioningFlowID) {
+            return 'Unknown'
+        }
+
+        if (getIsCustom(this.match.provisioningFlowID)) {
             queue = `[Custom] ${queue}`
         }
         return queue
@@ -130,8 +133,8 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get queueTypeStyle() : any {
         let color = ''
-        let queue = getGameMode(this.match.patchId, this.match.gameMode, this.match.isRanked)
-        if (getIsCustom(this.match.provisioningFlowId)) {
+        let queue = getGameMode(this.match.gameVersion, this.match.gameMode, this.match.isRanked)
+        if (!!this.match.provisioningFlowID && getIsCustom(this.match.provisioningFlowID)) {
             color = '#343a40'
         } else if (this.match.isRanked) {
             color = '#6c757d'
@@ -141,6 +144,8 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
             color = '#17a2b8'
         } else if (queue == 'Spike Rush') {
             color = '#28a745'
+        } else {
+            color = '#ff0000'
         }
 
         return {
@@ -149,17 +154,26 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get mapName() : string {
-        let cnt = getValorantContent(this.match.patchId)
+        if (!this.match.gameVersion || !this.match.map) {
+            return 'Unknown'
+        }
+
+        let cnt = getValorantContent(this.match.gameVersion)
         return cnt.mapAssetPathToName(this.match.map)
     }
 
     get style() : any {
-        return {
+        let style: any = {
             'border-left': `5px solid ${this.winLossColor}`,
-            'background-image': `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`,
             'background-position': 'right',
             'background-size': 'contain',
         }
+
+        if (!!this.match.gameVersion && !!this.match.map) {
+            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
+        }
+
+        return style
     }
 
     get wlColorStyle() : any {
@@ -169,15 +183,15 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get kda() : string {
-        return kda(this.match.stats).toFixed(2)
+        return kda(this.match.kills, this.match.assists, this.match.deaths).toFixed(2)
     }
 
     get dpr() : string {
-        return dpr(this.match.stats).toFixed(2)
+        return dpr(this.match.totalDamage, this.match.roundsPlayed).toFixed(2)
     }
 
     get cspr() : string {
-        return cspr(this.match.stats).toFixed(2)
+        return cspr(this.match.totalCombatScore, this.match.roundsPlayed).toFixed(2)
     }
 }
 

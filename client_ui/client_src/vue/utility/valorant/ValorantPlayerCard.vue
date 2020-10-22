@@ -85,19 +85,19 @@ export default class ValorantPlayerCard extends Vue {
     account! : ValorantAccountData
 
     get kda() : number {
-        return kda(this.summary)
+        return kda(this.summary.kills, this.summary.assists, this.summary.deaths)
     }
 
     get hsp() : number {
-        return hsp(this.summary)
+        return hsp(this.summary.headshots, this.summary.bodyshots, this.summary.legshots)
     }
 
     get dpr() : number {
-        return dpr(this.summary)
+        return dpr(this.summary.totalDamage, this.summary.rounds)
     }
 
     get cspr() : number {
-        return cspr(this.summary)
+        return cspr(this.summary.totalCombatScore, this.summary.rounds)
     }
 }
 

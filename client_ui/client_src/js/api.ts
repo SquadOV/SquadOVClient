@@ -160,17 +160,6 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
-    listValorantMatchesForPlayer(puuid : string) : Promise<ApiData<ValorantPlayerMatchSummary[]>> {
-        return axios({
-            ...this.createAxiosConfig(`valorant/accounts/${puuid}/matches`),
-            method: 'get'
-        }).then((resp : ApiData<ValorantPlayerMatchSummary[]>) => {
-            resp.data.forEach(cleanValorantPlayerMatchSummary)
-            return resp
-        })
-    }
-
-    @waitForApiServerSetup
     getValorantPlayerStats(puuid : string) : Promise<ApiData<ValorantPlayerStatsSummary>> {
         return axios({
             ...this.createAxiosConfig(`valorant/stats/summary/${puuid}`),
@@ -267,6 +256,23 @@ class ApiClient {
     getAimlabTaskData(uuid : string) : Promise<ApiData<AimlabTaskData>> {
         return axios.get(`v1/aimlab/match/${uuid}/task`, this.createWebAxiosConfig()).then((resp : ApiData<AimlabTaskData>) => {
             cleanAimlabTaskData(resp.data)
+            return resp
+        })
+    }
+
+    listValorantMatchesForPlayer(params : {next : string | null, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/valorant/accounts/${params.puuid}/matches`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<ValorantPlayerMatchSummary[]>>) => {
+            resp.data.data.forEach(cleanValorantPlayerMatchSummary)
             return resp
         })
     }

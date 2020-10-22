@@ -2,14 +2,14 @@
     <div>
         <valorant-player-match-summary-display
             class="mb-4"
-            v-for="match in limitedMatches"
+            v-for="match in matches"
             :key="match.matchId"
             :match="match"
         >
         </valorant-player-match-summary-display>
 
         <v-btn
-            v-if="!loadedAllMatches"
+            v-if="canLoadMore"
             color="primary"
             block
             @click="loadMore"  
@@ -38,18 +38,11 @@ export default class ValorantMatchScroller extends Vue {
     @Prop({type: Array, default: []})
     matches! : ValorantPlayerMatchSummary[]
 
-    maxMatchCount: number = loadMoreMatches
-
-    get loadedAllMatches() : boolean {
-        return this.maxMatchCount >= this.matches.length
-    }
-
-    get limitedMatches() : ValorantPlayerMatchSummary[] {
-        return this.matches.slice(0, this.maxMatchCount)
-    }
+    @Prop({type: Boolean})
+    canLoadMore!: boolean
 
     loadMore() {
-        this.maxMatchCount += loadMoreMatches
+        this.$emit('load-more')
     }
 }
 

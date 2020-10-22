@@ -31,6 +31,8 @@
                             <valorant-match-scroller
                                 v-if="allMatches.length > 0"
                                 :matches="allMatches"
+                                :can-load-more="hasNext"
+                                @load-more="loadMoreMatches"
                             >
                             </valorant-match-scroller>
 
@@ -53,7 +55,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import { apiClient, ApiData } from '@client/js/api'
+import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { ValorantAccountData } from '@client/js/valorant/valorant_account'
 import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
 import { ValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
@@ -61,6 +63,8 @@ import { ValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ValorantPlayerCard from '@client/vue/utility/valorant/ValorantPlayerCard.vue'
 import ValorantMatchScroller from '@client/vue/utility/valorant/ValorantMatchScroller.vue'
+
+const maxTasksPerRequest : number = 20
 
 @Component({
     components: {
@@ -71,14 +75,21 @@ import ValorantMatchScroller from '@client/vue/utility/valorant/ValorantMatchScr
 })
 export default class ValorantGameLog extends Vue {
     account : ValorantAccountData | null = null
-    allMatches : ValorantPlayerMatchSummary[] | null = []
     playerStats : ValorantPlayerStatsSummary | null = null
+
+    allMatches : ValorantPlayerMatchSummary[] | null = null
+    lastIndex: number = 0
+    nextLink: string | null = null
 
     get routeAccountPuuid() : string | null {
         if (!this.$route.params.account) {
             return null;
         }
         return this.$route.params.account
+    }
+
+    get hasNext() : boolean {
+        return !!this.nextLink
     }
 
     @Watch('routeAccountPuuid')
@@ -92,7 +103,7 @@ export default class ValorantGameLog extends Vue {
             this.account = resp.data
         }).catch((err : any) => {
             console.log('Failed to get valorant account: ' + err);
-        })       
+        })   
     }
 
     get accountPuuid() : string | null {
@@ -103,14 +114,37 @@ export default class ValorantGameLog extends Vue {
     }
 
     @Watch('accountPuuid')
-    refreshMatches() {
+    loadMoreMatches(newPuuid : string | null, oldPuuid : string | null) {
         if (!this.accountPuuid) {
-            this.allMatches = null
             return
         }
 
-        apiClient.listValorantMatchesForPlayer(this.accountPuuid).then((resp : ApiData<ValorantPlayerMatchSummary[]>) => {
-            this.allMatches = resp.data
+        if (newPuuid !== oldPuuid) {
+            this.allMatches = null
+            this.nextLink = null
+        }
+
+        if (!!this.allMatches && !this.nextLink) {
+            return
+        }
+
+        apiClient.listValorantMatchesForPlayer({
+            next: this.nextLink,
+            puuid: this.accountPuuid!,
+            start: this.lastIndex,
+            end: this.lastIndex + maxTasksPerRequest,
+        }).then((resp : ApiData<HalResponse<ValorantPlayerMatchSummary[]>>) => {
+            if (!this.allMatches) {
+                this.allMatches = resp.data.data
+            } else {
+                this.allMatches.push(...resp.data.data)
+            }
+            this.lastIndex += resp.data.data.length
+            if ("next" in resp.data._links) {
+                this.nextLink = resp.data._links["next"].href
+            } else {
+                this.nextLink = null
+            }
         }).catch((err : any) => {
             console.log('Failed to list valorant matches: ' + err);
         })

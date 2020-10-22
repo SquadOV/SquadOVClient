@@ -13,24 +13,24 @@ export interface ValorantPlayerStatsSummary {
     games: number
 }
 
-export function kda(s : ValorantPlayerStatsSummary) {
-    return (s.kills + s.assists) / s.deaths
+export function kda(kills: number, assists: number, deaths: number) : number {
+    return (kills + assists) / deaths
 }
 
-export function hsp(s : ValorantPlayerStatsSummary) {
-    return (s.headshots) / (s.headshots + s.bodyshots + s.legshots)
+export function hsp(headshots: number, bodyshots: number, legshots: number) : number {
+    return headshots/ (headshots + bodyshots + legshots)
 }
 
-export function dpr(s : ValorantPlayerStatsSummary) : number {
-    if (s.rounds == 0) {
+export function dpr(totalDamage: number, rounds: number) : number {
+    if (rounds == 0) {
         return 0
     }
-    return s.totalDamage / s.rounds
+    return totalDamage / rounds
 }
 
-export function cspr(s : ValorantPlayerStatsSummary) : number {
-    if (s.rounds == 0) {
+export function cspr(combatScore: number, rounds: number) : number {
+    if (rounds == 0) {
         return 0
     }
-    return s.totalCombatScore / s.rounds
+    return combatScore / rounds
 }
