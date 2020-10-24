@@ -14,6 +14,10 @@ SET(SRCS
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
+    src/recorder/pipe/pipe.cpp
+    src/recorder/pipe/file_output_piper.cpp
+    src/recorder/pipe/filesystem_piper.cpp
+    src/recorder/pipe/gcs_piper.cpp
     src/system/win32/hwnd_utils.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
@@ -40,6 +44,10 @@ SET(HEADERS
     src/recorder/audio/audio_packet_properties.h
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
+    src/recorder/pipe/pipe.h
+    src/recorder/pipe/file_output_piper.h
+    src/recorder/pipe/filesystem_piper.h
+    src/recorder/pipe/gcs_piper.h
     src/system/win32/hwnd_utils.h
     src/zeromq/zeromq.h
     src/local/local_data.h
@@ -82,14 +90,15 @@ target_link_libraries(squadov_client_service
     ZLIB::ZLIB
     ${OPENSSL_LIBRARIES}
     ${FFMPEG_LIBRARIES}
+    ${OPENH264_LIBRARIES}
 )
 
 if(WIN32)
-    file(GLOB FFMPEG_DLLS "${CMAKE_SOURCE_DIR}/deps/ffmpeg/bin/*.dll")
+    file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
     add_custom_command(
         TARGET squadov_client_service
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${FFMPEG_DLLS} $<TARGET_FILE_DIR:squadov_client_service>
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:squadov_client_service>
     )
 
     target_link_libraries(squadov_client_service

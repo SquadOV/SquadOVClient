@@ -23,7 +23,7 @@ import 'video.js/dist/video-js.css'
 @Component
 export default class VideoPlayer extends Vue {
     @Prop({required: true})
-    videoUuid! : string | null
+    videoUuid! : string | null | undefined
 
     // Our custom manifest file format that lists all the available options
     // for video quality as well as the urls to get that particular

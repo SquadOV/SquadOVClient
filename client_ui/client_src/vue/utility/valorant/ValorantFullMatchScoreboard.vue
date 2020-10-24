@@ -20,14 +20,14 @@
                     <td class="text-center">
                         <div class="d-flex justify-space-around align-center">
                             <valorant-agent-icon
-                                :agent="item.player._p.agentId"
-                                :patch="match._details.patchId"
+                                :agent="item.player._p.characterId"
+                                :patch="match._details.matchInfo.gameVersion"
                                 :width-height="40"
                                 circular
                             >
                             </valorant-agent-icon>
 
-                            <span>{{ agentName(item.player._p.agentId) }}</span>
+                            <span>{{ agentName(item.player._p.characterId) }}</span>
                         </div>                    
                     </td>
 
@@ -82,7 +82,7 @@ export default class ValorantFullMatchScoreboard extends Vue {
     currentPlayer! : ValorantMatchPlayerWrapper | null
 
     agentName(id : string) : string {
-        let cnt = getValorantContent(this.match._details.patchId)
+        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
         return cnt.agentIdToName(id)
     }
 
@@ -93,7 +93,7 @@ export default class ValorantFullMatchScoreboard extends Vue {
     teamRowStyle(p : ValorantMatchPlayerWrapper) : any {
         let style : any = {}
 
-        if (p._p.puuid == this.currentPlayer?._p.puuid) {
+        if (p._p.subject == this.currentPlayer?._p.subject) {
             style['border-left'] = '5px solid #FFD700'
         }
 
@@ -169,12 +169,12 @@ export default class ValorantFullMatchScoreboard extends Vue {
                 player: ele,
                 rank: ele._p.competitiveTier,
                 kda: {
-                    kills: ele._p.kills,
-                    deaths: ele._p.deaths, 
-                    assists: ele._p.assists,
+                    kills: ele._p.stats.kills,
+                    deaths: ele._p.stats.deaths, 
+                    assists: ele._p.stats.assists,
                 },
-                score: (ele._p.roundsPlayed > 0) ? ele._p.totalCombatScore / ele._p.roundsPlayed : 0,
-                damage: (ele._p.roundsPlayed > 0) ? this.match.getDamageDoneByPlayer(ele._p.puuid) / ele._p.roundsPlayed : 0,
+                score: (ele._p.stats.roundsPlayed > 0) ? ele._p.stats.score / ele._p.stats.roundsPlayed : 0,
+                damage: (ele._p.stats.roundsPlayed > 0) ? this.match.getDamageDoneByPlayer(ele._p.subject) / ele._p.stats.roundsPlayed : 0,
             }
         })
     }

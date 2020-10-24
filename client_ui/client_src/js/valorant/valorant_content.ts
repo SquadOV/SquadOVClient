@@ -113,7 +113,11 @@ function loadValorantContent(patchId : string) {
     content[patchId] = ct
 }
 
-export function getValorantContent(patchId : string) {
+export function getValorantContent(patchId : string | null) {
+    if (!patchId) {
+        patchId = latestPatch
+    }
+
     if (!(patchId in content)) {
         loadValorantContent(patchId)
     }

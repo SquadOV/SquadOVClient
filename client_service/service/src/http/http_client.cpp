@@ -11,6 +11,20 @@
 
 namespace service::http {
 
+struct CurlRawBuffer {
+    const char* buffer = nullptr;
+    size_t size = 0;
+    size_t read = 0;
+
+    const char* currentPtr() const { return buffer + read; }
+    size_t bufferSize(size_t req) const {
+        return std::min(req, size - read);
+    }
+    void step(size_t bytes) {
+        read += bytes;
+    }
+};
+
 class HttpRequest {
 public:
     HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned);
@@ -19,11 +33,26 @@ public:
 
     void doDelete();
     void doPost(const nlohmann::json& body);
+    void doPut(const char* buffer, size_t numBytes);
 
 private:
+    void setJsonBody(const nlohmann::json& body);
+    void setRawBuffer(const char* buffer, size_t size);
+
     CURL* _curl = nullptr;
+    CurlRawBuffer _buffer;
     curl_slist* _headers = nullptr;
+    char _errBuffer[CURL_ERROR_SIZE];
 };
+
+size_t curlReadCallback(char* buffer, size_t size, size_t nitems, void* userdata) {
+    CurlRawBuffer* rawBuffer = reinterpret_cast<CurlRawBuffer*>(userdata);
+    const auto* bytes = rawBuffer->currentPtr();
+    const auto bytesHandled = rawBuffer->bufferSize(size * nitems);
+    std::memcpy(buffer, bytes, bytesHandled);
+    rawBuffer->step(bytesHandled);
+    return bytesHandled;
+}
 
 size_t curlStringStreamCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     std::ostringstream& buffer = *reinterpret_cast<std::ostringstream*>(userdata);
@@ -36,18 +65,15 @@ size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userda
     std::string_view header(buffer, size * nitems);
     const auto total = nitems * size;
     
-    if (header.find(':') == std::string::npos) {
+    const auto splitIt = header.find(":");
+    if (splitIt == std::string::npos) {
         return total;
     }
 
-    std::vector<std::string> parts;
-    boost::split(parts, header, boost::is_any_of(":"));
-    if (parts.size() != 2) {
-        return total;
-    }
-
-    const std::string key = boost::algorithm::trim_copy(std::string(parts[0]));
-    const std::string value = boost::algorithm::trim_copy(std::string(parts[1]));
+    // Don't do a boost::split here on a colon because a header value could have
+    // more than one colon like the "Location" header...yikes...
+    const std::string key = boost::algorithm::trim_copy(std::string(header.substr(0, splitIt)));
+    const std::string value = boost::algorithm::trim_copy(std::string(header.substr(splitIt + 2)));
     resp->headers[key] = value;
     return total;
 }
@@ -84,12 +110,18 @@ HttpResponsePtr HttpRequest::execute() {
     curl_easy_setopt(_curl, CURLOPT_HEADERDATA, resp.get());
     curl_easy_setopt(_curl, CURLOPT_HEADERFUNCTION, curlHeaderCallback);
 
+    _errBuffer[0] = 0;
+    curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errBuffer);
+
     resp->curlError = curl_easy_perform(_curl);
     if (resp->curlError == CURLE_OK) {
         curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
+        resp->body = buffer.str();
+    } else {
+        resp->body = std::string(_errBuffer);
     }
 
-    resp->body = buffer.str();
+    
     return resp;
 }
 
@@ -97,17 +129,43 @@ void HttpRequest::doDelete() {
     curl_easy_setopt(_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 }
 
+void HttpRequest::setJsonBody(const nlohmann::json& body) {
+    if (body.is_null()) {
+        curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, 0);
+    } else {
+        std::ostringstream h;
+        h << "Content-Type: application/json";
+        _headers = curl_slist_append(_headers, h.str().c_str());
+        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+
+        const std::string jsonBody = body.dump();
+        curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
+        curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
+    }
+}
+
 void HttpRequest::doPost(const nlohmann::json& body) {
     curl_easy_setopt(_curl, CURLOPT_POST, 1);
+    setJsonBody(body);
+}
 
-    std::ostringstream h;
-    h << "Content-Type: application/json";
-    _headers = curl_slist_append(_headers, h.str().c_str());
-    curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+void HttpRequest::setRawBuffer(const char* buffer, size_t size) {
+    if (size == 0) {
+        return;
+    }
 
-    const std::string jsonBody = body.dump();
-    curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
-    curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
+    _buffer.buffer = buffer;
+    _buffer.size = size;
+    _buffer.read = 0;
+
+    curl_easy_setopt(_curl, CURLOPT_READDATA, &_buffer);
+    curl_easy_setopt(_curl, CURLOPT_READFUNCTION, curlReadCallback);
+    curl_easy_setopt(_curl, CURLOPT_INFILESIZE, size);
+}
+
+void HttpRequest::doPut(const char* buffer, size_t numBytes) {
+    curl_easy_setopt(_curl, CURLOPT_UPLOAD, 1);
+    setRawBuffer(buffer, numBytes);
 }
 
 HttpClient::HttpClient(const std::string& baseUri):
@@ -131,6 +189,11 @@ void HttpClient::setHeaderKeyValue(const std::string& key, const std::string& va
     _headers[key] = value;
 }
 
+void HttpClient::removeHeaderKey(const std::string& key) {
+    std::unique_lock<std::shared_mutex> guard(_headerMutex);
+    _headers.erase(key);
+}
+
 HttpResponsePtr HttpClient::get(const std::string& path) const {
     return sendRequest(path, nullptr);
 }
@@ -138,6 +201,12 @@ HttpResponsePtr HttpClient::get(const std::string& path) const {
 HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body) const {
     return sendRequest(path, [&body](HttpRequest& req){
         req.doPost(body);
+    });
+}
+
+HttpResponsePtr HttpClient::put(const std::string& path, const char* buffer, size_t numBytes) const {
+    return sendRequest(path, [buffer, numBytes](HttpRequest& req){
+        req.doPut(buffer, numBytes);
     });
 }
 

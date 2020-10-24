@@ -5,6 +5,8 @@
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/video/video_recorder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "recorder/pipe/file_output_piper.h"
+#include "shared/squadov/vod.h"
 #include <filesystem>
 #include <memory>
 
@@ -28,6 +30,11 @@ public:
     void stop();
     bool isRecording() const { return !!_encoder; }
     const VodIdentifier& currentId() const { return *_currentId; }
+    shared::squadov::VodMetadata getMetadata() const { 
+        auto metadata = _encoder->getMetadata();
+        metadata.videoUuid = _currentId->videoUuid;
+        return metadata;
+    }
 
 private:
     void createVideoRecorder();
@@ -38,6 +45,7 @@ private:
 
     encoder::AvEncoderPtr _encoder;
     std::unique_ptr<VodIdentifier> _currentId;
+    pipe::FileOutputPiperPtr _outputPiper;
 
     video::VideoRecorderPtr _vrecorder;
     audio::AudioRecorderPtr _aoutRecorder;

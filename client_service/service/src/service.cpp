@@ -51,7 +51,6 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 }
 
 int main(int argc, char** argv) {
-
 #ifdef _WIN32
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif

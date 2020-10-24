@@ -55,7 +55,7 @@ export default class ValorantRoundTimeline extends Vue {
             return {}
         }
 
-        let winner = round._r.roundWinner
+        let winner = round._r.winningTeam
         let accentColor : Color = { r : 0, g : 0, b : 0}
         if (!!this.currentPlayer) {
             if (winner == this.currentPlayer._p.teamId) {

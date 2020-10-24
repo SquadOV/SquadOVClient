@@ -115,7 +115,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get winLossColor() : string {
-        let color : string = this.match.won ? '#4CAF50' : '#FF5252'
+        let color : string = !!this.match.won ? '#4CAF50' : '#FF5252'
         return color
     }
 
@@ -154,7 +154,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get mapName() : string {
-        if (!this.match.gameVersion || !this.match.map) {
+        if (!this.match.map) {
             return 'Unknown'
         }
 

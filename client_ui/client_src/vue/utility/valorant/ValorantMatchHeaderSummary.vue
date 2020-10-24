@@ -47,29 +47,45 @@ export default class ValorantMatchHeaderSummary extends Vue {
     }
 
     get mapName() : string {
-        let cnt = getValorantContent(this.match._details.patchId)
-        return cnt.mapAssetPathToName(this.match._details.map)
+        if (!this.match._details.matchInfo.mapId) {
+            return 'Unknown'
+        }
+
+        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
+        return cnt.mapAssetPathToName(this.match._details.matchInfo.mapId)
     }
 
     get queueType() : string {
-        let queue = getGameMode(this.match._details.patchId, this.match._details.gameMode, this.match._details.isRanked)
-        if (getIsCustom(this.match._details.provisioningFlowId)) {
+        let queue = getGameMode(this.match._details.matchInfo.gameVersion, this.match._details.matchInfo.gameMode, this.match._details.matchInfo.isRanked)
+        if (!queue) {
+            return 'Unknown'
+        }
+
+        if (getIsCustom(this.match._details.matchInfo.provisioningFlowID)) {
             queue = `[Custom] ${queue}`
         }
         return queue!
     }
 
     get style() : any {
-        return {
+        let ret : any = {
             'border-left': `5px solid ${this.winLossColor}`,
-            'background-image': `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`,
             'background-position': 'right',
             'background-size': 'contain',
         }
+
+        if (!!this.match._details.matchInfo.gameVersion) {
+            ret['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
+        }
+
+        return ret
     }
 
     get matchTime() : string {
-        return format(this.match._details.matchTime, 'MMMM do uuuu, h:mm a')
+        if (!this.match._details.matchInfo.serverStartTimeUtc) {
+            return 'Unknown'
+        }
+        return format(this.match._details.matchInfo.serverStartTimeUtc, 'MMMM do uuuu, h:mm a')
     }
 
 }

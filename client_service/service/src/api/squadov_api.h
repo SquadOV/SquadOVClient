@@ -41,7 +41,8 @@ public:
     void bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskData>& data) const;
 
     // VOD
-    void associateVod(const shared::squadov::VodAssociation& association) const;
+    std::string createVodDestinationUri(const std::string& videoUuid) const;
+    void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata) const;
     void deleteVod(const std::string& videoUuid) const;
 
 private:

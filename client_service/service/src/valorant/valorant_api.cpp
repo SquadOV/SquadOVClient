@@ -71,7 +71,8 @@ nlohmann::json ValorantApi::getRawMatchDetails(const std::string& matchId) const
     const auto result = _pvpClient->get(path.str().c_str());
 
     if (result->status != 200) {
-        return nullptr;
+        THROW_ERROR("Failed to get Valorant match details: " << matchId << std::endl);
+        return nlohmann::json();
     }
 
     return nlohmann::json::parse(result->body);

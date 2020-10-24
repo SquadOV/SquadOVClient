@@ -132,7 +132,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     // a copy in our own database.
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
-        _recorder->stop();
+        const auto metadata = _recorder->getMetadata();
 
         // It might take a few tries to grab the data from the SQLite database.
         // I'm assuming it's because Aim Lab will write exclusively to the database
@@ -159,11 +159,14 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
             association.videoUuid = vodId.videoUuid;
             association.startTime = _taskStartTime;
             association.endTime = eventTime;
-            service::api::getGlobalApi()->associateVod(association);
+            service::api::getGlobalApi()->associateVod(association, metadata);
             success = true;
             break;
         }
 
+        // It's fine if the recording is a little longer due to the SQLite waiting time...
+        // I'd rather grab the data soon as possible as stop() will do some waiting for the IO flush.
+        _recorder->stop();
         if (!success) {
             // Failed to pull data - hopefully we never get here but just remove the video.
             service::api::getGlobalApi()->deleteVod(vodId.videoUuid);

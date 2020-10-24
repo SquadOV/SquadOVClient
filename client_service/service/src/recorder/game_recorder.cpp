@@ -55,11 +55,13 @@ VodIdentifier GameRecorder::start() {
     _currentId->userUuid = service::api::getGlobalApi()->getSession().user.uuid;
     _currentId->videoUuid = shared::generateUuidv4();
 
-    // Generate an appropriate new basename for the video and audiot files.
-    std::ostringstream rtmpUrl;
-    rtmpUrl << "rtmp://" << shared::getEnv("SQUADOV_INGEST_URL", "127.0.0.1") << "/squadov/"
-        << shared::base64::encode(_currentId->userUuid) << "." << shared::base64::encode(_currentId->videoUuid);
-    _encoder.reset(new encoder::FfmpegAvEncoder(rtmpUrl.str()));
+    // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
+    // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
+    // create an output piper of the appropriate type based on the given URI.
+    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid);
+    _outputPiper = pipe::createFileOutputPiper(_currentId->videoUuid, outputUri);
+    _outputPiper->start();
+    _encoder.reset(new encoder::FfmpegAvEncoder(_outputPiper->filePath()));
 
     // Initialize streams in the encoder here. Use hard-coded options for to record
     // video at 1080p@60fps. 
@@ -115,6 +117,8 @@ void GameRecorder::stop() {
     _encoder->stop();
     _encoder.reset(nullptr);
     _currentId.reset(nullptr);
+
+    _outputPiper->wait();
 }
 
 }

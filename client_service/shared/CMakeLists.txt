@@ -10,6 +10,7 @@ SET(SRCS
     shared/aimlab/aimlab.cpp
     shared/uuid.cpp
     shared/base64/encode.cpp
+    shared/squadov/vod.cpp
 )
 
 SET(HEADERS

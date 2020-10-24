@@ -50,6 +50,7 @@ MACRO(FFMPEG_FIND varname shortname headername)
         NAMES ${shortname}
         PATHS
         ${FFMPEG_ROOT}/lib
+        ${FFMPEG_ROOT}/bin
         $ENV{FFMPEG_DIR}/lib
         ~/Library/Frameworks
         /Library/Frameworks

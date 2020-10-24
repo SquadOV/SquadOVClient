@@ -128,7 +128,7 @@ std::string SquadovApi::uploadValorantMatch(const std::string& matchId,  const n
     }
 
     if (!playerData.is_null()) {
-        body["playerData"] = playerData.dump();
+        body["playerData"] = playerData;
     }
 
     const auto result = _webClient->post(path, body);
@@ -192,17 +192,32 @@ void SquadovApi::bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskDat
     }
 }
 
-void SquadovApi::associateVod(const shared::squadov::VodAssociation& association) const {
+std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid) const {
     const std::string path = "/v1/vod";
 
     const nlohmann::json body = {
-        { "matchUuid", association.matchUuid },
-        { "userUuid", association.userUuid },
-        { "videoUuid", association.videoUuid },
-        { "startTime", shared::timeToIso(association.startTime) },
-        { "endTime", shared::timeToIso(association.endTime  ) },
+        { "videoUuid", videoUuid },
     };
     const auto result = _webClient->post(path, body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to associate VOD: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << association.videoUuid;
+
+    const nlohmann::json body = {
+        { "association", association.toJson() },
+        { "metadata", metadata.toJson() },
+    };
+    const auto result = _webClient->post(path.str(), body);
 
     if (result->status != 200) {
         THROW_ERROR("Failed to associate VOD: " << result->status);

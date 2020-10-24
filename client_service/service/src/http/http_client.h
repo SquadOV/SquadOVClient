@@ -37,12 +37,16 @@ public:
 
     void setBearerAuthToken(const std::string& token);
     void setHeaderKeyValue(const std::string& key, const std::string& value);
+    void removeHeaderKey(const std::string& key);
+
     void enableSelfSigned() { _allowSelfSigned = true; }
 
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
+    void clearResponseInterceptors() { _responseInterceptors.clear(); }
 
     HttpResponsePtr get(const std::string& path) const;
     HttpResponsePtr post(const std::string& path, const nlohmann::json& body) const;
+    HttpResponsePtr put(const std::string& path, const char* buffer, size_t numBytes) const;
     HttpResponsePtr del(const std::string& path) const;
 
 private:
@@ -66,5 +70,7 @@ private:
     // Intercepts. Let users modify the response/request as necessary.
     std::vector<ResponseInterceptor> _responseInterceptors;
 };
+
+using HttpClientPtr = std::unique_ptr<HttpClient>;
 
 }

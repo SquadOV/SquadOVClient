@@ -1,4 +1,3 @@
-import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
 
 export interface ValorantMatchTeam {
@@ -8,112 +7,94 @@ export interface ValorantMatchTeam {
     roundsPlayed: number
 }
 
-export interface ValorantMatchPlayer {
-    puuid : string
-    teamId: string
-    agentId: string
-    competitiveTier: number
-    totalCombatScore: number
+export interface ValorantPlayerStats {
+    score: number
     roundsPlayed: number
     kills: number
     deaths: number
     assists: number
 }
 
+export interface ValorantMatchPlayer {
+    subject: string,
+    characterId: string
+    competitiveTier: number
+    teamId: string
+    stats: ValorantPlayerStats
+}
+
 export interface ValorantMatchLoadout {
-    roundNum : number
-    puuid: string
-    loadoutValue: number
-    remainingMoney : number
-    spentMoney : number
+    subject: string
+    armor: string
     weapon: string
-    armor: string | null
-}
-
-export interface ValorantMatchPlayerRoundStat {
-    roundNum : number
-    puuid: string
-    combatScore : number
-}
-
-export interface ValorantMatchRound {
-    startBuyTime : Date | null
-    startPlayTime: Date | null
-
-    roundNum : number
-    plantRoundTime : number | null
-    planter: string | null
-
-    defuseRoundTime: number | null
-    defuser : string | null
-
-    roundWinner: string
-    loadouts: ValorantMatchLoadout[]
-    roundStats: ValorantMatchPlayerRoundStat[]
-}
-
-export interface ValorantMatchKill {
-    roundNum : number
-    roundTime: number
-    damageType: string
-    damageItem: string
-    secondaryFire: boolean
-    killer: string
-    victim: string
+    remaining: number
+    loadoutValue: number
+    spent: number
 }
 
 export interface ValorantMatchDamage {
-    roundNum : number
-    damage: number
-    headshots: number
-    bodyshots: number
-    legshots: number
-    instigator: string
     receiver: string
+    damage: number
+    legshots: number
+    bodyshots: number
+    headshots: number
 }
 
-export interface ValorantMatchDetails {
-    matchId : string
-    matchTime : Date
-    ovStartTime: Date | null
-    ovEndTime: Date | null    
-    map : string
-    provisioningFlowId : string
-    gameMode : string
-    patchId : string
-    isRanked: boolean
-    vodPath : string | null
-
-    players: ValorantMatchPlayer[]
-    teams: ValorantMatchTeam[]
-    rounds: ValorantMatchRound[]
-    kills: ValorantMatchKill[]
+export interface ValorantMatchPlayerRoundStat {
+    subject: string
+    score: number
     damage: ValorantMatchDamage[]
 }
 
-export function cleanValorantMatchRound(m :ValorantMatchRound) : ValorantMatchRound {
-    if (!!m.startBuyTime) {
-        m.startBuyTime = new Date(m.startBuyTime)
-    }
+export interface ValorantMatchRound {
+    roundNum: number
+    plantRoundTime: number | null
+    bombPlanter: string | null
+    defuseRoundTime: number | null
+    bombDefuser: string | null
+    winningTeam: string
+    playerStats: ValorantMatchPlayerRoundStat[]
+    playerEconomies: ValorantMatchLoadout[] | null
+}
 
-    if (!!m.startPlayTime ){
-        m.startPlayTime = new Date(m.startPlayTime)
-    }
-    return m
+export interface ValorantFinishingDamage {
+    damageType: string
+    damageItem: string
+    isSecondaryFireMode: boolean
+}
+
+export interface ValorantMatchKill {
+    roundTime: number
+    round: number
+    finishingDamage: ValorantFinishingDamage
+    killer: string | null
+    victim: string
+}
+
+export interface ValorantMatchMetadata {
+    matchId: string
+    gameMode: string | null
+    mapId: string | null
+    isRanked: boolean | null
+    provisioningFlowID: string | null
+    gameVersion: string | null
+    serverStartTimeUtc: Date | null
+}
+
+export interface ValorantMatchDetails {
+    matchUuid: string
+    matchInfo: ValorantMatchMetadata
+    teams: ValorantMatchTeam[]
+    players: ValorantMatchPlayer[]
+    roundResults: ValorantMatchRound[]
+    kills: ValorantMatchKill[]
+    rawData: any
 }
 
 export function cleanValorantMatchDetails(m :ValorantMatchDetails) : ValorantMatchDetails {
-    m.matchTime = new Date(m.matchTime)
-
-    if (!!m.ovStartTime) {
-        m.ovStartTime = new Date(m.ovStartTime)
+    if (!!m.matchInfo.serverStartTimeUtc) {
+        m.matchInfo.serverStartTimeUtc = new Date(m.matchInfo.serverStartTimeUtc)
     }
-
-    if (!!m.ovEndTime) {
-        m.ovEndTime = new Date(m.ovEndTime)
-    }
-
-    m.rounds.forEach(cleanValorantMatchRound)
     return m
 }
 
@@ -168,6 +149,40 @@ export function getGameMode(patchId : string | null, gameMode: string | null, is
     }
 }
 
-export function getIsCustom(provisioningFlowId : string) : boolean {
+export function getIsCustom(provisioningFlowId : string | null) : boolean {
     return provisioningFlowId === 'CustomGame'
+}
+
+export interface ValorantMatchPlayerRoundMetadata {
+    matchId: string
+    puuid: string
+    round: number
+    buyTime: Date | null
+    roundTime: Date | null
+}
+
+export function cleanValorantMatchPlayerRoundMetadata(v : ValorantMatchPlayerRoundMetadata) : ValorantMatchPlayerRoundMetadata {
+    if (!!v.buyTime) {
+        v.buyTime = new Date(v.buyTime)
+    }
+
+    if (!!v.roundTime) {
+        v.roundTime = new Date(v.roundTime)
+    }
+    return v
+}
+
+export interface ValorantMatchPlayerMatchMetadata {
+    matchId: string
+    puuid: string
+    startTime: Date
+    endTime: Date
+    rounds: ValorantMatchPlayerRoundMetadata[]
+}
+
+export function cleanValorantMatchPlayerMatchMetadata(v: ValorantMatchPlayerMatchMetadata) : ValorantMatchPlayerMatchMetadata {
+    v.startTime = new Date(v.startTime)
+    v.endTime = new Date(v.endTime)
+    v.rounds.forEach(cleanValorantMatchPlayerRoundMetadata)
+    return v
 }

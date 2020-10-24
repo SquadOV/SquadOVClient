@@ -94,7 +94,7 @@ export default class ValorantWeaponAbilityKillStats extends Vue {
         let groupedKills = new Map<string, ValorantMatchKillWrapper[]>()
 
         this.kills.forEach((ele :ValorantMatchKillWrapper) => {
-            let key = ele._k.damageItem
+            let key = ele._k.finishingDamage.damageItem
             if (!groupedKills.has(key)) {
                 groupedKills.set(key, [])
             }
@@ -106,12 +106,12 @@ export default class ValorantWeaponAbilityKillStats extends Vue {
         groupedKills.forEach((kills : ValorantMatchKillWrapper[], item : string) => {
             ret.push({
                 equipment: {
-                    type: kills[0]._k.damageType,
+                    type: kills[0]._k.finishingDamage.damageType,
                     id: item,
                 },
                 kills: kills.length,
                 altFire: kills.reduce((acc : number, k : ValorantMatchKillWrapper) => {
-                    return acc + (k._k.secondaryFire ? 1 : 0)
+                    return acc + (k._k.finishingDamage.isSecondaryFireMode ? 1 : 0)
                 }, 0)
             })
         })

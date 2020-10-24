@@ -13,7 +13,7 @@
                     color="success"
                     fab
                     small
-                    v-if="hasBuyTime"
+                    v-if="!!buyTime"
                 >
                     <v-icon>mdi-currency-usd</v-icon>
                 </v-btn>
@@ -24,7 +24,7 @@
                     color="primary"
                     fab
                     small
-                    v-if="hasPlayTime"
+                    v-if="!!playTime"
                 >
                     <v-icon>mdi-play</v-icon>
                 </v-btn>
@@ -45,26 +45,27 @@
                         <div class="d-flex align-center justify-space-around">
                             <template v-if="!!eve.kill">
                                 <valorant-agent-icon
-                                    :agent="eve.kill.killer._p.agentId"
-                                    :patch="match._details.patchId"
+                                    v-if="!!eve.kill.killer"
+                                    :agent="eve.kill.killer._p.characterId"
+                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
                                 </valorant-agent-icon>
 
                                 <valorant-weapon-ability-icon
-                                    :agent="eve.kill.killer._p.agentId"
-                                    :patch="match._details.patchId"
-                                    :equip-type="eve.kill._k.damageType"
-                                    :equip-id="eve.kill._k.damageItem"
+                                    :agent="eve.kill.killer._p.characterId"
+                                    :patch="match._details.matchInfo.gameVersion"
+                                    :equip-type="eve.kill._k.finishingDamage.damageType"
+                                    :equip-id="eve.kill._k.finishingDamage.damageItem"
                                     :max-height="40"
                                     :max-width="150"
                                 >
                                 </valorant-weapon-ability-icon>
 
                                 <valorant-agent-icon
-                                    :agent="eve.kill.victim._p.agentId"
-                                    :patch="match._details.patchId"
+                                    :agent="eve.kill.victim._p.characterId"
+                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -73,8 +74,8 @@
 
                             <template v-if="!!eve.plant">
                                 <valorant-agent-icon
-                                    :agent="eve.plant._p.agentId"
-                                    :patch="match._details.patchId"
+                                    :agent="eve.plant._p.characterId"
+                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -91,8 +92,8 @@
 
                             <template v-if="!!eve.defuse">
                                 <valorant-agent-icon
-                                    :agent="eve.defuse._p.agentId"
-                                    :patch="match._details.patchId"
+                                    :agent="eve.defuse._p.characterId"
+                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -109,7 +110,7 @@
                         </div>
                     </v-list-item-content>
 
-                    <v-list-item-action class="ml-0" v-if="hasPlayTime">
+                    <v-list-item-action class="ml-0" v-if="!!playTime">
                         <v-btn
                             outlined
                             fab
@@ -135,6 +136,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
+import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
     ValorantMatchDetailsWrapper,
     ValorantMatchRoundWrapper,
@@ -177,6 +179,9 @@ export default class ValorantRoundEvents extends Vue {
 
     @Prop()
     currentPlayer! : ValorantMatchPlayerWrapper | null
+
+    @Prop({default: null})
+    metadata!: ValorantMatchPlayerMatchMetadata | null
 
     @Prop({type: Boolean, default: false})
     forceDisableGoToEvent! : boolean
@@ -221,8 +226,8 @@ export default class ValorantRoundEvents extends Vue {
             } else {
                 color = getRedTeamColor()
             }
-            isSelf = (eventPlayer._p.puuid == this.currentPlayer._p.puuid) ||
-                (altPlayer?._p.puuid == this.currentPlayer._p.puuid)
+            isSelf = (eventPlayer._p.subject == this.currentPlayer._p.subject) ||
+                (altPlayer?._p.subject == this.currentPlayer._p.subject)
         } else {
             if (eventPlayer._p.teamId == 'Blue') {
                 color = getBlueTeamColor()
@@ -249,17 +254,17 @@ export default class ValorantRoundEvents extends Vue {
         }
 
         let events : RoundEvent[] = []
-        if (!!this.round._r.plantRoundTime && !!this.round._r.planter) {
+        if (!!this.round._r.plantRoundTime && !!this.round._r.bombPlanter) {
             events.push({
                 roundTimeMs: this.round._r.plantRoundTime,
-                plant: this.match.getPlayer(this.round._r.planter),
+                plant: this.match.getPlayer(this.round._r.bombPlanter),
             })
         }
 
-        if (!!this.round._r.defuseRoundTime  && !!this.round._r.defuser) {
+        if (!!this.round._r.defuseRoundTime  && !!this.round._r.bombDefuser) {
             events.push({
                 roundTimeMs: this.round._r.defuseRoundTime,
-                defuse: this.match.getPlayer(this.round._r.defuser),
+                defuse: this.match.getPlayer(this.round._r.bombDefuser),
             })
         }
 
@@ -281,25 +286,25 @@ export default class ValorantRoundEvents extends Vue {
         return !!this.round
     }
 
-    get hasBuyTime() : boolean {
-        return !!this.round!._r.startBuyTime && !this.forceDisableGoToEvent
+    get buyTime() : Date | null | undefined {
+        return this.metadata?.rounds[this.round!._r.roundNum]?.buyTime
     }
 
-    get hasPlayTime() : boolean {
-        return !!this.round!._r.startPlayTime && !this.forceDisableGoToEvent
+    get playTime() : Date| null | undefined {
+        return this.metadata?.rounds[this.round!._r.roundNum]?.roundTime
     }
 
     goToPlay() {
-        this.$emit('go-to-event', this.round!._r.startPlayTime!)
+        this.$emit('go-to-event', this.playTime!)
     }
 
     goToBuy() {
-        this.$emit('go-to-event', this.round!._r.startBuyTime!)
+        this.$emit('go-to-event', this.buyTime!)
     }
 
     goToEvent(e : RoundEvent) {
         // Offset so we can actually see the action happen.
-        this.$emit('go-to-event', new Date(this.round!._r.startPlayTime!.getTime() + e.roundTimeMs - offsetMs))
+        this.$emit('go-to-event', new Date(this.playTime!.getTime() + e.roundTimeMs - offsetMs))
     }
 }
 

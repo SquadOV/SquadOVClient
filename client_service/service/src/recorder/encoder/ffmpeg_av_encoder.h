@@ -21,6 +21,7 @@ public:
 
     void start() override;
     void stop() override;
+    shared::squadov::VodMetadata getMetadata() const override;
 private:
     std::unique_ptr<FfmpegAvEncoderImpl> _impl;
 };

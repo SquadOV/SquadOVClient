@@ -95,8 +95,8 @@ ValorantProcessHandlerInstance::~ValorantProcessHandlerInstance() {
 void ValorantProcessHandlerInstance::backfillThreadJob() {
     while (_backfillRunning) {
         // Get their full match history and store each game's match details.
+        std::string matchId;
         try {
-            std::string matchId;
 
             {
                 std::unique_lock<std::mutex> guard(_backfillMutex);
@@ -116,6 +116,7 @@ void ValorantProcessHandlerInstance::backfillThreadJob() {
             service::api::getGlobalApi()->uploadValorantMatch(matchId, apiDetails, nlohmann::json());
         } catch (const std::exception& e) {
             LOG_WARNING("Failed to backfill: " << e.what() << std::endl);
+            addMatchesToBackfill({ matchId });
         }
 
         // Give it a hot sec before continuing just so we aren't constantly looping around even if
@@ -213,7 +214,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             association.videoUuid = vodId.videoUuid;
             association.startTime = _currentMatch->startTime();
             association.endTime = _currentMatch->endTime();
-            service::api::getGlobalApi()->associateVod(association);
+            service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata());
         } catch (...) {
             // Any errors should result in the VOD being deleted.
             service::api::getGlobalApi()->deleteVod(vodId.videoUuid);

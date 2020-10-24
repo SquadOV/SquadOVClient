@@ -12,16 +12,14 @@
 
                 <v-row no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
-                        <!--
                         <video-player
                             ref="player"
-                            :video-filename="vodFilename"
+                            :video-uuid="videoUuid"
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
                         >
                         </video-player>
-                        -->
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
@@ -31,6 +29,7 @@
                             :force-disable-go-to-event="!hasMatchTiming"
                             :style="roundEventsStyle"
                             :current-player="currentPlayer"
+                            :metadata="playerMetadata"
                             @go-to-event="goToVodTime"
                         >
                         </valorant-round-events>
@@ -83,6 +82,8 @@
                         <valorant-match-player-card
                             :match="matchWrapper"
                             :current-player="currentPlayer"
+                            :metadata="playerMetadata"
+                            :force-disable-go-to-event="!hasMatchTiming"
                             @go-to-event="goToVodTime"
                         >
                         </valorant-match-player-card>
@@ -99,7 +100,8 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
-import { ValorantMatchDetails } from '@client/js/valorant/valorant_matches'
+import { VodAssociation } from '@client/js/squadov/vod'
+import { ValorantMatchDetails, ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
     ValorantMatchDetailsWrapper,
     ValorantMatchRoundWrapper,
@@ -131,6 +133,8 @@ import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchP
 export default class ValorantMatch extends Vue {
     @Prop()
     puuid! : string | null
+    vod : VodAssociation | null = null
+    playerMetadata: ValorantMatchPlayerMatchMetadata | null = null
 
     @Prop({required: true})
     matchId! : string
@@ -142,9 +146,36 @@ export default class ValorantMatch extends Vue {
 
     currentMatch : ValorantMatchDetails | null = null
     currentPlayer : ValorantMatchPlayerWrapper | null = null
+
     currentRoundNum : number = 0
 
     theaterMode: boolean = false
+
+    refreshPlayerMetadata() {
+        apiClient.getValorantMatchPlayerMetadata(this.matchId, this.currentPlayer!._p.subject).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+            this.playerMetadata = resp.data
+        }).catch((err : any) => {
+            this.playerMetadata = null
+        })
+    }
+
+    @Watch('currentMatch')
+    refreshVod() {
+        if (!this.currentMatch) {
+            this.vod = null
+            return
+        }
+
+        apiClient.findVodFromMatchUserUuid(this.currentMatch.matchUuid, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+            this.vod = resp.data
+        }).catch((err : any) => {
+            this.vod = null
+        })
+    }
+
+    get videoUuid() : string | undefined {
+        return this.vod?.videoUuid
+    }
 
     get matchWrapper() : ValorantMatchDetailsWrapper | null {
         if (!this.currentMatch) {
@@ -161,15 +192,8 @@ export default class ValorantMatch extends Vue {
         return this.matchWrapper!.getRound(this.currentRoundNum)
     }
 
-    get vodFilename() : string | null {
-        if (!this.currentMatch) {
-            return ''
-        }
-        return this.currentMatch.vodPath
-    }
-
     get hasMatchTiming() : boolean {
-        return !!this.currentMatch!.ovStartTime
+        return !!this.playerMetadata
     }
 
     get roundEventsStyle() : any {
@@ -193,7 +217,7 @@ export default class ValorantMatch extends Vue {
         if (!this.currentPlayer) {
             return this.matchWrapper!.getTeam('Blue')
         } else {
-            return this.matchWrapper!.getPlayerTeam(this.currentPlayer._p.puuid)
+            return this.matchWrapper!.getPlayerTeam(this.currentPlayer._p.subject)
         }
         return null
     }
@@ -206,20 +230,17 @@ export default class ValorantMatch extends Vue {
         if (!this.currentPlayer) {
             return this.matchWrapper!.getTeam('Red')
         } else {
-            return this.matchWrapper!.getOpposingPlayerTeam(this.currentPlayer._p.puuid)
+            return this.matchWrapper!.getOpposingPlayerTeam(this.currentPlayer._p.subject)
         }
         return null
     }
 
     goToVodTime(tm : Date) {
-        // Need to estimate what the video time is based on the given
-        // Date and the Date we have for when the match started.
-        let matchStartTime : Date | null = this.currentMatch!.ovStartTime
-        if (!matchStartTime) {
+        if (!this.hasMatchTiming) {
             return
         }
-
-        let diffMs = tm.getTime() - matchStartTime.getTime()
+        
+        let diffMs = tm.getTime() - this.playerMetadata!.startTime.getTime()
         this.$refs.player.goToTimeMs(diffMs)
     }
 
@@ -231,6 +252,7 @@ export default class ValorantMatch extends Vue {
             return
         }
         this.currentPlayer = this.matchWrapper!.getPlayer(this.puuid)
+        this.refreshPlayerMetadata()
     }
 
     @Watch('matchId')

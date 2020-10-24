@@ -5,6 +5,7 @@
 #include <memory>
 #include "recorder/image/image.h"
 #include "recorder/audio/audio_packet_view.h"
+#include "shared/squadov/vod.h"
 
 namespace service::recorder::encoder {
 
@@ -30,6 +31,7 @@ public:
 
     virtual void start() = 0;
     virtual void stop() = 0;
+    virtual shared::squadov::VodMetadata getMetadata() const = 0;
 };
 using AvEncoderPtr = std::unique_ptr<AvEncoder>;
 

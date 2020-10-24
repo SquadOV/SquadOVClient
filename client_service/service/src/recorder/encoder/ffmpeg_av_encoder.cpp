@@ -103,6 +103,7 @@ public:
 
     void start();
     void stop();
+    shared::squadov::VodMetadata getMetadata() const;
 private:
     void swapBuffers();
 
@@ -229,9 +230,9 @@ void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSampl
 FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
     _streamUrl(streamUrl) {
 
-    _avformat = av_guess_format("flv", nullptr, nullptr);
+    _avformat = av_guess_format("mp4", nullptr, nullptr);
     if (!_avformat) {
-        THROW_ERROR("Failed to find the FLV format.");
+        THROW_ERROR("Failed to find the MP4 format.");
     }
 
     if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, nullptr) < 0) {
@@ -268,7 +269,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     const std::string encodersToUse[] = {
         "h264_amf",
         "h264_nvenc",
-        "mpeg4"
+        "libopenh264"
     };
 
     bool foundEncoder = false;
@@ -297,6 +298,10 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             // This can be high since we're only dealing with local videos for now.
             _vcodecContext->gop_size = 10;
             _vcodecContext->max_b_frames = 1;
+
+            if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
+                _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+            }
             
             // Actually initialize the codec context.
             AVDictionary *options = nullptr;
@@ -330,10 +335,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
     _vstream->time_base = _vcodecContext->time_base;
     avcodec_parameters_from_context(_vstream->codecpar, _vcodecContext);
-
-    if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
-        _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
 
     // Preallocate frame for output.
     _vframe = av_frame_alloc();
@@ -376,6 +377,9 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
     _acodecContext->channel_layout = AV_CH_LAYOUT_STEREO;
     _acodecContext->time_base = AVRational{1, sampleRate};
     _acodecContext->frame_size = 480;// audioSamplesPerFrame;
+    if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
+        _acodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    }
 
     if (avcodec_open2(_acodecContext, _acodec, nullptr) < 0) {
         THROW_ERROR("Failed to initialize audio context");
@@ -388,10 +392,6 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
     _astream->id = _avcontext->nb_streams - 1;
     _astream->time_base = _acodecContext->time_base;
     avcodec_parameters_from_context(_astream->codecpar, _acodecContext);
-
-    if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
-        _acodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
 
     _aframe = av_frame_alloc();
     _aframe->nb_samples = _acodecContext->frame_size;
@@ -543,13 +543,16 @@ void FfmpegAvEncoderImpl::start() {
     }
 
     // This is what actually gets us to write to a file.
-    if (avio_open(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE) < 0) {
+    if (avio_open2(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr) < 0) {
         THROW_ERROR("Failed to open video for output");
     }
 
-    if (avformat_write_header(_avcontext, nullptr) < 0) {
+    AVDictionary* mp4Options = nullptr;
+    av_dict_set(&mp4Options, "movflags", "+empty_moov+frag_keyframe", 0);
+    if (avformat_write_header(_avcontext, &mp4Options) < 0) {
         THROW_ERROR("Failed to write header");
     }
+    av_dict_free(&mp4Options);
 
     av_dump_format(_avcontext, 0, _streamUrl.c_str(), 1);
 
@@ -725,6 +728,40 @@ void FfmpegAvEncoderImpl::stop() {
     av_write_trailer(_avcontext);
 }
 
+shared::squadov::VodMetadata FfmpegAvEncoderImpl::getMetadata() const {
+    shared::squadov::VodMetadata metadata;
+    metadata.id = "source";
+
+    // Bandwidth
+    {
+        const auto* props = reinterpret_cast<const AVCPBProperties*>(av_stream_get_side_data(
+            _vstream,
+            AV_PKT_DATA_CPB_PROPERTIES,
+            nullptr
+        ));
+
+        if (props) {
+            metadata.avgBitrate = props->avg_bitrate;
+            metadata.maxBitrate = props->max_bitrate;
+            metadata.minBitrate = props->min_bitrate;
+        } else if (_vstream->codecpar->bit_rate) {
+            metadata.avgBitrate = _vstream->codecpar->bit_rate;
+            metadata.maxBitrate = _vstream->codecpar->bit_rate;
+            metadata.minBitrate = _vstream->codecpar->bit_rate;
+        }
+    }
+
+    // Resolution
+    {
+        metadata.resX = _vcodecContext->width;
+        metadata.resY = _vcodecContext->height;
+    }
+
+    // FPS
+    metadata.fps = static_cast<int>(static_cast<double>(_vcodecContext->framerate.num) / _vcodecContext->framerate.den);
+    return metadata;
+}
+
 FfmpegAvEncoder::FfmpegAvEncoder(const std::string& streamUrl):
     _impl(new FfmpegAvEncoderImpl(streamUrl)) {  
 }
@@ -745,6 +782,10 @@ void FfmpegAvEncoder::start() {
 
 void FfmpegAvEncoder::stop() {
     _impl->stop();
+}
+
+shared::squadov::VodMetadata FfmpegAvEncoder::getMetadata() const {
+    return _impl->getMetadata();
 }
 
 void FfmpegAvEncoder::getVideoDimensions(size_t& width, size_t& height) const {

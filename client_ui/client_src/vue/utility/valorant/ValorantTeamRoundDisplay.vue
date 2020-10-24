@@ -13,14 +13,14 @@
             <template v-slot:item.player="{ item }">
                 <div :class="`d-flex justify-space-around align-center ${ mirror ? 'flex-row-reverse' : ''}`">
                     <valorant-agent-icon
-                        :agent="item.player._p.agentId"
-                        :patch="match._details.patchId"
+                        :agent="item.player._p.characterId"
+                        :patch="match._details.matchInfo.gameVersion"
                         :width-height="40"
                         circular
                     >
                     </valorant-agent-icon>
 
-                    <span>{{ agentName(item.player._p.agentId) }}</span>
+                    <span>{{ agentName(item.player._p.characterId) }}</span>
                 </div>
             </template>
 
@@ -39,8 +39,8 @@
             <template v-slot:item.inventory="{ item }">
                 <div :class="`d-flex justify-space-around align-center ${ mirror ? 'flex-row-reverse' : ''}`">
                     <valorant-weapon-ability-icon
-                        :agent="item.player._p.agentId"
-                        :patch="match._details.patchId"
+                        :agent="item.player._p.characterId"
+                        :patch="match._details.matchInfo.gameVersion"
                         equip-type="Weapon"
                         :equip-id="item.loadout.weapon"
                         :max-height="40"
@@ -106,7 +106,7 @@ export default class ValorantTeamRoundDisplay extends Vue {
     mirror! : boolean
 
     agentName(id : string) : string {
-        let cnt = getValorantContent(this.match._details.patchId)
+        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
         return cnt.agentIdToName(id)
     }
 
@@ -167,13 +167,13 @@ export default class ValorantTeamRoundDisplay extends Vue {
             return {
                 player: ele,
                 kda: {
-                    kills: this.round.getKillsForPlayer(ele._p.puuid),
-                    deaths: this.round.getDeathsForPlayer(ele._p.puuid),
-                    assists: this.round.getAssistsForPlayer(ele._p.puuid),
+                    kills: this.round.getKillsForPlayer(ele._p.subject),
+                    deaths: this.round.getDeathsForPlayer(ele._p.subject),
+                    assists: this.round.getAssistsForPlayer(ele._p.subject),
                 },
-                score: this.round.getCombatScoreForPlayer(ele._p.puuid),
-                damage: this.round.getDamageDoneByPlayer(ele._p.puuid),
-                loadout: this.round.getLoadoutForPlayer(ele._p.puuid)
+                score: this.round.getCombatScoreForPlayer(ele._p.subject),
+                damage: this.round.getDamageDoneByPlayer(ele._p.subject),
+                loadout: this.round.getLoadoutForPlayer(ele._p.subject)
             }
         })
     }

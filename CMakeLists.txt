@@ -16,8 +16,13 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 
-set(FFMPEG_ROOT ${CMAKE_SOURCE_DIR}/deps/ffmpeg)
+set(FFMPEG_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/ffmpeg CACHE STRING "" FORCE)
+set(OPENH264_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/openh264 CACHE STRING "" FORCE)
 find_package(FFMPEG REQUIRED)
+
+set(OPENH264_LIBRARIES
+    ${OPENH264_ROOT}/lib/openh264.lib
+)
 
 # Need to duplicate the work of find_package(ZLIB)
 add_library(ZLIB::ZLIB INTERFACE IMPORTED)

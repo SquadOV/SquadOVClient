@@ -4,11 +4,11 @@
             <valorant-rank-tier :value="currentPlayer._p.competitiveTier" :max-width-height="50">
             </valorant-rank-tier>
 
-            <span class="text-h5">{{ agentName(currentPlayer._p.agentId) }}</span>
+            <span class="text-h5">{{ agentName(currentPlayer._p.characterId) }}</span>
 
             <valorant-agent-icon
-                :agent="currentPlayer._p.agentId"
-                :patch="match._details.patchId"
+                :agent="currentPlayer._p.characterId"
+                :patch="match._details.matchInfo.gameVersion"
                 :width-height="50"
                 circular
             >
@@ -123,8 +123,8 @@
             <v-tab-item>
                 <valorant-weapon-ability-kill-stats
                     :kills="currentPlayer.kills"
-                    :agent="currentPlayer._p.agentId"
-                    :patch="match._details.patchId"
+                    :agent="currentPlayer._p.characterId"
+                    :patch="match._details.matchInfo.gameVersion"
                 >
                 </valorant-weapon-ability-kill-stats>
             </v-tab-item>
@@ -138,6 +138,8 @@
                     :kills="currentPlayer.kills"
                     :deaths="currentPlayer.deaths"
                     :match="match"
+                    :metadata="metadata"
+                    :force-disable-go-to-event="forceDisableGoToEvent"
                     @go-to-event="$emit('go-to-event', arguments[0])"
                 >
                 </valorant-head-to-head-display>
@@ -151,6 +153,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
+import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
     ValorantMatchDetailsWrapper,
     ValorantMatchPlayerWrapper,
@@ -181,8 +184,14 @@ export default class ValorantMatchPlayerCard extends Vue {
     @Prop()
     currentPlayer! : ValorantMatchPlayerWrapper
 
+    @Prop({default: null})
+    metadata!: ValorantMatchPlayerMatchMetadata | null
+
+    @Prop({type: Boolean, default: false})
+    forceDisableGoToEvent! : boolean
+
     agentName(id : string) : string {
-        let cnt = getValorantContent(this.match._details.patchId)
+        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
         return cnt.agentIdToName(id)
     }
 }

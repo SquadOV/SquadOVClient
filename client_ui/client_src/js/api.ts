@@ -7,6 +7,8 @@ import {
     ValorantMatchDetails,
     cleanValorantPlayerMatchSummary,
     cleanValorantMatchDetails,
+    ValorantMatchPlayerMatchMetadata,
+    cleanValorantMatchPlayerMatchMetadata,
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { GraphqlQuery } from '@client/js/graphql/graphql'
@@ -160,25 +162,6 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
-    getValorantPlayerStats(puuid : string) : Promise<ApiData<ValorantPlayerStatsSummary>> {
-        return axios({
-            ...this.createAxiosConfig(`valorant/stats/summary/${puuid}`),
-            method: 'get'
-        })
-    }
-
-    @waitForApiServerSetup
-    getValorantMatchDetails(matchId : string) : Promise<ApiData<ValorantMatchDetails>> {
-        return axios({
-            ...this.createAxiosConfig(`valorant/matches/${matchId}`),
-            method: 'get'
-        }).then((resp : ApiData<ValorantMatchDetails>) => {
-            cleanValorantMatchDetails(resp.data)
-            return resp
-        })
-    }
-
-    @waitForApiServerSetup
     graphqlRequest(req : GraphqlQuery) : Promise<GraphqlApiData<any>> {
         let baseConfig : any = this.createAxiosConfig(`graphql`)
         baseConfig.method = 'post'
@@ -273,6 +256,25 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<ValorantPlayerMatchSummary[]>>) => {
             resp.data.data.forEach(cleanValorantPlayerMatchSummary)
+            return resp
+        })
+    }
+
+    getValorantPlayerStats(puuid : string) : Promise<ApiData<ValorantPlayerStatsSummary>> {
+        return axios.get(`v1/valorant/accounts/${puuid}/stats`, this.createWebAxiosConfig())
+    }
+
+    
+    getValorantMatchDetails(matchId : string) : Promise<ApiData<ValorantMatchDetails>> {
+        return axios.get(`v1/valorant/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchDetails>) => {
+            cleanValorantMatchDetails(resp.data)
+            return resp
+        })
+    }
+
+    getValorantMatchPlayerMetadata(matchId: string, puuid: string) : Promise<ApiData<ValorantMatchPlayerMatchMetadata>> {
+        return axios.get(`v1/valorant/match/${matchId}/metadata/${puuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+            cleanValorantMatchPlayerMatchMetadata(resp.data)
             return resp
         })
     }
