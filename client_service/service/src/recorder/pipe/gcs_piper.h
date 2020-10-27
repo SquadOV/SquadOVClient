@@ -10,6 +10,11 @@
 #include <thread>
 #include <vector>
 
+#define DUMP_GCS_REF_VIDEO 0
+#if DUMP_GCS_REF_VIDEO
+#include <fstream>
+#endif
+
 namespace service::recorder::pipe {
 
 class GCSPacket {
@@ -52,6 +57,10 @@ private:
     // Random number generator for backoff
     std::random_device _rd;
     std::mt19937 _gen;
+
+#if DUMP_GCS_REF_VIDEO
+    std::ofstream _refVideo;
+#endif 
 };
 
 }

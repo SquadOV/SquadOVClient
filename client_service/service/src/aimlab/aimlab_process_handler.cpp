@@ -104,7 +104,11 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
         _recorder->stop();
-        service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        try {
+            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to delete VOD: " << ex.what());            
+        }
     }
 }
 
@@ -169,7 +173,11 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
         _recorder->stop();
         if (!success) {
             // Failed to pull data - hopefully we never get here but just remove the video.
-            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            try {
+                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to delete VOD: " << ex.what());            
+            }
         }
     }
 }

@@ -162,7 +162,11 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
         service::recorder::VodIdentifier id = _recorder->currentId();
         _recorder->stop();
         _currentMatch.reset(nullptr);
-        service::api::getGlobalApi()->deleteVod(id.videoUuid);
+        try {
+            service::api::getGlobalApi()->deleteVod(id.videoUuid);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to delete VOD: " << ex.what());            
+        }
     }
 
     _currentMatch = std::make_unique<ValorantMatch>(eventTime, state->matchMap, state->matchId);
@@ -217,7 +221,11 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata());
         } catch (...) {
             // Any errors should result in the VOD being deleted.
-            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            try {
+                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to delete VOD: " << ex.what());            
+            }
         }
     }
 

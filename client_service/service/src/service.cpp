@@ -46,8 +46,10 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     if (level > av_log_get_level()) {
         return;
     }
-    vprintf(fmt, v1);
-    fflush(stdout);
+
+    char buffer[2048];
+    vsprintf(buffer, fmt, v1);
+    LOG_INFO(buffer);
 }
 
 int main(int argc, char** argv) {
@@ -102,6 +104,7 @@ int main(int argc, char** argv) {
     zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
+    av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
 
     // Start process watcher to watch for our supported games.

@@ -46,12 +46,12 @@ void Pipe::waitForConnect() {
 }
 
 size_t Pipe::readFromBuffer() {
-    size_t bytesRead = 0;
+    DWORD bytesRead = 0;
     const auto success = ReadFile(
         _namedPipe, // hFile
         (void*)_buffer.data(), // lpBuffer,
         MAX_BUFFER_SIZE, // nNumberOfBytesToRead,
-        (DWORD*)&bytesRead, // lpNumberOfBytesRead
+        &bytesRead, // lpNumberOfBytesRead
         nullptr
     );
 
@@ -60,7 +60,7 @@ size_t Pipe::readFromBuffer() {
         return 0;
     }
 
-    return bytesRead;
+    return static_cast<size_t>(bytesRead);
 }
 
 }

@@ -1,6 +1,7 @@
 #include "recorder/pipe/gcs_piper.h"
 
 #include "shared/errors/error.h"
+#include "shared/filesystem/common_paths.h"
 
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
@@ -44,10 +45,14 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
     _httpClient->removeHeaderKey("x-goog-resumable");
     _httpClient->clearResponseInterceptors();
     _gcsThread = std::thread(std::bind(&GCSPiper::tickGcsThread, this));
+
+#if DUMP_GCS_REF_VIDEO
+    const auto path = shared::filesystem::getSquadOvUserFolder() / std::filesystem::path("gcs_ref.mp4");
+    _refVideo.open(path.string(), std::ios_base::binary | std::ios_base::out);
+#endif
 }
 
 GCSPiper::~GCSPiper() {
-    std::cout << "DESTRUCTOR" << std::endl;
     flush();
 }
 
@@ -77,7 +82,7 @@ void GCSPiper::tickGcsThread() {
         const auto taskNow = std::chrono::high_resolution_clock::now();
         const auto oldBufferSize = internalBuffer.size();
 #endif
-        // If the write buffer (_gcsBuffer) is of proper size, copy the data
+        // If the write buffer (_gcsBuffer) is non empty, copy the data
         // into the internalBuffer. The reason we do this is to ensure that
         // handleBuffer can keep running and pulling data from wherever it's
         // getting data from without having to wait on the GCS request to finish
@@ -214,17 +219,21 @@ bool GCSPiper::handleBuffer(const char* buffer, size_t numBytes) {
 #if LOG_TIME
     const auto taskNow = std::chrono::high_resolution_clock::now();
 #endif
-
     GCSPacket packet(buffer, numBytes);
 
     std::unique_lock<std::mutex> guard(_gcsMutex);
     _gcsBuffer.emplace_back(std::move(packet));
+
+#if DUMP_GCS_REF_VIDEO
+    _refVideo.write(packet.data(), packet.size());
+#endif
 
 #if LOG_TIME
     const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
     const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
     LOG_INFO("GCS Handle Buffer: " << numMs << "ms" << std::endl);
 #endif
+
     return true;
 }
 
@@ -234,7 +243,14 @@ void GCSPiper::flush() {
     }
 
     _finished = true;
-    _gcsThread.join();
+
+    if (_gcsThread.joinable()) {
+        _gcsThread.join();
+    }
+
+#if DUMP_GCS_REF_VIDEO
+    _refVideo.close();
+#endif
 }
 
 }

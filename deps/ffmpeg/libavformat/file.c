@@ -233,7 +233,7 @@ static int file_open(URLContext *h, const char *filename, int flags)
         return AVERROR(errno);
     c->fd = fd;
 
-    h->is_streamed = !fstat(fd, &st) && S_ISFIFO(st.st_mode);
+    h->is_streamed = (!fstat(fd, &st) && S_ISFIFO(st.st_mode)) || !strncmp(filename, "\\\\.\\pipe\\", 9);
 
     /* Buffer writes more than the default 32k to improve throughput especially
      * with networked file systems */
