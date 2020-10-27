@@ -57,7 +57,6 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
-import StatLibrary from '@client/js/stats/stat_library'
 import StatContainer from '@client/vue/stats/StatContainer.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 
@@ -79,10 +78,13 @@ export default class AimlabTaskPerformanceHistory extends Vue {
     }
 
     getStatTitle(st : string) : string {
+        /*
         if (!StatLibrary.exists(st)) {
             return 'Unknown'
         }
         return StatLibrary.getStatName(st)!
+        */
+       return ''
     }
 }
 

@@ -14,7 +14,7 @@ struct TaskData {
     int mode = 0;
     int score = 0;
     std::string version;
-    std::string rawData;
+    nlohmann::json rawData;
 
     nlohmann::json toJson() const;
 };

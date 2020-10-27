@@ -34,7 +34,6 @@ files:
   - "package.json"
 
 extraResources:
-  - "graphql/**/*"
   - from: "assets"
     to: "assets"
     filter:

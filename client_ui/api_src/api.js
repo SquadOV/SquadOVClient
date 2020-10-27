@@ -7,7 +7,6 @@ const { migrateDb } = require('./migrate.js')
 const {app} = require('electron')
 const { ValorantApiServer } = require('./valorant.js')
 const { AimlabApiServer } = require('./aimlab.js')
-const { createGraphqlEndpoint } = require('./graphql/graphql.js')
 const log = require('../log.js')
 const { generateSelfSignedKeyCert } = require('./https')
 const https = require('https')
@@ -65,7 +64,6 @@ class ApiServer {
 
         restApp.use('/valorant', this.valorant.createRouter())
         restApp.use('/aimlab', this.aimlab.createRouter())
-        restApp.use('/graphql', createGraphqlEndpoint(this.db))
 
         let port = !!process.env.SQUADOV_API_PORT ? parseInt(process.env.SQUADOV_API_PORT) : 0
         const tlsOptions = generateSelfSignedKeyCert()

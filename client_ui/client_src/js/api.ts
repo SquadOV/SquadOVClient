@@ -11,7 +11,6 @@ import {
     cleanValorantMatchPlayerMatchMetadata,
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
-import { GraphqlQuery } from '@client/js/graphql/graphql'
 import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
 
 import { ipcRenderer } from 'electron'
@@ -161,15 +160,6 @@ class ApiClient {
         })
     }
 
-    @waitForApiServerSetup
-    graphqlRequest(req : GraphqlQuery) : Promise<GraphqlApiData<any>> {
-        let baseConfig : any = this.createAxiosConfig(`graphql`)
-        baseConfig.method = 'post'
-        baseConfig.data = req.generateBody()
-        baseConfig.headers['Content-Type'] = 'application/graphql'
-        return axios(baseConfig)
-    }
-
     //
     // Web server API
     //
@@ -277,6 +267,12 @@ class ApiClient {
             cleanValorantMatchPlayerMatchMetadata(resp.data)
             return resp
         })
+    }
+
+    graphqlRequest(req : string) : Promise<GraphqlApiData<any>> {
+        return axios.post('graphql', {
+            query: req
+        }, this.createWebAxiosConfig())
     }
 }
 

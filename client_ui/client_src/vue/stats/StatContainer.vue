@@ -60,21 +60,20 @@
  
         <div
             class="d-flex align-center mb-4"
-            v-for="(st, idx) in localStats"
+            v-for="(st, idx) in instances"
             :key="idx"
         >
             <span
                 class="text-subtitle mr-4"
             >
-                {{ getStateName(st.stat) }} {{ st.id }}
+                {{ st.name }}
             </span>
 
-            <stat-options-chooser
+            <stat-option-chooser
                 class="flex-grow-1"
-                v-if="!!statValues"
-                :option-values="statValues[st.alias]"
+                :option="st.options"
             >
-            </stat-options-chooser>
+            </stat-option-chooser>
 
             <v-btn icon
                 color="error"
@@ -96,14 +95,13 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { GraphqlQuery, GraphqlAlias } from '@client/js/graphql/graphql'
-import { GraphqlQuerySchema } from '@client/js/graphql/schema'
 import { apiClient, GraphqlApiData } from '@client/js/api'
-import StatLibrary, { MultiStatOptionValueMap, StatOptionValueMap, createGraphqlVariables } from '@client/js/stats/stat_library'
-import { loadStatXYSeriesDataFromGraphql, StatXYSeriesData } from '@client/js/stats/series_data'
-
-import StatOptionsChooser from '@client/vue/stats/StatOptionsChooser.vue'
-import StatChooser from '@client/vue/utility/stats/StatChooser.vue'
+import { statLibrary } from '@client/js/stats/statLibrary'
+import { StatInstance } from '@client/js/stats/statPrimitives'
+import { StatInstanceContainer } from '@client/js/stats/statInstanceContainer'
+import { StatXYSeriesData } from '@client/js/stats/seriesData'
+import StatChooser from '@client/vue/stats/StatChooser.vue'
+import StatOptionChooser from '@client/vue/stats/StatOptionChooser.vue'
 
 interface UniqueStatId {
     stat: string
@@ -113,161 +111,96 @@ interface UniqueStatId {
 
 @Component({
     components: {
-        StatOptionsChooser,
+        StatOptionChooser,
         StatChooser
     }
 })
 export default class StatContainer extends Vue {
-    // A unique ID for each stat that we add so that we can
-    // transfer stat options whenever a stat gets added/removed.
-    statCounter: number = 0
-
-    // These are the stats to pull and obtain series data for.
-    // These stats will be made available to the slot display.
-    @Prop({type: Array})
-    stats! : string[]
-
-    // We can't depend on a 'stats' array being passed in so the input 'stats'
-    // array is just used as an initial state for the actual stats array, localStats.
-    localStats: UniqueStatId[] = []
-    statsToAdd: string[] = []
-
     @Prop({default: 'Graph'})
     title!: string
 
     @Prop({type: Boolean, default: false})
     editable!: boolean
-    showHideAddStats : boolean = false
 
-    seriesData: (StatXYSeriesData | null)[] = []
-    statValues: MultiStatOptionValueMap | null = null
+    // These are the stats to pull and obtain series data for.
+    // These stats will be made available to the slot display.
+    @Prop({type: Array})
+    stats! : string[]
+    statsToAdd: string[] = []
+    showHideAddStats: boolean = false
+
+    // This is the final set of stats to visualize. This is 
+    // separate from the input stats prop array as we may add
+    // user-specified stats on top of that.
+    finalStats: string[] = []
+    instances: StatInstance[] = []
+    seriesData:  (StatXYSeriesData | undefined)[] = []
 
     get allAvailableStats() : string[] {
-        // Don't filter by stats that were already added because users may want
-        // to view each stat differently (avg vs min vs max etc).
-        return StatLibrary.allStats
+        return statLibrary.allStatIds
+    }
+
+    @Watch('stats')
+    refreshStatSet() {
+        this.finalStats = Array.from(new Set([...this.stats]))
+    }
+
+    get statSet() : Set<string> {
+        return new Set([...this.finalStats])
     }
 
     addStats() {
-        this.localStats.push(...this.statsToAdd.map((ele : string) => {
-            this.statCounter += 1
-            return {
-                stat: ele,
-                id: this.statCounter,
-                alias: `${ele}_${this.statCounter}`   
-            }   
-        }))
+        for (let s of this.statsToAdd) {
+            if (!this.statSet.has(s)) {
+                this.finalStats.push(s)
+            }
+        }
         this.statsToAdd = []
         this.showHideAddStats = false
     }
 
-    removeStat(st : UniqueStatId) {
-        let idx = this.localStats.findIndex((ele: UniqueStatId) => ele.id == st.id)
-        if (idx == -1) {
-            return
-        }
-        this.localStats.splice(idx, 1)
+    removeStat(stat: StatInstance) {
+        this.instances = this.instances.filter((ele: StatInstance) => ele.id != stat.id)
     }
 
-    @Watch('stats')
-    syncToLocalStats() {
-        if (!!this.stats) {
-            this.statsToAdd = [...this.stats]
-            this.addStats()
-        } else {
-            this.localStats = []
-        }
-    }
+    @Watch('finalStats')
+    refreshStatInstances() {
+        let existingInstances = this.instances.filter((ele : StatInstance) => this.statSet.has(ele.id))
+        let newInstances = new Map<string, StatInstance>(existingInstances.map((ele : StatInstance) => [ele.id, ele]))
 
-    get validStats() : UniqueStatId[] {
-        return this.localStats.filter((st :UniqueStatId) => {
-            return StatLibrary.exists(st.stat)
-        })
-    }
-
-    getStateName(st : string) : string {
-        if (!StatLibrary.exists(st)) {
-            return 'Unknown'
-        }
-        return StatLibrary.getStatName(st)!
-    }
-    
-    @Watch('localStats')
-    regenerateStatOptions() {
-        let oldOptions : MultiStatOptionValueMap | null = this.statValues
-        let options : MultiStatOptionValueMap = {}
-
-        for (let st of this.validStats) {
-            // Use the old values if it exists.
-            if (!!oldOptions && st.alias in oldOptions) {
-                options[st.alias] = oldOptions[st.alias]
-            } else {                    
-                let statOptions = StatLibrary.getStatOptions(st.stat)!
-                let map : StatOptionValueMap = {
-                    options: statOptions,
-                    values: {},
-                }
-
-                // Populate the map with default values.
-                for (let opt of statOptions) {
-                    let defaultValue : any = null
-                    for (let val of opt.values) {
-                        if (!!val.default) {
-                            defaultValue = val
-                        }
-                    }
-                    map.values[opt.id] = defaultValue
-                }
-
-                options[st.alias] = map
+        // We only need to create instances for the stats that don't already exist.
+        // This way we can retain options between pulls.
+        let newStats : StatInstance[] = []
+        for (let stat of this.finalStats) {
+            if (newInstances.has(stat)) {
+                continue
             }
+            
+            let inst = statLibrary.createInstance(stat)
+            newStats.push(inst)
+            newInstances.set(inst.id, inst)
         }
 
-        this.statValues = options
+        this.instances = this.finalStats.map((ele : string) => newInstances.get(ele)!)
     }
 
-    @Watch('statValues', {deep: true})
-    refreshStats() {
-        if (!this.statValues || this.validStats.length == 0) {
-            this.seriesData = []
+    @Watch('instances', {deep:true})
+    pullGraphqlData() {
+        if (this.instances.length == 0) {
             return
         }
 
-        let query = new GraphqlQuery()
-        let idx = 0
-        for (let st of this.validStats) {
-            query.addPath(st.alias, StatLibrary.getStatGraphqlPath(st.stat)!)
-            query.addVariables(st.alias, createGraphqlVariables(this.statValues[st.alias]))
-            idx += 1
-        }
-
-        apiClient.graphqlRequest(query).then((resp : GraphqlApiData<any>) => {
-            this.seriesData = this.validStats.map((st: UniqueStatId): StatXYSeriesData | null => {
-                const alias: GraphqlAlias = {
-                    alias: st.alias,
-                    original: 'stats'
-                }
-
-                let optionValues = this.statValues![st.alias]
-                const xPath = StatLibrary.getStatXPath(st.stat, alias)!
-                const yPath = StatLibrary.getStatYPath(st.stat, alias)!
-                return loadStatXYSeriesDataFromGraphql(
-                    resp.data.data,
-                    xPath,
-                    yPath,
-                    optionValues.values[StatLibrary.getStatOptionForX(st.stat)!].type!,
-                    `${StatLibrary.getStatName(st.stat)!} ${st.id}`,
-                )
-            })
+        // TODO: Figure out *what* changed exactly so we can only request data that we expect to be different.
+        let container = new StatInstanceContainer(new Map([[this.$store.state.currentUser.uuid, this.instances]]))
+        let request = container.buildGraphqlQuery()
+        apiClient.graphqlRequest(request).then((resp : GraphqlApiData<any>) => {
+            container.parseGraphqlResponse(resp)
+            this.seriesData = this.instances.map((ele : StatInstance) => ele.data)
         }).catch((err: any) => {
-            console.log('Failed to perform GraphQL query: ', err)
+            console.log('Failed to obtain GraphQL data: ', err)
         })
     }
 
-    mounted() {
-        this.syncToLocalStats()
-        this.regenerateStatOptions()
-    }
 }
 
 </script>

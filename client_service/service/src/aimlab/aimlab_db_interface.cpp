@@ -2,6 +2,7 @@
 #include "shared/sqlite/sqlite.h"
 #include "shared/errors/error.h"
 
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <iostream>
 
@@ -18,7 +19,7 @@ shared::aimlab::TaskData getTaskDataFromSqlStatement(SqlStatement& stmt) {
     data.mode = stmt.getColumn<int>(4);
     data.score = stmt.getColumn<int>(5);
     data.version = stmt.getColumn<std::string>(6);
-    data.rawData = stmt.getColumn<std::string>(7);
+    data.rawData = nlohmann::json::parse(stmt.getColumn<std::string>(7));
     return data;
 }
 

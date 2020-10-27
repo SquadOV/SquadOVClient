@@ -7,7 +7,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
-import { StatXYSeriesData } from '@client/js/stats/series_data'
+import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import * as echarts from 'echarts/lib/echarts.js'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/component/dataZoom'
@@ -61,7 +61,8 @@ export default class LineGraph extends Vue {
                     lineStyle: {
                         color: '#FFFFFF'
                     }
-                }
+                },
+                inverse: this.validSeriesData[i].reversed
             })
             seriesToAxis.set(type, xAxis.length - 1)
         }

@@ -14,7 +14,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { StatTree, StatTreeNode, buildVuetifyTreeViewItemFromStatTreeNode } from '@client/js/stats/stat_tree'
+import { statLibrary } from '@client/js/stats/statLibrary'
 
 @Component
 export default class StatChooser extends Vue {
@@ -24,12 +24,8 @@ export default class StatChooser extends Vue {
     @Prop({type: Array, required: true})
     availableStats!: string[]
 
-    get statTree() : StatTree {
-        return new StatTree(this.availableStats)
-    }
-
     get itemStats(): any[] {
-        return this.statTree.rootNodes.map((ele : StatTreeNode) => buildVuetifyTreeViewItemFromStatTreeNode(ele)))
+        return statLibrary.vuetifyTreeViewItems
     }
 }
 
