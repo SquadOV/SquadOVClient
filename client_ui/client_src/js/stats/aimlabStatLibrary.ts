@@ -50,7 +50,7 @@ export function createAimlabGroupOption(): StatOption {
             },
         ],
         createDefault: () => {
-            return AimlabGrouping.AgId
+            return AimlabGrouping.AgDate
         }
     }
 }

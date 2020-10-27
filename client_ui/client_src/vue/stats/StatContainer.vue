@@ -201,6 +201,9 @@ export default class StatContainer extends Vue {
         })
     }
 
+    mounted() {
+        this.refreshStatSet()
+    }
 }
 
 </script>

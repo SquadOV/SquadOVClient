@@ -6,29 +6,29 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_gridshot_ultimate_score",
+                    "scoreStat": "root.aimlab.gridshot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_gridshot_ultimate_kills",
-                        "root_aimlab_gridshot_ultimate_ttk",
-                        "root_aimlab_gridshot_ultimate_acc"
+                        "root.aimlab.gridshot.ultimate.kill",
+                        "root.aimlab.gridshot.ultimate.ttk",
+                        "root.aimlab.gridshot.ultimate.acc"
                     ]
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_gridshot_precision_score",
+                    "scoreStat": "root.aimlab.gridshot.precision.score",
                     "extraStats": [
-                        "root_aimlab_gridshot_precision_kills",
-                        "root_aimlab_gridshot_precision_ttk",
-                        "root_aimlab_gridshot_precision_acc"
+                        "root.aimlab.gridshot.precision.kill",
+                        "root.aimlab.gridshot.precision.ttk",
+                        "root.aimlab.gridshot.precision.acc"
                     ]
                 },
                 "12": {
                     "name": "Speed",
-                    "scoreStat": "root_aimlab_gridshot_speed_score",
+                    "scoreStat": "root.aimlab.gridshot.speed.score",
                     "extraStats": [
-                        "root_aimlab_gridshot_speed_kill",
-                        "root_aimlab_gridshot_speed_ttk",
-                        "root_aimlab_gridshot_speed_acc"
+                        "root.aimlab.gridshot.speed.kill",
+                        "root.aimlab.gridshot.speed.ttk",
+                        "root.aimlab.gridshot.speed.acc"
                     ]
                 }
             }
@@ -39,29 +39,29 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_microshot_ultimate_score",
+                    "scoreStat": "root.aimlab.microshot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_microshot_ultimate_kills",
-                        "root_aimlab_microshot_ultimate_ttk",
-                        "root_aimlab_microshot_ultimate_acc"
+                        "root.aimlab.microshot.ultimate.kill",
+                        "root.aimlab.microshot.ultimate.ttk",
+                        "root.aimlab.microshot.ultimate.acc"
                     ]
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_microshot_precision_score",
+                    "scoreStat": "root.aimlab.microshot.precision.score",
                     "extraStats": [
-                        "root_aimlab_microshot_precision_kills",
-                        "root_aimlab_microshot_precision_ttk",
-                        "root_aimlab_microshot_precision_acc"
+                        "root.aimlab.microshot.precision.kill",
+                        "root.aimlab.microshot.precision.ttk",
+                        "root.aimlab.microshot.precision.acc"
                     ]
                 },
                 "12": {
                     "name": "Speed",
-                    "scoreStat": "root_aimlab_microshot_speed_score",
+                    "scoreStat": "root.aimlab.microshot.speed.score",
                     "extraStats": [
-                        "root_aimlab_microshot_speed_kill",
-                        "root_aimlab_microshot_speed_ttk",
-                        "root_aimlab_microshot_speed_acc"
+                        "root.aimlab.microshot.speed.kill",
+                        "root.aimlab.microshot.speed.ttk",
+                        "root.aimlab.microshot.speed.acc"
                     ]
                 }
             }
@@ -72,11 +72,11 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_sixshot_ultimate_score",
+                    "scoreStat": "root.aimlab.sixshot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_sixshot_ultimate_kills",
-                        "root_aimlab_sixshot_ultimate_ttk",
-                        "root_aimlab_sixshot_ultimate_acc"
+                        "root.aimlab.sixshot.ultimate.kill",
+                        "root.aimlab.sixshot.ultimate.ttk",
+                        "root.aimlab.sixshot.ultimate.acc"
                     ]
                 }
             }
@@ -87,7 +87,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_detection_ultimate_score"
+                    "scoreStat": "root.aimlab.detection.ultimate.score"
                 }
             } 
         },
@@ -97,15 +97,15 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_decisionshot_ultimate_score"
+                    "scoreStat": "root.aimlab.decisionshot.ultimate.score"
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_decisionshot_precision_score"
+                    "scoreStat": "root.aimlab.decisionshot.precision.score"
                 },
                 "12": {
                     "name": "Speed",
-                    "scoreStat": "root_aimlab_decisionshot_speed_score"
+                    "scoreStat": "root.aimlab.decisionshot.speed.score"
                 }
             }
         },
@@ -115,29 +115,29 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_spidershot_ultimate_score",
+                    "scoreStat": "root.aimlab.spidershot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_spidershot_ultimate_kills",
-                        "root_aimlab_spidershot_ultimate_ttk",
-                        "root_aimlab_spidershot_ultimate_acc"
+                        "root.aimlab.spidershot.ultimate.kill",
+                        "root.aimlab.spidershot.ultimate.ttk",
+                        "root.aimlab.spidershot.ultimate.acc"
                     ]
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_spidershot_precision_score",
+                    "scoreStat": "root.aimlab.spidershot.precision.score",
                     "extraStats": [
-                        "root_aimlab_spidershot_precision_kills",
-                        "root_aimlab_spidershot_precision_ttk",
-                        "root_aimlab_spidershot_precision_acc"
+                        "root.aimlab.spidershot.precision.kill",
+                        "root.aimlab.spidershot.precision.ttk",
+                        "root.aimlab.spidershot.precision.acc"
                     ]
                 },
                 "12": {
                     "name": "Speed",
-                    "scoreStat": "root_aimlab_spidershot_speed_score",
+                    "scoreStat": "root.aimlab.spidershot.speed.score",
                     "extraStats": [
-                        "root_aimlab_spidershot_speed_kill",
-                        "root_aimlab_spidershot_speed_ttk",
-                        "root_aimlab_spidershot_speed_acc"
+                        "root.aimlab.spidershot.speed.kill",
+                        "root.aimlab.spidershot.speed.ttk",
+                        "root.aimlab.spidershot.speed.acc"
                     ]
                 }
             }
@@ -148,29 +148,29 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_motionshot_ultimate_score",
+                    "scoreStat": "root.aimlab.motionshot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_motionshot_ultimate_kills",
-                        "root_aimlab_motionshot_ultimate_ttk",
-                        "root_aimlab_motionshot_ultimate_acc"
+                        "root.aimlab.motionshot.ultimate.kill",
+                        "root.aimlab.motionshot.ultimate.ttk",
+                        "root.aimlab.motionshot.ultimate.acc"
                     ]
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_motionshot_precision_score",
+                    "scoreStat": "root.aimlab.motionshot.precision.score",
                     "extraStats": [
-                        "root_aimlab_motionshot_precision_kills",
-                        "root_aimlab_motionshot_precision_ttk",
-                        "root_aimlab_motionshot_precision_acc"
+                        "root.aimlab.motionshot.precision.kill",
+                        "root.aimlab.motionshot.precision.ttk",
+                        "root.aimlab.motionshot.precision.acc"
                     ]
                 },
                 "12": {
                     "name": "Speed",
-                    "scoreStat": "root_aimlab_motionshot_speed_score",
+                    "scoreStat": "root.aimlab.motionshot.speed.score",
                     "extraStats": [
-                        "root_aimlab_motionshot_speed_kill",
-                        "root_aimlab_motionshot_speed_ttk",
-                        "root_aimlab_motionshot_speed_acc"
+                        "root.aimlab.motionshot.speed.kill",
+                        "root.aimlab.motionshot.speed.ttk",
+                        "root.aimlab.motionshot.speed.acc"
                     ]
                 }
             }
@@ -181,20 +181,20 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_microflex_ultimate_score",
+                    "scoreStat": "root.aimlab.microflex.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_microflex_ultimate_kills",
-                        "root_aimlab_microflex_ultimate_ttk",
-                        "root_aimlab_microflex_ultimate_acc"
+                        "root.aimlab.microflex.ultimate.kill",
+                        "root.aimlab.microflex.ultimate.ttk",
+                        "root.aimlab.microflex.ultimate.acc"
                     ]
                 },
                 "11": {
                     "name": "Precision",
-                    "scoreStat": "root_aimlab_microflex_precision_score",
+                    "scoreStat": "root.aimlab.microflex.precision.score",
                     "extraStats": [
-                        "root_aimlab_microflex_precision_kills",
-                        "root_aimlab_microflex_precision_ttk",
-                        "root_aimlab_microflex_precision_acc"
+                        "root.aimlab.microflex.precision.kill",
+                        "root.aimlab.microflex.precision.ttk",
+                        "root.aimlab.microflex.precision.acc"
                     ]
                 }
             }
@@ -205,7 +205,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_strafetrack_ultimate_score"
+                    "scoreStat": "root.aimlab.strafetrack.ultimate.score"
                 }
             } 
         },
@@ -215,7 +215,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_circletrack_ultimate_score"
+                    "scoreStat": "root.aimlab.circletrack.ultimate.score"
                 }
             } 
         },
@@ -225,7 +225,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_strafeshot_ultimate_score"
+                    "scoreStat": "root.aimlab.strafeshot.ultimate.score"
                 }
             } 
         },
@@ -235,7 +235,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_circleshot_ultimate_score"
+                    "scoreStat": "root.aimlab.circleshot.ultimate.score"
                 }
             } 
         },
@@ -245,11 +245,11 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_multishot_ultimate_score",
+                    "scoreStat": "root.aimlab.multishot.ultimate.score",
                     "extraStats": [
-                        "root_aimlab_multishot_ultimate_kills",
-                        "root_aimlab_multishot_ultimate_ttk",
-                        "root_aimlab_multishot_ultimate_acc"
+                        "root.aimlab.multishot.ultimate.kill",
+                        "root.aimlab.multishot.ultimate.ttk",
+                        "root.aimlab.multishot.ultimate.acc"
                     ]
                 }
             } 
@@ -260,7 +260,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_linetrace_ultimate_score"
+                    "scoreStat": "root.aimlab.linetrace.ultimate.score"
                 }
             } 
         },
@@ -270,7 +270,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_multilinetrace_ultimate_score"
+                    "scoreStat": "root.aimlab.multilinetrace.ultimate.score"
                 }
             }
         },
@@ -280,7 +280,7 @@
             "mode": {
                 "10": {
                     "name": "Ultimate",
-                    "scoreStat": "root_aimlab_pentakill_ultimate_score"
+                    "scoreStat": "root.aimlab.pentakill.ultimate.score"
                 }
             }
         }
