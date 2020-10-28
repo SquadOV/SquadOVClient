@@ -76,6 +76,7 @@
     "express-graphql": "^0.11.0",
     "graphql": "^15.3.0",
     "graphql-tools": "^6.2.3",
+    "jwt-decode": "^3.0.0",
     "node-forge": "^0.10.0",
     "sqlite3": "^5.0.0",
     "subscriptions-transport-ws": "^0.9.18",

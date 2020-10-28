@@ -33,6 +33,8 @@ struct GameLogState {
     shared::valorant::EValorantMap matchMap;
     std::string matchId;
     std::string apiServer;
+    std::string username;
+    std::string tagline;
     std::string puuid;
 };
 

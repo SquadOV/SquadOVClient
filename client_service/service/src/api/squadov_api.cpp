@@ -117,6 +117,28 @@ shared::riot::RiotUser SquadovApi::getRiotUserFromPuuid(const std::string& puuid
     return user;
 }
 
+shared::riot::RiotUser SquadovApi::updateRiotUsername(const std::string& puuid, const std::string& username, const std::string& tagline) const {
+    shared::riot::RiotUser user;
+    user.puuid = puuid;
+    user.username = username;
+    user.tag = tagline;
+
+    std::ostringstream path;
+    path << "/valorant/accounts/" << puuid << "/username";
+
+    nlohmann::json body;
+    body["username"] = username;
+    body["tag"] = tagline;
+    const auto result = _localClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to update Riot username: " << result->status);
+        return user;
+    }
+    
+    return user;
+}
+
 std::string SquadovApi::uploadValorantMatch(const std::string& matchId,  const nlohmann::json& rawData, const nlohmann::json& playerData) const {
     const std::string path = "/v1/valorant";
     nlohmann::json body = {

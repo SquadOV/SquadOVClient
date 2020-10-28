@@ -4,6 +4,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 
+#include <boost/algorithm/string.hpp>
 #include <chrono>
 #include <filesystem>
 #include <iostream>
@@ -21,10 +22,11 @@ const std::string valorantLogDtFormat = "%Y.%m.%d-%H.%M.%S";
 struct ValorantMapChangeData {
     shared::TimePoint logTime;
     std::string map;
+    std::string url;
     bool ready = false;
     bool complete = false;
 };
-const std::regex mapChangeRegex("\\[(.*?):\\d{3}\\].*?LogMapLoadModel: Update: \\[Map: (.*)\\] \\[Ready: (.*)\\] \\[Complete: (.*)\\] \\[URL:.*\\]");
+const std::regex mapChangeRegex("\\[(.*?):\\d{3}\\].*?LogMapLoadModel: Update: \\[Map: (.*)\\] \\[Ready: (.*)\\] \\[Complete: (.*)\\] \\[URL: (.*)\\]");
 bool parseGameLogMapChange(const std::string& line, ValorantMapChangeData& data) {
     std::smatch matches;
     if (!std::regex_search(line, matches, mapChangeRegex)) {
@@ -35,6 +37,7 @@ bool parseGameLogMapChange(const std::string& line, ValorantMapChangeData& data)
     data.map = matches[2].str();
     data.ready = matches[3].str() == "TRUE";
     data.complete = matches[4].str() == "TRUE";
+    data.url = matches[5].str();
     return true;
 }
 
@@ -106,6 +109,59 @@ std::string getApiServer(const std::string& url) {
     return url.substr(httpsOffset, slashIndex - httpsOffset);
 }
 
+struct ValorantMapUrl {
+    std::string username;
+    std::string tagline;
+    std::string map;
+};
+
+ValorantMapUrl parseValorantMapUrl(const std::string& url) {
+    ValorantMapUrl retUrl;
+
+    // The general structure of the "map" URL is
+    // [IP ADDRESS:PORT/]MAP_PATH?Name=$USERNAME ?SubjectBase64=$BASE64_PUUID[?game=$GAME_MODE]#$TAGLINE
+    // Where the items in brackets [] are optional and don't always exist.
+    std::vector<std::string> fragmentSplit;
+    boost::split(fragmentSplit, url, boost::is_any_of("#"));
+
+    if (fragmentSplit.size() != 2) {
+        return retUrl;
+    }
+
+    retUrl.tagline = fragmentSplit[1];
+
+    std::vector<std::string> querySplit;
+    boost::split(querySplit, fragmentSplit[0], boost::is_any_of("?"));
+
+    if (querySplit.size() < 1) {
+        return retUrl;
+    }
+
+    // The first one is always the IP address port map path combo
+    // we don't need the IP/port so we can just go straight to the "/Game/Maps"
+    // part of the string.
+    const auto mapIt = querySplit[0].find("/Game/Maps");
+    if (mapIt == std::string::npos) {
+        return retUrl;
+    }
+
+    retUrl.map = querySplit[0].substr(mapIt);
+    for (size_t i = 1; i < querySplit.size(); ++i) {
+        // All these other parameters have the form KEY=VALUE.
+        std::vector<std::string> tokens;
+        boost::split(tokens, querySplit[i], boost::is_any_of("="));
+        if (tokens.size() != 2) {
+            continue;
+        }
+
+        if (tokens[0] == "Name") {
+            retUrl.username = boost::trim_copy(tokens[1]);
+        }
+    }
+
+    return retUrl;
+}
+
 }
 
 namespace game_event_watcher {
@@ -146,7 +202,14 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         {
             ValorantMapChangeData data;
             if (parseGameLogMapChange(line, data) && data.ready) {
+                const auto parsedMapUrl = parseValorantMapUrl(data.url);
                 _gameLogState.matchMap = shared::valorant::codenameToValorantMap(data.map);
+
+                // Technically don't have to have the check for main menu but putting this in just in case.
+                if (_gameLogState.matchMap == shared::valorant::EValorantMap::MainMenu) {
+                    _gameLogState.username = parsedMapUrl.username;
+                    _gameLogState.tagline = parsedMapUrl.tagline;
+                }
                 _gameLogState.isInMatch = (previousState.matchId != "" && shared::valorant::isGameMap(_gameLogState.matchMap));
 
                 if (_gameLogState.isInMatch && _gameLogState.matchMap == previousState.matchMap && data.complete) {
@@ -214,9 +277,20 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
 
         if (!parsed) {
             if (parseLoggedInChange(line, _gameLogState.puuid)) {
-                notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &_gameLogState.puuid);
                 parsed = true;
             }
+        }
+
+        // This is checking if 1) any of the user data information changes and 2) that the user data information is filed out.
+        // Only when both those conditions are met do we fire off an RSO login event.
+        if ((_gameLogState.puuid != previousState.puuid || _gameLogState.username != previousState.username || _gameLogState.tagline != previousState.tagline) &&
+            !_gameLogState.puuid.empty() && !_gameLogState.username.empty() && !_gameLogState.tagline.empty()) {
+            
+            shared::riot::RiotUser rsoUser;
+            rsoUser.username = _gameLogState.username;
+            rsoUser.tag = _gameLogState.tagline;
+            rsoUser.puuid = _gameLogState.puuid;
+            notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &rsoUser);
         }
     }
 }

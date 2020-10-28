@@ -15,6 +15,7 @@ class ValorantApiServer {
         valorantRouter.get('/accounts/:puuid', this.getValorantAccount.bind(this))
         valorantRouter.get('/accounts/:puuid/rso', this.getValorantAccountTokens.bind(this))
         valorantRouter.put('/accounts/:puuid', this.editValorantAccount.bind(this))
+        valorantRouter.post('/accounts/:puuid/username', this.updateValorantUsername.bind(this))
 
         valorantRouter.get('/accounts/:puuid/matches', this.listValorantMatches.bind(this))
         valorantRouter.get('/matches/:matchId', this.getValorantMatchDetails.bind(this))
@@ -55,7 +56,7 @@ class ValorantApiServer {
                 return
             }
 
-            new RiotRsoTokenRetriever(row.login, decryptPassword(row.encryptedPassword)).obtain(true).then(({rso, user}) => {
+            new RiotRsoTokenRetriever(row.login, decryptPassword(row.encryptedPassword)).obtain(true).then(({rso, _}) => {
                 res.json(rso)
             }).catch((err) => {
                 res.status(500).json({'error': err})
@@ -82,7 +83,7 @@ class ValorantApiServer {
     createValorantAccount(req, res) {
         // Verify that the username/password combination works by
         // attempting to obtain an RSO token.
-        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, user}) => {
+        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, puuid}) => {
             this.db.serialize(() => {
                 this.db.run('BEGIN EXCLUSIVE TRANSACTION;')
                 this.db.run(`
@@ -101,15 +102,16 @@ class ValorantApiServer {
                         ?
                     )
                 `, [
-                    user.puuid,
-                    user.username,
-                    user.tag,
+                    puuid,
+                    // This needs to be filled in later.
+                    'Unknown',
+                    'Unknown',
                     req.body.login,
                     encryptPassword(req.body.password)
                 ])
                 this.db.exec('COMMIT TRANSACTION;')
 
-                req.params['puuid'] = user.puuid
+                req.params['puuid'] = puuid
                 this.getValorantAccount(req, res)
             })
         }).catch((err) => {
@@ -117,14 +119,32 @@ class ValorantApiServer {
         })
     }
 
+    updateValorantUsername(req, res) {
+        this.db.serialize(() => {
+            this.db.run('BEGIN EXCLUSIVE TRANSACTION;')
+            this.db.run(`
+                UPDATE valorant_accounts
+                SET username = ?,
+                    tag = ?
+                WHERE puuid = ?
+            `, [
+                req.body.username,
+                req.body.tag,
+                req.params.puuid,
+            ])
+            this.db.exec('COMMIT TRANSACTION;')
+            this.getValorantAccount(req, res)
+        })
+    }
+
     editValorantAccount(req, res) {
         // Verify that the username/password combination works by
         // attempting to obtain an RSO token AND make sure that the
         // puuid matches the specified PUUID.
-        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, user}) => {
+        new RiotRsoTokenRetriever(req.body.login, req.body.password).obtain().then(({rso, puuid}) => {
             const refPuuid = req.params.puuid
-            if (refPuuid !== user.puuid) {
-                res.status(500).json({'error': `PUUID mismatch: ${refPuuid} vs ${user.puuid}`})
+            if (refPuuid !== puuid) {
+                res.status(500).json({'error': `PUUID mismatch: ${refPuuid} vs ${puuid}`})
                 return
             }
 
@@ -138,7 +158,7 @@ class ValorantApiServer {
                 `, [
                     req.body.login,
                     encryptPassword(req.body.password),
-                    user.puuid,
+                    puuid,
                 ])
                 this.db.exec('COMMIT TRANSACTION;')
                 this.getValorantAccount(req, res)

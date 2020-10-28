@@ -1,6 +1,7 @@
 const axios = require('axios').default
 const axiosCookieJarSupport = require('axios-cookiejar-support').default
 const tough = require('tough-cookie')
+const jwtDecode = require('jwt-decode')
 
 class RiotRsoUser {
     constructor(username, tag, puuid) {
@@ -25,7 +26,7 @@ class RiotRsoTokenRetriever {
         this._password = password
     }
 
-    obtain(ignoreUserInfo) {
+    obtain() {
         return new Promise(async (resolve, reject) => {
             const authInst = axios.create({
                 baseURL: 'https://auth.riotgames.com/api/v1/authorization',
@@ -34,7 +35,7 @@ class RiotRsoTokenRetriever {
             const cookieJar = new tough.CookieJar();
 
             try {
-                await authInst.post('/', {
+                await authInst.post('', {
                     'client_id': 'play-valorant-web-prod',
                     'redirect_uri': 'https://playvalorant.com/opt_in',
                     'nonce': '1',
@@ -44,7 +45,7 @@ class RiotRsoTokenRetriever {
                     withCredentials: true,
                 })
 
-                const authResp = await authInst.put('/', {
+                const authResp = await authInst.put('', {
                     'type': 'auth',
                     'username': this._username,
                     'password': this._password,
@@ -58,6 +59,8 @@ class RiotRsoTokenRetriever {
                 // The result is just the same as a normal query params so just slash out the # and use it as URLSearchParams.
                 const params = new URLSearchParams(uri.hash.slice(1))
                 const accessToken = params.get('access_token')
+                const jwtAccess = jwtDecode(accessToken)
+
                 const accessExpires = params.get('expires_in')
                 
                 // Next we need to grab the entitlements token.
@@ -71,23 +74,12 @@ class RiotRsoTokenRetriever {
 
                 let ret = {
                     rso: new RiotRsoToken(accessToken, entitlementToken, accessExpires),
-                }
-
-                if (!ignoreUserInfo) {
-                    // Finally grab the user info so we know who the hell this is.
-                    // This needs to more flexible to accomodate other regions but MEH. In the ideal case this isn't here anyway so this is fine for now.
-                    const userResp = await axios.post('https://pd.na.a.pvp.net/name-service/v1/players', {}, {
-                        headers: {
-                            'Authorization': `Bearer ${accessToken}`,
-                            'X-Riot-Entitlements-JWT': entitlementToken,
-                        }
-                    })    
-                    ret.user = new RiotRsoUser(userResp.data.GameName, userResp.data.TagLine, userResp.data.Subject)
-                }
-                
+                    puuid: jwtAccess['sub']
+                }            
                 resolve(ret)
             } catch (err) {
                 // TOO MUCH INFO GETS DUMPED HERE SO DON'T PASS BACK ERR.
+                console.log('Failed to obtain token: ', err)
                 reject('Failed to obtain RSO Token')
             }
         })

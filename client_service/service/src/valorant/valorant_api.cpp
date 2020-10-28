@@ -38,7 +38,7 @@ void ValorantApi::refreshToken() {
     // Create a thread that'll sleep until the token is about to expire, then try to 
     // refresh it.
     _refreshThread = std::thread([this](){
-        while (true) {
+        while (_running) {
             // First check if the token is expired. We'll say the token is expired if we're within 
             // 1 minute of being expired. Should account for any potential drift and allow us to
             // always maintain a valid token.

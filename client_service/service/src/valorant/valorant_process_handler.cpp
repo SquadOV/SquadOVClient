@@ -295,20 +295,28 @@ void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoin
 void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint& eventTime, const void* rawData) {
     // When we detect this login event, we only get the PUUID. We'll need to query our own API to get an RSO token and entitlements token
     // to use.
-    const auto* puuid = reinterpret_cast<const std::string*>(rawData);
+    const auto* user = reinterpret_cast<const shared::riot::RiotUser*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant RSO Login" << std::endl
-        << "\tPUUID: " << *puuid << std::endl);
-
+        << "\tPUUID: " << user->puuid << std::endl
+        << "\tUsername: " << user->username << std::endl
+        << "\tTagline: " << user->tag << std::endl);
 
     shared::riot::RiotRsoToken token;
     try {
-        token = service::api::getGlobalApi()->refreshValorantRsoToken(*puuid);
+        token = service::api::getGlobalApi()->refreshValorantRsoToken(user->puuid);
     } catch (std::exception& ex) {
         LOG_ERROR("Failed to refresh Valorant RSO token: " << ex.what());
         // If we failed to get the RSO token we'll just assume the user will restart the game.
         return;
     }
 
+    _currentUser = service::api::getGlobalApi()->getRiotUserFromPuuid(user->puuid);
+
+    if (_currentUser.tag != user->tag || _currentUser.username != user->username) {
+        service::api::getGlobalApi()->updateRiotUsername(user->puuid, user->username, user->tag);
+    }
+
+    // Keep this down here as we need to make sure to populate the currentUser first.
     // Now that we have the RSO/Entitlement token we know enough to start querying the API.
     // Only need to give the token to the API object once as the object will take care of
     // auto-refreshing the token for us....
@@ -320,8 +328,6 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
             _pendingPvpServer = "";
         }
     }
-
-    _currentUser = service::api::getGlobalApi()->getRiotUserFromPuuid(*puuid);
 }
 
 ValorantProcessHandler::ValorantProcessHandler() = default;
