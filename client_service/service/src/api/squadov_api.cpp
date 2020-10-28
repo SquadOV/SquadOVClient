@@ -27,7 +27,7 @@ SquadovApi::SquadovApi() {
 
     {
         std::ostringstream host;
-        host << shared::getEnv("API_URL", "http://127.0.0.1:8080");
+        host << shared::getEnv("API_SQUADOV_URL", "http://127.0.0.1:8080");
         _webClient = std::make_unique<http::HttpClient>(host.str());
         _webClient->addResponseInterceptor([this](service::http::HttpResponse& response){
             if (!_sessionUpdateCallback) {

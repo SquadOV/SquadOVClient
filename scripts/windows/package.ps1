@@ -1,4 +1,6 @@
 $GCP_PROJECT=$args[0]
+Set-Item -Path Env:GCP_PROJECT -Value $GCP_PROJECT
+
 $PUBLISH=$args[1]
 
 Write-Host "Begin Packaging Windows SquadOV $GCP_PROJECT"

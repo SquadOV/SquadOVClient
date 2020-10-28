@@ -15,9 +15,6 @@ module.exports = (env, argv) => {
             })],
         },  
         plugins: [
-            new webpack.DefinePlugin({
-                'API_URL': '"http://api.squadov.gg"',
-            })
         ],
         output: {
             path:path.resolve(__dirname, '../dist', 'production'),

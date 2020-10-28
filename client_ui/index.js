@@ -12,6 +12,10 @@ if (app.isPackaged) {
     autoUpdater.checkForUpdatesAndNotify()
 }
 
+const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
+const config = JSON.parse(fs.readFileSync(configFile))
+process.env.API_SQUADOV_URL = config["API_URL"]
+
 let win
 
 function start() {

@@ -1,4 +1,4 @@
-appId: "squadov.squadov.app.2020-10-6-189b665abf8d7caf68e59a8b3dc78f2fca2a7dcf"
+appId: "squadov.squadov.app.2020-10-28"
 productName: "SquadOV"
 copyright: "Copyright © 2020 GRCHive, Inc."
 
@@ -41,4 +41,4 @@ extraResources:
   - from: "../build/bin/Release"
     to: "service"
   - from: "config/${env.GCP_PROJECT}.json"
-  - to: "config/config.json"
+    to: "config/config.json"

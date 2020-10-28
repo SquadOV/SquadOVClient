@@ -105,7 +105,7 @@ class ApiClient {
 
     createWebAxiosConfig() : any {
         let ret : any = {
-            baseURL: API_URL,
+            baseURL: process.env.API_SQUADOV_URL,
         }
 
         if (!!this.setSessionId) {
