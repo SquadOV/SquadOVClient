@@ -32,7 +32,7 @@ let zeromqServer = new ZeroMQServerClient()
 const { ApiServer } = require('./api_src/api');
 
 let apiServer = new ApiServer()
-function quit() {
+async function quit() {
     zeromqServer.close()
     apiServer.close()
     app.quit()
@@ -130,6 +130,7 @@ function updateSession(sessionId, sendIpc) {
     win.webContents.send('update-session', sessionId)
 }
 
+
 zeromqServer.on('session-id', (sessionId) => {
     updateSession(sessionId, false)
 })
@@ -139,6 +140,7 @@ let backendReady = new Promise((resolve, reject) => {
         resolve()
     })
 })
+
 
 // This is the initial session obtainment from logging in. Loading it from storage will
 // directly call loadSession(). This event ONLY happens in the Login UI.
@@ -209,7 +211,7 @@ app.on('ready', async () => {
         return
     }
     log.log(`OBTAINED ENCRYPTION PASSWORD`)
-
+    
     apiServer.start(async () => {
         // Start auxiliary service that'll handle waiting for games to run and
         // collecting the relevant information and sending it to the database.
@@ -247,7 +249,11 @@ app.on('ready', async () => {
         })
 
         await backendReady;
-
-        start()
+        
     })
+    start()
+})
+
+app.on('window-all-closed', () => {
+    quit()
 })

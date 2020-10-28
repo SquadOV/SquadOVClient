@@ -31,6 +31,7 @@ class ZeroMQServerClient {
 
         this._port = 0
         this._handlers = {}
+        this._started = false
     }
 
     async start() {
@@ -58,6 +59,7 @@ class ZeroMQServerClient {
 
         log.log(`Starting ZeroMQ Server on Port ${this._port}`)
         log.log(`\tExpecting Backend Service ZeroMQ Port ${process.env.SQUADOV_ZEROMQ_SERVICE_PORT}`)
+        this._started = true
     }
 
     async run() {
@@ -86,10 +88,23 @@ class ZeroMQServerClient {
         this._handlers[topic].push(handler)
     }
 
-    close() {
-        //this._sub.close()
-        this._sub.unbind(this._sub.lastEndpoint)
-        this._pub.unbind(this._pub.lastEndpoint)
+    async close() {
+        if (this._started) {
+            try {
+                await this._sub.unbind(this._sub.lastEndpoint)
+            } catch(ex) {
+                console.log(ex)
+            }
+
+            try {
+                await this._pub.unbind(this._pub.lastEndpoint)
+            } catch(ex) {
+                console.log(ex)
+            }
+        }
+
+        this._sub.close()
+        this._pub.close()
     }
 }
 
