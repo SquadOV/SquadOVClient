@@ -166,6 +166,47 @@ ipcMain.handle('request-session', () => {
     }
 })
 
+function startClientService() {
+    // Start auxiliary service that'll handle waiting for games to run and
+    // collecting the relevant information and sending it to the database.
+    // Search for the proper executable file.
+    //  1) The file specified by the environment variable: SQUADOV_SERVICE_EXE
+    //  2) Relative to the current working directory: resources/service/squadov_client_service.exe
+    let exeName = ''
+    if (process.platform == 'win32') {
+        exeName = 'squadov_client_service.exe'
+    }
+
+    let exePath = process.env.SQUADOV_SERVICE_EXE
+    if (!fs.existsSync(exePath)) {
+        exePath = path.join(path.dirname(app.getPath('exe')), 'resources', 'service', exeName)
+        if (!fs.existsSync(exePath)) {
+            dialog.showMessageBoxSync({
+                type: 'error',
+                title: 'SquadOV Installation Error',
+                message: 'Failed to find the client service executable for SquadOV. Please check that SquadOV was installed correctly. Reinstall if necessary.'
+            })
+
+            quit()
+            return
+        }
+    }
+
+    log.log("SPAWN PROCESS: " + exePath);
+    let child = spawn(exePath)
+    child.stdout.on('data', (data) => {
+        console.log(`SERVICE: ${data}`)
+    })
+
+    child.stderr.on('data', (data) => {
+        console.log(`SERVICE: ${data}`)
+    })
+
+    child.on('close', (code) => {
+        startClientService()
+    })
+}
+
 app.on('ready', async () => {    
     await zeromqServer.start()
     zeromqServer.run()
@@ -213,43 +254,8 @@ app.on('ready', async () => {
     log.log(`OBTAINED ENCRYPTION PASSWORD`)
     
     apiServer.start(async () => {
-        // Start auxiliary service that'll handle waiting for games to run and
-        // collecting the relevant information and sending it to the database.
-        // Search for the proper executable file.
-        //  1) The file specified by the environment variable: SQUADOV_SERVICE_EXE
-        //  2) Relative to the current working directory: resources/service/squadov_client_service.exe
-        let exeName = ''
-        if (process.platform == 'win32') {
-            exeName = 'squadov_client_service.exe'
-        }
-    
-        let exePath = process.env.SQUADOV_SERVICE_EXE
-        if (!fs.existsSync(exePath)) {
-            exePath = path.join(path.dirname(app.getPath('exe')), 'resources', 'service', exeName)
-            if (!fs.existsSync(exePath)) {
-                dialog.showMessageBoxSync({
-                    type: 'error',
-                    title: 'SquadOV Installation Error',
-                    message: 'Failed to find the client service executable for SquadOV. Please check that SquadOV was installed correctly. Reinstall if necessary.'
-                })
-
-                quit()
-                return
-            }
-        }
-    
-        log.log("SPAWN PROCESS: " + exePath);
-        let child = spawn(exePath)
-        child.stdout.on('data', (data) => {
-            console.log(`SERVICE: ${data}`)
-        })
-    
-        child.stderr.on('data', (data) => {
-            console.log(`SERVICE: ${data}`)
-        })
-
-        await backendReady;
-        
+        startClientService()
+        await backendReady
     })
     start()
 })
