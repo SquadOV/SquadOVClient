@@ -36,7 +36,7 @@ LogWatcher::~LogWatcher() {
 
 void LogWatcher::watchWorker() {
     if (_waitForNewFile || !fs::exists(_path.string())) {
-        while (true) {
+        while (!_isFinished) {
             const auto now = fs::file_time_type::clock::now();
             const auto lastWriteTime = fs::last_write_time(_path);
             const auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
@@ -51,6 +51,11 @@ void LogWatcher::watchWorker() {
             std::this_thread::sleep_for(1s);
             LOG_INFO("\t\tRestart watching: " << _path.string() << std::endl);
         }
+    }
+
+    if (_isFinished) {
+        // An early out here just in case we want to stop while still waiting for the log.
+        return;
     }
 
     // Open file for reading via the C++ STDLIB.
