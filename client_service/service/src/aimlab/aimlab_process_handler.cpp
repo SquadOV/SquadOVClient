@@ -147,6 +147,16 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
             try {
                 lastData = _aimlab->getLatestTaskData();
                 LOG_INFO("Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl);
+
+                // The latest task data *could* be older than the most recent one if Aim Lab hasn't updated the database yet.
+                // Thus, if the time difference between the task's create time and the current time is greater than a threshold
+                // we need to effectively fail.
+                const auto timeDiff = std::chrono::duration_cast<std::chrono::seconds>(lastData.createDate - shared::nowUtc());
+                constexpr int maxTimeDiff = 60;
+                if (std::abs(timeDiff.count()) > maxTimeDiff) {
+                    throw std::runtime_error("Max time diff exceeded.");
+                }
+
             } catch (...) {
                 // Don't retry immediately. Wait 10 seconds in total and hopefully
                 // we'll get through....
