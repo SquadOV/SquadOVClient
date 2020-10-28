@@ -7,16 +7,24 @@ interface ContentFileMap {
 }
 
 const contentFiles : ContentFileMap = {
-    'release-01.08-shipping-10-471230': {
+    'release-01.08': {
         static: process.env.NODE_ENV === 'production' ?  
             path.join(process.resourcesPath, 'assets/valorant/content/v1.08.json') :
             'assets/valorant/content/v1.08.json',
         abilities: process.env.NODE_ENV === 'production' ?  
             path.join(process.resourcesPath, 'assets/valorant/content/v1.08.Abilities.json') :
             'assets/valorant/content/v1.08.Abilities.json'
+    },
+    'release-01.11': {
+        static: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.json') :
+            'assets/valorant/content/v1.11.json',
+        abilities: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
+            'assets/valorant/content/v1.11.Abilities.json'    
     }
 }
-const latestPatch = 'release-01.08-shipping-10-471230'
+const latestPatch = 'release-01.11'
 
 interface AgentMap {
     [agentId : string] : string;
@@ -50,22 +58,23 @@ export class ValorantContent {
         this._gameModes = {}
         this._weapons = {}
 
-        for (let agent of jData["Characters"]) {
-            this._agents[agent["ID"]] = agent["Name"] 
+        // All the || here are just meant to support older patches (namely v1.08).
+        for (let agent of (jData["Characters"] || jData["characters"])) {
+            this._agents[agent["ID"] || agent["id"]] = agent["Name"] || agent["name"]
         }
 
-        for (let m of jData["Maps"]) {
-            const mapName = m["Name"]
-            this._mapAssetNameToMap[m["AssetName"]] = mapName
-            this._mapAssetPathToMap[m["AssetPath"]] = mapName
+        for (let m of (jData["Maps"] || jData["maps"])) {
+            const mapName = m["Name"] || m["name"]
+            this._mapAssetNameToMap[m["AssetName"] || m["assetName"]] = mapName
+            this._mapAssetPathToMap[m["AssetPath"] || m["assetPath"]] = mapName
         }
 
-        for (let m of jData["GameModes"]) {
-            this._gameModes[m["AssetPath"]] = m["Name"] 
+        for (let m of (jData["GameModes"] || jData["gameModes"])) {
+            this._gameModes[m["AssetPath"] || m["assetPath"]] = m["Name"] || m["name"]
         }
 
-        for (let m of jData["Equips"]) {
-            this._weapons[m["ID"]] = m["Name"]
+        for (let m of (jData["Equips"] || jData["equips"])) {
+            this._weapons[m["ID"] || m["id"]] = m["Name"] || m["name"]
         }
 
         this._agentAbilities = JSON.parse(abilityData)
@@ -113,9 +122,20 @@ function loadValorantContent(patchId : string) {
     content[patchId] = ct
 }
 
+const valorantPatchIdRegex = /(release-\d\d.\d\d)-?.*/
+
 export function getValorantContent(patchId : string | null) {
     if (!patchId) {
         patchId = latestPatch
+    } else {
+        // The patch ID is generally in the form of release-XX.YY-OTHER
+        // We just want to extract the release-XX.YY part of the patch.
+        let matches = patchId.match(valorantPatchIdRegex)
+        if (!matches) {
+            patchId = latestPatch
+        } else {
+            patchId = matches[1]
+        }
     }
 
     if (!(patchId in content)) {

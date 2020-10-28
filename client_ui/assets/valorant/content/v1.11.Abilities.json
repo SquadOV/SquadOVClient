@@ -1,0 +1,80 @@
+{
+    "Breach": {
+        "GrenadeAbility": "Aftershock",
+        "Ability1": "Flashpoint",
+        "Ability2": "Fault Line",
+        "Ultimate": "Rolling Thunder"
+    },
+    "Brimstone": {
+        "GrenadeAbility": "Stim Beacon",
+        "Ability1": "Incendiary",
+        "Ability2": "Sky Smoke",
+        "Ultimate": "Orbital Strike"
+    },
+    "Cypher": {
+        "GrenadeAbility": "Trapwire",
+        "Ability1": "Cyber Cage",
+        "Ability2": "Spycam",
+        "Ultimate": "Neural Theft"
+    },
+    "Jett": {
+        "GrenadeAbility": "Cloudburst",
+        "Ability1": "Updraft",
+        "Ability2": "Tailwind",
+        "Ultimate": "Blade Storm"
+    },
+    "Killjoy": {
+        "GrenadeAbility": "Nanoswarm",
+        "Ability1": "Alarmbot",
+        "Ability2": "Turret",
+        "Ultimate": "Lockdown"
+    },
+    "Omen": {
+        "GrenadeAbility": "Shrouded Step",
+        "Ability1": "Paranoia",
+        "Ability2": "Dark Cover",
+        "Ultimate": "From the Shadows"
+    },
+    "Phoenix": {
+        "GrenadeAbility": "Blaze",
+        "Ability1": "Curveball",
+        "Ability2": "Hot Hands",
+        "Ultimate": "Run it Back"
+    },
+    "Raze": {
+        "GrenadeAbility": "Boom Bot",
+        "Ability1": "Blast Pack",
+        "Ability2": "Paint Shells",
+        "Ultimate": "Showstopper"
+    },
+    "Reyna": {
+        "GrenadeAbility": "Leer",
+        "Ability1": "Devour",
+        "Ability2": "Dismiss",
+        "Ultimate": "Empress"
+    },
+    "Sage": {
+        "GrenadeAbility": "Barrier Orb",
+        "Ability1": "Slow Orb",
+        "Ability2": "Healing Orb",
+        "Ultimate": "Resurrection"
+    },
+    "Sova": {
+        "GrenadeAbility": "Owl Drone",
+        "Ability1": "Shock Dart",
+        "Ability2": "Recon Bolt",
+        "Ultimate": "Hunter's Fury"
+    },
+    "Viper": {
+        "GrenadeAbility": "Snake Bite",
+        "Ability1": "Poison Cloud",
+        "Ability2": "Toxic Screen",
+        "Ultimate": "Viper's Pit"
+    },
+    "Skye": {
+        "GrenadeAbility": "Regrowth",
+        "Ability1": "Trailblazer",
+        "Ability2": "Guiding Light",
+        "Ultimate": "Seekers"        
+    }
+}
