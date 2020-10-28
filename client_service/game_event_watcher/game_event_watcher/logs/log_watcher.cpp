@@ -64,17 +64,6 @@ void LogWatcher::watchWorker() {
         THROW_ERROR("Failed to open log.");
     }
 
-    // Create another thread to open up the file every once in awhile.
-    // Not sure why this is needed but some programs (e.g. Riot's client) won't actually flush
-    // to the file unless this happens.
-    std::thread pollThread([this](){
-        while (!_isFinished) {
-            std::ifstream tmp(_path.string());
-            tmp.seekg(0, tmp.end);
-            std::this_thread::sleep_for(1s);
-        }
-    });
-
     LogLinesDelta lineBuffer;
 
     // Open the file (if necessary) for the OS-specific way of watching for changes.
@@ -94,6 +83,21 @@ void LogWatcher::watchWorker() {
 #else
         THROW_ERROR("Unsupported OS for LogWatcher.");
 #endif
+
+    
+    // Create another thread to open up the file every once in awhile.
+    // Not sure why this is needed but some programs (e.g. Riot's client) won't actually flush
+    // to the file unless this happens. This thread is also responsible for making sure
+    // the call to ReadDirectoryChangesW gets cancelled.
+    std::thread pollThread([this, hDir](){
+        while (!_isFinished) {
+            std::ifstream tmp(_path.string());
+            tmp.seekg(0, tmp.end);
+            std::this_thread::sleep_for(1s);
+        }
+        CancelIoEx(hDir, nullptr);
+    });
+
     while (!_isFinished) {
         logStream.clear();
         // Read all available changes.
