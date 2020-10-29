@@ -40,8 +40,18 @@ nlohmann::json ValorantRoundMetadata::toJson(const std::string& matchId, const s
     json["matchId"] = matchId;
     json["puuid"] = puuid;
     json["round"] = round;
-    json["buyTime"] = shared::timeToIso(buyTime);
-    json["roundTime"] = shared::timeToIso(startTime);
+    if (shared::isTimeValid(buyTime)) {
+        json["buyTime"] = shared::timeToIso(buyTime);
+    } else {
+        json["buyTime"] = nlohmann::json();
+    }
+
+    if (shared::isTimeValid(startTime)) {
+        json["roundTime"] = shared::timeToIso(startTime);
+    } else {
+        json["roundTime"] = nlohmann::json();
+    }
+    
     return json;
 }
 

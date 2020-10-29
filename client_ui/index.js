@@ -171,6 +171,10 @@ ipcMain.handle('request-session', () => {
 })
 
 function startClientService() {
+    if (!!process.env.SQUADOV_MANUAL_SERVICE) {
+        return
+    }
+
     // Start auxiliary service that'll handle waiting for games to run and
     // collecting the relevant information and sending it to the database.
     // Search for the proper executable file.

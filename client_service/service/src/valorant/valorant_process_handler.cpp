@@ -219,7 +219,8 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             association.startTime = _currentMatch->startTime();
             association.endTime = _currentMatch->endTime();
             service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata());
-        } catch (...) {
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to upload valorant match: " << ex.what() << std::endl);
             // Any errors should result in the VOD being deleted.
             try {
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
