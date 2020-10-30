@@ -26,10 +26,8 @@ public:
                 << "[" << currentTimeLog() << "] ";
             _needPrefix = false;
         }
-        str << val;
-
-        _outLog << str.str();
-        std::cout << str.str();
+        _outLog << str.str() << val;
+        std::cout << str.str() << val;
         return *this;
     } 
 
@@ -45,6 +43,13 @@ public:
             _needPrefix = true;
         }
 
+        _outLog << manip;
+        std::cout << manip;
+        return *this;
+    }
+
+    using StdIoManip = std::ios_base&(*)(std::ios_base&);
+    Log& operator<<(StdIoManip manip) {
         _outLog << manip;
         std::cout << manip;
         return *this;

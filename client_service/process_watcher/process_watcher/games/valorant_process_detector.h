@@ -6,7 +6,7 @@ namespace process_watcher::games {
 
 class ValorantProcessDetector: public GameProcessDetector {
 public:
-    bool checkIsRunning(const std::vector<process::Process>& processes, size_t* outIdx) const override;
+    ValorantProcessDetector();
 };
 
 }

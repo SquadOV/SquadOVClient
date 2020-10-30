@@ -10,11 +10,15 @@ namespace process_watcher::games {
 
 class GameProcessDetector {
 public:
+    explicit GameProcessDetector(const std::string& exe);
     virtual ~GameProcessDetector() {}
-    virtual bool checkIsRunning(const std::vector<process::Process>& processes, size_t* outIndex = nullptr) const = 0;
+    bool checkIsRunning(const std::vector<process::Process>& processes, size_t* outIndex = nullptr) const;
 
 protected:
     bool checkProcessIsRunning(const process::Process& ref, const std::vector<process::Process>& processes, size_t* outIndex = nullptr) const;
+
+private:
+    const std::string _exeName;
 };
 
 std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game);

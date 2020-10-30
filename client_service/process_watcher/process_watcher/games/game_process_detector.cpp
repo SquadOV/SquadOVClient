@@ -9,14 +9,14 @@
 
 namespace process_watcher::games {
 
-std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {
-    switch (game) {
-        case shared::EGame::Valorant:
-            return std::make_unique<ValorantProcessDetector>();
-        case shared::EGame::Aimlab:
-            return std::make_unique<AimlabProcessDetector>();
-    }
-    return nullptr;
+GameProcessDetector::GameProcessDetector(const std::string& exe):
+    _exeName(exe) {
+    
+}
+
+bool GameProcessDetector::checkIsRunning(const std::vector<process::Process>& processes, size_t* outIndex) const {
+    const process::Process cmpProcess(_exeName, 0);
+    return checkProcessIsRunning(cmpProcess, processes, outIndex);
 }
 
 bool GameProcessDetector::checkProcessIsRunning(const process::Process& ref, const std::vector<process::Process>& processes, size_t* outIndex) const {
@@ -41,5 +41,16 @@ bool GameProcessDetector::checkProcessIsRunning(const process::Process& ref, con
         return true;
     }
 }
+
+std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {
+    switch (game) {
+        case shared::EGame::Valorant:
+            return std::make_unique<ValorantProcessDetector>();
+        case shared::EGame::Aimlab:
+            return std::make_unique<AimlabProcessDetector>();
+    }
+    return nullptr;
+}
+
 
 }

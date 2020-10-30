@@ -10,9 +10,8 @@ const std::string valorantProcessName("VALORANT-Win64-Shipping.exe");
 
 namespace process_watcher::games {
 
-bool ValorantProcessDetector::checkIsRunning(const std::vector<process::Process>& processes, size_t* outIndex) const {
-    const process::Process cmpProcess(valorantProcessName, 0);
-    return checkProcessIsRunning(cmpProcess, processes, outIndex);
+ValorantProcessDetector::ValorantProcessDetector():
+    GameProcessDetector(valorantProcessName) {
 }
 
 }

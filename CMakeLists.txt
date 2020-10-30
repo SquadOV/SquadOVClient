@@ -31,8 +31,10 @@ set_target_properties(ZLIB::ZLIB PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES ${_ZLIB_INCLUDE_DIRS})
 target_link_libraries(ZLIB::ZLIB INTERFACE zlib)
 
-find_package(BOOST 1.74.0 REQUIRED
-    COMPONENTS filesystem system lockfree)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost 1.74.0 REQUIRED
+    COMPONENTS filesystem system program_options)
 
 add_subdirectory(deps)
 add_subdirectory(client_service)
+add_subdirectory(tools)
