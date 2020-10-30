@@ -2,6 +2,7 @@
 
 #include "process_watcher/memory/module_memory_mapper.h"
 #include "process_watcher/memory/mono/mono_class_mapper.h"
+#include "process_watcher/memory/mono/mono_type_mapper.h"
 
 #include <memory>
 #include <unordered_map>
@@ -251,15 +252,29 @@ namespace process_watcher::memory::mono {
 // 	 */
 // 	mono_mutex_t    lock;
 // };
-class MonoImageWrapper {
+class MonoImageMapper {
 public:
-    MonoImageWrapper(const process_watcher::memory::ModuleMemoryMapper& memory, uintptr_t ptr);
+    MonoImageMapper(const process_watcher::memory::ModuleMemoryMapperSPtr& memory, uintptr_t ptr);
 
+    const MonoClassMapper* loadClassFromPtr(uintptr_t ptr);
+    const MonoTypeMapper* loadTypeFromPtr(uintptr_t ptr);
+
+    friend std::ostream& operator<<(std::ostream& os, const MonoImageMapper& map);
 private:
+    process_watcher::memory::ModuleMemoryMapperSPtr _memory;
     uintptr_t _ptr = 0;
+
+    // Access by class name.
     std::unordered_map<std::string, MonoClassMapperPtr> _classes;
+    // Access by class pointer - the pointer to the MonoClassMapper is owned by the unique ptr in _classes.
+    std::unordered_map<uintptr_t, MonoClassMapper*> _classPointers;
+
+    // Access by type pointer.
+    std::unordered_map<uintptr_t, MonoTypeMapperPtr> _types;
 };
 
-using MonoImageWrapperPtr = std::unique_ptr<MonoImageWrapper>;
+std::ostream& operator<<(std::ostream& os, const MonoImageMapper& map);
+
+using MonoImageMapperPtr = std::unique_ptr<MonoImageMapper>;
 
 }

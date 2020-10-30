@@ -9,6 +9,8 @@ SET(SRCS
     process_watcher/memory/mono_memory_mapper.cpp
     process_watcher/memory/mono/mono_image_mapper.cpp
     process_watcher/memory/mono/mono_class_mapper.cpp
+    process_watcher/memory/mono/mono_classfield_mapper.cpp
+    process_watcher/memory/mono/mono_type_mapper.cpp
 )
 
 SET(HEADERS
@@ -23,6 +25,8 @@ SET(HEADERS
     process_watcher/memory/mono_memory_mapper.h
     process_watcher/memory/mono/mono_image_mapper.h
     process_watcher/memory/mono/mono_class_mapper.h
+    process_watcher/memory/mono/mono_classfield_mapper.h
+    process_watcher/memory/mono/mono_type_mapper.h
 )
 
 add_library(squadov_process_watcher

@@ -5,6 +5,7 @@
 #include "process_watcher/memory/mono_memory_mapper.h"
 
 #include <boost/program_options.hpp>
+#include <fstream>
 #include <iostream>
 #include <vector>
 
@@ -15,7 +16,8 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("exe", po::value<std::string>()->required(), "Process to hook to.")
-        ("module", po::value<std::string>()->required(), "PE module to dump.");
+        ("module", po::value<std::string>()->required(), "PE module to dump.")
+        ("output", po::value<std::string>()->required(), "File to output to");
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -41,7 +43,9 @@ int main(int argc, char** argv) {
     const auto& process = processes[idx];
     auto memMapper = std::make_shared<memory::ModuleMemoryMapper>(process, module);
     memory::PEMapper peMapper(memMapper);
-    LOG_INFO(peMapper);
+    memory::MonoMemoryMapper monoWrapper(memMapper, peMapper); 
 
+    std::ofstream file(vm["output"].as<std::string>());
+    file << monoWrapper;
     return 0;
 }

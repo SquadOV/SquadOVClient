@@ -47,7 +47,7 @@ constexpr uint32_t MONO_ASSEMBLY_IMAGE_PTR_OFFSET = MONO_ASSEMBLY_NAME_OFFSET +
     2; // padding
 }
 
-MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMapper& pe) {
+MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const PEMapper& pe) {
     // For now we only support 32-bit architectures.
     if (pe.arch() != ExecutableArch::X86) {
         THROW_ERROR("Only 32-bit executables supported for Mono.");
@@ -56,7 +56,7 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMap
     const auto rva = pe.getExportRva(MONO_GET_ROOT_DOMAIN);
 
     uint8_t x86Func[6];
-    std::memcpy(x86Func, memory.moduleBuffer().data() + rva, 6);
+    std::memcpy(x86Func, memory->moduleBuffer().data() + rva, 6);
     if (x86Func[0] != X86_MOV_EAX_OP || x86Func[5] != X86_RET_OP) {
         THROW_ERROR("Failed to find mono_get_root_domain");
     }
@@ -68,13 +68,13 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMap
     // the 4 bytes in memory pointed to by [ptr].
     uint32_t rootDomainLocPtr = 0;
     std::memcpy(&rootDomainLocPtr, &x86Func[1], 4);
-    memory.readProcessMemory(&_rootDomainPtr, static_cast<uintptr_t>(rootDomainLocPtr));
+    memory->readProcessMemory(&_rootDomainPtr, static_cast<uintptr_t>(rootDomainLocPtr));
 
     // Now that we have the location of the root domain we need to grab the available assemblies
     // and find the relevant Assembly-CSharp.
     uint32_t domainAssembliesListPtr = 0;
     const auto domainAssembliesVA = _rootDomainPtr + MONO_DOMAIN_ASSEMBLIES_OFFSET;
-    memory.readProcessMemory(&domainAssembliesListPtr, static_cast<uintptr_t>(domainAssembliesVA));
+    memory->readProcessMemory(&domainAssembliesListPtr, static_cast<uintptr_t>(domainAssembliesVA));
 
     // domainAssembliesListPtr is now the pointer to the first element of a GSList linked list of the
     // form:
@@ -90,15 +90,15 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMap
     while (domainAssembliesListPtr) {
         uint32_t data = 0;
         uint32_t next = 0;
-        memory.readProcessMemory(&data, static_cast<uintptr_t>(domainAssembliesListPtr));
-        memory.readProcessMemory(&next, static_cast<uintptr_t>(domainAssembliesListPtr + 4));
+        memory->readProcessMemory(&data, static_cast<uintptr_t>(domainAssembliesListPtr));
+        memory->readProcessMemory(&next, static_cast<uintptr_t>(domainAssembliesListPtr + 4));
 
         // 'data' now is a pointer to a MonoAssembly object.
         // Use MONO_ASSEMBLY_NAME_OFFSET to get the location of the MonoAssemblyName *object* whose first 4 bytes are 
         // a pointer to a string (const char*)
         uint32_t namePointer = 0;
-        memory.readProcessMemory(&namePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_NAME_OFFSET));
-        memory.readProcessMemory(nameBuffer, static_cast<uintptr_t>(namePointer), nameBuffer.size());
+        memory->readProcessMemory(&namePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_NAME_OFFSET));
+        memory->readProcessMemory(nameBuffer, static_cast<uintptr_t>(namePointer), nameBuffer.size());
 
         if (std::string(nameBuffer.data()) != MONO_MAIN_ASSEMBLY_NAME) {
             domainAssembliesListPtr = next;
@@ -108,15 +108,25 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMap
         // The next 4 bytes in the MonoAssembly object is a pointer to a MonoImage. Since we've found the correct assembly,
         // we'll go ahead and store our own representation of the MonoImage for easy access.
         uint32_t imagePointer = 0;
-        memory.readProcessMemory(&imagePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_IMAGE_PTR_OFFSET));
+        memory->readProcessMemory(&imagePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_IMAGE_PTR_OFFSET));
 
-        _image = std::make_unique<mono::MonoImageWrapper>(memory, imagePointer);
+        _image = std::make_unique<mono::MonoImageMapper>(memory, imagePointer);
         break;
     }
 
     if (!_image) {
         THROW_ERROR("Failed to find the Assembly-CSharp main assembly.");
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map) {
+    os << "Mono Mapper: ";
+    if (map._image) {
+        os << std::endl << *map._image;
+    } else {
+        os << " INVALID";
+    } 
+    return os;
 }
 
 }

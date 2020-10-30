@@ -1,9 +1,11 @@
 #pragma once
 
 #include "process_watcher/memory/module_memory_mapper.h"
+#include "process_watcher/memory/mono/mono_classfield_mapper.h"
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace process_watcher::memory::mono {
 
@@ -70,7 +72,7 @@ namespace process_watcher::memory::mono {
 // 	guint nested_classes_inited : 1; /* Whenever nested_class is initialized */
 // 
 // 	/* next byte*/
-// 	(+24) guint class_kind : 3; /* One of the values from MonoTypeKind */
+// 	(+30) guint class_kind : 3; /* One of the values from MonoTypeKind */
 // 	guint interfaces_inited : 1; /* interfaces is initialized */
 // 	guint simd_type : 1; /* class is a simd intrinsic type */
 // 	guint has_finalize_inited    : 1; /* has_finalize is initialized */
@@ -78,32 +80,32 @@ namespace process_watcher::memory::mono {
 // 	guint has_failure : 1; /* See mono_class_get_exception_data () for a MonoErrorBoxed with the details */
 // 	guint has_weak_fields : 1; /* class has weak reference fields */
 // 
-// 	(+28) MonoClass  *parent; --> between class_kind and parent are 9 bits so I'm assuming it's going to pad out to 28 bytes
-// 	(+32) MonoClass  *nested_in;
+// 	(+32) MonoClass  *parent; --> between class_kind and parent are 9 bits so I'm assuming it's going to pad out to 28 bytes
+// 	(+36) MonoClass  *nested_in;
 // 
 //  (+40) MonoImage *image; --> I confirmed this number in disassembler. There's probably nesting shenanigans going on with the bitfields...
 // 	(+44) const char *name;
 // 	(+48) const char *name_space;
 // 
-// 	guint32    type_token;
-// 	int        vtable_size; /* number of slots */
+// 	(+52) guint32    type_token;
+// 	(+56) int        vtable_size; /* number of slots */
 // 
-// 	guint16     interface_count;
-// 	guint32     interface_id;        /* unique inderface id (for interfaces) */
-// 	guint32     max_interface_id;
+// 	(+60) guint16     interface_count;
+// 	(+64) guint32     interface_id;        /* unique inderface id (for interfaces) */
+// 	(+68) guint32     max_interface_id;
 // 	
-// 	guint16     interface_offsets_count;
-// 	MonoClass **interfaces_packed;
-// 	guint16    *interface_offsets_packed;
+// 	(+72) guint16     interface_offsets_count;
+// 	(+76) MonoClass **interfaces_packed;
+// 	(+80) guint16    *interface_offsets_packed;
 // /* enabled only with small config for now: we might want to do it unconditionally */
 // #ifdef MONO_SMALL_CONFIG
 // #define COMPRESSED_INTERFACE_BITMAP 1
 // #endif
-// 	guint8     *interface_bitmap;
+// 	(+82) guint8     *interface_bitmap;
 // 
-// 	MonoClass **interfaces;
+// 	(+84) MonoClass **interfaces;
 // 
-// 	union {
+// 	(+88) union {
 // 		int class_size; /* size of area for static fields */
 // 		int element_size; /* for array types */
 // 		int generic_param_token; /* for generic param types, both var and mvar */
@@ -112,38 +114,53 @@ namespace process_watcher::memory::mono {
 // 	/*
 // 	 * Field information: Type and location from object base
 // 	 */
-// 	MonoClassField *fields;
+// 	(+96) MonoClassField *fields; -> I confirmed this number in the disassembler too hmmmmm
 // 
-// 	MonoMethod **methods;
+// 	(+96) MonoMethod **methods;
 // 
 // 	/* used as the type of the this argument and when passing the arg by value */
-// 	MonoType this_arg;
-// 	MonoType byval_arg;
+// 	(+100) MonoType this_arg;
+// 	(+112) MonoType byval_arg;
 // 
-// 	MonoGCDescriptor gc_descr;
+// 	(+124) MonoGCDescriptor gc_descr;
 // 
-// 	MonoClassRuntimeInfo *runtime_info;
+// 	(+128) MonoClassRuntimeInfo *runtime_info;
 // 
 // 	/* Generic vtable. Initialized by a call to mono_class_setup_vtable () */
-// 	MonoMethod **vtable;
+// 	(+132) MonoMethod **vtable;
 // 
 // 	/* Infrequently used items. See class-accessors.c: InfrequentDataKind for what goes into here. */
-// 	MonoPropertyBag infrequent_data;
+// 	(+136) MonoPropertyBag infrequent_data;
 // 
-// 	void *unity_user_data;
+// 	(+140) void *unity_user_data;
 // };
 class MonoClassMapper {
 public:
-    MonoClassMapper(const process_watcher::memory::ModuleMemoryMapper& memory, uintptr_t ptr);
+    MonoClassMapper(class MonoImageMapper* image, const process_watcher::memory::ModuleMemoryMapperSPtr& memory, uintptr_t ptr);
+
+    // NO DATA IS LOADED BEFORE loadInner is called. This *can not* be a part of the 
+    // constructor or else we'll risk having infinite recursion as it's possible for a
+    // field to have a type to another class. If that type loads the class from the
+    // image mapper and it's *this class* then the image mapper will try to load *this class*
+    // again. Thus, the image mapper must first construct the wrapper, store the wrapper in
+    // an accessible way, *and then* allow the class wrapper to load data from memory.
+    void loadInner();
 
     const std::string& name() const { return _name; }
     std::string fullName() const;
+
+    friend std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);
 private:
+    class MonoImageMapper* _image;
+    process_watcher::memory::ModuleMemoryMapperSPtr _memory;
     uintptr_t _ptr = 0;
+
     std::string _name;
     std::string _namespace;
+    std::unordered_map<std::string, MonoClassFieldMapperPtr> _fields;
 };
 
+std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);
 using MonoClassMapperPtr = std::unique_ptr<MonoClassMapper>;
 
 }

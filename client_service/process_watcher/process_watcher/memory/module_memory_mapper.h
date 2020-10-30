@@ -8,6 +8,7 @@
 #include <psapi.h>
 #endif
 
+#include <memory>
 #include <vector>
 
 namespace process_watcher::memory {
@@ -38,5 +39,7 @@ private:
     MODULEINFO _modInfo;
     std::vector<char> _buffer;
 };
+
+using ModuleMemoryMapperSPtr = std::shared_ptr<ModuleMemoryMapper>;
 
 }

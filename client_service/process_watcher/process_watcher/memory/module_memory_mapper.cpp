@@ -86,7 +86,10 @@ void ModuleMemoryMapper::readProcessMemory(std::string& buffer, uintptr_t src, b
         // In this case the 'src' is a 'const char*' so we actually need to do another redirect to read the C string.
         uint32_t redirect = 0;
         readProcessMemory(&redirect, src);
-        readProcessMemory(buffer, static_cast<uintptr_t>(redirect), false);
+
+        if (redirect) {
+            readProcessMemory(buffer, static_cast<uintptr_t>(redirect), false);
+        }
         return;
     }
 

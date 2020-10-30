@@ -1,1 +1,2 @@
+add_subdirectory(mono_dumper)
 add_subdirectory(pe_dumper)

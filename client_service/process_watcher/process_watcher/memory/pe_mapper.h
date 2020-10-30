@@ -1,6 +1,7 @@
 #pragma once
 
 #include "process_watcher/memory/module_memory_mapper.h"
+#include <iostream>
 #include <unordered_map>
 
 namespace process_watcher::memory {
@@ -15,11 +16,12 @@ enum class ExecutableArch {
 // Informationa bout the PE format can be found here: https://docs.microsoft.com/en-us/windows/win32/debug/pe-format
 class PEMapper {
 public:
-    explicit PEMapper(const ModuleMemoryMapper& mapper);
+    explicit PEMapper(const ModuleMemoryMapperSPtr& mapper);
 
     uint32_t getExportRva(const std::string& name) const { return _exportRvas.at(name); }
     ExecutableArch arch() const;
 
+    friend std::ostream& operator<<(std::ostream& os, const PEMapper& map);
 private:
     const char* loadMsDosStub(const char* buffer);
     const char* loadPEHeader(const char* buffer);
@@ -80,5 +82,7 @@ private:
     PEFile _file;
     std::unordered_map<std::string, uint32_t> _exportRvas;
 };
+
+std::ostream& operator<<(std::ostream& os, const PEMapper& map);
 
 }

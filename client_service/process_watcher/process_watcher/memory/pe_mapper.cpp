@@ -21,8 +21,8 @@ constexpr uint32_t PE32_OPTIONAL_HEADER_DATA_DIR_OFFSET = 28 + 68;
 constexpr uint32_t PE32_PLUS_OPTIONAL_HEADER_DATA_DIR_OFFSET = 24 + 88;
 }
 
-PEMapper::PEMapper(const ModuleMemoryMapper& mapper) {
-    const auto& buffer = mapper.moduleBuffer();
+PEMapper::PEMapper(const ModuleMemoryMapperSPtr& mapper) {
+    const auto& buffer = mapper->moduleBuffer();
     
     {
         const char* rawBuffer = buffer.data();
@@ -138,6 +138,16 @@ ExecutableArch PEMapper::arch() const {
     } else { 
         return ExecutableArch::X86_64;
     }
+}
+
+std::ostream& operator<<(std::ostream& os, const PEMapper& map) {
+    os << "PE Mapper: " << std::endl
+        << "\t Machine: " << map._file.coff.machine << std::endl
+        << "\t Exports: ";
+    for (const auto& kvp : map._exportRvas) {
+        os << std::endl << "\t\t" << kvp.first;
+    }
+    return os;
 }
 
 }

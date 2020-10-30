@@ -11,11 +11,14 @@ namespace process_watcher::memory {
 // Note that this is specific to mapping out the *Unity* fork of Mono.
 class MonoMemoryMapper {
 public:
-    MonoMemoryMapper(const ModuleMemoryMapper& memory, const PEMapper& pe);
+    MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const PEMapper& pe);
 
+    friend std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map);
 private:
     uint32_t _rootDomainPtr = 0;
-    mono::MonoImageWrapperPtr _image;
+    mono::MonoImageMapperPtr _image;
 };
+
+std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map);
 
 }
