@@ -4,6 +4,8 @@
 #include "process_watcher/memory/pe_mapper.h"
 #include "process_watcher/memory/mono/mono_image_mapper.h"
 
+#include <memory>
+
 namespace process_watcher::memory {
 
 // Pulls Mono-specific data out of memory using the already mapped
@@ -12,13 +14,18 @@ namespace process_watcher::memory {
 class MonoMemoryMapper {
 public:
     MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const PEMapper& pe);
+    const mono::MonoImageMapper& image() const { return *_image; }
+
+    int32_t domainId() const { return _domainId; }
 
     friend std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map);
 private:
     uint32_t _rootDomainPtr = 0;
+    int32_t _domainId = 0;
     mono::MonoImageMapperPtr _image;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map);
+using MonoMemoryMapperPtr = std::unique_ptr<MonoMemoryMapper>;
 
 }

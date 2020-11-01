@@ -3,6 +3,7 @@
 #include "process_watcher/memory/module_memory_mapper.h"
 #include "process_watcher/memory/mono/mono_class_mapper.h"
 #include "process_watcher/memory/mono/mono_type_mapper.h"
+#include "process_watcher/memory/mono/mono_vtable_mapper.h"
 
 #include <memory>
 #include <unordered_map>
@@ -257,7 +258,15 @@ public:
     MonoImageMapper(const process_watcher::memory::ModuleMemoryMapperSPtr& memory, uintptr_t ptr);
 
     const MonoClassMapper* loadClassFromPtr(uintptr_t ptr);
+    const MonoClassMapper* loadClassFromFullName(const std::string& nm) const;
+
     const MonoTypeMapper* loadTypeFromPtr(uintptr_t ptr);
+
+    // loadVTableForClass should be called on demand so that we only load the vtables for the
+    // classes/objects that we need to actually access. Note that this is a bit of a hack to
+    // get around the const-ness of the input klass. LOL.
+    const MonoVTableMapper* loadVTableForClass(const MonoClassMapper* klass, int32_t domainId);
+    const MonoVTableMapper* loadVTableFromPtr(uintptr_t ptr, int32_t domainId);
 
     friend std::ostream& operator<<(std::ostream& os, const MonoImageMapper& map);
 private:
@@ -271,6 +280,9 @@ private:
 
     // Access by type pointer.
     std::unordered_map<uintptr_t, MonoTypeMapperPtr> _types;
+
+    // Populated by loadVTableForClass.
+    std::unordered_map<uintptr_t, const MonoVTableMapper*> _vtables;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoImageMapper& map);

@@ -54,8 +54,12 @@ const MonoClassMapper* MonoImageMapper::loadClassFromPtr(uintptr_t ptr) {
     // only try to look up the class using the ptr.
     retPtr->loadInner();
 
-    _classes[klass->name()] = std::move(klass);
+    _classes[klass->fullName()] = std::move(klass);
     return retPtr;
+}
+
+const MonoClassMapper* MonoImageMapper::loadClassFromFullName(const std::string& nm) const {
+    return _classes.at(nm).get();
 }
 
 const MonoTypeMapper* MonoImageMapper::loadTypeFromPtr(uintptr_t ptr) {
@@ -69,6 +73,31 @@ const MonoTypeMapper* MonoImageMapper::loadTypeFromPtr(uintptr_t ptr) {
     _types[ptr] = std::move(typ);
     typPtr->loadInner();
     return typPtr;
+}
+
+const MonoVTableMapper* MonoImageMapper::loadVTableForClass(const MonoClassMapper* klass, int32_t domainId) {
+    // As I said, hack for getting around the const-ness...
+    auto* cls = const_cast<MonoClassMapper*>(loadClassFromPtr(klass->ptr()));
+    const auto* vtable = cls->loadVTable(domainId);
+    _vtables[vtable->ptr()] = vtable;
+    return vtable;
+}
+
+const MonoVTableMapper* MonoImageMapper::loadVTableFromPtr(uintptr_t ptr, int32_t domainId) {
+    // Note that it's inappropriate to assume that loadVTableFromPtr is only called for
+    // vtables that already exist. If it doesn't exist, we need to do some digging to figure out
+    // what class it's being loaded for.
+    auto it = _vtables.find(ptr);
+    if (it != _vtables.end()) {
+        return (*it).second;
+    }
+
+    // The first 4 bytes are a pointer to the class so just use that to go through the loadVTableForClass
+    // route since we kind of assume that the class takes ownership of the vtable for better or worse.
+    uint32_t classPtr = 0;
+    _memory->readProcessMemory(&classPtr, ptr);
+    const auto* cls = loadClassFromPtr(static_cast<uintptr_t>(classPtr));
+    return loadVTableForClass(cls, domainId);
 }
 
 std::ostream& operator<<(std::ostream& os, const MonoImageMapper& map) {

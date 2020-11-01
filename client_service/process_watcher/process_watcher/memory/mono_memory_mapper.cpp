@@ -33,6 +33,7 @@ constexpr uint32_t MONO_DOMAIN_ASSEMBLIES_OFFSET =
     4 + // guint32            state;
     4 + // gint32             domain_id;
     4;  // gint32             shadow_serial;
+constexpr uint32_t MONO_DOMAIN_ID_OFFSET = MONO_DOMAIN_ASSEMBLIES_OFFSET - 8;
 constexpr uint32_t MONO_ASSEMBLY_NAME_OFFSET = 8;
 constexpr uint32_t MONO_ASSEMBLY_IMAGE_PTR_OFFSET = MONO_ASSEMBLY_NAME_OFFSET +
     4 + // const char *name;
@@ -69,6 +70,9 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const P
     uint32_t rootDomainLocPtr = 0;
     std::memcpy(&rootDomainLocPtr, &x86Func[1], 4);
     memory->readProcessMemory(&_rootDomainPtr, static_cast<uintptr_t>(rootDomainLocPtr));
+
+    // The domain ID is later needed to grab the VTable for classes/objects so we can extract properties and the like.
+    memory->readProcessMemory(&_domainId, static_cast<uintptr_t>(_rootDomainPtr + MONO_DOMAIN_ID_OFFSET));
 
     // Now that we have the location of the root domain we need to grab the available assemblies
     // and find the relevant Assembly-CSharp.

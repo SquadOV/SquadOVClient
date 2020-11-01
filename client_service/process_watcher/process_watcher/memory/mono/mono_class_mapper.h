@@ -2,6 +2,7 @@
 
 #include "process_watcher/memory/module_memory_mapper.h"
 #include "process_watcher/memory/mono/mono_classfield_mapper.h"
+#include "process_watcher/memory/mono/mono_vtable_mapper.h"
 
 #include <memory>
 #include <string>
@@ -80,7 +81,7 @@ namespace process_watcher::memory::mono {
 // 	guint has_failure : 1; /* See mono_class_get_exception_data () for a MonoErrorBoxed with the details */
 // 	guint has_weak_fields : 1; /* class has weak reference fields */
 // 
-// 	(+32) MonoClass  *parent; --> between class_kind and parent are 9 bits so I'm assuming it's going to pad out to 28 bytes
+// 	(+32) MonoClass  *parent;
 // 	(+36) MonoClass  *nested_in;
 // 
 //  (+40) MonoImage *image; --> I confirmed this number in disassembler. There's probably nesting shenanigans going on with the bitfields...
@@ -103,9 +104,9 @@ namespace process_watcher::memory::mono {
 // #endif
 // 	(+82) guint8     *interface_bitmap;
 // 
-// 	(+84) MonoClass **interfaces;
+// 	(+88) MonoClass **interfaces;
 // 
-// 	(+88) union {
+// 	(+92) union {
 // 		int class_size; /* size of area for static fields */
 // 		int element_size; /* for array types */
 // 		int generic_param_token; /* for generic param types, both var and mvar */
@@ -116,23 +117,23 @@ namespace process_watcher::memory::mono {
 // 	 */
 // 	(+96) MonoClassField *fields; -> I confirmed this number in the disassembler too hmmmmm
 // 
-// 	(+96) MonoMethod **methods;
+// 	(+100) MonoMethod **methods;
 // 
 // 	/* used as the type of the this argument and when passing the arg by value */
-// 	(+100) MonoType this_arg;
-// 	(+112) MonoType byval_arg;
+// 	(+104) MonoType this_arg;
+// 	(+116) MonoType byval_arg;
 // 
-// 	(+124) MonoGCDescriptor gc_descr;
+// 	(+128) MonoGCDescriptor gc_descr;
 // 
-// 	(+128) MonoClassRuntimeInfo *runtime_info;
+// 	(+132) MonoClassRuntimeInfo *runtime_info;
 // 
 // 	/* Generic vtable. Initialized by a call to mono_class_setup_vtable () */
-// 	(+132) MonoMethod **vtable;
+// 	(+136) MonoMethod **vtable;
 // 
 // 	/* Infrequently used items. See class-accessors.c: InfrequentDataKind for what goes into here. */
-// 	(+136) MonoPropertyBag infrequent_data;
+// 	(+140) MonoPropertyBag infrequent_data;
 // 
-// 	(+140) void *unity_user_data;
+// 	(+144) void *unity_user_data;
 // };
 class MonoClassMapper {
 public:
@@ -146,8 +147,16 @@ public:
     // an accessible way, *and then* allow the class wrapper to load data from memory.
     void loadInner();
 
+    const MonoClassFieldMapper& field(const std::string& nm) const { return *_fields.at(nm); }
+    const uintptr_t ptr() const { return _ptr; }
+
     const std::string& name() const { return _name; }
     std::string fullName() const;
+
+    int32_t sizes() const { return _sizes; }
+    bool isValueType() const { return _isValueType; }
+
+    const MonoVTableMapper* loadVTable(int32_t domainId);
 
     friend std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);
 private:
@@ -158,6 +167,10 @@ private:
     std::string _name;
     std::string _namespace;
     std::unordered_map<std::string, MonoClassFieldMapperPtr> _fields;
+    std::unordered_map<int32_t, MonoVTableMapperPtr> _domainVtables;
+
+    int32_t _sizes;
+    bool _isValueType;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);

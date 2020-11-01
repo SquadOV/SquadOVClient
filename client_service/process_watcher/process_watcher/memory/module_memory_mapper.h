@@ -24,12 +24,21 @@ public:
 
     void readProcessMemory(std::vector<char>& buffer, uintptr_t src, size_t numBytes) const;
     void readProcessMemory(std::string& buffer, uintptr_t src, bool isCPtr) const;
+    void readProcessMemory(std::string& buffer, uintptr_t src, size_t length) const;
+    void readProcessMemory(std::u16string& buffer, uintptr_t src, size_t length) const;
 
     template<typename T, typename D>
     void readProcessMemory(T* buffer, D src) const {
         if (!ReadProcessMemory(_hProcess, reinterpret_cast<LPCVOID>(src), buffer, sizeof(T), nullptr)) {
             THROW_WIN32_ERROR("Failed to read process memory.");
         }
+    }
+
+    template<typename T, typename D>
+    T readProcessMemory(D src) const {
+        T ret;
+        readProcessMemory(&ret, src);
+        return ret;
     }
 private:
     // It's feasible that we'd want to read the memory multiple times or from different locations.

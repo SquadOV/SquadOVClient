@@ -81,6 +81,20 @@ void ModuleMemoryMapper::readProcessMemory(std::vector<char>& buffer, uintptr_t 
     }
 }
 
+void ModuleMemoryMapper::readProcessMemory(std::string& buffer, uintptr_t src, size_t length) const {
+    buffer.resize(length);
+    if (!ReadProcessMemory(_hProcess, reinterpret_cast<LPCVOID>(src), buffer.data(), length, nullptr)) {
+        THROW_WIN32_ERROR("Failed to read process memory.");
+    }
+}
+
+void ModuleMemoryMapper::readProcessMemory(std::u16string& buffer, uintptr_t src, size_t length) const {
+    buffer.resize(length);
+    if (!ReadProcessMemory(_hProcess, reinterpret_cast<LPCVOID>(src), buffer.data(), length * 2, nullptr)) {
+        THROW_WIN32_ERROR("Failed to read process memory.");
+    }
+}
+
 void ModuleMemoryMapper::readProcessMemory(std::string& buffer, uintptr_t src, bool isCPtr) const {
     if (isCPtr) {
         // In this case the 'src' is a 'const char*' so we actually need to do another redirect to read the C string.

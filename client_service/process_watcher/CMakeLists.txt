@@ -11,6 +11,15 @@ SET(SRCS
     process_watcher/memory/mono/mono_class_mapper.cpp
     process_watcher/memory/mono/mono_classfield_mapper.cpp
     process_watcher/memory/mono/mono_type_mapper.cpp
+    process_watcher/memory/mono/mono_vtable_mapper.cpp
+    process_watcher/memory/mono/mono_object_mapper.cpp
+    process_watcher/memory/mono/types/string_mapper.cpp
+    process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/collection_deck_box_visual_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/uber_text_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/collection_manager_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/collection_deck_mapper.cpp
 )
 
 SET(HEADERS
@@ -23,10 +32,23 @@ SET(HEADERS
     process_watcher/memory/module_memory_mapper.h
     process_watcher/memory/pe_mapper.h
     process_watcher/memory/mono_memory_mapper.h
+    process_watcher/memory/mono/mono_forward.h
     process_watcher/memory/mono/mono_image_mapper.h
     process_watcher/memory/mono/mono_class_mapper.h
     process_watcher/memory/mono/mono_classfield_mapper.h
     process_watcher/memory/mono/mono_type_mapper.h
+    process_watcher/memory/mono/mono_vtable_mapper.h
+    process_watcher/memory/mono/mono_object_mapper.h
+    process_watcher/memory/mono/types/array_mapper.h
+    process_watcher/memory/mono/types/string_mapper.h
+    process_watcher/memory/mono/types/map_mapper.h
+    process_watcher/memory/mono/types/link_mapper.h
+    process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h
+    process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.h
+    process_watcher/memory/games/hearthstone/types/collection_deck_box_visual_mapper.h
+    process_watcher/memory/games/hearthstone/types/uber_text_mapper.h
+    process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h
+    process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h
 )
 
 add_library(squadov_process_watcher
