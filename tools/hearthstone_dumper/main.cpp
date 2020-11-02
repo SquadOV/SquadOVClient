@@ -17,8 +17,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("exe", po::value<std::string>()->required(), "Process to hook to.")
-        ("module", po::value<std::string>()->required(), "PE module to dump.")
-        ("output", po::value<std::string>()->required(), "File to output to");
+        ("module", po::value<std::string>()->required(), "PE module to dump.");
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -49,11 +48,9 @@ int main(int argc, char** argv) {
     const auto deck = hearthstoneMapper.getCurrentDeck();
 
     if (deck) {
-        std::cout << "Selected Deck: " << deck->deckId() << "\t" << deck->name() << std::endl;
+        std::cout << "Selected Deck: " << *deck << std::endl;
     } else {
         std::cout << "Unknown Deck Selected" << std::endl;
     }
-
-    std::ofstream file(vm["output"].as<std::string>());
     return 0;
 }

@@ -148,6 +148,7 @@ public:
     // an accessible way, *and then* allow the class wrapper to load data from memory.
     void loadInner();
 
+    const MonoClassMapper* elementClass() const { return _elementClass; }
     const MonoClassFieldMapper& field(const std::string& nm) const { return *_fields.at(nm); }
     const uintptr_t ptr() const { return _ptr; }
 
@@ -156,6 +157,7 @@ public:
 
     int32_t sizes() const { return _sizes; }
     bool isValueType() const { return _isValueType; }
+    bool isEnumType() const { return _isEnumType; }
 
     const MonoVTableMapper* loadVTable(int32_t domainId);
     const MonoTypeMapper* type() const { return _type.get(); }
@@ -166,6 +168,7 @@ private:
     process_watcher::memory::ModuleMemoryMapperSPtr _memory;
     uintptr_t _ptr = 0;
 
+    const MonoClassMapper* _elementClass;
     std::string _name;
     std::string _namespace;
     std::unordered_map<std::string, MonoClassFieldMapperPtr> _fields;
@@ -174,6 +177,7 @@ private:
 
     int32_t _sizes;
     bool _isValueType;
+    bool _isEnumType;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);

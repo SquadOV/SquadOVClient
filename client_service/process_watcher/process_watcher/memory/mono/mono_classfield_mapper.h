@@ -42,6 +42,8 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const MonoClassFieldMapper& map);
 private:
+    DynamicMonoType getValue(uintptr_t ptr, int32_t domainId, const MonoClassMapper* objectKlass, const MonoTypeMapper* typ) const;
+
     class MonoImageMapper* _image;
     process_watcher::memory::ModuleMemoryMapperSPtr _memory;
     uintptr_t _ptr = 0;

@@ -91,53 +91,70 @@ DynamicMonoType MonoClassFieldMapper::get(const MonoObjectMapper* object, int32_
         dataPtr = static_cast<uintptr_t>(newPtr);
     }
 
+    return getValue(dataPtr, domainId, objectKlass, _type);
+}
+
+
+DynamicMonoType MonoClassFieldMapper::getValue(uintptr_t ptr, int32_t domainId, const MonoClassMapper* objectKlass, const MonoTypeMapper* typ) const {
     // TODO: Support other data types.
-    DynamicMonoType ret(dataPtr);
-    switch (_type->type()) {
+    DynamicMonoType ret(ptr);
+    switch (typ->type()) {
         case MonoTypes::Class:
         case MonoTypes::SzArray:
         case MonoTypes::GenericInst:
             // We use the constructor that takes in the class because that allows the MonoObjectMapper to
             // selectively load the vtable or not based on data from the class.
-            ret = std::make_shared<MonoObjectMapper>(_image, _memory, dataPtr, domainId, objectKlass);
+            ret = std::make_shared<MonoObjectMapper>(_image, _memory, ptr, domainId, objectKlass);
             break;
         case MonoTypes::Uint1:
         case MonoTypes::Bool:
-            ret = _memory->readProcessMemory<uint8_t>(dataPtr);
+            ret = _memory->readProcessMemory<uint8_t>(ptr);
             break;
         case MonoTypes::Uint2:
-            ret = _memory->readProcessMemory<uint16_t>(dataPtr);
+            ret = _memory->readProcessMemory<uint16_t>(ptr);
             break;
         case MonoTypes::Uint4:
-            ret = _memory->readProcessMemory<uint32_t>(dataPtr);
+            ret = _memory->readProcessMemory<uint32_t>(ptr);
             break;
         case MonoTypes::Uint8:
-            ret = _memory->readProcessMemory<uint64_t>(dataPtr);
+            ret = _memory->readProcessMemory<uint64_t>(ptr);
             break;
         case MonoTypes::Int1:
-            ret = _memory->readProcessMemory<int8_t>(dataPtr);
+            ret = _memory->readProcessMemory<int8_t>(ptr);
             break;
         case MonoTypes::Int2:
-            ret = _memory->readProcessMemory<int16_t>(dataPtr);
+            ret = _memory->readProcessMemory<int16_t>(ptr);
             break;
         case MonoTypes::Int4:
-            ret = _memory->readProcessMemory<int32_t>(dataPtr);
+            ret = _memory->readProcessMemory<int32_t>(ptr);
             break;
         case MonoTypes::Int8:
-            ret = _memory->readProcessMemory<int64_t>(dataPtr);
+            ret = _memory->readProcessMemory<int64_t>(ptr);
             break;
         case MonoTypes::String: {
             // Technically this *could* be the same as the MonoTypes::Class case as it's really just
             // returning a MonoObject with class String; however, it's more useful to us if we abstract
             // that away and just return an std::string instead.
-            auto monoObject = std::make_shared<MonoObjectMapper>(_image, _memory, dataPtr, domainId);
+            auto monoObject = std::make_shared<MonoObjectMapper>(_image, _memory, ptr, domainId);
             types::StringMapper strMapper(monoObject);
             ret = strMapper.value();
             break;
         }
         case MonoTypes::Char:
-            ret = _memory->readProcessMemory<char16_t>(dataPtr);
+            ret = _memory->readProcessMemory<char16_t>(ptr);
             break;
+        case MonoTypes::ValueType: {
+            // Need to handle enums here as a special case. Not sure what else
+            // will be passed as a ValueType so leave that to whenever we encounter that.
+            const auto* innerCls = _type->inner<const class MonoClassMapper*>();
+            const auto* elementCls = innerCls->elementClass();
+            if (innerCls->isEnumType()) {
+                return getValue(ptr, domainId, elementCls, elementCls->type());
+            } else {
+                THROW_ERROR("Non-Enum VALUETYPE unsupported.");    
+            }
+            break;
+        }
         default:
             THROW_ERROR("Unsupported type to get value from.");
     }

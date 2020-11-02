@@ -8,7 +8,9 @@ namespace {
 
 constexpr uint32_t MONO_CLASS_FLAGS_OFFSET = 20;
 constexpr uint8_t MONO_CLASS_VALUETYPE_FLAGS_BITFLAGS = 0b100;
+constexpr uint8_t MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS = 0b1000;
 
+constexpr uint32_t MONO_CLASS_ELEMENTCLASS_OFFSET = 0;
 constexpr uint32_t MONO_CLASS_KIND_OFFSET = 30;
 constexpr uint32_t MONO_CLASS_NAME_OFFSET = 44;
 constexpr uint32_t MONO_CLASS_NAMESPACE_OFFSET = 48;
@@ -82,6 +84,9 @@ MonoClassMapper::MonoClassMapper(class MonoImageMapper* image, const process_wat
 }
 
 void MonoClassMapper::loadInner() {
+    const auto eleClassPtr = _memory->readProcessMemory<uint32_t>(_ptr + MONO_CLASS_ELEMENTCLASS_OFFSET);
+    _elementClass = _image->loadClassFromPtr(static_cast<uintptr_t>(eleClassPtr));
+
     _memory->readProcessMemory(_name, _ptr + MONO_CLASS_NAME_OFFSET, true);
     _memory->readProcessMemory(_namespace, _ptr + MONO_CLASS_NAMESPACE_OFFSET, true);
 
@@ -105,6 +110,7 @@ void MonoClassMapper::loadInner() {
 
     const auto flags = _memory->readProcessMemory<uint8_t>(_ptr + MONO_CLASS_FLAGS_OFFSET);
     _isValueType = flags & MONO_CLASS_VALUETYPE_FLAGS_BITFLAGS;
+    _isEnumType = flags & MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS;
 }
 
 std::string MonoClassMapper::fullName() const {
