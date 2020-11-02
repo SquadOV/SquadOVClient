@@ -2,6 +2,8 @@
 #include "process_watcher/memory/mono/mono_image_mapper.h"
 
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 namespace process_watcher::memory::mono {
 namespace {
@@ -50,6 +52,8 @@ std::string monoTypeToString(MonoTypes typ) {
             return "Value";
         case MonoTypes::Class:
             return "Class";
+        case MonoTypes::Var:
+            return "Var";
         case MonoTypes::Array:
             return "Array";
         case MonoTypes::GenericInst:
@@ -159,6 +163,11 @@ std::string MonoTypeMapper::name() const {
         str << ">";
     }
     return str.str();
+}
+
+bool operator==(const MonoTypeMapper& a, const MonoTypeMapper& b) {
+    // I'm not sure if it's valid to just compare the "data" but yolooooo.
+    return a.rawData() == b.rawData();
 }
 
 std::ostream& operator<<(std::ostream& os, const MonoTypeMapper& map) {

@@ -43,15 +43,20 @@ DynamicMonoType MonoClassFieldMapper::get(const MonoObjectMapper* object, int32_
         // static data in the vtable member and offset it by what's stored in
         // _classfield.offset and that should get us what we need to read.
         const auto* vtable = _image->loadVTableForClass(_class, domainId);
+        if (!vtable) {
+            return DynamicMonoType(nullptr);
+        }
+
         auto staticPtr = vtable->getStaticDataPtr();
         if (!staticPtr) {
-            THROW_ERROR("VTable lacks static data.");
+            return DynamicMonoType(nullptr);
         }
         dataPtr = staticPtr + _classfield.offset;
     } else {
         dataPtr = object->ptr() + _classfield.offset;
     }
 
+    const MonoClassMapper* objectKlass = nullptr;
     // isPtr determines whether or not what's stored in memory that we're going to read 
     // using the field's offset is a pointer or not. Note that this kind of mixes together
     // references and pointers as we're not really interested in maintaining separation
@@ -59,11 +64,19 @@ DynamicMonoType MonoClassFieldMapper::get(const MonoObjectMapper* object, int32_
     bool isPtr = false;
     switch (_type->type()) {
         case MonoTypes::Class:
-        case MonoTypes::GenericInst:
         case MonoTypes::SzArray:
         case MonoTypes::String:
             isPtr = true;
             break;
+        case MonoTypes::GenericInst: {
+            // GenericInst is a ref/ptr only if the inner type isn't a value type.
+            const auto* innerCls = _type->inner<const class MonoClassMapper*>();
+            isPtr = !innerCls->isValueType();
+            if (!isPtr) {
+                objectKlass = innerCls;
+            }
+            break;
+        }
         default:
             isPtr = _type->byRef();
             break;
@@ -82,11 +95,14 @@ DynamicMonoType MonoClassFieldMapper::get(const MonoObjectMapper* object, int32_
     DynamicMonoType ret(dataPtr);
     switch (_type->type()) {
         case MonoTypes::Class:
-        case MonoTypes::GenericInst:
         case MonoTypes::SzArray:
-            ret = std::make_shared<MonoObjectMapper>(_image, _memory, dataPtr, domainId);
+        case MonoTypes::GenericInst:
+            // We use the constructor that takes in the class because that allows the MonoObjectMapper to
+            // selectively load the vtable or not based on data from the class.
+            ret = std::make_shared<MonoObjectMapper>(_image, _memory, dataPtr, domainId, objectKlass);
             break;
         case MonoTypes::Uint1:
+        case MonoTypes::Bool:
             ret = _memory->readProcessMemory<uint8_t>(dataPtr);
             break;
         case MonoTypes::Uint2:

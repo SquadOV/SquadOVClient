@@ -1,6 +1,7 @@
 #include "process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.h"
 
 namespace process_watcher::memory::games::hearthstone {
 
@@ -10,7 +11,7 @@ HearthstoneMemoryMapper::HearthstoneMemoryMapper(process_watcher::memory::MonoMe
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeck() const {
-    auto deck = getCurrentDeckInUI();
+    const auto deck = getCurrentDeckInUI();
     if (deck) {
         return deck;
     }
@@ -18,7 +19,7 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeck() const 
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInUI() const {
-    auto deckPicker = types::DeckPickerTrayDisplayMapper::singleton(_mono->image(), _mono->domainId());
+    const auto deckPicker = types::DeckPickerTrayDisplayMapper::singleton(_mono->image(), _mono->domainId());
     if (!deckPicker) {
         return nullptr;
     }
@@ -27,11 +28,21 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInUI() co
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch() const {
-    return nullptr;
+    const auto gameMgr = types::HearthstoneServicesMapper::getGameMgr(_mono->image(), _mono->domainId());
+    if (!gameMgr) {
+        return nullptr;
+    }
+
+    const auto deckId = gameMgr->lastDeckId();
+    if (!deckId) {
+        return nullptr;
+    }
+
+    return getDeckFromId(deckId.value());
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getDeckFromId(int64_t deckId) const {
-    auto mgr = types::CollectionManagerMapper::singleton(_mono->image(), _mono->domainId());
+    const auto mgr = types::CollectionManagerMapper::singleton(_mono->image(), _mono->domainId());
     if (!mgr) {
         return nullptr;
     }

@@ -90,7 +90,6 @@ T ArrayEleMapperHelper<T, D>::extract(uintptr_t ptr) const {
             _arr._object->domainId()
         ));
     }
-    return T();
 }
 
 template<typename T>

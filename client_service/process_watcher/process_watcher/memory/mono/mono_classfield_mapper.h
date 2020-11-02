@@ -36,6 +36,7 @@ public:
 
     DynamicMonoType getStatic(int32_t domainId) const;
     DynamicMonoType get(const class MonoObjectMapper* object, int32_t domainId) const;
+    int32_t offset() const { return _classfield.offset; }
 
     const MonoTypeMapper* type() const { return _type; }
 

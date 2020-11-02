@@ -15,6 +15,7 @@ constexpr uint32_t MONO_CLASS_NAMESPACE_OFFSET = 48;
 constexpr uint32_t MONO_CLASS_VTABLE_SIZE_OFFSET = 56;
 constexpr uint32_t MONO_CLASS_SIZES_OFFSET = 92;
 constexpr uint32_t MONO_CLASS_CLASSFIELDS_OFFSET = 96;
+constexpr uint32_t MONO_CLASS_THISARG_OFFSET = 104;
 constexpr uint32_t MONO_CLASS_RUNTIME_INFO_OFFSET = 132;
 constexpr uint32_t MONO_CLASS_SIZE = 148; // I'm assuming I counted MonoType wrong or something.
 constexpr uint32_t MONO_CLASSDEF_FIELD_COUNT_OFFSET = MONO_CLASS_SIZE + 16;
@@ -97,6 +98,9 @@ void MonoClassMapper::loadInner() {
         classFieldsPtr += MONO_CLASSFIELDS_SIZE;
     }
 
+    _type = std::make_unique<MonoTypeMapper>(_image, _memory, _ptr + MONO_CLASS_THISARG_OFFSET);
+    _type->loadInner();
+
     _sizes = _memory->readProcessMemory<int32_t>(_ptr + MONO_CLASS_SIZES_OFFSET);
 
     const auto flags = _memory->readProcessMemory<uint8_t>(_ptr + MONO_CLASS_FLAGS_OFFSET);
@@ -121,17 +125,25 @@ const MonoVTableMapper* MonoClassMapper::loadVTable(int32_t domainId) {
     int32_t vtableSize = 0;
     _memory->readProcessMemory(&vtableSize, _ptr + MONO_CLASS_VTABLE_SIZE_OFFSET);
 
+    if (!vtableSize) {
+        return nullptr;
+    }
+
     // Grab the runtime_info to get the MonoClassRuntimeInfo object.
     // Ensure the input domain ID is less than or equal to max_domain (array size is max_domain + 1) and
     // then use the MonoVTable pointer to create a MonoVTableMapper.
     uint32_t runtimeInfoPtr = 0;
     _memory->readProcessMemory(&runtimeInfoPtr, _ptr + MONO_CLASS_RUNTIME_INFO_OFFSET);
 
+    if (!runtimeInfoPtr) {
+        return nullptr;
+    }
+
     uint16_t maxDomains = 0;
     _memory->readProcessMemory(&maxDomains, static_cast<uintptr_t>(runtimeInfoPtr));
 
     if (domainId < 0 || domainId >= static_cast<int32_t>(maxDomains)) {
-        THROW_ERROR("Invalid domain ID.");
+        return nullptr;
     }
     
     uint32_t vtablePtr = 0;

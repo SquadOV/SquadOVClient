@@ -3,6 +3,7 @@
 #include "process_watcher/memory/module_memory_mapper.h"
 #include "process_watcher/memory/mono/mono_classfield_mapper.h"
 #include "process_watcher/memory/mono/mono_vtable_mapper.h"
+#include "process_watcher/memory/mono/mono_type_mapper.h"
 
 #include <memory>
 #include <string>
@@ -157,6 +158,7 @@ public:
     bool isValueType() const { return _isValueType; }
 
     const MonoVTableMapper* loadVTable(int32_t domainId);
+    const MonoTypeMapper* type() const { return _type.get(); }
 
     friend std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);
 private:
@@ -168,6 +170,7 @@ private:
     std::string _namespace;
     std::unordered_map<std::string, MonoClassFieldMapperPtr> _fields;
     std::unordered_map<int32_t, MonoVTableMapperPtr> _domainVtables;
+    MonoTypeMapperPtr _type;
 
     int32_t _sizes;
     bool _isValueType;

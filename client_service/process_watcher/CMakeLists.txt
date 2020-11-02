@@ -20,6 +20,10 @@ SET(SRCS
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_deck_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/service_locator_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/game_mgr_mapper.cpp
 )
 
 SET(HEADERS
@@ -42,13 +46,19 @@ SET(HEADERS
     process_watcher/memory/mono/types/array_mapper.h
     process_watcher/memory/mono/types/string_mapper.h
     process_watcher/memory/mono/types/map_mapper.h
+    process_watcher/memory/mono/types/nullable_mapper.h
     process_watcher/memory/mono/types/link_mapper.h
+    process_watcher/memory/mono/types/list_mapper.h
     process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h
     process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_deck_box_visual_mapper.h
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h
+    process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.h
+    process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.h
+    process_watcher/memory/games/hearthstone/types/service_locator_mapper.h
+    process_watcher/memory/games/hearthstone/types/game_mgr_mapper.h
 )
 
 add_library(squadov_process_watcher

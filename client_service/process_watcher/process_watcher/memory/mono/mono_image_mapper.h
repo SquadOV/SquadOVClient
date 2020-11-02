@@ -273,10 +273,14 @@ private:
     process_watcher::memory::ModuleMemoryMapperSPtr _memory;
     uintptr_t _ptr = 0;
 
+    // The pointer to the MonoClassMapper *must* be owned by _classPointers as
+    // _classPointers is the only one guaranteed to have a unique mapping to classes.
+    // Accessing class by names is *unsafe* for things like generic types but still needs
+    // to be supported for easier user access.
     // Access by class name.
-    std::unordered_map<std::string, MonoClassMapperPtr> _classes;
-    // Access by class pointer - the pointer to the MonoClassMapper is owned by the unique ptr in _classes.
-    std::unordered_map<uintptr_t, MonoClassMapper*> _classPointers;
+    std::unordered_map<std::string, MonoClassMapper*> _classes;
+    // Access by class pointer.
+    std::unordered_map<uintptr_t, MonoClassMapperPtr> _classPointers;
 
     // Access by type pointer.
     std::unordered_map<uintptr_t, MonoTypeMapperPtr> _types;

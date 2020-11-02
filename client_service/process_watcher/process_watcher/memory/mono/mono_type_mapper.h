@@ -34,6 +34,7 @@ enum class MonoTypes {
     Ptr = 0x0f,
     ValueType = 0x11,
     Class = 0x12,
+    Var = 0x13,
     Array = 0x14,
     GenericInst = 0x15,
     Int = 0x18,
@@ -57,6 +58,7 @@ public:
     MonoTypes type() const { return static_cast<MonoTypes>(_type); }
     bool byRef() const { return _byRef; }
 
+    uint32_t rawData() const { return _data; }
     std::string name() const;
     friend std::ostream& operator<<(std::ostream& os, const MonoTypeMapper& map);
 
@@ -87,6 +89,8 @@ private:
     // A human readable name for the type that we generate.
     std::string _name;
 };
+
+bool operator==(const MonoTypeMapper& a, const MonoTypeMapper& b);
 
 std::ostream& operator<<(std::ostream& os, const MonoTypeMapper& map);
 using MonoTypeMapperPtr = std::unique_ptr<MonoTypeMapper>;

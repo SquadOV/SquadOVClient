@@ -42,24 +42,28 @@ MonoImageMapper::MonoImageMapper(const process_watcher::memory::ModuleMemoryMapp
 const MonoClassMapper* MonoImageMapper::loadClassFromPtr(uintptr_t ptr) {
     auto it = _classPointers.find(ptr);
     if (it != _classPointers.end()) {
-        return (*it).second;
+        return (*it).second.get();
     }
 
     auto klass = std::make_unique<MonoClassMapper>(this, _memory, ptr);
     auto* retPtr = klass.get();
-    _classPointers[ptr] = retPtr;
+    _classPointers[ptr] = std::move(klass);
 
     // This needs to be before we try to store the class by name.
     // It has to be after the ptr set though since Mono internals should
     // only try to look up the class using the ptr.
     retPtr->loadInner();
 
-    _classes[klass->fullName()] = std::move(klass);
+    // This isn't completely safe from stuff like generics so only store by fullname in certain cases.
+    // Generally we only care about more user-facing types.
+    if (retPtr->type()->type() != MonoTypes::GenericInst) {
+        _classes[retPtr->fullName()] = retPtr;
+    }
     return retPtr;
 }
 
 const MonoClassMapper* MonoImageMapper::loadClassFromFullName(const std::string& nm) const {
-    return _classes.at(nm).get();
+    return _classes.at(nm);
 }
 
 const MonoTypeMapper* MonoImageMapper::loadTypeFromPtr(uintptr_t ptr) {
@@ -79,7 +83,9 @@ const MonoVTableMapper* MonoImageMapper::loadVTableForClass(const MonoClassMappe
     // As I said, hack for getting around the const-ness...
     auto* cls = const_cast<MonoClassMapper*>(loadClassFromPtr(klass->ptr()));
     const auto* vtable = cls->loadVTable(domainId);
-    _vtables[vtable->ptr()] = vtable;
+    if (vtable) {
+        _vtables[vtable->ptr()] = vtable;
+    }
     return vtable;
 }
 
