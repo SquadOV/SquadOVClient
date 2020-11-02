@@ -1,6 +1,8 @@
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
+#include "process_watcher/memory/mono/types/list_mapper.h"
 #include <string>
 
+namespace mono = process_watcher::memory::mono;
 namespace process_watcher::memory::games::hearthstone::types {
 namespace {
 
@@ -40,16 +42,6 @@ std::string deckTypeToString(DeckType typ) {
         case DeckType::Unknown:
         default:
             return "Unknown";
-    }
-    return "";
-}
-
-std::string tagPremiumToString(TagPremium typ) {
-    switch (typ) {
-        case TagPremium::Normal:
-            return "Normal";
-        case TagPremium::Golden:
-            return "Golden";
     }
     return "";
 }
@@ -94,6 +86,21 @@ bool CollectionDeckMapper::isWild() const {
     return value.get<uint8_t>();
 }
 
+std::vector<CollectionDeckSlotMapperSPtr> CollectionDeckMapper::slots() const {
+    const auto value = _object->get(COLLECTION_DECK_SLOTS_FIELD_NAME);
+    const auto list = mono::types::ListMapper<CollectionDeckSlotMapperSPtr>(value.get<mono::MonoObjectMapperSPtr>());
+    const auto arr = list.items();
+
+    std::vector<CollectionDeckSlotMapperSPtr> ret;
+    ret.reserve(list.size());
+
+    for (int32_t i = 0; i < list.size(); ++i) {
+        ret.push_back(arr[i]);
+    }
+
+    return ret;
+}
+
 std::ostream& operator<<(std::ostream& os, const CollectionDeckMapper& map) {
     os << "Name: " << map.name()
        << std::endl << "DeckID: " << map.deckId()
@@ -101,7 +108,10 @@ std::ostream& operator<<(std::ostream& os, const CollectionDeckMapper& map) {
        << std::endl << "Type: " << deckTypeToString(map.deckType())
        << std::endl << "Create Date: " << map.createDate()
        << std::endl << "Is Wild: " << map.isWild();
-       
+    for (const auto& sl: map.slots()) {
+        os << std::endl << "------------------------------";
+        os << std::endl << *sl;
+    }       
     return os;
 }
 

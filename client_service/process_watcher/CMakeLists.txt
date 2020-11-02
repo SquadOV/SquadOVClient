@@ -20,6 +20,7 @@ SET(SRCS
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_deck_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/collection_deck_slot_mapper.cpp
     process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.cpp
     process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.cpp
     process_watcher/memory/games/hearthstone/types/service_locator_mapper.cpp
@@ -55,6 +56,7 @@ SET(HEADERS
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h
+    process_watcher/memory/games/hearthstone/types/collection_deck_slot_mapper.h
     process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.h
     process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.h
     process_watcher/memory/games/hearthstone/types/service_locator_mapper.h

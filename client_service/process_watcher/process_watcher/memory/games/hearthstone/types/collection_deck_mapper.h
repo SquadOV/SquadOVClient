@@ -2,7 +2,9 @@
 
 #include "process_watcher/memory/mono/mono_forward.h"
 #include "process_watcher/memory/mono/mono_object_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/collection_deck_slot_mapper.h"
 #include <memory>
+#include <vector>
 
 namespace process_watcher::memory::games::hearthstone::types {
 
@@ -22,12 +24,6 @@ enum class DeckType {
 
 std::string deckTypeToString(DeckType typ);
 
-enum class TagPremium {
-    Normal = 0,
-    Golden = 1
-};
-
-std::string tagPremiumToString(TagPremium typ);
 
 using CollectionDeckMapperSPtr = std::shared_ptr<class CollectionDeckMapper>;
 class CollectionDeckMapper {
@@ -41,6 +37,7 @@ public:
     DeckType deckType() const;
     uint64_t createDate() const;
     bool isWild() const;
+    std::vector<CollectionDeckSlotMapperSPtr> slots() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

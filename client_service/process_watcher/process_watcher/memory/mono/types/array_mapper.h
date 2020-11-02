@@ -62,7 +62,8 @@ public:
         return helper.extract(ptr);
     }
 
-    friend struct ArrayEleMapperHelper<T>;
+    template<typename, typename>
+    friend struct ArrayEleMapperHelper;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
     const process_watcher::memory::mono::MonoTypeMapper* _type;
@@ -112,5 +113,78 @@ struct ArrayEleMapperHelper<T,
 private:
     const ArrayMapper<T>& _arr;
 };
+
+template<typename T>
+struct ArrayEleMapperHelper<
+    std::shared_ptr<T>,
+    typename std::enable_if_t<
+        !std::is_same_v<MonoObjectMapper, T>
+    >
+> {
+    using TPtr = std::shared_ptr<T>;
+
+    ArrayEleMapperHelper(const ArrayMapper<TPtr>& arr):
+        _arr(arr)
+    {}
+
+    TPtr extract(uintptr_t ptr) const {
+        if (_arr._eklass->isValueType()) {
+            return std::make_shared<T>(std::make_shared<process_watcher::memory::mono::MonoObjectMapper>(
+                _arr._object->image(),
+                _arr._object->memory(),
+                ptr,
+                _arr._object->domainId()
+            ));
+        } else {
+            const auto newPtr = _arr._object->memory()->readProcessMemory<uint32_t>(ptr);
+            return std::make_shared<T>(std::make_shared<process_watcher::memory::mono::MonoObjectMapper>(
+                _arr._object->image(),
+                _arr._object->memory(),
+                newPtr,
+                _arr._object->domainId()
+            ));
+        }
+    }
+
+private:
+    const ArrayMapper<TPtr>& _arr;
+};
+
+template<typename T>
+struct ArrayEleMapperHelper<
+    std::unique_ptr<T>,
+    typename std::enable_if_t<
+        !std::is_same_v<MonoObjectMapper, T>
+    >
+> {
+    using TPtr = std::unique_ptr<T>;
+
+    ArrayEleMapperHelper(const ArrayMapper<TPtr>& arr):
+        _arr(arr)
+    {}
+
+    TPtr extract(uintptr_t ptr) const {
+        if (_arr._eklass->isValueType()) {
+            return std::make_unique<T>(std::make_shared<process_watcher::memory::mono::MonoObjectMapper>(
+                _arr._object->image(),
+                _arr._object->memory(),
+                ptr,
+                _arr._object->domainId()
+            ));
+        } else {
+            const auto newPtr = _arr._object->memory()->readProcessMemory<uint32_t>(ptr);
+            return std::make_unique<T>(std::make_shared<process_watcher::memory::mono::MonoObjectMapper>(
+                _arr._object->image(),
+                _arr._object->memory(),
+                newPtr,
+                _arr._object->domainId()
+            ));
+        }
+    }
+
+private:
+    const ArrayMapper<TPtr>& _arr;
+};
+
 
 }
