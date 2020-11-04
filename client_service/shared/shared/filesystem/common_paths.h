@@ -5,6 +5,7 @@
 namespace shared::filesystem {
 
 std::filesystem::path getAppDataPath();
+std::filesystem::path getLocalAppDataPath();
 
 std::filesystem::path getSquadOvFolder();
 std::filesystem::path getSquadOvUserFolder();
@@ -13,5 +14,7 @@ std::filesystem::path getSquadOvLogFolder();
 std::filesystem::path getSquadOvServiceLogFolder();
 
 std::filesystem::path getAimlabAppDataFolder();
+
+std::filesystem::path getHearthstoneAppDataFolder();
 
 }

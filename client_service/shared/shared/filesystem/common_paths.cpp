@@ -10,6 +10,10 @@ std::filesystem::path getAppDataPath() {
     return fs::path(shared::getEnv("APPDATA"));
 }
 
+std::filesystem::path getLocalAppDataPath() {
+    return fs::path(shared::getEnv("LOCALAPPDATA"));
+}
+
 std::filesystem::path getSquadOvFolder() {
     return getAppDataPath() / std::filesystem::path("SquadOV");;
 }
@@ -35,6 +39,10 @@ std::filesystem::path getSquadOvServiceLogFolder() {
 
 std::filesystem::path getAimlabAppDataFolder() {
     return getAppDataPath().parent_path() / fs::path("LocalLow") / fs::path("Statespace") / fs::path("aimlab_tb");
+}
+
+std::filesystem::path getHearthstoneAppDataFolder() {
+    return getLocalAppDataPath() / fs::path("Blizzard") / fs::path("Hearthstone");
 }
 
 }

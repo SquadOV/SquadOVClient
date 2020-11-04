@@ -9,6 +9,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
+#include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 
 #include <boost/stacktrace.hpp>
 #include <chrono>
@@ -107,6 +108,10 @@ int main(int argc, char** argv) {
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
+
+    // Some games need some other setup if they're installed. Do this every time the app starts up as
+    // doing it when the game is already running would be too late.
+    game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
     // Start process watcher to watch for our supported games.
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
