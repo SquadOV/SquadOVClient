@@ -8,6 +8,8 @@ std::string gameToString(EGame game) {
         return "Valorant";
     case EGame::Aimlab:
         return "Aim Lab";
+    case EGame::Hearthstone:
+        return "Hearthstone";
     }
     return "";
 }

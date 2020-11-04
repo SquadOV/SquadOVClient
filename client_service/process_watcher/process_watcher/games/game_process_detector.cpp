@@ -2,6 +2,7 @@
 
 #include "process_watcher/games/valorant_process_detector.h"
 #include "process_watcher/games/aimlab_process_detector.h"
+#include "process_watcher/games/hearthstone_process_detector.h"
 
 #include <algorithm>
 #include <iostream>
@@ -48,6 +49,8 @@ std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {
             return std::make_unique<ValorantProcessDetector>();
         case shared::EGame::Aimlab:
             return std::make_unique<AimlabProcessDetector>();
+        case shared::EGame::Hearthstone:
+            return std::make_unique<HearthstoneProcessDetector>();
     }
     return nullptr;
 }
