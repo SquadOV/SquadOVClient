@@ -26,6 +26,10 @@ SET(SRCS
     process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.cpp
     process_watcher/memory/games/hearthstone/types/service_locator_mapper.cpp
     process_watcher/memory/games/hearthstone/types/game_mgr_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/player_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/medal_info_translator_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/translated_medal_info_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/game_state_mapper.cpp
 )
 
 SET(HEADERS
@@ -63,6 +67,10 @@ SET(HEADERS
     process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.h
     process_watcher/memory/games/hearthstone/types/service_locator_mapper.h
     process_watcher/memory/games/hearthstone/types/game_mgr_mapper.h
+    process_watcher/memory/games/hearthstone/types/player_mapper.h
+    process_watcher/memory/games/hearthstone/types/medal_info_translator_mapper.h
+    process_watcher/memory/games/hearthstone/types/translated_medal_info_mapper.h
+    process_watcher/memory/games/hearthstone/types/game_state_mapper.h
 )
 
 add_library(squadov_process_watcher
@@ -75,4 +83,5 @@ target_include_directories(squadov_process_watcher
     PUBLIC
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/client_service/process_watcher
+    ${CMAKE_SOURCE_DIR}/deps/json/single_include
 )

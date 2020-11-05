@@ -47,10 +47,23 @@ int main(int argc, char** argv) {
     memory::games::hearthstone::HearthstoneMemoryMapper hearthstoneMapper(std::move(monoWrapper));
     const auto deck = hearthstoneMapper.getCurrentDeck();
 
+    std::cout << "#######################################################" << std::endl
+              << "                       SELECTED DECK                   " << std::endl
+              << "#######################################################" << std::endl;
+
     if (deck) {
         std::cout << "Selected Deck: " << *deck << std::endl;
     } else {
         std::cout << "Unknown Deck Selected" << std::endl;
     }
+
+    std::cout << "#######################################################" << std::endl
+              << "                     CURRENT PLAYERS                   " << std::endl
+              << "#######################################################" << std::endl;
+    for (const auto& kvp : hearthstoneMapper.getCurrentPlayers()) {
+        std::cout << "------------------ Player " << kvp.first << "------------------" << std::endl
+                  << *kvp.second << std::endl;
+    }
+    
     return 0;
 }

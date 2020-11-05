@@ -8,10 +8,13 @@
 namespace shared {
 
 using TimePoint = date::sys_time<std::chrono::system_clock::duration>;
+using LocalTimePoint = date::local_seconds;
 
 TimePoint zeroTime();
 TimePoint nowUtc();
 TimePoint strToTime(const std::string& dt, const std::string& format = "%F %H:%M:%S");
+LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %H:%M:%S");
+
 std::string timeToStr(const TimePoint& tm);
 std::string timeToIso(const TimePoint& tm);
 // A version of timeToStr that creates a date string that's more compatible with filenames.

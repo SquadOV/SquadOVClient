@@ -80,7 +80,8 @@ bool AimlabLogState::isInTask() const {
     return inTask && !taskName.empty() && !taskMode.empty() && !taskMap.empty() && !gameVersion.empty();
 }
 
-AimlabLogWatcher::AimlabLogWatcher() {
+AimlabLogWatcher::AimlabLogWatcher():
+    BaseLogWatcher(true) {
     // Find log file which is stored at (Windows):
     //  %APPDATA%/../LocalLow/Statespace/aimlab_tb/Player.log
     const fs::path gameLogDir = shared::filesystem::getAimlabAppDataFolder();

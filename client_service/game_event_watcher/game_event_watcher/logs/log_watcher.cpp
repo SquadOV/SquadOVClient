@@ -170,4 +170,8 @@ void LogWatcher::watchWorker() {
     pollThread.join();
 }
 
+void LogWatcher::wait() {
+    _changeThread.join();
+}
+
 }

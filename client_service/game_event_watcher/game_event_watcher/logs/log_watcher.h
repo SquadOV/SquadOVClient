@@ -24,7 +24,7 @@ public:
         const bool waitForNewFile = false
     );
     ~LogWatcher();
-
+    void wait();
 private:
     void watchWorker();
 

@@ -2,6 +2,7 @@
 #include "process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/game_state_mapper.h"
 
 namespace process_watcher::memory::games::hearthstone {
 
@@ -47,6 +48,16 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getDeckFromId(int64_t d
         return nullptr;
     }
     return mgr->getDeckFromId(deckId);
+}
+
+std::unordered_map<int, types::PlayerMapperSPtr> HearthstoneMemoryMapper::getCurrentPlayers() const {
+    const auto state = types::GameStateMapper::singleton(_mono->image(), _mono->domainId());
+    if (!state) {
+        return {};
+    }
+
+    const auto playerMap = state->playerMap();
+    return playerMap.values();
 }
 
 }

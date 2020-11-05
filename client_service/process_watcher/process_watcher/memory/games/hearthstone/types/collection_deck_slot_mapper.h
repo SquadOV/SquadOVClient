@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include "process_watcher/memory/mono/types/list_mapper.h"
 
@@ -24,6 +25,7 @@ public:
     int32_t count() const;
     int32_t count(TagPremium premium) const;
 
+    nlohmann::json toJson() const;
 private:
     process_watcher::memory::mono::types::ListMapper<int32_t> allCounts() const;
 

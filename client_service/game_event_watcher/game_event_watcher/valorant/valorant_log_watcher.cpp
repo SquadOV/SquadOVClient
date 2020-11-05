@@ -166,7 +166,8 @@ ValorantMapUrl parseValorantMapUrl(const std::string& url) {
 
 namespace game_event_watcher {
 
-ValorantLogWatcher::ValorantLogWatcher() {
+ValorantLogWatcher::ValorantLogWatcher():
+    BaseLogWatcher(true) {
     // Find log files which are stored in (Windows)
     //  1) %LOCALAPPDATA%/VALORANT/Saved/Logs (Game Logs)
     //  2) %LOCALAPPDATA%/Riot Games/Riot Client/Logs/Riot Client Logs (Client Logs)

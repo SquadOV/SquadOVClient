@@ -214,6 +214,26 @@ void SquadovApi::bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskDat
     }
 }
 
+std::string SquadovApi::createHearthstoneMatch(
+    const game_event_watcher::HearthstoneGameConnectionInfo& info,
+    const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
+    const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players
+) {
+    nlohmann::json body = {
+        { "info", info.toJson() },
+        { "deck", deck.toJson() }
+    };
+
+    return "";
+}
+
+void SquadovApi::uploadHearthstonePowerLogs(
+    const game_event_watcher::HearthstoneGameConnectionInfo& info,
+    const nlohmann::json& logs
+) {
+    
+}
+
 std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid) const {
     const std::string path = "/v1/vod";
 

@@ -1,3 +1,4 @@
 add_subdirectory(pe_dumper)
 add_subdirectory(mono_dumper)
 add_subdirectory(hearthstone_dumper)
+add_subdirectory(hearthstone_log_parser)

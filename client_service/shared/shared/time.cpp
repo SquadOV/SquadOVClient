@@ -20,6 +20,13 @@ TimePoint strToTime(const std::string& dt, const std::string& format) {
     return ret;
 }
 
+LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format) {
+    std::istringstream input(dt);
+    LocalTimePoint ret;
+    input >> date::parse(format, ret);
+    return ret;
+}
+
 std::string timeToStr(const TimePoint& tm) {
     return date::format("%F %H:%M:%S", tm);
 }

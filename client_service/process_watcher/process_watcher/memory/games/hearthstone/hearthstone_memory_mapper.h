@@ -2,6 +2,7 @@
 
 #include "process_watcher/memory/mono_memory_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
 #include <memory>
 
 namespace process_watcher::memory::games::hearthstone {
@@ -24,6 +25,9 @@ public:
     types::CollectionDeckMapperSPtr getCurrentDeck() const;
     types::CollectionDeckMapperSPtr getDeckFromId(int64_t deckId) const;
 
+    // Obtains information about the current players in the game.
+    std::unordered_map<int, types::PlayerMapperSPtr> getCurrentPlayers() const;
+
 private:
     types::CollectionDeckMapperSPtr getCurrentDeckInUI() const;
     // Note that this function will return the *last deck* used even if the game has ended.
@@ -31,5 +35,6 @@ private:
 
     process_watcher::memory::MonoMemoryMapperPtr _mono;
 };
+using HearthstoneMemoryMapperPtr = std::unique_ptr<HearthstoneMemoryMapper>;
 
 }

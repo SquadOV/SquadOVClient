@@ -101,6 +101,26 @@ std::vector<CollectionDeckSlotMapperSPtr> CollectionDeckMapper::slots() const {
     return ret;
 }
 
+nlohmann::json CollectionDeckMapper::toJson() const {
+    nlohmann::json ret = {
+        { "name", name() },
+        { "deckId", deckId() },
+        { "heroCard", heroCard() },
+        { "heroPremium", static_cast<int>(heroPremium()) },
+        { "deckType", static_cast<int>(deckType()) },
+        { "createDate", createDate() },
+        { "isWild", isWild() }
+    };
+
+    auto jsonSlots = nlohmann::json::array();
+    for (const auto& slot : slots()) {
+        jsonSlots.push_back(slot->toJson());
+    }
+
+    ret["slots"] = jsonSlots;
+    return ret;
+}
+
 std::ostream& operator<<(std::ostream& os, const CollectionDeckMapper& map) {
     os << "Name: " << map.name()
        << std::endl << "DeckID: " << map.deckId()

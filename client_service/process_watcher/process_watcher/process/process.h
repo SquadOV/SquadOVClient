@@ -23,6 +23,7 @@ public:
 #else
     std::string name() const { return _path.filename().string(); }
 #endif
+    const std::filesystem::path& path() const { return _path; }
 
     OSProcessHandle pid() const { return _pid; }
 

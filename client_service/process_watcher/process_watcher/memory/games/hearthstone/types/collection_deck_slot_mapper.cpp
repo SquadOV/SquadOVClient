@@ -55,6 +55,18 @@ mono::types::ListMapper<int32_t> CollectionDeckSlotMapper::allCounts() const {
     return mono::types::ListMapper<int32_t>(value.get<mono::MonoObjectMapperSPtr>());
 }
 
+nlohmann::json CollectionDeckSlotMapper::toJson() const {
+    return {
+        { "index", index() },
+        { "cardId", cardId() },
+        { "owned", owned() },
+        { "count", {
+            { "normal", count(TagPremium::Normal) },
+            { "golden", count(TagPremium::Golden) },
+        }}
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const CollectionDeckSlotMapper& map) {
     os << "Card: " << map.cardId()
        << std::endl << "Index: " << map.index()

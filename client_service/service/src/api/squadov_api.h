@@ -6,6 +6,10 @@
 #include "shared/squadov/vod.h"
 #include "shared/aimlab/aimlab.h"
 
+#include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+#include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
+
 #include <functional>
 #include <memory>
 #include <nlohmann/json.hpp>
@@ -40,6 +44,18 @@ public:
     // Aim Lab
     std::string uploadAimlabTask(const shared::aimlab::TaskData& data) const;
     void bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskData>& data) const;
+
+    // Hearthstone
+    std::string createHearthstoneMatch(
+        const game_event_watcher::HearthstoneGameConnectionInfo& info,
+        const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
+        const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players
+    );
+
+    void uploadHearthstonePowerLogs(
+        const game_event_watcher::HearthstoneGameConnectionInfo& info,
+        const nlohmann::json& logs
+    );
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;

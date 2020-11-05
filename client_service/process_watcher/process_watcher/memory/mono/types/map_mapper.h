@@ -59,6 +59,8 @@ public:
         return _values.at(key);
     }
 
+    const std::unordered_map<T,V>& values() const { return _values; }
+
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
     std::unordered_map<T, V> _values;

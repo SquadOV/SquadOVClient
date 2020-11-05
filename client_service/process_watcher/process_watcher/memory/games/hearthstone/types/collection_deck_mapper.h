@@ -4,6 +4,7 @@
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_slot_mapper.h"
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace process_watcher::memory::games::hearthstone::types {
@@ -38,6 +39,8 @@ public:
     uint64_t createDate() const;
     bool isWild() const;
     std::vector<CollectionDeckSlotMapperSPtr> slots() const;
+
+    nlohmann::json toJson() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };
