@@ -3,6 +3,7 @@
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/translated_medal_info_mapper.h"
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace process_watcher::memory::games::hearthstone::types {
 
@@ -13,6 +14,8 @@ public:
 
     TranslatedMedalInfoMapperSPtr currentMedalInfo() const;
     TranslatedMedalInfoMapperSPtr currentWildMedalInfo() const;
+
+    nlohmann::json toJson() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

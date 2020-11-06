@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
               << "#######################################################" << std::endl;
 
     if (deck) {
-        std::cout << "Selected Deck: " << *deck << std::endl;
+        std::cout << "Selected Deck: " << deck->toJson().dump(4) << std::endl;
     } else {
         std::cout << "Unknown Deck Selected" << std::endl;
     }
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
               << "#######################################################" << std::endl;
     for (const auto& kvp : hearthstoneMapper.getCurrentPlayers()) {
         std::cout << "------------------ Player " << kvp.first << "------------------" << std::endl
-                  << *kvp.second << std::endl;
+                  << kvp.second->toJson().dump(4) << std::endl;
     }
     
     return 0;

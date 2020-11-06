@@ -49,13 +49,11 @@ public:
     std::string createHearthstoneMatch(
         const game_event_watcher::HearthstoneGameConnectionInfo& info,
         const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
-        const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players
+        const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
+        const shared::TimePoint& timestamp
     );
 
-    void uploadHearthstonePowerLogs(
-        const game_event_watcher::HearthstoneGameConnectionInfo& info,
-        const nlohmann::json& logs
-    );
+    void uploadHearthstonePowerLogs(const std::string& matchUuid, const nlohmann::json& logs);
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;

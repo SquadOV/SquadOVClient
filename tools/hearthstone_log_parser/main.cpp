@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
     po::options_description desc("Options");
     desc.add_options()
         ("log", po::value<std::string>()->required(), "Hearthstone log to parse.")
+        ("power", po::value<std::string>()->required(), "Hearthstone power log to parse.")
         ("output", po::value<std::string>()->required(), "Output of the JSON power log to send to the server.");
 
     po::variables_map vm;
@@ -21,14 +22,20 @@ int main(int argc, char** argv) {
     po::notify(vm);
 
     const fs::path logPath(vm["log"].as<std::string>());
+    const fs::path powerPath(vm["power"].as<std::string>());
+
     HearthstoneLogWatcher watcher(false);
     watcher.notifyOnEvent(static_cast<int>(EHearthstoneLogEvents::GameReady), [](const shared::TimePoint& tm, const void* data){
         LOG_INFO("Hearthstone Game Ready [" << shared::timeToStr(tm) << "]" << std::endl);
     });
 
     watcher.notifyOnEvent(static_cast<int>(EHearthstoneLogEvents::MatchStart), [](const shared::TimePoint& tm, const void* data){
+        LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(tm) << "]" << std::endl);
+    });
+
+    watcher.notifyOnEvent(static_cast<int>(EHearthstoneLogEvents::MatchConnect), [](const shared::TimePoint& tm, const void* data){
         const HearthstoneGameConnectionInfo* info = reinterpret_cast<const HearthstoneGameConnectionInfo*>(data);
-        LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(tm) << "]" << std::endl
+        LOG_INFO("Hearthstone Game Connect [" << shared::timeToStr(tm) << "]" << std::endl
             << "\tGame Server:" << info->ip << ":" << info->port << std::endl
             << "\tGame ID: " << info->gameId << std::endl
             << "\tClient ID: " << info->clientId << std::endl
@@ -46,7 +53,8 @@ int main(int argc, char** argv) {
 
         watcher.clearGameState();
     });
-    watcher.loadFromFile(logPath);
+    watcher.loadPrimaryFromFile(logPath);
+    watcher.loadPowerFromFile(powerPath);
     watcher.wait();
     
     return 0;

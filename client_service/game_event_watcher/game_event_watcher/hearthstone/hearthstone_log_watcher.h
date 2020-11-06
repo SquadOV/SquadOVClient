@@ -10,6 +10,10 @@ namespace game_event_watcher {
 
 enum class EHearthstoneLogEvents {
     GameReady,
+    // MatchConnect and MatchStart are two different events.
+    // MatchConnect is when we're first notified that we are now going to start connecting to a game
+    // while MatchStart is called when we've finally loaded into that game.
+    MatchConnect,
     MatchStart,
     MatchEnd
 };
@@ -23,6 +27,7 @@ struct HearthstoneGameConnectionInfo {
     bool reconnecting;
 
     nlohmann::json toJson() const;
+    bool valid() const { return !ip.empty(); }
 };
 
 using HearthstoneLogWatcherPtr = std::unique_ptr<class HearthstoneLogWatcher>;
@@ -36,16 +41,20 @@ public:
 
     HearthstoneLogWatcher(bool useTimeChecks);
     void loadFromExecutable(const std::filesystem::path& exePath);
-    void loadFromFile(const std::filesystem::path& logFile);
+
+    void loadPrimaryFromFile(const std::filesystem::path& logFile);
+    void loadPowerFromFile(const std::filesystem::path& logFile);
 
     // The power parser maintains game state so we need to manually clear it when a game actually ends.
     void clearGameState();
 
     void wait();
 private:
-    void onLogChange(const LogLinesDelta& lines);
+    void onPrimaryLogChange(const LogLinesDelta& lines);
+    void onPowerLogChange(const LogLinesDelta& lines);
 
-    LogWatcherPtr _watcher;
+    LogWatcherPtr _primaryWatcher;
+    LogWatcherPtr _powerWatcher;
 
     HearthstonePowerLogParser _powerParser;
 };

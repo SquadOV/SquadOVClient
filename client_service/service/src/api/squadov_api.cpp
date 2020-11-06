@@ -6,6 +6,8 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
+#define DEBUG_REQUEST_BODY_TO_DISK 1
+
 namespace service::api {
 namespace {
 
@@ -217,21 +219,57 @@ void SquadovApi::bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskDat
 std::string SquadovApi::createHearthstoneMatch(
     const game_event_watcher::HearthstoneGameConnectionInfo& info,
     const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
-    const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players
+    const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
+    const shared::TimePoint& timestamp
 ) {
     nlohmann::json body = {
         { "info", info.toJson() },
-        { "deck", deck.toJson() }
+        { "deck", deck.toJson() },
+        { "timestamp", shared::timeToIso(timestamp) }
     };
 
-    return "";
+    nlohmann::json jPlayers;
+    for (const auto& kvp : players) {
+        jPlayers[std::to_string(kvp.first)] = kvp.second->toJson();
+    }
+    body["players"] = jPlayers;
+
+#if DEBUG_REQUEST_BODY_TO_DISK
+    {
+        std::ofstream dbg("createHearthstoneMatch.json");
+        dbg << body.dump(4);
+    }
+#endif
+
+    const std::string path = "/v1/hearthstone";
+    const auto result = _webClient->post(path, body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create Hearthstone match: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 void SquadovApi::uploadHearthstonePowerLogs(
-    const game_event_watcher::HearthstoneGameConnectionInfo& info,
+    const std::string& matchUuid,
     const nlohmann::json& logs
 ) {
-    
+    std::ostringstream path;
+    path << "/v1/hearthstone/" << matchUuid;
+
+#if DEBUG_REQUEST_BODY_TO_DISK
+    {
+        std::ofstream dbg("uploadHearthstonePowerLogs.json");
+        dbg << logs.dump(4);
+    }
+#endif
+
+    const auto result = _webClient->post(path.str(), logs);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to upload Hearthstone match power logs: " << result->status);
+    }
 }
 
 std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid) const {

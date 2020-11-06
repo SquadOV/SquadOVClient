@@ -24,6 +24,9 @@ public:
         const bool waitForNewFile = false
     );
     ~LogWatcher();
+
+    void disableBatching() { _batchingEnabled = false; }
+
     void wait();
 private:
     void watchWorker();
@@ -34,6 +37,7 @@ private:
 
     std::thread _changeThread;
     bool _isFinished = false;
+    bool _batchingEnabled = true;
 };
 
 using LogWatcherPtr = std::unique_ptr<LogWatcher>;

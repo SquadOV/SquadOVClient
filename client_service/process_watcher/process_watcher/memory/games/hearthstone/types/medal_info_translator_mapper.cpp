@@ -23,6 +23,13 @@ TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentWildMedalInfo() 
     return std::make_shared<TranslatedMedalInfoMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
 }
 
+nlohmann::json MedalInfoTranslatorMapper::toJson() const {
+    return {
+        { "standard", currentMedalInfo()->toJson() },
+        { "wild", currentWildMedalInfo()->toJson() }
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const MedalInfoTranslatorMapper& map) {
     os << "{Standard: " << *map.currentMedalInfo() << "\t" << "Wild: " << *map.currentWildMedalInfo() << "}";
     return os;

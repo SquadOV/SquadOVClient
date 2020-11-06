@@ -3,6 +3,7 @@
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/medal_info_translator_mapper.h"
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace process_watcher::memory::games::hearthstone::types {
 
@@ -29,6 +30,7 @@ public:
     uint32_t tavernBrawlWins() const;
     uint32_t tavernBrawlLoss() const;
 
+    nlohmann::json toJson() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

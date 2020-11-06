@@ -18,7 +18,6 @@ HearthstoneRawLog parseLogLine(const std::string& line) {
     HearthstoneRawLog log;
 
     if (!std::regex_search(line, matches, logRegex)) {
-        LOG_WARNING("Unknown Hearthstone log line: " << line << std::endl);
         return log;
     }
 
@@ -40,6 +39,31 @@ HearthstoneRawLog parseLogLine(const std::string& line) {
     return log;
 }
 
+const std::regex powerRegex("D\\s(.*?)\\s(.*)");
+HearthstoneRawLog parsePowerLogLine(const std::string& line) {
+    std::smatch matches;
+    HearthstoneRawLog log;
+
+    if (!std::regex_search(line, matches, powerRegex)) {
+        return log;
+    }
+    log.canParse = true;
+
+    // This is a little hacky to get a date time from the time-only string
+    // in the power log. We assume the time is an ISO valid section of a time
+    // string so we just tack on the current day to get the full ISO string that
+    // we can parse.
+    const auto now = date::make_zoned(date::current_zone(), shared::nowUtc());
+    std::ostringstream newTmString;
+    newTmString << shared::timeToDateString(now.get_local_time()) << " " << matches[1].str();
+
+    const auto t = date::make_zoned(date::current_zone(), shared::strToLocalTime(newTmString.str()));
+    log.tm = t.get_sys_time();
+    log.section = "Power";
+    log.log = matches[2].str();
+    return log;
+}
+
 const std::regex connectRegex("Network.GotoGameServer -- address= (.*):(\\d*), game=(\\d*), client=(\\d*), spectateKey=(.*)\\sreconnecting=(.*)");
 bool parseConnectToGameServer(const HearthstoneRawLog& line, HearthstoneGameConnectionInfo& info) {
     std::smatch matches;
@@ -54,10 +78,6 @@ bool parseConnectToGameServer(const HearthstoneRawLog& line, HearthstoneGameConn
     info.spectateKey = matches[5].str();
     info.reconnecting = matches[6].str() == "True";
     return true;
-}
-
-bool parseExperimentEnd(const HearthstoneRawLog& line) {
-    return line.log.find("Ending Experiment") == 0;
 }
 
 }
@@ -94,7 +114,7 @@ HearthstoneLogWatcher::HearthstoneLogWatcher(bool useTimeChecks):
 
 void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exePath) {
     const auto folder = exePath.parent_path() / fs::path("Logs");
-    // The first thing we need to do is to detect the *latest* log file.
+    // The first thing we need to do is to detect the *latest* primary log file.
     // There are multiple log files in this folder so we need to find the one
     // with the latest write time whose name is prefixed with "hearthstone_".
     // This might take awhile to finish as the first file found may not be the found
@@ -102,37 +122,82 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
     // so we need to kick off a thread to do this work so we don't block.
     std::thread t([this, folder](){
         std::filesystem::path logFile;
-        while (!fs::exists(logFile) || (shared::filesystem::secondsSinceLastFileWrite(logFile) > std::chrono::seconds(30))) {
-            logFile = shared::filesystem::getNewestFileInFolder(folder, [](const fs::path& path){
-                if (path.extension() != ".log") {
-                    return false;
+        while (true) {
+            // I'm not sure how to do this conditional, catch the possible exception in secondsSinceLastFileWrite and *still*
+            // continue on in the while loop all at once.
+            try {
+                if (!fs::exists(logFile) || (shared::filesystem::secondsSinceLastFileWrite(logFile) > std::chrono::seconds(30))) {
+                    logFile = shared::filesystem::getNewestFileInFolder(folder, [](const fs::path& path){
+                        if (path.extension() != ".log") {
+                            return false;
+                        }
+
+                        if (path.filename().string().find("hearthstone_") != 0) {
+                            return false;
+                        } 
+
+                        return true;
+                    });
+                } else {
+                    break;
                 }
-
-                if (path.filename().string().find("hearthstone_") != 0) {
-                    return false;
-                } 
-
-                return true;
-            });
+            } catch (std::exception& ex) {
+                LOG_WARNING("Exception when detecting hearthstone log: " << ex.what() << std::endl);
+                continue;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-        loadFromFile(logFile);
+        loadPrimaryFromFile(logFile);
     });
     t.detach();
+
+    loadPowerFromFile(folder / fs::path("Power.log"));
 }
 
-void HearthstoneLogWatcher::loadFromFile(const std::filesystem::path& logFile) {
-    LOG_INFO("Hearthstone Log Found: " << logFile.string() << std::endl);
+void HearthstoneLogWatcher::loadPrimaryFromFile(const std::filesystem::path& logFile) {
+    LOG_INFO("Hearthstone Primary Log Found: " << logFile.string() << std::endl);
     using std::placeholders::_1;
-    _watcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onLogChange, this, _1), useTimeChecks());
+    _primaryWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPrimaryLogChange, this, _1), useTimeChecks());
 }
 
-void HearthstoneLogWatcher::onLogChange(const LogLinesDelta& lines) {
+void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFile) {
+    LOG_INFO("Hearthstone Power Log Found: " << logFile.string() << std::endl);
+    using std::placeholders::_1;
+    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), useTimeChecks());
+}
+
+void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
+    for (const auto& ln : lines) {
+        const auto rawLog = parsePowerLogLine(ln);
+        if (!rawLog.canParse) {
+            LOG_WARNING("Skipping Hearthstone power log line: " << ln << std::endl);
+            continue;
+        }
+
+        const auto wasRunning = _powerParser.isGameRunning();
+        _powerParser.parse(rawLog);
+        const auto isRunning = _powerParser.isGameRunning();
+
+        if (wasRunning != isRunning) {
+            if (isRunning) {
+                notify(static_cast<int>(EHearthstoneLogEvents::MatchStart), rawLog.tm, nullptr);
+            } else {
+                const auto data = _powerParser.toJson();
+                notify(static_cast<int>(EHearthstoneLogEvents::MatchEnd), rawLog.tm, &data);
+                _powerParser.clear();
+            }
+        }
+    }
+}
+
+void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
         // First parse the log line into the following format:
         // TIME: [SECTION] INFO
         // Where the log line may or may not have a [SECTION] tag.
         const auto rawLog = parseLogLine(ln);
         if (!rawLog.canParse) {
+            LOG_WARNING("Skipping Hearthstone log line: " << ln << std::endl);
             continue;
         }
 
@@ -140,20 +205,14 @@ void HearthstoneLogWatcher::onLogChange(const LogLinesDelta& lines) {
             // Always send the game ready event regardless of whether this is an old line or not
             // since we need to know when to load mono into memory.
             notify(static_cast<int>(EHearthstoneLogEvents::GameReady), rawLog.tm, nullptr, false);
-        } else if (rawLog.section == "Power") {
-            _powerParser.parse(rawLog);
         } else {
-            // There's mainly two events that we want to detect here - game start and game end.
-            // Game Start: TIME: Network.GotoGameServer -- address= IP:PORT, game=GAMEID, client=CLIENTID, spectateKey=SPECTATEKEY reconnecting=RECON
-            // Game End: Ending Experiment
-            //   Note the "Game End" event is a little inconsistent as it might signal something else (I think it's more of a generic scence change ending log line)
-            //   but it it logged when the game ends so I think it's safe - the user will just have to track some state.
+            // Parse match connect here as this is the only place this server information will be stored.
+            // Note that it is *UNSAFE* to clear the power log here as we're honestly not quite sure on
+            // the order of operations between the two threads: the power log thread *could have* picked up
+            // the power log already so we don't want to clear out any data that we might need.
             HearthstoneGameConnectionInfo connectionInfo;
             if (parseConnectToGameServer(rawLog, connectionInfo)) {
-                notify(static_cast<int>(EHearthstoneLogEvents::MatchStart), rawLog.tm, &connectionInfo);
-            } else if (parseExperimentEnd(rawLog)) {
-                nlohmann::json data = _powerParser.toJson();
-                notify(static_cast<int>(EHearthstoneLogEvents::MatchEnd), rawLog.tm, &data);
+                notify(static_cast<int>(EHearthstoneLogEvents::MatchConnect), rawLog.tm, &connectionInfo);
             }
         }
     }
@@ -164,7 +223,8 @@ void HearthstoneLogWatcher::clearGameState() {
 }
 
 void HearthstoneLogWatcher::wait() {
-    _watcher->wait();
+    _primaryWatcher->wait();
+    _powerWatcher->wait();
 }
 
 }

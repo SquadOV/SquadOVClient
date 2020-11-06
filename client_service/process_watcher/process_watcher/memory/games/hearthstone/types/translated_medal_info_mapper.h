@@ -2,6 +2,7 @@
 
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include <memory>
+#include <nlohmann/json.hpp>
 
 namespace process_watcher::memory::games::hearthstone::types {
 
@@ -16,6 +17,8 @@ public:
     int32_t bestStarLevel() const;
     int32_t winStreak() const;
     int32_t legendIndex() const;
+
+    nlohmann::json toJson() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

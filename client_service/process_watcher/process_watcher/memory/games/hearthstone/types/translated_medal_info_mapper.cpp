@@ -47,6 +47,17 @@ int32_t TranslatedMedalInfoMapper::legendIndex() const {
     return value.get<int32_t>();
 }
 
+nlohmann::json TranslatedMedalInfoMapper::toJson() const {
+    return {
+        { "leagueId", leagueId() },
+        { "earnedStars", earnedStars() },
+        { "starLevel", starLevel() },
+        { "bestStarLevel", bestStarLevel() },
+        { "winStreak", winStreak() },
+        { "legendIndex", legendIndex() }
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const TranslatedMedalInfoMapper& map) {
     os << "[League: " << map.leagueId() 
         << " Earned: " << map.earnedStars()

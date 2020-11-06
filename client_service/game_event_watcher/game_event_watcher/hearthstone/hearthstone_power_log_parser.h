@@ -12,8 +12,12 @@ public:
     void clear();
 
     nlohmann::json toJson() const;
+    bool isGameRunning() const { return _gameRunning; }
+
 private:
     std::vector<HearthstoneRawLog> _raw;
+    bool _gameRunning = false;
+    bool _endPending = false;
 };
 
 }

@@ -21,6 +21,7 @@ public:
 
 private:
     void loadMonoMapper(const shared::TimePoint& eventTime, const void* rawData);
+    void onGameConnect(const shared::TimePoint& eventTime, const void* rawData);
     void onGameStart(const shared::TimePoint& eventTime, const void* rawData);
     void onGameEnd(const shared::TimePoint& eventTime, const void* rawData);
 
@@ -33,7 +34,10 @@ private:
     game_event_watcher::HearthstoneGameConnectionInfo _currentGame;
     std::string _matchUuid;
     bool _inGame = false;
+    // This is when the game started from the perspective of the VOD.
     shared::TimePoint _gameStartTime;
+    // This is when the game started from the perspective of the log.
+    shared::TimePoint _gameStartEventTime;
 };
 
 HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -42,6 +46,7 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::Hearthstone);
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::GameReady), std::bind(&HearthstoneProcessHandlerInstance::loadMonoMapper, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchConnect), std::bind(&HearthstoneProcessHandlerInstance::onGameConnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchStart), std::bind(&HearthstoneProcessHandlerInstance::onGameStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchEnd), std::bind(&HearthstoneProcessHandlerInstance::onGameEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
@@ -67,9 +72,9 @@ void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& 
     _monoMapper = std::make_unique<process_watcher::memory::games::hearthstone::HearthstoneMemoryMapper>(std::move(monoWrapper));
 }
 
-void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eventTime, const void* rawData) {
+void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& eventTime, const void* rawData) {
     const game_event_watcher::HearthstoneGameConnectionInfo* info = reinterpret_cast<const game_event_watcher::HearthstoneGameConnectionInfo*>(rawData);
-    LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(eventTime) << "]" << std::endl
+    LOG_INFO("Hearthstone Game Connect [" << shared::timeToStr(eventTime) << "]" << std::endl
         << "\tGame Server:" << info->ip << ":" << info->port << std::endl
         << "\tGame ID: " << info->gameId << std::endl
         << "\tClient ID: " << info->clientId << std::endl
@@ -82,20 +87,38 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         return;
     }
 
+    // We need to store this information as we'll be using this to identify the game when we upload information about the game soon.
+    _currentGame = *info;
+    if (_inGame) {
+        onGameStart(eventTime, nullptr);
+    }
+}
+
+void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eventTime, const void* rawData) {
+    LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(eventTime) << "] - " << _currentGame.valid() << std::endl);
+
+    // Mark this flag just in case the MatchConnect gets fired *after* MatchStart so we know to call onGameStart from the MatchConnect event.
+    if (!_inGame) {
+        _gameStartEventTime = eventTime;
+        _inGame = true;   
+    }
+
+    // We need this check between two separate threads are polling the main log file that sends the MatchConnect event
+    // and the power log file that sends the MatchStart event so it's theoretically possible to get these events out of order.
+    if (!_currentGame.valid()) {
+        return;
+    }
+
     // Grab the deck and information about all the players in the game and upload this information first.
     try {
         const auto deck = _monoMapper->getCurrentDeck();
         const auto players = _monoMapper->getCurrentPlayers();
-        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(*info, *deck, players);
+        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(_currentGame, *deck, players, _gameStartEventTime);
     } catch (const std::exception& ex) {
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
         return;
     }
 
-    // Mark ourselves as being in-game and start recording if we actually were able to reserve a match uuid for this game.
-    _inGame = true;
-    // We need to store this information as we'll be using this to identify the game when we upload the power log.
-    _currentGame = *info;
     _gameStartTime = shared::nowUtc();
     _recorder->start();
 }
@@ -120,7 +143,7 @@ void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& event
     // with the current match.
     try {
         const nlohmann::json* data = reinterpret_cast<const nlohmann::json*>(rawData);
-        service::api::getGlobalApi()->uploadHearthstonePowerLogs(_currentGame, *data);
+        service::api::getGlobalApi()->uploadHearthstonePowerLogs(_matchUuid, *data);
     } catch (const std::exception& ex) {
         // Not the end of the world - we just won't have match history details - still have a VOD!
         LOG_WARNING("Failed to upload Hearthstone power logs: " << ex.what() << std::endl);

@@ -77,6 +77,20 @@ uint32_t PlayerMapper::tavernBrawlLoss() const {
     return value.get<uint32_t>();
 }
 
+nlohmann::json PlayerMapper::toJson() const {
+    return {
+        { "name", name() },
+        { "local", local() },
+        { "side", static_cast<int>(side()) },
+        { "cardBackId", static_cast<int>(cardBackId()) },
+        { "medalInfo", medalInfo()->toJson() },
+        { "arenaWins", arenaWins() },
+        { "arenaLoss", arenaLoss() },
+        { "tavernBrawlWins", tavernBrawlWins() },
+        { "tavernBrawlLoss", tavernBrawlLoss() }
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const PlayerMapper& map) {
     os << "Player: " << map.name()
         << std::endl << "\tLocal: " << map.local()

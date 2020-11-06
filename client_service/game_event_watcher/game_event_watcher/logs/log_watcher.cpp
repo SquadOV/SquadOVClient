@@ -59,11 +59,7 @@ void LogWatcher::watchWorker() {
     }
 
     // Open file for reading via the C++ STDLIB.
-    std::ifstream logStream(_path.string());
-    if (!logStream.is_open()) {
-        THROW_ERROR("Failed to open log.");
-    }
-
+    std::ifstream logStream;
     LogLinesDelta lineBuffer;
 
     // Open the file (if necessary) for the OS-specific way of watching for changes.
@@ -91,24 +87,40 @@ void LogWatcher::watchWorker() {
     // the call to ReadDirectoryChangesW gets cancelled.
     std::thread pollThread([this, hDir](){
         while (!_isFinished) {
-            std::ifstream tmp(_path.string());
-            tmp.seekg(0, tmp.end);
-            std::this_thread::sleep_for(1s);
+            if (fs::exists(_path)) {
+                std::ifstream tmp(_path.string());
+                tmp.seekg(0, tmp.end);
+                std::this_thread::sleep_for(1s);
+            }
         }
         CancelIoEx(hDir, nullptr);
     });
 
     while (!_isFinished) {
         logStream.clear();
-        // Read all available changes.
+        // Read all available changes if the file is opened and exists.    
+        // Totally OK if the log file isn't open yet but it doesn't exit or whatever.
+        if (fs::exists(_path) && !logStream.is_open()) {
+            logStream.open(_path.string());
+            if (!logStream.is_open()) {
+                LOG_WARNING("Failed to open log file: " << _path.string() << std::endl);
+            }
+        }
+        
         std::string line;
         while (std::getline(logStream, line)) {
-            lineBuffer.push_back(line);
+            if (_batchingEnabled) {
+                lineBuffer.push_back(line);
+            } else {
+                _cb({line});
+            }
         }
 
-        // Let callback parse changes.
-        _cb(lineBuffer);
-        lineBuffer.clear();
+        if (_batchingEnabled) {
+            // Let callback parse changes.
+            _cb(lineBuffer);
+            lineBuffer.clear();
+        }
 
         // Wait until the file changes again.
 #ifdef _WIN32

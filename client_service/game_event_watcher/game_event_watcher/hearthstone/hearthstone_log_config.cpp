@@ -52,7 +52,9 @@ HearthstoneLogConfig::HearthstoneLogConfig(const std::filesystem::path& fname):
 void HearthstoneLogConfig::enableLogSection(HearthstoneLogSection section) {
     auto info = _sections[section];
     info.logLevel = std::max(info.logLevel, int64_t(1));
-    info.consolePrinting = true;
+    info.filePrinting = true;
+    // Needs to be here so that we don't make the console printed log too large.
+    info.consolePrinting = false;
     _sections[section] = info;
 }
 
