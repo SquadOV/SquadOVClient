@@ -6,7 +6,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
-#define DEBUG_REQUEST_BODY_TO_DISK 1
+#define DEBUG_REQUEST_BODY_TO_DISK 0
 
 namespace service::api {
 namespace {
