@@ -1,3 +1,5 @@
+import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
+
 export interface HearthstoneMatchSnapshotAuxData {
     currentTurn: number
     step: number
@@ -11,7 +13,7 @@ export interface HearthstoneMatchSnapshot {
     gameEntityId: number
     playerNameToPlayerId: { [nm : string] : number }
     playerIdToEntityId: { [id: number] : number }
-    entities: { [id: number] : any }
+    entities: { [id: number] : HearthstoneEntity }
     auxData: HearthstoneMatchSnapshotAuxData | null
 }
 

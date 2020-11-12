@@ -46,6 +46,7 @@
                     <v-col cols="5" align-self="center">
                         <hearthstone-mini-board-state-display
                             :snapshot="latestSnapshot"
+                            :player-match-id="localPlayerMatchId"
                         >
                         </hearthstone-mini-board-state-display>
                     </v-col>
@@ -142,20 +143,30 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
         return isGameTypeRanked(this.currentMatch!.metadata.gameType)
     }
 
-    get medalInfo() : HearthstoneMedalInfo | undefined {
+    get localPlayerMatchId() : number | undefined {
         for (let [pid, player] of Object.entries(this.currentMatch!.metadata.players)) {
             let typedPlayer: HearthstonePlayer = player
             if (!typedPlayer.local) {
                 continue
             }
-
-            if (this.currentMatch!.metadata.formatType == HearthstoneFormatType.Standard) {
-                return typedPlayer.medalInfo.standard
-            } else {
-                return typedPlayer.medalInfo.wild
-            }
+            return parseInt(pid)
         }
         return undefined
+    }
+
+    get localPlayer() : HearthstonePlayer | undefined {
+        if (!this.localPlayerMatchId) {
+            return undefined
+        }
+        return this.currentMatch!.metadata.players[this.localPlayerMatchId]
+    }
+
+    get medalInfo() : HearthstoneMedalInfo | undefined {
+        if (this.currentMatch!.metadata.formatType == HearthstoneFormatType.Standard) {
+            return this.localPlayer?.medalInfo.standard
+        } else {
+            return this.localPlayer?.medalInfo.wild
+        }
     }
 
     get matchLength() : string {

@@ -65,7 +65,7 @@ export default class HearthstonePlayerMedalDisplay extends Vue {
     }
 
     get rankSubtier() : number {
-        return earnedStarsToHearthstoneSubrank(this.medalInfo!.earnedStars, this.medalInfo!.legendIndex)
+        return earnedStarsToHearthstoneSubrank(this.medalInfo!.starLevel, this.medalInfo!.legendIndex)
     }
 
     get frameImage(): string {
