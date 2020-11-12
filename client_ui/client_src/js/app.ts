@@ -25,6 +25,8 @@ import ValorantMatch from '@client/vue/log/ValorantMatch.vue'
 import AimlabGameLog from '@client/vue/log/AimlabGameLog.vue'
 import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
 
+import HearthstoneGameLog from '@client/vue/log/HearthstoneGameLog.vue'
+
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
 import VizStats from '@client/vue/performance/VizStats.vue'
@@ -77,6 +79,18 @@ const baseRoutes : any[] = [
                 component: AimlabMatch,
                 props: (route : any) => ({
                     taskId: route.params.taskId
+                })
+            },
+            {
+                path: '/hearthstone',
+                name: pi.HearthstoneLogPageId,
+                component: HearthstoneGameLog
+            },
+            {
+                path: '/hearthstone/match/:matchId',
+                name: pi.HearthstoneMatchPageId,
+                props: (route : any) => ({
+                    matchId: route.params.matchId
                 })
             }
         ],

@@ -12,6 +12,7 @@ import {
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
+import { HearthstoneMatch, cleanHearthstoneMatchFromJson } from '@client/js/hearthstone/hearthstone_match'
 
 import { ipcRenderer } from 'electron'
 
@@ -265,6 +266,25 @@ class ApiClient {
     getValorantMatchPlayerMetadata(matchId: string, puuid: string) : Promise<ApiData<ValorantMatchPlayerMatchMetadata>> {
         return axios.get(`v1/valorant/match/${matchId}/metadata/${puuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
             cleanValorantMatchPlayerMatchMetadata(resp.data)
+            return resp
+        })
+    }
+
+    listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
+        return !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/hearthstone/user/${params.userId!}`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+    }
+
+    getHearthstoneMatch(matchId: string) : Promise<ApiData<HearthstoneMatch>> {
+        return axios.get(`v1/hearthstone/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<HearthstoneMatch>) => {
+            cleanHearthstoneMatchFromJson(resp.data)
             return resp
         })
     }

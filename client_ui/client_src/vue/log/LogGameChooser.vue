@@ -19,6 +19,14 @@
                         </v-card-title>
                     </v-card>
                 </router-link>
+
+                <router-link :to="hearthstoneTo" >
+                    <v-card class="choice" color="primary">
+                        <v-card-title>
+                            Hearthstone
+                        </v-card-title>
+                    </v-card>
+                </router-link>
             </div>
         </v-row>
     </v-container>
@@ -41,6 +49,12 @@ export default class LogGameChooser extends Vue {
     get aimlabTo() : any {
         return {
             name: pi.AimlabLogPageId
+        }
+    }
+
+    get hearthstoneTo() : any {
+        return {
+            name: pi.HearthstoneLogPageId
         }
     }
 }

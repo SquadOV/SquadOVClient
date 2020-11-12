@@ -61,6 +61,13 @@ export default class AppNav extends Vue {
                         params: this.$route.params
                     },
                 },
+                {
+                    name: 'Hearthstone',
+                    to: {
+                        name: pi.HearthstoneLogPageId,
+                        params: this.$route.params
+                    },
+                },
             ]
         },
         {
