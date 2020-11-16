@@ -33,7 +33,7 @@
                         </p>
 
                         <p>
-                            {{ matchLength }} - {{ numTurns }} Turns
+                            {{ matchLength }} - {{ numTurns }} Turns (<span :style="currentPlayerHpStyle">{{ currentPlayerLife }}</span> - <span :style="opposingPlayerHpStyle">{{ opposingPlayerLife }}</span>)
                         </p>
                     </v-col>
 
@@ -88,7 +88,7 @@ import { Prop } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import * as pi from '@client/js/pages'
-import { HearthstoneMatch, constructGameTypeString, HearthstoneFormatType, isGameTypeConstructed, isGameTypeRanked } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneMatch, HearthstoneMatchWrapper, constructGameTypeString, HearthstoneFormatType, isGameTypeConstructed, isGameTypeRanked } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneMedalInfo, HearthstonePlayer } from '@client/js/hearthstone/hearthstone_player'
 import { HearthstoneEntity, HearthstoneEntityWrapper } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneMatchSnapshot } from '@client/js/hearthstone/hearthstone_snapshot'
@@ -123,6 +123,22 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
     get hasVod() : boolean {
         return !!this.vod
+    }
+
+    get matchWrapper(): HearthstoneMatchWrapper {
+        return new HearthstoneMatchWrapper(this.currentMatch!)
+    }
+
+    get currentPlayerLife(): number {
+        let entity = this.matchWrapper.currentPlayerHeroEntity
+        let hp = entity?.remainingHealth
+        return !!hp ? hp : 0
+    }
+
+    get opposingPlayerLife(): number {
+        let entity = this.matchWrapper.opposingPlayerHeroEntity
+        let hp = entity?.remainingHealth
+        return !!hp ? hp : 0
     }
 
     get deckHeroCard() : string | undefined  {
@@ -217,9 +233,29 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
         return entity.playState == HearthstonePlayState.Won
     }
 
+    computeWLColor(w: boolean) : string {
+        return w ? '#4CAF50' : '#FF5252'
+    }
+
     get winLossColor() : string {
-        let color : string = !!this.won ? '#4CAF50' : '#FF5252'
-        return color
+        return this.computeWLColor(this.won)
+    }
+
+    get opposingPlayerHpColor() : string {
+        return this.computeWLColor(!this.won)
+    }
+
+
+    get currentPlayerHpStyle() : any {
+        return {
+            'color': this.winLossColor
+        }
+    }
+
+    get opposingPlayerHpStyle() : any {
+        return {
+            'color': this.opposingPlayerHpColor
+        }
     }
 
     get divStyle() : any {
