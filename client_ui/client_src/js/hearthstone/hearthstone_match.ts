@@ -1,6 +1,8 @@
-import { HearthstoneMatchSnapshot, cleanHearthstoneMatchSnapshotFromJson } from '@client/js/hearthstone/hearthstone_snapshot'
+import { HearthstoneMatchSnapshot, HearthstoneMatchSnapshotWrapper, cleanHearthstoneMatchSnapshotFromJson } from '@client/js/hearthstone/hearthstone_snapshot'
 import { HearthstoneDeck, cleanHearthstoneDeckFromJson } from '@client/js/hearthstone/hearthstone_deck'
-import { HearthstonePlayer } from '@client/js/hearthstone/hearthstone_player'
+import { HearthstoneMedalInfo, HearthstonePlayer } from '@client/js/hearthstone/hearthstone_player'
+import { HearthstoneEntityWrapper } from '@client/js/hearthstone/hearthstone_entity'
+import { HearthstoneCardtype } from '@client/js/hearthstone/hearthstone_cardtype'
 
 export interface HearthstoneMatchLogMetadata {
     snapshotIds: string[]
@@ -127,4 +129,140 @@ export function cleanHearthstoneMatchFromJson(m : HearthstoneMatch) : Hearthston
         cleanHearthstoneMatchSnapshotFromJson(m.latestSnapshot)
     }
     return m
+}
+
+export class HearthstoneMatchWrapper {
+    _match: HearthstoneMatch
+    _snapshot: HearthstoneMatchSnapshotWrapper
+
+    constructor(m : HearthstoneMatch) {
+        this._match = m
+        this._snapshot = new HearthstoneMatchSnapshotWrapper(this._match.latestSnapshot)
+    }
+
+    entity(entityId: number): HearthstoneEntityWrapper | undefined {
+        return this._snapshot.entity(entityId)
+    }
+
+    playerEntity(playerId: number) : HearthstoneEntityWrapper | undefined {
+        let entityId = this._snapshot.playerIdToEntityId(playerId)
+        if (!entityId) {
+            return undefined
+        }
+        return this.entity(entityId)
+    }
+
+    playerHeroEntity(playerId: number): HearthstoneEntityWrapper | undefined {
+        let entities = this._snapshot.entitiesForPlayerId(playerId)
+        for (let e of entities) {
+            if (e.controller == playerId && e.cardType == HearthstoneCardtype.Hero) {
+                return e
+            }
+        }
+        return undefined
+    }
+
+    playerHeroCard(playerId: number): string | undefined {
+        return this.playerHeroEntity(playerId)?.cardId
+    }
+
+    medalsForPlayer(playerId: number): HearthstoneMedalInfo | undefined {
+        if (this._match.metadata.formatType == HearthstoneFormatType.Standard) {
+            return this.player(playerId)?.medalInfo.standard
+        } else {
+            return this.player(playerId)?.medalInfo.wild
+        }
+    }
+
+    player(playerId: number): HearthstonePlayer | undefined {
+        return this._match.metadata.players[playerId]
+    }
+
+    get currentPlayerId(): number | undefined {
+        for (let [pid, player] of Object.entries(this._match.metadata.players)) {
+            let typedPlayer: HearthstonePlayer = player
+            if (!typedPlayer.local) {
+                continue
+            }
+            return parseInt(pid)
+        }
+        return undefined
+    }
+
+    get currentPlayer(): HearthstonePlayer | undefined {
+        if (!this.currentPlayerId) {
+            return undefined
+        }
+        return this.player(this.currentPlayerId)
+    }
+
+    get currentPlayerEntity(): HearthstoneEntityWrapper | undefined {
+        if (!this.currentPlayerId) {
+            return undefined
+        }
+
+        return this.playerEntity(this.currentPlayerId)
+    }
+
+    get currentPlayerHeroEntity(): HearthstoneEntityWrapper | undefined {
+        if (!this.currentPlayerId) {
+            return undefined
+        }
+
+        return this.playerHeroEntity(this.currentPlayerId)
+    }
+
+    get opposingPlayerId(): number | undefined {
+        for (let [pid, player] of Object.entries(this._match.metadata.players)) {
+            let typedPlayer: HearthstonePlayer = player
+            if (typedPlayer.local) {
+                continue
+            }
+            return parseInt(pid)
+        }
+        return undefined
+    }
+
+    get opposingPlayer(): HearthstonePlayer | undefined {
+        if (!this.opposingPlayerId) {
+            return undefined
+        }
+        return this.player(this.opposingPlayerId)
+    }
+
+    get opposingPlayerEntity(): HearthstoneEntityWrapper | undefined {
+        if (!this.opposingPlayerId) {
+            return undefined
+        }
+
+        return this.playerEntity(this.opposingPlayerId)
+    }
+
+    get opposingPlayerHeroEntity(): HearthstoneEntityWrapper | undefined {
+        if (!this.opposingPlayerId) {
+            return undefined
+        }
+
+        return this.playerHeroEntity(this.opposingPlayerId)
+    }
+
+    get matchTime(): Date {
+        return this._match.metadata.matchTime
+    }
+
+    get displayedGameMode(): string {
+        return constructGameTypeString(this._match.metadata.gameType, this._match.metadata.formatType)
+    }
+
+    get numTurns() : number {
+        return this._snapshot.currentTurn
+    }
+
+    get elapsedSeconds() : number {
+        return this._match.metadata.elapsedSeconds
+    }
+
+    get isRanked() : boolean {
+        return isGameTypeRanked(this._match.metadata.gameType)
+    }
 }

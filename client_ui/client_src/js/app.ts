@@ -26,6 +26,7 @@ import AimlabGameLog from '@client/vue/log/AimlabGameLog.vue'
 import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
 
 import HearthstoneGameLog from '@client/vue/log/HearthstoneGameLog.vue'
+import HearthstoneMatch from '@client/vue/log/HearthstoneMatch.vue'
 
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
@@ -89,6 +90,7 @@ const baseRoutes : any[] = [
             {
                 path: '/hearthstone/match/:matchId',
                 name: pi.HearthstoneMatchPageId,
+                component: HearthstoneMatch,
                 props: (route : any) => ({
                     matchId: route.params.matchId
                 })

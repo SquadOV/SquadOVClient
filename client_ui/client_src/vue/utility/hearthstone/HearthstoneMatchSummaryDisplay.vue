@@ -4,6 +4,7 @@
             <v-sheet
                 class="task-summary"
                 rounded
+                :style="divStyle"
             >
                 <v-row no-gutters v-if="!!currentMatch">
                     <!-- Hero class + Deck Name (if applicable) -->
@@ -22,13 +23,17 @@
                     </v-col>
 
                     <!-- DateTime + Game Mode -->
-                    <v-col cols="3" align-self="center">
+                    <v-col cols="2" align-self="center" class="text-body-2">
                         <p>
                             {{ dateTime }}
                         </p>
 
                         <p>
                             {{ gameMode }}
+                        </p>
+
+                        <p>
+                            {{ matchLength }} - {{ numTurns }} Turns
                         </p>
                     </v-col>
 
@@ -51,15 +56,13 @@
                         </hearthstone-mini-board-state-display>
                     </v-col>
 
-                    <!-- Basic Stats about Match -->
-                    <v-col cols="1" align-self="center">
-                        <p>
-                            {{ matchLength }}
-                        </p>
-
-                        <p>
-                            {{ numTurns }} Turns
-                        </p>
+                    <!-- Enemy hero -->
+                    <v-col cols="2" align-self="center">
+                        <hearthstone-hero-display
+                            :hero-card="enemyHeroCard"
+                            :max-height="150"
+                        >
+                        </hearthstone-hero-display>
                     </v-col>
                 </v-row>
 
@@ -87,8 +90,11 @@ import { apiClient, ApiData } from '@client/js/api'
 import * as pi from '@client/js/pages'
 import { HearthstoneMatch, constructGameTypeString, HearthstoneFormatType, isGameTypeConstructed, isGameTypeRanked } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneMedalInfo, HearthstonePlayer } from '@client/js/hearthstone/hearthstone_player'
+import { HearthstoneEntity, HearthstoneEntityWrapper } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneMatchSnapshot } from '@client/js/hearthstone/hearthstone_snapshot'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
+import { HearthstoneCardtype } from '@client/js/hearthstone/hearthstone_cardtype'
+import { HearthstonePlayState } from '@client/js/hearthstone/hearthstone_playstate'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import HearthstonePlayerMedalDisplay from '@client/vue/utility/hearthstone/HearthstonePlayerMedalDisplay.vue'
 import HearthstoneMiniBoardStateDisplay from '@client/vue/utility/hearthstone/HearthstoneMiniBoardStateDisplay.vue'
@@ -121,6 +127,22 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
     get deckHeroCard() : string | undefined  {
         return this.currentMatch?.metadata.deck?.heroCard
+    }
+
+    get enemyHeroCard() : string | undefined {
+        if (!this.latestSnapshot) {
+            return undefined
+        }
+
+        for (let [eid, entity] of Object.entries(this.latestSnapshot.entities)) {
+            let typedEntity: HearthstoneEntity = entity
+            let wrappedEntity = new HearthstoneEntityWrapper(typedEntity)
+            if (wrappedEntity.controller != this.localPlayerMatchId 
+                && wrappedEntity.cardType == HearthstoneCardtype.Hero) {
+                return wrappedEntity.cardId
+            }
+        }
+        return undefined
     }
 
     get deckName() : string | undefined {
@@ -179,7 +201,31 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     }
 
     get latestSnapshot(): HearthstoneMatchSnapshot | null {
-        return this.currentMatch!.latestSnapshot
+        if (!this.currentMatch) {
+            return null
+        }
+        return this.currentMatch.latestSnapshot
+    }
+
+    get won() : boolean {
+        if (!this.latestSnapshot || !this.localPlayerMatchId) {
+            return false
+        }
+
+        let entityId = this.latestSnapshot.playerIdToEntityId[this.localPlayerMatchId]
+        let entity = new HearthstoneEntityWrapper(this.latestSnapshot.entities[entityId])
+        return entity.playState == HearthstonePlayState.Won
+    }
+
+    get winLossColor() : string {
+        let color : string = !!this.won ? '#4CAF50' : '#FF5252'
+        return color
+    }
+
+    get divStyle() : any {
+        return {
+            'border-left': `5px solid ${this.winLossColor}`,
+        }
     }
 
     refreshData() {
@@ -208,13 +254,9 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
 <style scoped>
 
-.match-summary {
+.task-summary {
     width: 100%;
     position: relative;
-}
-
-.match-div {
-    min-height: 125px;
 }
 
 </style>

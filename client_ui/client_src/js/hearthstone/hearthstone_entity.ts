@@ -1,5 +1,6 @@
 import { HearthstoneZone, hearthstoneZoneFromString } from '@client/js/hearthstone/hearthstone_zone'
 import { HearthstoneCardtype, hearthstoneCardTypeFromString } from '@client/js/hearthstone/hearthstone_cardtype'
+import { HearthstonePlayState, hearthstonePlayStateFromString } from '@client/js/hearthstone/hearthstone_playstate'
 
 export interface HearthstoneEntity {
     entityId: number
@@ -12,6 +13,9 @@ const ZONE_POSITION = 'ZONE_POSITION'
 const ZONE = 'ZONE'
 const CONTROLLER = 'CONTROLLER'
 const CARDTYPE = 'CARDTYPE'
+const PLAYSTATE = 'PLAYSTATE'
+const HEALTH = 'HEALTH'
+const DAMAGE = 'DAMAGE'
 
 // Attributes
 const CARD_ID = 'CardID'
@@ -21,6 +25,26 @@ export class HearthstoneEntityWrapper {
 
     constructor(entity: HearthstoneEntity) {
         this._entity = entity
+    }
+
+    get health(): number {
+        let hp = this._entity.tags[HEALTH]
+        if (!hp) {
+            return 0
+        }
+        return parseInt(hp)
+    }
+
+    get damage(): number {
+        let dmg = this._entity.tags[DAMAGE]
+        if (!dmg) {
+            return 0
+        }
+        return parseInt(dmg)
+    }
+
+    get remainingHealth(): number {
+        return this.health - this.damage
     }
 
     get zone() : HearthstoneZone {
@@ -61,5 +85,13 @@ export class HearthstoneEntityWrapper {
             return HearthstoneCardtype.Invalid
         }
         return hearthstoneCardTypeFromString(typ)
+    }
+
+    get playState() : HearthstonePlayState {
+        let state = this._entity.tags[PLAYSTATE]
+        if (!state) {
+            return HearthstonePlayState.Invalid
+        }
+        return hearthstonePlayStateFromString(state)
     }
 }
