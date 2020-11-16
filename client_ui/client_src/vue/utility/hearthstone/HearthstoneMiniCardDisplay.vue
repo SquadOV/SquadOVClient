@@ -1,18 +1,18 @@
 <template>
-    <v-hover v-slot="{ hover }">
-        <div :style="parentStyle">
-            <div :style="divStyle">    
-            </div>
-
-            <hearthstone-full-card-display
-                ref="hoverCard"
-                v-if="hover"
-                :card-id="cardId"
-                :style="cardStyle"
+    <v-tooltip right color="transparent">
+        <template v-slot:activator="{on, attrs}">
+            <div
+                :style="divStyle"
+                v-bind="attrs"
+                v-on="on"
             >
-            </hearthstone-full-card-display>
-        </div>
-    </v-hover>
+            </div>
+        </template>
+        <hearthstone-full-card-display
+            :card-id="cardId"
+        >
+        </hearthstone-full-card-display>
+    </v-tooltip>
 </template>
 
 <script lang="ts">
@@ -49,14 +49,6 @@ export default class HearthstoneMiniCardDisplay extends Vue {
         return staticClient.getHearthstoneCardPortraitUrl(this.cardId)
     }
 
-    get parentStyle() : any {
-        return {
-            'position': 'relative',
-            'top': '0',
-            'left': '0',
-        }
-    }
-
     get divStyle() : any {
         return {
             'height': `${this.maxHeight}px`,
@@ -67,44 +59,6 @@ export default class HearthstoneMiniCardDisplay extends Vue {
             'border-radius': '50% 50%',
             'border': '2px solid white',
             'z-index': 1,
-        }
-    }
-
-    recomputeHoverCardStyle() {
-        if (!this.hoverCardStyle) {
-            Vue.nextTick(() => {
-                // Check if the hover card would go out of bounds on the right if displayed, if so
-                // make it spawn to the left of the mini-card instead.
-                let style : any = {
-                    'position': 'absolute',
-                    'top': 0,
-                    'z-index': 2,
-                }
-
-                let bounding = this.$refs.hoverCard.$el.getBoundingClientRect()
-
-                // Need to guesstimate bounding right as it won't be set at this point. We know the dimensions
-                // of the card though so this should be fairly accurate.
-                let rightBound = bounding.left + 362
-
-                if (rightBound >= window.innerWidth) {
-                    style['right'] =`${this.maxWidth * 1.01}px`
-                } else {
-                    style['left'] =`${this.maxWidth * 1.01}px`
-                }
-
-                this.hoverCardStyle = style
-            })
-        }
-    }
-
-    get cardStyle() : any {
-        this.recomputeHoverCardStyle()
-        return !!this.hoverCardStyle ? this.hoverCardStyle : {
-            'position': 'absolute',
-            'top': 0,
-            'left': 0,
-            'z-index': 2,
         }
     }
 }
