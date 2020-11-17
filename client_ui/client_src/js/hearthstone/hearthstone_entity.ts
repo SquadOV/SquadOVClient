@@ -1,6 +1,7 @@
 import { HearthstoneZone, hearthstoneZoneFromString } from '@client/js/hearthstone/hearthstone_zone'
 import { HearthstoneCardtype, hearthstoneCardTypeFromString } from '@client/js/hearthstone/hearthstone_cardtype'
 import { HearthstonePlayState, hearthstonePlayStateFromString } from '@client/js/hearthstone/hearthstone_playstate'
+import { HearthstoneGameStep, hearthstoneGameStepFromString } from '@client/js/hearthstone/hearthstone_game_step'
 
 export interface HearthstoneEntity {
     entityId: number
@@ -16,6 +17,7 @@ const CARDTYPE = 'CARDTYPE'
 const PLAYSTATE = 'PLAYSTATE'
 const HEALTH = 'HEALTH'
 const DAMAGE = 'DAMAGE'
+const STEP = 'STEP'
 
 // Attributes
 const CARD_ID = 'CardID'
@@ -25,6 +27,14 @@ export class HearthstoneEntityWrapper {
 
     constructor(entity: HearthstoneEntity) {
         this._entity = entity
+    }
+
+    get step(): HearthstoneGameStep {
+        let raw = this._entity.tags[STEP]
+        if (!raw) {
+            return HearthstoneGameStep.Invalid
+        }
+        return hearthstoneGameStepFromString(raw)
     }
 
     get health(): number {

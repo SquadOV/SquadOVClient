@@ -2,6 +2,7 @@
     <v-img
         :src="cardSrc"
         :height="maxHeight"
+        :width="width"
         :style="style"
         contain
     >
@@ -25,6 +26,11 @@ export default class HearthstoneFullCardDisplay extends Vue {
 
     get cardSrc() : string {
         return staticClient.getHearthstoneCardImageUrl(this.cardId)
+    }
+
+    get width() : number {
+        // Specify width manually to allow the tooltip to be positioned properly before the image loads.
+        return this.maxHeight * 0.723938
     }
 
     get style() : any {

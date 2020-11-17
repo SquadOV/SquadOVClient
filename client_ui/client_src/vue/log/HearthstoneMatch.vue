@@ -1,5 +1,5 @@
 <template>
-    <loading-container :is-loading="!currentMatch">
+    <loading-container :is-loading="!ready">
         <template v-slot:default="{ loading }">
             <div v-if="!loading">
                 <!--
@@ -31,6 +31,8 @@
 
                     <v-col v-if="!theaterMode" cols="4">
                         <hearthstone-turn-events-display
+                            :current-match="matchWrapper"
+                            :turn="currentTurn"
                             :style="roundEventsStyle"
                         >
                         </hearthstone-turn-events-display>
@@ -41,7 +43,11 @@
                     Turn-timeline (mulligan + turns)
                 -->
                 <v-row class="my-4">
-                    <hearthstone-turn-timeline-display>
+                    <hearthstone-turn-timeline-display
+                        id="turn-timeline"
+                        :current-match="matchWrapper"
+                        :turn.sync="currentTurn"
+                    >
                     </hearthstone-turn-timeline-display>
                 </v-row>
                 
@@ -71,7 +77,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
-import { HearthstoneMatch as RawHearthstoneMatch, HearthstoneMatchWrapper} from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneMatch as RawHearthstoneMatch, HearthstoneMatchWrapper, HearthstoneMatchLogs} from '@client/js/hearthstone/hearthstone_match'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import HearthstoneMatchHeaderDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchHeaderDisplay.vue'
 import HearthstoneTurnEventsDisplay from '@client/vue/utility/hearthstone/HearthstoneTurnEventsDisplay.vue'
@@ -99,9 +105,15 @@ export default class HearthstoneMatch extends Vue {
     }
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
-
     vod: VodAssociation | null = null
+
+    // Match Info
     currentMatch: RawHearthstoneMatch | null = null
+    currentTurn: number = 0
+
+    // Match loading
+    ready: boolean = false
+
 
     get videoUuid() : string | undefined {
         return this.vod?.videoUuid
@@ -118,8 +130,16 @@ export default class HearthstoneMatch extends Vue {
     }
 
     refreshData() {
+        this.ready = false
         apiClient.getHearthstoneMatch(this.matchId).then((resp : ApiData<RawHearthstoneMatch>) => {
             this.currentMatch = resp.data
+
+            apiClient.getHearthstoneMatchLogs(this.matchId).then((resp: ApiData<HearthstoneMatchLogs>) => {
+                this.matchWrapper.addLogs(resp.data)
+                this.ready = true
+            }).catch((err: any) => {
+                console.log('Failed to obtain Hearthstone match logs: ', err)    
+            })
         }).catch((err: any) => {
             console.log('Failed to obtain Hearthstone match: ', err)
         })
@@ -140,3 +160,11 @@ export default class HearthstoneMatch extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+#turn-timeline {
+    width: 100%;
+}
+
+</style>

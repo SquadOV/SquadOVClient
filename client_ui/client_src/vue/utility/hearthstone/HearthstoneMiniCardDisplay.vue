@@ -1,5 +1,9 @@
 <template>
-    <v-tooltip right color="transparent">
+    <v-tooltip
+        left
+        :allow-overflow="!noOverflow"
+        color="transparent"
+    >
         <template v-slot:activator="{on, attrs}">
             <div
                 :style="divStyle"
@@ -35,11 +39,14 @@ export default class HearthstoneMiniCardDisplay extends Vue {
     @Prop({default: 130})
     maxHeight!: number
 
-    hoverCardStyle: any = null
+    @Prop({type: Boolean, default: false})
+    left!: boolean
 
-    $refs!: {
-        hoverCard: HearthstoneFullCardDisplay
-    }
+    @Prop({type: Boolean, default: false})
+    noShrink!: boolean
+
+    @Prop({type: Boolean, default: false})
+    noOverflow!: boolean
 
     get maxWidth(): number {
         return this.maxHeight * 0.8
@@ -50,7 +57,7 @@ export default class HearthstoneMiniCardDisplay extends Vue {
     }
 
     get divStyle() : any {
-        return {
+        let style : any = {
             'height': `${this.maxHeight}px`,
             'width': `${this.maxWidth}px`,
             'background-image': `url('${this.cardSrc}')`,
@@ -60,6 +67,12 @@ export default class HearthstoneMiniCardDisplay extends Vue {
             'border': '2px solid white',
             'z-index': 1,
         }
+
+        if (this.noShrink) {
+            style['flex-shrink'] = '0 !important'
+        }
+
+        return style
     }
 }
 

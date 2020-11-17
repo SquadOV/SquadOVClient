@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="full-width">
         <v-sheet
             rounded
             :style="divStyle"
