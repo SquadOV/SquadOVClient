@@ -14,11 +14,17 @@ MedalInfoTranslatorMapper::MedalInfoTranslatorMapper(const process_watcher::memo
 }
 
 TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentMedalInfo() const {
+    if (!_object) {
+        return nullptr;
+    }
     const auto value = _object->get(CURRENT_MEDAL_FIELD_NAME);
     return std::make_shared<TranslatedMedalInfoMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
 }
 
 TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentWildMedalInfo() const {
+    if (!_object) {
+        return nullptr;
+    }
     const auto value = _object->get(CURRENT_WILD_MEDAL_FIELD_NAME);
     return std::make_shared<TranslatedMedalInfoMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
 }

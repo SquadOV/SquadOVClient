@@ -34,47 +34,47 @@ PlayerMapper::PlayerMapper(const process_watcher::memory::mono::MonoObjectMapper
 
 std::string PlayerMapper::name() const {
     const auto value = _object->get(NAME_FIELD);
-    return value.get<std::string>();
+    return value.getDefault<std::string>("");
 }
 
 bool PlayerMapper::local() const {
     const auto value = _object->get(LOCAL_FIELD);
-    return value.get<uint8_t>();
+    return value.getDefault<uint8_t>(0);
 }
 
 PlayerSide PlayerMapper::side() const {
     const auto value = _object->get(SIDE_FIELD);
-    return static_cast<PlayerSide>(value.get<int32_t>());
+    return static_cast<PlayerSide>(value.getDefault<int32_t>(0));
 }
 
 int32_t PlayerMapper::cardBackId() const {
     const auto value = _object->get(CARD_BACK_FIELD);
-    return value.get<int32_t>();
+    return value.getDefault<int32_t>(0);
 }
 
 MedalInfoTranslatorMapperSPtr PlayerMapper::medalInfo() const {
     const auto value = _object->get(MEDAL_INFO_FIELD);
-    return std::make_shared<MedalInfoTranslatorMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
+    return std::make_shared<MedalInfoTranslatorMapper>(value.getDefault<process_watcher::memory::mono::MonoObjectMapperSPtr>(nullptr));
 }
 
 uint32_t PlayerMapper::arenaWins() const {
     const auto value = _object->get(ARENA_WINS_FIELD);
-    return value.get<uint32_t>();
+    return value.getDefault<uint32_t>(0);
 }
 
 uint32_t PlayerMapper::arenaLoss() const {
     const auto value = _object->get(ARENA_LOSS_FIELD);
-    return value.get<uint32_t>();
+    return value.getDefault<uint32_t>(0);
 }
 
 uint32_t PlayerMapper::tavernBrawlWins() const {
     const auto value = _object->get(BRAWL_WIN_FIELD);
-    return value.get<uint32_t>();
+    return value.getDefault<uint32_t>(0);
 }
 
 uint32_t PlayerMapper::tavernBrawlLoss() const {
     const auto value = _object->get(BRAWL_LOSS_FIELD);
-    return value.get<uint32_t>();
+    return value.getDefault<uint32_t>(0);
 }
 
 nlohmann::json PlayerMapper::toJson() const {

@@ -21,7 +21,8 @@ public:
     LogWatcher(
         const std::filesystem::path& path,
         const LogChangeCallback& cb,
-        const bool waitForNewFile = false
+        bool waitForNewFile = false,
+        bool immediatelyGoToEnd = false
     );
     ~LogWatcher();
 
@@ -38,6 +39,7 @@ private:
     std::thread _changeThread;
     bool _isFinished = false;
     bool _batchingEnabled = true;
+    bool _immediatelyGoToEnd = false;
 };
 
 using LogWatcherPtr = std::unique_ptr<LogWatcher>;

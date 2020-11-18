@@ -80,6 +80,10 @@ bool parseConnectToGameServer(const HearthstoneRawLog& line, HearthstoneGameConn
     return true;
 }
 
+bool parseEndingExperiment(const HearthstoneRawLog& line) {
+    return line.log.find("Ending Experiment") != std::string::npos;
+}
+
 }
 
 nlohmann::json HearthstoneGameConnectionInfo::toJson() const {
@@ -158,19 +162,23 @@ void HearthstoneLogWatcher::loadPrimaryFromFile(const std::filesystem::path& log
     LOG_INFO("Hearthstone Primary Log Found: " << logFile.string() << std::endl);
     using std::placeholders::_1;
     _primaryWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPrimaryLogChange, this, _1), useTimeChecks());
+    _primaryWatcher->disableBatching();
 }
 
 void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFile) {
     LOG_INFO("Hearthstone Power Log Found: " << logFile.string() << std::endl);
     using std::placeholders::_1;
-    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), useTimeChecks());
+    // 'false' -> Don't wait for a new file - we want to capture the Power.log immediately and not just when it's written to because 
+    //            if we wait for when the Power.log is written to we'll have missed some crucial information.
+    // 'true' -> We want to seek to the end because we want to ignore past matches if they exist in the file.
+    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), false, true);
+    _powerWatcher->disableBatching();
 }
 
 void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
         const auto rawLog = parsePowerLogLine(ln);
         if (!rawLog.canParse) {
-            LOG_WARNING("Skipping Hearthstone power log line: " << ln << std::endl);
             continue;
         }
 
@@ -197,7 +205,6 @@ void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
         // Where the log line may or may not have a [SECTION] tag.
         const auto rawLog = parseLogLine(ln);
         if (!rawLog.canParse) {
-            LOG_WARNING("Skipping Hearthstone log line: " << ln << std::endl);
             continue;
         }
 
@@ -213,6 +220,8 @@ void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
             HearthstoneGameConnectionInfo connectionInfo;
             if (parseConnectToGameServer(rawLog, connectionInfo)) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchConnect), rawLog.tm, &connectionInfo);
+            } else if (parseEndingExperiment(rawLog)) {
+                notify(static_cast<int>(EHearthstoneLogEvents::MatchDisconnect), rawLog.tm, nullptr);
             }
         }
     }

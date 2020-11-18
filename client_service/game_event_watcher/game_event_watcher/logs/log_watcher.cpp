@@ -22,11 +22,12 @@ using namespace std::chrono_literals;
 
 namespace game_event_watcher {
 
-LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, bool waitForNewFile):
+LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, bool waitForNewFile, bool immediatelyGoToEnd):
     _path(path),
     _cb(cb),
     _changeThread(&LogWatcher::watchWorker, this),
-    _waitForNewFile(waitForNewFile) {
+    _waitForNewFile(waitForNewFile),
+    _immediatelyGoToEnd(immediatelyGoToEnd) {
 }
 
 LogWatcher::~LogWatcher() {
@@ -37,21 +38,22 @@ LogWatcher::~LogWatcher() {
 void LogWatcher::watchWorker() {
     if (_waitForNewFile || !fs::exists(_path.string())) {
         while (!_isFinished) {
-            const auto now = fs::file_time_type::clock::now();
-            const auto lastWriteTime = fs::last_write_time(_path);
-            const auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
-            const auto maxDiff = std::chrono::seconds(30);
+            if (fs::exists(_path)) {
+                const auto now = fs::file_time_type::clock::now();
+                const auto lastWriteTime = fs::last_write_time(_path);
+                const auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
+                const auto maxDiff = std::chrono::seconds(30);
 
-            // The log file should have be written maxDiff of the current time OR the log file should just be newer.
-            if (diff < maxDiff) {
-                break;
+                // The log file should have be written maxDiff of the current time OR the log file should just be newer.
+                if (diff < maxDiff) {
+                    break;
+                }
             }
-
-            LOG_INFO("\tDeferring log watcher due to a diff of " << diff.count() << " seconds." << std::endl);
-            std::this_thread::sleep_for(1s);
-            LOG_INFO("\t\tRestart watching: " << _path.string() << std::endl);
+            std::this_thread::sleep_for(100ms);
         }
     }
+
+    LOG_INFO("Found Log File: " << _path.string() << std::endl);
 
     if (_isFinished) {
         // An early out here just in case we want to stop while still waiting for the log.
@@ -90,22 +92,37 @@ void LogWatcher::watchWorker() {
             if (fs::exists(_path)) {
                 std::ifstream tmp(_path.string());
                 tmp.seekg(0, tmp.end);
-                std::this_thread::sleep_for(1s);
             }
+            std::this_thread::sleep_for(1s);
         }
         CancelIoEx(hDir, nullptr);
     });
 
+    auto previousFilesize = std::filesystem::file_size(_path);
+
     while (!_isFinished) {
         logStream.clear();
+
+        const auto currentFilesize = std::filesystem::file_size(_path);
+        bool hasReset = false;
+        if (currentFilesize < previousFilesize && logStream.is_open()) {
+            // This happens in the case where we're watching a file which will have its content deleted and overwritten.
+            // In this case the only thing we can really do is to reopen the file and start from the beginning
+            logStream.close();
+            hasReset = true;
+        }
+
         // Read all available changes if the file is opened and exists.    
         // Totally OK if the log file isn't open yet but it doesn't exit or whatever.
         if (fs::exists(_path) && !logStream.is_open()) {
-            logStream.open(_path.string());
+            // We don't want to set the std::ios_base::ate flag if we detected the contents of the file were wiped as we actually
+            // do want to read in what was already written into the file.
+            logStream.open(_path.string(), (_immediatelyGoToEnd && !hasReset) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
                 LOG_WARNING("Failed to open log file: " << _path.string() << std::endl);
             }
-        }
+        } 
+        previousFilesize = currentFilesize;
         
         std::string line;
         while (std::getline(logStream, line)) {
@@ -153,17 +170,16 @@ void LogWatcher::watchWorker() {
             while (!!rawNotif && !_isFinished) {
                 FILE_NOTIFY_INFORMATION* notif = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(rawNotif);
 
-                if (notif->Action == FILE_ACTION_MODIFIED) {
-                    // Ensure that the file that was changed is the file we care about.
-                    const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
+                // Ensure that the file that was changed is the file we care about.
+                const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
 
-                    // This conversion is deprecated in C++17 but I can't seem to find a good alternative.
-#pragma warning(disable: 4996)
-                    const std::string notifName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(wNotifFname);
-                    if (notifName == _path.filename().string()) {
-                        foundChanges = true;
-                        break;
-                    }
+                // This conversion is deprecated in C++17 but I can't seem to find a good alternative.
+                #pragma warning(disable: 4996)
+                const std::string notifName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(wNotifFname);
+
+                if (notif->Action == FILE_ACTION_MODIFIED && notifName == _path.filename().string()) {
+                    foundChanges = true;
+                    break;
                 }
 
                 if (notif->NextEntryOffset == 0) {

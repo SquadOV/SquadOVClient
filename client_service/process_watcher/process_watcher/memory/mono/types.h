@@ -50,6 +50,15 @@ public:
     const T& get() const { return std::get<T>(_internal); }
 
     template<typename T>
+    const T& getDefault(const T& default) const {
+        try {
+            return std::get<T>(_internal);
+        } catch(...) {
+            return default;
+        }
+    }
+
+    template<typename T>
     DynamicMonoType& operator=(const T& other) {
         _internal = other;
         return *this;

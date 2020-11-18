@@ -3,26 +3,24 @@
 
 namespace game_event_watcher {
 
-const std::string CREATE_GAME_DELIMITER = "GameState.DebugPrintPower() - CREATE_GAME";
-const std::string END_TASK_LIST = "PowerProcessor.EndCurrentTaskList()";
-
-const std::regex goldRewardRegex("PowerTaskList.DebugPrintPower\\(\\) -\\s*TAG_CHANGE.*tag=GOLD_REWARD_STATE value=1");
-bool parseGoldRewardState(const std::string& log) {
-    return std::regex_search(log, goldRewardRegex);
-}
+const std::string BEGIN_MULLIGAN = "tag=MULLIGAN_STATE value=DONE";
+const std::string GAMEOVER_TAG = "TAG_CHANGE Entity=GameEntity tag=STEP value=FINAL_GAMEOVER";
+const std::string BLOCKEND = "Block End=(null)";
 
 void HearthstonePowerLogParser::parse(const HearthstoneRawLog& log) {
     _raw.push_back(log);
 
-    if (log.log.find(CREATE_GAME_DELIMITER) != std::string::npos) {
+    if (log.log.find(BEGIN_MULLIGAN) != std::string::npos) {
+        // This will happen twice - one for each player but that's fine.
+        // We use the mulligan done log line for detecting game start as that's
+        // when we will reliably know that the user has actually loaded into the game.
+        // TODO: It probably won't work for other game modes.
         _gameRunning = true;
-    } else if (parseGoldRewardState(log.log)) {
+    } else if (log.log.find(GAMEOVER_TAG) != std::string::npos) {
         _endPending = true;
-    } else if (log.log.find(END_TASK_LIST) != std::string::npos) {
-        if (_endPending) {
-            _gameRunning = false;
-            _endPending = false;
-        }
+    } else if (_endPending && log.log.find(BLOCKEND) != std::string::npos) {
+        _gameRunning = false;
+        _endPending = false;
     }
 }
 

@@ -13,9 +13,12 @@ enum class EHearthstoneLogEvents {
     // MatchConnect and MatchStart are two different events.
     // MatchConnect is when we're first notified that we are now going to start connecting to a game
     // while MatchStart is called when we've finally loaded into that game.
+    // Similarly, MatchEnd is when the game finishes server side and MatchDisconnect is when the user is
+    // logically disconnected from the game (i.e. their screen goes back to a non-game screen).
     MatchConnect,
     MatchStart,
-    MatchEnd
+    MatchEnd,
+    MatchDisconnect
 };
 
 struct HearthstoneGameConnectionInfo {

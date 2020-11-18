@@ -24,6 +24,7 @@ private:
     void onGameConnect(const shared::TimePoint& eventTime, const void* rawData);
     void onGameStart(const shared::TimePoint& eventTime, const void* rawData);
     void onGameEnd(const shared::TimePoint& eventTime, const void* rawData);
+    void onGameDisconnect(const shared::TimePoint& eventTime, const void* rawData);
 
     process_watcher::process::Process  _process;
     game_event_watcher::HearthstoneLogWatcherPtr _logWatcher;
@@ -49,6 +50,7 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchConnect), std::bind(&HearthstoneProcessHandlerInstance::onGameConnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchStart), std::bind(&HearthstoneProcessHandlerInstance::onGameStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchEnd), std::bind(&HearthstoneProcessHandlerInstance::onGameEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchDisconnect), std::bind(&HearthstoneProcessHandlerInstance::onGameDisconnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
 }
 
@@ -89,6 +91,12 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 
     // We need to store this information as we'll be using this to identify the game when we upload information about the game soon.
     _currentGame = *info;
+
+    // We need to start recording now because the game start event comes much later so if we don't start recording now then we
+    // might miss parts of the mulligan.
+    _gameStartTime = shared::nowUtc();
+    _recorder->start();
+
     if (_inGame) {
         onGameStart(eventTime, nullptr);
     }
@@ -118,29 +126,17 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
         return;
     }
-
-    _gameStartTime = shared::nowUtc();
-    _recorder->start();
 }
 
 void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& eventTime, const void* rawData) {
-    // We do need this check as the game end event happens at every scence change pretty much.
     if (!_inGame) {
         return;
     }
 
     LOG_INFO("Hearthstone Game End [" << shared::timeToStr(eventTime) << "]" << std::endl);
 
-    _inGame = false;
-    _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
-
-    const auto vodId = _recorder->currentId();
-    const auto metadata = _recorder->getMetadata();
-    _recorder->stop();
-
-    // Now we need to send the raw power log to the API server for processing as well
-    // as tell the server about the association between the VOD we just recorded
-    // with the current match.
+    // Note that we use the game end event to retrieve the power logs in JSON form and store it for safe keeping.
+    // We use the game disconnect event to actually stop recording.
     try {
         const nlohmann::json* data = reinterpret_cast<const nlohmann::json*>(rawData);
         service::api::getGlobalApi()->uploadHearthstonePowerLogs(_matchUuid, *data);
@@ -148,19 +144,45 @@ void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& event
         // Not the end of the world - we just won't have match history details - still have a VOD!
         LOG_WARNING("Failed to upload Hearthstone power logs: " << ex.what() << std::endl);
     }
+}
 
-    try {
-        shared::squadov::VodAssociation association;
-        association.matchUuid = _matchUuid;
-        association.userUuid = vodId.userUuid;
-        association.videoUuid = vodId.videoUuid;
-        association.startTime = _gameStartTime;
-        association.endTime = eventTime;
-        service::api::getGlobalApi()->associateVod(association, metadata);
-    } catch (const std::exception& ex) {
-        LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
-        service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint& eventTime, const void* rawData) {
+    LOG_INFO("Hearthstone Game Disconnect [" << shared::timeToStr(eventTime) << "]" << std::endl);
+
+    const auto isRecording = _recorder->isRecording();
+    const auto vodId = _recorder->currentId();
+    const auto metadata = _recorder->getMetadata();
+
+    if (isRecording) {
+        _recorder->stop();
     }
+
+    // Need this check here just in case for whatever reason we connected to a game but never
+    // actually caught the "game start" event.
+    try {
+        if (_inGame) {
+            try {
+                shared::squadov::VodAssociation association;
+                association.matchUuid = _matchUuid;
+                association.userUuid = vodId.userUuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = _gameStartTime;
+                association.endTime = eventTime;
+                service::api::getGlobalApi()->associateVod(association, metadata);
+            } catch (const std::exception& ex) {
+                LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
+                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            }
+        } else if (isRecording) {
+            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        }
+    } catch (std::exception& ex) {
+        // This should only be catching delete VOD exceptions which are fine.
+        LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
+    }
+    
+    _inGame = false;
+    _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
 }
 
 HearthstoneProcessHandler::HearthstoneProcessHandler() = default;

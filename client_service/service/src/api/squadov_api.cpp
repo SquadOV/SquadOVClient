@@ -241,7 +241,7 @@ std::string SquadovApi::createHearthstoneMatch(
     }
 #endif
 
-    const std::string path = "/v1/hearthstone";
+    const std::string path = "/v1/hearthstone/match";
     const auto result = _webClient->post(path, body);
     if (result->status != 200) {
         THROW_ERROR("Failed to create Hearthstone match: " << result->status);
@@ -257,7 +257,7 @@ void SquadovApi::uploadHearthstonePowerLogs(
     const nlohmann::json& logs
 ) {
     std::ostringstream path;
-    path << "/v1/hearthstone/" << matchUuid;
+    path << "/v1/hearthstone/match/" << matchUuid;
 
 #if DEBUG_REQUEST_BODY_TO_DISK
     {
