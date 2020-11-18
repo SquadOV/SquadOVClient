@@ -1,6 +1,7 @@
 <template>
     <v-tooltip
-        left
+        :left="left"
+        :right="!left"
         :allow-overflow="!noOverflow"
         color="transparent"
     >
@@ -25,6 +26,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { staticClient } from '@client/js/staticData'
+import { getSameTeamColor, getOpposingTeamColor } from '@client/js/hearthstone/hearthstone_colors'
 import HearthstoneFullCardDisplay from '@client/vue/utility/hearthstone/HearthstoneFullCardDisplay.vue'
 
 @Component({
@@ -48,6 +50,12 @@ export default class HearthstoneMiniCardDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     noOverflow!: boolean
 
+    @Prop({type: Boolean, default: false})
+    history!: boolean
+
+    @Prop({type: Boolean, default: false})
+    isFriendly!: boolean
+
     get maxWidth(): number {
         return this.maxHeight * 0.8
     }
@@ -59,13 +67,21 @@ export default class HearthstoneMiniCardDisplay extends Vue {
     get divStyle() : any {
         let style : any = {
             'height': `${this.maxHeight}px`,
-            'width': `${this.maxWidth}px`,
             'background-image': `url('${this.cardSrc}')`,
-            'background-size': `${this.maxHeight*1.05}px ${this.maxHeight*1.05}px`,
-            'background-position': '50% 50%',
-            'border-radius': '50% 50%',
-            'border': '2px solid white',
+            'background-size': `${this.maxHeight*1.2}px ${this.maxHeight*1.2}px`,
+            'background-position': '55% 40%',
             'z-index': 1,
+        }
+
+        if (this.history) {
+            let histColor = this.isFriendly ? getSameTeamColor() : getOpposingTeamColor()
+            style['border-radius'] = '4px'
+            style['border'] = `4px solid rgb(${histColor.r}, ${histColor.g}, ${histColor.b})`
+            style['width'] = `${this.maxHeight}px`
+        } else {
+            style['border-radius'] = '50%'
+            style['border'] = '2px solid white'
+            style['width'] = `${this.maxWidth}px`
         }
 
         if (this.noShrink) {

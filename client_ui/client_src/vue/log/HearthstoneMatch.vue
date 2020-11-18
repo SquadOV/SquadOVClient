@@ -42,7 +42,7 @@
                 <!--
                     Turn-timeline (mulligan + turns)
                 -->
-                <v-row class="my-4">
+                <v-row>
                     <hearthstone-turn-timeline-display
                         id="turn-timeline"
                         :current-match="matchWrapper"
@@ -56,13 +56,33 @@
                 -->
                 <v-row>
                     <v-col cols="6">
-                        <hearthstone-match-deck-display>
-                        </hearthstone-match-deck-display>
+                        <template v-if="!!matchWrapper.currentPlayerDeck">
+                            <div class="d-flex align-center justify-center pa-4">
+                                <span class="text-h5">
+                                    {{ matchWrapper.currentPlayerDeck.name }}
+                                </span>
+                            </div>
+                            <v-divider></v-divider>
+                            <hearthstone-match-deck-display
+                                :deck="matchWrapper.currentPlayerDeck"
+                            >
+                            </hearthstone-match-deck-display>
+                        </template>
                     </v-col>
 
                     <v-col cols="6">
-                        <hearthstone-match-deck-display>
-                        </hearthstone-match-deck-display>
+                        <template v-if="!!matchWrapper.opposingPlayerDeck">
+                            <div class="d-flex align-center justify-center pa-4">
+                                <span class="text-h5">
+                                    {{ matchWrapper.opposingPlayerDeck.name }}
+                                </span>
+                            </div>
+                            <v-divider></v-divider>
+                            <hearthstone-match-deck-display
+                                :deck="matchWrapper.opposingPlayerDeck"
+                            >
+                            </hearthstone-match-deck-display>
+                        </template>
                     </v-col>
                 </v-row>
             </div>

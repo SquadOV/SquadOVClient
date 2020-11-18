@@ -101,7 +101,6 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
         if (!this.snapshot) {
             return []
         }
-        console.log('Relevant blocks: ', this.snapshot.gameBlocks)
         return this.snapshot.gameBlocks
     }
 

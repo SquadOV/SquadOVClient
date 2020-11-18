@@ -10,6 +10,26 @@ export interface HearthstoneDeckSlot {
     count: HearthstoneDeckCardCount
 }
 
+export enum HearthstoneCardRarity {
+	Invalid,
+	Common,
+	Free,
+	Rare,
+	Epic,
+	Legendary
+}
+
+export interface HearthstoneCardMetadata {
+    cardId: string
+    name: string
+    cost: number
+    rarity: HearthstoneCardRarity
+}
+
+export interface HearthstoneDeckSlotWithMetadata extends HearthstoneDeckSlot {
+    metadata: HearthstoneCardMetadata
+}
+
 export interface HearthstoneDeck {
     name: string
     deckId: number

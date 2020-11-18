@@ -36,3 +36,7 @@ html {
 .full-width {
     width: 100%;
 }
+
+.v-tooltip__content.menuable__content__active {
+    opacity: 1!important;
+}

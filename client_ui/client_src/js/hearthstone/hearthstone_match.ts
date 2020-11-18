@@ -3,8 +3,9 @@ import { HearthstoneDeck, cleanHearthstoneDeckFromJson } from '@client/js/hearth
 import { HearthstoneMedalInfo, HearthstonePlayer } from '@client/js/hearthstone/hearthstone_player'
 import { HearthstoneEntityWrapper } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneCardtype } from '@client/js/hearthstone/hearthstone_cardtype'
-import { HearthstoneGameAction, HearthstoneGameBlock, HearthstoneGameBlockWrapper } from '@client/js/hearthstone/hearthstone_actions'
-import { HearthstoneGameStep, isGameStepMulligan } from '@client/js/hearthstone/hearthstone_game_step'
+import { HearthstoneGameAction, HearthstoneGameBlock, HearthstoneGameBlockWrapper, cleanHearthstoneGameActionFromJson } from '@client/js/hearthstone/hearthstone_actions'
+import { HearthstoneGameStep } from '@client/js/hearthstone/hearthstone_game_step'
+import { HearthstoneZone } from '@client/js/hearthstone/hearthstone_zone'
 
 export interface HearthstoneMatchLogMetadata {
     snapshotIds: string[]
@@ -141,6 +142,7 @@ export interface HearthstoneMatchLogs {
 
 export function cleanHearthstoneMatchLogsFromJson(m: HearthstoneMatchLogs) : HearthstoneMatchLogs {
     m.snapshots.forEach(cleanHearthstoneMatchSnapshotFromJson)
+    m.actions.forEach(cleanHearthstoneGameActionFromJson)
     return m
 }
 
@@ -150,6 +152,7 @@ export class HearthstoneMatchWrapper {
     _snapshot: HearthstoneMatchSnapshotWrapper
 
     // Match Logs
+    _initialSnapshot: HearthstoneMatchSnapshotWrapper | null
     _allSnapshots: HearthstoneMatchSnapshotWrapper[]
     _allBlocks: Map<string, HearthstoneGameBlockWrapper>
     _turnToSnapshot: Map<number, HearthstoneMatchSnapshotWrapper>
@@ -158,6 +161,7 @@ export class HearthstoneMatchWrapper {
         this._match = m
         this._logs = null
         this._snapshot = new HearthstoneMatchSnapshotWrapper(this._match.latestSnapshot)
+        this._initialSnapshot = null
         this._allSnapshots = []
         this._allBlocks = new Map()
         this._turnToSnapshot = new Map()
@@ -165,6 +169,7 @@ export class HearthstoneMatchWrapper {
 
     addLogs(logs: HearthstoneMatchLogs) {
         this._logs = logs
+        this._initialSnapshot = (this._logs.snapshots.length > 0) ? new HearthstoneMatchSnapshotWrapper(this._logs.snapshots[0]) : null
         for (let l of this._logs.snapshots) {
             let wrapper = new HearthstoneMatchSnapshotWrapper(l)
             let turn = wrapper.currentTurn
@@ -280,7 +285,70 @@ export class HearthstoneMatchWrapper {
 
     // Number of seconds since the start of the match that the block was triggered
     matchTimeForBlock(b : HearthstoneGameBlockWrapper) : number {
-        return 0
+        if (!b.blockTime) {
+            return 0
+        }
+        return Math.round((b.blockTime.getTime() - this._match.metadata.matchTime.getTime()) / 1000)
+    }
+
+    computeDeckForPlayer(p: number): HearthstoneDeck | undefined {
+        // We can use the first snapshot to determine all the cards that are in a player's deck and then
+        // we can use the final snapshot to determine which cards they are.
+        if (!this._initialSnapshot) {
+            return undefined
+        }
+
+        let player = this.player(p)
+        if (!player) {
+            return undefined
+        }
+
+        // For each card, how many are there in the deck.
+        let cardCount : Map<string, number> = new Map()
+        for (let entity of this._initialSnapshot.entitiesForPlayerId(p)) {
+            // It's important we check for the deck here because it's possible that the game
+            // creates other cards that aren't a part of the user's constructed deck in the beginning
+            // (e.g. the hero card). Note that we need to allow for cards in the hand already too
+            // as the game will put cards in the player's hand almost immediately.
+            if (entity.zone != HearthstoneZone.Deck && entity.zone != HearthstoneZone.Hand) {
+                continue
+            }
+
+            // It's critical that we pull the same entity from the final snapshot to determine the card ID.
+            // If there is no card ID then we *do not know* what card this is so we just ignore it.
+            let cardId = this._snapshot.entity(entity._entity.entityId)?.cardId
+            if (!cardId || cardId == '') {
+                continue
+            }
+
+            if (cardCount.has(cardId)) {
+                cardCount.set(cardId, cardCount.get(cardId)! + 1)
+            } else {
+                cardCount.set(cardId, 1)
+            }
+        }
+
+        // Now we just need to translate all this data into our own deck format.
+        return {
+            name: `${player.name}'s Deck`,
+            deckId: 0,
+            heroCard: '',
+            heroPremium: 0,
+            deckType: 0,
+            createDate: new Date(),
+            isWild: false,
+            slots: Array.from(cardCount.keys()).map((cardId : string) => {
+                return {
+                    index: 0,
+                    cardId: cardId,
+                    owned: true,
+                    count: {
+                        normal: cardCount.get(cardId)!,
+                        golden: 0
+                    }
+                }
+            })
+        }
     }
 
     get currentPlayerId(): number | undefined {
@@ -317,6 +385,17 @@ export class HearthstoneMatchWrapper {
         return this.playerHeroEntity(this.currentPlayerId)
     }
 
+    get currentPlayerDeck(): HearthstoneDeck | undefined {
+        if (!!this._match.metadata.deck) {
+            return this._match.metadata.deck
+        }
+
+        if (!this.currentPlayerId) {
+            return undefined
+        }
+        return this.computeDeckForPlayer(this.currentPlayerId)
+    }
+
     get opposingPlayerId(): number | undefined {
         for (let [pid, player] of Object.entries(this._match.metadata.players)) {
             let typedPlayer: HearthstonePlayer = player
@@ -349,6 +428,13 @@ export class HearthstoneMatchWrapper {
         }
 
         return this.playerHeroEntity(this.opposingPlayerId)
+    }
+
+    get opposingPlayerDeck(): HearthstoneDeck | undefined {
+        if (!this.opposingPlayerId) {
+            return undefined
+        }
+        return this.computeDeckForPlayer(this.opposingPlayerId)
     }
 
     get matchTime(): Date {

@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid v-if="!!subjectCardId">
+    <v-container fluid v-if="!!subject">
         <v-row no-gutters>
             <v-col align-self="center" cols="1">
                 <!-- Block Type indicator (if any) -->
@@ -17,14 +17,16 @@
                     <!-- Block Subject -->
                     <hearthstone-mini-card-display
                         :max-height="64"
-                        :card-id="subjectCardId"
+                        :card-id="subject.cardId"
                         left
                         no-shrink
                         no-overflow
+                        history
+                        :is-friendly="subject.controller == currentPlayerId"
                     >
                     </hearthstone-mini-card-display>
 
-                    <template v-if="receiverCardIds.length > 0">
+                    <template v-if="receivers.length > 0">
                         <!-- Image to show that we're doing something to another card -->
                         <v-img
                             :max-height="32"
@@ -36,13 +38,15 @@
 
                         <!-- Block Receiver (if any) -->
                         <hearthstone-mini-card-display
-                            v-for="(recv, idx) of receiverCardIds"
+                            v-for="(recv, idx) of receivers"
                             :max-height="64"
                             :key="idx"
-                            :card-id="recv"
+                            :card-id="recv.cardId"
                             left
                             no-shrink
                             no-overflow
+                            history
+                            :is-friendly="recv.controller == currentPlayerId"
                         >
                         </hearthstone-mini-card-display>
                     </template>
@@ -78,12 +82,16 @@ export default class HearthstoneGameBlockRenderer extends Vue {
         return this.typeIndicatorImage.length != 0
     }
 
-    get subjectCardId(): string | undefined {
-        return this.block.subject?.cardId
+    get currentPlayerId(): number | undefined {
+        return this.currentMatch.currentPlayerId
     }
 
-    get receiverCardIds(): string[] {
-        return this.block.targets.map((ele : HearthstoneEntityWrapper) => ele.cardId)
+    get subject(): HearthstoneEntityWrapper | undefined {
+        return this.block.subject
+    }
+
+    get receivers(): HearthstoneEntityWrapper[] {
+        return this.block.targets
     }
 
     get typeIndicatorImage(): string {
@@ -94,7 +102,7 @@ export default class HearthstoneGameBlockRenderer extends Vue {
             // Playing a card is a little trickier as we could play a minion
             // or play a spell. In the case where we play a spell we display
             // the spell image if the spell does something to the *opposing* player
-            // (what we can an "offensive") action.
+            // (what we can an "offensive" action).
             if (this.block.isSpell && this.block.isOffensive) {
                 return 'assets/hearthstone/Spell.png'
             }

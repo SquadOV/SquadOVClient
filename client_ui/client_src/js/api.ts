@@ -12,7 +12,8 @@ import {
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
-import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
 
 import { ipcRenderer } from 'electron'
 
@@ -290,7 +291,14 @@ class ApiClient {
     }
 
     getHearthstoneMatchLogs(matchId: string) : Promise<ApiData<HearthstoneMatchLogs>> {
-        return axios.get(`v1/hearthstone/match/${matchId}/logs`, this.createWebAxiosConfig())
+        return axios.get(`v1/hearthstone/match/${matchId}/logs`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneMatchLogs>) => {
+            cleanHearthstoneMatchLogsFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getBulkHearthstoneCardMetadata(cards: string[]) : Promise<ApiData<HearthstoneCardMetadata[]>> {
+        return axios.post(`v1/hearthstone/cards`, cards, this.createWebAxiosConfig())
     }
 
     graphqlRequest(req : string) : Promise<GraphqlApiData<any>> {

@@ -19,6 +19,11 @@ export interface HearthstoneGameAction {
     attributes: { [nm : string] : string | undefined }
 }
 
+export function cleanHearthstoneGameActionFromJson(a: HearthstoneGameAction) : HearthstoneGameAction {
+    a.tm = new Date(a.tm)
+    return a
+}
+
 export enum BlockType {
     Invalid = 0,
     Attack = 1,
@@ -126,5 +131,13 @@ export class HearthstoneGameBlockWrapper {
 
     get isRoot() : boolean {
         return !this._gameBlock.parentBlock
+    }
+
+    get blockTime() : Date | undefined {
+        if (this._actions.length > 0) {
+            return this._actions[0].tm
+        } else {
+            return undefined
+        }
     }
 }

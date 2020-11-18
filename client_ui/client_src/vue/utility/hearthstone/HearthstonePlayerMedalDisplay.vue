@@ -12,26 +12,28 @@
             </v-img>
         </div>
 
-        <div :style="imageDivStyle"> 
-            <v-img
-                :src="frameImage"
-                :width="maxHeight"
-                :height="maxHeight"
-                contain
-                position="top"
-                :style="frameStyle"
-            >
-            </v-img>
+        <div class="d-flex justify-center">
+            <div :style="imageDivStyle"> 
+                <v-img
+                    :src="frameImage"
+                    :width="maxHeight"
+                    :height="maxHeight"
+                    contain
+                    position="top"
+                    :style="frameStyle"
+                >
+                </v-img>
 
-            <v-img
-                :src="portraitImage"
-                :width="maxHeight"
-                :height="maxHeight"
-                contain
-                position="top"
-                :style="portraitStyle"
-            >
-            </v-img>
+                <v-img
+                    :src="portraitImage"
+                    :width="maxHeight"
+                    :height="maxHeight"
+                    contain
+                    position="top"
+                    :style="portraitStyle"
+                >
+                </v-img>
+            </div>
         </div>
 
         <div class="d-flex justify-center">
