@@ -1,6 +1,6 @@
 import { HearthstoneEntity, HearthstoneEntityWrapper } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneGameStep } from '@client/js/hearthstone/hearthstone_game_step'
-import { HearthstoneGameBlockWrapper, BlockType } from '@client/js/hearthstone/hearthstone_actions'
+import { HearthstoneGameBlockWrapper, BlockType, HearthstoneGameAction } from '@client/js/hearthstone/hearthstone_actions'
 
 export interface HearthstoneMatchSnapshotAuxData {
     currentTurn: number
@@ -30,10 +30,12 @@ export class HearthstoneMatchSnapshotWrapper {
     _snapshot: HearthstoneMatchSnapshot | null
     _entities: Map<number, HearthstoneEntityWrapper>
     _blocks: HearthstoneGameBlockWrapper[]
+    _actions: HearthstoneGameAction[]
     constructor(s: HearthstoneMatchSnapshot | null) {
         this._snapshot = s
         this._entities = new Map()
         this._blocks = []
+        this._actions = []
     }
 
     // A subset of the blocks that correspond to player actions
@@ -49,7 +51,28 @@ export class HearthstoneMatchSnapshotWrapper {
             return undefined
         }
 
-        return this._snapshot.tm
+        // The snapshot happens at the end of the turn.
+        // The beginning of the turn (block 0) isn't necessarily when the player draws the card.
+        // Thus, we must search for the action at which we go to the "MAIN_START" step.
+        let idx = -1
+        for (let a of this._actions) {
+            idx += 1
+            if (a.realEntityId != this._snapshot.gameEntityId) {
+                continue
+            }
+
+            if (!('STEP' in a.tags)) {
+                continue
+            }
+
+            let step = a.tags['STEP']
+            if (step == 'MAIN_START') {
+                console.log('SNAPSHOT TIME: ', this.currentTurn, a.tm, this._snapshot.auxData!.lastActionIndex - this._actions.length + idx)
+                return a.tm
+            }
+        }
+
+        return undefined
     }
 
     get gameEntity(): HearthstoneEntityWrapper | undefined {
@@ -65,6 +88,10 @@ export class HearthstoneMatchSnapshotWrapper {
             return
         }
         this._blocks.push(block)
+    }
+
+    addActions(actions: HearthstoneGameAction[]) {
+        this._actions = actions
     }
 
     entity(entityId: number) : HearthstoneEntityWrapper | undefined {

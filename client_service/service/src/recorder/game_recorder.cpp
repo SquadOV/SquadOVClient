@@ -10,12 +10,15 @@
 #include "recorder/video/win32_gdi_recorder.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "system/win32/hwnd_utils.h"
 
+#include <chrono>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
 
 namespace fs = std::filesystem;
+using namespace std::chrono_literals;
 
 namespace service::recorder {
 
@@ -24,21 +27,48 @@ GameRecorder::GameRecorder(
     shared::EGame game):
     _process(process),
     _game(game) {
+
+    // Start a new thread to determine the current window status of the game. We'll need it for initializing the
+    // video recorder.
+    _updateWindowInfoThread = std::thread(std::bind(&GameRecorder::updateWindowInfo, this));
 }
 
 GameRecorder::~GameRecorder() {
     if (isRecording()) {
         stop();
     }
+
+    if (_updateWindowInfoThread.joinable()) {
+        _running = false;
+        _updateWindowInfoThread.join();
+    }
 }
 
-void GameRecorder::createVideoRecorder() {
+void GameRecorder::updateWindowInfo() {
+    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(120000));
+    while (_running) {
+        if (!IsIconic(wnd)) {
+            HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
+            RECT windowRes;
+            GetClientRect(wnd, &windowRes);
+
+            std::unique_lock<std::shared_mutex> guard(_windowInfoMutex);
+            _windowInfo.width = windowRes.right - windowRes.left;
+            _windowInfo.height = windowRes.bottom - windowRes.top;
+            _windowInfo.init = true;
+            _windowInfo.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor);
+        }
+        std::this_thread::sleep_for(100ms);
+    }
+}
+
+void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
 #ifdef _WIN32
-    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, _process.pid())) {
+    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 
-    if (video::tryInitializeWin32GdiRecorder(_vrecorder, _process.pid())) {
+    if (video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 #endif
@@ -63,17 +93,28 @@ VodIdentifier GameRecorder::start() {
     _outputPiper->start();
     _encoder.reset(new encoder::FfmpegAvEncoder(_outputPiper->filePath()));
 
-    // Initialize streams in the encoder here. Use hard-coded options for to record
-    // video at 1080p@60fps. 
-    // TODO: Make some more quality controls for video/audio available here.
-    _encoder->initializeVideoStream(60, 1920, 1080);
+    {
+        std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
 
-    // Create recorders to capture
-    //   1) The video captured from the game.
-    //   2) The audio from the user's system.
-    //   3) The audio from the user's microphone (if any).
-    createVideoRecorder();
-    _vrecorder->startRecording(_encoder.get());
+        // Initialize streams in the encoder here. Use hard-coded options for to record
+        // video at 1080p@60fps. 
+        // TODO: Make some more quality controls for video/audio available here.
+        // Note that we don't want to exceed 1080p for now (but we want to maintain the same aspect ratio as the OG resolution)
+        const auto aspectRatio = static_cast<double>(_windowInfo.width) / _windowInfo.height;
+        const auto desiredHeight = std::min(_windowInfo.height, size_t(1080));
+        _encoder->initializeVideoStream(
+            60,
+            static_cast<size_t>(desiredHeight * aspectRatio),
+            desiredHeight
+        );
+
+        // Create recorders to capture
+        //   1) The video captured from the game.
+        //   2) The audio from the user's system.
+        //   3) The audio from the user's microphone (if any).
+        createVideoRecorder(_windowInfo);
+        _vrecorder->startRecording(_encoder.get());
+    }
     
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
     _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));

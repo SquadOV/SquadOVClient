@@ -13,7 +13,7 @@
                 color="primary"
                 fab
                 small
-                v-if="!!turnTime"
+                v-if="!!turnTime && hasVod"
             >
                 <v-icon>mdi-play</v-icon>
             </v-btn>
@@ -38,7 +38,7 @@
                     </hearthstone-game-block-renderer>
                 </v-list-item-content>
 
-                <v-list-item-action class="ml-0" v-if="!!turnTime">
+                <v-list-item-action class="ml-0" v-if="hasVod && !!block.blockTime">
                     <v-btn
                         outlined
                         fab
@@ -55,7 +55,6 @@
 </template>
 
 <script lang="ts">
-
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
@@ -78,8 +77,11 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
     @Prop({type: Number, required: true})
     turn!: number
 
-    @Prop({default: false})
+    @Prop({type:Boolean, default: false})
     disableGoto!: boolean
+
+    @Prop({type:Boolean, default: false})
+    hasVod!: boolean
 
     get roundName() : string {
         if (this.turn == 0) {
@@ -113,11 +115,11 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
     }
 
     goToTurn() {
-
+        this.$emit('go-to-event', this.turnTime!)
     }
 
     goToEvent(block: HearthstoneGameBlockWrapper) {
-
+        this.$emit('go-to-event', block.blockTime!)
     }
 }
 

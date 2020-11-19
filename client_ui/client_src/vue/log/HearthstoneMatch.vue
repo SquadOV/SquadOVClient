@@ -34,6 +34,8 @@
                             :current-match="matchWrapper"
                             :turn="currentTurn"
                             :style="roundEventsStyle"
+                            @go-to-event="goToVodTime"
+                            :has-vod="hasVod"
                         >
                         </hearthstone-turn-events-display>
                     </v-col>
@@ -134,7 +136,6 @@ export default class HearthstoneMatch extends Vue {
     // Match loading
     ready: boolean = false
 
-
     get videoUuid() : string | undefined {
         return this.vod?.videoUuid
     }
@@ -147,6 +148,19 @@ export default class HearthstoneMatch extends Vue {
 
     get matchWrapper() : HearthstoneMatchWrapper {
         return new HearthstoneMatchWrapper(this.currentMatch!)
+    }
+
+    get hasVod() : boolean {
+        return !!this.vod
+    }
+
+    goToVodTime(tm : Date) {
+        if (!this.hasVod) {
+            return
+        }
+
+        let diffMs = tm.getTime() - this.vod!.startTime.getTime()
+        this.$refs.player.goToTimeMs(diffMs)
     }
 
     refreshData() {

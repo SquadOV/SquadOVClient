@@ -135,7 +135,6 @@ void DxgiDesktopRecorder::initialize() {
 
     reacquireDuplicationInterface();
     
-    // Create a shared texture that we'll copy the desktop into.
     D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
     sharedDesc.Width = outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left;
     sharedDesc.Height = outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top;
@@ -282,7 +281,11 @@ void DxgiDesktopRecorder::stopRecording() {
     }
 }
 
-bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, DWORD pid) {
+bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
+    if (info.isWindowed) {
+        return false;
+    }
+
     HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
     if (!wnd) {
         return false;

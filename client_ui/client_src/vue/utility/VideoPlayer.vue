@@ -70,7 +70,7 @@ export default class VideoPlayer extends Vue {
             return
         }
 
-        this.player.currentTime(Math.max(Math.floor(tmMs / 1000.0) - 1.0, 0.0))
+        this.player.currentTime(Math.max(Math.floor(tmMs / 1000.0), 0.0))
     }
 
     get currentVideoSourceUri() : string {

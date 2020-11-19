@@ -38,7 +38,7 @@ private:
     IDXGIOutput1* _dxgiOutput1 = nullptr;
 };
 
-bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, DWORD pid);
+bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid);
 
 }
 

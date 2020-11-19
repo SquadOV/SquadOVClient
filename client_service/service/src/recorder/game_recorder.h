@@ -9,6 +9,8 @@
 #include "shared/squadov/vod.h"
 #include <filesystem>
 #include <memory>
+#include <shared_mutex>
+#include <thread>
 
 namespace service::recorder {
 
@@ -37,7 +39,8 @@ public:
     }
 
 private:
-    void createVideoRecorder();
+    void createVideoRecorder(const video::VideoWindowInfo& info);
+    void updateWindowInfo();
 
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;
@@ -50,6 +53,11 @@ private:
     video::VideoRecorderPtr _vrecorder;
     audio::AudioRecorderPtr _aoutRecorder;
     audio::AudioRecorderPtr _ainRecorder;
+
+    bool _running = true;
+    std::thread _updateWindowInfoThread;
+    std::shared_mutex _windowInfoMutex;
+    video::VideoWindowInfo _windowInfo;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

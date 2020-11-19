@@ -170,6 +170,7 @@ export class HearthstoneMatchWrapper {
     addLogs(logs: HearthstoneMatchLogs) {
         this._logs = logs
         this._initialSnapshot = (this._logs.snapshots.length > 0) ? new HearthstoneMatchSnapshotWrapper(this._logs.snapshots[0]) : null
+        let previousIndex = -1
         for (let l of this._logs.snapshots) {
             let wrapper = new HearthstoneMatchSnapshotWrapper(l)
             let turn = wrapper.currentTurn
@@ -181,7 +182,11 @@ export class HearthstoneMatchWrapper {
             } else {
                 continue
             }
-
+            
+            if (l.auxData?.lastActionIndex !== undefined) {
+                wrapper.addActions(this._logs.actions.slice(previousIndex + 1, l.auxData.lastActionIndex))
+                previousIndex = l.auxData.lastActionIndex
+            }
             this._allSnapshots.push(wrapper)
         }
 

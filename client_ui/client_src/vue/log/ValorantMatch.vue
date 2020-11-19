@@ -193,7 +193,7 @@ export default class ValorantMatch extends Vue {
     }
 
     get hasMatchTiming() : boolean {
-        return !!this.playerMetadata
+        return !!this.playerMetadata && !!this.vod
     }
 
     get roundEventsStyle() : any {

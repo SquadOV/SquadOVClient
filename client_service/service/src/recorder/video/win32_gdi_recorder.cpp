@@ -141,7 +141,11 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
     });
 }
 
-bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, DWORD pid) {
+bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
+    if (!info.isWindowed) {
+        return false;
+    }
+
     HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
     if (!wnd) {
         return false;

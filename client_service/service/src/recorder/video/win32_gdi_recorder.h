@@ -22,7 +22,7 @@ private:
     std::thread _recordingThread;
 };
 
-bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, DWORD pid);
+bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid);
 
 }
 #endif

@@ -8,6 +8,13 @@ class AvEncoder;
 
 namespace service::recorder::video {
 
+struct VideoWindowInfo {
+    size_t width = 0;
+    size_t height = 0;
+    bool isWindowed = false;
+    bool init = false;
+};
+
 class VideoRecorder {
 public:
     virtual ~VideoRecorder() {}
