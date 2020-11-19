@@ -11,7 +11,8 @@ namespace {
 const HearthstoneLogSection ALL_LOG_SECTIONS[] = {
     HearthstoneLogSection::Decks,
     HearthstoneLogSection::Power,
-    HearthstoneLogSection::Zone
+    HearthstoneLogSection::Zone,
+    HearthstoneLogSection::Arena
 };
 
 std::string logSectionNameToString(HearthstoneLogSection sec) {
@@ -22,6 +23,8 @@ std::string logSectionNameToString(HearthstoneLogSection sec) {
             return "Power";
         case HearthstoneLogSection::Zone:
             return "Zone";
+        case HearthstoneLogSection::Arena:
+            return "Arena";
     }
     return "";
 }

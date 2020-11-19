@@ -26,8 +26,6 @@ public:
     bool useTimeChecks() const { return _useTimeChecks; }
 protected:
     void notify(int event, const shared::TimePoint& eventTime, const void* data, bool checkTime = true) const {
-        std::cout << "NOTIFY: " << checkTime << " " << _useTimeChecks << std::endl
-            << "\tEVENT TIME: " << shared::timeToStr(eventTime) << "\t Now Time: " << shared::timeToStr(shared::nowUtc()) << std::endl;
         if (checkTime && _useTimeChecks) {
             // Don't notify if the event time has drifted too far (probably due to reading a log that existed already).
             const auto maxDiff = std::chrono::seconds(10);

@@ -39,12 +39,12 @@ HearthstoneRawLog parseLogLine(const std::string& line) {
     return log;
 }
 
-const std::regex powerRegex("D\\s(.*?)\\s(.*)");
-HearthstoneRawLog parsePowerLogLine(const std::string& line) {
+const std::regex filePrintRegex("D\\s(.*?)\\s(.*)");
+HearthstoneRawLog parseFilePrintLogLine(const std::string& line, const std::string& section) {
     std::smatch matches;
     HearthstoneRawLog log;
 
-    if (!std::regex_search(line, matches, powerRegex)) {
+    if (!std::regex_search(line, matches, filePrintRegex)) {
         return log;
     }
     log.canParse = true;
@@ -59,7 +59,7 @@ HearthstoneRawLog parsePowerLogLine(const std::string& line) {
 
     const auto t = date::make_zoned(date::current_zone(), shared::strToLocalTime(newTmString.str()));
     log.tm = t.get_sys_time();
-    log.section = "Power";
+    log.section = section;
     log.log = matches[2].str();
     return log;
 }
@@ -82,6 +82,43 @@ bool parseConnectToGameServer(const HearthstoneRawLog& line, HearthstoneGameConn
 
 bool parseEndingExperiment(const HearthstoneRawLog& line) {
     return line.log.find("Ending Experiment") != std::string::npos;
+}
+
+const std::regex startDraftRegex("DraftManager.OnBegin - Got new draft deck with ID: (\\d*)");
+bool parseStartArenaDraft(const HearthstoneRawLog& line, int64_t& deckId) {
+    std::smatch matches;
+    if (!std::regex_search(line.log, matches, startDraftRegex)) { 
+        return false;
+    }
+
+    deckId = static_cast<int64_t>(std::stoll(matches[1].str()));
+    return true;
+}
+
+const std::regex continueDraftRegex("DraftManager.OnChoicesAndContents - Draft Deck ID: (\\d*), Hero Card = .*");
+bool parseArenaDraftContinue(const HearthstoneRawLog& line, int64_t& deckId) {
+    std::smatch matches;
+    if (!std::regex_search(line.log, matches, continueDraftRegex)) { 
+        return false;
+    }
+
+    deckId = static_cast<int64_t>(std::stoll(matches[1].str()));
+    return true;
+}
+
+const std::regex arenaChooseRegex("Client chooses: .* \\((.*)\\)");
+bool parseArenaDraftChoice(const HearthstoneRawLog& line, std::string& cardId) {
+    std::smatch matches;
+    if (!std::regex_search(line.log, matches, arenaChooseRegex)) { 
+        return false;
+    }
+
+    cardId = matches[1].str();
+    return true;
+}
+
+bool parseFinishArenaDraft(const HearthstoneRawLog& line) {
+    return line.log.find("SetDraftMode - ACTIVE_DRAFT_DECK") != std::string::npos;
 }
 
 }
@@ -109,6 +146,7 @@ void HearthstoneLogWatcher::enableHearthstoneLogging()
 
     HearthstoneLogConfig cfg(configPath);
     cfg.enableLogSection(HearthstoneLogSection::Power);
+    cfg.enableLogSection(HearthstoneLogSection::Arena);
     cfg.save();
 }
 
@@ -156,6 +194,7 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
     t.detach();
 
     loadPowerFromFile(folder / fs::path("Power.log"));
+    loadArenaFromFile(folder / fs::path("Arena.log"));
 }
 
 void HearthstoneLogWatcher::loadPrimaryFromFile(const std::filesystem::path& logFile) {
@@ -175,9 +214,35 @@ void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFi
     _powerWatcher->disableBatching();
 }
 
+void HearthstoneLogWatcher::loadArenaFromFile(const std::filesystem::path& logFile) {
+    LOG_INFO("Hearthstone Arena Log Found: " << logFile.string() << std::endl);
+    using std::placeholders::_1;
+    _arenaWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onArenaLogChange, this, _1), false, true);
+    _arenaWatcher->disableBatching();
+}
+
+void HearthstoneLogWatcher::onArenaLogChange(const LogLinesDelta& lines) {
+    for (const auto& ln : lines) {
+        const auto rawLog = parseFilePrintLogLine(ln, "Arena");
+        if (!rawLog.canParse) {
+            continue;
+        }
+
+        int64_t deckId = 0;
+        std::string cardId;
+        if (parseStartArenaDraft(rawLog, deckId) || parseArenaDraftContinue(rawLog, deckId)) {
+            notify(static_cast<int>(EHearthstoneLogEvents::ArenaStartDraft), rawLog.tm, &deckId);
+        } else if (parseFinishArenaDraft(rawLog)) {
+            notify(static_cast<int>(EHearthstoneLogEvents::ArenaFinishDraft), rawLog.tm, nullptr);
+        } else if (parseArenaDraftChoice(rawLog, cardId)) {
+            notify(static_cast<int>(EHearthstoneLogEvents::ArenaDraftChoice), rawLog.tm, &cardId);
+        }
+    }
+}
+
 void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
-        const auto rawLog = parsePowerLogLine(ln);
+        const auto rawLog = parseFilePrintLogLine(ln, "Power");
         if (!rawLog.canParse) {
             continue;
         }

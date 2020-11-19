@@ -8,7 +8,8 @@ namespace game_event_watcher {
 enum class HearthstoneLogSection {
     Decks,
     Zone,
-    Power
+    Power,
+    Arena
 };
 
 class HearthstoneLogConfig {

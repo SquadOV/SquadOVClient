@@ -32,6 +32,7 @@ private:
     types::CollectionDeckMapperSPtr getCurrentDeckInUI() const;
     // Note that this function will return the *last deck* used even if the game has ended.
     types::CollectionDeckMapperSPtr getCurrentDeckInMatch() const;
+    types::CollectionDeckMapperSPtr getCurrentArenaDeck() const;
 
     process_watcher::memory::MonoMemoryMapperPtr _mono;
 };

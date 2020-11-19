@@ -7,6 +7,7 @@ namespace {
 
 const std::string GAMEMGR_FULL_NAME("GameMgr");
 const std::string GAMEMGR_LASTDECKID_FIELD_NAME("m_lastDeckId");
+const std::string GAMETYPE_FIELD_NAME("m_gameType");
 
 }
 
@@ -25,6 +26,14 @@ mono::types::NullableMapper<int64_t> GameMgrMapper::lastDeckId() const {
         return nullptr;
     }
     return mono::types::NullableMapper<int64_t>(value.get<mono::MonoObjectMapperSPtr>());
+}
+
+GameType GameMgrMapper::gameType() const {
+    const auto value = _object->get(GAMETYPE_FIELD_NAME);
+    if (value.isNull()) {
+        return GameType::GT_UNKNOWN;
+    }
+    return static_cast<GameType>(value.get<int32_t>());
 }
 
 }

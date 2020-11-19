@@ -53,6 +53,9 @@ CollectionDeckMapper::CollectionDeckMapper(const process_watcher::memory::mono::
 
 std::string CollectionDeckMapper::name() const {
     const auto value = _object->get(COLLECTION_DECK_NAME_FIELD_NAME);
+    if (value.isNull()) {
+        return "Deck";
+    }
     return value.get<std::string>();
 }
 

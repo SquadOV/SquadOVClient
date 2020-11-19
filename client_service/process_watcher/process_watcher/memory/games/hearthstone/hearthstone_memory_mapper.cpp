@@ -34,12 +34,26 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch()
         return nullptr;
     }
 
-    const auto deckId = gameMgr->lastDeckId();
-    if (!deckId) {
+    // If the current game is constructed then we return the match made last deck ID.
+    // If the current game is arena, then return the arena deck.
+    if (gameMgr->gameType() == types::GameType::GT_ARENA) {
+        return getCurrentArenaDeck();
+    } else {
+        const auto deckId = gameMgr->lastDeckId();
+        if (!deckId) {
+            return nullptr;
+        }
+
+        return getDeckFromId(deckId.value());
+    }
+}
+
+types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentArenaDeck() const {
+    const auto draftManager = types::HearthstoneServicesMapper::getDraftManager(_mono->image(), _mono->domainId());
+    if (!draftManager) {
         return nullptr;
     }
-
-    return getDeckFromId(deckId.value());
+    return draftManager->getDraftDeck();
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getDeckFromId(int64_t deckId) const {

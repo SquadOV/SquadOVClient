@@ -17,6 +17,7 @@ SET(SRCS
     process_watcher/memory/mono/types/string_mapper.cpp
     process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.cpp
     process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/draft_manager_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_deck_box_visual_mapper.cpp
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.cpp
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.cpp
@@ -58,6 +59,7 @@ SET(HEADERS
     process_watcher/memory/mono/types/list_mapper.h
     process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h
     process_watcher/memory/games/hearthstone/types/deck_picker_tray_display_mapper.h
+    process_watcher/memory/games/hearthstone/types/draft_manager_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_deck_box_visual_mapper.h
     process_watcher/memory/games/hearthstone/types/uber_text_mapper.h
     process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h

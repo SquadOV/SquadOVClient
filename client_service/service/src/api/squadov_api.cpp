@@ -221,7 +221,7 @@ std::string SquadovApi::createHearthstoneMatch(
     const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
     const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
     const shared::TimePoint& timestamp
-) {
+) const {
     nlohmann::json body = {
         { "info", info.toJson() },
         { "deck", deck.toJson() },
@@ -255,7 +255,7 @@ std::string SquadovApi::createHearthstoneMatch(
 void SquadovApi::uploadHearthstonePowerLogs(
     const std::string& matchUuid,
     const nlohmann::json& logs
-) {
+) const {
     std::ostringstream path;
     path << "/v1/hearthstone/match/" << matchUuid;
 
@@ -269,6 +269,41 @@ void SquadovApi::uploadHearthstonePowerLogs(
     const auto result = _webClient->post(path.str(), logs);
     if (result->status != 200) {
         THROW_ERROR("Failed to upload Hearthstone match power logs: " << result->status);
+    }
+}
+
+std::string SquadovApi::createHearthstoneArenaDraft(const shared::TimePoint& timestamp, int64_t deckId) const {
+    std::ostringstream path;
+    path << "/v1/hearthstone/user/" << _session.user.id << "/arena";
+
+    const nlohmann::json body = {
+        { "deckId", deckId },
+        { "tm", shared::timeToIso(timestamp) }
+    };
+
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create Hearthstone draft: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::addHearthstoneArenaDraftCard(const shared::TimePoint& timestamp, const std::string& arenaUuid, const std::string& cardId) const {
+    std::ostringstream path;
+    path << "/v1/hearthstone/arena/" << arenaUuid;
+
+    const nlohmann::json body = {
+        { "cardId", cardId },
+        { "tm", shared::timeToIso(timestamp) }
+    };
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to add Hearthstone draft card: " << result->status);
     }
 }
 

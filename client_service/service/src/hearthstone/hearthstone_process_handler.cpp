@@ -26,6 +26,13 @@ private:
     void onGameEnd(const shared::TimePoint& eventTime, const void* rawData);
     void onGameDisconnect(const shared::TimePoint& eventTime, const void* rawData);
 
+    // Arena Handlers. This will have to be reworked a little bit (probably) if/when we decide
+    // to support VOD recording of drafts because we're very much assuming that we can easily
+    // support restarting an arena draft.
+    void onArenaDraftStart(const shared::TimePoint& eventTime, const void* rawData);
+    void onArenaDraftChoice(const shared::TimePoint& eventTime, const void* rawData);
+    void onArenaDraftFinish(const shared::TimePoint& eventTime, const void* rawData);
+
     process_watcher::process::Process  _process;
     game_event_watcher::HearthstoneLogWatcherPtr _logWatcher;
     process_watcher::memory::games::hearthstone::HearthstoneMemoryMapperPtr _monoMapper;
@@ -39,6 +46,9 @@ private:
     shared::TimePoint _gameStartTime;
     // This is when the game started from the perspective of the log.
     shared::TimePoint _gameStartEventTime;
+
+    // Arena
+    std::string _arenaUuid;
 };
 
 HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -51,6 +61,10 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchStart), std::bind(&HearthstoneProcessHandlerInstance::onGameStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchEnd), std::bind(&HearthstoneProcessHandlerInstance::onGameEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchDisconnect), std::bind(&HearthstoneProcessHandlerInstance::onGameDisconnect, this, std::placeholders::_1, std::placeholders::_2));
+
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::ArenaStartDraft), std::bind(&HearthstoneProcessHandlerInstance::onArenaDraftStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::ArenaFinishDraft), std::bind(&HearthstoneProcessHandlerInstance::onArenaDraftFinish, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::ArenaDraftChoice), std::bind(&HearthstoneProcessHandlerInstance::onArenaDraftChoice, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
 }
 
@@ -72,6 +86,44 @@ void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& 
     process_watcher::memory::PEMapper peMapper(memMapper);
     auto monoWrapper = std::make_unique<process_watcher::memory::MonoMemoryMapper>(memMapper, peMapper); 
     _monoMapper = std::make_unique<process_watcher::memory::games::hearthstone::HearthstoneMemoryMapper>(std::move(monoWrapper));
+}
+
+void HearthstoneProcessHandlerInstance::onArenaDraftStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (!_arenaUuid.empty()) {
+        LOG_WARNING("Starting an arena draft in the middle of another arena draft?" << std::endl);
+        return;
+    }
+
+    const int64_t* deckId = reinterpret_cast<const int64_t*>(rawData);
+    LOG_INFO("Hearthstone Arena Draft Start [" << shared::timeToStr(eventTime) << " - " << *deckId << "]" << std::endl);
+    try {
+        _arenaUuid = service::api::getGlobalApi()->createHearthstoneArenaDraft(eventTime, *deckId);
+    } catch(std::exception& ex) {
+        LOG_WARNING("Failed to start an arena draft: " << ex.what() << std::endl);
+    }
+}
+
+void HearthstoneProcessHandlerInstance::onArenaDraftChoice(const shared::TimePoint& eventTime, const void* rawData) {
+    if (_arenaUuid.empty()) {
+        return;
+    }
+
+    const std::string* cardId = reinterpret_cast<const std::string*>(rawData);
+    LOG_INFO("Hearthstone Arena Draft Choice [" << shared::timeToStr(eventTime) << " - " << *cardId << "]" << std::endl);
+    try {
+        service::api::getGlobalApi()->addHearthstoneArenaDraftCard(eventTime, _arenaUuid, *cardId);
+    } catch(std::exception& ex) {
+        LOG_WARNING("Failed to add arena card choice: " << ex.what() << std::endl);
+    }
+}
+
+void HearthstoneProcessHandlerInstance::onArenaDraftFinish(const shared::TimePoint& eventTime, const void* rawData) {
+    if (_arenaUuid.empty()) {
+        return;
+    }
+
+    LOG_INFO("Hearthstone Arena Draft Finish [" << shared::timeToStr(eventTime) << "]" << std::endl);
+    _arenaUuid = "";
 }
 
 void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& eventTime, const void* rawData) {

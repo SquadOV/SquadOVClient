@@ -18,7 +18,10 @@ enum class EHearthstoneLogEvents {
     MatchConnect,
     MatchStart,
     MatchEnd,
-    MatchDisconnect
+    MatchDisconnect,
+    ArenaStartDraft,
+    ArenaFinishDraft,
+    ArenaDraftChoice
 };
 
 struct HearthstoneGameConnectionInfo {
@@ -47,6 +50,7 @@ public:
 
     void loadPrimaryFromFile(const std::filesystem::path& logFile);
     void loadPowerFromFile(const std::filesystem::path& logFile);
+    void loadArenaFromFile(const std::filesystem::path& logFile);
 
     // The power parser maintains game state so we need to manually clear it when a game actually ends.
     void clearGameState();
@@ -55,9 +59,11 @@ public:
 private:
     void onPrimaryLogChange(const LogLinesDelta& lines);
     void onPowerLogChange(const LogLinesDelta& lines);
+    void onArenaLogChange(const LogLinesDelta& lines);
 
     LogWatcherPtr _primaryWatcher;
     LogWatcherPtr _powerWatcher;
+    LogWatcherPtr _arenaWatcher;
 
     HearthstonePowerLogParser _powerParser;
 };
