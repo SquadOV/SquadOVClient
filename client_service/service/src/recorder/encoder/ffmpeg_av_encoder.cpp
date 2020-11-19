@@ -295,8 +295,9 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->time_base = AVRational{1, static_cast<int>(fps)};
             _vcodecContext->framerate = AVRational{static_cast<int>(fps), 1};
 
-            // This can be high since we're only dealing with local videos for now.
-            _vcodecContext->gop_size = 10;
+            // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
+            // if the GOP size is too small.
+            _vcodecContext->gop_size = fps * 5;
             _vcodecContext->max_b_frames = 1;
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -548,7 +549,9 @@ void FfmpegAvEncoderImpl::start() {
     }
 
     AVDictionary* mp4Options = nullptr;
-    av_dict_set(&mp4Options, "movflags", "+empty_moov+frag_keyframe", 0);
+    // Need empty_moov+frag_keyframe to get a fragmented mp4. We need this so that we can write to a non-seekable stream (i.e. directly to GCS).
+    // We need +default_base_moof so that when Chrome tries to download the metadata for this file, it doesn't effectively try to download the whole file.
+    av_dict_set(&mp4Options, "movflags", "+empty_moov+frag_keyframe+default_base_moof", 0);
     if (avformat_write_header(_avcontext, &mp4Options) < 0) {
         THROW_ERROR("Failed to write header");
     }

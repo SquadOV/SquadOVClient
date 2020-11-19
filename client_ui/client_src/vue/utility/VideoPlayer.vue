@@ -125,6 +125,14 @@ export default class VideoPlayer extends Vue {
             controls: true,
             autoplay: false,
             preload: 'auto',
+            playbackRates: [
+                0.25,
+                0.5,
+                1.0,
+                1.25,
+                1.5,
+                2.0
+            ]
         })
 
         // Just in case videoUri and audioUri got set earlier.

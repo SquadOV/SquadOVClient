@@ -22,6 +22,14 @@ const contentFiles : ContentFileMap = {
         abilities: process.env.NODE_ENV === 'production' ?  
             path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
             'assets/valorant/content/v1.11.Abilities.json'    
+    },
+    'release-01.12': {
+        static: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.12.json') :
+            'assets/valorant/content/v1.12.json',
+        abilities: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
+            'assets/valorant/content/v1.11.Abilities.json'    
     }
 }
 const latestPatch = 'release-01.11'
