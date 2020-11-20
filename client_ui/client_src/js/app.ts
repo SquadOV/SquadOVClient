@@ -30,6 +30,7 @@ import HearthstoneMatch from '@client/vue/log/HearthstoneMatch.vue'
 import HearthstoneAllMatchesGameLog from '@client/vue/log/HearthstoneAllMatchesGameLog.vue'
 import HearthstoneArenaGameLog from '@client/vue/log/HearthstoneArenaGameLog.vue'
 import HearthstoneDuelGameLog from '@client/vue/log/HearthstoneDuelGameLog.vue'
+import HearthstoneArenaRunMatchLog from '@client/vue/log/HearthstoneArenaRunMatchLog.vue'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 
 import Performance from '@client/vue/Performance.vue'
@@ -110,6 +111,14 @@ const baseRoutes : any[] = [
                         path: '/arena',
                         name: pi.HearthstoneArenaLogPageId,
                         component: HearthstoneArenaGameLog
+                    },
+                    {
+                        path: '/arena/:arenaId',
+                        name: pi.HearthstoneArenaRunMatchLogPageId,
+                        component: HearthstoneArenaRunMatchLog,
+                        props: (route: any) => ({
+                            runId: route.params.arenaId
+                        })
                     },
                     {
                         path: '/brawl',

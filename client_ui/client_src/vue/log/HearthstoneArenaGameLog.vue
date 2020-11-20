@@ -8,7 +8,7 @@
                         :key="idx"
                         :arena-uuid="collection"
                     >
-                    <hearthstone-arena-summary-display>
+                    </hearthstone-arena-summary-display>
                 </template>
 
                 <div class="text-center" v-else>

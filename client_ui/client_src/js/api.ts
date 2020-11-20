@@ -15,7 +15,7 @@ import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
-import { HearthstoneArenaRun } from '@client/js/hearthstone/hearthstone_arena'
+import { HearthstoneArenaRun, cleanHearthstoneArenaRunFromJson } from '@client/js/hearthstone/hearthstone_arena'
 
 import { ipcRenderer } from 'electron'
 
@@ -303,7 +303,10 @@ class ApiClient {
     }
 
     getHearthstoneArenaRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneArenaRun>> {
-        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}`, this.createWebAxiosConfig())
+        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneArenaRun>) => {
+            cleanHearthstoneArenaRunFromJson(resp.data)
+            return resp
+        })
     }
 
     getHearthstoneMatch(matchId: string) : Promise<ApiData<HearthstoneMatch>> {

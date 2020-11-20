@@ -25,6 +25,9 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInUI() co
         return nullptr;
     }
     const auto deckVisual = deckPicker->getSelectedCustomDeckBox();
+    if (!deckVisual) {
+        return nullptr;
+    }
     return getDeckFromId(deckVisual->deckId());
 }
 

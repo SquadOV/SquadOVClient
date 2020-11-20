@@ -208,36 +208,36 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
     LOG_INFO("Hearthstone Game Disconnect [" << shared::timeToStr(eventTime) << "]" << std::endl);
 
     const auto isRecording = _recorder->isRecording();
-    const auto vodId = _recorder->currentId();
-    const auto metadata = _recorder->getMetadata();
 
     if (isRecording) {
+        const auto vodId = _recorder->currentId();
+        const auto metadata = _recorder->getMetadata();
         _recorder->stop();
-    }
-
-    // Need this check here just in case for whatever reason we connected to a game but never
-    // actually caught the "game start" event.
-    try {
-        if (_inGame) {
-            try {
-                shared::squadov::VodAssociation association;
-                association.matchUuid = _matchUuid;
-                association.userUuid = vodId.userUuid;
-                association.videoUuid = vodId.videoUuid;
-                association.startTime = _gameStartTime;
-                association.endTime = eventTime;
-                service::api::getGlobalApi()->associateVod(association, metadata);
-            } catch (const std::exception& ex) {
-                LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
+        // Need this check here just in case for whatever reason we connected to a game but never
+        // actually caught the "game start" event.
+        try {
+            if (_inGame) {
+                try {
+                    shared::squadov::VodAssociation association;
+                    association.matchUuid = _matchUuid;
+                    association.userUuid = vodId.userUuid;
+                    association.videoUuid = vodId.videoUuid;
+                    association.startTime = _gameStartTime;
+                    association.endTime = eventTime;
+                    service::api::getGlobalApi()->associateVod(association, metadata);
+                } catch (const std::exception& ex) {
+                    LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
+                    service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+                }
+            } else if (isRecording) {
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
             }
-        } else if (isRecording) {
-            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        } catch (std::exception& ex) {
+            // This should only be catching delete VOD exceptions which are fine.
+            LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
         }
-    } catch (std::exception& ex) {
-        // This should only be catching delete VOD exceptions which are fine.
-        LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
     }
+
     
     _inGame = false;
     _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();

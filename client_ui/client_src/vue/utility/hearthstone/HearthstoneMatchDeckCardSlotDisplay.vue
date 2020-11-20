@@ -84,7 +84,7 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
         return {
             'font-weight': 700,
             'background-image': `linear-gradient(to right, #121212 0 10%, transparent), url('${this.cardSrc}')`,
-            'background-position': '110% 45%',
+            'background-position': 'right -64px top -128px',
             'background-size': `256px 256px`
         }
     }
