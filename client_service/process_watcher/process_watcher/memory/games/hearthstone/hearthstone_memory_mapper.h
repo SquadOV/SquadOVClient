@@ -24,7 +24,8 @@ public:
     // current moment.
     types::CollectionDeckMapperSPtr getCurrentDeck() const;
     types::CollectionDeckMapperSPtr getDeckFromId(int64_t deckId) const;
-
+    types::CollectionDeckMapperSPtr getCurrentArenaDeck() const;
+    
     // Obtains information about the current players in the game.
     std::unordered_map<int, types::PlayerMapperSPtr> getCurrentPlayers() const;
 
@@ -32,7 +33,6 @@ private:
     types::CollectionDeckMapperSPtr getCurrentDeckInUI() const;
     // Note that this function will return the *last deck* used even if the game has ended.
     types::CollectionDeckMapperSPtr getCurrentDeckInMatch() const;
-    types::CollectionDeckMapperSPtr getCurrentArenaDeck() const;
 
     process_watcher::memory::MonoMemoryMapperPtr _mono;
 };

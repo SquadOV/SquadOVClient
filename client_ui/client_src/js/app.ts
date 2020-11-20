@@ -27,6 +27,10 @@ import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
 
 import HearthstoneGameLog from '@client/vue/log/HearthstoneGameLog.vue'
 import HearthstoneMatch from '@client/vue/log/HearthstoneMatch.vue'
+import HearthstoneAllMatchesGameLog from '@client/vue/log/HearthstoneAllMatchesGameLog.vue'
+import HearthstoneArenaGameLog from '@client/vue/log/HearthstoneArenaGameLog.vue'
+import HearthstoneDuelGameLog from '@client/vue/log/HearthstoneDuelGameLog.vue'
+import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
@@ -84,8 +88,62 @@ const baseRoutes : any[] = [
             },
             {
                 path: '/hearthstone',
-                name: pi.HearthstoneLogPageId,
-                component: HearthstoneGameLog
+                component: HearthstoneGameLog,
+                children: [
+                    {
+                        path: '/',
+                        name: pi.HearthstoneLogPageId,
+                        component: HearthstoneAllMatchesGameLog
+                    },
+                    {
+                        path: '/constructed',
+                        name: pi.HearthstoneConstructedLogPageId,
+                        component: HearthstoneAllMatchesGameLog,
+                        props: (route : any) => ({
+                            filteredGameTypes: [
+                                HearthstoneGameType.Ranked,
+                                HearthstoneGameType.Casual
+                            ]
+                        })
+                    },
+                    {
+                        path: '/arena',
+                        name: pi.HearthstoneArenaLogPageId,
+                        component: HearthstoneArenaGameLog
+                    },
+                    {
+                        path: '/brawl',
+                        name: pi.HearthstoneBrawlLogPageId,
+                        component: HearthstoneAllMatchesGameLog,
+                        props: (route : any) => ({
+                            filteredGameTypes: [
+                                HearthstoneGameType.TavernBrawl,
+                                HearthstoneGameType.Tb1pVsAi,
+                                HearthstoneGameType.Tb2pCoop,
+                                HearthstoneGameType.FsgBrawlVsFriend,
+                                HearthstoneGameType.FsgBrawl,
+                                HearthstoneGameType.FsgBrawl1pVsAi,
+                                HearthstoneGameType.FsgBrawl2pCoop,
+                            ]
+                        })
+                    },
+                    {
+                        path: '/battlegrounds',
+                        name: pi.HearthstoneBattlegroundsLogPageId,
+                        component: HearthstoneAllMatchesGameLog,
+                        props: (route : any) => ({
+                            filteredGameTypes: [
+                                HearthstoneGameType.Battlegrounds,
+                                HearthstoneGameType.BattlegroundsFriendly
+                            ]
+                        })
+                    },
+                    {
+                        path: '/duels',
+                        name: pi.HearthstoneDuelLogPageId,
+                        component: HearthstoneDuelGameLog
+                    }
+                ]
             },
             {
                 path: '/hearthstone/match/:matchId',

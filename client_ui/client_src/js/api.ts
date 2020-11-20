@@ -14,6 +14,8 @@ import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_ta
 import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
+import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneArenaRun } from '@client/js/hearthstone/hearthstone_arena'
 
 import { ipcRenderer } from 'electron'
 
@@ -271,16 +273,37 @@ class ApiClient {
         })
     }
 
-    listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
+    listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number, filter : HearthstoneGameType[]}) : Promise<ApiData<HalResponse<string[]>>> {
         return !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/hearthstone/user/${params.userId!}`, {
+            axios.get(`v1/hearthstone/user/${params.userId!}/match`, {
                 ...this.createWebAxiosConfig(),
                 params: {
-                    start: params.start!,
-                    end: params.end!,
+                    start: params.start,
+                    end: params.end,
+                    filter: JSON.stringify(params.filter)
                 }
             })
+    }
+
+    listHearthstoneMatchesForArenaRun(collectionUuid: string, userId: number): Promise<ApiData<string[]>> {
+        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, this.createWebAxiosConfig())
+    }
+
+    listHearthstoneArenaRunsForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
+        return !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/hearthstone/user/${params.userId!}/arena`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start,
+                    end: params.end,
+                }
+            })
+    }
+
+    getHearthstoneArenaRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneArenaRun>> {
+        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}`, this.createWebAxiosConfig())
     }
 
     getHearthstoneMatch(matchId: string) : Promise<ApiData<HearthstoneMatch>> {

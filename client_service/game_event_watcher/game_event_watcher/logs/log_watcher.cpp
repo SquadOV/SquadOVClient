@@ -36,6 +36,7 @@ LogWatcher::~LogWatcher() {
 }
 
 void LogWatcher::watchWorker() {
+    const bool isCompletelyNewFile = !fs::exists(_path.string());
     if (_waitForNewFile || !fs::exists(_path.string())) {
         while (!_isFinished) {
             if (fs::exists(_path)) {
@@ -117,7 +118,8 @@ void LogWatcher::watchWorker() {
         if (fs::exists(_path) && !logStream.is_open()) {
             // We don't want to set the std::ios_base::ate flag if we detected the contents of the file were wiped as we actually
             // do want to read in what was already written into the file.
-            logStream.open(_path.string(), (_immediatelyGoToEnd && !hasReset) ? std::ios_base::ate : std::ios_base::in);
+            LOG_INFO("Open Log File for Reading: " << _path.string() << " " << _immediatelyGoToEnd << " " << hasReset << " " << isCompletelyNewFile << std::endl);
+            logStream.open(_path.string(), (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
                 LOG_WARNING("Failed to open log file: " << _path.string() << std::endl);
             }

@@ -123,6 +123,12 @@ void HearthstoneProcessHandlerInstance::onArenaDraftFinish(const shared::TimePoi
     }
 
     LOG_INFO("Hearthstone Arena Draft Finish [" << shared::timeToStr(eventTime) << "]" << std::endl);
+
+    try {
+        service::api::getGlobalApi()->uploadHearthstoneArenaDeck(*_monoMapper->getCurrentArenaDeck(), _arenaUuid);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to add upload Arena deck: " << ex.what() << std::endl);
+    }
     _arenaUuid = "";
 }
 

@@ -94,7 +94,7 @@ export function isGameTypeRanked(gt: HearthstoneGameType) : boolean {
 export function constructGameTypeString(gt: HearthstoneGameType, ft: HearthstoneFormatType) : string {
     let base = gameTypeToString(gt)
 
-    if (ft != HearthstoneFormatType.Unknown) {
+    if (gt == HearthstoneGameType.Ranked || gt == HearthstoneGameType.Casual) {
         base += ` - ${formatTypeToString(ft)}`
     }
 

@@ -55,6 +55,7 @@ public:
     void uploadHearthstonePowerLogs(const std::string& matchUuid, const nlohmann::json& logs) const;
     std::string createHearthstoneArenaDraft(const shared::TimePoint& timestamp, int64_t deckId) const;
     void addHearthstoneArenaDraftCard(const shared::TimePoint& timestamp, const std::string& arenaUuid, const std::string& cardId) const;
+    void uploadHearthstoneArenaDeck(const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck, const std::string& arenaUuid) const;
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;
