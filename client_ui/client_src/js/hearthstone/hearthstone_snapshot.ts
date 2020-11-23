@@ -38,7 +38,7 @@ export class HearthstoneMatchSnapshotWrapper {
         this._actions = []
     }
 
-    // A subset of the blocks that correspond to player actions
+    // A subset of the blocks that correspond to player actions.
     get gameBlocks(): HearthstoneGameBlockWrapper[] {
         return this._blocks.filter((ele : HearthstoneGameBlockWrapper) => {
             let typ =  ele._gameBlock.blockType
@@ -67,7 +67,6 @@ export class HearthstoneMatchSnapshotWrapper {
 
             let step = a.tags['STEP']
             if (step == 'MAIN_START') {
-                console.log('SNAPSHOT TIME: ', this.currentTurn, a.tm, this._snapshot.auxData!.lastActionIndex - this._actions.length + idx)
                 return a.tm
             }
         }

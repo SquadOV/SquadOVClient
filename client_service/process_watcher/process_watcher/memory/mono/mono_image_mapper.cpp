@@ -63,6 +63,9 @@ const MonoClassMapper* MonoImageMapper::loadClassFromPtr(uintptr_t ptr) {
 }
 
 const MonoClassMapper* MonoImageMapper::loadClassFromFullName(const std::string& nm) const {
+    if (_classes.find(nm) == _classes.end()) {
+        return nullptr;
+    }
     return _classes.at(nm);
 }
 

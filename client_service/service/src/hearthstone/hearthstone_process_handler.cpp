@@ -179,7 +179,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
     try {
         const auto deck = _monoMapper->getCurrentDeck();
         const auto players = _monoMapper->getCurrentPlayers();
-        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(_currentGame, *deck, players, _gameStartEventTime);
+        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(_currentGame, deck, players, _gameStartEventTime);
     } catch (const std::exception& ex) {
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
         return;
@@ -192,6 +192,13 @@ void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& event
     }
 
     LOG_INFO("Hearthstone Game End [" << shared::timeToStr(eventTime) << "]" << std::endl);
+
+    // This needs to be here instead of "onGameDisconnect". If we set
+    // _inGame = false in onGameDisconnect inn the scenario where onGameDisconnect is fired first
+    // (due to the two events being parsed from two different logs in two different threads), then
+    // we won't send the match logs which is undesirable.
+    _inGame = false;
+    _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
 
     // Note that we use the game end event to retrieve the power logs in JSON form and store it for safe keeping.
     // We use the game disconnect event to actually stop recording.
@@ -216,20 +223,16 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
         // Need this check here just in case for whatever reason we connected to a game but never
         // actually caught the "game start" event.
         try {
-            if (_inGame) {
-                try {
-                    shared::squadov::VodAssociation association;
-                    association.matchUuid = _matchUuid;
-                    association.userUuid = vodId.userUuid;
-                    association.videoUuid = vodId.videoUuid;
-                    association.startTime = _gameStartTime;
-                    association.endTime = eventTime;
-                    service::api::getGlobalApi()->associateVod(association, metadata);
-                } catch (const std::exception& ex) {
-                    LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
-                    service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
-                }
-            } else if (isRecording) {
+            try {
+                shared::squadov::VodAssociation association;
+                association.matchUuid = _matchUuid;
+                association.userUuid = vodId.userUuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = _gameStartTime;
+                association.endTime = eventTime;
+                service::api::getGlobalApi()->associateVod(association, metadata);
+            } catch (const std::exception& ex) {
+                LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
             }
         } catch (std::exception& ex) {
@@ -237,10 +240,6 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
             LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
         }
     }
-
-    
-    _inGame = false;
-    _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
 }
 
 HearthstoneProcessHandler::HearthstoneProcessHandler() = default;

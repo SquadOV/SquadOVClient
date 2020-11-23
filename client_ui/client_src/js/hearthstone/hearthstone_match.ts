@@ -122,7 +122,6 @@ function cleanHearthstoneMatchMetadataFromJson(m: HearthstoneMatchMetadata) : He
 export interface HearthstoneMatch {
     matchUuid: string
     metadata: HearthstoneMatchMetadata
-    logMetadata: HearthstoneMatchLogMetadata
     latestSnapshot: HearthstoneMatchSnapshot | null
 }
 
@@ -244,7 +243,15 @@ export class HearthstoneMatchWrapper {
     playerHeroEntity(playerId: number): HearthstoneEntityWrapper | undefined {
         let entities = this._snapshot.entitiesForPlayerId(playerId)
         for (let e of entities) {
-            if (e.controller == playerId && e.cardType == HearthstoneCardtype.Hero) {
+            if (e.controller == playerId 
+                && e.cardType == HearthstoneCardtype.Hero
+                // Needs to also check the graveyard since for battlegrounds if we lose, the latest snapshot will
+                // stick the user's hero there (since they hit 0 HP).
+                && (e.zone == HearthstoneZone.Play || e.zone == HearthstoneZone.Graveyard)
+                // In the very specific case where the current match is for Battlegrounds we want to check for the PLAYER_ID
+                // tag as that'll be set on heroes that were chosen.
+                && ((this.isBattlegrounds && e.playerId > 0) || !this.isBattlegrounds)
+            ) {
                 return e
             }
         }
@@ -460,5 +467,10 @@ export class HearthstoneMatchWrapper {
 
     get isRanked() : boolean {
         return isGameTypeRanked(this._match.metadata.gameType)
+    }
+
+    get isBattlegrounds() : boolean {
+        return this._match.metadata.gameType == HearthstoneGameType.Battlegrounds ||
+        this._match.metadata.gameType == HearthstoneGameType.BattlegroundsFriendly
     }
 }

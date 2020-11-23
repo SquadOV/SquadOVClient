@@ -210,7 +210,7 @@ void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFi
     // 'false' -> Don't wait for a new file - we want to capture the Power.log immediately and not just when it's written to because 
     //            if we wait for when the Power.log is written to we'll have missed some crucial information.
     // 'true' -> We want to seek to the end because we want to ignore past matches if they exist in the file.
-    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), false, true);
+    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), false, useTimeChecks());
     _powerWatcher->disableBatching();
 }
 
@@ -252,11 +252,22 @@ void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
         const auto isRunning = _powerParser.isGameRunning();
 
         if (wasRunning != isRunning) {
+            LOG_INFO("Detect Running Change: " << wasRunning << " to " << isRunning << std::endl);
             if (isRunning) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchStart), rawLog.tm, nullptr);
             } else {
+                const auto start = shared::nowUtc();
                 const auto data = _powerParser.toJson();
-                notify(static_cast<int>(EHearthstoneLogEvents::MatchEnd), rawLog.tm, &data);
+                const auto elapsed = shared::nowUtc() - start;
+
+                // It's possible for the power parse toJson function to take awhile - i.e.
+                // enough time such that the notification time check fails. The time check is
+                // primarily to make sure we don't get an event that's from a previous log file.
+                // A way to get around this is to offset the log time to include the processing time.
+                // This way if this event *just happened* then we'll still send the notification for this
+                // event.
+                const auto eventTime = rawLog.tm + elapsed;
+                notify(static_cast<int>(EHearthstoneLogEvents::MatchEnd), eventTime, &data);
                 _powerParser.clear();
             }
         }

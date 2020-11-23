@@ -297,7 +297,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
             // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
             // if the GOP size is too small.
-            _vcodecContext->gop_size = fps * 5;
+            _vcodecContext->gop_size = static_cast<int>(fps * 5);
             _vcodecContext->max_b_frames = 1;
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {

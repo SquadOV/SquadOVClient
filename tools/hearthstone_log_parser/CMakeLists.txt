@@ -20,6 +20,6 @@ target_include_directories(hearthstone_log_parser
 target_link_libraries(hearthstone_log_parser
     squadov_game_event_watcher
     squadov_shared
-    Boost::program_options
+    ${Boost_LIBRARIES}
     date-tz
 )

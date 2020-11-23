@@ -3,13 +3,22 @@
         <v-row no-gutters>
             <v-col align-self="center" cols="1">
                 <!-- Block Type indicator (if any) -->
-                <v-img
-                    v-if="hasTypeIndicator"
-                    :max-height="32"
-                    :src="typeIndicatorImage"
-                    contain
-                >
-                </v-img>
+                <template v-if="hasTypeIndicator">
+                    <v-img
+                        v-if="!isIcon"
+                        :max-height="32"
+                        :src="typeIndicatorImage"
+                        contain
+                    >
+                    </v-img>
+
+                    <v-icon
+                        :color="iconColor"
+                        v-else
+                    >
+                        {{ typeIndicatorImage }}
+                    </v-icon>
+                </template>
             </v-col>
 
             <v-col align-self="center"  cols="11">
@@ -105,9 +114,21 @@ export default class HearthstoneGameBlockRenderer extends Vue {
             // (what we can an "offensive" action).
             if (this.block.isSpell && this.block.isOffensive) {
                 return 'assets/hearthstone/Spell.png'
+            } else if (this.block.isBattlegroundsBuy) {
+                return 'mdi-cart-plus'
+            } else if (this.block.isBattlegroundsSell) {
+                return 'mdi-cart-minus'
             }
         }
         return ''
+    }
+
+    get isIcon(): boolean {
+        return this.block.blockType == BlockType.Play && (this.block.isBattlegroundsBuy || this.block.isBattlegroundsSell)
+    }
+
+    get iconColor(): string {
+        return this.block.isBattlegroundsBuy ? 'success' : 'error'
     }
 
     get cardActionImage(): string {

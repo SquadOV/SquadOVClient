@@ -28,7 +28,10 @@ protected:
     void notify(int event, const shared::TimePoint& eventTime, const void* data, bool checkTime = true) const {
         if (checkTime && _useTimeChecks) {
             // Don't notify if the event time has drifted too far (probably due to reading a log that existed already).
-            const auto maxDiff = std::chrono::seconds(10);
+            // A 120 second difference should be enough to account for any processing time between when the event
+            // was processed and when we fire the notification while still be small enough such that we will detect
+            // events in old log files.
+            const auto maxDiff = std::chrono::seconds(120);
             const auto diff = shared::nowUtc() - eventTime;
             if (diff > maxDiff) {
                 return;

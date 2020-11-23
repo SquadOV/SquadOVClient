@@ -90,6 +90,7 @@ target_link_libraries(squadov_client_service
     portaudio
     libzmq
     ZLIB::ZLIB
+    ${Boost_LIBRARIES}
     ${OPENSSL_LIBRARIES}
     ${FFMPEG_LIBRARIES}
     ${OPENH264_LIBRARIES}

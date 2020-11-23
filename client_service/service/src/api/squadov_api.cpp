@@ -218,13 +218,13 @@ void SquadovApi::bulkUploadAimlabTasks(const std::vector<shared::aimlab::TaskDat
 
 std::string SquadovApi::createHearthstoneMatch(
     const game_event_watcher::HearthstoneGameConnectionInfo& info,
-    const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck,
+    const process_watcher::memory::games::hearthstone::types::CollectionDeckMapperSPtr& deck,
     const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
     const shared::TimePoint& timestamp
 ) const {
     nlohmann::json body = {
         { "info", info.toJson() },
-        { "deck", deck.toJson() },
+        { "deck", deck ? deck->toJson() : nlohmann::json() },
         { "timestamp", shared::timeToIso(timestamp) }
     };
 

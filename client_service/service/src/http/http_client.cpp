@@ -4,12 +4,20 @@
 #include "shared/log/log.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 #include <curl/curl.h>
 #include <iostream>
 #include <sstream>
 #include <thread>
 
 namespace service::http {
+namespace {
+
+constexpr size_t MAX_RAW_JSON_POST_BYTES_SIZE = 1 * 1024 * 1024;
+
+}
 
 struct CurlRawBuffer {
     const char* buffer = nullptr;
@@ -133,14 +141,29 @@ void HttpRequest::setJsonBody(const nlohmann::json& body) {
     if (body.is_null()) {
         curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, 0);
     } else {
-        std::ostringstream h;
-        h << "Content-Type: application/json";
-        _headers = curl_slist_append(_headers, h.str().c_str());
-        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
+        _headers = curl_slist_append(_headers, "Content-Type: application/json");
 
         const std::string jsonBody = body.dump();
-        curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
-        curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
+        // TODO: Make this GZIP functionality more general?
+        if (jsonBody.size() > MAX_RAW_JSON_POST_BYTES_SIZE) {
+            _headers = curl_slist_append(_headers, "Content-Encoding: gzip");
+
+            std::vector<char> gzipBuffer;
+            auto gzipDevice = boost::iostreams::back_inserter(gzipBuffer);
+            boost::iostreams::filtering_ostream outputStream;
+            outputStream.push(boost::iostreams::gzip_compressor{});
+            outputStream.push(gzipDevice);
+            outputStream << jsonBody << std::flush;
+            outputStream.pop();
+
+            LOG_INFO("Post CURL JSON GZIP: " << gzipBuffer.size() << std::endl);
+            curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, gzipBuffer.size());
+            curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, gzipBuffer.data());
+        } else {
+            curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
+            curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
+        }
+        curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
     }
 }
 

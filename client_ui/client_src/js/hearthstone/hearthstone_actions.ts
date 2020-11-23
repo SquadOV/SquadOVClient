@@ -97,7 +97,45 @@ export class HearthstoneGameBlockWrapper {
         })
     }
 
+    get isBattlegroundsBuy() : boolean {
+        return this.blockSubject?.cardId == 'TB_BaconShop_DragBuy'
+    }
+
+    get isBattlegroundsSell(): boolean {
+        return this.blockSubject?.cardId == 'TB_BaconShop_DragSell'
+    }
+
     get subject(): HearthstoneEntityWrapper | undefined {
+        // In the two battlegrounds cases we want to examine the sub-actions to determine
+        // what card to actually display as the 'subject' (aka which card we actually
+        // bought or sold).
+        if (this.isBattlegroundsBuy) {
+            // The card we bought is the one that has a change in zone to our hand.
+            for (let a of this._actions) {
+                if (a.actionType == ActionType.TagChange && 
+                    a.tags['ZONE'] === 'HAND') {
+                    return this._finalSnapshot.entity(a.realEntityId)
+                } 
+            }
+            return undefined
+        } else if (this.isBattlegroundsSell) {
+            // The card we sold is the one that has a change in zone to setaside.
+            for (let a of this._actions) {
+                if (a.actionType == ActionType.TagChange && 
+                    a.tags['ZONE'] === 'SETASIDE') {
+                    return this._finalSnapshot.entity(a.realEntityId)
+                } 
+            }
+            return undefined
+        } else {
+            return this._finalSnapshot.entity(this._gameBlock.entityId)
+        }
+    }
+
+    // In certain cases we actually care about what card this block is trying to
+    // represent an action for. Generally blockSubject should only be used internally
+    // while most client facing actions should use the regular subject property.
+    get blockSubject(): HearthstoneEntityWrapper | undefined {
         return this._finalSnapshot.entity(this._gameBlock.entityId)
     }
 

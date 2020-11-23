@@ -18,6 +18,8 @@ const PLAYSTATE = 'PLAYSTATE'
 const HEALTH = 'HEALTH'
 const DAMAGE = 'DAMAGE'
 const STEP = 'STEP'
+const SPAWN_TIME_COUNT = 'SPAWN_TIME_COUNT'
+const PLAYER_ID = 'PLAYER_ID'
 
 // Attributes
 const CARD_ID = 'CardID'
@@ -103,5 +105,21 @@ export class HearthstoneEntityWrapper {
             return HearthstonePlayState.Invalid
         }
         return hearthstonePlayStateFromString(state)
+    }
+    
+    get spawnTimeCount(): number {
+        let data = this._entity.tags[SPAWN_TIME_COUNT]
+        if (!data) {
+            return 0
+        }
+        return parseInt(data)
+    }
+
+    get playerId(): number {
+        let data = this._entity.tags[PLAYER_ID]
+        if (!data) {
+            return 0
+        }
+        return parseInt(data)
     }
 }

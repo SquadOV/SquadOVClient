@@ -21,6 +21,9 @@ DraftManagerMapperSPtr HearthstoneServicesMapper::getDraftManager(const process_
 
 DynamicServiceLocatorMapperPtr HearthstoneServicesMapper::getDynamicServices(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(HEARTHSTONE_SERVICES_MAPPER_FULL_NAME);
+    if (!cls) {
+        return nullptr;
+    }
     const auto& field = cls->field(DYNAMIC_SERVICES_FIELD_NAME);
     const auto value = field.getStatic(domainId);
     if (value.isNull()) {
@@ -31,6 +34,9 @@ DynamicServiceLocatorMapperPtr HearthstoneServicesMapper::getDynamicServices(con
 
 ServiceLocatorMapperPtr HearthstoneServicesMapper::getServices(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(HEARTHSTONE_SERVICES_MAPPER_FULL_NAME);
+    if (!cls) {
+        return nullptr;
+    }
     const auto& field = cls->field(SERVICES_FIELD_NAME);
     const auto value = field.getStatic(domainId);
     if (value.isNull()) {

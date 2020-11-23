@@ -142,7 +142,10 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     }
 
     get deckHeroCard() : string | undefined  {
-        return this.currentMatch?.metadata.deck?.heroCard
+        if (!this.matchWrapper.currentPlayerId) {
+            return undefined
+        }
+        return this.matchWrapper.playerHeroCard(this.matchWrapper.currentPlayerId)
     }
 
     get enemyHeroCard() : string | undefined {
