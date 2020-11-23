@@ -245,7 +245,8 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
         }
 
         if (this.matchWrapper.isBattlegrounds) {
-            return this.matchWrapper.currentPlayerHeroEntity?.leaderboardPlace <= 4
+            let place = this.matchWrapper.currentPlayerHeroEntity?.leaderboardPlace
+            return !!place ? place <= 4 : false
         } else {
             let entityId = this.latestSnapshot.playerIdToEntityId[this.localPlayerMatchId]
             let entity = new HearthstoneEntityWrapper(this.latestSnapshot.entities[entityId])

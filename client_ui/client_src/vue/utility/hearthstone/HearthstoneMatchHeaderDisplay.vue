@@ -168,7 +168,8 @@ export default class HearthstoneMatchHeaderDisplay extends Vue {
 
     get currentPlayerWon(): boolean {
         if (this.currentMatch.isBattlegrounds) {
-            return this.currentMatch.currentPlayerHeroEntity?.leaderboardPlace <= 4
+            let place = this.currentMatch.currentPlayerHeroEntity?.leaderboardPlace
+            return !!place ? place <= 4 : false
         } else {
             let entity = this.currentMatch.currentPlayerEntity
             return entity?.playState == HearthstonePlayState.Won
