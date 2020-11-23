@@ -16,6 +16,14 @@ export function getOpposingTeamColor(): Color {
     }
 }
 
+export function getNeutralTeamColor(): Color {
+    return {
+        r: 245,
+        g: 245,
+        b: 220
+    }
+}
+
 export function getRarityColor(rarity: HearthstoneCardRarity): Color {
     switch (rarity) {
         default:

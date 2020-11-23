@@ -2,6 +2,12 @@ import { HearthstoneEntity, HearthstoneEntityWrapper } from '@client/js/hearthst
 import { HearthstoneGameStep } from '@client/js/hearthstone/hearthstone_game_step'
 import { HearthstoneGameBlockWrapper, BlockType, HearthstoneGameAction } from '@client/js/hearthstone/hearthstone_actions'
 
+export enum BattlegroundsRoundWinState {
+    Win,
+    Loss,
+    Draw
+}
+
 export interface HearthstoneMatchSnapshotAuxData {
     currentTurn: number
     step: HearthstoneGameStep
@@ -147,5 +153,26 @@ export class HearthstoneMatchSnapshotWrapper {
     get step(): HearthstoneGameStep {
         let st = this._snapshot?.auxData?.step
         return !!st ? st : HearthstoneGameStep.Invalid
+    }
+
+    battlegroundsWinState(currentPlayerHeroEntityId: number): BattlegroundsRoundWinState {
+        // Need to see if the player's hero entity is either the target of or is the subject of any attacks.
+        // Subject - WIN!
+        // Target - Loss!
+        // Doesn't Exist - Draw!
+        let blocks = this.gameBlocks.filter((ele: HearthstoneGameBlockWrapper) => {
+            return ele.subject?._entity.entityId === currentPlayerHeroEntityId ||
+                !!ele.targets.find((ele : HearthstoneEntityWrapper) => {
+                    return ele._entity.entityId === currentPlayerHeroEntityId
+                })
+        })
+
+        if (blocks.length === 0) {
+            return BattlegroundsRoundWinState.Draw
+        } else if (blocks[0].subject?._entity.entityId === currentPlayerHeroEntityId) {
+            return BattlegroundsRoundWinState.Win
+        } else {
+            return BattlegroundsRoundWinState.Loss
+        }
     }
 }

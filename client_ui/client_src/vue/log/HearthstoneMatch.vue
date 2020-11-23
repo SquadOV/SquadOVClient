@@ -49,8 +49,17 @@
                         id="turn-timeline"
                         :current-match="matchWrapper"
                         :turn.sync="currentTurn"
+                        v-if="!matchWrapper.isBattlegrounds"
                     >
                     </hearthstone-turn-timeline-display>
+
+                    <hearthstone-battlegrounds-turn-timeline-display
+                        id="turn-timeline"
+                        :current-match="matchWrapper"
+                        :turn.sync="currentTurn"
+                        v-else
+                    >
+                    </hearthstone-battlegrounds-turn-timeline-display>
                 </v-row>
                 
                 <!--
@@ -104,6 +113,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import HearthstoneMatchHeaderDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchHeaderDisplay.vue'
 import HearthstoneTurnEventsDisplay from '@client/vue/utility/hearthstone/HearthstoneTurnEventsDisplay.vue'
 import HearthstoneTurnTimelineDisplay from '@client/vue/utility/hearthstone/HearthstoneTurnTimelineDisplay.vue'
+import HearthstoneBattlegroundsTurnTimelineDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsTurnTimelineDisplay.vue'
 import HearthstoneMatchDeckDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchDeckDisplay.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 
@@ -113,6 +123,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
     HearthstoneMatchHeaderDisplay,
     HearthstoneTurnEventsDisplay,
     HearthstoneTurnTimelineDisplay,
+    HearthstoneBattlegroundsTurnTimelineDisplay,
     HearthstoneMatchDeckDisplay,
     VideoPlayer
   }
