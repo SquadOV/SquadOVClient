@@ -76,6 +76,15 @@ export class HearthstoneGameBlockWrapper {
         this._children.push(b)
     }
 
+    get gameBlocks(): HearthstoneGameBlockWrapper[] {
+        let typ =  this._gameBlock.blockType
+        if ((typ == BlockType.Attack) || (typ == BlockType.Play)) {
+            return [this]
+        } else {
+            return this._children.map((ele: HearthstoneGameBlockWrapper) => ele.gameBlocks).flat()
+        }
+    }
+
     get blockType(): BlockType {
         return this._gameBlock.blockType
     }

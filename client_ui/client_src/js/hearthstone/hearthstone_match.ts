@@ -218,7 +218,7 @@ export class HearthstoneMatchWrapper {
             }
 
             let parent = this._allBlocks.get(b.parentBlock)
-            let child = this._allBlocks.get(b.parentBlock)
+            let child = this._allBlocks.get(b.blockId)
 
             if (!parent || !child) {
                 continue

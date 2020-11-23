@@ -40,10 +40,9 @@ export class HearthstoneMatchSnapshotWrapper {
 
     // A subset of the blocks that correspond to player actions.
     get gameBlocks(): HearthstoneGameBlockWrapper[] {
-        return this._blocks.filter((ele : HearthstoneGameBlockWrapper) => {
-            let typ =  ele._gameBlock.blockType
-            return (typ == BlockType.Attack) || (typ == BlockType.Play)
-        })
+        return this._blocks.map((ele : HearthstoneGameBlockWrapper) => {
+            return ele.gameBlocks
+        }).flat()
     }
 
     get snapshotTime(): Date | undefined {
