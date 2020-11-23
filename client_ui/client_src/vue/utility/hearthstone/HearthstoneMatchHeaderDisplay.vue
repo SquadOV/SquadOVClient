@@ -7,7 +7,13 @@
             <v-row no-gutters>
                 <v-col cols="1" align-self="center">
                     <div class="d-flex justify-center text-h2">
-                        <span :style="currentPlayerHpStyle">{{ currentPlayerLife }}</span>
+                        <span v-if="!currentMatch.isBattlegrounds" :style="currentPlayerHpStyle">{{ currentPlayerLife }}</span>
+                        <hearthstone-battlegrounds-game-leaderboard-place-display
+                            class="mx-2"
+                            :current-match="currentMatch"
+                            v-else
+                        >
+                        </hearthstone-battlegrounds-game-leaderboard-place-display>
                     </div>
                 </v-col>
                 <v-col cols="2" align-self="center">
@@ -24,7 +30,7 @@
                     </div>
                 </v-col>
 
-                <v-col cols="1" align-self="center">
+                <v-col cols="1" align-self="center" v-if="!currentMatch.isBattlegrounds">
                     <hearthstone-player-medal-display
                         v-if="currentMatch.isRanked"
                         :medal-info="currentPlayerMedals"
@@ -33,7 +39,7 @@
                     </hearthstone-player-medal-display>
                 </v-col>
 
-                <v-col cols="4" align-self="center">
+                <v-col :cols="currentMatch.isBattlegrounds ? 2 : 4" align-self="center" class="text-body-2">
                     <div class="d-flex justify-center">
                         {{ dateTime }}
                     </div>
@@ -47,7 +53,7 @@
                     </div>
                 </v-col>
 
-                <v-col cols="1" align-self="center">
+                <v-col cols="1" align-self="center" v-if="!currentMatch.isBattlegrounds">
                     <hearthstone-player-medal-display
                         v-if="currentMatch.isRanked"
                         :medal-info="opposingPlayerMedals"
@@ -56,7 +62,7 @@
                     </hearthstone-player-medal-display>
                 </v-col>
 
-                <v-col cols="2" align-self="center">
+                <v-col cols="2" align-self="center" v-if="!currentMatch.isBattlegrounds">
                     <hearthstone-hero-display
                         :hero-card="opposingPlayerHeroCard"
                         :max-height="150"
@@ -69,10 +75,18 @@
                         </span>
                     </div>
                 </v-col>
-                <v-col cols="1" align-self="center">
+                <v-col cols="1" align-self="center" v-if="!currentMatch.isBattlegrounds">
                     <div class="d-flex justify-center text-h2">
                         <span :style="opposingPlayerHpStyle">{{ opposingPlayerLife }}</span>
                     </div>
+                </v-col>
+
+                <v-col cols="7" v-if="currentMatch.isBattlegrounds" align-self="center">
+                    <hearthstone-mini-board-state-display
+                        :snapshot="currentMatch._match.latestSnapshot"
+                        :player-match-id="currentMatch.currentPlayerId"
+                    >
+                    </hearthstone-mini-board-state-display>
                 </v-col>
             </v-row>
         </v-sheet>
@@ -91,11 +105,15 @@ import { HearthstoneMedalInfo } from '@client/js/hearthstone/hearthstone_player'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import HearthstonePlayerMedalDisplay from '@client/vue/utility/hearthstone/HearthstonePlayerMedalDisplay.vue'
+import HearthstoneMiniBoardStateDisplay from '@client/vue/utility/hearthstone/HearthstoneMiniBoardStateDisplay.vue'
+import HearthstoneBattlegroundsGameLeaderboardPlaceDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsGameLeaderboardPlaceDisplay.vue'
 
 @Component({
     components: {
         HearthstoneHeroDisplay,
-        HearthstonePlayerMedalDisplay
+        HearthstonePlayerMedalDisplay,
+        HearthstoneMiniBoardStateDisplay,
+        HearthstoneBattlegroundsGameLeaderboardPlaceDisplay
     }
 })
 export default class HearthstoneMatchHeaderDisplay extends Vue {
@@ -149,8 +167,12 @@ export default class HearthstoneMatchHeaderDisplay extends Vue {
     }
 
     get currentPlayerWon(): boolean {
-        let entity = this.currentMatch.currentPlayerEntity
-        return entity?.playState == HearthstonePlayState.Won
+        if (this.currentMatch.isBattlegrounds) {
+            return this.currentMatch.currentPlayerHeroEntity?.leaderboardPlace <= 4
+        } else {
+            let entity = this.currentMatch.currentPlayerEntity
+            return entity?.playState == HearthstonePlayState.Won
+        }
     }
 
     get currentPlayerLife(): number {

@@ -78,7 +78,11 @@ export class HearthstoneGameBlockWrapper {
 
     get gameBlocks(): HearthstoneGameBlockWrapper[] {
         let typ =  this._gameBlock.blockType
-        if ((typ == BlockType.Attack) || (typ == BlockType.Play)) {
+        if (typ == BlockType.Play) {
+            return [this]
+        } else if (typ == BlockType.Attack &&
+            // Need to check targets here because in battlegrounds, if we move the minion around, it'll register as an attack block.
+            this.targets.length > 0) {
             return [this]
         } else {
             return this._children.map((ele: HearthstoneGameBlockWrapper) => ele.gameBlocks).flat()

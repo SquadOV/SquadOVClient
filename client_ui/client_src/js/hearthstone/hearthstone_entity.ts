@@ -20,6 +20,7 @@ const DAMAGE = 'DAMAGE'
 const STEP = 'STEP'
 const SPAWN_TIME_COUNT = 'SPAWN_TIME_COUNT'
 const PLAYER_ID = 'PLAYER_ID'
+const PLAYER_LEADERBOARD_PLACE = 'PLAYER_LEADERBOARD_PLACE'
 
 // Attributes
 const CARD_ID = 'CardID'
@@ -117,6 +118,14 @@ export class HearthstoneEntityWrapper {
 
     get playerId(): number {
         let data = this._entity.tags[PLAYER_ID]
+        if (!data) {
+            return 0
+        }
+        return parseInt(data)
+    }
+
+    get leaderboardPlace(): number {
+        let data = this._entity.tags[PLAYER_LEADERBOARD_PLACE]
         if (!data) {
             return 0
         }

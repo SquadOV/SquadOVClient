@@ -52,7 +52,9 @@ export class HearthstoneMatchSnapshotWrapper {
 
         // The snapshot happens at the end of the turn.
         // The beginning of the turn (block 0) isn't necessarily when the player draws the card.
-        // Thus, we must search for the action at which we go to the "MAIN_START" step.
+        // Thus, we must search for the action at which we go to the "MAIN_READY" step. Note that
+        // we use MAIN_READY here instead of MAIN_START as it translates to battlegrounds as well
+        // while MAIN_START is not used in the action phase of battlegrounds.
         let idx = -1
         for (let a of this._actions) {
             idx += 1
@@ -65,7 +67,7 @@ export class HearthstoneMatchSnapshotWrapper {
             }
 
             let step = a.tags['STEP']
-            if (step == 'MAIN_START') {
+            if (step == 'MAIN_READY') {
                 return a.tm
             }
         }

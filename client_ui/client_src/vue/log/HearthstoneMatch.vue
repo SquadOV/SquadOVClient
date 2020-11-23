@@ -56,7 +56,7 @@
                 <!--
                     Deck Comparison
                 -->
-                <v-row>
+                <v-row v-if="!matchWrapper.isBattlegrounds">
                     <v-col cols="6">
                         <template v-if="!!matchWrapper.currentPlayerDeck">
                             <div class="d-flex align-center justify-center pa-4">

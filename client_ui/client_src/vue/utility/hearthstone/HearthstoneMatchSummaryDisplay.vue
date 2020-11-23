@@ -33,22 +33,33 @@
                         </p>
 
                         <p>
-                            {{ matchLength }} - {{ numTurns }} Turns (<span :style="currentPlayerHpStyle">{{ currentPlayerLife }}</span> - <span :style="opposingPlayerHpStyle">{{ opposingPlayerLife }}</span>)
+                            {{ matchLength }} - {{ numTurns }} Turns
+                            <template v-if="!matchWrapper.isBattlegrounds">
+                                (<span :style="currentPlayerHpStyle">{{ currentPlayerLife }}</span> - <span :style="opposingPlayerHpStyle">{{ opposingPlayerLife }}</span>)
+                            </template>
                         </p>
                     </v-col>
 
                     <!-- Rank (if relevant) -->
                     <v-col cols="1" align-self="center">
                         <hearthstone-player-medal-display
-                            v-if="isRanked"
+                            v-if="isRanked && !matchWrapper.isBattlegrounds"
                             :medal-info="medalInfo"
                             :max-height="100"
                         >
                         </hearthstone-player-medal-display>
+                        
+                        <div class="d-flex justify-center text-h3" v-else-if="matchWrapper.isBattlegrounds">
+                            <hearthstone-battlegrounds-game-leaderboard-place-display
+                                class="mx-2"
+                                :current-match="matchWrapper"
+                            >
+                            </hearthstone-battlegrounds-game-leaderboard-place-display>
+                        </div>
                     </v-col>
 
                     <!-- Board State -->
-                    <v-col cols="5" align-self="center">
+                    <v-col :cols="matchWrapper.isBattlegrounds ? 7 : 5" align-self="center">
                         <hearthstone-mini-board-state-display
                             :snapshot="latestSnapshot"
                             :player-match-id="localPlayerMatchId"
@@ -57,7 +68,7 @@
                     </v-col>
 
                     <!-- Enemy hero -->
-                    <v-col cols="2" align-self="center">
+                    <v-col cols="2" align-self="center" v-if="!matchWrapper.isBattlegrounds">
                         <hearthstone-hero-display
                             :hero-card="enemyHeroCard"
                             :max-height="150"
@@ -98,12 +109,14 @@ import { HearthstonePlayState } from '@client/js/hearthstone/hearthstone_playsta
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import HearthstonePlayerMedalDisplay from '@client/vue/utility/hearthstone/HearthstonePlayerMedalDisplay.vue'
 import HearthstoneMiniBoardStateDisplay from '@client/vue/utility/hearthstone/HearthstoneMiniBoardStateDisplay.vue'
+import HearthstoneBattlegroundsGameLeaderboardPlaceDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsGameLeaderboardPlaceDisplay.vue'
 
 @Component({
     components: {
         HearthstoneHeroDisplay,
         HearthstonePlayerMedalDisplay,
-        HearthstoneMiniBoardStateDisplay
+        HearthstoneMiniBoardStateDisplay,
+        HearthstoneBattlegroundsGameLeaderboardPlaceDisplay
     }
 })
 export default class HearthstoneMatchSummaryDisplay extends Vue {
@@ -231,9 +244,13 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
             return false
         }
 
-        let entityId = this.latestSnapshot.playerIdToEntityId[this.localPlayerMatchId]
-        let entity = new HearthstoneEntityWrapper(this.latestSnapshot.entities[entityId])
-        return entity.playState == HearthstonePlayState.Won
+        if (this.matchWrapper.isBattlegrounds) {
+            return this.matchWrapper.currentPlayerHeroEntity?.leaderboardPlace <= 4
+        } else {
+            let entityId = this.latestSnapshot.playerIdToEntityId[this.localPlayerMatchId]
+            let entity = new HearthstoneEntityWrapper(this.latestSnapshot.entities[entityId])
+            return entity.playState == HearthstonePlayState.Won
+        }
     }
 
     computeWLColor(w: boolean) : string {
