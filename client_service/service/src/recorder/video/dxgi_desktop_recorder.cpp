@@ -185,6 +185,19 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 
             const auto startFrameTm = TickClock::now();
 
+            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
+            /*
+                SOURCE: https://docs.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe
+                When the client does not own the frame, the operating system copies all desktop updates to the surface. 
+                This can result in wasted GPU cycles if the operating system updates the same region for each frame that occurs.
+                When the client acquires the frame, the client is aware of only the final update to this region;
+                therefore, any overlapping updates during previous frames are wasted. When the client acquires a frame,
+                the client owns the surface; therefore, the operating system can track only the updated regions and
+                cannot copy desktop updates to the surface. Because of this behavior, we recommend that you
+                minimize the time between the call to release the current frame and the call to acquire the next frame.
+            */
+            _dupl->ReleaseFrame();
+
             HRESULT hr = _dupl->AcquireNextFrame(500, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 continue;
@@ -202,7 +215,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
-                _dupl->ReleaseFrame();
                 std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
                 continue;
             }
@@ -217,7 +229,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             desktopResource->Release();
             desktopResource = nullptr;
             if (hr != S_OK) {
-                _dupl->ReleaseFrame();
                 continue;
             }
 
@@ -225,7 +236,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             // are dirty/moved?
             _context->CopyResource(_deviceTexture, tex);
             tex->Release();
-            _dupl->ReleaseFrame();
 
             // Read from the texture onto the CPU and then copy it into our image buffer
             // to send to the encoder.
