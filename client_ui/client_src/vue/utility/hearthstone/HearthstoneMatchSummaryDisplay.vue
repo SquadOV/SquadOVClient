@@ -49,13 +49,19 @@
                         >
                         </hearthstone-player-medal-display>
                         
-                        <div class="d-flex justify-center text-h3" v-else-if="matchWrapper.isBattlegrounds">
-                            <hearthstone-battlegrounds-game-leaderboard-place-display
-                                class="mx-2"
-                                :current-match="matchWrapper"
-                            >
-                            </hearthstone-battlegrounds-game-leaderboard-place-display>
-                        </div>
+                        <hearthstone-battlegrounds-game-leaderboard-place-display
+                            v-else-if="matchWrapper.isBattlegrounds"
+                            class="mx-2"
+                            :current-match="matchWrapper"
+                        >
+                        </hearthstone-battlegrounds-game-leaderboard-place-display>
+
+                        <hearthstone-duels-rating-display
+                            v-else-if="matchWrapper.isDuels"
+                            class="mx-2"
+                            :current-match="matchWrapper"
+                        >
+                        </hearthstone-duels-rating-display>
                     </v-col>
 
                     <!-- Board State -->
@@ -110,13 +116,15 @@ import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneH
 import HearthstonePlayerMedalDisplay from '@client/vue/utility/hearthstone/HearthstonePlayerMedalDisplay.vue'
 import HearthstoneMiniBoardStateDisplay from '@client/vue/utility/hearthstone/HearthstoneMiniBoardStateDisplay.vue'
 import HearthstoneBattlegroundsGameLeaderboardPlaceDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsGameLeaderboardPlaceDisplay.vue'
+import HearthstoneDuelsRatingDisplay from '@client/vue/utility/hearthstone/HearthstoneDuelsRatingDisplay.vue'
 
 @Component({
     components: {
         HearthstoneHeroDisplay,
         HearthstonePlayerMedalDisplay,
         HearthstoneMiniBoardStateDisplay,
-        HearthstoneBattlegroundsGameLeaderboardPlaceDisplay
+        HearthstoneBattlegroundsGameLeaderboardPlaceDisplay,
+        HearthstoneDuelsRatingDisplay
     }
 })
 export default class HearthstoneMatchSummaryDisplay extends Vue {

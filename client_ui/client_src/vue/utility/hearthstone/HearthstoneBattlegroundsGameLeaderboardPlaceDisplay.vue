@@ -1,5 +1,8 @@
 <template>
-    <span :style="textStyle">{{ placeString }}</span>
+    <div class="d-flex flex-column justify-center" :style="textStyle">
+        <div class="d-flex justify-center text-h3">{{ placeString }}</div>
+        <div class="d-flex justify-center text-h5" v-if="rating !== null">{{ rating }}</div>
+    </div>
 </template>
 
 <script lang="ts">
@@ -23,6 +26,13 @@ export default class HearthstoneBattlegroundsGameLeaderboardPlaceDisplay extends
 
     get placeString(): string {
         return getOrdinal(this.place)
+    }
+
+    get rating(): number | null {
+        if (!this.currentMatch.currentPlayer) {
+            return null
+        }
+        return this.currentMatch.currentPlayer.battlegroundsRating
     }
 
     get textStyle(): any {

@@ -22,4 +22,7 @@ export interface HearthstonePlayer {
     arenaLoss: number
     tavernBrawlWins: number
     tavernBrawlLoss: number
+    battlegroundsRating: number | null
+    duelsCasualRating: number | null
+    duelsHeroicRating: number| null
 }

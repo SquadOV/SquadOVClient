@@ -6,6 +6,12 @@
                 rounded
             >
                 <v-row no-gutters v-if="!!currentDuelRun">
+                    <v-col cols="1" align-self="center">
+                        <div class="d-flex justify-center text-h3">
+                            <span v-if="currentDuelRun.rating !== null">{{ currentDuelRun.rating }}</span>
+                        </div>
+                    </v-col>
+
                     <v-col cols="2" align-self="center">
                         <hearthstone-hero-display
                             :hero-card="deckHeroCard"
@@ -20,7 +26,7 @@
                         </div>
                     </v-col>
 
-                    <v-col cols="5">
+                    <v-col cols="4">
                     </v-col>
 
                     <v-col align-self="center" cols="1">

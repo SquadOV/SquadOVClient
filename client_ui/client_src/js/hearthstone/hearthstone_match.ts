@@ -65,8 +65,9 @@ export function gameTypeToString(gt : HearthstoneGameType) : string {
         case HearthstoneGameType.BattlegroundsFriendly:
             return "Battlegrounds"
         case HearthstoneGameType.PvpDrPaid:
+            return "Duels (Heroic)"
         case HearthstoneGameType.PvpDr:
-            return "Duels"
+            return "Duels (Casual)"
         default:
             return 'Unknown'
     }
@@ -471,6 +472,11 @@ export class HearthstoneMatchWrapper {
 
     get isBattlegrounds() : boolean {
         return this._match.metadata.gameType == HearthstoneGameType.Battlegrounds ||
-        this._match.metadata.gameType == HearthstoneGameType.BattlegroundsFriendly
+            this._match.metadata.gameType == HearthstoneGameType.BattlegroundsFriendly
+    }
+
+    get isDuels(): boolean {
+        return this._match.metadata.gameType == HearthstoneGameType.PvpDr ||
+            this._match.metadata.gameType == HearthstoneGameType.PvpDrPaid
     }
 }

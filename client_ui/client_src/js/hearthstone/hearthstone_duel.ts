@@ -7,6 +7,7 @@ export interface HearthstoneDuelRun {
     wins: number
     loss: number
     timestamp: Date
+    rating: number | null
 }
 
 export function cleanHearthstoneDuelRunFromJson(r : HearthstoneDuelRun): HearthstoneDuelRun {
