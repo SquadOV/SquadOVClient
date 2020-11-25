@@ -12,6 +12,7 @@ SET(SRCS
     shared/uuid.cpp
     shared/base64/encode.cpp
     shared/squadov/vod.cpp
+    shared/hearthstone/hearthstone_ratings.cpp
 )
 
 SET(HEADERS
@@ -31,6 +32,7 @@ SET(HEADERS
     shared/base64/encode.h
     shared/squadov/session.h
     shared/squadov/user.h
+    shared/hearthstone/hearthstone_ratings.h
 )
 
 add_library(squadov_shared

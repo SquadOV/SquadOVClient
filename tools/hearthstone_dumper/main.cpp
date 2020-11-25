@@ -4,7 +4,7 @@
 #include "process_watcher/memory/pe_mapper.h"
 #include "process_watcher/memory/mono_memory_mapper.h"
 #include "process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h"
-
+#include "shared/hearthstone/hearthstone_ratings.h"
 #include <boost/program_options.hpp>
 #include <fstream>
 #include <iostream>
@@ -64,6 +64,19 @@ int main(int argc, char** argv) {
         std::cout << "------------------ Player " << kvp.first << "------------------" << std::endl
                   << kvp.second->toJson().dump(4) << std::endl;
     }
-    
+
+    std::cout << "#######################################################" << std::endl
+              << "                       NET CACHE                       " << std::endl
+              << "#######################################################" << std::endl;
+    std::cout << "Battlegrounds Rating: " << hearthstoneMapper.getBattlegroundsRating().value_or(-1) << std::endl;
+    std::cout << "Duels Casual Rating: " << hearthstoneMapper.getDuelsCasualRating().value_or(-1) << std::endl;
+    std::cout << "Duels Heroic Rating: " << hearthstoneMapper.getDuelsHeroicRating().value_or(-1) << std::endl;
+
+    shared::hearthstone::HearthstoneRatings ratings;
+    ratings.battlegroundsRating = hearthstoneMapper.getBattlegroundsRating();
+    ratings.duelsCasualRating = hearthstoneMapper.getDuelsCasualRating();
+    ratings.duelsHeroicRating = hearthstoneMapper.getDuelsHeroicRating();
+    std::cout << ratings.toJson().dump(4) << std::endl;
+
     return 0;
 }

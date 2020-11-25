@@ -4,6 +4,7 @@
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
 #include <memory>
+#include <optional>
 
 namespace process_watcher::memory::games::hearthstone {
 
@@ -29,6 +30,10 @@ public:
     
     // Obtains information about the current players in the game.
     std::unordered_map<int, types::PlayerMapperSPtr> getCurrentPlayers() const;
+
+    std::optional<int32_t> getBattlegroundsRating() const;
+    std::optional<int32_t> getDuelsCasualRating() const;
+    std::optional<int32_t> getDuelsHeroicRating() const;
 
 private:
     types::CollectionDeckMapperSPtr getCurrentDeckInUI() const;

@@ -5,6 +5,7 @@
 #include "shared/squadov/session.h"
 #include "shared/squadov/vod.h"
 #include "shared/aimlab/aimlab.h"
+#include "shared/hearthstone/hearthstone_ratings.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
@@ -50,6 +51,7 @@ public:
         const game_event_watcher::HearthstoneGameConnectionInfo& info,
         const process_watcher::memory::games::hearthstone::types::CollectionDeckMapperSPtr& deck,
         const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
+        const shared::hearthstone::HearthstoneRatings& ratings,
         const shared::TimePoint& timestamp
     ) const;
     void uploadHearthstonePowerLogs(const std::string& matchUuid, const nlohmann::json& logs) const;

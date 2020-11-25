@@ -220,6 +220,7 @@ std::string SquadovApi::createHearthstoneMatch(
     const game_event_watcher::HearthstoneGameConnectionInfo& info,
     const process_watcher::memory::games::hearthstone::types::CollectionDeckMapperSPtr& deck,
     const std::unordered_map<int, process_watcher::memory::games::hearthstone::types::PlayerMapperSPtr>& players,
+    const shared::hearthstone::HearthstoneRatings& ratings,
     const shared::TimePoint& timestamp
 ) const {
     nlohmann::json body = {
@@ -230,7 +231,15 @@ std::string SquadovApi::createHearthstoneMatch(
 
     nlohmann::json jPlayers;
     for (const auto& kvp : players) {
-        jPlayers[std::to_string(kvp.first)] = kvp.second->toJson();
+        auto j = kvp.second->toJson();
+
+        // This should be fine as everything within ratings is optional within
+        // the player structure server-side.
+        if (kvp.second->local()) {
+            j.update(ratings.toJson());
+        }
+
+        jPlayers[std::to_string(kvp.first)] = j;
     }
     body["players"] = jPlayers;
 

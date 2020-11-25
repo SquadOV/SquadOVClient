@@ -87,4 +87,43 @@ std::unordered_map<int, types::PlayerMapperSPtr> HearthstoneMemoryMapper::getCur
     return playerMap.values();
 }
 
+std::optional<int32_t> HearthstoneMemoryMapper::getBattlegroundsRating() const {
+    const auto cache = types::HearthstoneServicesMapper::getNetCache(_mono->image(), _mono->domainId());
+    if (!cache) {
+        return std::nullopt;
+    }
+
+    const auto rating = cache->getBaconRatingInfo();
+    if (!rating) {
+        return std::nullopt;
+    }
+    return rating->rating();
+}
+
+std::optional<int32_t> HearthstoneMemoryMapper::getDuelsCasualRating() const {
+    const auto cache = types::HearthstoneServicesMapper::getNetCache(_mono->image(), _mono->domainId());
+    if (!cache) {
+        return std::nullopt;
+    }
+
+    const auto rating = cache->getPvpDrStatsInfo();
+    if (!rating) {
+        return std::nullopt;
+    }
+    return rating->rating();
+}
+
+std::optional<int32_t> HearthstoneMemoryMapper::getDuelsHeroicRating() const {
+    const auto cache = types::HearthstoneServicesMapper::getNetCache(_mono->image(), _mono->domainId());
+    if (!cache) {
+        return std::nullopt;
+    }
+
+    const auto rating = cache->getPvpDrStatsInfo();
+    if (!rating) {
+        return std::nullopt;
+    }
+    return rating->paidRating();
+}
+
 }

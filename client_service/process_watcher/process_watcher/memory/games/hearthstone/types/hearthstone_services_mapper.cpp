@@ -19,6 +19,11 @@ DraftManagerMapperSPtr HearthstoneServicesMapper::getDraftManager(const process_
     return get<DraftManagerMapper>(cls, image, domainId);
 }
 
+NetCacheMapperSPtr HearthstoneServicesMapper::getNetCache(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
+    const auto* cls = NetCacheMapper::klass(image);
+    return get<NetCacheMapper>(cls, image, domainId);
+}
+
 DynamicServiceLocatorMapperPtr HearthstoneServicesMapper::getDynamicServices(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(HEARTHSTONE_SERVICES_MAPPER_FULL_NAME);
     if (!cls) {

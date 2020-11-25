@@ -6,6 +6,7 @@
 #include "process_watcher/memory/pe_mapper.h"
 #include "process_watcher/memory/games/hearthstone/hearthstone_memory_mapper.h"
 #include "shared/log/log.h"
+#include "shared/hearthstone/hearthstone_ratings.h"
 #include "api/squadov_api.h"
 #include "recorder/game_recorder.h"
 
@@ -179,7 +180,19 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
     try {
         const auto deck = _monoMapper->getCurrentDeck();
         const auto players = _monoMapper->getCurrentPlayers();
-        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(_currentGame, deck, players, _gameStartEventTime);
+
+        shared::hearthstone::HearthstoneRatings ratings;
+        ratings.battlegroundsRating = _monoMapper->getBattlegroundsRating();
+        ratings.duelsCasualRating = _monoMapper->getDuelsCasualRating();
+        ratings.duelsHeroicRating = _monoMapper->getDuelsHeroicRating();
+
+        _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(
+            _currentGame,
+            deck,
+            players,
+            ratings,
+            _gameStartEventTime
+        );
     } catch (const std::exception& ex) {
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
         return;
