@@ -12,7 +12,8 @@ const HearthstoneLogSection ALL_LOG_SECTIONS[] = {
     HearthstoneLogSection::Decks,
     HearthstoneLogSection::Power,
     HearthstoneLogSection::Zone,
-    HearthstoneLogSection::Arena
+    HearthstoneLogSection::Arena,
+    HearthstoneLogSection::PvpDr
 };
 
 std::string logSectionNameToString(HearthstoneLogSection sec) {
@@ -25,6 +26,8 @@ std::string logSectionNameToString(HearthstoneLogSection sec) {
             return "Zone";
         case HearthstoneLogSection::Arena:
             return "Arena";
+        case HearthstoneLogSection::PvpDr:
+            return "PVPDR";
     }
     return "";
 }

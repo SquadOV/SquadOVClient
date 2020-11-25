@@ -25,6 +25,7 @@ public:
     types::CollectionDeckMapperSPtr getCurrentDeck() const;
     types::CollectionDeckMapperSPtr getDeckFromId(int64_t deckId) const;
     types::CollectionDeckMapperSPtr getCurrentArenaDeck() const;
+    types::CollectionDeckMapperSPtr getCurrentDuelsDeck() const;
     
     // Obtains information about the current players in the game.
     std::unordered_map<int, types::PlayerMapperSPtr> getCurrentPlayers() const;

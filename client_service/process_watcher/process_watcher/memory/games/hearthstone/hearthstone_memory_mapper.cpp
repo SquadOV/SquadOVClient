@@ -41,6 +41,8 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch()
     // If the current game is arena, then return the arena deck.
     if (gameMgr->gameType() == types::GameType::GT_ARENA) {
         return getCurrentArenaDeck();
+    } else if (gameMgr->gameType() == types::GameType::GT_PVPDR || gameMgr->gameType() == types::GameType::GT_PVPDR_PAID) {
+        return getCurrentDuelsDeck();
     } else {
         const auto deckId = gameMgr->lastDeckId();
         if (!deckId) {
@@ -57,6 +59,14 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentArenaDeck() c
         return nullptr;
     }
     return draftManager->getDraftDeck();
+}
+
+types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDuelsDeck() const {
+    const auto mgr = types::CollectionManagerMapper::singleton(_mono->image(), _mono->domainId());
+    if (!mgr) {
+        return nullptr;
+    }
+    return mgr->getCurrentDuelsDeck();
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getDeckFromId(int64_t deckId) const {

@@ -12,6 +12,7 @@ export const HearthstoneArenaRunMatchLogPageId = 'HearthstoneArenaRunMatchLog'
 export const HearthstoneBrawlLogPageId = 'hearthstoneBrawlLogs'
 export const HearthstoneBattlegroundsLogPageId = 'hearthstoneBattlegroundsLogs'
 export const HearthstoneDuelLogPageId = 'hearthstoneDuelLogs'
+export const HearthstoneDuelRunMatchLogPageId = 'hearthstoneDuelRunMatchLog'
 export const HearthstoneMatchPageId = 'hearthstoneMatch'
 
 export const PerformancePageId = 'performance'

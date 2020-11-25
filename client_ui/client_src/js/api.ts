@@ -16,6 +16,7 @@ import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, 
 import { HearthstoneCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneArenaRun, cleanHearthstoneArenaRunFromJson } from '@client/js/hearthstone/hearthstone_arena'
+import { HearthstoneDuelRun, cleanHearthstoneDuelRunFromJson } from '@client/js/hearthstone/hearthstone_duel'
 
 import { ipcRenderer } from 'electron'
 
@@ -290,6 +291,10 @@ class ApiClient {
         return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, this.createWebAxiosConfig())
     }
 
+    listHearthstoneMatchesForDuelRun(collectionUuid: string, userId: number): Promise<ApiData<string[]>> {
+        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}/matches`, this.createWebAxiosConfig())
+    }
+
     listHearthstoneArenaRunsForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
         return !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
@@ -300,6 +305,25 @@ class ApiClient {
                     end: params.end,
                 }
             })
+    }
+
+    listHearthstoneDuelRunsForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
+        return !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/hearthstone/user/${params.userId!}/duels`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start,
+                    end: params.end,
+                }
+            })
+    }
+
+    getHearthstoneDuelRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneDuelRun>> {
+        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneDuelRun>) => {
+            cleanHearthstoneDuelRunFromJson(resp.data)
+            return resp
+        })
     }
 
     getHearthstoneArenaRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneArenaRun>> {

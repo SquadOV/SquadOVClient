@@ -9,7 +9,8 @@ enum class HearthstoneLogSection {
     Decks,
     Zone,
     Power,
-    Arena
+    Arena,
+    PvpDr
 };
 
 class HearthstoneLogConfig {

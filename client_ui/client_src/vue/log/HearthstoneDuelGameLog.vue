@@ -2,7 +2,16 @@
     <loading-container :is-loading="!allCollectionIds">
         <template v-slot:default="{ loading }">
             <div v-if="!loading">
-                <div class="text-center">
+                <template v-if="allCollectionIds.length > 0">
+                    <hearthstone-duel-summary-display
+                        v-for="(collection, idx) of allCollectionIds"
+                        :key="idx"
+                        :duel-uuid="collection"
+                    >
+                    </hearthstone-duel-summary-display>
+                </template>
+
+                <div class="text-center" v-else>
                     <span class="text-h5">No Hearthstone Duel runs found.</span>
                 </div>
 
@@ -25,13 +34,14 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
+import HearthstoneDuelSummaryDisplay from '@client/vue/utility/hearthstone/HearthstoneDuelSummaryDisplay.vue'
 
 const maxTasksPerRequest : number = 20
 
 @Component({
     components: {
         LoadingContainer,
-
+        HearthstoneDuelSummaryDisplay
     }
 })
 export default class HearthstoneDuelGameLog extends Vue {
@@ -48,12 +58,11 @@ export default class HearthstoneDuelGameLog extends Vue {
             return
         }
         let user = this.$store.state.currentUser!
-        apiClient.listHearthstoneMatchesForPlayer({
+        apiClient.listHearthstoneDuelRunsForPlayer({
             next: this.nextLink,
             userId: user.id,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
-            filter: [],
         }).then((resp : ApiData<HalResponse<string[]>>) => {
             if (!this.allCollectionIds) {
                 this.allCollectionIds = resp.data.data
@@ -67,7 +76,7 @@ export default class HearthstoneDuelGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list Hearthstone arena runs: ' + err);
+            console.log('Failed to list Hearthstone duel runs: ' + err);
         })
     }
 

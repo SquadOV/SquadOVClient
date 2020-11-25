@@ -16,6 +16,7 @@ public:
     explicit CollectionManagerMapper(const process_watcher::memory::mono::MonoObjectMapperSPtr& object);
 
     CollectionDeckMapperSPtr getDeckFromId(int64_t deckId) const;
+    CollectionDeckMapperSPtr getCurrentDuelsDeck() const;
 private:
     using DeckMap = process_watcher::memory::mono::types::MapMapper<int64_t, process_watcher::memory::mono::MonoObjectMapperSPtr>;
 

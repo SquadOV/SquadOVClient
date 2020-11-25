@@ -147,6 +147,7 @@ void HearthstoneLogWatcher::enableHearthstoneLogging()
     HearthstoneLogConfig cfg(configPath);
     cfg.enableLogSection(HearthstoneLogSection::Power);
     cfg.enableLogSection(HearthstoneLogSection::Arena);
+    cfg.enableLogSection(HearthstoneLogSection::PvpDr);
     cfg.save();
 }
 

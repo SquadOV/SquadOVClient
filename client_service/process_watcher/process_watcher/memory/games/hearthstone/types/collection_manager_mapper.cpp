@@ -9,6 +9,7 @@ const std::string COLLECTION_MANAGER_FULLNAME("CollectionManager");
 const std::string COLLECTION_MANAGER_SINGLETON_FIELD("s_instance");
 const std::string COLLECTION_MANAGER_DECKS_FIELD("m_decks");
 const std::string COLLECTION_MANAGER_BASE_DECKS_FIELD("m_baseDecks");
+const std::string COLLECTION_MANAGER_CURRENT_PVPDR_DECK_ID_FIELD("m_currentPVPDRDeckId");
 
 }
 CollectionManagerMapperSPtr CollectionManagerMapper::singleton(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
@@ -35,6 +36,11 @@ CollectionDeckMapperSPtr CollectionManagerMapper::getDeckFromId(int64_t deckId) 
     }
 
     return getDeckFromIdFromDeckMap(COLLECTION_MANAGER_BASE_DECKS_FIELD, deckId);
+}
+
+CollectionDeckMapperSPtr CollectionManagerMapper::getCurrentDuelsDeck() const {
+    const auto deckId = _object->get(COLLECTION_MANAGER_CURRENT_PVPDR_DECK_ID_FIELD).get<int64_t>();
+    return getDeckFromId(deckId);
 }
 
 CollectionDeckMapperSPtr CollectionManagerMapper::getDeckFromIdFromDeckMap(const std::string& fieldName, int64_t deckId) const {
