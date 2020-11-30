@@ -13,7 +13,7 @@ export class StatInstanceContainer {
     buildGraphqlQuery() : string {
         let builder = new GraphqlQueryBuilder()
         for (let [uuid, inst] of this._stats) {
-            let sb = builder.stats(uuid.replace(/-/g, ''), `"${uuid}"`)
+            let sb = builder.stats(`user${uuid.replace(/-/g, '')}`, `"${uuid}"`)
             for (let st of inst) {
                 st.obj.addToGraphqlBuilder(sb, st.options)
             }
@@ -29,13 +29,12 @@ export class StatInstanceContainer {
         }
 
         for (let [uuid, inst] of this._stats) {
-            let userStats: AllStats = response[uuid.replace(/-/g, '')]
+            let userStats: AllStats = response[`user${uuid.replace(/-/g, '')}`]
             cleanAllStatsFromJson(userStats)
 
             for (let st of inst) {
                 st.obj.parseResponseIntoInstance(userStats, st)
             }
         }
-        console.log(this._stats)
     }
 }

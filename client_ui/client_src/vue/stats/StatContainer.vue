@@ -124,7 +124,7 @@ export default class StatContainer extends Vue {
 
     // These are the stats to pull and obtain series data for.
     // These stats will be made available to the slot display.
-    @Prop({type: Array})
+    @Prop({type: Array, default: () => []})
     stats! : string[]
     statsToAdd: string[] = []
     showHideAddStats: boolean = false
