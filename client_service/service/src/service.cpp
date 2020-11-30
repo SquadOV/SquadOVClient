@@ -55,6 +55,7 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 }
 
 int main(int argc, char** argv) {
+    LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif
@@ -67,22 +68,23 @@ int main(int argc, char** argv) {
         THROW_ERROR("Failed to initialize PortAudio.");
     }
 
-    std::cout << "USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl;
+    LOG_INFO("USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl);
 
     // Start running the ZeroMQ server for IPC communication with the frontend.
     service::zeromq::ZeroMQServerClient zeroMqServerClient;
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, [](const std::string& msg){
-        std::cout << "RECEIVE SESSION ID: " << msg << std::endl;
+        LOG_INFO("RECEIVE SESSION ID: " << msg << std::endl);
         service::api::getGlobalApi()->setSessionId(msg);
     });
     zeroMqServerClient.start();
 
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
-        std::cout << "SEND SESSION ID: " << sessionId << std::endl;
+        LOG_INFO("SEND SESSION ID: " << sessionId << std::endl);
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
         service::api::getGlobalApi()->setSessionId(sessionId);
     });
 
+    LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
         service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
     } catch (std::exception& ex) {
@@ -96,6 +98,7 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
+    LOG_INFO("Send Ready" << std::endl);
     // At this point we can fire off an event letting the UI know that the service is ready.
     // The reason we need this is because setSessionId will fire off an API request to get the
     // user's profile. The same call also happens on the UI side to validate the session ID once
@@ -106,11 +109,13 @@ int main(int argc, char** argv) {
     zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
 
     // Init FFmpeg logging - not sure why the default ffmpeg logging isn't working.
+    LOG_INFO("Init FFMpeg Logging" << std::endl);
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
 
     // Some games need some other setup if they're installed. Do this every time the app starts up as
     // doing it when the game is already running would be too late.
+    LOG_INFO("Enable Hearthstone Logging" << std::endl);
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
     // Start process watcher to watch for our supported games.

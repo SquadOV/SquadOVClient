@@ -75,7 +75,7 @@ class RiotRsoTokenRetriever {
                 let ret = {
                     rso: new RiotRsoToken(accessToken, entitlementToken, accessExpires),
                     puuid: jwtAccess['sub']
-                }            
+                }
                 resolve(ret)
             } catch (err) {
                 // TOO MUCH INFO GETS DUMPED HERE SO DON'T PASS BACK ERR.

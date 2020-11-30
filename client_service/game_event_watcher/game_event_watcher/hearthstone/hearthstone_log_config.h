@@ -10,7 +10,8 @@ enum class HearthstoneLogSection {
     Zone,
     Power,
     Arena,
-    PvpDr
+    PvpDr,
+    Unknown
 };
 
 class HearthstoneLogConfig {
@@ -18,6 +19,7 @@ public:
     explicit HearthstoneLogConfig(const std::filesystem::path& fname);
 
     void enableLogSection(HearthstoneLogSection section);
+    void load();
     void save();
 
 private:
@@ -26,9 +28,15 @@ private:
         bool filePrinting = false;
         bool consolePrinting = false;
         bool screenPrinting = false;
+        bool verbose = false;
+
+        bool operator==(const LogSection& other) const;
+        bool operator!=(const LogSection& other) const;
     };
-    std::unordered_map<HearthstoneLogSection, LogSection> _sections;
+    std::unordered_map<std::string, LogSection> _sections;
     std::filesystem::path _fname;
+    bool _successLoading = false;
+    bool _hasChanges = false;
 };
 
 }
