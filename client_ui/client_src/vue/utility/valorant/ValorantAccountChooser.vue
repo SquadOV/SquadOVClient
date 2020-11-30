@@ -154,7 +154,7 @@ export default class ValorantAccountChooser extends Vue {
             this.showHideEdit = false
         }).catch((err : any ) => {
             this.showHideAccountError = true
-            console.log('Failed to edit valorant account: ', err)
+            console.log('Failed to edit valorant account')
         }).finally(() => {
             this.$refs.editForm.clear()
         })
@@ -167,7 +167,7 @@ export default class ValorantAccountChooser extends Vue {
             this.showHideNew = false
         }).catch((err : any ) => {
             this.showHideAccountError = true
-            console.log('Failed to create valorant account: ', err)
+            console.log('Failed to create valorant account')
         }).finally(() => {
             this.$refs.newForm.clear()
         })
