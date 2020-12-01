@@ -6,7 +6,7 @@
         <template v-slot:activator="{on, attrs}">
             <div class="d-flex full-width slot-div" v-bind="attrs" v-on="on">
                 <!-- Card cost/rarity display -->
-                <div class="rarity-div d-flex justify-center align-center flex-shrink-0 flex-grow-0" :style="rarityStyle">
+                <div class="rarity-div d-flex justify-center align-center flex-shrink-0 flex-grow-0" :style="rarityStyle" v-if="!hideCost">
                     <div>
                         {{ cardSlot.metadata.cost }}
                     </div>
@@ -20,7 +20,7 @@
                 </div>
 
                 <!-- Count count display (if > 1 or legendary) -->
-                <div v-if="totalCount > 1 || isLegendary" class="count-div d-flex justify-center align-center flex-shrink-0 flex-grow-0">
+                <div v-if="(totalCount > 1 || isLegendary) && !hideCount" class="count-div d-flex justify-center align-center flex-shrink-0 flex-grow-0">
                     <div>
                         <span v-if="totalCount > 1">
                             {{ totalCount }}
@@ -47,7 +47,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import {  HearthstoneDeckSlotWithMetadata, HearthstoneCardRarity } from '@client/js/hearthstone/hearthstone_deck'
+import { HearthstoneDeckSlotWithMetadata, HearthstoneCardRarity } from '@client/js/hearthstone/hearthstone_deck'
 import { getRarityColor } from '@client/js/hearthstone/hearthstone_colors'
 import { staticClient } from '@client/js/staticData'
 import HearthstoneFullCardDisplay from '@client/vue/utility/hearthstone/HearthstoneFullCardDisplay.vue'
@@ -60,6 +60,12 @@ import HearthstoneFullCardDisplay from '@client/vue/utility/hearthstone/Hearthst
 export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
     @Prop({required: true})
     cardSlot!: HearthstoneDeckSlotWithMetadata
+
+    @Prop({type: Boolean, default: false})
+    hideCount!: boolean
+
+    @Prop({type: Boolean, default: false})
+    hideCost!: boolean
 
     get totalCount(): number {
         return this.cardSlot.count.normal + this.cardSlot.count.golden
@@ -84,7 +90,7 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
         return {
             'font-weight': 700,
             'background-image': `linear-gradient(to right, #121212 0 10%, transparent), url('${this.cardSrc}')`,
-            'background-position': 'right -64px top -128px',
+            'background-position': 'right -64px top -65px',
             'background-size': `256px 256px`
         }
     }

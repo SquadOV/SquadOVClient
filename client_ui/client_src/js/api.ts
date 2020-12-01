@@ -13,7 +13,7 @@ import {
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { VodAssociation, cleanVodAssocationData, VodManifest } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
-import { HearthstoneCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
+import { HearthstoneCardMetadata, HearthstoneBattlegroundsCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneArenaRun, cleanHearthstoneArenaRunFromJson } from '@client/js/hearthstone/hearthstone_arena'
 import { HearthstoneDuelRun, cleanHearthstoneDuelRunFromJson } from '@client/js/hearthstone/hearthstone_duel'
@@ -349,6 +349,10 @@ class ApiClient {
 
     getBulkHearthstoneCardMetadata(cards: string[]) : Promise<ApiData<HearthstoneCardMetadata[]>> {
         return axios.post(`v1/hearthstone/cards`, cards, this.createWebAxiosConfig())
+    }
+
+    getHearthstoneBattlegroundsCardsForTavernLevel(level: number): Promise<ApiData<HearthstoneBattlegroundsCardMetadata[]>> {
+        return axios.get(`v1/hearthstone/cards/battlegrounds/tavern/${level}`, this.createWebAxiosConfig())
     }
 
     graphqlRequest(req : string) : Promise<GraphqlApiData<any>> {

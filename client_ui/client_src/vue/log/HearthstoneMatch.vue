@@ -30,14 +30,46 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <hearthstone-turn-events-display
-                            :current-match="matchWrapper"
-                            :turn="currentTurn"
-                            :style="roundEventsStyle"
-                            @go-to-event="goToVodTime"
-                            :has-vod="hasVod"
-                        >
-                        </hearthstone-turn-events-display>
+                        <v-tabs grow v-model="eventSectionTab">
+                            <v-tab>
+                                Events
+                            </v-tab>
+
+                            <v-tab-item>
+                                <hearthstone-turn-events-display
+                                    :current-match="matchWrapper"
+                                    :turn="currentTurn"
+                                    :style="roundEventsStyle"
+                                    @go-to-event="goToVodTime"
+                                    :has-vod="hasVod"
+                                >
+                                </hearthstone-turn-events-display>
+                            </v-tab-item>
+
+                            <template v-if="matchWrapper.isBattlegrounds">
+                                <!-- This show the current deck STATE (e.g. hand, graveyard, in play, etc.) -->
+                                <v-tab>
+                                    Tavern
+                                </v-tab>
+
+                                <v-tab-item>
+                                    <hearthstone-battleground-tavern-summary
+                                        :height="currentPlayerHeight"
+                                    >
+                                    </hearthstone-battleground-tavern-summary>    
+                                </v-tab-item>
+                            </template>
+
+                            <template v-else>
+                                <!-- This show the current deck state for the start of the given round (e.g. hand, graveyard, in play, etc.) -->
+                                <v-tab>
+                                    Deck
+                                </v-tab>
+
+                                <v-tab-item>
+                                </v-tab-item>
+                            </template>
+                        </v-tabs>
                     </v-col>
                 </v-row>
 
@@ -61,7 +93,7 @@
                     >
                     </hearthstone-battlegrounds-turn-timeline-display>
                 </v-row>
-                
+
                 <!--
                     Deck Comparison
                 -->
@@ -115,6 +147,7 @@ import HearthstoneTurnEventsDisplay from '@client/vue/utility/hearthstone/Hearth
 import HearthstoneTurnTimelineDisplay from '@client/vue/utility/hearthstone/HearthstoneTurnTimelineDisplay.vue'
 import HearthstoneBattlegroundsTurnTimelineDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsTurnTimelineDisplay.vue'
 import HearthstoneMatchDeckDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchDeckDisplay.vue'
+import HearthstoneBattlegroundTavernSummary from '@client/vue/utility/hearthstone/HearthstoneBattlegroundTavernSummary.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 
 @Component({
@@ -125,12 +158,14 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
     HearthstoneTurnTimelineDisplay,
     HearthstoneBattlegroundsTurnTimelineDisplay,
     HearthstoneMatchDeckDisplay,
+    HearthstoneBattlegroundTavernSummary,
     VideoPlayer
   }
 })
 export default class HearthstoneMatch extends Vue {
     @Prop({required: true})
     matchId!: string
+    eventSectionTab: number = 0
 
     // VOD display
     $refs!: {

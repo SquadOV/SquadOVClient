@@ -1,3 +1,5 @@
+import { HearthstoneCardRace } from '@client/js/hearthstone/hearthstone_cardtype'
+
 export interface HearthstoneDeckCardCount {
     normal: number
     golden: number
@@ -24,6 +26,12 @@ export interface HearthstoneCardMetadata {
     name: string
     cost: number
     rarity: HearthstoneCardRarity
+}
+
+export interface HearthstoneBattlegroundsCardMetadata {
+    base: HearthstoneCardMetadata
+    tavernLevel: number
+    cardRace: HearthstoneCardRace | null
 }
 
 export interface HearthstoneDeckSlotWithMetadata extends HearthstoneDeckSlot {

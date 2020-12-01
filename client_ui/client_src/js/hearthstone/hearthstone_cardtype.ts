@@ -46,3 +46,56 @@ export function hearthstoneCardTypeFromString(str: string) : HearthstoneCardtype
         return HearthstoneCardtype.Invalid
     }
 }
+
+export enum HearthstoneCardRace {
+	Invalid = 0,
+	Bloodelf = 1,
+	Dranei = 2,
+	Dwarf = 3,
+	Gnome = 4,
+	Goblin = 5,
+	Human = 6,
+	NightElf = 7,
+	Orc = 8,
+	Tauren = 9,
+	Troll = 10,
+	Undead = 11,
+	Worgen = 12,
+	Goblin2 = 13,
+	Murloc = 14,
+	Demon = 0xF,
+	Scourge = 0x10,
+	Mechanical = 17,
+	Elemental = 18,
+	Ogre = 19,
+	Pet = 20,
+	Totem = 21,
+	Nerubian = 22,
+	Pirate = 23,
+	Dragon = 24,
+	Blank = 25,
+	All = 26,
+	Egg = 38
+}
+
+export function cardRaceToString(r: HearthstoneCardRace) : string {
+    switch (r) {
+        case HearthstoneCardRace.Pet:
+            return 'Beast'
+        case HearthstoneCardRace.Demon:
+            return 'Demon'
+        case HearthstoneCardRace.Dragon:
+            return 'Dragon'
+        case HearthstoneCardRace.Elemental:
+            return 'Elemental'
+        case HearthstoneCardRace.Mechanical:
+            return 'Mech'
+        case HearthstoneCardRace.Murloc:
+            return 'Murloc'
+        case HearthstoneCardRace.Pirate:
+            return 'Pirate'
+        case HearthstoneCardRace.Invalid:
+            return 'Neutral'
+    }
+    return 'Other'
+}
