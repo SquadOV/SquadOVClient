@@ -1,4 +1,5 @@
 import { HearthstoneCardRace } from '@client/js/hearthstone/hearthstone_cardtype'
+import { HearthstoneZone } from '@client/js/hearthstone/hearthstone_zone'
 
 export interface HearthstoneDeckCardCount {
     normal: number
@@ -36,6 +37,10 @@ export interface HearthstoneBattlegroundsCardMetadata {
 
 export interface HearthstoneDeckSlotWithMetadata extends HearthstoneDeckSlot {
     metadata: HearthstoneCardMetadata
+}
+
+export interface HearthstoneDeckZoneCardData extends HearthstoneDeckSlotWithMetadata {
+    zone: HearthstoneZone
 }
 
 export interface HearthstoneDeck {

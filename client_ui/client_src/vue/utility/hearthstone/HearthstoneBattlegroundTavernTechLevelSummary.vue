@@ -1,23 +1,34 @@
 <template>
-    <div>
+    <div class="py-2">
         <template v-if="!!cards">
             <div v-for="(group, idx) of groupedCards"
                 :key="idx"
                 v-if="group.cards.length > 0"
+                class="px-2"
             >
-                <div class="d-flex justify-center text--white text-h6 text-uppercase font-weight-bold">
-                    {{ group.group }}
+                <div class="d-flex justify-start">
+                    <div class="d-flex align-center mr-4 text--white text-h6 font-weight-bold">
+                        {{ group.group }}
+                    </div>
+
+                    <div class="d-flex flex-wrap">
+                        <div
+                            v-for="card of group.cards"
+                            :key="`${idx}-${card.cardId}`"
+                            class="ma-2"
+                        >
+                            <hearthstone-mini-card-display
+                                :card-id="card.cardId"
+                                :max-height="48"
+                                history
+                                is-friendly
+                            >
+                            </hearthstone-mini-card-display>
+                        </div>
+                    </div>
                 </div>
 
-                <hearthstone-match-deck-card-slot-display
-                    v-for="card of group.cards"
-                    :key="`${idx}-${card.cardId}`"
-                    :card-slot="card"
-                    hide-cost
-                    hide-count
-                >
-                </hearthstone-match-deck-card-slot-display>
-                <v-divider class="my-4"></v-divider>
+                <v-divider></v-divider>
             </div>
         </template>
 
@@ -36,7 +47,7 @@ import { Prop } from 'vue-property-decorator'
 import { HearthstoneBattlegroundsCardMetadata, HearthstoneDeckSlotWithMetadata } from '@client/js/hearthstone/hearthstone_deck'
 import { HearthstoneCardRace, cardRaceToString } from '@client/js/hearthstone/hearthstone_cardtype'
 import { apiClient, ApiData } from '@client/js/api'
-import HearthstoneMatchDeckCardSlotDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchDeckCardSlotDisplay.vue'
+import HearthstoneMiniCardDisplay from '@client/vue/utility/hearthstone/HearthstoneMiniCardDisplay.vue'
 
 interface GroupedCards {
     group: string
@@ -56,7 +67,7 @@ const bgRaceGroups = [
 
 @Component({
     components: {
-        HearthstoneMatchDeckCardSlotDisplay
+        HearthstoneMiniCardDisplay
     }
 })
 export default class HearthstoneBattlegroundTavernTechLevelSummary extends Vue {

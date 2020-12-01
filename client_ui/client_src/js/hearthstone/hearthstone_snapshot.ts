@@ -130,6 +130,11 @@ export class HearthstoneMatchSnapshotWrapper {
                 return false
             }
             return ele.controller == playerId
+        }).sort((a: HearthstoneEntityWrapper | undefined, b: HearthstoneEntityWrapper | undefined) => {
+            if (a === undefined || b === undefined) {
+                return 0
+            }
+            return a._entity.entityId - b._entity.entityId
         }) as HearthstoneEntityWrapper[]
     }
 

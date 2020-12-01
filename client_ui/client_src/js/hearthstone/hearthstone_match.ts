@@ -304,6 +304,19 @@ export class HearthstoneMatchWrapper {
         return Math.round((b.blockTime.getTime() - this._match.metadata.matchTime.getTime()) / 1000)
     }
 
+    deckEntitiesForPlayer(p: number): HearthstoneEntityWrapper[] {
+        if (!this._initialSnapshot) {
+            return []
+        }
+
+        let player = this.player(p)
+        if (!player) {
+            return []
+        }
+
+        return this._initialSnapshot.entitiesForPlayerId(p)
+    }
+
     computeDeckForPlayer(p: number): HearthstoneDeck | undefined {
         // We can use the first snapshot to determine all the cards that are in a player's deck and then
         // we can use the final snapshot to determine which cards they are.
@@ -318,7 +331,7 @@ export class HearthstoneMatchWrapper {
 
         // For each card, how many are there in the deck.
         let cardCount : Map<string, number> = new Map()
-        for (let entity of this._initialSnapshot.entitiesForPlayerId(p)) {
+        for (let entity of this.deckEntitiesForPlayer(p)) {
             // It's important we check for the deck here because it's possible that the game
             // creates other cards that aren't a part of the user's constructed deck in the beginning
             // (e.g. the hero card). Note that we need to allow for cards in the hand already too

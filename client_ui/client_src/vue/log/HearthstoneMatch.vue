@@ -54,7 +54,7 @@
 
                                 <v-tab-item>
                                     <hearthstone-battleground-tavern-summary
-                                        :height="currentPlayerHeight"
+                                        :height="currentPlayerHeight - 48"
                                     >
                                     </hearthstone-battleground-tavern-summary>    
                                 </v-tab-item>
@@ -67,6 +67,14 @@
                                 </v-tab>
 
                                 <v-tab-item>
+                                    <hearthstone-current-deck-state
+                                        :deck="matchWrapper.currentPlayerDeck"
+                                        :current-match="matchWrapper"
+                                        :turn="currentTurn"
+                                        :player-id="matchWrapper.currentPlayerId"
+                                        :style="deckStateStyle"
+                                    >
+                                    </hearthstone-current-deck-state>
                                 </v-tab-item>
                             </template>
                         </v-tabs>
@@ -148,6 +156,7 @@ import HearthstoneTurnTimelineDisplay from '@client/vue/utility/hearthstone/Hear
 import HearthstoneBattlegroundsTurnTimelineDisplay from '@client/vue/utility/hearthstone/HearthstoneBattlegroundsTurnTimelineDisplay.vue'
 import HearthstoneMatchDeckDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchDeckDisplay.vue'
 import HearthstoneBattlegroundTavernSummary from '@client/vue/utility/hearthstone/HearthstoneBattlegroundTavernSummary.vue'
+import HearthstoneCurrentDeckState from '@client/vue/utility/hearthstone/HearthstoneCurrentDeckState.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 
 @Component({
@@ -159,6 +168,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
     HearthstoneBattlegroundsTurnTimelineDisplay,
     HearthstoneMatchDeckDisplay,
     HearthstoneBattlegroundTavernSummary,
+    HearthstoneCurrentDeckState,
     VideoPlayer
   }
 })
@@ -188,7 +198,15 @@ export default class HearthstoneMatch extends Vue {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight}px`,
+            'height': `${this.currentPlayerHeight - 48}px`,
+        }
+    }
+
+    get deckStateStyle() : any {
+        let style = this.roundEventsStyle
+        return {
+            'overflow': 'auto',
+            ...style
         }
     }
 

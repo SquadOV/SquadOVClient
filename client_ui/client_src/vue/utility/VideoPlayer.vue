@@ -142,6 +142,12 @@ export default class VideoPlayer extends Vue {
             this.$emit('update:playerHeight', this.player!.currentHeight())
         })
 
+        // The videojs player can change height on the canplay event and it doesn't
+        // trigger any of the *resize events.
+        this.player.on('canplay', () => {
+            this.$emit('update:playerHeight', this.player!.currentHeight())
+        })
+
         if (!this.disableTheater) {
             // Construct a custom "theater mode" button a la YouTube 
             let button = videojs.getComponent('Button')

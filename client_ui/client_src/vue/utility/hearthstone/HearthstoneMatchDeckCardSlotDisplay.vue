@@ -20,19 +20,32 @@
                 </div>
 
                 <!-- Count count display (if > 1 or legendary) -->
-                <div v-if="(totalCount > 1 || isLegendary) && !hideCount" class="count-div d-flex justify-center align-center flex-shrink-0 flex-grow-0">
+                <div v-if="!hideCount" class="count-div d-flex justify-center align-center flex-shrink-0 flex-grow-0">
                     <div>
-                        <span v-if="totalCount > 1">
+                        <span v-if="customCountIcon != ''">
+                            <v-icon small>
+                                {{ customCountIcon }}
+                            </v-icon>
+                        </span>
+
+                        <span v-else-if="totalCount > 1">
                             {{ totalCount }}
                         </span>
 
-                        <span v-else>
+                        <span v-else-if="isLegendary">
                             <v-icon small color="#FFC107">
                                 mdi-star
                             </v-icon>
                         </span>
                     </div>
                 </div>
+
+                <v-overlay
+                    absolute
+                    :opacity="1.0 - opacity"
+                    :value="true"
+                >
+                </v-overlay>
             </div>
         </template>
         <hearthstone-full-card-display
@@ -66,6 +79,12 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
 
     @Prop({type: Boolean, default: false})
     hideCost!: boolean
+
+    @Prop({default: ''})
+    customCountIcon!: string
+
+    @Prop({default: 1.0})
+    opacity!: number
 
     get totalCount(): number {
         return this.cardSlot.count.normal + this.cardSlot.count.golden
@@ -102,6 +121,7 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
 
 .slot-div {
     border: 1px solid white;
+    position: relative;
 }
 
 .rarity-div {
