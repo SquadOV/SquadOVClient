@@ -127,6 +127,7 @@ export default class Register extends Vue {
     }
 
     register() {
+        this.inProgress = true
         apiClient.register({
             username: this.username,
             password: this.password,
@@ -143,6 +144,8 @@ export default class Register extends Vue {
         }).catch((err : any) => {
             console.log('Failed to register: ', err)
             this.showHideGenericError = true
+        }).finally(() => {
+            this.inProgress = false
         })
     }
 }

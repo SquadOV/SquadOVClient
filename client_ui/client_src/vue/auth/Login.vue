@@ -48,9 +48,12 @@
                 </div>
 
                 <div class="d-flex">
-                    <a href="#"  @click="forgotPassword">
+                    <a href="#"  @click="forgotPassword" v-if="!forgotInProgress">
                         Forgot your password?
                     </a>
+
+                    <v-progress-circular indeterminate size="16" v-else>
+                    </v-progress-circular>
 
                     <v-spacer></v-spacer>
 
@@ -120,6 +123,7 @@ export default class Login extends Vue {
 
     formValid: boolean = false
     inProgress: boolean = false
+    forgotInProgress: boolean = false
     username: string = ''
     password: string = ''
     forcedUsernameMessages : string[] = []
@@ -147,6 +151,7 @@ export default class Login extends Vue {
     }
 
     login() {
+        this.inProgress = true
         apiClient.login({
             username: this.username,
             password: this.password,
@@ -174,6 +179,8 @@ export default class Login extends Vue {
                 console.log('Login failure: ', err)
                 this.showHideGenericError = true
             }
+        }).finally(() => {
+            this.inProgress = false
         })
     }
 
@@ -187,12 +194,15 @@ export default class Login extends Vue {
             return
         }
 
+        this.forgotInProgress = true
         // If the email exists, send a request to the server to send a password reset email.
         apiClient.forgotPassword(this.username).then(() => {
             this.showHideResetPasswordSuccess = true
         }).catch((err : any) => {
             console.log('Failed to reset password: ', err)
             this.showHideGenericError = true
+        }).finally(() => {
+            this.forgotInProgress = false
         })
     }
 }
