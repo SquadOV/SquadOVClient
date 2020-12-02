@@ -251,6 +251,14 @@ class ApiClient {
     rejectSquadInvite(squadId: number, inviteUuid: string): Promise<void> {
         return axios.post(`v1/squad/${squadId}/invite/${inviteUuid}/reject`, {}, this.createWebAxiosConfig())
     }
+
+    deleteSquad(squadId: number): Promise<void> {
+        return axios.delete(`v1/squad/${squadId}/admin`, this.createWebAxiosConfig())
+    }
+
+    leaveSquad(squadId: number): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/leave`, {}, this.createWebAxiosConfig())
+    }
     
     createSquad(squadName: string, squadGroup: string): Promise<void> {
         return axios.post(`v1/squad`, {

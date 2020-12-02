@@ -3,41 +3,121 @@
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
                 <div class="d-flex">
-                    <div>
-                        <span class="text-h5 font-weight-bold">{{ localMembership.squad.squadName }}</span>
-                        <span class="text-subtitle-2 squad-group-text">{{ localMembership.squad.squadGroup }}</span>
+                    <div class="d-flex flex-column">
+                        <div class="text-h5 font-weight-bold">{{ localMembership.squad.squadName }}</div>
+                        <div class="text-subtitle-2 squad-group-text">{{ localMembership.squad.squadGroup }}</div>
                     </div>
+
+                    <v-btn icon color="warning" v-if="isOwner">
+                        <v-icon>
+                            mdi-pencil
+                        </v-icon>
+                    </v-btn>
                     <v-spacer></v-spacer>
+
+                    <v-dialog v-model="showHideDeleteLeave" persistent width="40%">
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn icon color="error"  v-bind="attrs" v-on="on">
+                                <v-icon v-if="isOwner">
+                                    mdi-delete
+                                </v-icon>
+
+                                <v-icon v-else>
+                                    mdi-exit-to-app
+                                </v-icon>
+                            </v-btn>
+                        </template>
+
+                        <v-card>
+                            <v-card-title>
+                                {{ leaveDeleteAction }}&nbsp;{{ localMembership.squad.squadName }}
+                            </v-card-title>
+                            <v-divider></v-divider>
+
+                            <v-card-text class="mt-4">
+                                <div>
+                                    Are you sure you wish to {{ leaveDeleteAction.toLowerCase() }} {{ localMembership.squad.squadName }}?
+                                </div>
+
+                                <div class="mt-4">
+                                    Please type <span class="font-weight-bold">{{ localMembership.squad.squadName }}</span> to confirm this action.
+                                </div>
+
+                                <v-text-field
+                                    class="mt-4"
+                                    filled
+                                    label="Confirmation"
+                                    v-model="confirmationText"
+                                    hide-details
+                                >
+                                </v-text-field>
+                            </v-card-text>
+
+                            <v-card-actions>
+                                <v-btn @click="cancelDeleteLeave">
+                                    Cancel
+                                </v-btn>
+
+                                <v-spacer></v-spacer>
+
+                                <v-btn
+                                    color="error"
+                                    :loading="leaveDeletePending"
+                                    :disabled="confirmationText != localMembership.squad.squadName"
+                                    @click="dispatchLeaveDelete"
+                                >
+                                    {{ leaveDeleteAction }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
                 </div>
                 <v-divider class="my-4"></v-divider>
 
-                <v-tabs>
-                    <v-tab>
-                        Members ({{ localMembership.squad.memberCount }})
-                    </v-tab>
+                <div class="d-flex align-center">
+                    <v-tabs v-model="tab">
+                        <v-tab>
+                            Members ({{ localMembership.squad.memberCount }})
+                        </v-tab>
 
+                        <v-tab>
+                            Invites ({{ localMembership.squad.pendingInviteCount }})
+                        </v-tab>
+                    </v-tabs>
+                    
+                    <v-btn class="ml-4" color="primary">
+                        <v-icon class="mr-2">
+                            mdi-account-multiple-plus
+                        </v-icon>
+                        Invite
+                    </v-btn>
+                </div>
+
+                <v-tabs-items class="pa-4" v-model="tab">
                     <v-tab-item>
                         <squad-member-table
-                            class="ma-4"
                             v-model="squadMembers"
                             :is-owner="isOwner"
                         >
                         </squad-member-table>
                     </v-tab-item>
 
-                    <v-tab>
-                        Invites ({{ localMembership.squad.pendingInviteCount }})
-                    </v-tab>
-
                     <v-tab-item>
                         <squad-invite-table
-                            class="ma-4"
                             v-model="squadInvites"
                             :is-owner="isOwner"
                         >
                         </squad-invite-table>
                     </v-tab-item>
-                </v-tabs>
+                </v-tabs-items>
+
+                <v-snackbar
+                    v-model="showHideError"
+                    :timeout="5000"
+                    color="error"
+                >
+                    {{ errorMessage }}
+                </v-snackbar>
             </v-container>
         </template>
     </loading-container>
@@ -57,6 +137,7 @@ import {
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
+import * as pi from '@client/js/pages'
 
 @Component({
     components: {
@@ -68,13 +149,29 @@ import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
 export default class SingleSquadPage extends Vue {
     @Prop({required: true})
     squadId!: number
+    tab: number = 0
+    leaveDeletePending: boolean = false
+    showHideDeleteLeave: boolean = false
+    confirmationText: string = ''
 
     localMembership: SquadMembership | null = null
     squadMembers: SquadMembership[] | null = null
     squadInvites: SquadInvite[] | null = null
 
+    showHideError: boolean = false
+    errorMessage: string = ''
+
     get isOwner(): boolean {
         return this.localMembership!.role == SquadRole.Owner
+    }
+
+    get leaveDeleteAction() : string {
+        return this.isOwner ? 'Delete' : 'Leave'
+    }
+
+    showError(msg: string) {
+        this.showHideError = true
+        this.errorMessage = msg
     }
 
     @Watch('squadId')
@@ -96,6 +193,53 @@ export default class SingleSquadPage extends Vue {
         }).catch((err: any) => {
             console.log('Failed to get all squad invites: ', err)
         })
+    }
+
+    cancelDeleteLeave() {
+        this.confirmationText = ''
+        this.showHideDeleteLeave = false
+    }
+
+    deleteSquad() {
+        this.leaveDeletePending = true
+        apiClient.deleteSquad(this.squadId).then(() => {
+            this.$router.replace({
+                name: pi.UserSquadsPageId,
+                params: {
+                    userId: this.$store.state.currentUser.id
+                }
+            })
+        }).catch((err: any) => {
+            console.log('Failed to delete squad: ', err)
+            this.showError('Failed to delete squad, please try again.')
+        }).finally(() => {
+            this.leaveDeletePending = true
+        })
+    }
+
+    leaveSquad() {
+        this.leaveDeletePending = true
+        apiClient.leaveSquad(this.squadId).then(() => {
+            this.$router.replace({
+                name: pi.UserSquadsPageId,
+                params: {
+                    userId: this.$store.state.currentUser.id
+                }
+            })
+        }).catch((err: any) => {
+            console.log('Failed to leave squad: ', err)
+            this.showError('Failed to leave squad, please try again.')
+        }).finally(() => {
+            this.leaveDeletePending = true
+        })
+    }
+
+    dispatchLeaveDelete() {
+        if (this.isOwner) {
+            this.deleteSquad()
+        } else {
+            this.leaveSquad()
+        }
     }
 
     mounted() {
