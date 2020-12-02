@@ -1,9 +1,9 @@
 <template>
     <div>
         <slot v-if="!isLoading" v-bind:loading="isLoading"></slot>
-        <v-row align-content="center" justify="center" v-else>
+        <div class="d-flex justify-center align-center full-width" v-else>
             <v-progress-circular indeterminate size="64"></v-progress-circular>
-        </v-row>
+        </div>
     </div>
 </template>
 

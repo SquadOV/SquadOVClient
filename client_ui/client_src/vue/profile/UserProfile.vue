@@ -5,7 +5,7 @@
                 <v-container fluid>
                     <v-row class="justify-center">
                         <v-col cols="8">
-                            <span class="text-h6 text--white font-weight-bold">
+                            <span class="text-h5 text--white font-weight-bold">
                                 User Profile
                             </span>
                         </v-col>

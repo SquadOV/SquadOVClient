@@ -17,6 +17,11 @@ import { HearthstoneCardMetadata, HearthstoneBattlegroundsCardMetadata } from '@
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneArenaRun, cleanHearthstoneArenaRunFromJson } from '@client/js/hearthstone/hearthstone_arena'
 import { HearthstoneDuelRun, cleanHearthstoneDuelRunFromJson } from '@client/js/hearthstone/hearthstone_duel'
+import {
+    Squad, cleanSquadFromJson,
+    SquadMembership, cleanSquadMembershipFromJson
+    SquadInvite, cleanSquadInviteFromJson
+} from '@client/js/squadov/squad'
 
 import { ipcRenderer } from 'electron'
 
@@ -195,6 +200,35 @@ class ApiClient {
 
     logout() : Promise<void> {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
+
+    getSquad(squadId: number): Promise<ApiData<Squad>> {
+        return axios.get(`v1/squad/${squadId}/profile`, this.createWebAxiosConfig()).then((resp: ApiData<Squad>) => {
+            cleanSquadFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getUserSquads(userId: number): Promise<ApiData<SquadMembership[]>> {
+        return axios.get(`v1/users/${userId}/squads`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
+            resp.data.forEach(cleanSquadMembershipFromJson)
+            return resp
+        })
+    }
+
+    getUserSquadInvites(userId: number): Promise<ApiData<SquadInvite[]>> {
+        return axios.get(`v1/users/${userId}/squads/invites`, this.createWebAxiosConfig()).then((resp : ApiData<SquadInvite[]>) => {
+            resp.data.forEach(cleanSquadInviteFromJson)
+            return resp
+        })
+    }
+
+    acceptSquadInvite(squadId: number, inviteUuid: string): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/invite/${inviteUuid}/accept`, {}, this.createWebAxiosConfig())
+    }
+
+    rejectSquadInvite(squadId: number, inviteUuid: string): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/invite/${inviteUuid}/reject`, {}, this.createWebAxiosConfig())
     }
 
     findVodFromMatchUserUuid(matchUuid : string, userUuid: string) : Promise<ApiData<VodAssociation>> {

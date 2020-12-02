@@ -3,6 +3,30 @@ export interface Squad {
     squadName: string
     squadGroup: string
     creationTime: Date
+    memberCount: number
+}
+
+export function cleanSquadFromJson(s : Squad) : Squad {
+    s.creationTime = new Date(s.creationTime)
+    return s
+}
+
+export enum SquadRole {
+    Owner,
+    Member
+}
+
+export interface SquadMembership {
+    squad: Squad
+    role: SquadRole
+}
+
+export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembership {
+    cleanSquadFromJson(s.squad)
+
+    //@ts-ignore
+    s.role = SquadRole[s.role]
+    return s
 }
 
 export interface SquadInvite {
@@ -12,4 +36,16 @@ export interface SquadInvite {
     responseTime: Date | null
     inviteTime: Date | null
     inviteUuid: string
+    inviterUsername: string
+}
+
+export function cleanSquadInviteFromJson(s : SquadInvite) : SquadInvite {
+    if (!!s.responseTime) {
+        s.responseTime = new Date(s.responseTime)
+    }
+
+    if (!!s.inviteTime) {
+        s.inviteTime = new Date(s.inviteTime)
+    }
+    return s
 }

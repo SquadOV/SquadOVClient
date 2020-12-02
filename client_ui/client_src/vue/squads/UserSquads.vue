@@ -1,33 +1,68 @@
 <template>
-    <loading-container :is-loading="!mySquads">
-        <template v-slot:default="{ loading }">
-            <div v-if="!loading">
-                <div class="text-h5 font-weight-bold">
-                    My Squads
-                </div>
-
-                <v-divider class="my-4"></v-divider>
-
-                <v-tabs>
-                    <v-tab>
-                        Squads
-                    </v-tab>
-
-                    <v-tab-item>
-
-                    </v-tab-item>
-
-                    <v-tab>
-                        Invites
-                    </v-tab>
-
-                    <v-tab-item>
-
-                    </v-tab-item>
-                </v-tabs>
+    <div class="ma-4">
+        <div class="d-flex">
+            <div class="text-h5 font-weight-bold">
+                My Squads
             </div>
-        </template>
-    </loading-container>
+
+            <v-spacer></v-spacer>
+
+            <div>
+                <v-btn color="primary">
+                    Create Squad
+                </v-btn>
+            </div>
+        </div>
+
+        <v-divider class="my-4"></v-divider>
+
+        <v-tabs>
+            <v-tab>
+                Squads
+            </v-tab>
+
+            <v-tab-item>
+                <loading-container :is-loading="!mySquads">
+                    <template v-slot:default="{ loading }">
+                        <v-container fluid  v-if="!loading">
+                            <v-row>
+                                <v-col cols="3" v-for="(membership, idx) in mySquads" :key="`col-membership-${idx}`">
+                                    <squad-membership-summary-display
+                                        :key="`membership-${idx}`"
+                                        :membership="membership"
+                                    >
+                                    </squad-membership-summary-display>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </template>
+                </loading-container>
+            </v-tab-item>
+
+            <v-tab>
+                Invites
+            </v-tab>
+
+            <v-tab-item>
+                <loading-container :is-loading="!myInvites">
+                    <template v-slot:default="{ loading }">
+                        <v-container fluid  v-if="!loading">
+                            <v-row>
+                                <v-col cols="3" v-for="(invite, idx) in myInvites" :key="`col-invite-${idx}`">
+                                    <squad-invite-display
+                                        :key="`invite-${invite.inviteUuid}`"
+                                        :invite="invite"
+                                        @clear-invite="removeInvite(invite)"
+                                    >
+                                    </squad-invite-display>
+                                </v-col>
+                            </v-row>
+                        </v-container>
+                    </template>
+                </loading-container>
+            </v-tab-item>
+        </v-tabs>
+    </div>
 </template>
 
 <script lang="ts">
@@ -35,24 +70,57 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { ApiData } from '@client/js/api' 
-import { Squad } from '@client/js/squadov/squad'
+import { apiClient, ApiData } from '@client/js/api' 
+import { SquadMembership, SquadInvite } from '@client/js/squadov/squad'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import SquadMembershipSummaryDisplay from '@client/vue/utility/squads/SquadMembershipSummaryDisplay.vue'
+import SquadInviteDisplay from '@client/vue/utility/squads/SquadInviteDisplay.vue'
 
 @Component({
     components: {
-        LoadingContainer
+        LoadingContainer,
+        SquadMembershipSummaryDisplay,
+        SquadInviteDisplay
     }
 })
 export default class UserSquads extends Vue {
     @Prop({required: true})
     userId!: number
 
-    mySquads: Squad[] | null = null
+    mySquads: SquadMembership[] | null = null
+    myInvites: SquadInvite[] | null = null
 
     @Watch('userId')
     refreshData() {
         this.mySquads = null
+        this.myInvites = null
+
+        apiClient.getUserSquads(this.userId).then((resp: ApiData<SquadMembership[]>) => {
+            this.mySquads = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain user squads: ', err)
+        })
+
+        apiClient.getUserSquadInvites(this.userId).then((resp: ApiData<SquadInvite[]>) => {
+            this.myInvites = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain user squad invites: ', err)
+        })
+    }
+    
+    removeInvite(inv: SquadInvite) {
+        if (!this.myInvites) {
+            return
+        }
+        let idx = this.myInvites.findIndex((ele: SquadInvite) => {
+            return ele.inviteUuid = inv.inviteUuid
+        })
+
+        if (idx == -1) {
+            return
+        }
+
+        this.myInvites.splice(idx, 1)
     }
 
     mounted() {
@@ -61,3 +129,11 @@ export default class UserSquads extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+>>>.v-tabs-items {
+    background-color: inherit !important;
+}
+
+</style>
