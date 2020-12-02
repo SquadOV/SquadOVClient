@@ -2,17 +2,42 @@
     <loading-container :is-loading="!localMembership">
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
-                <div class="d-flex">
+                <div class="d-flex align-center">
                     <div class="d-flex flex-column">
-                        <div class="text-h5 font-weight-bold">{{ localMembership.squad.squadName }}</div>
+                        <div v-if="!editMode" class="text-h5 font-weight-bold">{{ localMembership.squad.squadName }}</div>
+                        <v-text-field
+                            v-model="editSquadName"
+                            filled
+                            dense
+                            hide-details
+                            v-else
+                        >
+                        </v-text-field>
                         <div class="text-subtitle-2 squad-group-text">{{ localMembership.squad.squadGroup }}</div>
                     </div>
 
-                    <v-btn icon color="warning" v-if="isOwner">
-                        <v-icon>
-                            mdi-pencil
-                        </v-icon>
-                    </v-btn>
+                    <template v-if="isOwner">
+                        <v-btn icon color="warning" v-if="!editMode" @click="startEdit">
+                            <v-icon>
+                                mdi-pencil
+                            </v-icon>
+                        </v-btn>
+
+                        <template v-else>
+                            <v-btn icon color="error" @click="cancelEdit" :loading="editPending">
+                                <v-icon>
+                                    mdi-close
+                                </v-icon>
+                            </v-btn>
+
+                            <v-btn icon color="success" @click="saveEdit" :disabled="editSquadName.trim() == ''" :loading="editPending">
+                                <v-icon>
+                                    mdi-content-save
+                                </v-icon>
+                            </v-btn>
+                        </template>
+                    </template>
+                    
                     <v-spacer></v-spacer>
 
                     <v-dialog v-model="showHideDeleteLeave" persistent width="40%">
@@ -154,6 +179,10 @@ export default class SingleSquadPage extends Vue {
     showHideDeleteLeave: boolean = false
     confirmationText: string = ''
 
+    editMode: boolean = false
+    editSquadName: string = ''
+    editPending: boolean = false
+
     localMembership: SquadMembership | null = null
     squadMembers: SquadMembership[] | null = null
     squadInvites: SquadInvite[] | null = null
@@ -240,6 +269,30 @@ export default class SingleSquadPage extends Vue {
         } else {
             this.leaveSquad()
         }
+    }
+
+    startEdit() {
+        this.editMode = true
+        this.editSquadName = this.localMembership!.squad.squadName
+    }
+
+    cancelEdit() {
+        this.editMode = false
+    }
+
+    saveEdit() {
+        this.editPending = true
+
+        let copy = this.editSquadName
+        apiClient.editSquad(this.squadId, this.editSquadName).then(() => {
+            this.localMembership!.squad.squadName = copy
+            this.editMode = false
+        }).catch((err: any) => {
+            console.log('Failed to edit squad: ', err)
+            this.showError('Failed to edit squad, please try again.')
+        }).finally(() => {
+            this.editPending = false
+        })
     }
 
     mounted() {

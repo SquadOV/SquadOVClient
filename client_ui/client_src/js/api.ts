@@ -256,6 +256,12 @@ class ApiClient {
         return axios.delete(`v1/squad/${squadId}/admin`, this.createWebAxiosConfig())
     }
 
+    editSquad(squadId: number, name: string): Promise<void> {
+        return axios.put(`v1/squad/${squadId}/admin`, {
+            squadName: name
+        }, this.createWebAxiosConfig())
+    }
+
     leaveSquad(squadId: number): Promise<void> {
         return axios.post(`v1/squad/${squadId}/leave`, {}, this.createWebAxiosConfig())
     }
