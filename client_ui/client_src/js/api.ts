@@ -230,6 +230,13 @@ class ApiClient {
     rejectSquadInvite(squadId: number, inviteUuid: string): Promise<void> {
         return axios.post(`v1/squad/${squadId}/invite/${inviteUuid}/reject`, {}, this.createWebAxiosConfig())
     }
+    
+    createSquad(squadName: string, squadGroup: string): Promise<void> {
+        return axios.post(`v1/squad`, {
+            squadName,
+            squadGroup
+        }, this.createWebAxiosConfig())
+    }
 
     findVodFromMatchUserUuid(matchUuid : string, userUuid: string) : Promise<ApiData<VodAssociation>> {
         return axios.get(`v1/vod/match/${matchUuid}/user/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {

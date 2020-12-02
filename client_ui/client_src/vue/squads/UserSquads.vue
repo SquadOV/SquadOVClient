@@ -8,9 +8,55 @@
             <v-spacer></v-spacer>
 
             <div>
-                <v-btn color="primary">
-                    Create Squad
-                </v-btn>
+                <v-dialog
+                    v-model="showHideCreateSquad"
+                    persistent
+                    width="40%"
+                >
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="primary" v-on="on" v-bind="attrs">
+                            Create Squad
+                        </v-btn>
+                    </template>
+
+                    <v-card>
+                        <v-card-title>
+                            New Squad
+                        </v-card-title>
+
+                        <v-divider></v-divider>
+
+                        <v-form class="ma-4">
+                            <v-text-field
+                                v-model="newSquadName"
+                                label="Squad Name"
+                                required
+                                filled
+                            >
+                            </v-text-field>
+                        </v-form>
+
+                        <v-card-actions>
+                            <v-btn color="error" @click="cancelCreate" :loading="createPending">
+                                Cancel
+                            </v-btn>
+
+                            <v-spacer></v-spacer>
+
+                            <v-btn color="success" @click="performCreate" :loading="createPending">
+                                Create
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <v-snackbar
+                    v-model="showHideCreateSquadError"
+                    :timeout="5000"
+                    color="error"
+                >
+                    Failed to create squad. Please try again.
+                </v-snackbar>
             </div>
         </div>
 
@@ -87,6 +133,11 @@ export default class UserSquads extends Vue {
     @Prop({required: true})
     userId!: number
 
+    showHideCreateSquad: boolean = false
+    createPending: boolean = false
+    showHideCreateSquadError: boolean = false
+    newSquadName: string = ''
+
     mySquads: SquadMembership[] | null = null
     myInvites: SquadInvite[] | null = null
 
@@ -125,6 +176,24 @@ export default class UserSquads extends Vue {
 
     mounted() {
         this.refreshData()
+    }
+    
+    cancelCreate() {
+        this.newSquadName = ''
+        this.showHideCreateSquad = false
+    }
+
+    performCreate() {
+        this.createPending = true
+        apiClient.createSquad(this.newSquadName, this.$store.state.currentUser.username).then(() => {
+            this.refreshData()
+            this.showHideCreateSquad = false
+        }).catch((err: any) => {
+            console.log('Failed to create squad: ', err)
+            this.showHideCreateSquadError = true
+        }).finally(() => {
+            this.createPending = false
+        })
     }
 }
 
