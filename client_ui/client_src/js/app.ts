@@ -15,6 +15,7 @@ Vue.use(Vuex)
 
 import App from '@client/vue/App.vue'
 import Dashboard from '@client/vue/Dashboard.vue'
+import UserProfile from '@client/vue/profile/UserProfile.vue'
 
 import GameLog from '@client/vue/GameLog.vue'
 import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
@@ -46,6 +47,14 @@ import { RootStoreOptions } from '@client/js/vuex/store'
 
 const baseRoutes : any[] = [
     { path: '/', name: pi.DashboardPageId, component: Dashboard },
+    {
+        path: '/profile/:userId',
+        name: pi.UserProfilePageId,
+        component: UserProfile,
+        props: (route : any) => ({
+            userId: route.params.userId
+        })
+    },
     { 
         path: '/logs',
         component: GameLog,

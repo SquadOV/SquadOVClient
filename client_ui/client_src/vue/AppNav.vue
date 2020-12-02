@@ -27,9 +27,30 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn @click="logout" text>
-            Logout
-        </v-btn>
+        <v-menu bottom offset-y>
+            <template v-slot:activator="{on, attrs}">
+                <v-btn text v-bind="attrs" v-on="on">
+                    {{ currentUserName }}
+                    <v-icon small>
+                        mdi-chevron-down
+                    </v-icon> 
+                </v-btn>
+            </template>
+
+            <v-list dense>
+                <v-list-item :to="profileTo">
+                    <v-list-item-title>Profile</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                    <v-list-item-title>Squads</v-list-item-title>
+                </v-list-item>
+
+                <v-list-item @click="logout">
+                    <v-list-item-title>Logout</v-list-item-title>
+                </v-list-item>
+            </v-list>
+        </v-menu>
     </v-app-bar>
 </template>
 
@@ -87,6 +108,23 @@ export default class AppNav extends Vue {
     get homeTo() : any {
         return {
             name: pi.DashboardPageId,
+        }
+    }
+
+    get currentUserName(): string {
+        if (!this.$store.state.currentUser) {
+            return 'Unknown'
+        }
+
+        return this.$store.state.currentUser.username
+    }
+
+    get profileTo(): any {
+        return {
+            name: pi.UserProfilePageId,
+            params: {
+                userId: this.$store.state.currentUser!.id
+            }
         }
     }
 
