@@ -17,6 +17,7 @@ import App from '@client/vue/App.vue'
 import Dashboard from '@client/vue/Dashboard.vue'
 import UserProfile from '@client/vue/profile/UserProfile.vue'
 import UserSquads from '@client/vue/squads/UserSquads.vue'
+import SingleSquadPage from '@client/vue/squads/SingleSquadPage.vue'
 
 import GameLog from '@client/vue/GameLog.vue'
 import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
@@ -57,11 +58,19 @@ const baseRoutes : any[] = [
         })
     },
     {
-        path: '/squads/:userId',
+        path: '/profile/:userId/squads',
         name: pi.UserSquadsPageId,
         component: UserSquads,
         props: (route: any) => ({
             userId: route.params.userId
+        })
+    },
+    {
+        path: '/squad/:squadId',
+        name: pi.SingleSquadPageId,
+        component: SingleSquadPage,
+        props: (route: any) => ({
+            squadId: route.params.squadId
         })
     },
     { 

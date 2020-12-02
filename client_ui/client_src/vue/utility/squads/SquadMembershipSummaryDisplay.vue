@@ -34,6 +34,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { SquadMembership, SquadRole } from '@client/js/squadov/squad'
+import * as pi from '@client/js/pages'
 
 @Component
 export default class SquadMembershipSummaryDisplay extends Vue {
@@ -46,7 +47,10 @@ export default class SquadMembershipSummaryDisplay extends Vue {
 
     get to(): any {
         return {
-
+            name: pi.SingleSquadPageId,
+            params: {
+                squadId: this.membership.squad.id
+            }
         }
     }
 }

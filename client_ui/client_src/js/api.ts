@@ -209,9 +209,30 @@ class ApiClient {
         })
     }
 
+    getUserSquadMembership(squadId: number, userId: number): Promise<ApiData<SquadMembership>> {
+        return axios.get(`v1/squad/${squadId}/membership/${userId}`, this.createWebAxiosConfig()).then((resp: ApiData<SquadMembership>) => {
+            cleanSquadMembershipFromJson(resp.data)
+            return resp
+        })
+    }
+
     getUserSquads(userId: number): Promise<ApiData<SquadMembership[]>> {
         return axios.get(`v1/users/${userId}/squads`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
             resp.data.forEach(cleanSquadMembershipFromJson)
+            return resp
+        })
+    }
+
+    getSquadUsers(squadId: number): Promise<ApiData<SquadMembership[]>> {
+        return axios.get(`v1/squad/${squadId}/membership`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
+            resp.data.forEach(cleanSquadMembershipFromJson)
+            return resp
+        })
+    }
+
+    getSquadInvites(squadId: number): Promise<ApiData<SquadInvite[]>> {
+        return axios.get(`v1/squad/${squadId}/invite`, this.createWebAxiosConfig()).then((resp : ApiData<SquadInvite[]>) => {
+            resp.data.forEach(cleanSquadInviteFromJson)
             return resp
         })
     }

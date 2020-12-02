@@ -4,6 +4,7 @@ export interface Squad {
     squadGroup: string
     creationTime: Date
     memberCount: number
+    pendingInviteCount: number
 }
 
 export function cleanSquadFromJson(s : Squad) : Squad {
@@ -19,6 +20,7 @@ export enum SquadRole {
 export interface SquadMembership {
     squad: Squad
     role: SquadRole
+    username: string
 }
 
 export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembership {
@@ -31,6 +33,7 @@ export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembershi
 
 export interface SquadInvite {
     squadId: number
+    username: string
     userId: number
     joined: boolean
     responseTime: Date | null
