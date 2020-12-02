@@ -42,7 +42,7 @@
                     <v-list-item-title>Profile</v-list-item-title>
                 </v-list-item>
 
-                <v-list-item>
+                <v-list-item :to="squadsTo">
                     <v-list-item-title>Squads</v-list-item-title>
                 </v-list-item>
 
@@ -122,6 +122,15 @@ export default class AppNav extends Vue {
     get profileTo(): any {
         return {
             name: pi.UserProfilePageId,
+            params: {
+                userId: this.$store.state.currentUser!.id
+            }
+        }
+    }
+
+    get squadsTo(): any {
+        return {
+            name: pi.UserSquadsPageId,
             params: {
                 userId: this.$store.state.currentUser!.id
             }

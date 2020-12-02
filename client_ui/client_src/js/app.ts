@@ -16,6 +16,7 @@ Vue.use(Vuex)
 import App from '@client/vue/App.vue'
 import Dashboard from '@client/vue/Dashboard.vue'
 import UserProfile from '@client/vue/profile/UserProfile.vue'
+import UserSquads from '@client/vue/profile/UserSquads.vue'
 
 import GameLog from '@client/vue/GameLog.vue'
 import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
@@ -52,6 +53,14 @@ const baseRoutes : any[] = [
         name: pi.UserProfilePageId,
         component: UserProfile,
         props: (route : any) => ({
+            userId: route.params.userId
+        })
+    },
+    {
+        path: '/squads/:userId',
+        name: pi.UserSquadsPageId,
+        component: UserSquads,
+        props: (route: any) => ({
             userId: route.params.userId
         })
     },
