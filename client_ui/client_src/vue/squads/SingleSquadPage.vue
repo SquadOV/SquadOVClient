@@ -110,12 +110,52 @@
                         </v-tab>
                     </v-tabs>
                     
-                    <v-btn class="ml-4" color="primary">
-                        <v-icon class="mr-2">
-                            mdi-account-multiple-plus
-                        </v-icon>
-                        Invite
-                    </v-btn>
+                    <v-dialog persistent width="40%" v-model="showHideInvite">
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn class="ml-4" color="primary" v-on="on" v-bind="attrs">
+                                <v-icon class="mr-2">
+                                    mdi-account-multiple-plus
+                                </v-icon>
+                                Invite
+                            </v-btn>
+                        </template>
+
+                        <v-card>
+                            <v-card-title>
+                                Invite Users
+                            </v-card-title>
+                            <v-divider></v-divider>
+
+                            <v-combobox
+                                v-model="inviteUsernames"
+                                clearable
+                                filled
+                                chips
+                                label="Usernames"
+                                multiple
+                                deletable-chips
+                            >
+                            </v-combobox>
+
+                            <v-card-actions>
+                                <v-btn color="error" @click="cancelInvite">
+                                    Cancel
+                                </v-btn>
+
+                                <v-spacer></v-spacer>
+
+                                <v-btn
+                                    color="success"
+                                    :loading="invitePending"
+                                    @click="sendInvite"
+                                    :disabled="inviteUsernames.length == 0"
+                                >
+                                    Send
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                    
                 </div>
 
                 <v-tabs-items class="pa-4" v-model="tab">
@@ -142,6 +182,14 @@
                     color="error"
                 >
                     {{ errorMessage }}
+                </v-snackbar>
+
+                <v-snackbar
+                    v-model="showHideSuccess"
+                    :timeout="5000"
+                    color="success"
+                >
+                    {{ successMessage }}
                 </v-snackbar>
             </v-container>
         </template>
@@ -183,12 +231,19 @@ export default class SingleSquadPage extends Vue {
     editSquadName: string = ''
     editPending: boolean = false
 
+    showHideInvite: boolean = false
+    invitePending: boolean = false
+    inviteUsernames: string[] = []
+
     localMembership: SquadMembership | null = null
     squadMembers: SquadMembership[] | null = null
     squadInvites: SquadInvite[] | null = null
 
     showHideError: boolean = false
     errorMessage: string = ''
+
+    showHideSuccess: boolean = false
+    successMessage: string = ''
 
     get isOwner(): boolean {
         return this.localMembership!.role == SquadRole.Owner
@@ -203,6 +258,29 @@ export default class SingleSquadPage extends Vue {
         this.errorMessage = msg
     }
 
+    showSuccess(msg: string) {
+        this.showHideSuccess = true
+        this.successMessage = msg
+    }
+
+    refreshMembers() {
+        this.squadMembers = null
+        apiClient.getSquadUsers(this.squadId).then((resp: ApiData<SquadMembership[]>) => {
+            this.squadMembers = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get all squad memberships: ', err)
+        })
+    }
+
+    refreshInvites() {
+        this.squadInvites = null
+        apiClient.getSquadInvites(this.squadId).then((resp: ApiData<SquadInvite[]>) => {
+            this.squadInvites = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get all squad invites: ', err)
+        })
+    }
+
     @Watch('squadId')
     refreshData() {
         apiClient.getUserSquadMembership(this.squadId, this.$store.state.currentUser.id).then((resp: ApiData<SquadMembership>) => {
@@ -211,17 +289,8 @@ export default class SingleSquadPage extends Vue {
             console.log('Failed to get local squad membership: ', err)
         })
 
-        apiClient.getSquadUsers(this.squadId).then((resp: ApiData<SquadMembership[]>) => {
-            this.squadMembers = resp.data
-        }).catch((err: any) => {
-            console.log('Failed to get all squad memberships: ', err)
-        })
-
-        apiClient.getSquadInvites(this.squadId).then((resp: ApiData<SquadInvite[]>) => {
-            this.squadInvites = resp.data
-        }).catch((err: any) => {
-            console.log('Failed to get all squad invites: ', err)
-        })
+        this.refreshMembers()
+        this.refreshInvites()
     }
 
     cancelDeleteLeave() {
@@ -292,6 +361,26 @@ export default class SingleSquadPage extends Vue {
             this.showError('Failed to edit squad, please try again.')
         }).finally(() => {
             this.editPending = false
+        })
+    }
+
+    cancelInvite() {
+        this.showHideInvite = false
+        this.inviteUsernames = []
+    }
+
+    sendInvite() {
+        this.invitePending = true
+        apiClient.sendSquadInvite(this.squadId, this.inviteUsernames).then(() => {
+            this.showHideInvite = false
+            this.showSuccess('Invites successfully sent.')
+            // Refresh all data instead of just invites because we want to re-pull the invite count too.
+            this.refreshData()
+        }).catch((err: any) => {
+            console.log('Failed to send squad invites: ', err)
+            this.showError('Failed to send invites, please double check the usernames and try again.')
+        }).finally(() => {
+            this.invitePending = false
         })
     }
 
