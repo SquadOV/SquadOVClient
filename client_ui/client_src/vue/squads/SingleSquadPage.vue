@@ -162,6 +162,7 @@
                     <v-tab-item>
                         <squad-member-table
                             v-model="squadMembers"
+                            @on-kick="onSquadKick"
                             :is-owner="isOwner"
                         >
                         </squad-member-table>
@@ -170,6 +171,7 @@
                     <v-tab-item>
                         <squad-invite-table
                             v-model="squadInvites"
+                            @on-revoke="onSquadInviteRevoke"
                             :is-owner="isOwner"
                         >
                         </squad-invite-table>
@@ -372,7 +374,7 @@ export default class SingleSquadPage extends Vue {
     sendInvite() {
         this.invitePending = true
         apiClient.sendSquadInvite(this.squadId, this.inviteUsernames).then(() => {
-            this.showHideInvite = false
+            this.cancelInvite()
             this.showSuccess('Invites successfully sent.')
             // Refresh all data instead of just invites because we want to re-pull the invite count too.
             this.refreshData()
@@ -382,6 +384,20 @@ export default class SingleSquadPage extends Vue {
         }).finally(() => {
             this.invitePending = false
         })
+    }
+
+    onSquadKick() {
+        if (!this.localMembership) {
+            return
+        }
+        this.localMembership.squad.memberCount -= 1
+    }
+
+    onSquadInviteRevoke() {
+        if (!this.localMembership) {
+            return
+        }
+        this.localMembership.squad.pendingInviteCount -= 1
     }
 
     mounted() {

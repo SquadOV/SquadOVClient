@@ -20,13 +20,21 @@
                 {{ standardFormatTime(item.sent) }}
             </template>
             <template v-slot:item.actions="{ item }">
-                <v-btn icon color="error" v-if="isOwner">
+                <v-btn icon color="error" v-if="isOwner" @click="revokeInvite(item)" :loading="item.revokePending">
                     <v-icon>
                         mdi-close-circle
                     </v-icon>
                 </v-btn>
             </template>
         </v-data-table>
+
+        <v-snackbar
+            v-model="showHideError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to delete squad invite, please try again.
+        </v-snackbar>
     </div>
 </template>
 
@@ -39,6 +47,7 @@ import {
     SquadInvite,
 } from '@client/js/squadov/squad'
 import { standardFormatTime } from '@client/js/time'
+import { apiClient, ApiData } from '@client/js/api' 
 
 @Component
 export default class SquadInviteTable extends Vue {
@@ -51,6 +60,7 @@ export default class SquadInviteTable extends Vue {
     isOwner!: boolean
 
     filterText:string = ''
+    showHideError: boolean = false
 
     get currentUsername(): string {
         return this.$store.state.currentUser.username
@@ -97,7 +107,30 @@ export default class SquadInviteTable extends Vue {
                 recipient: ele.username,
                 inviter: ele.inviterUsername,
                 sent: ele.inviteTime!,
+                uuid: ele.inviteUuid,
+                squadId: ele.squadId,
+                revokePending: false,
             }
+        })
+    }
+
+    revokeInvite(item : any) {
+        if (!this.value) {
+            return
+        }
+
+        Vue.set(item, 'revokePending', true)
+        apiClient.revokeSquadInvite(item.squadId, item.uuid).then(() => {
+            let newValues = this.value!.filter((ele: SquadInvite) => {
+                return ele.inviteUuid != item.uuid
+            })
+            this.$emit('input', newValues)
+            this.$emit('on-revoke')
+        }).catch((err: any) => {
+            this.showHideError = true
+            console.log('Failed to revoke invite: ', err)
+        }).finally(() => {
+            Vue.set(item, 'revokePending', false)
         })
     }
 }

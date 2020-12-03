@@ -280,6 +280,14 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
+    revokeSquadInvite(squadId: number, inviteUuid: string) : Promise<void> {
+        return axios.post(`v1/squad/${squadId}/admin/invite/${inviteUuid}/revoke`, {}, this.createWebAxiosConfig())
+    }
+
+    kickSquadMember(squadId: number, userId: number): Promise<void> {
+        return axios.delete(`v1/squad/${squadId}/admin/membership/${userId}`, this.createWebAxiosConfig())
+    }
+
     findVodFromMatchUserUuid(matchUuid : string, userUuid: string) : Promise<ApiData<VodAssociation>> {
         return axios.get(`v1/vod/match/${matchUuid}/user/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
             cleanVodAssocationData(resp.data)

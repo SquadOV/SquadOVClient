@@ -21,6 +21,7 @@ export interface SquadMembership {
     squad: Squad
     role: SquadRole
     username: string
+    userId: number
 }
 
 export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembership {
