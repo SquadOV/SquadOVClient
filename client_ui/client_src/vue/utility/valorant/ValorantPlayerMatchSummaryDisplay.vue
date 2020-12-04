@@ -51,7 +51,7 @@
                 </div>
 
                 <!-- VOD presence indicator in bottom right corner-->
-                <div class="vod-div" v-if="match.hasVod">
+                <div class="vod-div" v-if="hasVod">
                     <v-icon color="black">
                         mdi-video
                     </v-icon>
@@ -70,6 +70,8 @@ import { ValorantPlayerMatchSummary, getGameMode, getIsCustom } from '@client/js
 import { kda, dpr, cspr } from '@client/js/valorant/valorant_player_stats'
 import { getOrdinal } from '@client/js/ordinal'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
+import { VodAssociation } from '@client/js/squadov/vod'
+import { apiClient, ApiData } from '@client/js/api'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import * as pi from '@client/js/pages'
@@ -83,6 +85,11 @@ import * as pi from '@client/js/pages'
 export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     @Prop({required: true})
     match! : ValorantPlayerMatchSummary
+    vod: VodAssociation | null = null
+
+    get hasVod() : boolean {
+        return !!this.vod
+    }
 
     get gameTo(): any {
         return {
@@ -192,6 +199,18 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get cspr() : string {
         return cspr(this.match.totalCombatScore, this.match.roundsPlayed).toFixed(2)
+    }
+
+    refreshVod() {
+        apiClient.findVodFromMatchUserUuid(this.match.matchUuid, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+            this.vod = resp.data
+        }).catch((err : any) => {
+            this.vod = null
+        })
+    }
+
+    mounted() {
+        this.refreshVod()
     }
 }
 

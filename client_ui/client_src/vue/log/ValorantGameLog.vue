@@ -130,6 +130,7 @@ export default class ValorantGameLog extends Vue {
 
         apiClient.listValorantMatchesForPlayer({
             next: this.nextLink,
+            userId: this.$store.state.currentUser.id,
             puuid: this.accountPuuid!,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
@@ -157,7 +158,7 @@ export default class ValorantGameLog extends Vue {
             return
         }
 
-        apiClient.getValorantPlayerStats(this.accountPuuid).then((resp : ApiData<ValorantPlayerStatsSummary>) => {
+        apiClient.getValorantPlayerStats(this.$store.state.currentUser.id, this.accountPuuid).then((resp : ApiData<ValorantPlayerStatsSummary>) => {
             this.playerStats = resp.data
         }).catch((err : any) => {
             console.log('Failed to get player stats: ' + err);

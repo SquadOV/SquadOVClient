@@ -329,10 +329,10 @@ class ApiClient {
         })
     }
 
-    listValorantMatchesForPlayer(params : {next : string | null, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
+    listValorantMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/valorant/accounts/${params.puuid}/matches`, {
+            axios.get(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
@@ -346,11 +346,10 @@ class ApiClient {
         })
     }
 
-    getValorantPlayerStats(puuid : string) : Promise<ApiData<ValorantPlayerStatsSummary>> {
-        return axios.get(`v1/valorant/accounts/${puuid}/stats`, this.createWebAxiosConfig())
+    getValorantPlayerStats(userId: number, puuid : string) : Promise<ApiData<ValorantPlayerStatsSummary>> {
+        return axios.get(`v1/valorant/user/${userId}/accounts/${puuid}/stats`, this.createWebAxiosConfig())
     }
 
-    
     getValorantMatchDetails(matchId : string) : Promise<ApiData<ValorantMatchDetails>> {
         return axios.get(`v1/valorant/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchDetails>) => {
             cleanValorantMatchDetails(resp.data)
@@ -450,6 +449,19 @@ class ApiClient {
         return axios.post('graphql', {
             query: req
         }, this.createWebAxiosConfig())
+    }
+
+    syncRiotAccount(userId: number, puuid: string) : Promise<void> {
+        return axios.post(`v1/users/${userId}/accounts/riot`, {
+            puuid,
+        }, this.createWebAxiosConfig())
+    }
+
+    async syncAllLocalRiotAccounts(userId: number): Promise<any> {
+        let accounts = await this.listValorantAccounts()
+        return Promise.all(accounts.data.map((ele: ValorantAccountData) => {
+            return this.syncRiotAccount(userId, ele.puuid)
+        }))
     }
 }
 

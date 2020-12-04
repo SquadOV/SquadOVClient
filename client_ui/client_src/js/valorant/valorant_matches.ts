@@ -100,6 +100,7 @@ export function cleanValorantMatchDetails(m :ValorantMatchDetails) : ValorantMat
 
 export interface ValorantPlayerMatchSummary {
     matchId : string
+    matchUuid: string
     serverStartTimeUtc: Date | null
     gameMode: string | null
     map: string | null
