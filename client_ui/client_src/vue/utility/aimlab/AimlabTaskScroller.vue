@@ -5,6 +5,7 @@
             v-for="(task, index) in tasks"
             :task="task"
             :key="index"
+            :user-id="userId"
         >
         </aimlab-task-summary-display>
 
@@ -35,6 +36,9 @@ import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSumma
 export default class AimlabTaskScroller extends Vue {
     @Prop({type: Array, default: []})
     tasks! : AimlabTaskData[]
+
+    @Prop({required: true})
+    userId!: number
 
     @Prop({type: Boolean})
     canLoadMore!: boolean

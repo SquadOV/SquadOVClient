@@ -106,35 +106,27 @@ const baseRoutes : any[] = [
                 })
             },
             {
-                path: 'valorant/match/:matchId',
-                name: pi.ValorantMatchPageId,
-                component: ValorantMatch,
-                props: (route : any) => ({
-                    puuid: route.query.account,
-                    matchId: route.params.matchId
-                })
-            },
-            {
                 path: 'aimlab',
                 name: pi.AimlabLogPageId,
                 component: AimlabGameLog,
-            },
-            {
-                path: 'aimlab/task/:taskId',
-                name: pi.AimlabMatchPageId,
-                component: AimlabMatch,
                 props: (route : any) => ({
-                    taskId: route.params.taskId
+                    userId: route.params.userId,
                 })
             },
             {
                 path: 'hearthstone',
                 component: HearthstoneGameLog,
+                props: (route : any) => ({
+                    userId: route.params.userId,
+                }),
                 children: [
                     {
                         path: '',
                         name: pi.HearthstoneLogPageId,
-                        component: HearthstoneAllMatchesGameLog
+                        component: HearthstoneAllMatchesGameLog,
+                        props: (route : any) => ({
+                            userId: route.params.userId,
+                        }),
                     },
                     {
                         path: 'constructed',
@@ -144,20 +136,25 @@ const baseRoutes : any[] = [
                             filteredGameTypes: [
                                 HearthstoneGameType.Ranked,
                                 HearthstoneGameType.Casual
-                            ]
+                            ],
+                            userId: route.params.userId,
                         })
                     },
                     {
                         path: 'arena',
                         name: pi.HearthstoneArenaLogPageId,
-                        component: HearthstoneArenaGameLog
+                        component: HearthstoneArenaGameLog,
+                        props: (route : any) => ({
+                            userId: route.params.userId,
+                        }),
                     },
                     {
                         path: 'arena/:arenaId',
                         name: pi.HearthstoneArenaRunMatchLogPageId,
                         component: HearthstoneArenaRunMatchLog,
                         props: (route: any) => ({
-                            runId: route.params.arenaId
+                            runId: route.params.arenaId,
+                            userId: route.params.userId,
                         })
                     },
                     {
@@ -173,7 +170,8 @@ const baseRoutes : any[] = [
                                 HearthstoneGameType.FsgBrawl,
                                 HearthstoneGameType.FsgBrawl1pVsAi,
                                 HearthstoneGameType.FsgBrawl2pCoop,
-                            ]
+                            ],
+                            userId: route.params.userId,
                         })
                     },
                     {
@@ -184,33 +182,58 @@ const baseRoutes : any[] = [
                             filteredGameTypes: [
                                 HearthstoneGameType.Battlegrounds,
                                 HearthstoneGameType.BattlegroundsFriendly
-                            ]
+                            ],
+                            userId: route.params.userId,
                         })
                     },
                     {
                         path: 'duels',
                         name: pi.HearthstoneDuelLogPageId,
-                        component: HearthstoneDuelGameLog
+                        component: HearthstoneDuelGameLog,
+                        props: (route : any) => ({
+                            userId: route.params.userId,
+                        }),
                     },
                     {
                         path: 'duels/:duelId',
                         name: pi.HearthstoneDuelRunMatchLogPageId,
                         component: HearthstoneDuelRunMatchLog,
                         props: (route: any) => ({
-                            runId: route.params.duelId
+                            runId: route.params.duelId,
+                            userId: route.params.userId,
                         })
                     },
                 ]
             },
-            {
-                path: 'hearthstone/match/:matchId',
-                name: pi.HearthstoneMatchPageId,
-                component: HearthstoneMatch,
-                props: (route : any) => ({
-                    matchId: route.params.matchId
-                })
-            }
         ],
+    },
+    {
+        path: 'match/valorant/:matchId',
+        name: pi.ValorantMatchPageId,
+        component: ValorantMatch,
+        props: (route : any) => ({
+            puuid: route.query.account,
+            matchId: route.params.matchId,
+            userId: route.query.userId
+        })
+    },
+    {
+        path: 'match/aimlab/:taskId',
+        name: pi.AimlabMatchPageId,
+        component: AimlabMatch,
+        props: (route : any) => ({
+            taskId: route.params.taskId,
+            userId: route.query.userId
+        })
+    },
+    {
+        path: 'match/hearthstone/:matchId',
+        name: pi.HearthstoneMatchPageId,
+        component: HearthstoneMatch,
+        props: (route : any) => ({
+            matchId: route.params.matchId,
+            userId: route.query.userId
+        })
     },
     { 
         path: '/performance',

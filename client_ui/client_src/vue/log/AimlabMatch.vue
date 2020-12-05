@@ -6,6 +6,7 @@
                     class="mb-4"
                     :task="data"
                     :sync-vod.sync="vod"
+                    :user-id="userId"
                 >
                 </aimlab-task-summary-display>
 
@@ -52,8 +53,11 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 export default class AimlabMatch extends Vue {
     @Prop({required: true})
     taskId! : string
-    vod : VodAssociation | null = null
 
+    @Prop({required: true})
+    userId!: number
+
+    vod : VodAssociation | null = null
     data : AimlabTaskData | null = null
 
     @Watch('taskId')

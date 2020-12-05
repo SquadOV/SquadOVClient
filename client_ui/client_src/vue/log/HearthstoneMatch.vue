@@ -145,7 +145,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { HearthstoneMatch as RawHearthstoneMatch, HearthstoneMatchWrapper, HearthstoneMatchLogs} from '@client/js/hearthstone/hearthstone_match'
@@ -175,6 +175,10 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 export default class HearthstoneMatch extends Vue {
     @Prop({required: true})
     matchId!: string
+
+    @Prop({required: true})
+    userId!: number
+
     eventSectionTab: number = 0
 
     // VOD display
@@ -227,12 +231,15 @@ export default class HearthstoneMatch extends Vue {
         this.$refs.player.goToTimeMs(diffMs)
     }
 
+    @Watch('matchId')
+    @Watch('userId')
     refreshData() {
         this.ready = false
-        apiClient.getHearthstoneMatch(this.matchId).then((resp : ApiData<RawHearthstoneMatch>) => {
+        this.currentMatch = null
+        apiClient.getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<RawHearthstoneMatch>) => {
             this.currentMatch = resp.data
 
-            apiClient.getHearthstoneMatchLogs(this.matchId).then((resp: ApiData<HearthstoneMatchLogs>) => {
+            apiClient.getHearthstoneMatchLogs(this.matchId, this.userId).then((resp: ApiData<HearthstoneMatchLogs>) => {
                 this.matchWrapper.addLogs(resp.data)
                 this.ready = true
             }).catch((err: any) => {
@@ -243,8 +250,11 @@ export default class HearthstoneMatch extends Vue {
         })
     }
 
+    @Watch('matchId')
+    @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserUuid(this.matchId, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+        this.vod = null
+        apiClient.findVodFromMatchUserId(this.matchId, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

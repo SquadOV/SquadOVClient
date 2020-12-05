@@ -5,6 +5,7 @@
             v-for="match in matches"
             :key="match.matchId"
             :match="match"
+            :user-id="userId"
         >
         </valorant-player-match-summary-display>
 
@@ -40,6 +41,9 @@ export default class ValorantMatchScroller extends Vue {
 
     @Prop({type: Boolean})
     canLoadMore!: boolean
+
+    @Prop({required: true})
+    userId!: number
 
     loadMore() {
         this.$emit('load-more')

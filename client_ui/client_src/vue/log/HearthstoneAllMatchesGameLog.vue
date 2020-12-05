@@ -5,6 +5,7 @@
                 <hearthstone-match-scroller
                     :matches="allMatchIds"
                     v-if="allMatchIds.length > 0"
+                    :user-id="userId"
                 >
                 </hearthstone-match-scroller>
 
@@ -51,6 +52,9 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
     @Prop({type: Array, default: () => []})
     filteredGameTypes!: HearthstoneGameType[]
 
+    @Prop({required: true})
+    userId!: number
+
     get hasNext() : boolean {
         return !!this.nextLink
     }
@@ -59,10 +63,9 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
         if (!!this.allMatchIds && !this.nextLink) {
             return
         }
-        let user = this.$store.state.currentUser!
         apiClient.listHearthstoneMatchesForPlayer({
             next: this.nextLink,
-            userId: user.id,
+            userId: this.userId,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
             filter: this.filteredGameTypes,
@@ -84,6 +87,7 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
     }
 
     @Watch('filteredGameTypes')
+    @Watch('userId')
     refreshData() {
         this.allMatchIds = null
         this.lastIndex = 0

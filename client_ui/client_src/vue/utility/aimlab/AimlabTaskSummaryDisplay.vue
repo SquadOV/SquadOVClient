@@ -59,6 +59,9 @@ export default class AimlabTaskSummaryDisplay extends Vue {
     @Prop({ required : true })
     task! : AimlabTaskData
 
+    @Prop({required: true})
+    userId!: number
+
     @Prop()
     syncVod! : VodAssociation | null
     vod: VodAssociation | null = null
@@ -74,6 +77,9 @@ export default class AimlabTaskSummaryDisplay extends Vue {
             name: pi.AimlabMatchPageId,
             params: {
                 taskId: this.task.matchUuid
+            },
+            query: {
+                userId: this.userId
             }
         }
     }
@@ -84,7 +90,7 @@ export default class AimlabTaskSummaryDisplay extends Vue {
 
     @Watch('task', {deep: true})
     refreshVod() {
-        apiClient.findVodFromMatchUserUuid(this.task.matchUuid, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+        apiClient.findVodFromMatchUserId(this.task.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

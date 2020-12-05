@@ -71,6 +71,9 @@ export default class HearthstoneArenaSummaryDisplay extends Vue {
     @Prop({required: true})
     arenaUuid!: string
 
+    @Prop({required: true})
+    userId!: number
+
     currentArenaRun: HearthstoneArenaRun | null = null
 
     get to() : any {
@@ -83,7 +86,7 @@ export default class HearthstoneArenaSummaryDisplay extends Vue {
     }
 
     refreshData() {
-        apiClient.getHearthstoneArenaRun(this.arenaUuid, this.$store.state.currentUser!.id).then((resp : ApiData<HearthstoneArenaRun>) => {
+        apiClient.getHearthstoneArenaRun(this.arenaUuid, this.userId).then((resp : ApiData<HearthstoneArenaRun>) => {
             this.currentArenaRun = resp.data
         }).catch((err: any) => {
             console.log('Failed to get Hearthstone Arena Run: ', err)

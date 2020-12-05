@@ -101,7 +101,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import * as pi from '@client/js/pages'
@@ -130,6 +130,10 @@ import HearthstoneDuelsRatingDisplay from '@client/vue/utility/hearthstone/Heart
 export default class HearthstoneMatchSummaryDisplay extends Vue {
     @Prop({required: true})
     matchId!: string
+
+    @Prop({required: true})
+    userId!: number
+
     vod: VodAssociation | null = null
     currentMatch: HearthstoneMatch | null = null
 
@@ -138,6 +142,9 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
             name: pi.HearthstoneMatchPageId,
             params: {
                 matchId: this.matchId
+            },
+            query: {
+                userId: this.userId
             }
         }
     }
@@ -293,16 +300,22 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
         }
     }
 
+    @Watch('matchId')
+    @Watch('userId')
     refreshData() {
-        apiClient.getHearthstoneMatch(this.matchId).then((resp : ApiData<HearthstoneMatch>) => {
+        this.currentMatch = null
+        apiClient.getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<HearthstoneMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Hearthstone match: ', err)
         })
     }
 
+    @Watch('matchId')
+    @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserUuid(this.matchId, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+        this.vod = null
+        apiClient.findVodFromMatchUserId(this.matchId, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

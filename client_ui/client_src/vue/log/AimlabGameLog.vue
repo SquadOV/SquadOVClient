@@ -6,6 +6,7 @@
                     :tasks="allTasks"
                     v-if="allTasks.length > 0"
                     :can-load-more="hasNext"
+                    :user-id="userId"
                     @load-more="loadMoreData"
                 >
                 </aimlab-task-scroller>
@@ -22,6 +23,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
@@ -36,6 +38,9 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class AimlabGameLog extends Vue {
+    @Prop({required: true})
+    userId!: number
+
     allTasks : AimlabTaskData[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
@@ -44,15 +49,22 @@ export default class AimlabGameLog extends Vue {
         return !!this.nextLink
     }
 
+    @Watch('userId')
+    refreshData() {
+        this.allTasks = null
+        this.nextLink = null
+        this.lastIndex = 0
+        this.loadMoreData()
+    }
+
     loadMoreData() {
         if (!!this.allTasks && !this.nextLink) {
             return
         }
 
-        let user = this.$store.state.currentUser!
         apiClient.allAimlabTaskData({
             next: this.nextLink,
-            userId: user.id,
+            userId: this.userId,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest
         }).then((resp : ApiData<HalResponse<AimlabTaskData[]>>) => {
@@ -73,7 +85,7 @@ export default class AimlabGameLog extends Vue {
     }
 
     mounted() {
-        this.loadMoreData()
+        this.refreshData()
     }
 }
 

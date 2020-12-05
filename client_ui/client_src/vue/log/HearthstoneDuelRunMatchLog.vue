@@ -7,6 +7,7 @@
                         <hearthstone-match-scroller
                             :matches="allMatchIds"
                             v-if="allMatchIds.length > 0"
+                            :user-id="userId"
                         >
                         </hearthstone-match-scroller>
 
@@ -42,7 +43,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { HearthstoneDuelRun } from '@client/js/hearthstone/hearthstone_duel'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -60,17 +61,23 @@ export default class HearthstoneDuelRunMatchLog extends Vue {
     @Prop({required: true})
     runId!: string
 
+    @Prop({required: true})
+    userId!: number
+
     allMatchIds: string[] | null = null
     currentDuelRun: HearthstoneDuelRun | null = null
 
+    @Watch('userId')
     refreshData() {
-        apiClient.listHearthstoneMatchesForDuelRun(this.runId, this.$store.state.currentUser!.id).then((resp : ApiData<string[]>) => {
+        this.allMatchIds = null
+        apiClient.listHearthstoneMatchesForDuelRun(this.runId, this.userId).then((resp : ApiData<string[]>) => {
             this.allMatchIds = resp.data
         }).catch((err: any) => {
             console.log('Failed to list Hearthstone duel matches: ' + err);            
         })
 
-        apiClient.getHearthstoneDuelRun(this.runId, this.$store.state.currentUser!.id).then((resp : ApiData<HearthstoneDuelRun>) => {
+        this.currentDuelRun = null
+        apiClient.getHearthstoneDuelRun(this.runId, this.userId).then((resp : ApiData<HearthstoneDuelRun>) => {
             this.currentDuelRun = resp.data
         }).catch((err: any) => {
             console.log('Failed to get Hearthstone Duel Run: ', err)

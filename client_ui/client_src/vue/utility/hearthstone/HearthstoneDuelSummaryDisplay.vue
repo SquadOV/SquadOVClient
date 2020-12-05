@@ -77,6 +77,9 @@ export default class HearthstoneDuelSummaryDisplay extends Vue {
     @Prop({required: true})
     duelUuid!: string
 
+    @Prop({required: true})
+    userId!: number
+
     currentDuelRun: HearthstoneDuelRun | null = null
 
     get to() : any {
@@ -89,7 +92,7 @@ export default class HearthstoneDuelSummaryDisplay extends Vue {
     }
 
     refreshData() {
-        apiClient.getHearthstoneDuelRun(this.duelUuid, this.$store.state.currentUser!.id).then((resp : ApiData<HearthstoneDuelRun>) => {
+        apiClient.getHearthstoneDuelRun(this.duelUuid, this.userId).then((resp : ApiData<HearthstoneDuelRun>) => {
             this.currentDuelRun = resp.data
         }).catch((err: any) => {
             console.log('Failed to get Hearthstone Duel Run: ', err)

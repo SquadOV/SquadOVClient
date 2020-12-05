@@ -85,6 +85,10 @@ import * as pi from '@client/js/pages'
 export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     @Prop({required: true})
     match! : ValorantPlayerMatchSummary
+
+    @Prop({required: true})
+    userId!: number
+
     vod: VodAssociation | null = null
 
     get hasVod() : boolean {
@@ -100,6 +104,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
             },
             query: {
                 account: this.$route.params.account,
+                userId: this.userId,
                 ...this.$route.query
             },
         }
@@ -203,8 +208,9 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         return cspr(this.match.totalCombatScore, this.match.roundsPlayed).toFixed(2)
     }
 
+    @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserUuid(this.match.matchUuid, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+        apiClient.findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

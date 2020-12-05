@@ -281,7 +281,14 @@ class ApiClient {
     }
 
     findVodFromMatchUserUuid(matchUuid : string, userUuid: string) : Promise<ApiData<VodAssociation>> {
-        return axios.get(`v1/vod/match/${matchUuid}/user/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
+        return axios.get(`v1/vod/match/${matchUuid}/user/uuid/${userUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
+            cleanVodAssocationData(resp.data)
+            return resp
+        })
+    }
+
+    findVodFromMatchUserId(matchUuid : string, userId: number) : Promise<ApiData<VodAssociation>> {
+        return axios.get(`v1/vod/match/${matchUuid}/user/id/${userId}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
             cleanVodAssocationData(resp.data)
             return resp
         })
@@ -415,15 +422,15 @@ class ApiClient {
         })
     }
 
-    getHearthstoneMatch(matchId: string) : Promise<ApiData<HearthstoneMatch>> {
-        return axios.get(`v1/hearthstone/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<HearthstoneMatch>) => {
+    getHearthstoneMatch(matchId: string, userId: number) : Promise<ApiData<HearthstoneMatch>> {
+        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<HearthstoneMatch>) => {
             cleanHearthstoneMatchFromJson(resp.data)
             return resp
         })
     }
 
-    getHearthstoneMatchLogs(matchId: string) : Promise<ApiData<HearthstoneMatchLogs>> {
-        return axios.get(`v1/hearthstone/match/${matchId}/logs`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneMatchLogs>) => {
+    getHearthstoneMatchLogs(matchId: string, userId: number) : Promise<ApiData<HearthstoneMatchLogs>> {
+        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/logs`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneMatchLogs>) => {
             cleanHearthstoneMatchLogsFromJson(resp.data)
             return resp
         })

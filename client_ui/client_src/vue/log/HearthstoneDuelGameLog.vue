@@ -7,6 +7,7 @@
                         v-for="(collection, idx) of allCollectionIds"
                         :key="idx"
                         :duel-uuid="collection"
+                        :user-id="userId"
                     >
                     </hearthstone-duel-summary-display>
                 </template>
@@ -32,6 +33,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import HearthstoneDuelSummaryDisplay from '@client/vue/utility/hearthstone/HearthstoneDuelSummaryDisplay.vue'
@@ -49,18 +51,29 @@ export default class HearthstoneDuelGameLog extends Vue {
     lastIndex: number = 0
     nextLink: string | null = null
 
+    @Prop({required: true})
+    userId!: number
+
     get hasNext() : boolean {
         return !!this.nextLink
+    }
+
+    @Watch('userId')
+    refreshData() {
+        this.lastIndex = 0
+        this.nextLink = null
+        this.allCollectionIds = null
+        this.loadMoreData()
     }
 
     loadMoreData() {
         if (!!this.allCollectionIds && !this.nextLink) {
             return
         }
-        let user = this.$store.state.currentUser!
+        
         apiClient.listHearthstoneDuelRunsForPlayer({
             next: this.nextLink,
-            userId: user.id,
+            userId: this.userId,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
         }).then((resp : ApiData<HalResponse<string[]>>) => {
@@ -81,7 +94,7 @@ export default class HearthstoneDuelGameLog extends Vue {
     }
 
     mounted() {
-        this.loadMoreData()
+        this.refreshData()
     }
 }
 

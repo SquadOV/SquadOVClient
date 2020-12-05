@@ -33,6 +33,7 @@
                                 :matches="allMatches"
                                 :can-load-more="hasNext"
                                 @load-more="loadMoreMatches"
+                                :user-id="userId"
                             >
                             </valorant-match-scroller>
 

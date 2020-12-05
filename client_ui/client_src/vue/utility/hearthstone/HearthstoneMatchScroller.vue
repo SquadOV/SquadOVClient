@@ -5,6 +5,7 @@
             v-for="(match, index) in matches"
             :match-id="match"
             :key="index"
+            :user-id="userId"
         >
         </hearthstone-match-summary-display>
     </div>
@@ -25,6 +26,9 @@ import HearthstoneMatchSummaryDisplay from '@client/vue/utility/hearthstone/Hear
 export default class HearthstoneMatchScroller extends Vue {
     @Prop({type: Array, default: () => []})
     matches! : string[]
+
+    @Prop({required: true})
+    userId!: number
 }
 
 </script>

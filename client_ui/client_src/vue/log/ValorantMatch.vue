@@ -133,6 +133,10 @@ import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchP
 export default class ValorantMatch extends Vue {
     @Prop()
     puuid! : string | null
+
+    @Prop()
+    userId!: number
+
     vod : VodAssociation | null = null
     playerMetadata: ValorantMatchPlayerMatchMetadata | null = null
 
@@ -160,13 +164,14 @@ export default class ValorantMatch extends Vue {
     }
 
     @Watch('currentMatch')
+    @Watch('userId')
     refreshVod() {
         if (!this.currentMatch) {
             this.vod = null
             return
         }
 
-        apiClient.findVodFromMatchUserUuid(this.currentMatch.matchUuid, this.$store.state.currentUser!.uuid).then((resp : ApiData<VodAssociation>) => {
+        apiClient.findVodFromMatchUserId(this.currentMatch.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

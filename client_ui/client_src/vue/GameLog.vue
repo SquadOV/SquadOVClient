@@ -74,7 +74,7 @@
 
             <template v-if="!isLoadingCurrentUser">
                 <div
-                    :class="`pa-2 ${game.to.name === currentPageName ? 'selected-game' : ''}`"
+                    :class="`pa-2 game-div ${$route.path.startsWith(game.route.path) ? 'selected-game' : ''}`"
                     v-for="(game, idx) in supportedGames"
                     :key="`game-${idx}`"
                 >
@@ -154,21 +154,27 @@ export default class GameLog extends Vue {
     }
 
     get supportedGames(): any[] {
+        let aimlabTo = this.constructPageTo(pi.AimlabLogPageId)
+        let hearthstoneTo = this.constructPageTo(pi.HearthstoneLogPageId)
+        let valorantTo = this.constructPageTo(pi.ValorantLogPageId)
         return [
             {
                 'icon': 'assets/aimlab-logo.png',
                 'name': 'Aim Lab',
-                'to': this.constructPageTo(pi.AimlabLogPageId)
+                'to': aimlabTo,
+                'route': this.$router.resolve(aimlabTo).route
             },
             {
                 'icon': 'assets/hearthstone-logo.png',
                 'name': 'Hearthstone',
-                'to': this.constructPageTo(pi.HearthstoneLogPageId)
+                'to': hearthstoneTo,
+                'route': this.$router.resolve(hearthstoneTo).route
             },
             {
                 'icon': 'assets/valorant-logo.png',
                 'name': 'Valorant',
-                'to': this.constructPageTo(pi.ValorantLogPageId)
+                'to': valorantTo,
+                'route': this.$router.resolve(valorantTo).route
             },
         ]
     }
@@ -313,8 +319,12 @@ export default class GameLog extends Vue {
     border-left: 5px solid #FFD700;
 }
 
+.game-div {
+    border: 1px solid transparent;
+}
+
 .selected-game {
-    border: 1px solid #FFD700;
+    border: 1px solid #FFD700 !important;
 }
 
 .squad-text {
