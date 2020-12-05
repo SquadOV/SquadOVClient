@@ -1,6 +1,6 @@
 <template>
     <div class="d-flex align-center">
-        <v-tooltip v-if="!!value && !isValorantAccountValid" bottom offset-y>
+        <v-tooltip v-if="!!value && !isValorantAccountValid && allowCrud" bottom offset-y>
             <template v-slot:activator="{on, attrs}">
                 <v-icon v-bind="attrs" v-on="on" color="warning">
                     mdi-alert
@@ -24,7 +24,7 @@
         </v-select>
 
         <v-dialog
-            v-if="!!value"
+            v-if="!!value && allowCrud"
             v-model="showHideEdit"
             persistent
             max-width="40%"
@@ -62,6 +62,7 @@
             v-model="showHideNew"
             persistent
             max-width="40%"
+            v-if="allowCrud"
         >
             <template v-slot:activator="{ on, attrs }">
                 <v-btn
@@ -106,7 +107,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { ValorantAccountData } from '@client/js/valorant/valorant_account'
+import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { apiClient, ApiData } from '@client/js/api'
 
 import ValorantAccountCreation from '@client/vue/utility/valorant/ValorantAccountCreation.vue'
@@ -123,10 +124,13 @@ export default class ValorantAccountChooser extends Vue {
     }
 
     @Prop({required: true})
-    value! : ValorantAccountData | null
+    value! : RiotAccountData | null
 
     @Prop({type: Array, required: true})
-    options! : ValorantAccountData[]
+    options! : RiotAccountData[]
+
+    @Prop({type: Boolean, default: false})
+    allowCrud!: boolean
 
     showHideEdit : boolean = false
     showHideNew : boolean = false
@@ -137,7 +141,7 @@ export default class ValorantAccountChooser extends Vue {
     }
 
     get items() : any[] {
-        return this.options!.map((ele : ValorantAccountData) => ({
+        return this.options!.map((ele : RiotAccountData) => ({
             text: `${ele.username}#${ele.tag}`,
             value: ele,
         }))
@@ -148,7 +152,7 @@ export default class ValorantAccountChooser extends Vue {
             return
         }
 
-        apiClient.editValorantAccount(this.value.puuid, username, password).then((resp : ApiData<ValorantAccountData>) => {
+        apiClient.editValorantAccount(this.value.puuid, username, password).then((resp : ApiData<RiotAccountData>) => {
             Vue.set(this.value!, 'login', resp.data.login)
             Vue.set(this.value!, 'encryptedPassword', resp.data.encryptedPassword)
             this.showHideEdit = false
@@ -161,7 +165,7 @@ export default class ValorantAccountChooser extends Vue {
     }
 
     onSaveValorantAccount(username : string, password : string) {
-        apiClient.newValorantAccount(username, password).then((resp : ApiData<ValorantAccountData>) => {
+        apiClient.newValorantAccount(username, password).then((resp : ApiData<RiotAccountData>) => {
             this.$emit('update:options', [...this.options, resp.data])
             this.$emit('input', resp.data)
             this.showHideNew = false

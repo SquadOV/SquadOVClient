@@ -64,7 +64,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { ValorantPlayerStatsSummary, kda, hsp, dpr, cspr } from '@client/js/valorant/valorant_player_stats'
-import { ValorantAccountData } from '@client/js/valorant/valorant_account'
+import { RiotAccountData } from '@client/js/valorant/valorant_account'
 
 import ValorantRankTier from '@client/vue/utility/valorant/ValorantRankTier.vue'
 import WinLossStat from '@client/vue/utility/WinLossStat.vue'
@@ -82,7 +82,7 @@ export default class ValorantPlayerCard extends Vue {
     summary! : ValorantPlayerStatsSummary
 
     @Prop({required: true})
-    account! : ValorantAccountData
+    account! : RiotAccountData
 
     get kda() : number {
         return kda(this.summary.kills, this.summary.assists, this.summary.deaths)

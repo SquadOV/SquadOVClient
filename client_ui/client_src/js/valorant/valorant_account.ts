@@ -1,4 +1,4 @@
-export interface ValorantAccountData {
+export interface RiotAccountData {
     puuid : string
     username : string
     tag : string

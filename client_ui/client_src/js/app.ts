@@ -74,27 +74,39 @@ const baseRoutes : any[] = [
         })
     },
     { 
-        path: '/logs',
+        path: '/logs/:userId',
         component: GameLog,
+        props: (route: any) => ({
+            squadId: route.query.squadId,
+            userId: route.params.userId,
+        }),
         children: [
             {
-                path: '/',
+                path: '',
                 name: pi.LogPageId,
                 component: LogGameChooser
             },
             {
-                path: '/valorant/account/:account?',
+                path: 'valorant/account/:account?',
                 children: [
                     {
-                        path: '/',
+                        path: '',
                         name: pi.ValorantLogPageId,
                         component: ValorantGameLog,
+                        props: (route : any) => ({
+                            userId: route.params.userId,
+                            puuid: route.params.account
+                        })
                     },
                 ],
                 component: ValorantLogContainer,
+                props: (route : any) => ({
+                    userId: route.params.userId,
+                    puuid: route.params.account
+                })
             },
             {
-                path: '/valorant/match/:matchId',
+                path: 'valorant/match/:matchId',
                 name: pi.ValorantMatchPageId,
                 component: ValorantMatch,
                 props: (route : any) => ({
@@ -103,12 +115,12 @@ const baseRoutes : any[] = [
                 })
             },
             {
-                path: '/aimlab',
+                path: 'aimlab',
                 name: pi.AimlabLogPageId,
                 component: AimlabGameLog,
             },
             {
-                path: '/aimlab/task/:taskId',
+                path: 'aimlab/task/:taskId',
                 name: pi.AimlabMatchPageId,
                 component: AimlabMatch,
                 props: (route : any) => ({
@@ -116,16 +128,16 @@ const baseRoutes : any[] = [
                 })
             },
             {
-                path: '/hearthstone',
+                path: 'hearthstone',
                 component: HearthstoneGameLog,
                 children: [
                     {
-                        path: '/',
+                        path: '',
                         name: pi.HearthstoneLogPageId,
                         component: HearthstoneAllMatchesGameLog
                     },
                     {
-                        path: '/constructed',
+                        path: 'constructed',
                         name: pi.HearthstoneConstructedLogPageId,
                         component: HearthstoneAllMatchesGameLog,
                         props: (route : any) => ({
@@ -136,12 +148,12 @@ const baseRoutes : any[] = [
                         })
                     },
                     {
-                        path: '/arena',
+                        path: 'arena',
                         name: pi.HearthstoneArenaLogPageId,
                         component: HearthstoneArenaGameLog
                     },
                     {
-                        path: '/arena/:arenaId',
+                        path: 'arena/:arenaId',
                         name: pi.HearthstoneArenaRunMatchLogPageId,
                         component: HearthstoneArenaRunMatchLog,
                         props: (route: any) => ({
@@ -149,7 +161,7 @@ const baseRoutes : any[] = [
                         })
                     },
                     {
-                        path: '/brawl',
+                        path: 'brawl',
                         name: pi.HearthstoneBrawlLogPageId,
                         component: HearthstoneAllMatchesGameLog,
                         props: (route : any) => ({
@@ -165,7 +177,7 @@ const baseRoutes : any[] = [
                         })
                     },
                     {
-                        path: '/battlegrounds',
+                        path: 'battlegrounds',
                         name: pi.HearthstoneBattlegroundsLogPageId,
                         component: HearthstoneAllMatchesGameLog,
                         props: (route : any) => ({
@@ -176,12 +188,12 @@ const baseRoutes : any[] = [
                         })
                     },
                     {
-                        path: '/duels',
+                        path: 'duels',
                         name: pi.HearthstoneDuelLogPageId,
                         component: HearthstoneDuelGameLog
                     },
                     {
-                        path: '/duels/:duelId',
+                        path: 'duels/:duelId',
                         name: pi.HearthstoneDuelRunMatchLogPageId,
                         component: HearthstoneDuelRunMatchLog,
                         props: (route: any) => ({
@@ -191,7 +203,7 @@ const baseRoutes : any[] = [
                 ]
             },
             {
-                path: '/hearthstone/match/:matchId',
+                path: 'hearthstone/match/:matchId',
                 name: pi.HearthstoneMatchPageId,
                 component: HearthstoneMatch,
                 props: (route : any) => ({
@@ -205,12 +217,12 @@ const baseRoutes : any[] = [
         component: Performance,
         children: [
             {
-                path: '/',
+                path: '',
                 name: pi.PerformancePageId,
                 component: PerformanceComponentChooser,
             },
             {
-                path: '/visualization',
+                path: 'visualization',
                 name: pi.VizStatsPageId,
                 component: VizStats,
             },

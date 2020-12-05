@@ -8,7 +8,7 @@
             </router-link>
         </v-toolbar-title>
 
-        <v-menu bottom offset-y v-for="m in menu" :key="m.name">
+        <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
             <template v-slot:activator="{on, attrs}">
                 <v-btn text v-bind="attrs" v-on="on">
                     {{ m.name }}
@@ -64,46 +64,66 @@ import { ipcRenderer } from 'electron'
 
 @Component
 export default class AppNav extends Vue {
-    menu : any[] = [
-        {
-            name: 'Game Logs',
-            children: [
-                {
-                    name: 'Valorant',
-                    to: {
-                        name: pi.ValorantLogPageId,
-                        params: this.$route.params
+
+    get gameLogParams(): any {
+        let params = this.$route.params
+        if (params.userId !== undefined) {
+            return params
+        } else {
+            return {
+                userId: this.$store.state.currentUser.id
+            }
+        }
+    }
+
+    get gameLogQuery() : any {
+        return this.$route.query
+    }
+
+    get menuItems(): any [] {
+        return [
+            {
+                name: 'Game Logs',
+                children: [
+                    {
+                        name: 'Valorant',
+                        to: {
+                            name: pi.ValorantLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
                     },
-                },
-                {
-                    name: 'Aim Lab',
-                    to: {
-                        name: pi.AimlabLogPageId,
-                        params: this.$route.params
+                    {
+                        name: 'Aim Lab',
+                        to: {
+                            name: pi.AimlabLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
                     },
-                },
-                {
-                    name: 'Hearthstone',
-                    to: {
-                        name: pi.HearthstoneLogPageId,
-                        params: this.$route.params
+                    {
+                        name: 'Hearthstone',
+                        to: {
+                            name: pi.HearthstoneLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
                     },
-                },
-            ]
-        },
-        {
-            name: 'Performance',
-            children: [
-                {
-                    name: 'Visualization',
-                    to: {
-                        name: pi.VizStatsPageId,
-                        params: this.$route.params
+                ]
+            },
+            {
+                name: 'Performance',
+                children: [
+                    {
+                        name: 'Visualization',
+                        to: {
+                            name: pi.VizStatsPageId,
+                        },
                     },
-                },
-            ]
-        },
-    ]
+                ]
+            },
+        ]
+    }
 
     get homeTo() : any {
         return {

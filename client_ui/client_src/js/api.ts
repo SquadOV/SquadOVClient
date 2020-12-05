@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-import { ValorantAccountData } from '@client/js/valorant/valorant_account'
+import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
 import {
     ValorantPlayerMatchSummary,
@@ -131,7 +131,7 @@ class ApiClient {
     // Legay Local API
     //
     @waitForApiServerSetup
-    listValorantAccounts() : Promise<ApiData<ValorantAccountData[]>> {
+    listLocalValorantAccounts() : Promise<ApiData<RiotAccountData[]>> {
         return axios({
             ...this.createAxiosConfig('valorant/accounts'),
             method: 'get'
@@ -139,7 +139,7 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
-    editValorantAccount(puuid : string, login : string, password : string) : Promise<ApiData<ValorantAccountData>> {
+    editValorantAccount(puuid : string, login : string, password : string) : Promise<ApiData<RiotAccountData>> {
         return axios({
             ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
             method: 'put',
@@ -151,7 +151,7 @@ class ApiClient {
     }
 
     @waitForApiServerSetup
-    newValorantAccount(login : string, password : string) : Promise<ApiData<ValorantAccountData>> {
+    newValorantAccount(login : string, password : string) : Promise<ApiData<RiotAccountData>> {
         return axios({
             ...this.createAxiosConfig('valorant/accounts'),
             method: 'post',
@@ -159,14 +159,6 @@ class ApiClient {
                 login,
                 password
             }
-        })
-    }
-
-    @waitForApiServerSetup
-    getValorantAccount(puuid : string) : Promise<ApiData<ValorantAccountData>> {  
-        return axios({
-            ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
-            method: 'get'
         })
     }
 
@@ -451,18 +443,29 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    syncRiotAccount(userId: number, puuid: string) : Promise<void> {
+    syncRiotAccount(userId: number, data: RiotAccountData) : Promise<void> {
         return axios.post(`v1/users/${userId}/accounts/riot`, {
-            puuid,
+            puuid: data.puuid,
+            username: data.username,
+            tag: data.tag
         }, this.createWebAxiosConfig())
     }
 
     async syncAllLocalRiotAccounts(userId: number): Promise<any> {
-        let accounts = await this.listValorantAccounts()
-        return Promise.all(accounts.data.map((ele: ValorantAccountData) => {
-            return this.syncRiotAccount(userId, ele.puuid)
+        let accounts = await this.listLocalValorantAccounts()
+        return Promise.all(accounts.data.map((ele: RiotAccountData) => {
+            return this.syncRiotAccount(userId, ele)
         }))
     }
+
+    listRiotAccounts(userId: number): Promise<ApiData<RiotAccountData[]>> {
+        return axios.get(`v1/users/${userId}/accounts/riot`, this.createWebAxiosConfig())
+    }
+
+    getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  
+        return axios.get(`v1/users/${userId}/accounts/riot/${puuid}`, this.createWebAxiosConfig())
+    }
+
 }
 
 export let apiClient = new ApiClient()

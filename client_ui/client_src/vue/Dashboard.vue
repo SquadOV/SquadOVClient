@@ -35,13 +35,19 @@ export default class Dashboard extends Vue {
 
     get logsTo() : any {
         return {
-            name: pi.LogPageId
+            name: pi.LogPageId,
+            params: {
+                userId: this.$store.state.currentUser.id
+            }
         }
     }
 
     get performanceTo() : any {
         return {
-            name: pi.PerformancePageId
+            name: pi.PerformancePageId,
+            params: {
+                userId: this.$store.state.currentUser.id
+            }
         }
     }
 
