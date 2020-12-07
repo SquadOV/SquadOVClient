@@ -1,11 +1,15 @@
-import bs from 'binary-search'
-
 export interface VodAssociation {
     matchUuid: string
     userUuid: string
     videoUuid: string
     startTime: Date
     endTime: Date
+}
+
+export interface ValorantMatchAccessibleVods {
+    vods: VodAssociation[]
+    // uuid to puuid
+    userMapping: {[uuid: string] : string | undefined}
 }
 
 interface VodSegment {

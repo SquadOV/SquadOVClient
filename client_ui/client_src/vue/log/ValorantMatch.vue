@@ -20,6 +20,15 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                         >
                         </video-player>
+
+                        <valorant-vod-pov-picker
+                            :puuid.sync="povPuuid"
+                            :vod.sync="vod"
+                            :player-metadata.sync="playerMetadata"
+                            :match="matchWrapper"
+                            :ref-puuid="puuid"
+                        >
+                        </valorant-vod-pov-picker>
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
@@ -117,6 +126,7 @@ import ValorantRoundTimeline from '@client/vue/utility/valorant/ValorantRoundTim
 import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamRoundDisplay.vue'
 import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFullMatchScoreboard.vue'
 import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchPlayerCard.vue'
+import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPicker.vue'
 
 @Component({
     components: {
@@ -127,7 +137,8 @@ import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchP
         ValorantRoundTimeline,
         ValorantTeamRoundDisplay,
         ValorantFullMatchScoreboard,
-        ValorantMatchPlayerCard
+        ValorantMatchPlayerCard,
+        ValorantVodPovPicker
     }
 })
 export default class ValorantMatch extends Vue {
@@ -137,6 +148,7 @@ export default class ValorantMatch extends Vue {
     @Prop()
     userId!: number
 
+    povPuuid: string | null = null
     vod : VodAssociation | null = null
     playerMetadata: ValorantMatchPlayerMatchMetadata | null = null
 
@@ -154,29 +166,6 @@ export default class ValorantMatch extends Vue {
     currentRoundNum : number = 0
 
     theaterMode: boolean = false
-
-    refreshPlayerMetadata() {
-        apiClient.getValorantMatchPlayerMetadata(this.matchId, this.currentPlayer!._p.subject).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
-            this.playerMetadata = resp.data
-        }).catch((err : any) => {
-            this.playerMetadata = null
-        })
-    }
-
-    @Watch('currentMatch')
-    @Watch('userId')
-    refreshVod() {
-        if (!this.currentMatch) {
-            this.vod = null
-            return
-        }
-
-        apiClient.findVodFromMatchUserId(this.currentMatch.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
-            this.vod = resp.data
-        }).catch((err : any) => {
-            this.vod = null
-        })
-    }
 
     get videoUuid() : string | undefined {
         return this.vod?.videoUuid
@@ -203,7 +192,7 @@ export default class ValorantMatch extends Vue {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight}px`,
+            'height': `${this.currentPlayerHeight + 64}px`,
         }
     }
 
@@ -257,7 +246,6 @@ export default class ValorantMatch extends Vue {
             return
         }
         this.currentPlayer = this.matchWrapper!.getPlayer(this.puuid)
-        this.refreshPlayerMetadata()
     }
 
     @Watch('matchId')
@@ -270,6 +258,7 @@ export default class ValorantMatch extends Vue {
     }
 
     mounted() {
+        this.povPuuid = this.puuid
         this.refreshMatch()
     }
 }

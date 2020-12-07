@@ -216,10 +216,21 @@ interface MatchPlayerMap {
 export class ValorantMatchTeamWrapper {
     _t : ValorantMatchTeam
     players: ValorantMatchPlayerWrapper[]
+    puuidToPlayer: Map<string, ValorantMatchPlayerWrapper>
 
     constructor(t : ValorantMatchTeam) {
         this._t = t
         this.players = []
+        this.puuidToPlayer = new Map()
+    }
+
+    hasPlayer(p: string): boolean {
+        return this.puuidToPlayer.has(p)
+    }
+
+    addPlayer(p : ValorantMatchPlayerWrapper) {
+        this.players.push(p)
+        this.puuidToPlayer.set(p._p.subject, p)
     }
 
     getPlayersDescendingCS() : ValorantMatchPlayerWrapper[] {
@@ -252,7 +263,7 @@ export class ValorantMatchDetailsWrapper {
         this._players = {}
         for (let p of this._details.players) {
             let np = new ValorantMatchPlayerWrapper(p)
-            this._teams[p.teamId].players.push(np)
+            this._teams[p.teamId].addPlayer(np)
             this._players[p.subject] = np
         }
 

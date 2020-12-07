@@ -171,6 +171,11 @@ export default class ValorantLogContainer extends Vue {
             this.selectedAccount = this.allAccounts.find((ele : RiotAccountData) => {
                 return ele.puuid === this.puuid
             })
+
+            // We need this backup just in case we're switching from another player (in which case the puuid will be invalid).
+            if (!this.selectedAccount) {
+                this.selectedAccount = this.allAccounts[0]
+            }
         } else {
             this.selectedAccount = this.allAccounts[0]
         }
