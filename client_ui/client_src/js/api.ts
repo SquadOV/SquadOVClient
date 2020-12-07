@@ -321,8 +321,8 @@ class ApiClient {
         })
     }
 
-    getAimlabTaskData(uuid : string) : Promise<ApiData<AimlabTaskData>> {
-        return axios.get(`v1/aimlab/match/${uuid}/task`, this.createWebAxiosConfig()).then((resp : ApiData<AimlabTaskData>) => {
+    getAimlabTaskData(uuid : string, userId: number) : Promise<ApiData<AimlabTaskData>> {
+        return axios.get(`v1/aimlab/user/${userId}/match/${uuid}/task`, this.createWebAxiosConfig()).then((resp : ApiData<AimlabTaskData>) => {
             cleanAimlabTaskData(resp.data)
             return resp
         })

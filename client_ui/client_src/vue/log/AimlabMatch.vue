@@ -57,12 +57,13 @@ export default class AimlabMatch extends Vue {
     @Prop({required: true})
     userId!: number
 
+    // Synced from the task summary display. Kind of a yikes there...
     vod : VodAssociation | null = null
     data : AimlabTaskData | null = null
 
     @Watch('taskId')
     refreshTask() {
-        apiClient.getAimlabTaskData(this.taskId).then((resp : ApiData<AimlabTaskData>) => {
+        apiClient.getAimlabTaskData(this.taskId, this.userId).then((resp : ApiData<AimlabTaskData>) => {
             this.data = resp.data
         }).catch((err : any) => {
             console.log('Failed to get Aim Lab task data: ' + err)
