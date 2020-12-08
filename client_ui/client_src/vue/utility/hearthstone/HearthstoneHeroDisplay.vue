@@ -3,6 +3,7 @@
         <v-img
             :src="imageUrl"
             :max-height="maxHeight"
+            :max-width="maxHeight"
             contain
         >
         </v-img>

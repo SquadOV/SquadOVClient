@@ -1,5 +1,5 @@
 <template>
-    <div class="round-container d-flex">
+    <div class="round-container d-flex flex-wrap">
         <div
             class="flex-grow-1 flex-shrink-1"
             v-for="r in numRounds"

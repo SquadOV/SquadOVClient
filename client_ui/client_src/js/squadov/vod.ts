@@ -12,6 +12,12 @@ export interface ValorantMatchAccessibleVods {
     userMapping: {[uuid: string] : string | undefined}
 }
 
+export interface HearthstoneMatchAccessibleVods {
+    vods: VodAssociation[]
+    userToHero: {[userId: number] : string | undefined }
+    userToId: {[uuid: string] : number | undefined }
+}
+
 interface VodSegment {
     uri: string
     duration: number

@@ -1,7 +1,7 @@
 <template>
     <loading-container :is-loading="!ready">
         <template v-slot:default="{ loading }">
-            <div v-if="!loading">
+            <v-container fluid v-if="!loading">
                 <!--
                     Header that summarizes some key details about the final state of the match.
                     Namely, we want to know the two heros, final life count, final turn, match duration.
@@ -27,6 +27,13 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                         >
                         </video-player>
+
+                        <hearthstone-vod-pov-picker
+                            :match-id="matchId"
+                            :vod.sync="vod"
+                            :ref-user-id="userId"
+                        >
+                        </hearthstone-vod-pov-picker>
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
@@ -54,7 +61,7 @@
 
                                 <v-tab-item>
                                     <hearthstone-battleground-tavern-summary
-                                        :height="currentPlayerHeight - 48"
+                                        :height="currentPlayerHeight - 48 + 68"
                                     >
                                     </hearthstone-battleground-tavern-summary>    
                                 </v-tab-item>
@@ -136,7 +143,7 @@
                         </template>
                     </v-col>
                 </v-row>
-            </div>
+            </v-container>
         </template>
     </loading-container>
 </template>
@@ -157,6 +164,7 @@ import HearthstoneBattlegroundsTurnTimelineDisplay from '@client/vue/utility/hea
 import HearthstoneMatchDeckDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchDeckDisplay.vue'
 import HearthstoneBattlegroundTavernSummary from '@client/vue/utility/hearthstone/HearthstoneBattlegroundTavernSummary.vue'
 import HearthstoneCurrentDeckState from '@client/vue/utility/hearthstone/HearthstoneCurrentDeckState.vue'
+import HearthstoneVodPovPicker from '@client/vue/utility/hearthstone/HearthstoneVodPovPicker.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 
 @Component({
@@ -169,6 +177,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
     HearthstoneMatchDeckDisplay,
     HearthstoneBattlegroundTavernSummary,
     HearthstoneCurrentDeckState,
+    HearthstoneVodPovPicker,
     VideoPlayer
   }
 })
@@ -202,7 +211,7 @@ export default class HearthstoneMatch extends Vue {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight - 48}px`,
+            'height': `${this.currentPlayerHeight - 48 + 68}px`,
         }
     }
 
@@ -250,20 +259,8 @@ export default class HearthstoneMatch extends Vue {
         })
     }
 
-    @Watch('matchId')
-    @Watch('userId')
-    refreshVod() {
-        this.vod = null
-        apiClient.findVodFromMatchUserId(this.matchId, this.userId).then((resp : ApiData<VodAssociation>) => {
-            this.vod = resp.data
-        }).catch((err : any) => {
-            this.vod = null
-        })
-    }
-
     mounted() {
         this.refreshData()
-        this.refreshVod()
     }
 }
 
