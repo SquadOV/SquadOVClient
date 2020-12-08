@@ -170,8 +170,17 @@ ipcMain.handle('request-session', () => {
     }
 })
 
+totalCloseCount = 0
 function startClientService() {
-    if (!!process.env.SQUADOV_MANUAL_SERVICE) {
+    if (!!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
+        return
+    }
+
+    if (totalCloseCount > 5) {
+        console.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
+        if (!!win) {
+            win.webContents.send('service-error')
+        }
         return
     }
 
@@ -211,7 +220,11 @@ function startClientService() {
     })
 
     child.on('close', (code) => {
-        startClientService()
+        console.log('Unexpected close of client service: ', code)
+        totalCloseCount += 1
+        setTimeout(() => {
+            startClientService()
+        }, 500)
     })
 }
 

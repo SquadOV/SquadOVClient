@@ -289,6 +289,15 @@ ipcRenderer.invoke('request-session').then((session : {
     })
 })
 
+
+let globals: any = {
+    serviceError: false
+}
+
+ipcRenderer.on('service-error', () => {
+    globals.serviceError = true
+})
+
 new Vue({
     el: '#app',
     components: {
@@ -300,6 +309,9 @@ new Vue({
         theme: {
             dark: true,
         },
+    }),
+    data: () => ({
+        globals
     }),
     router: router,
     store: store,

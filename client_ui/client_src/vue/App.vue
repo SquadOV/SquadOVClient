@@ -2,6 +2,14 @@
     <div id="appInner">
         <template v-if="userLoaded">    
             <app-nav class="flex-grow-0"></app-nav>
+            <v-banner
+                v-if="$root.globals.serviceError"
+                single-line
+                sticky
+                color="error"
+            >
+                The local service encountered an unexpected error, please restart SquadOV and try again.
+            </v-banner>
             
             <div class="flex-grow-1">
                 <router-view></router-view>
