@@ -178,11 +178,15 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
 
     // Grab the deck and information about all the players in the game and upload this information first.
     try {
+        LOG_INFO("Retrieve Hearthstone deck from memory." << std::endl);
         const auto deck = _monoMapper->getCurrentDeck();
+        LOG_INFO("Retrieve Hearthstone current players from memory." << std::endl);
         const auto players = _monoMapper->getCurrentPlayers();
 
+        LOG_INFO("Retrieve Hearthstone BG ratings from memory." << std::endl);
         shared::hearthstone::HearthstoneRatings ratings;
         ratings.battlegroundsRating = _monoMapper->getBattlegroundsRating();
+        LOG_INFO("Retrieve Hearthstone Duels ratings from memory." << std::endl);
         ratings.duelsCasualRating = _monoMapper->getDuelsCasualRating();
         ratings.duelsHeroicRating = _monoMapper->getDuelsHeroicRating();
 
