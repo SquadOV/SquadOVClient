@@ -208,7 +208,7 @@ const baseRoutes : any[] = [
         ],
     },
     {
-        path: 'match/valorant/:matchId',
+        path: '/match/valorant/:matchId',
         name: pi.ValorantMatchPageId,
         component: ValorantMatch,
         props: (route : any) => ({
@@ -218,7 +218,7 @@ const baseRoutes : any[] = [
         })
     },
     {
-        path: 'match/aimlab/:taskId',
+        path: '/match/aimlab/:taskId',
         name: pi.AimlabMatchPageId,
         component: AimlabMatch,
         props: (route : any) => ({
@@ -227,7 +227,7 @@ const baseRoutes : any[] = [
         })
     },
     {
-        path: 'match/hearthstone/:matchId',
+        path: '/match/hearthstone/:matchId',
         name: pi.HearthstoneMatchPageId,
         component: HearthstoneMatch,
         props: (route : any) => ({

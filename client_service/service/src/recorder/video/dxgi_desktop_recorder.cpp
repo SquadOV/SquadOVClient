@@ -205,21 +205,25 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 
             HRESULT hr = _dupl->AcquireNextFrame(500, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
+                LOG_INFO("DXGI Wait timeout." << std::endl);
                 continue;
             }
 
             if (hr == DXGI_ERROR_ACCESS_LOST) {
+                LOG_INFO("DXGI Access Lost." << std::endl);
                 reacquireDuplicationInterface();
                 continue;
             }
 
             if (hr != S_OK) {
+                LOG_INFO("DXGI NOT OK:" << hr << std::endl);
                 continue;
             }
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
+                LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
                 std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
                 continue;
             }
@@ -234,6 +238,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             desktopResource->Release();
             desktopResource = nullptr;
             if (hr != S_OK) {
+                LOG_INFO("DXGI FAILED TO QUERY INTERFACE: " << hr << std::endl);
                 continue;
             }
 
@@ -247,6 +252,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             D3D11_MAPPED_SUBRESOURCE mappedData;
             hr = _context->Map(_deviceTexture, 0, D3D11_MAP_READ, 0, &mappedData);
             if (hr != S_OK) {
+                LOG_INFO("DXGI FAILED TO MAP TEXTURE: " << hr << std::endl);
                 continue;
             }
 

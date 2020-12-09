@@ -13,15 +13,19 @@ import {
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { VodAssociation, cleanVodAssocationData, VodManifest, ValorantMatchAccessibleVods, HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneCardMetadata, HearthstoneBattlegroundsCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneArenaRun, cleanHearthstoneArenaRunFromJson } from '@client/js/hearthstone/hearthstone_arena'
 import { HearthstoneDuelRun, cleanHearthstoneDuelRunFromJson } from '@client/js/hearthstone/hearthstone_duel'
+import { HearthstoneGameAction, cleanHearthstoneGameActionFromJson } from '@client/js/hearthstone/hearthstone_actions'
 import {
     Squad, cleanSquadFromJson,
     SquadMembership, cleanSquadMembershipFromJson
     SquadInvite, cleanSquadInviteFromJson
 } from '@client/js/squadov/squad'
+import * as root from '@client/js/proto.js'
+import { squadov } from '@client/js/proto'
 
 import { ipcRenderer } from 'electron'
 
@@ -437,9 +441,55 @@ class ApiClient {
     }
 
     getHearthstoneMatchLogs(matchId: string, userId: number) : Promise<ApiData<HearthstoneMatchLogs>> {
-        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/logs`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneMatchLogs>) => {
-            cleanHearthstoneMatchLogsFromJson(resp.data)
-            return resp
+        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/logs`, {
+            responseType: 'arraybuffer',
+            ...this.createWebAxiosConfig()
+        }).then((resp: ApiData<ArrayBuffer>) => {
+            let buf = new Uint8Array(resp.data)
+            
+            let gameLog: squadov.hearthstone.game_state.HearthstoneSerializedGameLog  = root.squadov.hearthstone.game_state.HearthstoneSerializedGameLog.decode(buf)
+            return {
+                data: {
+                    snapshots: gameLog.snapshots.map((ele: squadov.hearthstone.game_state.IHearthstoneSerializedGameSnapshot) => {
+                        let entities : { [id: number] : HearthstoneEntity } = {}
+                        for (let [eid, entity] of Object.entries(ele.entities!)) {
+                            entities[parseInt(eid)] = {
+                                entityId: entity.entityId!,
+                                tags: JSON.parse(entity.tags!),
+                                attributes: JSON.parse(entity.attributes!)
+                            }
+                        }
+
+                        return {
+                            uuid: ele.uuid!,
+                            tm: (!!ele.tm && ele.tm > 0) ? new Date(ele.tm * 1000) : null,
+                            gameEntityId: ele.gameEntityId!,
+                            playerNameToPlayerId: ele.playerNameToPlayerId!,
+                            playerIdToEntityId: ele.playerIdToEntityId!,
+                            entities: entities,
+                            auxData: (!!ele.auxData) ? {
+                                currentTurn: ele.auxData.currentTurn!,
+                                step: ele.auxData.step!,
+                                currentPlayerId: ele.auxData.currentPlayerId!,
+                                lastActionIndex: ele.auxData.lastActionIndex!,
+                            } : null
+                        }
+                    }),
+                    actions: JSON.parse(gameLog.actions).map((ele: HearthstoneGameAction) => {
+                        return cleanHearthstoneGameActionFromJson(ele)
+                    }),
+                    blocks: gameLog.blocks.map((ele: squadov.hearthstone.game_state.IHearthstoneSerializedGameBlock) => {
+                        return {
+                            blockId: ele.blockId!,
+                            startActionIndex: ele.startActionIndex!,
+                            endActionIndex: ele.endActionIndex!,
+                            blockType: ele.blockType!,
+                            parentBlock: ele.parentBlock!,
+                            entityId: ele.entityId!
+                        }
+                    })
+                }
+            }
         })
     }
 

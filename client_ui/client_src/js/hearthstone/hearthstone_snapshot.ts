@@ -97,7 +97,7 @@ export class HearthstoneMatchSnapshotWrapper {
 
         // If we really reach here then it's probably some edge case like the first shop round on battlegrounds
         // and resorting to the first action is probably OK.
-        return this._actions[0].tm
+        return (this._actions.length > 0 ) ? this._actions[0].tm : undefined
     }
 
     get gameEntity(): HearthstoneEntityWrapper | undefined {
