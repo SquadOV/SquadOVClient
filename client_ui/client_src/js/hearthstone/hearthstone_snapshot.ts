@@ -37,11 +37,13 @@ export class HearthstoneMatchSnapshotWrapper {
     _entities: Map<number, HearthstoneEntityWrapper>
     _blocks: HearthstoneGameBlockWrapper[]
     _actions: HearthstoneGameAction[]
-    constructor(s: HearthstoneMatchSnapshot | null) {
+    _isBattlegrounds: boolean
+    constructor(s: HearthstoneMatchSnapshot | null, isBattlegrounds: boolean) {
         this._snapshot = s
         this._entities = new Map()
         this._blocks = []
         this._actions = []
+        this._isBattlegrounds = isBattlegrounds
     }
 
     // A subset of the blocks that correspond to player actions.
@@ -60,25 +62,42 @@ export class HearthstoneMatchSnapshotWrapper {
         // The beginning of the turn (block 0) isn't necessarily when the player draws the card.
         // Thus, we must search for the action at which we go to the "MAIN_READY" step. Note that
         // we use MAIN_READY here instead of MAIN_START as it translates to battlegrounds as well
-        // while MAIN_START is not used in the action phase of battlegrounds.
-        let idx = -1
+        // while MAIN_START is not used in the action phase of battlegrounds. Note that for SHOP turns
+        // (odd numbers) in Battlegrounds, we need to look for other actions...
+        let turn = this._snapshot?.auxData?.currentTurn
+        let isBattlegroundsShop = this._isBattlegrounds && !!turn && turn % 2 !== 0
+
         for (let a of this._actions) {
-            idx += 1
-            if (a.realEntityId != this._snapshot.gameEntityId) {
-                continue
-            }
+            if (isBattlegroundsShop) {
+                // From what I can see, the first thing the game does is set tag=1196 to value=0 on the board
+                // so we can look for that...
+                if (!('1196' in a.tags)) {
+                    continue
+                }
 
-            if (!('STEP' in a.tags)) {
-                continue
-            }
+                let val = a.tags['1196']
+                if (val === '0') {
+                    return a.tm
+                }
+            } else {
+                if (a.realEntityId != this._snapshot.gameEntityId) {
+                    continue
+                }
 
-            let step = a.tags['STEP']
-            if (step == 'MAIN_READY') {
-                return a.tm
+                if (!('STEP' in a.tags)) {
+                    continue
+                }
+    
+                let step = a.tags['STEP']
+                if (step === 'MAIN_READY') {
+                    return a.tm
+                }
             }
         }
 
-        return undefined
+        // If we really reach here then it's probably some edge case like the first shop round on battlegrounds
+        // and resorting to the first action is probably OK.
+        return this._actions[0].tm
     }
 
     get gameEntity(): HearthstoneEntityWrapper | undefined {

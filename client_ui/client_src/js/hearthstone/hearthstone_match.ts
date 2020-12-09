@@ -160,7 +160,7 @@ export class HearthstoneMatchWrapper {
     constructor(m : HearthstoneMatch) {
         this._match = m
         this._logs = null
-        this._snapshot = new HearthstoneMatchSnapshotWrapper(this._match.latestSnapshot)
+        this._snapshot = new HearthstoneMatchSnapshotWrapper(this._match.latestSnapshot, this.isBattlegrounds)
         this._initialSnapshot = null
         this._allSnapshots = []
         this._allBlocks = new Map()
@@ -169,10 +169,10 @@ export class HearthstoneMatchWrapper {
 
     addLogs(logs: HearthstoneMatchLogs) {
         this._logs = logs
-        this._initialSnapshot = (this._logs.snapshots.length > 0) ? new HearthstoneMatchSnapshotWrapper(this._logs.snapshots[0]) : null
+        this._initialSnapshot = (this._logs.snapshots.length > 0) ? new HearthstoneMatchSnapshotWrapper(this._logs.snapshots[0], this.isBattlegrounds) : null
         let previousIndex = -1
         for (let l of this._logs.snapshots) {
-            let wrapper = new HearthstoneMatchSnapshotWrapper(l)
+            let wrapper = new HearthstoneMatchSnapshotWrapper(l, this.isBattlegrounds)
             let turn = wrapper.currentTurn
             let step = wrapper.step
 
