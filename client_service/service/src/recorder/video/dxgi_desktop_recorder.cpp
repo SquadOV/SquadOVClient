@@ -185,7 +185,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 
             const auto startFrameTm = TickClock::now();
 
-            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
+            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons. It's possible ReleaseFrame
             /*
                 SOURCE: https://docs.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe
                 When the client does not own the frame, the operating system copies all desktop updates to the surface. 
@@ -196,7 +196,12 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
                 cannot copy desktop updates to the surface. Because of this behavior, we recommend that you
                 minimize the time between the call to release the current frame and the call to acquire the next frame.
             */
-            _dupl->ReleaseFrame();
+            const auto result = _dupl->ReleaseFrame();
+            if (result == DXGI_ERROR_ACCESS_LOST) {
+                reacquireDuplicationInterface();
+                // Don't need to continue here since we only start to use _dupl after the
+                // call to ReleaseFrame.
+            }
 
             HRESULT hr = _dupl->AcquireNextFrame(500, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
