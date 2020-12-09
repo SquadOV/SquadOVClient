@@ -86,6 +86,9 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
     get roundName() : string {
         if (this.turn == 0) {
             return 'Mulligan'
+        } else if (this.currentMatch.isBattlegrounds) {
+            let actualRound = Math.floor((this.turn - 1) / 2) + 1
+            return `Round ${actualRound} - ${(this.turn % 2 == 0) ? 'Battle' : 'Shop'}`
         } else {
             return `Round ${this.turn}`
         }
