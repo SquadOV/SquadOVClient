@@ -17,7 +17,7 @@
 
             <footer class="flex-grow-0">
                 <p class="text-center ma-0 text-overline">
-                    SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by GRCHive, Inc.
+                    SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </p>
             </footer>
         </template>
