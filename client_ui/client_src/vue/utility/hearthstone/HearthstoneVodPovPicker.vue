@@ -30,7 +30,7 @@
                 <hearthstone-hero-display
                     :hero-card="uuidToHeroCard.get(evod.userUuid)"
                     :max-height="48"
-                    :class="`${(!!vod && fvod.videoUuid === vod.videoUuid) ? 'selected-hero' : 'enemy-hero'} generic-hero`"
+                    :class="`${(!!vod && evod.videoUuid === vod.videoUuid) ? 'selected-hero' : 'enemy-hero'} generic-hero`"
                 >
                 </hearthstone-hero-display>
             </div>
