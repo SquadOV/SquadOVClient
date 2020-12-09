@@ -52,36 +52,48 @@ export default class HearthstoneGameLog extends Vue {
     get allTo() : any {
         return {
             name: pi.HearthstoneLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 
     get constructedTo() : any {
         return {
             name: pi.HearthstoneConstructedLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 
     get arenaTo() : any {
         return {
             name: pi.HearthstoneArenaLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 
     get brawlTo() : any {
         return {
             name: pi.HearthstoneBrawlLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 
     get battlegroundsTo() : any {
         return {
             name: pi.HearthstoneBattlegroundsLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 
     get duelsTo() : any {
         return {
             name: pi.HearthstoneDuelLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
         }
     }
 }
