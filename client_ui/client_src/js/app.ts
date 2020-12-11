@@ -265,7 +265,7 @@ router.beforeEach((to : any, from : any, next : any) => {
 const store = new Vuex.Store(RootStoreOptions)
 
 // As soon as the app starts we need to query the main process for
-// the session ID properly initialize the API client
+// the session ID to properly initialize the API client
 // so that it's authenticated with the web server. After that, send out
 // an immediate request to obtain the current user profile and store it in the
 // Vuex storage to make it available to the frontend.

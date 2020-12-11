@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain, session} = require('electron')
+const {app, BrowserWindow, ipcMain, net} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
@@ -92,14 +92,16 @@ function getSessionPath() {
     return path.join(app.getPath('appData'), 'SquadOV', 'session.json')
 }
 
-ipcMain.on('logout', () => {
+function logout() {
     const sessionPath = getSessionPath()
     if (fs.existsSync(sessionPath)) {
         fs.unlinkSync(sessionPath)
     }
     app.relaunch()
     quit()    
-})
+}
+
+ipcMain.on('logout', logout)
 
 // Returns true is a session was loaded successfuly.
 function loadSession() {
@@ -172,10 +174,6 @@ ipcMain.handle('request-session', () => {
 
 totalCloseCount = 0
 function startClientService() {
-    if (!!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
-        return
-    }
-
     if (totalCloseCount > 5) {
         console.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
         if (!!win) {
@@ -228,6 +226,47 @@ function startClientService() {
     })
 }
 
+function startSessionHeartbeat(onBeat) {
+    const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
+    log.log('Starting session heartbeat...', url)
+    const request = net.request({
+        method: 'POST',
+        url
+    })
+    request.setHeader('Content-Type', 'application/json')
+    request.write(JSON.stringify({
+        sessionId: process.env.SQUADOV_SESSION_ID
+    }))
+    request.on('response', (resp) => {
+        if (resp.statusCode != 200) {
+            log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
+            logout()
+        } else {
+            let body = ''
+            resp.on('data', (chunk) => {
+                body += chunk.toString()
+            })
+            
+            resp.on('end', () => {
+                let respBody = JSON.parse(body)
+
+                updateSession(respBody.sessionId, true)
+                if (!!onBeat) {
+                    onBeat()
+                }
+
+                let expiration = new Date(respBody.expiration)
+
+                // Preemptively refresh the session 10 minutes before it's due to expire.
+                setTimeout(() => {
+                    startSessionHeartbeat()
+                }, Math.max(expiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
+            })
+        }
+    })
+    request.end()
+}
+
 app.on('ready', async () => {    
     await zeromqServer.start()
     zeromqServer.run()
@@ -263,22 +302,33 @@ app.on('ready', async () => {
     // Set the environment variable SQUADOV_USER_APP_FOLDER to specify which folder to store *ALL* this user's data in.
     setAppDataFolderFromEnv()
 
-    // THEN HAVE THE USER VERIFY THEIR LOCAL PASSWORD.
-    // This is *different* form their account password. It cannot be reset.
-    try {
-        await createVerifyEncryptionPasswordFlow(win)
-    } catch(ex) {
-        log.log('User chose not to input/create password...good bye: ', ex)
-        quit()
-        return
-    }
-    log.log(`OBTAINED ENCRYPTION PASSWORD`)
-    
-    apiServer.start(async () => {
-        startClientService()
-        await backendReady
+    // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
+    // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time
+    // and we end up with an invalid session ID.
+    startSessionHeartbeat(async () => {
+        // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
+        // start the UI and the client service (2 things that require querying the API) until we have a valid session.
+        // This is particularly relevant when we're loading the session from disk.
+
+        // THEN HAVE THE USER VERIFY THEIR LOCAL PASSWORD.
+        // This is *different* form their account password. It cannot be reset.
+        try {
+            await createVerifyEncryptionPasswordFlow(win)
+        } catch(ex) {
+            log.log('User chose not to input/create password...good bye: ', ex)
+            quit()
+            return
+        }
+        log.log(`OBTAINED ENCRYPTION PASSWORD`)
+        
+        apiServer.start(async () => {
+            if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
+                startClientService()
+                await backendReady
+            }
+        })
+        start()
     })
-    start()
 })
 
 app.on('window-all-closed', () => {

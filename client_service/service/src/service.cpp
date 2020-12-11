@@ -86,6 +86,7 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
+        // Note that setSessionId also does an API call to pull the current user.
         service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID", ""));
     } catch (std::exception& ex) {
         // This needs to be caught because the session could be completely invalid.

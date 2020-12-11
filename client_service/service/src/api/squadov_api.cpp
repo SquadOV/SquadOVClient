@@ -12,7 +12,6 @@ namespace service::api {
 namespace {
 
 const std::string WEB_SESSION_HEADER_KEY = "x-squadov-session-id";
-const std::string SET_SESSION_HEADER_KEY = "x-squadov-set-session-id";
 
 }
 
@@ -31,18 +30,6 @@ SquadovApi::SquadovApi() {
         std::ostringstream host;
         host << shared::getEnv("API_SQUADOV_URL", "http://127.0.0.1:8080");
         _webClient = std::make_unique<http::HttpClient>(host.str());
-        _webClient->addResponseInterceptor([this](service::http::HttpResponse& response){
-            if (!_sessionUpdateCallback) {
-                return true;
-            }
-            for (const auto& [key, value] : response.headers) {
-                if (key == SET_SESSION_HEADER_KEY) {
-                    _sessionUpdateCallback(value);
-                    break;
-                }
-            }
-            return true;
-        });
 
         // Some backfill tasks might get pretty heavy so put in a rate limit here.
         // For reference, this is 5 requests per second -- which will translate to about 500 aimlab tasks synced per second

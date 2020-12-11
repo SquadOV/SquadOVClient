@@ -249,7 +249,6 @@ export default class HearthstoneMatch extends Vue {
             this.currentMatch = resp.data
 
             apiClient.getHearthstoneMatchLogs(this.matchId, this.userId).then((resp: ApiData<HearthstoneMatchLogs>) => {
-                console.log('GET LOGS: ', resp.data)
                 this.matchWrapper.addLogs(resp.data)
                 this.ready = true
             }).catch((err: any) => {

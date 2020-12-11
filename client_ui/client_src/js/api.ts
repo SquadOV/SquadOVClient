@@ -26,6 +26,7 @@ import {
 } from '@client/js/squadov/squad'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
+import { UserSession, cleanUserSessionFromJson } from '@client/js/squadov/session'
 
 import { ipcRenderer } from 'electron'
 
@@ -529,32 +530,9 @@ class ApiClient {
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  
         return axios.get(`v1/users/${userId}/accounts/riot/${puuid}`, this.createWebAxiosConfig())
     }
-
 }
 
 export let apiClient = new ApiClient()
-
-const sessionSetHeader = 'x-squadov-set-session-id'
-function parseResponseHeaders(headers : any) {
-    if (!(sessionSetHeader in headers)) {
-        return
-    }
-
-    const newSessionId = headers[sessionSetHeader]
-    apiClient.setSessionId(newSessionId)
-
-    // Also need to notify the main process so that it can communicate with the local service somehow.
-    ipcRenderer.send('refresh-session', newSessionId)
-}
-
 ipcRenderer.on('update-session', (event : any, message : string) => {
     apiClient.setSessionId(message)
-})
-
-axios.interceptors.response.use((resp) => {
-    parseResponseHeaders(resp.headers)
-    return resp
-}, (err) => {
-    parseResponseHeaders(err.response.headers)
-    return Promise.reject(err)
 })
