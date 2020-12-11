@@ -32,6 +32,8 @@ public:
     void stop();
     bool isRecording() const { return !!_encoder; }
     const VodIdentifier& currentId() const { return *_currentId; }
+    std::string sessionId() const { return _outputPiper->sessionId(); }
+
     shared::squadov::VodMetadata getMetadata() const { 
         auto metadata = _encoder->getMetadata();
         metadata.videoUuid = _currentId->videoUuid;

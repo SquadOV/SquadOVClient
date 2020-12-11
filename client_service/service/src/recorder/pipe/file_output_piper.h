@@ -21,6 +21,7 @@ public:
     // At least on windows the pipe will have an actual path on disk that
     // we can use.
     const std::string& filePath() const { return _pipe->filePath(); }
+    virtual std::string sessionId() const { return ""; }
 
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;

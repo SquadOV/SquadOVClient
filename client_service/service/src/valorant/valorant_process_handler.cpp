@@ -197,6 +197,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
         _currentMatch->finishMatch(eventTime);
 
         const auto& vodId = _recorder->currentId();
+        const auto sessionId = _recorder->sessionId();
 
         try {
             // Store match details. Upload match without match details first just to get the match populated.
@@ -218,7 +219,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             association.videoUuid = vodId.videoUuid;
             association.startTime = _currentMatch->startTime();
             association.endTime = _currentMatch->endTime();
-            service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata());
+            service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata(), sessionId);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to upload valorant match: " << ex.what() << std::endl);
             // Any errors should result in the VOD being deleted.

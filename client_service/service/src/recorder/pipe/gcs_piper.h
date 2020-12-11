@@ -36,6 +36,7 @@ public:
     ~GCSPiper();
 
     bool handleBuffer(const char* buffer, size_t numBytes) override;
+    std::string sessionId() const override { return _sessionUri; }
     void flush() override;
 private:
     void tickGcsThread();

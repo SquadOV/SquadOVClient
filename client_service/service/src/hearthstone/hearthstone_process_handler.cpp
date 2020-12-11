@@ -236,6 +236,8 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
     if (isRecording) {
         const auto vodId = _recorder->currentId();
         const auto metadata = _recorder->getMetadata();
+        const auto sessionId = _recorder->sessionId();
+
         _recorder->stop();
         // Need this check here just in case for whatever reason we connected to a game but never
         // actually caught the "game start" event.
@@ -247,7 +249,7 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = _gameStartTime;
                 association.endTime = eventTime;
-                service::api::getGlobalApi()->associateVod(association, metadata);
+                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             } catch (const std::exception& ex) {
                 LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);

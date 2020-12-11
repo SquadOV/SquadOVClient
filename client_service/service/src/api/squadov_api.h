@@ -61,7 +61,7 @@ public:
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;
-    void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata) const;
+    void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const;
     void deleteVod(const std::string& videoUuid) const;
 
 private:

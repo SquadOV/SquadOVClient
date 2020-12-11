@@ -345,14 +345,21 @@ std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid) co
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata) const {
+void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const {
     std::ostringstream path;
     path << "/v1/vod/" << association.videoUuid;
 
-    const nlohmann::json body = {
+    nlohmann::json body = {
         { "association", association.toJson() },
         { "metadata", metadata.toJson() },
     };
+
+    if (sessionUri.empty()) {
+        body["sessionUri"] = nlohmann::json();
+    } else {
+        body["sessionUri"] = sessionUri;
+    }
+
     const auto result = _webClient->post(path.str(), body);
 
     if (result->status != 200) {
