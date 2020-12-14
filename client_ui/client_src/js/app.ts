@@ -54,7 +54,7 @@ const baseRoutes : any[] = [
         name: pi.UserProfilePageId,
         component: UserProfile,
         props: (route : any) => ({
-            userId: route.params.userId
+            userId: parseInt(route.params.userId)
         })
     },
     {
@@ -62,7 +62,7 @@ const baseRoutes : any[] = [
         name: pi.UserSquadsPageId,
         component: UserSquads,
         props: (route: any) => ({
-            userId: route.params.userId
+            userId: parseInt(route.params.userId)
         })
     },
     {
@@ -70,15 +70,15 @@ const baseRoutes : any[] = [
         name: pi.SingleSquadPageId,
         component: SingleSquadPage,
         props: (route: any) => ({
-            squadId: route.params.squadId
+            squadId: parseInt(route.params.squadId)
         })
     },
     { 
         path: '/logs/:userId',
         component: GameLog,
         props: (route: any) => ({
-            squadId: route.query.squadId,
-            userId: route.params.userId,
+            squadId: parseInt(route.query.squadId),
+            userId: parseInt(route.params.userId),
         }),
         children: [
             {
@@ -94,14 +94,14 @@ const baseRoutes : any[] = [
                         name: pi.ValorantLogPageId,
                         component: ValorantGameLog,
                         props: (route : any) => ({
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                             puuid: route.params.account
                         })
                     },
                 ],
                 component: ValorantLogContainer,
                 props: (route : any) => ({
-                    userId: route.params.userId,
+                    userId: parseInt(route.params.userId),
                     puuid: route.params.account
                 })
             },
@@ -110,14 +110,14 @@ const baseRoutes : any[] = [
                 name: pi.AimlabLogPageId,
                 component: AimlabGameLog,
                 props: (route : any) => ({
-                    userId: route.params.userId,
+                    userId: parseInt(route.params.userId),
                 })
             },
             {
                 path: 'hearthstone',
                 component: HearthstoneGameLog,
                 props: (route : any) => ({
-                    userId: route.params.userId,
+                    userId: parseInt(route.params.userId),
                 }),
                 children: [
                     {
@@ -125,7 +125,7 @@ const baseRoutes : any[] = [
                         name: pi.HearthstoneLogPageId,
                         component: HearthstoneAllMatchesGameLog,
                         props: (route : any) => ({
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         }),
                     },
                     {
@@ -137,7 +137,7 @@ const baseRoutes : any[] = [
                                 HearthstoneGameType.Ranked,
                                 HearthstoneGameType.Casual
                             ],
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         })
                     },
                     {
@@ -145,7 +145,7 @@ const baseRoutes : any[] = [
                         name: pi.HearthstoneArenaLogPageId,
                         component: HearthstoneArenaGameLog,
                         props: (route : any) => ({
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         }),
                     },
                     {
@@ -154,7 +154,7 @@ const baseRoutes : any[] = [
                         component: HearthstoneArenaRunMatchLog,
                         props: (route: any) => ({
                             runId: route.params.arenaId,
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         })
                     },
                     {
@@ -171,7 +171,7 @@ const baseRoutes : any[] = [
                                 HearthstoneGameType.FsgBrawl1pVsAi,
                                 HearthstoneGameType.FsgBrawl2pCoop,
                             ],
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         })
                     },
                     {
@@ -183,7 +183,7 @@ const baseRoutes : any[] = [
                                 HearthstoneGameType.Battlegrounds,
                                 HearthstoneGameType.BattlegroundsFriendly
                             ],
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         })
                     },
                     {
@@ -191,7 +191,7 @@ const baseRoutes : any[] = [
                         name: pi.HearthstoneDuelLogPageId,
                         component: HearthstoneDuelGameLog,
                         props: (route : any) => ({
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         }),
                     },
                     {
@@ -200,7 +200,7 @@ const baseRoutes : any[] = [
                         component: HearthstoneDuelRunMatchLog,
                         props: (route: any) => ({
                             runId: route.params.duelId,
-                            userId: route.params.userId,
+                            userId: parseInt(route.params.userId),
                         })
                     },
                 ]
@@ -214,7 +214,7 @@ const baseRoutes : any[] = [
         props: (route : any) => ({
             puuid: route.query.account,
             matchId: route.params.matchId,
-            userId: route.query.userId
+            userId: parseInt(route.query.userId)
         })
     },
     {
@@ -223,7 +223,7 @@ const baseRoutes : any[] = [
         component: AimlabMatch,
         props: (route : any) => ({
             taskId: route.params.taskId,
-            userId: route.query.userId
+            userId: parseInt(route.query.userId)
         })
     },
     {
@@ -232,7 +232,7 @@ const baseRoutes : any[] = [
         component: HearthstoneMatch,
         props: (route : any) => ({
             matchId: route.params.matchId,
-            userId: route.query.userId
+            userId: parseInt(route.query.userId)
         })
     },
     { 
@@ -258,7 +258,7 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to : any, from : any, next : any) => {
-    console.log(`Navigate ${from.path} => ${to.path}`)
+    console.log(`Navigate ${from.fullPath} => ${to.fullPath}`)
     next()
 })
 

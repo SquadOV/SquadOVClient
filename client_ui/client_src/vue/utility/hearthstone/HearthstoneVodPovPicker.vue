@@ -57,7 +57,7 @@ export default class HearthstoneVodPovPicker extends Vue {
     @Prop({required: true})
     matchId!: string
 
-    @Prop({required: true})
+    @Prop({type: Number, required: true})
     refUserId!: number
 
     @Prop({required: true})
@@ -124,10 +124,12 @@ export default class HearthstoneVodPovPicker extends Vue {
         return map
     }
 
+    @Watch('userIdToUuid')
     @Watch('availableVods')
     onChangeVods() {
         this.$emit('update:vod', null)
         if (!this.availableVods) {
+            console.log('no vods')
             return
         }
 
@@ -148,10 +150,6 @@ export default class HearthstoneVodPovPicker extends Vue {
 
         let vod = this.uuidToVod.get(uuid)
         if (!vod) {
-            return
-        }
-
-        if (vod.videoUuid === this.vod?.videoUuid) {
             return
         }
 

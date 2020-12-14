@@ -132,7 +132,7 @@ export default class GameLog extends Vue {
     }
 
     get isLoadingCurrentUser(): boolean {
-        return !this.logUser || (!this.logSquad && this.squadId !== undefined)
+        return !this.logUser || (!this.logSquad && (this.squadId !== undefined && !isNaN(this.squadId)))
     }
 
     get currentPageName() : string | null | undefined {
@@ -264,7 +264,7 @@ export default class GameLog extends Vue {
         this.showHideSquadMenu = false
 
         this.logSquad = null
-        if (this.squadId === undefined) {
+        if (this.squadId === undefined || isNaN(this.squadId)) {
             return
         }
 

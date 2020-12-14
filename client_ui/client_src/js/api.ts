@@ -26,7 +26,6 @@ import {
 } from '@client/js/squadov/squad'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
-import { UserSession, cleanUserSessionFromJson } from '@client/js/squadov/session'
 
 import { ipcRenderer } from 'electron'
 

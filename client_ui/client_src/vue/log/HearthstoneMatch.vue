@@ -185,7 +185,7 @@ export default class HearthstoneMatch extends Vue {
     @Prop({required: true})
     matchId!: string
 
-    @Prop({required: true})
+    @Prop({type: Number, required: true})
     userId!: number
 
     eventSectionTab: number = 0
