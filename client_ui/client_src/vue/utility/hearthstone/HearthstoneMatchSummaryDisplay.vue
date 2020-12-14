@@ -9,13 +9,15 @@
                 <v-row no-gutters v-if="!!currentMatch">
                     <!-- Hero class + Deck Name (if applicable) -->
                     <v-col cols="2" align-self="center">
-                        <hearthstone-hero-display
-                            :hero-card="deckHeroCard"
-                            :max-height="150"
-                        >
-                        </hearthstone-hero-display>
+                        <div class="d-flex justify-start">
+                            <hearthstone-hero-display
+                                :hero-card="deckHeroCard"
+                                :max-height="150"
+                            >
+                            </hearthstone-hero-display>
+                        </div>
 
-                        <div class="d-flex justify-center my-1" v-if="isConstructed">
+                        <div class="d-flex justify-start ml-2 my-1" v-if="isConstructed">
                             <span>
                                 {{ deckName }}
                             </span>
@@ -75,11 +77,13 @@
 
                     <!-- Enemy hero -->
                     <v-col cols="2" align-self="center" v-if="!matchWrapper.isBattlegrounds">
-                        <hearthstone-hero-display
-                            :hero-card="enemyHeroCard"
-                            :max-height="150"
-                        >
-                        </hearthstone-hero-display>
+                        <div class="d-flex justify-end">
+                            <hearthstone-hero-display
+                                :hero-card="enemyHeroCard"
+                                :max-height="150"
+                            >
+                            </hearthstone-hero-display>
+                        </div>
                     </v-col>
                 </v-row>
 
