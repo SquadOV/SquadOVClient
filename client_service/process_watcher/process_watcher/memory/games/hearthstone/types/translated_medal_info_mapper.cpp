@@ -58,6 +58,17 @@ nlohmann::json TranslatedMedalInfoMapper::toJson() const {
     };
 }
 
+nlohmann::json TranslatedMedalInfoMapper::emptyJson() {
+    return {
+        { "leagueId", 0 },
+        { "earnedStars", 0 },
+        { "starLevel", 0 },
+        { "bestStarLevel", 0 },
+        { "winStreak", 0 },
+        { "legendIndex", 0 }
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const TranslatedMedalInfoMapper& map) {
     os << "[League: " << map.leagueId() 
         << " Earned: " << map.earnedStars()

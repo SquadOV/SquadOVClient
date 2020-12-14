@@ -39,6 +39,7 @@ public:
 
     process_watcher::memory::mono::types::NullableMapper<int64_t> lastDeckId() const;
     GameType gameType() const;
+    bool isSpectator() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

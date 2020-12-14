@@ -148,6 +148,11 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
         return;
     }
 
+    // We don't want to handle spectate mode as that isn't this user's match.
+    if (_monoMapper->isSpectator()) {
+        return;
+    }
+
     // We need to store this information as we'll be using this to identify the game when we upload information about the game soon.
     _currentGame = *info;
 
@@ -165,7 +170,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
     LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(eventTime) << "] - " << _currentGame.valid() << std::endl);
 
     // Mark this flag just in case the MatchConnect gets fired *after* MatchStart so we know to call onGameStart from the MatchConnect event.
-    if (!_inGame) {
+    if (!_inGame && !_monoMapper->isSpectator()) {
         _gameStartEventTime = eventTime;
         _inGame = true;   
     }

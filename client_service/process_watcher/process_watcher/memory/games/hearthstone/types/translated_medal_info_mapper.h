@@ -19,6 +19,7 @@ public:
     int32_t legendIndex() const;
 
     nlohmann::json toJson() const;
+    static nlohmann::json emptyJson();
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

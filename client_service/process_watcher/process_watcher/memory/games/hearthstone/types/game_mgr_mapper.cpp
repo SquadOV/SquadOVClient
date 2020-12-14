@@ -8,6 +8,7 @@ namespace {
 const std::string GAMEMGR_FULL_NAME("GameMgr");
 const std::string GAMEMGR_LASTDECKID_FIELD_NAME("m_lastDeckId");
 const std::string GAMETYPE_FIELD_NAME("m_gameType");
+const std::string IS_SPECTATOR_FIELD_NAME("m_spectator");
 
 }
 
@@ -34,6 +35,11 @@ GameType GameMgrMapper::gameType() const {
         return GameType::GT_UNKNOWN;
     }
     return static_cast<GameType>(value.get<int32_t>());
+}
+
+bool GameMgrMapper::isSpectator() const {
+    const auto value = _object->get(IS_SPECTATOR_FIELD_NAME);
+    return static_cast<bool>(value.get<uint8_t>());
 }
 
 }

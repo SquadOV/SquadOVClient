@@ -53,6 +53,14 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch()
     }
 }
 
+bool HearthstoneMemoryMapper::isSpectator() const {
+    const auto gameMgr = types::HearthstoneServicesMapper::getGameMgr(_mono->image(), _mono->domainId());
+    if (!gameMgr) {
+        return false;
+    }
+    return gameMgr->isSpectator();
+}
+
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentArenaDeck() const {
     const auto draftManager = types::HearthstoneServicesMapper::getDraftManager(_mono->image(), _mono->domainId());
     if (!draftManager) {
