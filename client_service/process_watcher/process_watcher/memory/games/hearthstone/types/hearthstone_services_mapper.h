@@ -6,6 +6,7 @@
 #include "process_watcher/memory/games/hearthstone/types/service_locator_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/dynamic_service_locator_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/net_cache_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/network_mapper.h"
 #include <string>
 
 namespace process_watcher::memory::games::hearthstone::types {
@@ -15,6 +16,7 @@ public:
     static GameMgrMapperSPtr getGameMgr(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId);
     static DraftManagerMapperSPtr getDraftManager(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId);
     static NetCacheMapperSPtr getNetCache(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId);
+    static NetworkMapperSPtr getNetwork(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId);
 private:
     // T is the type that we want to return.
     // K is the MonoClass that it corresponds to.

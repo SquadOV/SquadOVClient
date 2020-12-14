@@ -6,6 +6,7 @@
 namespace process_watcher::memory::mono {
 namespace {
 
+constexpr uint32_t MONO_INSTANCE_SIZE_OFFSET = 16;
 constexpr uint32_t MONO_CLASS_FLAGS_OFFSET = 20;
 constexpr uint8_t MONO_CLASS_VALUETYPE_FLAGS_BITFLAGS = 0b100;
 constexpr uint8_t MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS = 0b1000;
@@ -111,6 +112,8 @@ void MonoClassMapper::loadInner() {
     const auto flags = _memory->readProcessMemory<uint8_t>(_ptr + MONO_CLASS_FLAGS_OFFSET);
     _isValueType = flags & MONO_CLASS_VALUETYPE_FLAGS_BITFLAGS;
     _isEnumType = flags & MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS;
+
+    _instanceSize = _memory->readProcessMemory<int32_t>(_ptr + MONO_INSTANCE_SIZE_OFFSET);
 }
 
 std::string MonoClassMapper::fullName() const {
@@ -159,6 +162,15 @@ const MonoVTableMapper* MonoClassMapper::loadVTable(int32_t domainId) {
     auto* ptr = vtable.get();
     _domainVtables[domainId] = std::move(vtable);
     return ptr;
+}
+
+
+int32_t MonoClassMapper::instanceSize() const {
+    return _instanceSize;
+}
+
+int32_t MonoClassMapper::valueSize() const {
+    return instanceSize() - 8;
 }
 
 std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map) {

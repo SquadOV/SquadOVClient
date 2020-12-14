@@ -12,10 +12,10 @@ HearthstoneMemoryMapper::HearthstoneMemoryMapper(process_watcher::memory::MonoMe
 }
 
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeck() const {
-    const auto deck = getCurrentDeckInUI();
-    if (deck) {
-        return deck;
-    }
+    //const auto deck = getCurrentDeckInUI();
+    //if (deck) {
+    //    return deck;
+    //}
     return getCurrentDeckInMatch();
 }
 

@@ -11,7 +11,11 @@ MonoObjectMapper::MonoObjectMapper(MonoImageMapper* image, const process_watcher
 
     if (klass) {
         _klass = klass;
-        _vtable = _image->loadVTableForClass(_klass, _domainId);
+        if (!klass->isValueType()) {
+            _vtable = _image->loadVTableForClass(_klass, _domainId);
+        } else {
+            _vtable = nullptr;
+        }
     } else {
         uint32_t vtablePtr = 0;
         _memory->readProcessMemory(&vtablePtr, _ptr);

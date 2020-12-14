@@ -24,6 +24,11 @@ NetCacheMapperSPtr HearthstoneServicesMapper::getNetCache(const process_watcher:
     return get<NetCacheMapper>(cls, image, domainId);
 }
 
+NetworkMapperSPtr HearthstoneServicesMapper::getNetwork(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
+    const auto* cls = NetworkMapper::klass(image);
+    return get<NetworkMapper>(cls, image, domainId);
+}
+
 DynamicServiceLocatorMapperPtr HearthstoneServicesMapper::getDynamicServices(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(HEARTHSTONE_SERVICES_MAPPER_FULL_NAME);
     if (!cls) {
@@ -49,5 +54,6 @@ ServiceLocatorMapperPtr HearthstoneServicesMapper::getServices(const process_wat
     }
     return std::make_shared<ServiceLocatorMapper>(value.get<mono::MonoObjectMapperSPtr>());
 }
+
 
 }

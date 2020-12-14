@@ -32,6 +32,9 @@ SET(SRCS
     process_watcher/memory/games/hearthstone/types/translated_medal_info_mapper.cpp
     process_watcher/memory/games/hearthstone/types/game_state_mapper.cpp
     process_watcher/memory/games/hearthstone/types/net_cache_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/find_game_result_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/network_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/game_session_info_mapper.cpp
 )
 
 SET(HEADERS
@@ -75,6 +78,9 @@ SET(HEADERS
     process_watcher/memory/games/hearthstone/types/translated_medal_info_mapper.h
     process_watcher/memory/games/hearthstone/types/game_state_mapper.h
     process_watcher/memory/games/hearthstone/types/net_cache_mapper.h
+    process_watcher/memory/games/hearthstone/types/find_game_result_mapper.h
+    process_watcher/memory/games/hearthstone/types/network_mapper.h
+    process_watcher/memory/games/hearthstone/types/game_session_info_mapper.h
 )
 
 add_library(squadov_process_watcher

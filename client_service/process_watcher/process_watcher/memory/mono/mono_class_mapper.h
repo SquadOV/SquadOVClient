@@ -162,6 +162,9 @@ public:
     const MonoVTableMapper* loadVTable(int32_t domainId);
     const MonoTypeMapper* type() const { return _type.get(); }
 
+    int32_t instanceSize() const;
+    int32_t valueSize() const;
+
     friend std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);
 private:
     class MonoImageMapper* _image;
@@ -178,6 +181,7 @@ private:
     int32_t _sizes;
     bool _isValueType;
     bool _isEnumType;
+    int32_t _instanceSize;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);

@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <variant>
+#include <vector>
 
 namespace process_watcher::memory::mono {
 
@@ -23,6 +24,7 @@ using RawDynamicMonoType = std::variant<
     uint64_t,
     float,
     double,
+    std::vector<char>, // A generic byte array - we'll use this to store structs.
     nullptr_t
 >;
 

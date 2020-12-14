@@ -82,6 +82,14 @@ DynamicMonoType MonoClassFieldMapper::get(const MonoObjectMapper* object, int32_
             break;
     };
 
+    
+    if (object && !object->hasVtable()) {
+        // This seems to be the case in practice?
+        // Honestly no idea ... just need things to work at this point so
+        // yolo.
+        dataPtr -= 8;
+    }
+
     if (isPtr) {
         uint32_t newPtr = 0;
         _memory->readProcessMemory(&newPtr, dataPtr);
@@ -151,7 +159,11 @@ DynamicMonoType MonoClassFieldMapper::getValue(uintptr_t ptr, int32_t domainId, 
             if (innerCls->isEnumType()) {
                 return getValue(ptr, domainId, elementCls, elementCls->type());
             } else {
-                THROW_ERROR("Non-Enum VALUETYPE unsupported.");    
+                // At this point we can probably assume that this is a struct. We'll let
+                // the MonoObjectMapper take care of handling the details of this specific case
+                // (of just...not having a vtable hopefully?).
+                ret = std::make_shared<MonoObjectMapper>(_image, _memory, ptr, domainId, innerCls);
+                break;
             }
             break;
         }
