@@ -148,11 +148,6 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
         return;
     }
 
-    // We don't want to handle spectate mode as that isn't this user's match.
-    if (_monoMapper->isSpectator()) {
-        return;
-    }
-
     // We need to store this information as we'll be using this to identify the game when we upload information about the game soon.
     _currentGame = *info;
 
@@ -169,8 +164,30 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eventTime, const void* rawData) {
     LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(eventTime) << "] - " << _currentGame.valid() << std::endl);
 
+    // We don't want to handle spectate mode as that isn't this user's match.
+    // We handle this here because it's likely that isSpecator isn't set to true until
+    // later (i.e. not the moment the user connects to the match). In the case that
+    // we are spectating we want to immediately stop recording and delete what was already
+    // recorded.
+    LOG_INFO("IS SPEC: " << _monoMapper->isSpectator() << std::endl);
+    if (_monoMapper->isSpectator()) {
+        LOG_INFO("Detecting spectator mode...reverting Hearthstone recording:" << _recorder->isRecording() << std::endl);
+        if (_recorder->isRecording()) {
+            const auto vodId = _recorder->currentId();
+            try {
+                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
+            }
+            _recorder->stop();
+        }
+        _inGame = false;
+        _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
+        return;
+    }
+
     // Mark this flag just in case the MatchConnect gets fired *after* MatchStart so we know to call onGameStart from the MatchConnect event.
-    if (!_inGame && !_monoMapper->isSpectator()) {
+    if (!_inGame) {
         _gameStartEventTime = eventTime;
         _inGame = true;   
     }
