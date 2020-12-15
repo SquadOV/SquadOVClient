@@ -35,6 +35,12 @@ SET(SRCS
     process_watcher/memory/games/hearthstone/types/find_game_result_mapper.cpp
     process_watcher/memory/games/hearthstone/types/network_mapper.cpp
     process_watcher/memory/games/hearthstone/types/game_session_info_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/friendly_challenge_mgr_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/friendly_challenge_data_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/bnet_player_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/bnet_presence_mgr_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/bnet_account_id_mapper.cpp
+    process_watcher/memory/games/hearthstone/types/bnet_account_mapper.cpp
 )
 
 SET(HEADERS
@@ -81,6 +87,12 @@ SET(HEADERS
     process_watcher/memory/games/hearthstone/types/find_game_result_mapper.h
     process_watcher/memory/games/hearthstone/types/network_mapper.h
     process_watcher/memory/games/hearthstone/types/game_session_info_mapper.h
+    process_watcher/memory/games/hearthstone/types/friendly_challenge_mgr_mapper.h
+    process_watcher/memory/games/hearthstone/types/friendly_challenge_data_mapper.h
+    process_watcher/memory/games/hearthstone/types/bnet_player_mapper.h
+    process_watcher/memory/games/hearthstone/types/bnet_presence_mgr_mapper.h
+    process_watcher/memory/games/hearthstone/types/bnet_account_id_mapper.h
+    process_watcher/memory/games/hearthstone/types/bnet_account_mapper.h
 )
 
 add_library(squadov_process_watcher

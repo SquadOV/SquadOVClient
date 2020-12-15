@@ -3,6 +3,7 @@
 #include "process_watcher/memory/mono_memory_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/bnet_account_id_mapper.h"
 #include <memory>
 #include <optional>
 
@@ -35,6 +36,8 @@ public:
     std::optional<int32_t> getBattlegroundsRating() const;
     std::optional<int32_t> getDuelsCasualRating() const;
     std::optional<int32_t> getDuelsHeroicRating() const;
+
+    types::BNetAccountIdMapperSPtr getLocalBNetPlayer() const;
 
 private:
     types::CollectionDeckMapperSPtr getCurrentDeckInUI() const;

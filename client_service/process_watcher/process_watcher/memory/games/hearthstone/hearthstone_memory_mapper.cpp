@@ -3,6 +3,8 @@
 #include "process_watcher/memory/games/hearthstone/types/collection_manager_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/hearthstone_services_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/game_state_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/friendly_challenge_mgr_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/bnet_presence_mgr_mapper.h"
 
 namespace process_watcher::memory::games::hearthstone {
 
@@ -31,6 +33,17 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInUI() co
     return getDeckFromId(deckVisual->deckId());
 }
 
+types::BNetAccountIdMapperSPtr HearthstoneMemoryMapper::getLocalBNetPlayer() const {
+    // Ideally we'd use BnetPresenceMgr but I can't for the life of me figure out why it's not showing up as
+    // a class when I can find it in ILSpy.
+    for (const auto& kvp : getCurrentPlayers()) {
+        if (kvp.second->local()) {
+            return kvp.second->gameAccountId();
+        }
+    }
+    return nullptr;
+}
+
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch() const {
     const auto gameMgr = types::HearthstoneServicesMapper::getGameMgr(_mono->image(), _mono->domainId());
     if (!gameMgr) {
@@ -45,11 +58,38 @@ types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentDeckInMatch()
         return getCurrentDuelsDeck();
     } else {
         const auto deckId = gameMgr->lastDeckId();
-        if (!deckId) {
+        if (deckId) {
+            return getDeckFromId(deckId.value());
+        }
+
+        // At this point we are probably in a friendly match
+        // which is handled separately from the regular GameMgr.
+        const auto friendly = types::FriendlyChallengeMgrMapper::singleton(_mono->image(), _mono->domainId());
+        if (!friendly) {
             return nullptr;
         }
 
-        return getDeckFromId(deckId.value());
+        const auto friendlyData = friendly->data();
+        if (!friendlyData) {
+            return nullptr;
+        }
+
+        const auto myPlayer = getLocalBNetPlayer();
+        if (!myPlayer) {
+            return nullptr;
+        }
+
+        const auto challenger = friendlyData->challenger();
+        if (challenger && *challenger == *myPlayer) {
+            return getDeckFromId(friendlyData->challengerDeckId());
+        }
+
+        const auto challengee = friendlyData->challengee();
+        if (challengee && *challengee->hsGameAccount()->id() == *myPlayer) {
+            return getDeckFromId(friendlyData->challengeeDeckId());
+        }
+
+        return nullptr;
     }
 }
 

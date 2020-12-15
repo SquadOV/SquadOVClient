@@ -161,6 +161,7 @@ public:
 
     const MonoVTableMapper* loadVTable(int32_t domainId);
     const MonoTypeMapper* type() const { return _type.get(); }
+    const MonoClassMapper* superClass(const std::string& name) const { return _supertypes.at(name); }
 
     int32_t instanceSize() const;
     int32_t valueSize() const;
@@ -182,6 +183,7 @@ private:
     bool _isValueType;
     bool _isEnumType;
     int32_t _instanceSize;
+    std::unordered_map<std::string, const MonoClassMapper*> _supertypes;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoClassMapper& map);

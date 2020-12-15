@@ -23,8 +23,10 @@ public:
 
     // Convenience functions to obtain field values for this specific object.
     DynamicMonoType get(const std::string& fieldName) const;
+    DynamicMonoType superGet(const std::string& parentName, const std::string& fieldName) const;
     const class MonoTypeMapper* fieldType(const std::string& fieldName) const;
     const class MonoClassFieldMapper& field(const std::string& fieldName) const;
+    const class MonoClassFieldMapper& superfield(const std::string& parentName, const std::string& fieldName) const;
     bool hasVtable() const { return !!_vtable; }
 private:
     class MonoImageMapper* _image;

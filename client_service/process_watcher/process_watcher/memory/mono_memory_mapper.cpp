@@ -104,32 +104,25 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const P
         memory->readProcessMemory(&namePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_NAME_OFFSET));
         memory->readProcessMemory(nameBuffer, static_cast<uintptr_t>(namePointer), nameBuffer.size());
 
-        if (std::string(nameBuffer.data()) != MONO_MAIN_ASSEMBLY_NAME) {
-            domainAssembliesListPtr = next;
-            continue;
-        }
-
         // The next 4 bytes in the MonoAssembly object is a pointer to a MonoImage. Since we've found the correct assembly,
         // we'll go ahead and store our own representation of the MonoImage for easy access.
         uint32_t imagePointer = 0;
         memory->readProcessMemory(&imagePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_IMAGE_PTR_OFFSET));
 
-        _image = std::make_unique<mono::MonoImageMapper>(memory, imagePointer);
-        break;
-    }
-
-    if (!_image) {
-        THROW_ERROR("Failed to find the Assembly-CSharp main assembly.");
+        _images[std::string(nameBuffer.data())] = std::make_unique<mono::MonoImageMapper>(memory, imagePointer);
+        domainAssembliesListPtr = next;
     }
 }
 
+const mono::MonoImageMapper& MonoMemoryMapper::image() const {
+    return *_images.at(MONO_MAIN_ASSEMBLY_NAME);
+}
+
 std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map) {
-    os << "Mono Mapper: ";
-    if (map._image) {
-        os << std::endl << *map._image;
-    } else {
-        os << " INVALID";
-    } 
+    os << "Mono Mapper: " << std::endl;
+    for (const auto& kvp: map._images) {
+        os << "IMAGE: " << kvp.first << std::endl << *kvp.second << std::endl;
+    }
     return os;
 }
 

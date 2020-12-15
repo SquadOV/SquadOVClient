@@ -12,6 +12,8 @@ constexpr uint8_t MONO_CLASS_VALUETYPE_FLAGS_BITFLAGS = 0b100;
 constexpr uint8_t MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS = 0b1000;
 
 constexpr uint32_t MONO_CLASS_ELEMENTCLASS_OFFSET = 0;
+constexpr uint32_t MONO_CLASS_SUPERTYPES_OFFSET = 8;
+constexpr uint32_t MONO_CLASS_IDEPTH_OFFSET = 12;
 constexpr uint32_t MONO_CLASS_KIND_OFFSET = 30;
 constexpr uint32_t MONO_CLASS_NAME_OFFSET = 44;
 constexpr uint32_t MONO_CLASS_NAMESPACE_OFFSET = 48;
@@ -114,6 +116,17 @@ void MonoClassMapper::loadInner() {
     _isEnumType = flags & MONO_CLASS_ENUMTYPE_FLAGS_BITFLAGS;
 
     _instanceSize = _memory->readProcessMemory<int32_t>(_ptr + MONO_INSTANCE_SIZE_OFFSET);
+
+    const uint32_t supertypesArrayPtr = _memory->readProcessMemory<uint32_t>(_ptr + MONO_CLASS_SUPERTYPES_OFFSET);
+    if (supertypesArrayPtr) {
+        
+        const auto idepth = _memory->readProcessMemory<uint16_t>(_ptr + MONO_CLASS_IDEPTH_OFFSET);
+        for (uint16_t i = 0; i < idepth; ++i) {
+            const uint32_t supertypesPtr = _memory->readProcessMemory<uint32_t>(supertypesArrayPtr + i  * 4);
+            const auto* superklass = _image->loadClassFromPtr(static_cast<uintptr_t>(supertypesPtr));
+            _supertypes[superklass->name()] = superklass;
+        }
+    }
 }
 
 std::string MonoClassMapper::fullName() const {

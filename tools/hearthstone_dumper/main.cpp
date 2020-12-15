@@ -48,6 +48,17 @@ int main(int argc, char** argv) {
     const auto deck = hearthstoneMapper.getCurrentDeck();
 
     std::cout << "#######################################################" << std::endl
+              << "                      BNET PLAYER                      " << std::endl
+              << "#######################################################" << std::endl;
+    
+    const auto localPlayer = hearthstoneMapper.getLocalBNetPlayer();
+    if (localPlayer) {
+        std::cout << "HI: " << localPlayer->hi() << "\tLO: " << localPlayer->lo() << std::endl;
+    } else {
+        std::cout << "No Player Found" << std::endl;
+    }
+
+    std::cout << "#######################################################" << std::endl
               << "                       SELECTED DECK                   " << std::endl
               << "#######################################################" << std::endl;
 

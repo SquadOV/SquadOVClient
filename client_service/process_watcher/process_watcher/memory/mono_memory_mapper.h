@@ -5,6 +5,7 @@
 #include "process_watcher/memory/mono/mono_image_mapper.h"
 
 #include <memory>
+#include <unordered_map>
 
 namespace process_watcher::memory {
 
@@ -14,7 +15,7 @@ namespace process_watcher::memory {
 class MonoMemoryMapper {
 public:
     MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const PEMapper& pe);
-    const mono::MonoImageMapper& image() const { return *_image; }
+    const mono::MonoImageMapper& image() const;
 
     int32_t domainId() const { return _domainId; }
 
@@ -22,7 +23,7 @@ public:
 private:
     uint32_t _rootDomainPtr = 0;
     int32_t _domainId = 0;
-    mono::MonoImageMapperPtr _image;
+    std::unordered_map<std::string, mono::MonoImageMapperPtr> _images;
 };
 
 std::ostream& operator<<(std::ostream& os, const MonoMemoryMapper& map);

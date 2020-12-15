@@ -2,6 +2,7 @@
 
 #include "process_watcher/memory/mono/mono_object_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/medal_info_translator_mapper.h"
+#include "process_watcher/memory/games/hearthstone/types/bnet_account_id_mapper.h"
 #include <memory>
 #include <nlohmann/json.hpp>
 
@@ -29,6 +30,7 @@ public:
     uint32_t arenaLoss() const;
     uint32_t tavernBrawlWins() const;
     uint32_t tavernBrawlLoss() const;
+    BNetAccountIdMapperSPtr gameAccountId() const;
 
     nlohmann::json toJson() const;
 private:

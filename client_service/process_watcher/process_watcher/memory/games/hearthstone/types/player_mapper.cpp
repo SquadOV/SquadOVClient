@@ -12,6 +12,7 @@ const std::string ARENA_WINS_FIELD = "m_arenaWins";
 const std::string ARENA_LOSS_FIELD = "m_arenaLoss";
 const std::string BRAWL_WIN_FIELD = "m_tavernBrawlWins";
 const std::string BRAWL_LOSS_FIELD = "m_tavernBrawlLoss";
+const std::string BNET_ACCOUNT_FIELD = "m_gameAccountId";
 
 }
 
@@ -75,6 +76,11 @@ uint32_t PlayerMapper::tavernBrawlWins() const {
 uint32_t PlayerMapper::tavernBrawlLoss() const {
     const auto value = _object->get(BRAWL_LOSS_FIELD);
     return value.getDefault<uint32_t>(0);
+}
+
+BNetAccountIdMapperSPtr PlayerMapper::gameAccountId() const {
+    const auto value = _object->get(BNET_ACCOUNT_FIELD);
+    return std::make_shared<BNetAccountIdMapper>(value.getDefault<process_watcher::memory::mono::MonoObjectMapperSPtr>(nullptr));
 }
 
 nlohmann::json PlayerMapper::toJson() const {
