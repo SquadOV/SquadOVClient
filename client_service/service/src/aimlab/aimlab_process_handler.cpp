@@ -39,7 +39,7 @@ private:
 };
 
 AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher::process::Process& p):
-    _logWatcher(new game_event_watcher::AimlabLogWatcher),
+    _logWatcher(new game_event_watcher::AimlabLogWatcher(shared::nowUtc())),
     _process(p),
     _aimlab(new AimlabDbInterface(shared::filesystem::getAimlabAppDataFolder() / fs::path("klutch.bytes"))) {
 

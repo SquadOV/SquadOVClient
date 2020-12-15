@@ -166,8 +166,8 @@ ValorantMapUrl parseValorantMapUrl(const std::string& url) {
 
 namespace game_event_watcher {
 
-ValorantLogWatcher::ValorantLogWatcher():
-    BaseLogWatcher(true) {
+ValorantLogWatcher::ValorantLogWatcher(const shared::TimePoint& timeThreshold):
+    BaseLogWatcher(true, timeThreshold) {
     // Find log files which are stored in (Windows)
     //  1) %LOCALAPPDATA%/VALORANT/Saved/Logs (Game Logs)
     //  2) %LOCALAPPDATA%/Riot Games/Riot Client/Logs/Riot Client Logs (Client Logs)
@@ -193,7 +193,7 @@ ValorantLogWatcher::ValorantLogWatcher():
     LOG_INFO("VALORANT Game Log: " << _gameLogFilename.string() << std::endl);
 
     using std::placeholders::_1;
-    _gameLogWatcher = std::make_unique<LogWatcher>(_gameLogFilename, std::bind(&ValorantLogWatcher::onGameLogChange, this, _1), true);
+    _gameLogWatcher = std::make_unique<LogWatcher>(_gameLogFilename, std::bind(&ValorantLogWatcher::onGameLogChange, this, _1), timeThreshold, true);
 }
 
 void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {

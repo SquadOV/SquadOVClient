@@ -31,7 +31,7 @@ bool operator==(const AimlabLogState& a, const AimlabLogState& b);
 
 class AimlabLogWatcher : public BaseLogWatcher {
 public:
-    AimlabLogWatcher();
+    AimlabLogWatcher(const shared::TimePoint& timeThreshold);
 
 private:
     void onGameLogChange(const LogLinesDelta& lines);

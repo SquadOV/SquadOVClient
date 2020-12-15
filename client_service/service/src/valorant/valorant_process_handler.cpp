@@ -59,7 +59,7 @@ private:
 };
 
 ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_watcher::process::Process& p):
-    _logWatcher(std::make_unique<game_event_watcher::ValorantLogWatcher>()),
+    _logWatcher(std::make_unique<game_event_watcher::ValorantLogWatcher>(shared::nowUtc())),
     _process(p) {
 
     // Initialize recorder to pull from the game window (but don't start recording until a game starts).

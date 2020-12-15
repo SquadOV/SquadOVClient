@@ -2,6 +2,7 @@
 
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "shared/filesystem/utility.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -22,9 +23,10 @@ using namespace std::chrono_literals;
 
 namespace game_event_watcher {
 
-LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, bool waitForNewFile, bool immediatelyGoToEnd):
+LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, const shared::TimePoint& timeThreshold, bool waitForNewFile, bool immediatelyGoToEnd):
     _path(path),
     _cb(cb),
+    _timeThreshold(timeThreshold),
     _changeThread(&LogWatcher::watchWorker, this),
     _waitForNewFile(waitForNewFile),
     _immediatelyGoToEnd(immediatelyGoToEnd) {
@@ -40,13 +42,8 @@ void LogWatcher::watchWorker() {
     if (_waitForNewFile || !fs::exists(_path.string())) {
         while (!_isFinished) {
             if (fs::exists(_path)) {
-                const auto now = fs::file_time_type::clock::now();
-                const auto lastWriteTime = fs::last_write_time(_path);
-                const auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
-                const auto maxDiff = std::chrono::seconds(30);
-
-                // The log file should have be written maxDiff of the current time OR the log file should just be newer.
-                if (diff < maxDiff) {
+                const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(_path);
+                if (lastWriteTime > _timeThreshold) {
                     break;
                 }
             }

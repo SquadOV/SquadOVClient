@@ -54,7 +54,7 @@ private:
 
 HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const process_watcher::process::Process& p):
     _process(p),
-    _logWatcher(std::make_unique<game_event_watcher::HearthstoneLogWatcher>(true)) {
+    _logWatcher(std::make_unique<game_event_watcher::HearthstoneLogWatcher>(true, shared::nowUtc())) {
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::Hearthstone);
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::GameReady), std::bind(&HearthstoneProcessHandlerInstance::loadMonoMapper, this, std::placeholders::_1, std::placeholders::_2));
@@ -169,7 +169,6 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
     // later (i.e. not the moment the user connects to the match). In the case that
     // we are spectating we want to immediately stop recording and delete what was already
     // recorded.
-    LOG_INFO("IS SPEC: " << _monoMapper->isSpectator() << std::endl);
     if (_monoMapper->isSpectator()) {
         LOG_INFO("Detecting spectator mode...reverting Hearthstone recording:" << _recorder->isRecording() << std::endl);
         if (_recorder->isRecording()) {
@@ -192,7 +191,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         _inGame = true;   
     }
 
-    // We need this check between two separate threads are polling the main log file that sends the MatchConnect event
+    // We need this check because two separate threads are polling the main log file that sends the MatchConnect event
     // and the power log file that sends the MatchStart event so it's theoretically possible to get these events out of order.
     if (!_currentGame.valid()) {
         return;
@@ -239,14 +238,16 @@ void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& event
     _inGame = false;
     _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
 
-    // Note that we use the game end event to retrieve the power logs in JSON form and store it for safe keeping.
-    // We use the game disconnect event to actually stop recording.
-    try {
-        const nlohmann::json* data = reinterpret_cast<const nlohmann::json*>(rawData);
-        service::api::getGlobalApi()->uploadHearthstonePowerLogs(_matchUuid, *data);
-    } catch (const std::exception& ex) {
-        // Not the end of the world - we just won't have match history details - still have a VOD!
-        LOG_WARNING("Failed to upload Hearthstone power logs: " << ex.what() << std::endl);
+    if (!_matchUuid.empty()) {
+        // Note that we use the game end event to retrieve the power logs in JSON form and store it for safe keeping.
+        // We use the game disconnect event to actually stop recording.
+        try {
+            const nlohmann::json* data = reinterpret_cast<const nlohmann::json*>(rawData);
+            service::api::getGlobalApi()->uploadHearthstonePowerLogs(_matchUuid, *data);
+        } catch (const std::exception& ex) {
+            // Not the end of the world - we just won't have match history details - still have a VOD!
+            LOG_WARNING("Failed to upload Hearthstone power logs: " << ex.what() << std::endl);
+        }
     }
 }
 

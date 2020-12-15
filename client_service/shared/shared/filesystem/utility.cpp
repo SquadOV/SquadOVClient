@@ -29,4 +29,8 @@ std::chrono::seconds secondsSinceLastFileWrite(const std::filesystem::path& pth)
     return std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
 }
 
+shared::TimePoint timeOfLastFileWrite(const std::filesystem::path& pth) {
+    return shared::nowUtc() - secondsSinceLastFileWrite(pth);
+}
+
 }

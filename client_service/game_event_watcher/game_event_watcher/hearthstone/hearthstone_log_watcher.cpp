@@ -84,6 +84,10 @@ bool parseEndingExperiment(const HearthstoneRawLog& line) {
     return line.log.find("Ending Experiment") != std::string::npos;
 }
 
+bool parseConnectionError(const HearthstoneRawLog& line) {
+    return line.log.find("Error.AddWarning() - header=Error message=The game failed to start because your opponent failed to connect. Please try again.") != std::string::npos;
+}
+
 const std::regex startDraftRegex("DraftManager.OnBegin - Got new draft deck with ID: (\\d*)");
 bool parseStartArenaDraft(const HearthstoneRawLog& line, int64_t& deckId) {
     std::smatch matches;
@@ -157,8 +161,8 @@ void HearthstoneLogWatcher::enableHearthstoneLogging()
     cfg.save();
 }
 
-HearthstoneLogWatcher::HearthstoneLogWatcher(bool useTimeChecks):
-    BaseLogWatcher(useTimeChecks) {
+HearthstoneLogWatcher::HearthstoneLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold):
+    BaseLogWatcher(useTimeChecks, timeThreshold) {
 }
 
 void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exePath) {
@@ -172,10 +176,10 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
     std::thread t([this, folder](){
         std::filesystem::path logFile;
         while (true) {
-            // I'm not sure how to do this conditional, catch the possible exception in secondsSinceLastFileWrite and *still*
+            // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
             // continue on in the while loop all at once.
             try {
-                if (!fs::exists(logFile) || (shared::filesystem::secondsSinceLastFileWrite(logFile) > std::chrono::seconds(30))) {
+                if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold())) {
                     logFile = shared::filesystem::getNewestFileInFolder(folder, [](const fs::path& path){
                         if (path.extension() != ".log") {
                             return false;
@@ -207,7 +211,7 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
 void HearthstoneLogWatcher::loadPrimaryFromFile(const std::filesystem::path& logFile) {
     LOG_INFO("Hearthstone Primary Log Found: " << logFile.string() << std::endl);
     using std::placeholders::_1;
-    _primaryWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPrimaryLogChange, this, _1), useTimeChecks());
+    _primaryWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPrimaryLogChange, this, _1), timeThreshold(), useTimeChecks());
     _primaryWatcher->disableBatching();
 }
 
@@ -217,14 +221,14 @@ void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFi
     // 'false' -> Don't wait for a new file - we want to capture the Power.log immediately and not just when it's written to because 
     //            if we wait for when the Power.log is written to we'll have missed some crucial information.
     // 'true' -> We want to seek to the end because we want to ignore past matches if they exist in the file.
-    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), false, useTimeChecks());
+    _powerWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPowerLogChange, this, _1), timeThreshold(), false, useTimeChecks());
     _powerWatcher->disableBatching();
 }
 
 void HearthstoneLogWatcher::loadArenaFromFile(const std::filesystem::path& logFile) {
     LOG_INFO("Hearthstone Arena Log Found: " << logFile.string() << std::endl);
     using std::placeholders::_1;
-    _arenaWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onArenaLogChange, this, _1), false, true);
+    _arenaWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onArenaLogChange, this, _1), timeThreshold(), false, true);
     _arenaWatcher->disableBatching();
 }
 
@@ -303,7 +307,7 @@ void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
             HearthstoneGameConnectionInfo connectionInfo;
             if (parseConnectToGameServer(rawLog, connectionInfo)) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchConnect), rawLog.tm, &connectionInfo);
-            } else if (parseEndingExperiment(rawLog)) {
+            } else if (parseEndingExperiment(rawLog) || parseConnectionError(rawLog)) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchDisconnect), rawLog.tm, nullptr);
             }
         }

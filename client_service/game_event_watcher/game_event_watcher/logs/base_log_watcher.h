@@ -2,6 +2,7 @@
 
 #include "game_event_watcher/logs/log_watcher.h"
 #include "shared/time.h"
+#include "shared/log/log.h"
 
 #include <chrono>
 #include <filesystem>
@@ -13,8 +14,9 @@ namespace game_event_watcher {
 
 class BaseLogWatcher {
 public:
-    explicit BaseLogWatcher(bool useTimeChecks):
-        _useTimeChecks(useTimeChecks) {
+    BaseLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold):
+        _useTimeChecks(useTimeChecks),
+        _timeThreshold(timeThreshold) {
     }
     virtual ~BaseLogWatcher() = default;
 
@@ -24,18 +26,17 @@ public:
     }
 
     bool useTimeChecks() const { return _useTimeChecks; }
+    bool isTimeBeforeThreshold(const shared::TimePoint& tp) const { return _useTimeChecks && tp < _timeThreshold; }
+    const shared::TimePoint& timeThreshold() const { return _timeThreshold; }
+
 protected:
     void notify(int event, const shared::TimePoint& eventTime, const void* data, bool checkTime = true) const {
-        if (checkTime && _useTimeChecks) {
-            // Don't notify if the event time has drifted too far (probably due to reading a log that existed already).
-            // A 120 second difference should be enough to account for any processing time between when the event
-            // was processed and when we fire the notification while still be small enough such that we will detect
-            // events in old log files.
-            const auto maxDiff = std::chrono::seconds(120);
-            const auto diff = shared::nowUtc() - eventTime;
-            if (diff > maxDiff) {
-                return;
-            }
+        LOG_INFO("Notify Log Event [" << event << "] at " << shared::timeToStr(eventTime) << " - Check Time " << (checkTime && _useTimeChecks) << std::endl);
+        // Discard events that came before the time threshold. The time threshold is generally when we
+        // detect that the game has opened - this prevents us from reading old log events.
+        if (checkTime && isTimeBeforeThreshold(eventTime)) {
+            LOG_INFO("\tDiscarding event due to time threshold: " << shared::timeToStr(_timeThreshold) << std::endl);
+            return;
         }
 
         for (const auto& cb : _callbacks.at(event)) {
@@ -46,6 +47,7 @@ protected:
 private:
     std::unordered_map<int, std::vector<EventCallback>> _callbacks;
     bool _useTimeChecks = false;
+    shared::TimePoint _timeThreshold;
 };
 
 }

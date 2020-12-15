@@ -80,8 +80,8 @@ bool AimlabLogState::isInTask() const {
     return inTask && !taskName.empty() && !taskMode.empty() && !taskMap.empty() && !gameVersion.empty();
 }
 
-AimlabLogWatcher::AimlabLogWatcher():
-    BaseLogWatcher(true) {
+AimlabLogWatcher::AimlabLogWatcher(const shared::TimePoint& timeThreshold):
+    BaseLogWatcher(true, timeThreshold) {
     // Find log file which is stored at (Windows):
     //  %APPDATA%/../LocalLow/Statespace/aimlab_tb/Player.log
     const fs::path gameLogDir = shared::filesystem::getAimlabAppDataFolder();
@@ -90,7 +90,7 @@ AimlabLogWatcher::AimlabLogWatcher():
     LOG_INFO("AIM LAB Game Log: " << _logPath.string() << std::endl);
 
     using std::placeholders::_1;
-    _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), true);
+    _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), this->timeThreshold(), true);
 }
 
 void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {

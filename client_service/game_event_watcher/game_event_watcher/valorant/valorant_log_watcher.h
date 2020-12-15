@@ -40,7 +40,7 @@ struct GameLogState {
 
 class ValorantLogWatcher: public BaseLogWatcher {
 public:
-    ValorantLogWatcher();
+    explicit ValorantLogWatcher(const shared::TimePoint& timeThreshold);
 
 private:
     void onGameLogChange(const LogLinesDelta& lines);

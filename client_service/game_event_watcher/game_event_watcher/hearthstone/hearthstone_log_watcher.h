@@ -45,7 +45,7 @@ class HearthstoneLogWatcher: public BaseLogWatcher {
 public:
     static void enableHearthstoneLogging();
 
-    HearthstoneLogWatcher(bool useTimeChecks);
+    HearthstoneLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);
     void loadFromExecutable(const std::filesystem::path& exePath);
 
     void loadPrimaryFromFile(const std::filesystem::path& logFile);

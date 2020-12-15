@@ -8,6 +8,8 @@
 #include <thread>
 #include <vector>
 
+#include "shared/time.h"
+
 namespace game_event_watcher {
 
 using LogLinesDelta = std::vector<std::string>;
@@ -21,6 +23,7 @@ public:
     LogWatcher(
         const std::filesystem::path& path,
         const LogChangeCallback& cb,
+        const shared::TimePoint& timeThreshold,
         bool waitForNewFile = false,
         bool immediatelyGoToEnd = false
     );
@@ -34,6 +37,7 @@ private:
 
     const std::filesystem::path _path;
     const LogChangeCallback _cb;
+    const shared::TimePoint _timeThreshold;
     const bool _waitForNewFile;
 
     std::thread _changeThread;
