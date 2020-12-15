@@ -122,6 +122,7 @@ export default class ValorantGameLog extends Vue {
         if (newPuuid !== oldPuuid) {
             this.allMatches = null
             this.nextLink = null
+            this.lastIndex = 0
         }
 
         if (!!this.allMatches && !this.nextLink) {
