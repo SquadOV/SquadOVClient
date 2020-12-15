@@ -96,9 +96,17 @@
                     </router-link>
                 </div>
             </template>
+
+            <v-spacer></v-spacer>
+
+            <v-btn icon @click="refresh">
+                <v-icon>
+                    mdi-refresh
+                </v-icon>
+            </v-btn>
         </div>
         <v-divider></v-divider>
-        <router-view></router-view>
+        <router-view :key="forceUpdateKey"></router-view>
     </v-container>
 </template>
 
@@ -126,6 +134,7 @@ export default class GameLog extends Vue {
     perSquadMembers: { [idx: number] : SquadMembership[] | undefined } | null = null
 
     showHideSquadMenu: boolean = false
+    forceUpdateKey: number = 0
 
     get hasSquadDropdown(): boolean {
         return !!this.allSquads && this.allSquads.length > 0
@@ -281,6 +290,10 @@ export default class GameLog extends Vue {
         this.refreshUser()
         this.refreshSquad()
         this.refreshAllSquads()
+    }
+
+    refresh() {
+        this.forceUpdateKey += 1
     }
 
     mounted() {
