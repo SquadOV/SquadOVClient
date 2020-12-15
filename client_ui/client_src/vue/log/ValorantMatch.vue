@@ -14,7 +14,7 @@
                     <v-col :cols="theaterMode ? 12 : 8">
                         <video-player
                             ref="player"
-                            :video-uuid="videoUuid"
+                            :vod="vod"
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
@@ -166,11 +166,7 @@ export default class ValorantMatch extends Vue {
     currentRoundNum : number = 0
 
     theaterMode: boolean = false
-
-    get videoUuid() : string | undefined {
-        return this.vod?.videoUuid
-    }
-
+    
     get matchWrapper() : ValorantMatchDetailsWrapper | null {
         if (!this.currentMatch) {
             return null

@@ -21,7 +21,7 @@
                     <v-col :cols="theaterMode ? 12 : 8">
                         <video-player
                             ref="player"
-                            :video-uuid="videoUuid"
+                            :vod="vod"
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
@@ -204,10 +204,6 @@ export default class HearthstoneMatch extends Vue {
 
     // Match loading
     ready: boolean = false
-
-    get videoUuid() : string | undefined {
-        return this.vod?.videoUuid
-    }
 
     get roundEventsStyle() : any {
         return {
