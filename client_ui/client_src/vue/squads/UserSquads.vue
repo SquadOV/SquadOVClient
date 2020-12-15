@@ -86,7 +86,14 @@
             </v-tab-item>
 
             <v-tab>
-                Invites
+                <v-badge
+                    inline
+                    :value="totalInvites > 0"
+                    :content="`${totalInvites}`"
+                    color="error"
+                >
+                    Invites
+                </v-badge>
             </v-tab>
 
             <v-tab-item>
@@ -140,6 +147,13 @@ export default class UserSquads extends Vue {
 
     mySquads: SquadMembership[] | null = null
     myInvites: SquadInvite[] | null = null
+
+    get totalInvites(): number {
+        if (!this.myInvites) {
+            return 0
+        }
+        return this.myInvites.length
+    }
 
     @Watch('userId')
     refreshData() {

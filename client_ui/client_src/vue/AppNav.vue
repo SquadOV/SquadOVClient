@@ -30,10 +30,18 @@
         <v-menu bottom offset-y>
             <template v-slot:activator="{on, attrs}">
                 <v-btn text v-bind="attrs" v-on="on">
-                    {{ currentUserName }}
-                    <v-icon small>
-                        mdi-chevron-down
-                    </v-icon> 
+                    <v-badge
+                        inline
+                        left
+                        :value="totalNotifications > 0"
+                        :content="`${totalNotifications}`"
+                        color="error"
+                    >
+                        {{ currentUserName }}
+                        <v-icon small>
+                            mdi-chevron-down
+                        </v-icon> 
+                    </v-badge>
                 </v-btn>
             </template>
 
@@ -43,7 +51,17 @@
                 </v-list-item>
 
                 <v-list-item :to="squadsTo">
-                    <v-list-item-title>Squads</v-list-item-title>
+                    <v-list-item-title>
+                        <v-badge
+                            class="inner-badge"
+                            inline
+                            :value="totalSquadInvites > 0"
+                            :content="`${totalSquadInvites}`"
+                            color="error"
+                        >
+                            Squads
+                        </v-badge>
+                    </v-list-item-title>
                 </v-list-item>
 
                 <v-list-item @click="logout">
@@ -58,12 +76,26 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
-import { apiClient } from '@client/js/api'
+import { apiClient, ApiData } from '@client/js/api'
 import { ipcRenderer } from 'electron'
+import { NotificationSummary } from '@client/js/squadov/notification'
 
 @Component
 export default class AppNav extends Vue {
+    notifications: NotificationSummary | null = null
+
+    get totalNotifications(): number {
+        return this.totalSquadInvites
+    }
+
+    get totalSquadInvites(): number {
+        if (!this.notifications) {
+            return 0
+        }
+        return this.notifications.numSquadInvites
+    }
 
     get gameLogParams(): any {
         let params = this.$route.params
@@ -166,10 +198,27 @@ export default class AppNav extends Vue {
             ipcRenderer.sendSync('logout')
         })
     }
+
+    @Watch('$route')
+    refreshNotifications() {
+        apiClient.getNotificationSummary().then((resp: ApiData<NotificationSummary>) => {
+            this.notifications = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain notifications: ', err)
+        })
+    }
+
+    mounted() {
+        this.refreshNotifications()
+    }
 }
 
 </script>
 
 <style scoped>
+
+.inner-badge {
+    margin-top: 0px !important;
+}
 
 </style>

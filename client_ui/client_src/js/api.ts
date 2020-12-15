@@ -24,6 +24,7 @@ import {
     SquadMembership, cleanSquadMembershipFromJson
     SquadInvite, cleanSquadInviteFromJson
 } from '@client/js/squadov/squad'
+import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
 
@@ -198,6 +199,10 @@ class ApiClient {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
     }
 
+    getNotificationSummary(): Promise<ApiData<NotificationSummary>> {
+        return axios.get(`v1/users/me/notifications`, this.createWebAxiosConfig())
+    }
+
     getSquad(squadId: number): Promise<ApiData<Squad>> {
         return axios.get(`v1/squad/${squadId}/profile`, this.createWebAxiosConfig()).then((resp: ApiData<Squad>) => {
             cleanSquadFromJson(resp.data)
@@ -268,7 +273,6 @@ class ApiClient {
             squadGroup
         }, this.createWebAxiosConfig())
     }
-
 
     sendSquadInvite(squadId: number, usernames: string[]): Promise<void> {
         return axios.post(`v1/squad/${squadId}/invite`, {
