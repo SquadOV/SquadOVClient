@@ -257,7 +257,10 @@ function startAutoupdater() {
         resizable: false,
         movable: false,
     })
-    updateWindow.webContents.toggleDevTools()
+
+    if (!app.isPackaged) {
+        updateWindow.webContents.toggleDevTools()
+    }
     updateWindow.loadFile('update.html')
     updateWindow.show()
     updateWindow.on('close', () => {
