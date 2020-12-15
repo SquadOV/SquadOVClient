@@ -7,11 +7,6 @@ const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
 const { createVerifyEncryptionPasswordFlow} = require('./password.js')
 
-if (app.isPackaged) {
-    const { autoUpdater } = require("electron-updater")
-    autoUpdater.checkForUpdatesAndNotify()
-}
-
 const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
 const config = JSON.parse(fs.readFileSync(configFile))
 process.env.API_SQUADOV_URL = config["API_URL"]
@@ -92,13 +87,17 @@ function getSessionPath() {
     return path.join(app.getPath('appData'), 'SquadOV', 'session.json')
 }
 
+function restart() {
+    app.relaunch()
+    quit()
+}
+
 function logout() {
     const sessionPath = getSessionPath()
     if (fs.existsSync(sessionPath)) {
         fs.unlinkSync(sessionPath)
     }
-    app.relaunch()
-    quit()    
+    restart()
 }
 
 ipcMain.on('logout', logout)
@@ -226,6 +225,69 @@ function startClientService() {
     })
 }
 
+function startAutoupdater() {
+    const { autoUpdater } = require("electron-updater")
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+    autoUpdater.logger = log
+
+    // This event is for when an update is available and we're past
+    // the initial start-up workflow. In this case we need to indicate
+    // to the user that an update is available and have them restart.
+    autoUpdater.on('update-downloaded', (info) => {
+        win.webContents.send('main-update-downloaded', info.version)
+    })
+
+    // 30 minute update check interval to give us some buffer to grow for now.
+    // IF Github has a limit of 5000 API calls per hour and an update check uses
+    // up to 3 calls per check, then doing it every 30 minutes will allow us to grow up to
+    // 833 active users.
+    // TODO: REPLACE GITHUB RELEASES WITH A MORE SUSTAINABLE SOLUTION.
+    setInterval(() => {
+        autoUpdater.checkForUpdates()
+    }, 30 * 60 * 1000)
+
+    let updateWindow = new BrowserWindow({
+        width: 300,
+        height: 300,
+        webPreferences: {
+            nodeIntegration: true,
+        },
+        frame: false,
+        resizable: false,
+        movable: false,
+    })
+    updateWindow.webContents.toggleDevTools()
+    updateWindow.loadFile('update.html')
+    updateWindow.show()
+    updateWindow.on('close', () => {
+        quit()
+    })
+
+    return new Promise((resolve, reject) => {
+        autoUpdater.once('update-not-available', () => {
+            autoUpdater.removeAllListeners('update-available')
+            autoUpdater.removeAllListeners('download-progress')
+            updateWindow.removeAllListeners('close')
+            updateWindow.close()
+            resolve()
+        })
+
+        autoUpdater.on('update-available', (info) => {
+            updateWindow.webContents.send('update-update-available', info)
+        })
+
+        autoUpdater.on('download-progress', (progress) => {
+            updateWindow.webContents.send('update-download-progress', progress)
+        })
+
+        autoUpdater.once('update-downloaded', () => {
+            restart()
+        })
+        autoUpdater.checkForUpdates()
+    })
+}
+
 function startSessionHeartbeat(onBeat) {
     const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
     log.log('Starting session heartbeat...', url)
@@ -267,11 +329,11 @@ function startSessionHeartbeat(onBeat) {
     request.end()
 }
 
-app.on('ready', async () => {    
+app.on('ready', async () => {
     await zeromqServer.start()
     zeromqServer.run()
 
-    win= new BrowserWindow({
+    win = new BrowserWindow({
         width: 1280,
         height: 720,
         webPreferences: {
@@ -285,7 +347,13 @@ app.on('ready', async () => {
 
     win.setMenu(null)
     win.setMenuBarVisibility(false)
+    win.hide()
 
+    if (app.isPackaged) {
+        await startAutoupdater()
+    }
+
+    win.show()
     if (!loadSession()) {
         // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
         try {

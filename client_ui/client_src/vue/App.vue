@@ -10,6 +10,15 @@
             >
                 The local service encountered an unexpected error, please restart SquadOV and try again.
             </v-banner>
+
+            <v-banner
+                v-if="$root.globals.hasUpdate"
+                single-line
+                sticky
+                color="primary"
+            >
+                An update for SquadOV is available. Please restart SquadOV to install it.
+            </v-banner>
             
             <div class="flex-grow-1">
                 <router-view></router-view>

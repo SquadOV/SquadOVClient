@@ -291,11 +291,16 @@ ipcRenderer.invoke('request-session').then((session : {
 
 
 let globals: any = {
-    serviceError: false
+    serviceError: false,
+    hasUpdate: false,
 }
 
 ipcRenderer.on('service-error', () => {
     globals.serviceError = true
+})
+
+ipcRenderer.on('main-update-downloaded', () => {
+    globals.hasUpdate = true
 })
 
 new Vue({
