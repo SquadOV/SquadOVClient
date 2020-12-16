@@ -293,7 +293,7 @@ function startAutoupdater() {
 
 function startSessionHeartbeat(onBeat) {
     const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
-    log.log('Starting session heartbeat...', url)
+    log.log('Performing session heartbeat...', url)
     const request = net.request({
         method: 'POST',
         url
