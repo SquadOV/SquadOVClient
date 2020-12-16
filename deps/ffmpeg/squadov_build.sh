@@ -4,7 +4,6 @@
     --disable-doc \
     --enable-libopenh264 \
     --enable-amf \
-    --enable-nonfree \
     --enable-nvenc \
     --toolchain=msvc \
     --target-os=win64 \
