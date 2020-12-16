@@ -285,7 +285,7 @@ function startAutoupdater() {
         })
 
         autoUpdater.once('update-downloaded', () => {
-            restart()
+            autoUpdater.quitAndInstall(true, true)
         })
         autoUpdater.checkForUpdates()
     })

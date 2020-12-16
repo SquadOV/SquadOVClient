@@ -34,7 +34,7 @@ export default class UpdateProgress extends Vue {
     updateVersion: string = ''
     downloadProgress: number = 0
 
-    displayPercent() : string {
+    get displayPercent() : string {
         return `${Math.floor(this.downloadProgress)}%`
     }
 
