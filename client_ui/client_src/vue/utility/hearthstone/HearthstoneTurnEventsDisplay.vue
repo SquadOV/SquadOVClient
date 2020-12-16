@@ -99,6 +99,7 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
     }
 
     get turnTime(): Date | undefined {
+        console.log('snapshot turn time: ', this.snapshot, this.snapshot?.snapshotTime)
         return this.snapshot?.snapshotTime
     }
 

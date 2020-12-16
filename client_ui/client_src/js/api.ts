@@ -27,6 +27,7 @@ import {
 import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
+import { longNumberToNumber } from '@client/js/long'
 
 import { ipcRenderer } from 'electron'
 
@@ -466,7 +467,7 @@ class ApiClient {
 
                         return {
                             uuid: ele.uuid!,
-                            tm: (!!ele.tm && ele.tm > 0) ? new Date(ele.tm * 1000) : null,
+                            tm: !!ele.tm ? new Date(longNumberToNumber(ele.tm) * 1000) : null,
                             gameEntityId: ele.gameEntityId!,
                             playerNameToPlayerId: ele.playerNameToPlayerId!,
                             playerIdToEntityId: ele.playerIdToEntityId!,
@@ -475,7 +476,7 @@ class ApiClient {
                                 currentTurn: ele.auxData.currentTurn!,
                                 step: ele.auxData.step!,
                                 currentPlayerId: ele.auxData.currentPlayerId!,
-                                lastActionIndex: ele.auxData.lastActionIndex!,
+                                lastActionIndex: longNumberToNumber(ele.auxData.lastActionIndex!),
                             } : null
                         }
                     }),
