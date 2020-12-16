@@ -25,9 +25,43 @@
             </div>
 
             <footer class="flex-grow-0">
-                <p class="text-center ma-0 text-overline">
+                <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
-                </p>
+                </div>
+
+                <div class="d-flex justify-center ma-0 text-overline">
+                    <v-dialog v-model="showHideLicenses" persistent max-width="80%">
+                        <template v-slot:activator="{on , attrs}">
+                            <v-btn
+                                color="primary"
+                                x-small
+                                text
+                                v-on="on"
+                                v-bind="attrs"
+                            >
+                                Licenses
+                            </v-btn>
+                        </template>
+                        
+                        <v-card>
+                            <v-card-title>
+                                Licenses
+                            </v-card-title>
+                            
+                            <license-data></license-data>
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn
+                                    color="error"
+                                    @click="showHideLicenses = false"
+                                >
+                                    Close
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </div>
             </footer>
         </template>
         
@@ -48,15 +82,18 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
+import LicenseData from '@client/vue/LicenseData.vue'
 import { version } from '@client/../package.json'
 
 @Component({
     components: {
-        AppNav
+        AppNav,
+        LicenseData
     }
 })
 export default class App extends Vue {
     version: string = version
+    showHideLicenses: boolean = false
 
     get userLoaded(): boolean {
         return !!this.$store.state.currentUser
@@ -71,6 +108,10 @@ export default class App extends Vue {
     display: flex;
     flex-direction: column;
     height: 100%;
+}
+
+.footer-text {
+    line-height: 1rem !important;
 }
 
 </style>
