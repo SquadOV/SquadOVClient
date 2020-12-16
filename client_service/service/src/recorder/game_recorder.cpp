@@ -82,7 +82,7 @@ VodIdentifier GameRecorder::start() {
     }
 
     _currentId = std::make_unique<VodIdentifier>();
-    _currentId->userUuid = service::api::getGlobalApi()->getSession().user.uuid;
+    _currentId->userUuid = service::api::getGlobalApi()->getSessionUserUuid();
     _currentId->videoUuid = shared::generateUuidv4();
 
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL

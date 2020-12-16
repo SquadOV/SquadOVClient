@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <memory>
+#include <shared_mutex>
 #include <nlohmann/json.hpp>
 #include <vector>
 
@@ -29,7 +30,8 @@ public:
     void setSessionIdUpdateCallback(const SessionIdUpdateCallback& cb) { _sessionUpdateCallback = cb; }
     void setSessionId(const std::string& key);
 
-    const auto& getSession() const { return _session; }
+    int64_t getSessionUserId() const;
+    std::string getSessionUserUuid() const;
 
     // User
     shared::squadov::SquadOVUser getCurrentUser() const;
@@ -72,6 +74,7 @@ private:
 
     // I'm not a big fan of leaving this here...
     shared::squadov::SquadOVSessionStorage _session;
+    mutable std::shared_mutex _sessionMutex;
 };
 
 using SquadovApiPtr = std::unique_ptr<SquadovApi>;

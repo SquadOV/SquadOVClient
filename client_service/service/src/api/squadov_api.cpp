@@ -40,8 +40,22 @@ SquadovApi::SquadovApi() {
 
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
+
+    const auto user = getCurrentUser();
+
+    std::unique_lock<std::shared_mutex> guard(_sessionMutex);
     _session.sessionId = key;
-    _session.user = getCurrentUser();
+    _session.user = user;
+}
+
+int64_t SquadovApi::getSessionUserId() const {
+    std::shared_lock<std::shared_mutex> guard(_sessionMutex);
+    return _session.user.id;
+}
+
+std::string SquadovApi::getSessionUserUuid() const {
+    std::shared_lock<std::shared_mutex> guard(_sessionMutex);
+    return _session.user.uuid;
 }
 
 shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
@@ -272,7 +286,7 @@ void SquadovApi::uploadHearthstonePowerLogs(
 
 std::string SquadovApi::createHearthstoneArenaDraft(const shared::TimePoint& timestamp, int64_t deckId) const {
     std::ostringstream path;
-    path << "/v1/hearthstone/user/" << _session.user.id << "/arena";
+    path << "/v1/hearthstone/user/" << getSessionUserId() << "/arena";
 
     const nlohmann::json body = {
         { "deckId", deckId },
@@ -292,7 +306,7 @@ std::string SquadovApi::createHearthstoneArenaDraft(const shared::TimePoint& tim
 
 void SquadovApi::addHearthstoneArenaDraftCard(const shared::TimePoint& timestamp, const std::string& arenaUuid, const std::string& cardId) const {
     std::ostringstream path;
-    path << "/v1/hearthstone/user/" << _session.user.id << "/arena/" << arenaUuid;
+    path << "/v1/hearthstone/user/" << getSessionUserId() << "/arena/" << arenaUuid;
 
     const nlohmann::json body = {
         { "cardId", cardId },
@@ -307,7 +321,7 @@ void SquadovApi::addHearthstoneArenaDraftCard(const shared::TimePoint& timestamp
 
 void SquadovApi::uploadHearthstoneArenaDeck(const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck, const std::string& arenaUuid) const {
     std::ostringstream path;
-    path << "/v1/hearthstone/user/" << _session.user.id << "/arena/" << arenaUuid << "/deck";
+    path << "/v1/hearthstone/user/" << getSessionUserId() << "/arena/" << arenaUuid << "/deck";
 
     const auto result = _webClient->post(path.str(), deck.toJson());
     if (result->status != 200) {
