@@ -1,7 +1,7 @@
 <template>
     <loading-container :is-loading="!currentMatch">
         <template v-slot:default="{ loading }">
-            <div v-if="!loading">
+            <v-container fluid v-if="!loading">
                 <v-row>
                     <valorant-match-header-summary
                         :match="matchWrapper"
@@ -98,7 +98,7 @@
                         </valorant-match-player-card>
                     </v-col>
                 </v-row>
-            </div>
+            </v-container>
         </template>
     </loading-container>
 </template>
