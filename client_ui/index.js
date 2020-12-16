@@ -277,10 +277,12 @@ function startAutoupdater() {
         })
 
         autoUpdater.on('update-available', (info) => {
+            log.log('Index Update Available: ', info)
             updateWindow.webContents.send('update-update-available', info)
         })
 
         autoUpdater.on('download-progress', (progress) => {
+            log.log('Index Download Progress: ', progress)
             updateWindow.webContents.send('update-download-progress', progress)
         })
 

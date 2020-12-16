@@ -13,6 +13,9 @@ win:
       owner: "SquadOV"
       repo: "SquadOV-Release"
 
+nsis:
+  differentialPackage : false
+
 files:
   - from: "dist/production"
     to: "dist"

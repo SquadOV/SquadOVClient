@@ -37,7 +37,7 @@ const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
         let key = process.env.SQUADOV_API_KEY
 
         while (port === undefined || key === undefined) {
-            console.log(`Could not find port or key for SQUADOV service...port ${port} key ${key}`)
+            console.log(`Could not find port or key for SQUADOV service...`)
             
             // Need to listen to port/key messages from the main process just in case that gets set late...
             const [newPort, newKey] = ipcRenderer.sendSync('apiServer')
@@ -46,7 +46,7 @@ const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
 
             await new Promise(resolve => setTimeout(resolve, 100))
         }
-
+        console.log('Found port/key for SQUADOV local API service.')
         return ogMethod.apply(this, args)
     }
 

@@ -45,7 +45,9 @@ export default class UpdateProgress extends Vue {
         })
 
         ipcRenderer.on('update-download-progress', (e: any, info: ProgressInfo) => {
+            console.log('Auto-Update Download Progress: ', info)
             this.downloadProgress = info.percent
+            this.$forceUpdate()
         })
     }
 }
