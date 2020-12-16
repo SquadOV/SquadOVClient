@@ -238,14 +238,9 @@ function startAutoupdater() {
         win.webContents.send('main-update-downloaded', info.version)
     })
 
-    // 30 minute update check interval to give us some buffer to grow for now.
-    // IF Github has a limit of 5000 API calls per hour and an update check uses
-    // up to 3 calls per check, then doing it every 30 minutes will allow us to grow up to
-    // 833 active users.
-    // TODO: REPLACE GITHUB RELEASES WITH A MORE SUSTAINABLE SOLUTION.
     setInterval(() => {
         autoUpdater.checkForUpdates()
-    }, 30 * 60 * 1000)
+    }, 5 * 60 * 1000)
 
     let updateWindow = new BrowserWindow({
         width: 300,

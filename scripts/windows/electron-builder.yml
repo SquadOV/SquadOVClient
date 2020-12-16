@@ -9,9 +9,8 @@ directories:
 win:
   target: "nsis"
   publish: 
-    - provider: github
-      owner: "SquadOV"
-      repo: "SquadOV-Release"
+    - provider: generic
+      url: https://us-central1.content.squadov.gg/builds
 
 nsis:
   differentialPackage : false
