@@ -16,6 +16,7 @@ enum class EValorantMap {
     Bind,
     Haven,
     Split,
+    Icebox,
     MainMenu,
     CharacterSelect,
     Init,

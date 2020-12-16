@@ -12,6 +12,8 @@ EValorantMap mapIdToValorantMap(const std::string& id) {
         return EValorantMap::Bind;
     } else if (id == "/Game/Maps/Bonsai/Bonsai") {
         return EValorantMap::Split;
+    } else if (id == "/Game/Maps/Port/Port") {
+        return EValorantMap::Icebox;
     }
     return EValorantMap::Unknown;
 }
@@ -25,6 +27,8 @@ EValorantMap codenameToValorantMap(const std::string& codename) {
         return EValorantMap::Bind;
     } else if (codename == "Bonsai") {
         return EValorantMap::Split;
+    } else if (codename == "Port") {
+        return EValorantMap::Icebox;
     } else if (codename == "MainMenuV2") {
         return EValorantMap::MainMenu;
     } else if (codename == "Init"){ 
@@ -45,6 +49,8 @@ std::string mapToName(EValorantMap map) {
             return "Haven";
         case EValorantMap::Split:
             return "Split";
+        case EValorantMap::Icebox:
+            return "Icebox";
         case EValorantMap::MainMenu:
             return "Main Menu";
         case EValorantMap::CharacterSelect:
@@ -61,6 +67,7 @@ bool isGameMap(EValorantMap map) {
         case EValorantMap::Bind:
         case EValorantMap::Haven:
         case EValorantMap::Split:
+        case EValorantMap::Icebox:
             return true;
     }    
     return false;
