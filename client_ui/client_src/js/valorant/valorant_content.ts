@@ -30,9 +30,17 @@ const contentFiles : ContentFileMap = {
         abilities: process.env.NODE_ENV === 'production' ?  
             path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
             'assets/valorant/content/v1.11.Abilities.json'    
+    },
+    'release-01.14': {
+        static: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.14.json') :
+            'assets/valorant/content/v1.14.json',
+        abilities: process.env.NODE_ENV === 'production' ?  
+            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
+            'assets/valorant/content/v1.11.Abilities.json'   
     }
 }
-const latestPatch = 'release-01.11'
+const latestPatch = 'release-01.14'
 
 interface AgentMap {
     [agentId : string] : string;
