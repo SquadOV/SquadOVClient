@@ -176,7 +176,7 @@ export default class Login extends Vue {
             if (!!err.response && err.response.status === 401) {
                 this.showHideAuthError = true
             } else {
-                console.log('Login failure: ', err)
+                console.log('Login failure')
                 this.showHideGenericError = true
             }
         }).finally(() => {

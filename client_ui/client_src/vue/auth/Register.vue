@@ -142,7 +142,7 @@ export default class Register extends Vue {
                 }
             })
         }).catch((err : any) => {
-            console.log('Failed to register: ', err)
+            console.log('Failed to register')
             this.showHideGenericError = true
         }).finally(() => {
             this.inProgress = false

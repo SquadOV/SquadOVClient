@@ -217,7 +217,7 @@ function startClientService() {
     })
 
     child.on('close', (code) => {
-        console.log('Unexpected close of client service: ', code)
+        log.log('Unexpected close of client service: ', code)
         totalCloseCount += 1
         setTimeout(() => {
             startClientService()

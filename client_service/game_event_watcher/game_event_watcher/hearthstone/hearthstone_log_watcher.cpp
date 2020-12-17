@@ -144,10 +144,11 @@ void HearthstoneLogWatcher::enableHearthstoneLogging()
     // even if user doesn't have Hearthstone installed. This way, we're guaranteed to
     // work as soon as the user launches Hearthstone.
     const auto configPath = shared::filesystem::getHearthstoneAppDataFolder() / fs::path("log.config");
+    const auto parentDir = configPath.parent_path();
     LOG_INFO("Hearthstone Log Config file: " << configPath << std::endl);
-    if (!fs::exists(configPath)) {
+    if (!fs::exists(parentDir)) {
         LOG_INFO("\tLog File does not exist." << std::endl);
-        fs::create_directories(configPath.parent_path());
+        fs::create_directories(parentDir);
     }
 
     HearthstoneLogConfig cfg(configPath);
