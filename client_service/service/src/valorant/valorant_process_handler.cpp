@@ -315,7 +315,12 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
     _currentUser = service::api::getGlobalApi()->getRiotUserFromPuuid(user->puuid);
 
     if (_currentUser.tag != user->tag || _currentUser.username != user->username) {
-        service::api::getGlobalApi()->updateRiotUsername(user->puuid, user->username, user->tag);
+        try {
+            service::api::getGlobalApi()->updateRiotUsername(user->puuid, user->username, user->tag);
+            service::api::getGlobalApi()->updateRiotUsernameApi(user->puuid, user->username, user->tag);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to sync Riot username: " << ex.what() << std::endl);
+        }
     }
 
     // Keep this down here as we need to make sure to populate the currentUser first.

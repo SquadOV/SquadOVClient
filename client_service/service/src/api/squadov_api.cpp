@@ -135,7 +135,30 @@ shared::riot::RiotUser SquadovApi::updateRiotUsername(const std::string& puuid, 
     const auto result = _localClient->post(path.str(), body);
 
     if (result->status != 200) {
-        THROW_ERROR("Failed to update Riot username: " << result->status);
+        THROW_ERROR("Failed to update Riot username (local): " << result->status);
+        return user;
+    }
+    
+    return user;
+}
+
+shared::riot::RiotUser SquadovApi::updateRiotUsernameApi(const std::string& puuid, const std::string& username, const std::string& tagline) const {
+    shared::riot::RiotUser user;
+    user.puuid = puuid;
+    user.username = username;
+    user.tag = tagline;
+
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot";
+
+    nlohmann::json body;
+    body["puuid"] = puuid;
+    body["username"] = username;
+    body["tag"] = tagline;
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to update Riot username (API): " << result->status);
         return user;
     }
     

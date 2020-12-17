@@ -40,6 +40,7 @@ public:
     shared::riot::RiotRsoToken refreshValorantRsoToken(const std::string& puuid) const;
     shared::riot::RiotUser getRiotUserFromPuuid(const std::string& puuid) const;
     shared::riot::RiotUser updateRiotUsername(const std::string& puuid, const std::string& username, const std::string& tagline) const;
+    shared::riot::RiotUser updateRiotUsernameApi(const std::string& puuid, const std::string& username, const std::string& tagline) const;
 
     std::string uploadValorantMatch(const std::string& matchId, const nlohmann::json& rawData, const nlohmann::json& playerData) const;
     std::vector<std::string> obtainMissingValorantMatches(const std::vector<std::string>& ids) const;
