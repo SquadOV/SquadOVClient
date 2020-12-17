@@ -102,7 +102,7 @@ export default class ValorantGameLog extends Vue {
         apiClient.getValorantAccount(this.userId, this.puuid).then((resp : ApiData<RiotAccountData>) => {
             this.account = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get valorant account: ' + err);
+            console.log('Failed to get valorant account: ', err);
         })
     }
 

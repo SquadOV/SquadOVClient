@@ -5,7 +5,8 @@ const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
-const { createVerifyEncryptionPasswordFlow} = require('./password.js')
+const { createMigrationFlow } = require('./password.js')
+const { getAppDataFolder } = require('./paths.js')
 
 const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
 const config = JSON.parse(fs.readFileSync(configFile))
@@ -47,44 +48,17 @@ app.on('certificate-error', (event, contents, url, error, certificate, callback)
 })
 
 function setAppDataFolderFromEnv() {
-    process.env.SQUADOV_USER_APP_FOLDER = path.join(app.getPath('appData'), 'SquadOV', `${process.env.SQUADOV_USER_ID}`)
-
+    process.env.SQUADOV_USER_APP_FOLDER = path.join(getAppDataFolder(), `${process.env.SQUADOV_USER_ID}`)
+    log.log('Set App Data Folder: ', getAppDataFolder(), process.env.SQUADOV_USER_APP_FOLDER)
     if (!fs.existsSync(process.env.SQUADOV_USER_APP_FOLDER)) {
         fs.mkdirSync(process.env.SQUADOV_USER_APP_FOLDER, {
             recursive: true
         })
-
-        // Check if there's an existing installation. If so, migrate everything into this new folder.
-        // Note that *eveyrthing* here excludes the log folder. That should stay in the non-user specified folder.
-        let oldInstallPath = path.join(app.getPath('appData'), 'SquadOV')
-        let oldDbPath = path.join(oldInstallPath, 'squadov.db')
-        if (fs.existsSync(oldDbPath)) {
-            fs.renameSync(
-                oldDbPath,
-                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'squadov.db'),
-            )
-        }
-
-        let oldVerifyPath = path.join(oldInstallPath, 'verify.bcrypt')
-        if (fs.existsSync(oldVerifyPath)) {
-            fs.renameSync(
-                oldVerifyPath,
-                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'verify.bcrypt'),
-            )
-        }
-
-        let oldRecordPath = path.join(oldInstallPath, 'Record')
-        if (fs.existsSync(oldRecordPath)) {
-            fs.renameSync(
-                oldRecordPath,
-                path.join(process.env.SQUADOV_USER_APP_FOLDER, 'Record'),
-            )
-        }
     }
 }
 
 function getSessionPath() {
-    return path.join(app.getPath('appData'), 'SquadOV', 'session.json')
+    return path.join(getAppDataFolder(), 'session.json')
 }
 
 function restart() {
@@ -313,10 +287,12 @@ function startSessionHeartbeat(onBeat) {
                 let respBody = JSON.parse(body)
 
                 updateSession(respBody.sessionId, true)
+                process.env.SQUADOV_PASSWORD = respBody.localenc
+
                 if (!!onBeat) {
                     onBeat()
                 }
-
+                
                 let expiration = new Date(respBody.expiration)
 
                 // Preemptively refresh the session 10 minutes before it's due to expire.
@@ -377,25 +353,23 @@ app.on('ready', async () => {
         // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
         // start the UI and the client service (2 things that require querying the API) until we have a valid session.
         // This is particularly relevant when we're loading the session from disk.
-
-        // THEN HAVE THE USER VERIFY THEIR LOCAL PASSWORD.
-        // This is *different* form their account password. It cannot be reset.
-        try {
-            await createVerifyEncryptionPasswordFlow(win)
-        } catch(ex) {
-            log.log('User chose not to input/create password...good bye: ', ex)
-            quit()
-            return
-        }
-        log.log(`OBTAINED ENCRYPTION PASSWORD`)
-        
         apiServer.start(async () => {
+            log.log('API Server Start callback.')
+            try {
+                await createMigrationFlow(win)
+            } catch (ex) {
+                log.log('Failure in migration flow: ', ex)
+                logout()
+                return
+            }
+            log.log('Post-migration flow.')
+            start()
+
             if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
                 startClientService()
                 await backendReady
             }
         })
-        start()
     })
 })
 

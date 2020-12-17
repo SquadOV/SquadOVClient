@@ -4,4 +4,5 @@ export interface RiotAccountData {
     tag : string
     login: string | null
     encryptedPassword : string | null
+    isMigrated: number
 }

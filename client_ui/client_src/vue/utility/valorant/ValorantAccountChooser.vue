@@ -8,7 +8,7 @@
             </template>
 
             <span>
-                This Valorant account is configured incorrectly.
+                This Valorant account needs to be reconfigured.
                 Please click the edit button to add a login and password so we can properly pull your match history.
             </span>
         </v-tooltip>
@@ -156,6 +156,10 @@ export default class ValorantAccountChooser extends Vue {
             Vue.set(this.value!, 'login', resp.data.login)
             Vue.set(this.value!, 'encryptedPassword', resp.data.encryptedPassword)
             this.showHideEdit = false
+
+            apiClient.syncRiotAccount(this.$store.state.currentUser.id, this.value!).catch((err: any) => {
+                console.log('Failed to sync Riot account (edit): ', err)
+            })
         }).catch((err : any ) => {
             this.showHideAccountError = true
             console.log('Failed to edit valorant account')
@@ -169,6 +173,10 @@ export default class ValorantAccountChooser extends Vue {
             this.$emit('update:options', [...this.options, resp.data])
             this.$emit('input', resp.data)
             this.showHideNew = false
+
+            apiClient.syncRiotAccount(this.$store.state.currentUser.id, this.value!).catch((err: any) => {
+                console.log('Failed to sync Riot account (new): ', err)
+            })
         }).catch((err : any ) => {
             this.showHideAccountError = true
             console.log('Failed to create valorant account')

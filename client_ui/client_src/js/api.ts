@@ -204,6 +204,10 @@ class ApiClient {
         return axios.get(`v1/users/me/notifications`, this.createWebAxiosConfig())
     }
 
+    getLocalEncryptionPassword(): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/localenc`, this.createWebAxiosConfig())
+    }
+
     getSquad(squadId: number): Promise<ApiData<Squad>> {
         return axios.get(`v1/squad/${squadId}/profile`, this.createWebAxiosConfig()).then((resp: ApiData<Squad>) => {
             cleanSquadFromJson(resp.data)

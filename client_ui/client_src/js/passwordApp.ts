@@ -7,7 +7,7 @@ import Vuetify, {
     VMain,
 } from 'vuetify/lib'
 
-import PasswordChooser from '@client/vue/PasswordChooser.vue'
+import PasswordMigrater from '@client/vue/PasswordMigrater.vue'
 
 Vue.use(Vuetify)
 
@@ -16,7 +16,7 @@ new Vue({
     components: {
         VApp,
         VMain,
-        PasswordChooser
+        PasswordMigrater
     },
     vuetify: new Vuetify({
         theme: {

@@ -31,7 +31,8 @@ class ValorantApiServer {
             username,
             tag,
             login,
-            encrypted_password AS "encryptedPassword"
+            encrypted_password AS "encryptedPassword",
+            is_migrated AS "isMigrated"
         FROM valorant_accounts
         `, [], (err, rows) => {
             if (!!err) res.status(500).json({ 'error': err })
@@ -92,14 +93,16 @@ class ValorantApiServer {
                         username,
                         tag,
                         login,
-                        encrypted_password
+                        encrypted_password,
+                        is_migrated
                     )
                     VALUES (
                         ?,
                         ?,
                         ?,
                         ?,
-                        ?
+                        ?,
+                        1
                     )
                 `, [
                     puuid,
@@ -153,7 +156,8 @@ class ValorantApiServer {
                 this.db.run(`
                     UPDATE valorant_accounts
                     SET login = ?,
-                        encrypted_password = ?
+                        encrypted_password = ?,
+                        is_migrated = 1
                     WHERE puuid = ?
                 `, [
                     req.body.login,

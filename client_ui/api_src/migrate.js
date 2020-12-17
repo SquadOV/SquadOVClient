@@ -1,4 +1,4 @@
-const CURRENT_DB_VERSION = 9
+const CURRENT_DB_VERSION = 10
 const log = require('../log.js')
 
 async function migrateDb(db) {
@@ -262,6 +262,18 @@ DROP TABLE valorant_match_rounds;
                     db.run(`
 ALTER TABLE valorant_match_rounds_new RENAME TO valorant_match_rounds;
                     `)                    
+                }
+
+                if (currentVersion < 10) {
+                    db.run(`
+UPDATE valorant_accounts
+SET encrypted_password = NULL;
+                    `)
+
+                    db.run(`
+ALTER TABLE valorant_accounts
+ADD COLUMN is_migrated INTEGER DEFAULT 0;
+                    `)
                 }
     
                 db.run(`PRAGMA user_version = ${CURRENT_DB_VERSION}`)
