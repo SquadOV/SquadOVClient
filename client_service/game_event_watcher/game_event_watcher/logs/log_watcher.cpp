@@ -88,8 +88,12 @@ void LogWatcher::watchWorker() {
     std::thread pollThread([this, hDir](){
         while (!_isFinished) {
             if (fs::exists(_path)) {
-                std::ifstream tmp(_path.string());
-                tmp.seekg(0, tmp.end);
+                try {
+                    std::ifstream tmp(_path.string());
+                    tmp.seekg(0, tmp.end);
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Failed to poll log file: " << _path.string() << " -- " << ex.what() << std::endl);
+                }
             }
             std::this_thread::sleep_for(1s);
         }
@@ -120,77 +124,86 @@ void LogWatcher::watchWorker() {
             if (!logStream.is_open()) {
                 LOG_WARNING("Failed to open log file: " << _path.string() << std::endl);
             }
+            LOG_INFO("\tSuccessfully opened log file." << std::endl);
         } 
         previousFilesize = currentFilesize;
         
-        std::string line;
-        while (std::getline(logStream, line)) {
-            if (_batchingEnabled) {
-                lineBuffer.push_back(line);
-            } else {
-                _cb({line});
+        try {
+            std::string line;
+            while (std::getline(logStream, line)) {
+                if (_batchingEnabled) {
+                    lineBuffer.push_back(line);
+                } else {
+                    _cb({line});
+                }
             }
-        }
 
-        if (_batchingEnabled) {
-            // Let callback parse changes.
-            _cb(lineBuffer);
-            lineBuffer.clear();
+            if (_batchingEnabled) {
+                // Let callback parse changes.
+                _cb(lineBuffer);
+                lineBuffer.clear();
+            }
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to parse log line(s): " << ex.what() << std::endl);
         }
 
         // Wait until the file changes again.
 #ifdef _WIN32
-        // Look for a change to log file in the directory that we want to watch.
-        constexpr auto bufferNumBytes = 16384;
-        std::unique_ptr<BYTE, decltype(&_aligned_free)> buffer((BYTE*)_aligned_malloc(bufferNumBytes, sizeof(BYTE)), _aligned_free);
+        try {
+            // Look for a change to log file in the directory that we want to watch.
+            constexpr auto bufferNumBytes = 16384;
+            std::unique_ptr<BYTE, decltype(&_aligned_free)> buffer((BYTE*)_aligned_malloc(bufferNumBytes, sizeof(BYTE)), _aligned_free);
 
-        bool foundChanges = false;
-        while (!foundChanges && !_isFinished) {      
-            DWORD numBytes;
-            BOOL ok = ReadDirectoryChangesW(
-                hDir,
-                buffer.get(),
-                bufferNumBytes,
-                FALSE, // Shouldn't need to watch subtree since the log file should be a direct descendant.
-                FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE,
-                &numBytes,
-                NULL,
-                NULL
-            );
+            bool foundChanges = false;
+            while (!foundChanges && !_isFinished) {  
+                DWORD numBytes;
+                BOOL ok = ReadDirectoryChangesW(
+                    hDir,
+                    buffer.get(),
+                    bufferNumBytes,
+                    FALSE, // Shouldn't need to watch subtree since the log file should be a direct descendant.
+                    FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE,
+                    &numBytes,
+                    NULL,
+                    NULL
+                );
 
-            // If numBytes == 0 then the system has too much info to give us...uhhh. TBD.
-            if (!ok || numBytes == 0) {
-                // For whatever reason we failed...try again later.
-                std::this_thread::sleep_for(500ms);
-                continue;
-            }
-
-            BYTE* rawNotif = buffer.get();
-            while (!!rawNotif && !_isFinished) {
-                FILE_NOTIFY_INFORMATION* notif = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(rawNotif);
-
-                // Ensure that the file that was changed is the file we care about.
-                const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
-
-                // This conversion is deprecated in C++17 but I can't seem to find a good alternative.
-                #pragma warning(disable: 4996)
-                const std::string notifName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(wNotifFname);
-
-                if (notif->Action == FILE_ACTION_MODIFIED && notifName == _path.filename().string()) {
-                    foundChanges = true;
-                    break;
+                // If numBytes == 0 then the system has too much info to give us...uhhh. TBD.
+                if (!ok || numBytes == 0) {
+                    // For whatever reason we failed...try again later.
+                    std::this_thread::sleep_for(500ms);
+                    continue;
                 }
 
-                if (notif->NextEntryOffset == 0) {
-                    break;
-                }
-                rawNotif += notif->NextEntryOffset;
-            }
+                BYTE* rawNotif = buffer.get();
+                while (!!rawNotif && !_isFinished) {
+                    FILE_NOTIFY_INFORMATION* notif = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(rawNotif);
 
-            if (!foundChanges) {
-                // If we get here we didn't receive a notification about the file in question.
-                std::this_thread::sleep_for(10ms);
+                    // Ensure that the file that was changed is the file we care about.
+                    const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
+
+                    // This conversion is deprecated in C++17 but I can't seem to find a good alternative.
+                    #pragma warning(disable: 4996)
+                    const std::string notifName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(wNotifFname);
+
+                    if (notif->Action == FILE_ACTION_MODIFIED && notifName == _path.filename().string()) {
+                        foundChanges = true;
+                        break;
+                    }
+
+                    if (notif->NextEntryOffset == 0) {
+                        break;
+                    }
+                    rawNotif += notif->NextEntryOffset;
+                }
+
+                if (!foundChanges) {
+                    // If we get here we didn't receive a notification about the file in question.
+                    std::this_thread::sleep_for(10ms);
+                }
             }
+        } catch (std::exception& ex) {
+            LOG_WARNING("Exception in waiting for directory change: " << ex.what() << std::endl);
         }
 #endif
     }
