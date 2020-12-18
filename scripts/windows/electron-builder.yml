@@ -31,6 +31,7 @@ files:
   - "password.js"
   - "login.js"
   - "log.js"
+  - "paths.js"
   - "rendererLog.js"
   - "zeromq.js"
   - "api_src/**/*"
