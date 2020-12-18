@@ -538,6 +538,18 @@ class ApiClient {
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  
         return axios.get(`v1/users/${userId}/accounts/riot/${puuid}`, this.createWebAxiosConfig())
     }
+
+    submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {
+        let form = new FormData()
+        form.append('title', title)
+        form.append('description', description)
+        form.append('logs', logs)
+
+        let cfg = this.createWebAxiosConfig()
+        cfg.headers['Content-Type'] = 'multipart/form-data'
+
+        return axios.post(`v1/bug`, form, cfg)
+    }
 }
 
 export let apiClient = new ApiClient()

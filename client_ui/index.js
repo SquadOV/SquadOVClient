@@ -263,46 +263,51 @@ function startAutoupdater() {
 }
 
 function startSessionHeartbeat(onBeat) {
-    const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
-    log.log('Performing session heartbeat...', url)
-    const request = net.request({
-        method: 'POST',
-        url
-    })
-    request.setHeader('Content-Type', 'application/json')
-    request.write(JSON.stringify({
-        sessionId: process.env.SQUADOV_SESSION_ID
-    }))
-    request.on('response', (resp) => {
-        if (resp.statusCode != 200) {
-            log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
-            logout()
-        } else {
-            let body = ''
-            resp.on('data', (chunk) => {
-                body += chunk.toString()
-            })
-            
-            resp.on('end', () => {
-                let respBody = JSON.parse(body)
-
-                updateSession(respBody.sessionId, true)
-                process.env.SQUADOV_PASSWORD = respBody.localenc
-
-                if (!!onBeat) {
-                    onBeat()
-                }
+    try {
+        const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
+        log.log('Performing session heartbeat...', url)
+        const request = net.request({
+            method: 'POST',
+            url
+        })
+        request.setHeader('Content-Type', 'application/json')
+        request.write(JSON.stringify({
+            sessionId: process.env.SQUADOV_SESSION_ID
+        }))
+        request.on('response', (resp) => {
+            if (resp.statusCode != 200) {
+                log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
+                logout()
+            } else {
+                let body = ''
+                resp.on('data', (chunk) => {
+                    body += chunk.toString()
+                })
                 
-                let expiration = new Date(respBody.expiration)
+                resp.on('end', () => {
+                    let respBody = JSON.parse(body)
 
-                // Preemptively refresh the session 10 minutes before it's due to expire.
-                setTimeout(() => {
-                    startSessionHeartbeat()
-                }, Math.max(expiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
-            })
-        }
-    })
-    request.end()
+                    updateSession(respBody.sessionId, true)
+                    process.env.SQUADOV_PASSWORD = respBody.localenc
+
+                    if (!!onBeat) {
+                        onBeat()
+                    }
+                    
+                    let expiration = new Date(respBody.expiration)
+
+                    // Preemptively refresh the session 10 minutes before it's due to expire.
+                    setTimeout(() => {
+                        startSessionHeartbeat()
+                    }, Math.max(expiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
+                })
+            }
+        })
+        request.end()
+    } catch (e) {
+        log.log('Failed to perform session heartbeat: ', e)
+        logout()
+    }
 }
 
 app.on('ready', async () => {

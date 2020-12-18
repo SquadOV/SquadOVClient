@@ -5,3 +5,5 @@ declare module "*.vue" {
 
 declare module 'echarts/lib/echarts.js'
 declare module 'bcryptjs'
+declare module 'glob'
+declare module 'adm-zip'

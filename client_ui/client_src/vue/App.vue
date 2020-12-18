@@ -24,7 +24,7 @@
                 <router-view></router-view>
             </div>
 
-            <footer class="flex-grow-0">
+            <footer class="flex-grow-0 my-1">
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>
@@ -62,6 +62,30 @@
                         </v-card>
                     </v-dialog>
                 </div>
+
+                <v-dialog
+                    v-model="showHideBug"
+                    persistent
+                    max-width="60%"
+                >
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn
+                            v-on="on"
+                            v-bind="attrs"
+                            small
+                            id="bugreport"
+                            color="error"
+                        >
+                            <v-icon>
+                                mdi-bug
+                            </v-icon>
+                            Report a Bug
+                        </v-btn>
+                    </template>
+                    <bug-reporter
+                        @cancel="showHideBug = false"
+                    ></bug-reporter>
+                </v-dialog>
             </footer>
         </template>
         
@@ -83,17 +107,20 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
 import LicenseData from '@client/vue/LicenseData.vue'
+import BugReporter from '@client/vue/BugReporter.vue'
 import { version } from '@client/../package.json'
 
 @Component({
     components: {
         AppNav,
-        LicenseData
+        LicenseData,
+        BugReporter
     }
 })
 export default class App extends Vue {
     version: string = version
     showHideLicenses: boolean = false
+    showHideBug: boolean = false
 
     get userLoaded(): boolean {
         return !!this.$store.state.currentUser
@@ -112,6 +139,23 @@ export default class App extends Vue {
 
 .footer-text {
     line-height: 1rem !important;
+}
+
+footer {
+    position: sticky;
+    bottom: 0px;
+    background-color: #121212;
+}
+
+#bugreport {
+    position: fixed;
+    bottom: 0px;
+    left: calc(100% - 250px);
+    width: 180px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
 }
 
 </style>
