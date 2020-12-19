@@ -7,6 +7,7 @@ SET(SRCS
     src/valorant/valorant_match.cpp
     src/valorant/valorant_api.cpp
     src/hearthstone/hearthstone_process_handler.cpp
+    src/wow/wow_process_handler.cpp
     src/http/http_client.cpp
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
@@ -32,6 +33,7 @@ SET(HEADERS
     src/valorant/valorant_match.h
     src/valorant/valorant_api.h
     src/hearthstone/hearthstone_process_handler.h
+    src/wow/wow_process_handler.h
     src/http/http_client.h
     src/recorder/game_recorder.h
     src/recorder/video/video_recorder.h

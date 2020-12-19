@@ -4,6 +4,7 @@
 #include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "hearthstone/hearthstone_process_handler.h"
+#include "wow/wow_process_handler.h"
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
 #include "shared/errors/error.h"
@@ -123,6 +124,7 @@ int main(int argc, char** argv) {
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     watcher.start();
 
     curl_global_cleanup();
