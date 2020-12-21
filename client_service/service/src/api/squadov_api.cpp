@@ -404,6 +404,30 @@ void SquadovApi::deleteVod(const std::string& videoUuid) const {
     }
 }
 
+std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {
+    return "";
+}
+
+void SquadovApi::uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const {
+
+}
+
+std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    return "";
+}
+
+void SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter) {
+
+}
+
+std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    return "";
+}
+
+void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter) {
+    
+}
+
 SquadovApi* getGlobalApi() {
     static SquadovApiPtr global = std::make_unique<SquadovApi>();
     return global.get();

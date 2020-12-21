@@ -8,6 +8,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+#include "game_event_watcher/wow/wow_log_watcher.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
 
@@ -61,6 +62,14 @@ public:
     std::string createHearthstoneArenaDraft(const shared::TimePoint& timestamp, int64_t deckId) const;
     void addHearthstoneArenaDraftCard(const shared::TimePoint& timestamp, const std::string& arenaUuid, const std::string& cardId) const;
     void uploadHearthstoneArenaDeck(const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck, const std::string& arenaUuid) const;
+
+    // WoW
+    std::string obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const;
+    void uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const;
+    std::string createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
+    void finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter);
+    std::string createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
+    void finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter);
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;

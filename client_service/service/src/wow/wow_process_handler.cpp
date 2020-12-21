@@ -1,7 +1,9 @@
 #include "wow/wow_process_handler.h"
 #include "shared/log/log.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
+#include "api/squadov_api.h"
 #include "shared/time.h"
+#include "recorder/game_recorder.h"
 
 namespace service::wow {
 
@@ -10,21 +12,266 @@ public:
     WoWProcessHandlerInstance(const process_watcher::process::Process& p);
     ~WoWProcessHandlerInstance();
 
+    void cleanup();
 private:
     process_watcher::process::Process  _process;
     game_event_watcher::WoWLogWatcherPtr _logWatcher;
+
+    bool hasValidCombatLog() const;
+    bool inChallenge() const { return !_currentChallenge.challengeName.empty(); }
+    bool inEncounter() const { return !_currentEncounter.encounterName.empty(); }
+    bool inMatch() const { return inChallenge() || inEncounter(); }
+
+    // The general story of how we expect these events to play out is as follows:
+    // 1) The user starts the combat log via /combatlog and we obtain a COMBAT_LOG_VERSION
+    //    log line (EWoWLogEvents::CombatLogStart). We create a unique identifier for all the log lines that follow. 
+    // 1b) For every log line that comes after COMBAT_LOG_VERSION, we send it to the
+    //     server for storage/processing (EWoWLogEvents::CombatLogLine).
+    // 2) The user begins a raid/instance and either ENCOUNTER_START or CHALLENGE_MODE_START
+    //    occurs in the log (EWoWLogEvents::EncounterStart/EWoWLogEvents::ChallengeModeStart).
+    // 3) Immediately following ENCOUNTER_START or CHALLENGE_MODE_START are N COMBATANT_INFO lines
+    //    (EWoWLogEvents::CombatantInfo).
+    // 4) After we collect all the combatant, we can obtain a unique match UUID for this particular
+    //    encounter/challenge that can be synced across the users in the encounter/challenge. It is
+    //    at this point that we can start recording.
+    // 5) Finally, when the encounter/challenge is finished, either ENCOUNTER_END or
+    //    CHALLENGE_MODE_END is called (EWoWLogEvents::EncounterEnd/EWoWLogEvents::ChallengeModeEnd)
+    //    at which point we can stop recording.
+    //
+    // As a special note, it is possible that an ENCOUNTER_START happens within a
+    // CHALLENGE_MODE_START/CHALLENGE_MODE_END block. In that case, CHALLENGE_MODE_START
+    // has priority and the ENCOUNTER_START is merely marked as an interesting event.
+    // This, however, is handled by the server as the client is only responsible for doing
+    // things that enable it to record VODs.
+    void onCombatLogStart(const shared::TimePoint& tm, const void* data);
+    void onCombatLogLine(const shared::TimePoint& tm, const void* data);
+    void onEncounterStart(const shared::TimePoint& tm, const void* data);
+    void onEncounterEnd(const shared::TimePoint& tm, const void* data);
+    void onChallengeModeStart(const shared::TimePoint& tm, const void* data);
+    void onChallengeModeEnd(const shared::TimePoint& tm, const void* data);
+    void onCombatantInfo(const shared::TimePoint& tm, const void* data);
+    void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
+
+    void genericMatchStart(const shared::TimePoint& tm);
+    void genericMatchEnd(const shared::TimePoint& tm);
+
+    bool _combatLogActive = false;
+    game_event_watcher::WoWCombatLogState _combatLog;
+    std::string _combatLogId;
+    std::string _currentMatchUuid;
+    shared::TimePoint _matchStartTime;
+
+    game_event_watcher::WoWChallengeModeStart _currentChallenge;
+    game_event_watcher::WoWEncounterStart _currentEncounter;
+    std::vector<game_event_watcher::WoWCombatantInfo> _combatants;
+    bool _expectingCombatants = false;
+
+    service::recorder::GameRecorderPtr _recorder;
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
     _process(p),
     _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())) {
 
-    
+    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogLine), std::bind(&WoWProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::EncounterStart), std::bind(&WoWProcessHandlerInstance::onEncounterStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::EncounterEnd), std::bind(&WoWProcessHandlerInstance::onEncounterEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeStart), std::bind(&WoWProcessHandlerInstance::onChallengeModeStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeEnd), std::bind(&WoWProcessHandlerInstance::onChallengeModeEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
 }
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
     
+}
+
+void WoWProcessHandlerInstance::cleanup() {
+    // TODO: Tell the server that the combat log is finished.
+    // We need to do this so that it'll get written out to block storage.
+    const game_event_watcher::RawWoWCombatLog endLog = {
+        shared::nowUtc(),
+        { "SQUADOV_END_COMBAT_LOG" }
+    };
+    onCombatLogLine(endLog.timestamp, (void*)&endLog);
+}
+
+bool WoWProcessHandlerInstance::hasValidCombatLog() const {
+    return !_combatLogId.empty();
+}
+
+void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, const void* data) {
+    if (hasValidCombatLog()) {
+        return;
+    }
+
+    const game_event_watcher::WoWCombatLogState* log = reinterpret_cast<const game_event_watcher::WoWCombatLogState*>(data);
+    LOG_INFO("Start WoW Combat Log [Version " << log->combatLogVersion << "- Advanced" << log->advancedLog << " - Build " << log->buildVersion << "] @ " << shared::timeToStr(tm) << std::endl);
+
+    // Request a unique combat log ID from the API server if we don't have one.
+    // A combat log ID represents an entire play session hence why this should only
+    // be called once every time after a user starts WoW.
+    try {
+        _combatLogId = service::api::getGlobalApi()->obtainNewWoWCombatLogUuid(*log);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to obtain new WoW combat log UUID:" << ex.what() << std::endl);
+        return;
+    }
+
+    _combatLogActive = true;
+    _combatLog = *log;
+}
+
+void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog()) {
+        return;
+    }
+
+    // TODO: Send combat log line to server associated with the current combat log.
+    const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);;
+    try {
+        service::api::getGlobalApi()->uploadWoWCombatLogLine(_combatLogId, log);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _combatLogId << std::endl);
+    }
+}
+
+void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || inMatch()) {
+        return;
+    }
+
+    _currentEncounter = *reinterpret_cast<const game_event_watcher::WoWEncounterStart*>(data);
+    LOG_INFO("WoW Encounter Start [" <<  shared::timeToStr(tm) << "]: " << _currentEncounter << std::endl);
+    _expectingCombatants = true;
+}
+
+void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || !inEncounter()) {
+        return;
+    }
+
+    const auto end = *reinterpret_cast<const game_event_watcher::WoWEncounterEnd*>(data);
+    LOG_INFO("WoW Encounter End [" <<  shared::timeToStr(tm) << "]: " << end << std::endl);
+    if (!_currentMatchUuid.empty()) {
+        try {
+            service::api::getGlobalApi()->finishWoWEncounterMatch(_currentMatchUuid, tm, end);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to finish WoW Encounter: " << ex.what() << "\t" << _currentMatchUuid << std::endl);
+        }
+    } else {
+        LOG_WARNING("\tNo match UUID?" << std::endl);
+    }
+    _currentEncounter = {};
+    _combatants.clear();
+    genericMatchEnd(tm);
+}
+
+void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || inMatch()) {
+        return;
+    }
+
+    _currentChallenge = *reinterpret_cast<const game_event_watcher::WoWChallengeModeStart*>(data);
+    LOG_INFO("WoW Challenge Start [" <<  shared::timeToStr(tm) << "]: " << _currentChallenge << std::endl);
+    _expectingCombatants = true;
+}
+
+void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || !inChallenge()) {
+        return;
+    }
+
+    const auto end = *reinterpret_cast<const game_event_watcher::WoWChallengeModeEnd*>(data);
+    LOG_INFO("WoW Challenge End [" <<  shared::timeToStr(tm) << "]: " << end  << std::endl);
+    if (!_currentMatchUuid.empty()) {
+        try {
+            service::api::getGlobalApi()->finishWoWChallengeMatch(_currentMatchUuid, tm, end);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to finish WoW challenge: " << ex.what() << "\t" << _currentMatchUuid << std::endl);
+        }
+    } else {
+        LOG_WARNING("\tNo match UUID?" << std::endl);
+    }
+    _currentChallenge = {};
+    _combatants.clear();
+    genericMatchEnd(tm);
+}
+
+void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || !inMatch() || !_expectingCombatants) {
+        return;
+    }
+
+    const auto combatant = *reinterpret_cast<const game_event_watcher::WoWCombatantInfo*>(data);
+    LOG_INFO("WoW Combatant Info [" <<  shared::timeToStr(tm) << "]: " << combatant << std::endl);
+    _combatants.push_back(combatant);
+}
+
+void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& tm, const void* data) {
+    if (!hasValidCombatLog() || !inMatch() || !_expectingCombatants) {
+        return;
+    }
+
+    LOG_INFO("WoW Finish Combatant Info [" << shared::timeToStr(tm) << "]" << std::endl);
+    _expectingCombatants = false;
+    genericMatchStart(tm);
+}
+
+void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
+    LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "] - LOG" << _combatLogId << std::endl);
+    // TODO: Use the current challenge/encounter data + combatant info to request a unique
+    // match UUID.
+    try {
+        if (inChallenge()) {
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(tm, _currentChallenge, _combatants);
+        } else if (inEncounter()) {
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(tm, _currentEncounter, _combatants);
+        } else {
+            THROW_ERROR("Match start without challenge or encounter." << std::endl);
+        }
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to create WoW challenge/encounter: " << ex.what() << std::endl
+            << "\tChallenge: " << _currentChallenge << std::endl
+            << "\tEncounter: " << _currentEncounter << std::endl
+            << "\tCombatants: " << _combatants << std::endl);
+        return;
+    }
+
+    _matchStartTime = tm;
+    _recorder->start();
+}
+
+void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
+    LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG" << _combatLogId << std::endl);
+    const auto isRecording = _recorder->isRecording();
+    if (isRecording && !_currentMatchUuid.empty()) {
+        const auto vodId = _recorder->currentId();
+        const auto metadata = _recorder->getMetadata();
+        const auto sessionId = _recorder->sessionId();
+
+        _recorder->stop();
+        try {
+            try {
+                shared::squadov::VodAssociation association;
+                association.matchUuid = _currentMatchUuid;
+                association.userUuid = vodId.userUuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = _matchStartTime;
+                association.endTime = tm;
+                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+            } catch (const std::exception& ex) {
+                LOG_WARNING("Failed to associate WoW VOD: " << ex.what() << std::endl);
+                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+            }
+        } catch (const std::exception& ex) {
+            LOG_WARNING("Failed to delete WoW VOD: " << ex.what() << "\t" << vodId.videoUuid << std::endl);
+        }
+        _currentMatchUuid = "";
+    }
 }
 
 WoWProcessHandler::WoWProcessHandler() = default;
@@ -44,6 +291,7 @@ void WoWProcessHandler::onProcessStops() {
         return;
     }
     LOG_INFO("STOP WOW" << std::endl);
+    _instance->cleanup();
     _instance.reset(nullptr);
 }
 

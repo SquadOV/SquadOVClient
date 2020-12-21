@@ -18,6 +18,10 @@ std::filesystem::path getSquadOvFolder() {
     return getAppDataPath() / std::filesystem::path("SquadOV" + shared::getEnv("SQUADOV_APPDATA_SUFFIX"));
 }
 
+std::filesystem::path getSquadOvTzDataFolder() {
+    return getSquadOvFolder() / fs::path("tzdata");
+}
+
 std::filesystem::path getSquadOvUserFolder() {
     return fs::path(shared::getEnv("SQUADOV_USER_APP_FOLDER"));
 }

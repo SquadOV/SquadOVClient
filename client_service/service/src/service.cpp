@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstdio>
 #include <curl/curl.h>
+#include <date/tz.h>
 #include <filesystem>
 #include <iostream>
 #include <portaudio.h>
@@ -68,6 +69,10 @@ int main(int argc, char** argv) {
     if (Pa_Initialize() != paNoError) {
         THROW_ERROR("Failed to initialize PortAudio.");
     }
+
+    const auto tzdataPath = shared::filesystem::getSquadOvTzDataFolder();
+    LOG_INFO("Set Tz Data Install Folder: " << tzdataPath << std::endl);
+    date::set_install(tzdataPath.string());
 
     LOG_INFO("USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl);
 

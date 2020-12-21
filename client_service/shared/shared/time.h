@@ -12,8 +12,8 @@ using LocalTimePoint = date::local_seconds;
 
 TimePoint zeroTime();
 TimePoint nowUtc();
-TimePoint strToTime(const std::string& dt, const std::string& format = "%F %H:%M:%S");
-LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %H:%M:%S");
+TimePoint strToTime(const std::string& dt, const std::string& format = "%F %T");
+LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %T");
 
 std::string timeToStr(const TimePoint& tm);
 std::string timeToIso(const TimePoint& tm);
