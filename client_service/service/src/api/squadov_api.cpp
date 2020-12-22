@@ -405,27 +405,103 @@ void SquadovApi::deleteVod(const std::string& videoUuid) const {
 }
 
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {
-    return "";
+    std::ostringstream path;
+    path << "/v1/wow/combatlog";
+    const auto result = _webClient->post(path.str(), log.toJson());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW combat log: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 void SquadovApi::uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const {
 
 }
 
-std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
-    return "";
+std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "combatants", combatantArray },
+        { "data", encounter.toJson() },
+        { "combatLogUuid", combatLogUuid }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/challenge";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW challenge: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 void SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter) {
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", encounter.toJson() }
+    };
 
+    std::ostringstream path;
+    path << "/v1/wow/match/challenge/" << matchUuid;
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create finish WoW challenge: " << result->status);
+    }
 }
 
-std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
-    return "";
+std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "combatants", combatantArray },
+        { "data", encounter.toJson() },
+        { "combatLogUuid", combatLogUuid }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/encounter";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW encounter: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter) {
-    
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", encounter.toJson() }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/encounter/" << matchUuid;
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to finish WoW encounter: " << result->status);
+    }
 }
 
 SquadovApi* getGlobalApi() {

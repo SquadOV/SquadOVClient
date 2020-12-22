@@ -174,6 +174,57 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     }
 }
 
+nlohmann::json WoWCombatLogState::toJson() const {
+    return {
+        {"combatLogVersion", combatLogVersion},
+        {"advancedLog", advancedLog},
+        {"buildVersion", buildVersion}
+    };
+}
+
+nlohmann::json WoWCombatantInfo::toJson() const {
+    return {
+        { "guid", guid }
+    };
+}
+
+nlohmann::json WoWEncounterStart::toJson() const {
+    return {
+        { "encounterId", encounterId },
+        { "encounterName", encounterName },
+        { "difficulty", difficulty },
+        { "numPlayers", numPlayers },
+        { "instanceId", instanceId },
+    };
+}
+
+nlohmann::json WoWEncounterEnd::toJson() const {
+    return {
+        { "encounterId", encounterId },
+        { "encounterName", encounterName },
+        { "difficulty", difficulty },
+        { "numPlayers", numPlayers },
+        { "success", success },
+    };
+}
+
+nlohmann::json WoWChallengeModeStart::toJson() const {
+    return {
+        { "challengeName", challengeName },
+        { "instanceId", instanceId },
+        { "keystoneLevel", keystoneLevel }
+    };
+}
+
+nlohmann::json WoWChallengeModeEnd::toJson() const {
+    return {
+        { "instanceId", instanceId },
+        { "success", success },
+        { "keystoneLevel", keystoneLevel },
+        { "timeMs", timeMs }
+    };
+}
+
 std::ostream& operator<<(std::ostream& os, const WoWEncounterStart& e) {
     os << "{"
        << "Id: " << e.encounterId 

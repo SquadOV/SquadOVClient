@@ -5,6 +5,7 @@
 #include "shared/time.h"
 
 #include <filesystem>
+#include <nlohmann/json.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -30,6 +31,8 @@ struct WoWCombatLogState {
     std::string combatLogVersion;
     bool advancedLog;
     std::string buildVersion;
+
+    nlohmann::json toJson() const;
 };
 
 struct RawWoWCombatLog {
@@ -43,12 +46,16 @@ struct WoWEncounterStart {
     int difficulty;
     int numPlayers;
     int instanceId;
+
+    nlohmann::json toJson() const;
 };
 
 struct WoWChallengeModeStart {
     std::string challengeName;
     int instanceId;
     int keystoneLevel;
+
+    nlohmann::json toJson() const;
 };
 
 struct WoWEncounterEnd {
@@ -57,6 +64,8 @@ struct WoWEncounterEnd {
     int difficulty;
     int numPlayers;
     bool success;
+
+    nlohmann::json toJson() const;
 };
 
 struct WoWChallengeModeEnd {
@@ -64,10 +73,14 @@ struct WoWChallengeModeEnd {
     bool success;
     int keystoneLevel;
     int64_t timeMs;
+
+    nlohmann::json toJson() const;
 };
 
 struct WoWCombatantInfo {
     std::string guid;
+
+    nlohmann::json toJson() const;
 };
 
 class WoWLogWatcher : public BaseLogWatcher {

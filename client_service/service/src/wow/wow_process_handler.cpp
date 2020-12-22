@@ -227,9 +227,9 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     // match UUID.
     try {
         if (inChallenge()) {
-            _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(tm, _currentChallenge, _combatants);
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(tm, _combatLogId, _currentChallenge, _combatants);
         } else if (inEncounter()) {
-            _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(tm, _currentEncounter, _combatants);
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(tm, _combatLogId, _currentEncounter, _combatants);
         } else {
             THROW_ERROR("Match start without challenge or encounter." << std::endl);
         }
