@@ -11,7 +11,7 @@ namespace fs = std::filesystem;
 namespace game_event_watcher {
 namespace {
 
-const std::string startTaskPrefix = "-------START-TASK-------";
+const std::string startTaskPrefix = "-------PLAY-TASK-------";
 bool parseStartTask(const std::string& line) {
     return shared::strings::hasPrefix(line, startTaskPrefix);
 }
@@ -56,7 +56,7 @@ bool parseGameVersion(const std::string& line, std::string& version) {
     return true;
 }
 
-const std::string finishTaskPrefix = "-------PERFORMANCE-------";
+const std::string finishTaskPrefix = "-------START-TASK-------";
 bool parseFinishTask(const std::string& line) {
     return shared::strings::hasPrefix(line, finishTaskPrefix);
 }
