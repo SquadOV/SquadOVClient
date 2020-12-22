@@ -90,8 +90,8 @@ WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
 }
 
 void WoWProcessHandlerInstance::cleanup() {
-    // TODO: Tell the server that the combat log is finished.
-    // We need to do this so that it'll get written out to block storage.
+    // Tell the server that the combat log is finished.
+    // We need to do this so that the log backup will get written out to block storage.
     const game_event_watcher::RawWoWCombatLog endLog = {
         shared::nowUtc(),
         { "SQUADOV_END_COMBAT_LOG" }
@@ -130,7 +130,7 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
         return;
     }
 
-    // TODO: Send combat log line to server associated with the current combat log.
+    // Send combat log line to server associated with the current combat log.
     const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);;
     try {
         service::api::getGlobalApi()->uploadWoWCombatLogLine(_combatLogId, log);
@@ -223,8 +223,7 @@ void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& t
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "] - LOG" << _combatLogId << std::endl);
-    // TODO: Use the current challenge/encounter data + combatant info to request a unique
-    // match UUID.
+    // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
         if (inChallenge()) {
             _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(tm, _combatLogId, _currentChallenge, _combatants);
