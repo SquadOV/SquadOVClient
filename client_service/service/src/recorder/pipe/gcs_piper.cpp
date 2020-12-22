@@ -196,7 +196,7 @@ size_t GCSPiper::sendDataFromBufferToGcs(const char* buffer, size_t numBytes, bo
             // to indicate *all* the data we've uploaded so far not just
             // this request.
             const auto start = _uploadedBytes;
-            const auto end = std::stoi(rangeParts[1]);
+            const auto end = static_cast<size_t>(std::stoull(rangeParts[1]));
             return (end - start + 1);
         } else {
             THROW_ERROR("Invalid range header received: " << retRange << std::endl);
