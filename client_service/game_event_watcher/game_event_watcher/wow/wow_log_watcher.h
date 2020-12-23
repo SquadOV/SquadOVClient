@@ -38,6 +38,8 @@ struct WoWCombatLogState {
 struct RawWoWCombatLog {
     shared::TimePoint timestamp;
     std::vector<std::string> log;
+
+    nlohmann::json toJson() const;
 };
 
 struct WoWEncounterStart {
@@ -87,6 +89,8 @@ class WoWLogWatcher : public BaseLogWatcher {
 public:
     WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);
     void loadFromExecutable(const std::filesystem::path& exePath);
+    void loadFromPath(const std::filesystem::path& logPath);
+
 private:
     void onCombatLogChange(const LogLinesDelta& lines);
 

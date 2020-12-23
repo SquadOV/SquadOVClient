@@ -4,6 +4,7 @@
 #include <ctime>
 #include <string>
 #include <date/date.h>
+#include <date/tz.h>
 
 namespace shared {
 
@@ -15,12 +16,24 @@ TimePoint nowUtc();
 TimePoint strToTime(const std::string& dt, const std::string& format = "%F %T");
 LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %T");
 
+int64_t timeToUnixMs(const TimePoint& tm);
 std::string timeToStr(const TimePoint& tm);
 std::string timeToIso(const TimePoint& tm);
 
 template<typename T>
 std::string timeToDateString(const T& tm) {
     return date::format("%F", tm);
+}
+
+template<typename T>
+std::string localTimeToString(const date::local_time<T>& t) {
+    const auto dp = date::floor<date::days>(t);
+    date::year_month_day ymd(dp);
+    date::hh_mm_ss hms(date::floor<std::chrono::milliseconds>(t - dp));
+
+    std::ostringstream ss;
+    ss << ymd.year() << "-" << ymd.month() << "-" << ymd.day() << " " << hms;
+    return ss.str();
 }
 
 // A version of timeToStr that creates a date string that's more compatible with filenames.

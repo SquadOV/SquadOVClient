@@ -26,12 +26,16 @@ public:
     }
 
     bool useTimeChecks() const { return _useTimeChecks; }
+    void setUseTimeChecks(bool v) { _useTimeChecks = v; }
     bool isTimeBeforeThreshold(const shared::TimePoint& tp) const { return _useTimeChecks && tp < _timeThreshold; }
     const shared::TimePoint& timeThreshold() const { return _timeThreshold; }
 
 protected:
-    void notify(int event, const shared::TimePoint& eventTime, const void* data, bool checkTime = true) const {
-        LOG_INFO("Notify Log Event [" << event << "] at " << shared::timeToStr(eventTime) << " - Check Time " << (checkTime && _useTimeChecks) << std::endl);
+    void notify(int event, const shared::TimePoint& eventTime, const void* data, bool checkTime = true, bool quiet = false) const {
+        if (!quiet) {
+            LOG_INFO("Notify Log Event [" << event << "] at " << shared::timeToStr(eventTime) << " - Check Time " << (checkTime && _useTimeChecks) << std::endl);
+        }
+        
         // Discard events that came before the time threshold. The time threshold is generally when we
         // detect that the game has opened - this prevents us from reading old log events.
         if (checkTime && isTimeBeforeThreshold(eventTime)) {

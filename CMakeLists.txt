@@ -19,6 +19,7 @@ find_package(OpenSSL REQUIRED)
 set(FFMPEG_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/ffmpeg CACHE STRING "" FORCE)
 set(OPENH264_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/openh264 CACHE STRING "" FORCE)
 find_package(FFMPEG REQUIRED)
+find_package(RdKafka CONFIG REQUIRED)
 
 set(OPENH264_LIBRARIES
     ${OPENH264_ROOT}/lib/openh264.lib

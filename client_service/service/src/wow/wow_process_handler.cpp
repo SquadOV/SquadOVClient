@@ -13,6 +13,8 @@ public:
     ~WoWProcessHandlerInstance();
 
     void cleanup();
+    void overrideCombatLogPosition(const std::filesystem::path& path);
+    void manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime);
 private:
     process_watcher::process::Process  _process;
     game_event_watcher::WoWLogWatcherPtr _logWatcher;
@@ -67,6 +69,10 @@ private:
     bool _expectingCombatants = false;
 
     service::recorder::GameRecorderPtr _recorder;
+
+    //
+    std::filesystem::path _manualVodPath;
+    shared::TimePoint _manualVodStartTime;
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -82,11 +88,26 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeEnd), std::bind(&WoWProcessHandlerInstance::onChallengeModeEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
-    _logWatcher->loadFromExecutable(p.path());
+
+    if (!_process.empty()) {
+        _logWatcher->loadFromExecutable(p.path());
+    } else {
+        LOG_WARNING("Empty process. May or may not be an error?" << std::endl);
+    }
 }
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
     
+}
+
+void WoWProcessHandlerInstance::overrideCombatLogPosition(const std::filesystem::path& path) {
+    _logWatcher->setUseTimeChecks(false);
+    _logWatcher->loadFromPath(path);
+}
+
+void WoWProcessHandlerInstance::manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime) {
+    _manualVodPath = path;
+    _manualVodStartTime = startTime;
 }
 
 void WoWProcessHandlerInstance::cleanup() {
@@ -109,13 +130,14 @@ void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, co
     }
 
     const game_event_watcher::WoWCombatLogState* log = reinterpret_cast<const game_event_watcher::WoWCombatLogState*>(data);
-    LOG_INFO("Start WoW Combat Log [Version " << log->combatLogVersion << "- Advanced" << log->advancedLog << " - Build " << log->buildVersion << "] @ " << shared::timeToStr(tm) << std::endl);
+    LOG_INFO("Start WoW Combat Log [Version " << log->combatLogVersion << "- Advanced " << log->advancedLog << " - Build " << log->buildVersion << "] @ " << shared::timeToStr(tm) << std::endl);
 
     // Request a unique combat log ID from the API server if we don't have one.
     // A combat log ID represents an entire play session hence why this should only
     // be called once every time after a user starts WoW.
     try {
         _combatLogId = service::api::getGlobalApi()->obtainNewWoWCombatLogUuid(*log);
+        LOG_INFO("\tObtained Combat Log ID: " << _combatLogId << std::endl);
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to obtain new WoW combat log UUID:" << ex.what() << std::endl);
         return;
@@ -133,7 +155,7 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     // Send combat log line to server associated with the current combat log.
     const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);;
     try {
-        service::api::getGlobalApi()->uploadWoWCombatLogLine(_combatLogId, log);
+        service::api::getKafkaApi()->uploadWoWCombatLogLine(_combatLogId, log);
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _combatLogId << std::endl);
     }
@@ -222,7 +244,7 @@ void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& t
 }
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
-    LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "] - LOG" << _combatLogId << std::endl);
+    LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "] - LOG " << _combatLogId << std::endl);
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
         if (inChallenge()) {
@@ -232,6 +254,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
         } else {
             THROW_ERROR("Match start without challenge or encounter." << std::endl);
         }
+        LOG_INFO("\tWoW Match Uuid: " << _currentMatchUuid << std::endl);
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create WoW challenge/encounter: " << ex.what() << std::endl
             << "\tChallenge: " << _currentChallenge << std::endl
@@ -241,7 +264,12 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     }
 
     _matchStartTime = tm;
-    _recorder->start();
+
+    if (!_process.empty()) {
+        _recorder->start();
+    } else {
+        _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
+    }
 }
 
 void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
@@ -252,7 +280,12 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
         const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
 
-        _recorder->stop();
+        if (!_process.empty()) {
+            _recorder->stop();
+        } else {
+            _recorder->stopFromSource(tm);
+        }
+
         try {
             try {
                 shared::squadov::VodAssociation association;
@@ -269,8 +302,8 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
         } catch (const std::exception& ex) {
             LOG_WARNING("Failed to delete WoW VOD: " << ex.what() << "\t" << vodId.videoUuid << std::endl);
         }
-        _currentMatchUuid = "";
     }
+    _currentMatchUuid = "";
 }
 
 WoWProcessHandler::WoWProcessHandler() = default;
@@ -283,6 +316,12 @@ void WoWProcessHandler::onProcessStarts(const process_watcher::process::Process&
 
     LOG_INFO("START WOW" << std::endl);
     _instance = std::make_unique<WoWProcessHandlerInstance>(p);
+}
+
+void WoWProcessHandler::manualStartLogWatching(const std::filesystem::path& path, const std::filesystem::path& vodPath, const shared::TimePoint& vodStartTime) {
+    onProcessStarts(process_watcher::process::Process{});
+    _instance->manualVodOverride(vodPath, vodStartTime);
+    _instance->overrideCombatLogPosition(path);
 }
 
 void WoWProcessHandler::onProcessStops() {

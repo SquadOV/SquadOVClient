@@ -6,6 +6,7 @@
 #include "shared/squadov/vod.h"
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
+#include "api/kafka_api.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
@@ -33,6 +34,9 @@ public:
 
     int64_t getSessionUserId() const;
     std::string getSessionUserUuid() const;
+
+    // Kafka
+    KafkaApiKeyPair getKafkaKeyPair() const;
 
     // User
     shared::squadov::SquadOVUser getCurrentUser() const;
@@ -65,7 +69,6 @@ public:
 
     // WoW
     std::string obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const;
-    void uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const;
     std::string createWoWChallengeMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
     void finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter);
     std::string createWoWEncounterMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);

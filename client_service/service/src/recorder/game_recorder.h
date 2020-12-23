@@ -7,6 +7,7 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/file_output_piper.h"
 #include "shared/squadov/vod.h"
+#include "shared/time.h"
 #include <filesystem>
 #include <memory>
 #include <shared_mutex>
@@ -30,19 +31,21 @@ public:
 
     VodIdentifier start();
     void stop();
-    bool isRecording() const { return !!_encoder; }
+
+    VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);
+    void stopFromSource(const shared::TimePoint& end);
+
+    bool isRecording() const { return !!_encoder || std::filesystem::exists(_manualVodPath); }
     const VodIdentifier& currentId() const { return *_currentId; }
     std::string sessionId() const { return _outputPiper->sessionId(); }
 
-    shared::squadov::VodMetadata getMetadata() const { 
-        auto metadata = _encoder->getMetadata();
-        metadata.videoUuid = _currentId->videoUuid;
-        return metadata;
-    }
+    shared::squadov::VodMetadata getMetadata() const;
 
 private:
     void createVideoRecorder(const video::VideoWindowInfo& info);
     void updateWindowInfo();
+    std::unique_ptr<VodIdentifier> createNewVodIdentifier() const;
+    void initializeFileOutputPiper();
 
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;
@@ -60,6 +63,11 @@ private:
     std::thread _updateWindowInfoThread;
     std::shared_mutex _windowInfoMutex;
     video::VideoWindowInfo _windowInfo;
+
+    // Manual Video File Controls
+    std::filesystem::path _manualVodPath;
+    shared::TimePoint _manualVodTimeStart;
+    shared::TimePoint _manualVodRecordStart;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

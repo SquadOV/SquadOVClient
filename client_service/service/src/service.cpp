@@ -10,8 +10,10 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
+#include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 
+#include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
 #include <chrono>
 #include <cstdio>
@@ -31,6 +33,7 @@ extern "C" {
 #endif
 
 namespace fs = std::filesystem;
+namespace po = boost::program_options;
 
 process_watcher::ProcessWatcher watcher;
 
@@ -56,8 +59,38 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     LOG_INFO(buffer);
 }
 
+void defaultMain() {
+    // Start process watcher to watch for our supported games.
+    watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
+    watcher.start();
+}
+
+// Not too big a fan of making this a gigantic executable that does everything..hmm..
+void wowTest(const std::string& log, const std::string& vod, const std::string& vodTime) {
+    service::wow::WoWProcessHandler handler;
+    handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
+
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 int main(int argc, char** argv) {
-    LOG_INFO("Start SquadOV" << std::endl);
+    po::options_description desc("Options");
+    desc.add_options()
+        ("mode", po::value<std::string>()->default_value(""), "Client mode.")
+        ("log", po::value<std::string>()->default_value(""), "Log file to manually parse (mode: wow_test).")
+        ("vod", po::value<std::string>()->default_value(""), "VOD file to manually upload (mode: wow_test).")
+        ("vodTime", po::value<std::string>()->default_value(""), "The UTC timestamp of when the VOD started to record (mode: wow_test).");
+
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::notify(vm);
+
+        LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif
@@ -105,6 +138,9 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
+    LOG_INFO("Initialize Kafka API" << std::endl);
+    service::api::getKafkaApi()->initialize(shared::getEnv("SQUADOV_KAFKA_BROKERS", ""));
+
     LOG_INFO("Send Ready" << std::endl);
     // At this point we can fire off an event letting the UI know that the service is ready.
     // The reason we need this is because setSessionId will fire off an API request to get the
@@ -125,13 +161,16 @@ int main(int argc, char** argv) {
     LOG_INFO("Enable Hearthstone Logging" << std::endl);
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
-    // Start process watcher to watch for our supported games.
-    watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
-    watcher.start();
+    const auto mode = vm["mode"].as<std::string>();
+    if (mode == "") {
+        defaultMain();
+    } else if (mode == "wow_test") {
+        wowTest(vm["log"].as<std::string>(), vm["vod"].as<std::string>(), vm["vodTime"].as<std::string>());
+    } else {
+        THROW_ERROR("Unknown Mode: " << mode);
+    }
 
     curl_global_cleanup();
     Pa_Terminate();
+    return 0;
 }

@@ -13,6 +13,7 @@
 #include "system/win32/hwnd_utils.h"
 
 #include <chrono>
+#include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
@@ -45,6 +46,10 @@ GameRecorder::~GameRecorder() {
 }
 
 void GameRecorder::updateWindowInfo() {
+    if (_process.empty()) {
+        return;
+    }
+
     HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(120000));
     while (_running) {
         if (!IsIconic(wnd)) {
@@ -81,16 +86,9 @@ VodIdentifier GameRecorder::start() {
         return *_currentId;
     }
 
-    _currentId = std::make_unique<VodIdentifier>();
-    _currentId->userUuid = service::api::getGlobalApi()->getSessionUserUuid();
-    _currentId->videoUuid = shared::generateUuidv4();
+    _currentId = createNewVodIdentifier();
+    initializeFileOutputPiper();
 
-    // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
-    // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
-    // create an output piper of the appropriate type based on the given URI.
-    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid);
-    _outputPiper = pipe::createFileOutputPiper(_currentId->videoUuid, outputUri);
-    _outputPiper->start();
     _encoder.reset(new encoder::FfmpegAvEncoder(_outputPiper->filePath()));
 
     {
@@ -160,6 +158,91 @@ void GameRecorder::stop() {
     _currentId.reset(nullptr);
 
     _outputPiper->wait();
+}
+
+VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart) {
+    if (!!_currentId) {
+        return *_currentId;
+    }
+
+    _currentId = createNewVodIdentifier();
+    initializeFileOutputPiper();
+
+    _manualVodPath = vodPath;
+    _manualVodTimeStart = vodStart;
+    _manualVodRecordStart = recordStart;
+
+    return *_currentId;
+}
+
+void GameRecorder::stopFromSource(const shared::TimePoint& end) {
+    // We don't really expect this code to run in production so just do some janky
+    // FFmpeg binary call here. YOLOOO.
+    const auto ffmpegBinary = std::filesystem::path(shared::getEnv("FFMPEG_BINARY_PATH", ""));
+    if (fs::exists(ffmpegBinary)) {
+        const auto startMs = std::chrono::duration_cast<std::chrono::milliseconds>(_manualVodRecordStart - _manualVodTimeStart).count();
+        const auto toMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - _manualVodTimeStart).count();
+
+        std::ostringstream ffmpegCommand;
+        ffmpegCommand << "\"\"" << ffmpegBinary.string() << "\""
+            << " -y -i \"" << _manualVodPath.string() << "\""
+            << " -ss " << static_cast<double>(startMs / 1000.0)
+            << " -to " << static_cast<double>(toMs / 1000.0)
+            << " -c:v h264_nvenc -c:a aac -movflags +empty_moov+frag_keyframe+default_base_moof -f mp4 "
+            << _outputPiper->filePath()
+            << "\"";
+
+        LOG_INFO("Run FFmpeg Command on Manual VOD source: " << ffmpegCommand.str() << std::endl);
+        if (std::system(ffmpegCommand.str().c_str())) {
+            LOG_ERROR("Failed to run FFmpeg." << std::endl);
+        }
+    } else {
+        LOG_ERROR("Failed to find FFmpeg binary:" << ffmpegBinary.string() << std::endl);
+    }
+
+    _manualVodPath = std::filesystem::path();
+    _manualVodTimeStart = shared::zeroTime();
+    _currentId.reset(nullptr);
+    _outputPiper->wait();
+}
+
+std::unique_ptr<VodIdentifier> GameRecorder::createNewVodIdentifier() const {
+    auto id = std::make_unique<VodIdentifier>();
+    id->userUuid = service::api::getGlobalApi()->getSessionUserUuid();
+    id->videoUuid = shared::generateUuidv4();
+    return id;
+}
+
+void GameRecorder::initializeFileOutputPiper() {
+    // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
+    // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
+    // create an output piper of the appropriate type based on the given URI.
+    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid);
+    _outputPiper = pipe::createFileOutputPiper(_currentId->videoUuid, outputUri);
+    _outputPiper->start();
+}
+
+shared::squadov::VodMetadata GameRecorder::getMetadata() const {
+    if (_encoder) {
+        auto metadata = _encoder->getMetadata();
+        metadata.videoUuid = _currentId->videoUuid;
+        return metadata;
+    } else {
+        shared::squadov::VodMetadata metadata;
+        metadata.id = "source";
+        metadata.videoUuid = _currentId->videoUuid;
+        
+        // TODO: Need to read in data from the file to get this information properly
+        // instead of just randomly hard-coded numbers.
+        metadata.resX = 1280;
+        metadata.resY = 720;
+        metadata.avgBitrate = 2011000;
+        metadata.minBitrate = 2011000;
+        metadata.maxBitrate = 2011000;
+        metadata.fps = 30;
+
+        return metadata;
+    }
 }
 
 }

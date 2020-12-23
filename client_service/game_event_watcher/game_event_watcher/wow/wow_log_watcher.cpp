@@ -1,6 +1,5 @@
 #include "game_event_watcher/wow/wow_log_watcher.h"
 #include <boost/algorithm/string.hpp>
-#include <date/tz.h>
 #include <vector>
 
 namespace fs = std::filesystem;
@@ -12,16 +11,25 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log) {
     // DATE TIME TOKENS
     std::vector<std::string> parts;
     boost::split(parts, line, boost::is_any_of(" "));
-    if (parts.size() != 3) {
+    if (parts.size() < 3) {
         return false;
     }
 
+    const auto currentLocal = date::make_zoned(date::current_zone(), shared::nowUtc()).get_local_time();
+    std::ostringstream datetime;
+    datetime << parts[0] << "/" << date::year_month_day{date::floor<date::days>(currentLocal)}.year() << " " << parts[1];
+
     const auto t = date::make_zoned(
         date::current_zone(),
-        shared::strToLocalTime(parts[0] + " " + parts[1], "%m/%d %T")
+        shared::strToLocalTime(datetime.str(), "%m/%d/%Y %T")
     );
     log.timestamp = t.get_sys_time();
-    boost::split(log.log, parts[2], boost::is_any_of(","));
+
+    // Need to combine everything from the 3rd part onwards back
+    // into one string since there could be spaces in the tokens
+    // that aren't relevant to the initial DATE TIME TOKEN split.
+    const auto tokenPart = std::accumulate(parts.begin() + 2, parts.end(), std::string());
+    boost::split(log.log, tokenPart, boost::is_any_of(","));
     return true;
 }
 
@@ -102,6 +110,10 @@ WoWLogWatcher::WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeTh
 
 void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
     const auto combatLogPath = exePath.parent_path() / fs::path("Logs") / fs::path("WoWCombatLog.txt");
+    loadFromPath(combatLogPath);
+}
+
+void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath) {
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << std::endl);
 
     using std::placeholders::_1;
@@ -165,14 +177,27 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 notify(static_cast<int>(EWoWLogEvents::CombatantInfo), log.timestamp, (void*)&info);
                 parsed = true;
             } else {
-                notify(static_cast<int>(EWoWLogEvents::FinishCombatantInfo), log.timestamp, nullptr);
+                notify(static_cast<int>(EWoWLogEvents::FinishCombatantInfo), log.timestamp, nullptr, true, true);
             }
         }
 
         // Every log line needs to get passed to the CombatLogLine event
-        notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log);
+        notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
     }
 }
+
+nlohmann::json RawWoWCombatLog::toJson() const {
+    auto parts = nlohmann::json::array();
+    for (const auto& p : log) {
+        parts.push_back(p);
+    }
+
+    return {
+        {"timestamp", shared::timeToIso(timestamp)},
+        {"log", parts }
+    };
+}
+
 
 nlohmann::json WoWCombatLogState::toJson() const {
     return {

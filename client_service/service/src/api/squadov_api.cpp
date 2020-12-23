@@ -38,6 +38,24 @@ SquadovApi::SquadovApi() {
     }
 }
 
+KafkaApiKeyPair SquadovApi::getKafkaKeyPair() const {
+    const std::string path = "/v1/kafka/credentials";
+
+    const auto result = _webClient->get(path);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get SquadOV Kafka credentials: " << result->status);
+        return KafkaApiKeyPair{};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+
+    KafkaApiKeyPair ret;
+    ret.key = parsedJson["key"].get<std::string>();
+    ret.secret = parsedJson["secret"].get<std::string>();
+    return ret;
+}
+
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
 
@@ -416,10 +434,6 @@ std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWC
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
-}
-
-void SquadovApi::uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const {
-
 }
 
 std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {

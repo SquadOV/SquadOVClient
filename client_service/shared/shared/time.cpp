@@ -1,5 +1,6 @@
 #include "shared/time.h"
 
+#include <date/tz.h>
 #include <sstream>
 #include <iomanip>
 
@@ -25,6 +26,10 @@ LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format) 
     LocalTimePoint ret;
     input >> date::parse(format, ret);
     return ret;
+}
+
+int64_t timeToUnixMs(const TimePoint& tm) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(tm.time_since_epoch()).count();
 }
 
 std::string timeToStr(const TimePoint& tm) {
