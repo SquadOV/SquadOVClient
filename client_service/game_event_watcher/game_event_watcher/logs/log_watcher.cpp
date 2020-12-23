@@ -51,15 +51,13 @@ void LogWatcher::watchWorker() {
         }
     }
 
-    LOG_INFO("Found Log File: " << _path << std::endl);
-
     if (_isFinished) {
         LOG_INFO("Exiting out of log watcher before log was found: " << _path.string() << std::endl);
         // An early out here just in case we want to stop while still waiting for the log.
         return;
     }
 
-    LOG_INFO("Found Log File: " << _path.string() << std::endl);
+    LOG_INFO("Found Log File: " << _path << std::endl);
     // Open file for reading via the C++ STDLIB.
     std::ifstream logStream;
     LogLinesDelta lineBuffer;
