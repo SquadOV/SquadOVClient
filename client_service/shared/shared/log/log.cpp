@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <vector>
+
 namespace fs = std::filesystem;
 
 namespace shared::log {
@@ -27,7 +28,13 @@ Log::Log(const std::string& fname) {
     if (fs::exists(logFile)) {
         const auto lastWriteTime = shared::convertTime(fs::last_write_time(logFile));
         auto backupFile = logFile;
-        backupFile.replace_filename(backupFile.filename().stem().string() + "_" + shared::fnameTimeToStr(lastWriteTime) + backupFile.extension().string());
+
+        auto newFname = backupFile.filename().stem();
+        newFname += fs::path("_");
+        newFname += fs::path(shared::fnameTimeToStr(lastWriteTime));
+        newFname += backupFile.extension();
+
+        backupFile.replace_filename(newFname);
         fs::rename(logFile, backupFile);
     }
 
@@ -50,7 +57,7 @@ Log::Log(const std::string& fname) {
 
     // Create the output file. Make sure we we do this after the previous cleanup operation
     // so that we don't accidentally wipe the newest log.
-    _outLog.open(logFile.string().c_str());
+    _outLog.open(logFile);
     if (!_outLog.is_open()) {
         // The only place where it's ok to throw a raw exception instead of going through the standard error path.
         throw std::runtime_error("Failed to open log file.");

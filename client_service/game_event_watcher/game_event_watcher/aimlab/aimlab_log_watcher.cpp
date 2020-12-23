@@ -87,7 +87,7 @@ AimlabLogWatcher::AimlabLogWatcher(const shared::TimePoint& timeThreshold):
     const fs::path gameLogDir = shared::filesystem::getAimlabAppDataFolder();
 
     _logPath = gameLogDir / fs::path("Player.log");
-    LOG_INFO("AIM LAB Game Log: " << _logPath.string() << std::endl);
+    LOG_INFO("AIM LAB Game Log: " << _logPath << std::endl);
 
     using std::placeholders::_1;
     _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), this->timeThreshold(), true);

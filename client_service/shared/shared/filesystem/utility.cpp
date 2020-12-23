@@ -1,5 +1,7 @@
-#include "shared/filesystem/utility.h"
+#pragma warning(disable: 4996)
 
+#include "shared/filesystem/utility.h"
+#include <codecvt>
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 
@@ -31,6 +33,16 @@ std::chrono::seconds secondsSinceLastFileWrite(const std::filesystem::path& pth)
 
 shared::TimePoint timeOfLastFileWrite(const std::filesystem::path& pth) {
     return shared::nowUtc() - secondsSinceLastFileWrite(pth);
+}
+
+std::string pathUtf8(const std::filesystem::path& path) {
+    const auto npath = path.native();
+#ifdef _WIN32
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.to_bytes(npath);
+#else
+    return npath;
+#endif
 }
 
 }

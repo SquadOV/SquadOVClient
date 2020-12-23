@@ -38,8 +38,8 @@ LogWatcher::~LogWatcher() {
 }
 
 void LogWatcher::watchWorker() {
-    const bool isCompletelyNewFile = !fs::exists(_path.string());
-    if (_waitForNewFile || !fs::exists(_path.string())) {
+    const bool isCompletelyNewFile = !fs::exists(_path);
+    if (_waitForNewFile || isCompletelyNewFile) {
         while (!_isFinished) {
             if (fs::exists(_path)) {
                 const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(_path);
@@ -50,6 +50,8 @@ void LogWatcher::watchWorker() {
             std::this_thread::sleep_for(100ms);
         }
     }
+
+    LOG_INFO("Found Log File: " << _path << std::endl);
 
     if (_isFinished) {
         LOG_INFO("Exiting out of log watcher before log was found: " << _path.string() << std::endl);
@@ -65,9 +67,9 @@ void LogWatcher::watchWorker() {
     // Open the file (if necessary) for the OS-specific way of watching for changes.
 #ifdef _WIN32
     const fs::path parentDirectory = _path.parent_path();
-    const std::string parentDirectoryFname = parentDirectory.string();
+    const std::wstring parentDirectoryFname = parentDirectory.native();
 
-    HANDLE hDir = CreateFile(     
+    HANDLE hDir = CreateFileW(     
         parentDirectoryFname.c_str(),
         FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
@@ -89,10 +91,10 @@ void LogWatcher::watchWorker() {
         while (!_isFinished) {
             if (fs::exists(_path)) {
                 try {
-                    std::ifstream tmp(_path.string());
+                    std::ifstream tmp(_path);
                     tmp.seekg(0, tmp.end);
                 } catch (std::exception& ex) {
-                    LOG_WARNING("Failed to poll log file: " << _path.string() << " -- " << ex.what() << std::endl);
+                    LOG_WARNING("Failed to poll log file: " << _path << " -- " << ex.what() << std::endl);
                 }
             }
             std::this_thread::sleep_for(1s);
@@ -119,10 +121,10 @@ void LogWatcher::watchWorker() {
         if (fs::exists(_path) && !logStream.is_open()) {
             // We don't want to set the std::ios_base::ate flag if we detected the contents of the file were wiped as we actually
             // do want to read in what was already written into the file.
-            LOG_INFO("Open Log File for Reading: " << _path.string() << " " << _immediatelyGoToEnd << " " << hasReset << " " << isCompletelyNewFile << std::endl);
-            logStream.open(_path.string(), (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
+            LOG_INFO("Open Log File for Reading: " << _path << " " << _immediatelyGoToEnd << " " << hasReset << " " << isCompletelyNewFile << std::endl);
+            logStream.open(_path, (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
-                LOG_WARNING("Failed to open log file: " << _path.string() << std::endl);
+                LOG_WARNING("Failed to open log file: " << _path << std::endl);
             }
             LOG_INFO("\tSuccessfully opened log file." << std::endl);
         } 
@@ -182,11 +184,7 @@ void LogWatcher::watchWorker() {
                     // Ensure that the file that was changed is the file we care about.
                     const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
 
-                    // This conversion is deprecated in C++17 but I can't seem to find a good alternative.
-                    #pragma warning(disable: 4996)
-                    const std::string notifName = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>{}.to_bytes(wNotifFname);
-
-                    if (notif->Action == FILE_ACTION_MODIFIED && notifName == _path.filename().string()) {
+                    if (notif->Action == FILE_ACTION_MODIFIED && wNotifFname == _path.filename().native()) {
                         foundChanges = true;
                         break;
                     }

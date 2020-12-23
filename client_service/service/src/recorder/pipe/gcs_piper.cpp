@@ -48,7 +48,7 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
 
 #if DUMP_GCS_REF_VIDEO
     const auto path = shared::filesystem::getSquadOvUserFolder() / std::filesystem::path("gcs_ref.mp4");
-    _refVideo.open(path.string(), std::ios_base::binary | std::ios_base::out);
+    _refVideo.open(path, std::ios_base::binary | std::ios_base::out);
 #endif
 }
 

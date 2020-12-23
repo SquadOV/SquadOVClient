@@ -3,6 +3,7 @@
 #include "shared/constants.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "shared/filesystem/common_paths.h"
 
 #include <boost/algorithm/string.hpp>
 #include <chrono>
@@ -172,14 +173,7 @@ ValorantLogWatcher::ValorantLogWatcher(const shared::TimePoint& timeThreshold):
     //  1) %LOCALAPPDATA%/VALORANT/Saved/Logs (Game Logs)
     //  2) %LOCALAPPDATA%/Riot Games/Riot Client/Logs/Riot Client Logs (Client Logs)
 #ifdef _WIN32
-    char* localAppData;
-    size_t len;
-    _dupenv_s(&localAppData, &len, "LOCALAPPDATA");
-
-    const fs::path localAppDataDir(localAppData);
-    free(localAppData);
-
-    const fs::path gameLogDir = localAppDataDir / fs::path("VALORANT") / fs::path("Saved") / fs::path("Logs");
+    const fs::path gameLogDir = shared::filesystem::getLocalAppDataPath() / fs::path("VALORANT") / fs::path("Saved") / fs::path("Logs");
 #else
     THROW_ERROR("Unsupported OS for Valorant Log Watcher.");
 #endif
@@ -190,7 +184,7 @@ ValorantLogWatcher::ValorantLogWatcher(const shared::TimePoint& timeThreshold):
 
     const fs::path gameLogFname = gameLogDir / fs::path("ShooterGame.log");
     _gameLogFilename = gameLogFname;
-    LOG_INFO("VALORANT Game Log: " << _gameLogFilename.string() << std::endl);
+    LOG_INFO("VALORANT Game Log: " << _gameLogFilename << std::endl);
 
     using std::placeholders::_1;
     _gameLogWatcher = std::make_unique<LogWatcher>(_gameLogFilename, std::bind(&ValorantLogWatcher::onGameLogChange, this, _1), timeThreshold, true);

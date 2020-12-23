@@ -19,7 +19,7 @@ LocalData* getLocalData() {
 LocalData::LocalData() {
     _path = shared::filesystem::getSquadOvUserFolder() / std::filesystem::path("local_data.json");
     if (std::filesystem::exists(_path)) {
-        std::ifstream input(_path.string());
+        std::ifstream input(_path);
         _data = nlohmann::json::parse(input);
     } else {
         _data = nlohmann::json::object();
@@ -46,7 +46,7 @@ void LocalData::markAimlabBackfillTime(const shared::TimePoint& tm) {
 }
 
 void LocalData::flush() {
-    std::ofstream output(_path.string(), std::ios_base::trunc);
+    std::ofstream output(_path, std::ios_base::trunc);
     output << _data;
 }
 

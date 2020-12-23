@@ -1,9 +1,11 @@
 #pragma once
+#pragma warning(disable: 4996)
 
 #include <filesystem>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <codecvt>
 
 namespace shared::log {
 
@@ -29,7 +31,20 @@ public:
         _outLog << str.str() << val;
         std::cout << str.str() << val;
         return *this;
-    } 
+    }
+
+    template<>
+    Log& operator<<(const std::wstring& t) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        *this << conv.to_bytes(t);
+        return *this;
+    }
+
+    template<>
+    Log& operator<<(const std::filesystem::path& p) {
+        *this << p.native();
+        return *this;
+    }
 
     template<>
     Log& operator<<(const LogType& t) {

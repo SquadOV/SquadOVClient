@@ -1,6 +1,7 @@
 #include "aimlab/aimlab_db_interface.h"
 #include "shared/sqlite/sqlite.h"
 #include "shared/errors/error.h"
+#include "shared/filesystem/utility.h"
 
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -27,7 +28,7 @@ shared::aimlab::TaskData getTaskDataFromSqlStatement(SqlStatement& stmt) {
 
 AimlabDbInterface::AimlabDbInterface(const std::filesystem::path& path):
     _path(path) {
-    if (sqlite3_open(_path.string().c_str(), &_db) != SQLITE_OK) {
+    if (sqlite3_open(shared::filesystem::pathUtf8(_path).c_str(), &_db) != SQLITE_OK) {
         THROW_ERROR("Failed to open database.");
     }
 }
