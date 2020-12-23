@@ -123,8 +123,9 @@ void LogWatcher::watchWorker() {
             logStream.open(_path, (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
                 LOG_WARNING("Failed to open log file: " << _path << std::endl);
+            } else {
+                LOG_INFO("\tSuccessfully opened log file." << std::endl);
             }
-            LOG_INFO("\tSuccessfully opened log file." << std::endl);
         } 
         previousFilesize = currentFilesize;
         
@@ -144,7 +145,8 @@ void LogWatcher::watchWorker() {
                 lineBuffer.clear();
             }
         } catch (std::exception& ex) {
-            LOG_WARNING("Failed to parse log line(s): " << ex.what() << std::endl);
+            LOG_WARNING("Failed to parse log line(s): " << ex.what() << std::endl
+                << "\tErrno: " << strerror(errno) << std::endl); 
         }
 
         // Wait until the file changes again.
