@@ -578,42 +578,43 @@ void FfmpegAvEncoderImpl::start() {
         while (_running) {
             const auto refFrameTime = start + std::chrono::nanoseconds(_nsPerFrame * frameNum);
             const auto now = AVSyncClock::now();
-            bool skipFrame = false;
 
             // If "now" is before the refFrameTime then we want to wait until
-            // refFrameTime. But if "now" is after refFrameTime then we skip a frame
-            // to ensure that we stay on track. By "skip" frame we just refer to
-            // writing the same frame as the last frame and hoping it's fast to make up
-            // lost time.
+            // refFrameTime and write a single frame. If we're running behind schedule
+            // then we'll have to write multiple frames at a single time to try and
+            // make up the difference.
+            auto desiredFrameNum = frameNum;
             if (now < refFrameTime) {
+                desiredFrameNum++;
                 std::this_thread::sleep_until(refFrameTime);
             } else {
-                skipFrame = true;
+                const auto elapsedFrames = std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count() / _nsPerFrame.count();
+                desiredFrameNum += elapsedFrames;
             }
 
 #if LOG_FRAME_TIME
             const auto taskNow = std::chrono::high_resolution_clock::now();
 #endif
             
-            _vframe->pts = frameNum++;
+            swapBuffers();
 
-            if (av_frame_make_writable(_vframe) < 0) {
-                THROW_ERROR("Failed to make video frame writeable.");
+            if (_frontBuffer->isInit()) {
+                const auto* inputBuffer = _frontBuffer->buffer();
+                const int inputBufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
+                sws_scale(_sws, &inputBuffer, inputBufferStride, 0, static_cast<int>(_frontBuffer->height()), _vframe->data, _vframe->linesize);
             }
 
-            if (!skipFrame) {
-                swapBuffers();
+            for (; frameNum < desiredFrameNum; ++frameNum) {
+                _vframe->pts = frameNum;
 
-                if (_frontBuffer->isInit()) {
-                    const auto* inputBuffer = _frontBuffer->buffer();
-                    const int inputBufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
-                    sws_scale(_sws, &inputBuffer, inputBufferStride, 0, static_cast<int>(_frontBuffer->height()), _vframe->data, _vframe->linesize);
+                if (av_frame_make_writable(_vframe) < 0) {
+                    THROW_ERROR("Failed to make video frame writeable.");
                 }
-            }
-            
-            {
-                std::unique_lock<std::mutex> guard(_encodeMutex);
-                encode(_vcodecContext, _avcontext, _vframe, _vstream);
+                
+                {
+                    std::unique_lock<std::mutex> guard(_encodeMutex);
+                    encode(_vcodecContext, _avcontext, _vframe, _vstream);
+                }
             }
         
 #if LOG_FRAME_TIME
