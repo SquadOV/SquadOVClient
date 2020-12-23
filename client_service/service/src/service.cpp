@@ -51,7 +51,9 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 
     char buffer[2048];
     vsprintf(buffer, fmt, v1);
-    LOG_INFO(buffer);
+
+    std::string sBuffer(buffer);
+    LOG_INFO(sBuffer);
 }
 
 int main(int argc, char** argv) {

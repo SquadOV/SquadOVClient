@@ -8,6 +8,7 @@
 #include <regex>
 
 namespace fs = std::filesystem;
+using namespace std::string_literals;
 
 namespace game_event_watcher {
 namespace {
@@ -186,7 +187,7 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
                             return false;
                         }
 
-                        if (path.filename().string().find("hearthstone_") != 0) {
+                        if (path.filename().native().find(L"hearthstone_"s) != 0) {
                             return false;
                         } 
 
@@ -210,14 +211,14 @@ void HearthstoneLogWatcher::loadFromExecutable(const std::filesystem::path& exeP
 }
 
 void HearthstoneLogWatcher::loadPrimaryFromFile(const std::filesystem::path& logFile) {
-    LOG_INFO("Hearthstone Primary Log Found: " << logFile.string() << std::endl);
+    LOG_INFO("Hearthstone Primary Log Found: " << logFile << std::endl);
     using std::placeholders::_1;
     _primaryWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onPrimaryLogChange, this, _1), timeThreshold(), useTimeChecks());
     _primaryWatcher->disableBatching();
 }
 
 void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFile) {
-    LOG_INFO("Hearthstone Power Log Found: " << logFile.string() << std::endl);
+    LOG_INFO("Hearthstone Power Log Found: " << logFile << std::endl);
     using std::placeholders::_1;
     // 'false' -> Don't wait for a new file - we want to capture the Power.log immediately and not just when it's written to because 
     //            if we wait for when the Power.log is written to we'll have missed some crucial information.
@@ -227,7 +228,7 @@ void HearthstoneLogWatcher::loadPowerFromFile(const std::filesystem::path& logFi
 }
 
 void HearthstoneLogWatcher::loadArenaFromFile(const std::filesystem::path& logFile) {
-    LOG_INFO("Hearthstone Arena Log Found: " << logFile.string() << std::endl);
+    LOG_INFO("Hearthstone Arena Log Found: " << logFile << std::endl);
     using std::placeholders::_1;
     _arenaWatcher = std::make_unique<LogWatcher>(logFile, std::bind(&HearthstoneLogWatcher::onArenaLogChange, this, _1), timeThreshold(), false, true);
     _arenaWatcher->disableBatching();

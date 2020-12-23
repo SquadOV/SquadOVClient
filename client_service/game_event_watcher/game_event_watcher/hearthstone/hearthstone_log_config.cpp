@@ -8,6 +8,8 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <fstream>
 
+#include "shared/filesystem/utility.h"
+
 namespace pt = boost::property_tree;
 namespace fs = std::filesystem;
 namespace game_event_watcher {
@@ -44,7 +46,7 @@ HearthstoneLogConfig::HearthstoneLogConfig(const std::filesystem::path& fname):
 
     if (fs::exists(_fname)) {
         try {
-            LOG_INFO("Load Hearthstone INI: " << _fname.string() << std::endl);
+            LOG_INFO("Load Hearthstone INI: " << _fname << std::endl);
             load();
             _successLoading = true;
         } catch (std::exception& ex) {
@@ -84,7 +86,7 @@ void HearthstoneLogConfig::load() {
     // most libraries as they expect =true/=false instead. Furthermore, we want
     // to handle potential user errors in the case where multiple log sections exist
     // instead of just erroring out.
-    std::ifstream f(_fname.string());
+    std::ifstream f(_fname);
     std::string line;
 
     std::string currentSection;
@@ -164,7 +166,8 @@ void HearthstoneLogConfig::save() {
         tree.put(kvp.first + ".Verbose", kvp.second.verbose);
     }
 
-    pt::write_ini(_fname.string(), tree);
+    std::ofstream output(_fname);
+    pt::write_ini(output, tree);
 }
 
 }

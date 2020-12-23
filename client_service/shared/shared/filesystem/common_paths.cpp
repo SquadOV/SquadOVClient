@@ -4,14 +4,16 @@
 #include "shared/env.h"
 
 namespace fs = std::filesystem;
+using namespace std::string_literals;
+
 namespace shared::filesystem {
 
 std::filesystem::path getAppDataPath() {
-    return fs::path(shared::getEnv("APPDATA"));
+    return fs::path(shared::getEnvW(L"APPDATA"s));
 }
 
 std::filesystem::path getLocalAppDataPath() {
-    return fs::path(shared::getEnv("LOCALAPPDATA"));
+    return fs::path(shared::getEnvW(L"LOCALAPPDATA"s));
 }
 
 std::filesystem::path getSquadOvFolder() {
@@ -19,7 +21,7 @@ std::filesystem::path getSquadOvFolder() {
 }
 
 std::filesystem::path getSquadOvUserFolder() {
-    return fs::path(shared::getEnv("SQUADOV_USER_APP_FOLDER"));
+    return fs::path(shared::getEnvW(L"SQUADOV_USER_APP_FOLDER"s));
 }
 
 std::filesystem::path getSquadOvRecordFolder() {

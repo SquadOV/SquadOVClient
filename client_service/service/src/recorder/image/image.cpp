@@ -3,6 +3,7 @@
 #include <cstring>
 #include <png.h>
 #include "shared/errors/error.h"
+#include "shared/filesystem/utility.h"
 
 #include <iostream>
 
@@ -44,7 +45,7 @@ void Image::saveToFile(const std::filesystem::path& path) const {
 
     if (!png_image_write_to_file(
         &image,
-        path.string().c_str(),
+        shared::filesystem::pathUtf8(path).c_str(),
         0,
         _buffer.get(),
         0,
