@@ -11,6 +11,9 @@ const { getAppDataFolder } = require('./paths.js')
 const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
 const config = JSON.parse(fs.readFileSync(configFile))
 process.env.API_SQUADOV_URL = config["API_URL"]
+process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
+    process.env.SQUADOV_TZDATA :
+    app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../resources/tzdata'
 
 let win
 

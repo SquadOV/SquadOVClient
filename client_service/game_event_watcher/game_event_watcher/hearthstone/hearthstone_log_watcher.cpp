@@ -288,23 +288,18 @@ void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
 }
 
 void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
-    LOG_INFO("Do parse log lines: " << lines.size() << std::endl);
     for (const auto& ln : lines) {
         // First parse the log line into the following format:
         // TIME: [SECTION] INFO
         // Where the log line may or may not have a [SECTION] tag.
-        LOG_INFO("Parse log line: " << ln << std::endl);
         const auto rawLog = parseLogLine(ln);
-        LOG_INFO("Raw log: " << rawLog.canParse << std::endl);
         if (!rawLog.canParse) {
             continue;
         }
-        LOG_INFO("Raw log section: " << rawLog.section << std::endl);
 
         if (rawLog.section == "HealthyGaming") {
             // Always send the game ready event regardless of whether this is an old line or not
             // since we need to know when to load mono into memory.
-            LOG_INFO("Game ready" << std::endl);
             notify(static_cast<int>(EHearthstoneLogEvents::GameReady), rawLog.tm, nullptr, false);
         } else {
             // Parse match connect here as this is the only place this server information will be stored.
@@ -313,10 +308,8 @@ void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
             // the power log already so we don't want to clear out any data that we might need.
             HearthstoneGameConnectionInfo connectionInfo;
             if (parseConnectToGameServer(rawLog, connectionInfo)) {
-                LOG_INFO("notify match connect" << std::endl);
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchConnect), rawLog.tm, &connectionInfo);
             } else if (parseEndingExperiment(rawLog) || parseConnectionError(rawLog)) {
-                LOG_INFO("notify match disconnect" << std::endl);
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchDisconnect), rawLog.tm, nullptr);
             }
         }

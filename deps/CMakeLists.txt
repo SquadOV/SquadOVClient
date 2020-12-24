@@ -5,6 +5,7 @@ set (CMAKE_USE_SCHANNEL ON CACHE BOOL "")
 add_subdirectory(curl)
 
 set(BUILD_TZ_LIB ON CACHE BOOL "")
+set(MANUAL_TZ_DB ON CACHE BOOL "")
 add_subdirectory(date)
 
 add_subdirectory(sqlite3)

@@ -12,6 +12,7 @@ std::filesystem::path getSquadOvUserFolder();
 std::filesystem::path getSquadOvRecordFolder();
 std::filesystem::path getSquadOvLogFolder();
 std::filesystem::path getSquadOvServiceLogFolder();
+std::filesystem::path getSquadOvTzDataFolder();
 
 std::filesystem::path getAimlabAppDataFolder();
 
