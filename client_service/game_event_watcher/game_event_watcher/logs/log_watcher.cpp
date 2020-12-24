@@ -122,7 +122,7 @@ void LogWatcher::watchWorker() {
             LOG_INFO("Open Log File for Reading: " << _path << " " << _immediatelyGoToEnd << " " << hasReset << " " << isCompletelyNewFile << std::endl);
             logStream.open(_path, (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
-                LOG_WARNING("Failed to open log file: " << _path << std::endl);
+                LOG_WARNING("\tFailed to open log file: " << _path << std::endl);
             } else {
                 LOG_INFO("\tSuccessfully opened log file." << std::endl);
             }
@@ -145,8 +145,15 @@ void LogWatcher::watchWorker() {
                 lineBuffer.clear();
             }
         } catch (std::exception& ex) {
-            LOG_WARNING("Failed to parse log line(s): " << ex.what() << std::endl
-                << "\tErrno: " << strerror(errno) << std::endl); 
+            LOG_WARNING(
+                "Failed to parse log line(s): " << ex.what() << std::endl
+                    << "\tErrno: " << strerror(errno) << std::endl
+                    << "\tWindows Error: " << shared::errors::getWin32ErrorAsString() << std::endl
+                    << "\tGood: " << logStream.good() << std::endl
+                    << "\tEOF: " << logStream.eof() << std::endl
+                    << "\tFail: " << logStream.fail() << std::endl
+                    << "\tBad: " << logStream.bad() << std::endl
+            ); 
         }
 
         // Wait until the file changes again.

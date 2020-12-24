@@ -105,9 +105,10 @@ int main(int argc, char** argv) {
         THROW_ERROR("Failed to initialize PortAudio.");
     }
 
-    const auto tzdataPath = shared::filesystem::getSquadOvTzDataFolder();
-    LOG_INFO("Set Tz Data Install Folder: " << tzdataPath << std::endl);
-    date::set_install(tzdataPath.string());
+    const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
+    LOG_INFO("TZ FOLDER: " << tzDataFolder << std::endl);
+    date::set_install(tzDataFolder);
+    date::get_tzdb_list();
 
     LOG_INFO("USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl);
 

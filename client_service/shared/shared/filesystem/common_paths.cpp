@@ -28,6 +28,10 @@ std::filesystem::path getSquadOvUserFolder() {
     return fs::path(shared::getEnvW(L"SQUADOV_USER_APP_FOLDER"s));
 }
 
+std::filesystem::path getSquadOvTzDataFolder() {
+    return fs::path(shared::getEnvW(L"SQUADOV_TZDATA"s));
+}
+
 std::filesystem::path getSquadOvRecordFolder() {
     const auto appData = getSquadOvUserFolder();
     return appData / std::filesystem::path("Record");
