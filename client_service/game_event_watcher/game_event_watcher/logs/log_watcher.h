@@ -25,7 +25,8 @@ public:
         const LogChangeCallback& cb,
         const shared::TimePoint& timeThreshold,
         bool waitForNewFile = false,
-        bool immediatelyGoToEnd = false
+        bool immediatelyGoToEnd = false,
+        bool loop = true
     );
     ~LogWatcher();
 
@@ -44,6 +45,7 @@ private:
     bool _isFinished = false;
     bool _batchingEnabled = true;
     bool _immediatelyGoToEnd = false;
+    bool _loop = true;
 };
 
 using LogWatcherPtr = std::unique_ptr<LogWatcher>;

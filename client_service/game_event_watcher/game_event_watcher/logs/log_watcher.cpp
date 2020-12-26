@@ -23,18 +23,21 @@ using namespace std::chrono_literals;
 
 namespace game_event_watcher {
 
-LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, const shared::TimePoint& timeThreshold, bool waitForNewFile, bool immediatelyGoToEnd):
+LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, const shared::TimePoint& timeThreshold, bool waitForNewFile, bool immediatelyGoToEnd, bool loop):
     _path(path),
     _cb(cb),
     _timeThreshold(timeThreshold),
     _changeThread(&LogWatcher::watchWorker, this),
     _waitForNewFile(waitForNewFile),
-    _immediatelyGoToEnd(immediatelyGoToEnd) {
+    _immediatelyGoToEnd(immediatelyGoToEnd),
+    _loop(loop) {
 }
 
 LogWatcher::~LogWatcher() {
     _isFinished = true;
-    _changeThread.join();
+    if (_changeThread.joinable()) {
+        _changeThread.join();
+    }
 }
 
 void LogWatcher::watchWorker() {
@@ -155,6 +158,10 @@ void LogWatcher::watchWorker() {
                     << "\tBad: " << logStream.bad() << std::endl
             ); 
         }
+        
+        if (!_loop) {
+            break;
+        }
 
         // Wait until the file changes again.
 #ifdef _WIN32
@@ -212,6 +219,8 @@ void LogWatcher::watchWorker() {
         }
 #endif
     }
+
+    _isFinished = true;
     pollThread.join();
 }
 

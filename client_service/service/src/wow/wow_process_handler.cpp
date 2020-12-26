@@ -15,6 +15,8 @@ public:
     void cleanup();
     void overrideCombatLogPosition(const std::filesystem::path& path);
     void manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime);
+    void waitForLogWatcher();
+
 private:
     process_watcher::process::Process  _process;
     game_event_watcher::WoWLogWatcherPtr _logWatcher;
@@ -102,7 +104,7 @@ WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
 
 void WoWProcessHandlerInstance::overrideCombatLogPosition(const std::filesystem::path& path) {
     _logWatcher->setUseTimeChecks(false);
-    _logWatcher->loadFromPath(path);
+    _logWatcher->loadFromPath(path, false);
 }
 
 void WoWProcessHandlerInstance::manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime) {
@@ -110,13 +112,19 @@ void WoWProcessHandlerInstance::manualVodOverride(const std::filesystem::path& p
     _manualVodStartTime = startTime;
 }
 
+void WoWProcessHandlerInstance::waitForLogWatcher() {
+    _logWatcher->wait();
+}
+
 void WoWProcessHandlerInstance::cleanup() {
     // Tell the server that the combat log is finished.
     // We need to do this so that the log backup will get written out to block storage.
     const game_event_watcher::RawWoWCombatLog endLog = {
         shared::nowUtc(),
-        { "SQUADOV_END_COMBAT_LOG" }
+        { "SQUADOV_END_COMBAT_LOG" },
+        -1
     };
+    LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
     onCombatLogLine(endLog.timestamp, (void*)&endLog);
 }
 
@@ -322,6 +330,8 @@ void WoWProcessHandler::manualStartLogWatching(const std::filesystem::path& path
     onProcessStarts(process_watcher::process::Process{});
     _instance->manualVodOverride(vodPath, vodStartTime);
     _instance->overrideCombatLogPosition(path);
+    _instance->waitForLogWatcher();
+    onProcessStops();
 }
 
 void WoWProcessHandler::onProcessStops() {

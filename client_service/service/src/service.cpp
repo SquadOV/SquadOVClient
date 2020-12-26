@@ -74,10 +74,6 @@ void defaultMain() {
 void wowTest(const std::string& log, const std::string& vod, const std::string& vodTime) {
     service::wow::WoWProcessHandler handler;
     handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
-
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
 }
 
 int main(int argc, char** argv) {

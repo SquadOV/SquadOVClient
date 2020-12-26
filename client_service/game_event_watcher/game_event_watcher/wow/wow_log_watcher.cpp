@@ -113,17 +113,22 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
     loadFromPath(combatLogPath);
 }
 
-void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath) {
-    LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << std::endl);
+void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop) {
+    LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
 
     using std::placeholders::_1;
-    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks());
+    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks(), false, loop);
     _watcher->disableBatching();
+}
+
+void WoWLogWatcher::wait() {
+    _watcher->wait();
 }
 
 void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
         RawWoWCombatLog log;
+        log.logLine = _logLine++;
         if (!parseRawCombatLogLine(ln, log)) {
             LOG_WARNING("Failed to parse WoW combat log line: " << ln << std::endl);
             continue;
@@ -194,7 +199,9 @@ nlohmann::json RawWoWCombatLog::toJson() const {
 
     return {
         {"timestamp", shared::timeToIso(timestamp)},
-        {"log", parts }
+        // Uhhh...I made the mistake of naming it parts on the server instead of log. Oop.
+        {"parts", parts },
+        {"logLine", logLine }
     };
 }
 
