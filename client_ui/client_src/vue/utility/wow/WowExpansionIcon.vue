@@ -21,7 +21,7 @@ import axios from 'axios'
 
 @Component
 export default class WowExpansionIcon extends Vue {
-    WIDTH_MULTIPLIER = 1.92567
+    WIDTH_MULTIPLIER = 2
 
     @Prop()
     expansionId!: number | string
@@ -36,6 +36,14 @@ export default class WowExpansionIcon extends Vue {
                 return 'assets/wow/expansions/Shadowlands.png'
             case 7:
                 return 'assets/wow/expansions/BfA.png'
+            case 6:
+                return 'assets/wow/expansions/Legion.png'
+            case 3:
+                return 'assets/wow/expansions/Cataclysm.png'
+            case 1:
+                return 'assets/wow/expansions/BurningCrusade.png'
+            case 0:
+                return 'assets/wow/expansions/Classic.png'
         }
         return ''
     }
