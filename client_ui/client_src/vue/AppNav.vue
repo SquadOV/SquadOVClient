@@ -118,14 +118,6 @@ export default class AppNav extends Vue {
                 name: 'Game Logs',
                 children: [
                     {
-                        name: 'Valorant',
-                        to: {
-                            name: pi.ValorantLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
                         name: 'Aim Lab',
                         to: {
                             name: pi.AimlabLogPageId,
@@ -137,6 +129,22 @@ export default class AppNav extends Vue {
                         name: 'Hearthstone',
                         to: {
                             name: pi.HearthstoneLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
+                    },
+                    {
+                        name: 'Valorant',
+                        to: {
+                            name: pi.ValorantLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
+                    },
+                    {
+                        name: 'World of Warcraft',
+                        to: {
+                            name: pi.WowLogPageId,
                             params: this.gameLogParams,
                             query: this.gameLogQuery
                         },

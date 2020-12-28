@@ -28,6 +28,13 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
 import { longNumberToNumber } from '@client/js/long'
+import { WowCharacter } from '@client/js/wow/character'
+import {
+    WowEncounter,
+    cleanWowEncounterFromJson,
+    WowChallenge,
+    cleanWowChallengeFromJson
+} from '@client/js/wow/matches'
 
 import { ipcRenderer } from 'electron'
 
@@ -537,6 +544,48 @@ class ApiClient {
 
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  
         return axios.get(`v1/users/${userId}/accounts/riot/${puuid}`, this.createWebAxiosConfig())
+    }
+
+    listWoWCharacters(userId: number): Promise<ApiData<WowCharacter[]>> {
+        return axios.get(`v1/wow/users/${userId}/characters`, this.createWebAxiosConfig())
+    }
+
+    listWoWCharactersForMatch(matchUuid: string, userId: number): Promise<ApiData<WowCharacter[]>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters`, this.createWebAxiosConfig())
+    }
+
+    listWoWEncountersForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowEncounter[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/encounters`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<WowEncounter[]>>) => {
+            resp.data.data.forEach(cleanWowEncounterFromJson)
+            return resp
+        })
+    }
+
+    listWoWChallengesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowChallenge[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/challenges`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<WowChallenge[]>>) => {
+            resp.data.data.forEach(cleanWowChallengeFromJson)
+            return resp
+        })
     }
 
     submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {

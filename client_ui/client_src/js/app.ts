@@ -37,6 +37,12 @@ import HearthstoneArenaRunMatchLog from '@client/vue/log/HearthstoneArenaRunMatc
 import HearthstoneDuelRunMatchLog from '@client/vue/log/HearthstoneDuelRunMatchLog.vue'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 
+import WowLogContainer from '@client/vue/log/WowLogContainer.vue'
+import WowGameLog from '@client/vue/log/WowGameLog.vue'
+import WowEncounterGameLog from '@client/vue/utility/wow/WowEncounterGameLog.vue'
+import WowKeystoneGameLog from '@client/vue/utility/wow/WowKeystoneGameLog.vue'
+import WowDefaultGameLog from '@client/vue/utility/wow/WowDefaultGameLog.vue'
+
 import Performance from '@client/vue/Performance.vue'
 import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
 import VizStats from '@client/vue/performance/VizStats.vue'
@@ -205,6 +211,52 @@ const baseRoutes : any[] = [
                     },
                 ]
             },
+            {
+                path: 'wow/character/:guid?',
+                children: [
+                    {
+                        path: '',
+                        component: WowGameLog,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            guid: route.params.guid,
+                        }),
+                        children: [
+                            {
+                                path: '',
+                                name: pi.WowLogPageId,
+                                // Use this as the component instead of using a redirect
+                                // so that when the game nav tries to get the path of this route
+                                // we get the non-redirected URL.
+                                component: WowDefaultGameLog,
+                            },
+                            {
+                                path: 'encounters',
+                                name: pi.WowEncounterLogPageId,
+                                component: WowEncounterGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                    guid: route.params.guid,
+                                }),
+                            },
+                            {
+                                path: 'challenges',
+                                name: pi.WowChallengeLogPageId,
+                                component: WowKeystoneGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                    guid: route.params.guid,
+                                }),
+                            }
+                        ]
+                    },
+                ],
+                component: WowLogContainer,
+                props: (route : any) => ({
+                    userId: parseInt(route.params.userId),
+                    guid: route.params.guid,
+                }),
+            }
         ],
     },
     {
