@@ -35,8 +35,8 @@ export function millisecondsToTimeString(totalMs : number) : string {
     let hoursStr = `${hours}`.padStart(2, '0')
 
     if (hours > 0) {
-        return `${hoursStr}:${minutesStr}:${secondsStr}.${ms}`
+        return `${hoursStr}:${minutesStr}:${secondsStr}.${msStr}`
     } else {
-        return `${minutesStr}:${secondsStr}.${ms}`
+        return `${minutesStr}:${secondsStr}.${msStr}`
     }
 }

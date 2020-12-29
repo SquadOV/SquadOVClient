@@ -175,6 +175,7 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
     }
 
     _currentEncounter = *reinterpret_cast<const game_event_watcher::WoWEncounterStart*>(data);
+    _matchStartTime = tm;
     LOG_INFO("WoW Encounter Start [" <<  shared::timeToStr(tm) << "]: " << _currentEncounter << std::endl);
     _expectingCombatants = true;
 }
@@ -206,6 +207,7 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
     }
 
     _currentChallenge = *reinterpret_cast<const game_event_watcher::WoWChallengeModeStart*>(data);
+    _matchStartTime = tm;
     LOG_INFO("WoW Challenge Start [" <<  shared::timeToStr(tm) << "]: " << _currentChallenge << std::endl);
     _expectingCombatants = true;
 }
@@ -252,13 +254,13 @@ void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& t
 }
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
-    LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "] - LOG " << _combatLogId << std::endl);
+    LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "::" << shared::timeToStr(_matchStartTime) << "] - LOG " << _combatLogId << std::endl);
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
         if (inChallenge()) {
-            _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(tm, _combatLogId, _currentChallenge, _combatants);
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(_matchStartTime, _combatLogId, _currentChallenge, _combatants);
         } else if (inEncounter()) {
-            _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(tm, _combatLogId, _currentEncounter, _combatants);
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(_matchStartTime, _combatLogId, _currentEncounter, _combatants);
         } else {
             THROW_ERROR("Match start without challenge or encounter." << std::endl);
         }
@@ -270,8 +272,6 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
             << "\tCombatants: " << _combatants << std::endl);
         return;
     }
-
-    _matchStartTime = tm;
 
     if (!_process.empty()) {
         _recorder->start();
