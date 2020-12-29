@@ -28,7 +28,8 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log) {
     // Need to combine everything from the 3rd part onwards back
     // into one string since there could be spaces in the tokens
     // that aren't relevant to the initial DATE TIME TOKEN split.
-    const auto tokenPart = std::accumulate(parts.begin() + 2, parts.end(), std::string());
+    parts.erase(parts.begin(), parts.begin() + 2);
+    const auto tokenPart = boost::join(parts, " ");
     boost::split(log.log, tokenPart, boost::is_any_of(","));
     return true;
 }
