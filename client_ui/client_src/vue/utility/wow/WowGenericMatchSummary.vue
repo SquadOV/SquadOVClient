@@ -8,7 +8,7 @@
             >
                 <v-row no-gutters>
                     <v-col cols="2" align-self="center">
-                        <slot></slot>
+                        <slot v-bind="{ instanceName }"></slot>
                     </v-col>
 
                     <v-col cols="3" align-self="center">
@@ -123,6 +123,10 @@ export default class WowGenericMatchSummary extends Vue {
 
     get timestamp(): string {
         return standardFormatTime(this.match.tm)
+    }
+
+    get instanceName(): string {
+        return !!this.instanceData ? this.instanceData.name : 'Loading...'
     }
 
     get style() : any {

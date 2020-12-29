@@ -4,13 +4,15 @@
         :user-id="userId"
         :elapsed-time="elapsedTime"
     >
-        <div class="text-h6">
-            {{ encounterName }}
-        </div>
+        <template v-slot="{ instanceName }">
+            <div class="text-h6">
+                {{ encounterName }}
+            </div>
 
-        <div class="d-flex align-center text-subtitle-2">
-            {{ difficulty }} ({{ encounter.numPlayers }} Players)
-        </div>
+            <div class="d-flex align-center text-subtitle-2">
+                {{ instanceName }} ({{ difficulty }})
+            </div>
+        </template>
     </wow-generic-match-summary>
 </template>
 
@@ -23,7 +25,8 @@ import { ApiData } from '@client/js/api'
 import { Prop, Watch } from 'vue-property-decorator'
 import { WowEncounter } from '@client/js/wow/matches'
 import { WowDifficultyData } from '@client/js/wow/difficulty'
-import { millisecondsToTimeString } from '@client/js/time'
+import { WowInstanceData } from '@client/js/wow/instance'
+import { secondsToTimeString } from '@client/js/time'
 import { staticClient } from '@client/js/staticData'
 import axios from 'axios'
 
@@ -40,6 +43,7 @@ export default class WowEncounterSummary extends Vue {
     userId!: number
 
     difficultyData: WowDifficultyData | null = null
+    instanceData: WowInstanceData | null = null
 
     get encounterName(): string {
         return this.encounter.encounterName.replace(/"/g, '')
@@ -56,7 +60,7 @@ export default class WowEncounterSummary extends Vue {
         let finishTime: Date = !!this.encounter.finishTime ?
             this.encounter.finishTime : new Date()
 
-        return millisecondsToTimeString(finishTime.getTime() - this.encounter.tm.getTime())
+        return secondsToTimeString((finishTime.getTime() - this.encounter.tm.getTime()) / 1000)
     }
 
     @Watch('encounter')
