@@ -1,15 +1,18 @@
-export interface WowEncounter {
+export interface WowCommonMatch {
     matchUuid: string
     tm: Date
     combatantsKey: string
-    encounterId: number
-    encounterName: string
-    difficulty: number
-    numPlayers: number
     instanceId: number
     finishTime: Date | null | undefined
     success: boolean
     build: string
+}
+
+export interface WowEncounter extends WowCommonMatch {
+    encounterId: number
+    encounterName: string
+    difficulty: number
+    numPlayers: number
 }
 
 export function cleanWowEncounterFromJson(e: WowEncounter): WowEncounter {
@@ -20,17 +23,10 @@ export function cleanWowEncounterFromJson(e: WowEncounter): WowEncounter {
     return e
 }
 
-export interface WowChallenge {
-    matchUuid: string
-    tm: Date
-    combatantsKey: string
+export interface WowChallenge extends WowCommonMatch {
     challengeName: string
-    instanceId: number
     keystoneLevel: number
-    finishTime: Date | null | undefined
     timeMs: number
-    success: boolean
-    build: string
 }
 
 export function cleanWowChallengeFromJson(c: WowChallenge): WowChallenge {

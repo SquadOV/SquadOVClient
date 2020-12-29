@@ -38,6 +38,10 @@ class StaticDataClient {
     getWowInstanceDataUrl(instanceId: number | string): string {
         return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/instances/${instanceId}/data.json`
     }
+
+    getWowDifficultyDataUrl(diffId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/difficulty/${diffId}/data.json`
+    }
 }
 
 export let staticClient = new StaticDataClient()

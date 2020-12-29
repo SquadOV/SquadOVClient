@@ -547,11 +547,31 @@ class ApiClient {
     }
 
     listWoWCharacters(userId: number): Promise<ApiData<WowCharacter[]>> {
-        return axios.get(`v1/wow/users/${userId}/characters`, this.createWebAxiosConfig())
+        return axios.get(`v1/wow/users/${userId}/characters`, this.createWebAxiosConfig()).then((resp: ApiData<WowCharacter[]>) => {
+            resp.data.sort((a: WowCharacter, b: WowCharacter) => {
+                if (a.name < b.name) {
+                    return -1
+                } else if (a.name > b.name) {
+                    return 1
+                }
+                return 0
+            })
+            return resp
+        })
     }
 
     listWoWCharactersForMatch(matchUuid: string, userId: number): Promise<ApiData<WowCharacter[]>> {
-        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters`, this.createWebAxiosConfig())
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters`, this.createWebAxiosConfig()).then((resp: ApiData<WowCharacter[]>) => {
+            resp.data.sort((a: WowCharacter, b: WowCharacter) => {
+                if (a.name < b.name) {
+                    return -1
+                } else if (a.name > b.name) {
+                    return 1
+                }
+                return 0
+            })
+            return resp
+        })
     }
 
     listWoWEncountersForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowEncounter[]>>> {

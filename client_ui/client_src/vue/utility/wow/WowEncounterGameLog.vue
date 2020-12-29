@@ -1,15 +1,27 @@
 <template>
-    <div>
-        <h1>BOOP</h1>
-        <v-btn
-            v-if="hasNext"
-            color="primary"
-            block
-            @click="loadMore"  
-        >
-            Load More
-        </v-btn>
-    </div>
+    <loading-container :is-loading="!allEncounters">
+        <template v-slot:default="{ loading }">
+            <div v-if="!loading">
+                <wow-encounter-summary
+                    class="mb-4"
+                    v-for="(encounter, idx) in allEncounters"
+                    :key="idx"
+                    :encounter="encounter"
+                    :user-id="userId"
+                >
+                </wow-encounter-summary>
+
+                <v-btn
+                    v-if="hasNext"
+                    color="primary"
+                    block
+                    @click="loadMore"  
+                >
+                    Load More
+                </v-btn>
+            </div>
+        </template>
+    </loading-container>
 </template>
 
 <script lang="ts">
@@ -19,10 +31,17 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { WowEncounter } from '@client/js/wow/matches'
+import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
+import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 const maxTasksPerRequest : number = 20
 
-@Component
+@Component({
+    components: {
+        LoadingContainer,
+        WowEncounterSummary
+    }
+})
 export default class WowEncounterGameLog extends Vue {
     @Prop({required: true})
     userId!: number
