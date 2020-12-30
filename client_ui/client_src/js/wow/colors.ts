@@ -15,3 +15,11 @@ export function getSuccessColor() : Color {
         b: 80,
     }
 }
+
+export function getSelfColor() : Color {
+    return {
+        r: 255,
+        g: 215,
+        b: 0,
+    }
+}

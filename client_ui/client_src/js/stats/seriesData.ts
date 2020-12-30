@@ -1,17 +1,34 @@
 import { assert } from 'console'
+import format from 'date-fns/format'
 
 export class StatXYSeriesData {
     _x : any[]
     _y : any[]
     _type : string
+    _subtype: string
     _name : string
 
-    constructor(x : any[], y : any[], type : string, name : string) {
+    constructor(x : any[], y : any[], type : string, subtype: string, name : string) {
         assert(x.length == y.length)
         this._x = x
         this._y = y
         this._type = type
+        this._subtype = subtype
         this._name = name
+    }
+
+    xFormatter(data: any): string {
+        if (this._type == 'time') {
+            if (this._subtype == 'date') {
+                return format(data, 'MMMM do uuuu')
+            } else if (this._subtype == 'time') {
+                return format(data, 'h:mm a')
+            } else {
+                return format(data, 'MMMM do uuuu, h:mm a')
+            }
+        } else {
+            return data
+        }
     }
 
     get reversed() : boolean {

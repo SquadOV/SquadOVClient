@@ -197,17 +197,18 @@ import { Watch, Prop } from 'vue-property-decorator'
 import {
     SerializedWowMatchEvents,
     WowEncounter,
-    WowDeath
+    WowDeath,
+    UnifiedWowEventContainer
 } from '@client/js/wow/events'
+import {
+    WowCharacter
+} from '@client/js/wow/character'
+import * as colors from '@client/js/wow/colors'
 import * as wowc from '@client/js/wow/constants'
+import { colorToCssString } from '@client/js/color'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { secondsToTimeString } from '@client/js/time'
-import { applyFilterToCondition} from '@client/js/boolean'
-
-interface UnifiedEventContainer {
-    tm: Date,
-    death?: WowDeath
-}
+import { applyFilterToCondition } from '@client/js/boolean'
 
 @Component({
     components: {
@@ -227,6 +228,12 @@ export default class WowMatchEvents extends Vue {
 
     @Prop({required: true})
     currentCharacter!: string | null
+
+    @Prop({required: true})
+    matchCharacters!: WowCharacter[]
+
+    @Prop({type: Array})
+    syncUnifiedEvents!: UnifiedWowEventContainer[]
 
     // Event filters
     showFilters: boolean = false
@@ -253,12 +260,22 @@ export default class WowMatchEvents extends Vue {
         this.$emit('go-to-event', this.selectedEncounter.endTm)
     }
 
-    goToEvent(e: UnifiedEventContainer) {
+    goToEvent(e: UnifiedWowEventContainer) {
         this.$emit('go-to-event', e.tm)
     }
 
-    eventStyling(e : UnifiedEventContainer) : any {
+    eventStyling(e : UnifiedWowEventContainer) : any {
         let borderHighlightColor: string = 'transparent'
+
+        if (!!e.death) {
+            if (e.death.guid == this.currentCharacter) {
+                borderHighlightColor = colorToCssString(colors.getSelfColor())
+            } else if (this.friendlyGuidSet.has(e.death.guid)) {
+                borderHighlightColor = colorToCssString(colors.getSuccessColor())
+            } else {
+                borderHighlightColor = colorToCssString(colors.getFailureColor())
+            }
+        }
 
         let style: any = {
             'border-left': `5px solid ${borderHighlightColor}`
@@ -269,6 +286,10 @@ export default class WowMatchEvents extends Vue {
     eventTimeToStr(tm : Date): string {
         let secs = (tm.getTime() - this.startTime.getTime()) / 1000
         return secondsToTimeString(secs)
+    }
+
+    get friendlyGuidSet(): Set<string> {
+        return new Set(this.matchCharacters.map((ele: WowCharacter) => ele.guid))
     }
 
     get encounterNameSet(): Set<string> {
@@ -283,12 +304,17 @@ export default class WowMatchEvents extends Vue {
         return ret
     }
 
-    get unifiedEvents(): UnifiedEventContainer[] {
+    @Watch('unifiedEvents')
+    propagateUnifiedEvents() {
+        this.$emit('update:syncUnifiedEvents', this.unifiedEvents)
+    }
+
+    get unifiedEvents(): UnifiedWowEventContainer[] {
         if (!this.events) {
             return []
         }
 
-        let retEvents: UnifiedEventContainer[] = []
+        let retEvents: UnifiedWowEventContainer[] = []
         if (!!this.selectedEncounter) {
             retEvents = this.events.deaths
                 .filter((ele: WowDeath) => {
@@ -306,7 +332,7 @@ export default class WowMatchEvents extends Vue {
             }))
         }
 
-        return retEvents.filter((ele: UnifiedEventContainer) => {
+        return retEvents.filter((ele: UnifiedWowEventContainer) => {
             if (!!ele.death) {
                 let friendly = wowc.isObjectFriendly(ele.death.flags)
                 let hostile = wowc.isObjectHostile(ele.death.flags)
@@ -367,7 +393,7 @@ export default class WowMatchEvents extends Vue {
 
 .event-list {
     overflow-y: auto;
-    height: calc(100% - 70px - 24px);
+    height: calc(100% - 70px - 28px);
 }
 
 .event-time {

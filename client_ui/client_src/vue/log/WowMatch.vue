@@ -39,10 +39,22 @@
                             :has-vod="!!vod"
                             :current-character="currentCharacter"
                             :start-time="startTime"
+                            :sync-unified-events.sync="filteredEvents"
+                            :match-characters="matchCharacters"
                             @go-to-event="goToVodTime"
                         >
                         </wow-match-events>
                     </v-col>
+                </v-row>
+
+                <v-row>
+                    <wow-video-timeline
+                        :start-time="startTime"
+                        :end-time="endTime"
+                        :events="events"
+                        :unified-events="filteredEvents"
+                    >
+                    </wow-video-timeline>
                 </v-row>
             </v-container>
         </template>
@@ -57,13 +69,18 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { GenericWowMatchContainer } from '@client/js/wow/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
-import { SerializedWowMatchEvents } from '@client/js/wow/events'
+import { SerializedWowMatchEvents, UnifiedWowEventContainer } from '@client/js/wow/events'
+import {
+    WowCharacter,
+    WoWCharacterUserAssociation
+} from '@client/js/wow/character'
 
 import WowMatchEvents from '@client/vue/utility/wow/WowMatchEvents.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
+import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
 
 @Component({
     components: {
@@ -72,6 +89,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
         WowEncounterSummary,
         LoadingContainer,
         VideoPlayer,
+        WowTimeline
     }
 })
 export default class WowMatch extends Vue {
@@ -85,9 +103,13 @@ export default class WowMatch extends Vue {
         player: VideoPlayer
     }
     
-    currentCharacter: string | null = null
+    matchCharacters: WowCharacter[] = []
+    characterAssociations: WoWCharacterUserAssociation[] = []
+
     currentMatch: GenericWowMatchContainer | null = null
+
     events: SerializedWowMatchEvents | null = null
+    filteredEvents: UnifiedWowEventContainer[] = []
 
     vod: VodAssociation | null = null
     theaterMode: boolean = false
@@ -102,6 +124,18 @@ export default class WowMatch extends Vue {
         this.$refs.player.goToTimeMs(diffMs)
     }
 
+    get currentCharacter(): string | undefined {
+        return this.userIdToChar.get(this.userId)
+    }
+
+    get userIdToChar(): Map<number, string> {
+        let ret = new Map()
+        for (let assoc of this.characterAssociations) {
+            ret.set(assoc.userId, assoc.guid)
+        }
+        return ret
+    }
+
     get roundEventsStyle() : any {
         return {
             'height': `${this.currentPlayerHeight}px`,
@@ -111,10 +145,26 @@ export default class WowMatch extends Vue {
     get startTime(): Date {
         if (!this.currentMatch) {
             return new Date()
+        } else if (!!this.vod) {
+            return this.vod.startTime
         } else if (!!this.currentMatch.encounter) {
             return this.currentMatch.encounter.tm
         } else if (!!this.currentMatch.challenge) {
             return this.currentMatch.challenge.tm
+        } else {
+            return new Date()
+        }
+    }
+
+    get endTime(): Date {
+        if (!this.currentMatch) {
+            return new Date()
+        } else if (!!this.vod) {
+            return this.vod.endTime
+        } else if (!!this.currentMatch.encounter && !!this.currentMatch.encounter.finishTime) {
+            return this.currentMatch.encounter.finishTime
+        } else if (!!this.currentMatch.challenge && !!this.currentMatch.challenge.finishTime) {
+            return this.currentMatch.challenge.finishTime
         } else {
             return new Date()
         }
@@ -128,6 +178,27 @@ export default class WowMatch extends Vue {
             this.currentMatch = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW match: ', err)
+        })
+    }
+
+    @Watch('matchUuid')
+    @Watch('userId')
+    refreshCharacters() {
+        this.matchCharacters = []
+        apiClient.listWoWCharactersForMatch(this.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
+            this.matchCharacters = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain WoW match characters: ', err)
+        })
+    }
+
+    @Watch('matchUuid')
+    refreshCharacterAssociations() {
+        this.characterAssociations = []
+        apiClient.listWoWMatchCharacterAssociations(this.$store.state.currentUser.id, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
+            this.characterAssociations = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain WoW character associations: ', err)
         })
     }
 
@@ -155,6 +226,8 @@ export default class WowMatch extends Vue {
 
     mounted() {
         this.refreshMatch()
+        this.refreshCharacters()
+        this.refreshCharacterAssociations()
         this.refreshEvents()
         this.refreshVod()
     }

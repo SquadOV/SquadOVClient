@@ -15,3 +15,8 @@ export interface WowClassData {
     id: string
     name: string
 }
+
+export interface WoWCharacterUserAssociation {
+    userId: number
+    guid: string
+}

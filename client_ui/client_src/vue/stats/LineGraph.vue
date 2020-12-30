@@ -62,6 +62,11 @@ export default class LineGraph extends Vue {
                         color: '#FFFFFF'
                     }
                 },
+                axisLabel: {
+                    formatter: (value: any) => {
+                        return this.validSeriesData[i].xFormatter(value)
+                    }
+                },
                 inverse: this.validSeriesData[i].reversed
             })
             seriesToAxis.set(type, xAxis.length - 1)
@@ -122,7 +127,9 @@ export default class LineGraph extends Vue {
             }),
             name: series._name,
             type: 'line',
-            smooth: false,
+            smooth: true,
+            smoothMonotone: 'x',
+            sampling: 'average',
             width: 4,
             xAxisIndex: seriesToAxis.get(series._type)!,
         }))

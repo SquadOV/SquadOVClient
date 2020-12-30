@@ -28,7 +28,7 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
 import { longNumberToNumber } from '@client/js/long'
-import { WowCharacter } from '@client/js/wow/character'
+import { WowCharacter, WoWCharacterUserAssociation } from '@client/js/wow/character'
 import {
     WowEncounter,
     cleanWowEncounterFromJson,
@@ -612,6 +612,10 @@ class ApiClient {
             resp.data.data.forEach(cleanWowChallengeFromJson)
             return resp
         })
+    }
+    
+    listWoWMatchCharacterAssociations(userId: number, matchUuid: string): Promise<ApiData<WoWCharacterUserAssociation[]>> {
+        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/characters`, this.createWebAxiosConfig())
     }
 
     getWoWMatch(userId: number, matchUuid: string): Promise<ApiData<GenericWowMatchContainer>> {

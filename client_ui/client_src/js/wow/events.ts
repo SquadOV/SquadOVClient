@@ -51,3 +51,8 @@ export function cleanWowMatchEventsFromJson(e: SerializedWowMatchEvents) : Seria
     e.encounters.forEach(cleanWowEncounterFromJson)
     return e
 }
+
+export interface UnifiedWowEventContainer {
+    tm: Date,
+    death?: WowDeath
+}

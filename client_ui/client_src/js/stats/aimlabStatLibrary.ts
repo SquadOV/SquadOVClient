@@ -102,18 +102,22 @@ function createGenericAimlabParseResponseIntoInstance<T extends AimlabCommonStat
         let sample = modeData[0]
         let xKey = ''
         let xType = ''
+        let xSubtype = ''
         if (!!sample.date) {
             xKey = 'date'
             xType = 'time'
+            xSubtype = 'date'
         } else if (!!sample.datetime) {
             xKey = 'datetime'
             xType = 'time'
+            xSubtype = 'datetime'
         } else if (!!sample.id) {
             xKey = 'id'
             xType = 'category'
         } else if (!!sample.time) {
             xKey = 'time'
             xType = 'time'
+            xSubtype = 'time'
         } else if (!!sample.version) {
             xKey = 'version'
             xType = 'category'
@@ -125,7 +129,7 @@ function createGenericAimlabParseResponseIntoInstance<T extends AimlabCommonStat
         let xData: any[] = modeData.map((ele: T) => ele[xKey])
         //@ts-ignore
         let yData : any[] = modeData.map((ele: T) => ele[stat])
-        inst.data = new StatXYSeriesData(xData, yData, xType, inst.name)
+        inst.data = new StatXYSeriesData(xData, yData, xType, xSubtype, inst.name)
     }
 }
 
