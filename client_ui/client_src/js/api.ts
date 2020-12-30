@@ -33,8 +33,14 @@ import {
     WowEncounter,
     cleanWowEncounterFromJson,
     WowChallenge,
-    cleanWowChallengeFromJson
+    cleanWowChallengeFromJson,
+    GenericWowMatchContainer,
+    cleanGenericWowMatchContainerFromJson,
 } from '@client/js/wow/matches'
+import {
+    SerializedWowMatchEvents,
+    cleanWowMatchEventsFromJson
+} from '@client/js/wow/events'
 
 import { ipcRenderer } from 'electron'
 
@@ -604,6 +610,20 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<WowChallenge[]>>) => {
             resp.data.data.forEach(cleanWowChallengeFromJson)
+            return resp
+        })
+    }
+
+    getWoWMatch(userId: number, matchUuid: string): Promise<ApiData<GenericWowMatchContainer>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<GenericWowMatchContainer>) => {
+            cleanGenericWowMatchContainerFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getWoWMatchEvents(userId: number, matchUuid: string): Promise<ApiData<SerializedWowMatchEvents>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/events`, this.createWebAxiosConfig()).then((resp: ApiData<SerializedWowMatchEvents>) => {
+            cleanWowMatchEventsFromJson(resp.data)
             return resp
         })
     }

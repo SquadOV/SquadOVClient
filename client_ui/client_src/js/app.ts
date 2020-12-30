@@ -39,6 +39,7 @@ import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 
 import WowLogContainer from '@client/vue/log/WowLogContainer.vue'
 import WowGameLog from '@client/vue/log/WowGameLog.vue'
+import WowMatch from '@client/vue/log/WowMatch.vue'
 import WowEncounterGameLog from '@client/vue/utility/wow/WowEncounterGameLog.vue'
 import WowKeystoneGameLog from '@client/vue/utility/wow/WowKeystoneGameLog.vue'
 import WowDefaultGameLog from '@client/vue/utility/wow/WowDefaultGameLog.vue'
@@ -286,6 +287,15 @@ const baseRoutes : any[] = [
             matchId: route.params.matchId,
             userId: parseInt(route.query.userId)
         })
+    },
+    {
+        path: '/match/wow/:matchUuid',
+        name: pi.WowMatchPageId,
+        component: WowMatch,
+        props: (route : any) => ({
+            userId: parseInt(route.query.userId),
+            matchUuid: route.params.matchUuid
+        }),
     },
     { 
         path: '/performance',

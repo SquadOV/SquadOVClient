@@ -95,6 +95,7 @@ import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import WowExpansionIcon from '@client/vue/utility/wow/WowExpansionIcon.vue'
 import axios from 'axios'
+import * as pi from '@client/js/pages'
 
 @Component({
     components: {
@@ -142,7 +143,19 @@ export default class WowGenericMatchSummary extends Vue {
     }
 
     get to() : any {
-        return {}
+        if (this.$route.name === pi.WowMatchPageId) {
+            return {}
+        }
+
+        return {
+            name: pi.WowMatchPageId,
+            params: {
+                matchUuid: this.match.matchUuid
+            },
+            query: {
+                userId: this.userId,
+            }
+        }
     }
 
     @Watch('challenge')

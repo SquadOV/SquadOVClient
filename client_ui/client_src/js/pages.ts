@@ -20,6 +20,7 @@ export const HearthstoneMatchPageId = 'hearthstoneMatch'
 export const WowLogPageId = 'wowLogs'
 export const WowEncounterLogPageId = 'wowEncounters'
 export const WowChallengeLogPageId = 'wowChallenges'
+export const WowMatchPageId = 'wowMatch'
 
 export const PerformancePageId = 'performance'
 export const VizStatsPageId = 'visualization'

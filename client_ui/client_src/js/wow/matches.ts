@@ -36,3 +36,20 @@ export function cleanWowChallengeFromJson(c: WowChallenge): WowChallenge {
     }
     return c
 }
+
+export interface GenericWowMatchContainer {
+    encounter: WowEncounter | null
+    challenge: WowChallenge | null
+}
+
+export function cleanGenericWowMatchContainerFromJson(c: GenericWowMatchContainer): GenericWowMatchContainer {
+    if (!!c.encounter) {
+        cleanWowEncounterFromJson(c.encounter)
+    }
+    
+    if (!!c.challenge) {
+        cleanWowChallengeFromJson(c.challenge)
+    }
+
+    return c
+}
