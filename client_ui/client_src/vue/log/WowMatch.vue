@@ -28,6 +28,7 @@
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
+                            :current-time.sync="vodTime"
                         >
                         </video-player>
                     </v-col>
@@ -48,13 +49,18 @@
                 </v-row>
 
                 <v-row>
-                    <wow-video-timeline
+                    <wow-timeline
+                        :user-id="userId"
+                        :match-uuid="matchUuid"
                         :start-time="startTime"
                         :end-time="endTime"
                         :events="events"
                         :unified-events="filteredEvents"
+                        :match-characters="matchCharacters"
+                        :current-time="vodTime"
+                        @go-to-time="goToVodTime"
                     >
-                    </wow-video-timeline>
+                    </wow-timeline>
                 </v-row>
             </v-container>
         </template>
@@ -112,6 +118,7 @@ export default class WowMatch extends Vue {
     filteredEvents: UnifiedWowEventContainer[] = []
 
     vod: VodAssociation | null = null
+    vodTime: Date | null = null
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
 

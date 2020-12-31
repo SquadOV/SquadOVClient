@@ -57,3 +57,20 @@ export function isObjectPet(flags: number): boolean {
 export const WOW_OVERRIDE_BOSS_NAMES: string[] = [
     "Margrave Stradama"   
 ]
+
+export const BLOODLUST_SPELL_IDS = new Set([
+    2825,
+    71975,
+    80353,
+    146555,
+    147118,
+    178207,
+    230935,
+    256740,
+    267572,
+    267575,
+    287925,
+    290583,
+    292686,
+    309658
+])

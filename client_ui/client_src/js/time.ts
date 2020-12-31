@@ -8,6 +8,7 @@ export function standardFormatTime(dt : Date | null) : string {
 }
 
 export function secondsToTimeString(totalSeconds : number) : string {
+    totalSeconds = Math.floor(totalSeconds)
     let seconds = totalSeconds % 60
     let minutes = Math.floor(totalSeconds / 60) % 60
     let hours = Math.floor(totalSeconds / 3600)
@@ -24,6 +25,7 @@ export function secondsToTimeString(totalSeconds : number) : string {
 }
 
 export function millisecondsToTimeString(totalMs : number) : string {
+    totalMs = Math.floor(totalMs)
     let ms = totalMs % 1000
     let seconds = Math.floor(totalMs / 1000) % 60
     let minutes = Math.floor(totalMs / 60000) % 60

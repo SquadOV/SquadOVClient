@@ -41,6 +41,9 @@ export default class VideoPlayer extends Vue {
     @Prop({type : Boolean ,default: false})
     disableTheater! : boolean
 
+    @Prop()
+    currentTime!: Date | null
+
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
@@ -174,6 +177,18 @@ export default class VideoPlayer extends Vue {
                 this.pinnedTimeStamp = null
                 if (this.pinnedPlaying) {
                     this.player.play()
+                }
+            }
+        })
+
+        this.player.on('timeupdate', () => {
+            if (!!this.vod && !!this.player) {
+                let newCurrentTime = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
+
+                // We don't particularly need to update this very often so cap it at showing 1s differences.
+                let diff = (!!this.currentTime ? Math.abs(this.currentTime.getTime() - newCurrentTime.getTime()) : 1000000000000000000) / 1000.0
+                if (diff > 1.0) {
+                    this.$emit('update:currentTime', newCurrentTime)
                 }
             }
         })

@@ -41,6 +41,10 @@ import {
     SerializedWowMatchEvents,
     cleanWowMatchEventsFromJson
 } from '@client/js/wow/events'
+import {
+    WowStatQueryParam,
+    WowMatchStatContainer
+} from '@client/js/wow/stats'
 
 import { ipcRenderer } from 'electron'
 
@@ -629,6 +633,13 @@ class ApiClient {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/events`, this.createWebAxiosConfig()).then((resp: ApiData<SerializedWowMatchEvents>) => {
             cleanWowMatchEventsFromJson(resp.data)
             return resp
+        })
+    }
+
+    getWoWMatchStats(userId: number, matchUuid: string, endpoint: string, query: WowStatQueryParam): Promise<ApiData<WowMatchStatContainer>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/${endpoint}`, {
+            params: query,
+            ...this.createWebAxiosConfig()
         })
     }
 

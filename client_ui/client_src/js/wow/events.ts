@@ -14,6 +14,7 @@ export interface WowAura {
     targetGuid: string
     targetName: string
     spellId: number
+    spellName: string
     auraType: {
         type: string
     }

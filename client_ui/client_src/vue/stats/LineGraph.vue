@@ -7,13 +7,17 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
-import { StatXYSeriesData } from '@client/js/stats/seriesData'
+import { StatXYSeriesData, XLineMarker, XAreaMarker } from '@client/js/stats/seriesData'
+import { generateArrayRange } from '@client/js/array'
 import * as echarts from 'echarts/lib/echarts.js'
 import 'echarts/lib/chart/line'
+import 'echarts/lib/component/axisPointer'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/legend'
 import 'echarts/lib/component/legendScroll'
 import 'echarts/lib/component/tooltip'
+import 'echarts/lib/component/markLine'
+import 'echarts/lib/component/markArea'
 
 @Component
 export default class LineGraph extends Vue {
@@ -26,17 +30,24 @@ export default class LineGraph extends Vue {
     @Prop({type:Array, required: true})
     seriesData!: (StatXYSeriesData | null)[]
 
+    @Prop({type:Boolean, default: false})
+    separateGraphs!: boolean
+
     get validSeriesData() : StatXYSeriesData[] {
         return <StatXYSeriesData[]>this.seriesData.filter((ele : StatXYSeriesData | null) => !!ele)
     }
 
-    @Watch('validSeriesData')
-    refreshGraph() {
+    @Watch('separateGraphs')
+    onChangeSeparateGraphs() {
         if (!!this.graph) {
             this.graph.clear()
         }
+        this.refreshGraph()
+    }
 
-        if (this.validSeriesData.length == 0) {
+    @Watch('validSeriesData')
+    refreshGraph() {
+        if (this.validSeriesData.length == 0) {    
             return
         }
 
@@ -48,7 +59,7 @@ export default class LineGraph extends Vue {
         let xAxis : any[] = []
         for (let i = 0; i < this.validSeriesData.length; ++i) {
             let type = this.validSeriesData[i]._type
-            if (seriesToAxis.has(type)) {
+            if (seriesToAxis.has(type) && !this.separateGraphs) {
                 continue
             }
 
@@ -67,24 +78,16 @@ export default class LineGraph extends Vue {
                         return this.validSeriesData[i].xFormatter(value)
                     }
                 },
-                inverse: this.validSeriesData[i].reversed
+                inverse: this.validSeriesData[i].reversed,
+                gridIndex: this.separateGraphs ? i : 0,
+                position: 'top',
             })
             seriesToAxis.set(type, xAxis.length - 1)
         }
 
-        let options : any = {
-            grid: {
-                show: false,
-            },
-            legend: {
-                show: true,
-                type: 'scroll',
-                textStyle: {
-                    color: '#FFFFFF',
-                },
-            },
-            xAxis: xAxis,
-            yAxis: {
+        let yAxis: any[] = []
+        for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
+            let axis: any = {
                 type: 'value',
                 nameTextStyle: {
                     color: '#FFFFFF'
@@ -100,28 +103,83 @@ export default class LineGraph extends Vue {
                 max: (value: any) => {
                     return Math.ceil(value.max + (value.max - value.min) * 0.01)
                 },
-            },
-            dataZoom: [
-                {
-                    type: 'slider',
-                    show: true,
-                    start: 0,
-                    end: 100,
-                    xAxisIndex: 0,
-                },
-                {
-                    type: 'inside',
-                    start: 0,
-                    end: 100,
-                    xAxisIndex: 0,
-                },
-            ],
-            tooltip: {
-                trigger: 'axis',
-            }        
+                gridIndex: i,
+            }
+
+            if (this.separateGraphs) {
+                axis['name'] = this.validSeriesData[i]._name
+                axis['nameLocation'] = 'center'
+                axis['nameRotate'] = 90
+                axis['nameGap'] = 50
+            }
+
+            yAxis.push(axis)
+        }
+    
+        let grids: any[] = []
+
+        //@ts-ignore
+        const parentHeight = this.$parent.$el.offsetHeight
+        const gridHeightMarginPx = 40
+        const gridTopReservedPx = 100
+        const gridBottomReservedPx = 50
+        const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - Math.max(this.validSeriesData.length - 1, 0) * gridHeightMarginPx 
+        const gridHeight = this.separateGraphs ? gridUsableHeightPx / this.validSeriesData.length : gridUsableHeightPx
+
+        for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
+            grids.push({
+                show: false,
+                left: 100,
+                right: 100,
+                top: gridTopReservedPx + (gridHeight + gridHeightMarginPx) * i,
+                height: gridHeight,
+            })
         }
 
-        options.series = this.validSeriesData.map((series : StatXYSeriesData) => ({
+        let dataZooms: any[] = [
+            {
+                type: 'slider',
+                show: true,
+                top: 30,
+                start: 0,
+                end: 100,
+                xAxisIndex: generateArrayRange(0, xAxis.length),
+                textStyle: {
+                    color: '#FFFFFF'
+                }
+            },
+        ]
+
+        if (!this.separateGraphs) {
+             dataZooms.push({
+                type: 'inside',
+                start: 0,
+                end: 100,
+                xAxisIndex: generateArrayRange(0, xAxis.length),
+            })
+        }
+
+        let options : any = {
+            grid: grids,
+            legend: {
+                show: true,
+                type: 'scroll',
+                textStyle: {
+                    color: '#FFFFFF',
+                },
+            },
+            xAxis: xAxis,
+            yAxis: yAxis,
+            axisPointer: {
+                link: {xAxisIndex: 'all'}
+            },
+            dataZoom: dataZooms,
+            tooltip: {
+                trigger: 'axis',
+            }
+        }
+
+        options.series = this.validSeriesData.map((series : StatXYSeriesData, seriesIdx: number) => ({
             data: series._x.map((x : number, idx : number) => {
                 return [x, series._y[idx]]
             }),
@@ -130,8 +188,69 @@ export default class LineGraph extends Vue {
             smooth: true,
             smoothMonotone: 'x',
             sampling: 'average',
+            showSymbol: false,
             width: 4,
-            xAxisIndex: seriesToAxis.get(series._type)!,
+            xAxisIndex: this.separateGraphs ? seriesIdx : seriesToAxis.get(series._type)!,
+            yAxisIndex: this.separateGraphs ? seriesIdx : 0,
+            markLine: {
+                label: {
+                    show: true,
+                    position: 'insideEndTop',
+                    fontSize: 16,
+                    formatter: (p: any) => {
+                        return p.name
+                    }
+                },
+                lineStyle: {
+                    type: 'solid',
+                    width: 3,
+                },
+                symbol: ['none', 'none'],
+                data: series._xLines.map((ele: XLineMarker) => {
+                    return  [
+                        {
+                            xAxis: ele.x,
+                            yAxis: 0.0,
+                            name: ele.name,
+                            lineStyle: {
+                                color: ele.colorOverride
+                            }
+                        },
+                        {
+                            xAxis: ele.x,
+                            yAxis: 'max',
+                            symbol: ele.symbol,
+                            symbolSize: 24,
+                        }
+                    ]
+                })
+            },
+            markArea: {
+                label: {
+                    show: true,
+                    position: 'inside',
+                    fontSize: 16,
+                    formatter: (p: any) => {
+                        return p.name
+                    }
+                },
+                itemStyle: {
+                    color: 'rgba(255, 204, 203, 0.3)'
+                },
+                data: series._xAreas.map((ele: XAreaMarker) => {
+                    return [
+                        {
+                            xAxis: ele.start,
+                            yAxis: 0.0,
+                            name: ele.name,
+                        },
+                        {
+                            xAxis: ele.end,
+                            yAxis: 'max',
+                        }
+                    ]
+                })
+            }
         }))
 
         this.graph.setOption(options)
@@ -146,6 +265,24 @@ export default class LineGraph extends Vue {
 
     mounted() {
         this.graph = echarts.init(this.$refs.graphDiv, null, { renderer: 'canvas' })
+
+        let zr = this.graph.getZr()
+        zr.on('click', (params: any) => {
+            let pointInPixel = [params.offsetX, params.offsetY];
+            let numGrids = this.separateGraphs ? this.seriesData.length : 1
+
+            for (let i = 0; i < numGrids; ++i) {
+                const finder = {gridIndex: i}
+                if (this.graph.containPixel(finder, pointInPixel)) {
+                    let pointInGrid = this.graph.convertFromPixel(finder, pointInPixel);
+                    this.$emit('graphclick', {
+                        gridIndex: i,
+                        pts: pointInGrid
+                    })
+                }
+            }            
+        })
+
         this.refreshGraph()
         window.addEventListener('resize', this.graphResize)
         Vue.nextTick(() => {
