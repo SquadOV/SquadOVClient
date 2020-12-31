@@ -1,7 +1,9 @@
 #include "game_event_watcher/wow/wow_log_watcher.h"
+#include "shared/filesystem/utility.h"
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
+using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 namespace game_event_watcher {
 namespace {
@@ -104,6 +106,8 @@ bool parseCombatantInfo(const RawWoWCombatLog& log, WoWCombatantInfo& info) {
     return true;
 }
 
+constexpr auto maxLogsToKeep = 10;
+
 }
 
 WoWLogWatcher::WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold):
@@ -192,6 +196,31 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         // Every log line needs to get passed to the CombatLogLine event
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
     }
+}
+
+void WoWLogWatcher::moveLogToBackup() {
+    if (!fs::exists(_logPath)) {
+        return;
+    }
+
+    fs::rename(_logPath, shared::filesystem::generateTimestampBackupFileName(_logPath));
+
+    // Remove older log files.
+    auto dirIter = fs::directory_iterator(_logPath.parent_path());
+    std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
+
+    // Only manage the files that start with WoWCombatLog. We can just check that the
+    // filename in the directory contains the stem of the given log path for this check
+    // as the stem of _logPath will be WoWCombatLog. This helps us avoid having to
+    // hardcode the "WoWCombatLog" string just in case it changes in the future.
+    logPaths.erase(
+        std::remove_if(logPaths.begin(), logPaths.end(), [this](const fs::path& pth){
+            return pth.filename().native().find(_logPath.stem().native()) == std::filesystem::path::string_type::npos;
+        }),
+        logPaths.end()
+    );
+
+    shared::filesystem::pruneFilesystemPaths(logPaths, maxLogsToKeep);
 }
 
 nlohmann::json RawWoWCombatLog::toJson() const {

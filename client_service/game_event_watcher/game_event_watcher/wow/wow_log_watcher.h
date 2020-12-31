@@ -91,6 +91,7 @@ public:
     WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);
     void loadFromExecutable(const std::filesystem::path& exePath);
     void loadFromPath(const std::filesystem::path& logPath, bool loop = true);
+    void moveLogToBackup();
 
     void wait();
 private:

@@ -126,6 +126,10 @@ void WoWProcessHandlerInstance::cleanup() {
     };
     LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
     onCombatLogLine(endLog.timestamp, (void*)&endLog);
+
+    // Move the current combat log to backup so that it doesn't get too big.
+    // This assumes that this is being called on WoW process stop so this should be safe to do.
+    _logWatcher->moveLogToBackup();
 }
 
 bool WoWProcessHandlerInstance::hasValidCombatLog() const {

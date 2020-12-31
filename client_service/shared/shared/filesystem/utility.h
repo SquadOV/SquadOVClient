@@ -13,5 +13,7 @@ std::filesystem::path getNewestFileInFolder(const std::filesystem::path& folder,
 std::chrono::seconds secondsSinceLastFileWrite(const std::filesystem::path& pth);
 shared::TimePoint timeOfLastFileWrite(const std::filesystem::path& pth);
 std::string pathUtf8(const std::filesystem::path& path);
+std::filesystem::path generateTimestampBackupFileName(const std::filesystem::path& fname);
+void pruneFilesystemPaths(std::vector<std::filesystem::path>& paths, int maxKeep);
 
 }

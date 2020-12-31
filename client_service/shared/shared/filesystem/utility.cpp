@@ -45,4 +45,33 @@ std::string pathUtf8(const std::filesystem::path& path) {
 #endif
 }
 
+std::filesystem::path generateTimestampBackupFileName(const std::filesystem::path& fname) {
+    const auto lastWriteTime = shared::convertTime(fs::last_write_time(fname));
+    auto backupFile = fname;
+
+    auto newFname = backupFile.filename().stem();
+    newFname += fs::path("_");
+    newFname += fs::path(shared::fnameTimeToStr(lastWriteTime));
+    newFname += backupFile.extension();
+
+    backupFile.replace_filename(newFname);
+    return backupFile;
+}
+
+void pruneFilesystemPaths(std::vector<std::filesystem::path>& paths, int maxKeep) {
+    if (paths.size() > static_cast<size_t>(maxKeep)) {
+        // Sort the files as oldest to newest so that the first X files are the X oldest files.
+        // And we just want to delete X = N - maxLogsToKeep files where N is the total numbero
+        // of log files.
+        std::sort(paths.begin(), paths.end(), [](const fs::path& a, const fs::path& b){
+            return fs::last_write_time(a) < fs::last_write_time(b);
+        });
+
+        const auto numToRemove = paths.size() - static_cast<size_t>(maxKeep);
+        for (size_t i = 0; i < numToRemove; ++i) {
+            fs::remove(paths[i]);
+        }
+    }
+}
+
 }

@@ -1,5 +1,6 @@
 #include "shared/log/log.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/filesystem/utility.h"
 #include "shared/time.h"
 
 #include <algorithm>
@@ -26,34 +27,13 @@ Log::Log(const std::string& fname) {
     // create the new log file.
     const auto logFile = logDir / fs::path(fname);
     if (fs::exists(logFile)) {
-        const auto lastWriteTime = shared::convertTime(fs::last_write_time(logFile));
-        auto backupFile = logFile;
-
-        auto newFname = backupFile.filename().stem();
-        newFname += fs::path("_");
-        newFname += fs::path(shared::fnameTimeToStr(lastWriteTime));
-        newFname += backupFile.extension();
-
-        backupFile.replace_filename(newFname);
-        fs::rename(logFile, backupFile);
+        fs::rename(logFile, shared::filesystem::generateTimestampBackupFileName(logFile));
     }
 
     // Ensure that we don't keep too many backup logs. Only keep the most recent logs.
     auto dirIter = fs::directory_iterator(logDir);
     std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
-    if (logPaths.size() > static_cast<size_t>(maxLogsToKeep)) {
-        // Sort the files as oldest to newest so that the first X files are the X oldest files.
-        // And we just want to delete X = N - maxLogsToKeep files where N is the total numbero
-        // of log files.
-        std::sort(logPaths.begin(), logPaths.end(), [](const fs::path& a, const fs::path& b){
-            return fs::last_write_time(a) < fs::last_write_time(b);
-        });
-
-        const auto numToRemove = logPaths.size() - static_cast<size_t>(maxLogsToKeep);
-        for (size_t i = 0; i < numToRemove; ++i) {
-            fs::remove(logPaths[i]);
-        }
-    }
+    shared::filesystem::pruneFilesystemPaths(logPaths, maxLogsToKeep);
 
     // Create the output file. Make sure we we do this after the previous cleanup operation
     // so that we don't accidentally wipe the newest log.
