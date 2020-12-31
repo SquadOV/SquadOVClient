@@ -34,6 +34,9 @@ export default class LineGraph extends Vue {
     separateGraphs!: boolean
     resizeTimeout: number | null = null
 
+    zoomStart: number = 0
+    zoomEnd: number = 100
+
     get validSeriesData() : StatXYSeriesData[] {
         return <StatXYSeriesData[]>this.seriesData.filter((ele : StatXYSeriesData | null) => !!ele)
     }
@@ -148,23 +151,14 @@ export default class LineGraph extends Vue {
                 type: 'slider',
                 show: true,
                 top: 30,
-                start: 0,
-                end: 100,
+                start: this.zoomStart,
+                end: this.zoomEnd,
                 xAxisIndex: generateArrayRange(0, xAxis.length),
                 textStyle: {
                     color: '#FFFFFF'
                 }
             },
         ]
-
-        if (!this.separateGraphs) {
-             dataZooms.push({
-                type: 'inside',
-                start: 0,
-                end: 100,
-                xAxisIndex: generateArrayRange(0, xAxis.length),
-            })
-        }
 
         let options : any = {
             grid: grids,
@@ -295,6 +289,11 @@ export default class LineGraph extends Vue {
                     })
                 }
             }
+        })
+
+        this.graph.on('datazoom', (params: any) => {
+            this.zoomStart = params.start
+            this.zoomEnd = params.end
         })
 
         Vue.nextTick(() => {
