@@ -31,6 +31,15 @@
                             :current-time.sync="vodTime"
                         >
                         </video-player>
+
+                        <wow-vod-pov-picker
+                            :vod.sync="vod"
+                            :match-uuid="matchUuid"
+                            :user-id="userId"
+                            :match-characters ="matchCharacters"
+                            :character-associations="characterAssociations"
+                        >
+                        </wow-vod-pov-picker>
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
@@ -87,6 +96,7 @@ import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
+import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
 
 @Component({
     components: {
@@ -95,7 +105,8 @@ import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
         WowEncounterSummary,
         LoadingContainer,
         VideoPlayer,
-        WowTimeline
+        WowTimeline,
+        WowVodPovPicker
     }
 })
 export default class WowMatch extends Vue {
@@ -145,7 +156,7 @@ export default class WowMatch extends Vue {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight}px`,
+            'height': `${this.currentPlayerHeight + 56}px`,
         }
     }
 
@@ -211,17 +222,6 @@ export default class WowMatch extends Vue {
 
     @Watch('matchUuid')
     @Watch('userId')
-    refreshVod() {
-        this.vod = null
-        apiClient.findVodFromMatchUserId(this.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
-            this.vod = resp.data
-        }).catch((err : any) => {
-            this.vod = null
-        })
-    }
-
-    @Watch('matchUuid')
-    @Watch('userId')
     refreshEvents() {
         this.events = null
         apiClient.getWoWMatchEvents(this.userId, this.matchUuid).then((resp: ApiData<SerializedWowMatchEvents>) => {
@@ -236,7 +236,6 @@ export default class WowMatch extends Vue {
         this.refreshCharacters()
         this.refreshCharacterAssociations()
         this.refreshEvents()
-        this.refreshVod()
     }
 }
 

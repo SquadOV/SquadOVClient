@@ -11,7 +11,14 @@ import {
     cleanValorantMatchPlayerMatchMetadata,
 } from '@client/js/valorant/valorant_matches'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
-import { VodAssociation, cleanVodAssocationData, VodManifest, ValorantMatchAccessibleVods, HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
+import {
+    VodAssociation,
+    cleanVodAssocationData,
+    VodManifest,
+    ValorantMatchAccessibleVods,
+    HearthstoneMatchAccessibleVods,
+    WowMatchAccessibleVods
+} from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
 import { HearthstoneCardMetadata, HearthstoneBattlegroundsCardMetadata } from '@client/js/hearthstone/hearthstone_deck'
@@ -640,6 +647,13 @@ class ApiClient {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/${endpoint}`, {
             params: query,
             ...this.createWebAxiosConfig()
+        })
+    }
+
+    getWoWMatchAccessibleVods(userId: number, matchUuid: string): Promise<ApiData<WowMatchAccessibleVods>> {
+        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<WowMatchAccessibleVods>) => {
+            resp.data.vods.forEach(cleanVodAssocationData)
+            return resp
         })
     }
 
