@@ -10,7 +10,7 @@
                 >
                 </line-graph>
             </template>
-        </stat-container>    
+        </stat-container>
     </div>
 </template>
 

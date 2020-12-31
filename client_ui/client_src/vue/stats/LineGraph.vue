@@ -32,6 +32,7 @@ export default class LineGraph extends Vue {
 
     @Prop({type:Boolean, default: false})
     separateGraphs!: boolean
+    resizeTimeout: number | null = null
 
     get validSeriesData() : StatXYSeriesData[] {
         return <StatXYSeriesData[]>this.seriesData.filter((ele : StatXYSeriesData | null) => !!ele)
@@ -47,7 +48,14 @@ export default class LineGraph extends Vue {
 
     @Watch('validSeriesData')
     refreshGraph() {
-        if (this.validSeriesData.length == 0) {    
+        // This needs to be up here so that the height computations work properly.
+        if (!!this.graph) {
+            this.graph.resize()
+        }
+        this.resizeTimeout = null
+
+        if (this.validSeriesData.length == 0) { 
+            this.graph.clear()   
             return
         }
 
@@ -118,8 +126,7 @@ export default class LineGraph extends Vue {
     
         let grids: any[] = []
 
-        //@ts-ignore
-        const parentHeight = this.$parent.$el.offsetHeight
+        const parentHeight = this.$refs.graphDiv.offsetHeight
         const gridHeightMarginPx = 40
         const gridTopReservedPx = 100
         const gridBottomReservedPx = 50
@@ -254,13 +261,20 @@ export default class LineGraph extends Vue {
         }))
 
         this.graph.setOption(options)
-        this.graphResize()
     }
 
     graphResize() {
-        if (!!this.graph) {
-            this.graph.resize()
+        // The code is setup this way to request a resize instead of
+        // actually performing the resize since we compute the height
+        // of our grids manually - therefore we need to actually redraw
+        // the whole graph to get things to resize dynamically.
+        if (this.resizeTimeout !== null) {
+            window.clearTimeout(this.resizeTimeout)
         }
+
+        this.resizeTimeout = window.setTimeout(() => {
+            this.refreshGraph()
+        }, 100)
     }
 
     mounted() {
@@ -280,14 +294,13 @@ export default class LineGraph extends Vue {
                         pts: pointInGrid
                     })
                 }
-            }            
+            }
         })
 
-        this.refreshGraph()
-        window.addEventListener('resize', this.graphResize)
         Vue.nextTick(() => {
-            this.graphResize()
+            this.refreshGraph()
         })
+        window.addEventListener('resize', this.graphResize)
     }
 }
 
