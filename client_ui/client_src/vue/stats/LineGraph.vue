@@ -211,7 +211,7 @@ export default class LineGraph extends Vue {
                     return  [
                         {
                             xAxis: ele.x,
-                            yAxis: 0.0,
+                            yAxis: 'min',
                             name: ele.name,
                             lineStyle: {
                                 color: ele.colorOverride
@@ -242,7 +242,7 @@ export default class LineGraph extends Vue {
                     return [
                         {
                             xAxis: ele.start,
-                            yAxis: 0.0,
+                            yAxis: 'min',
                             name: ele.name,
                         },
                         {

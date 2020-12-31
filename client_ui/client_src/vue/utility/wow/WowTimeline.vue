@@ -121,13 +121,6 @@ const STAT_SECOND_STEP = 5.0
 const STAT_SECOND_INTERVAL = 10.0
 const BASE_GRAPH_HEIGHT = 650
 
-interface IntermediateSeriesData {
-    guid: string
-    name: string
-    x: number[]
-    y: number[]
-}
-
 @Component({
     components: {
         LineGraph
@@ -213,57 +206,7 @@ export default class WowTimeline extends Vue {
     }
 
     get activeSeriesData(): StatXYSeriesData[] {
-        let ret = this.intermediateSeriesData.map((ele: IntermediateSeriesData) => {
-            let data = new StatXYSeriesData(
-                ele.x,
-                ele.y,
-                'value',
-                'elapsedSeconds',
-                ele.name
-            )
-
-            if (!!this.currentTime && this.showTime) {
-                data.addXMarkLine({
-                    x: this.convertTmToX(this.currentTime),
-                    name: '',
-                    symbol: 'none',
-                    colorOverride: colorToCssString(colors.getSelfColor()),
-                })
-            }
-
-            if (this.showEvents) {
-                for (let e of this.unifiedEvents) {
-                    if (!!e.death) {
-                        if (e.death.guid == ele.guid) {
-                            data.addXMarkLine({
-                                x: this.convertTmToX(e.tm),
-                                name: `Death`,
-                                symbol: `image://assets/wow/stats/skull.png`
-                            })
-                        }
-                    }
-                }
-            }
-
-            if (this.showBloodlust && !!this.events) {
-                for (let aura of this.events.auras) {
-                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
-                        data.addXMarkArea({
-                            start: this.convertTmToX(aura.appliedTm),
-                            end: this.convertTmToX(aura.removedTm),
-                            name: aura.spellName
-                        })
-                    }
-                }
-            }
-
-            return data
-        })
-        return ret
-    }
-
-    get intermediateSeriesData(): IntermediateSeriesData[] {
-        let series: IntermediateSeriesData[] = []
+        let series: StatXYSeriesData[] = []
 
         for (let [guid, stats] of Object.entries(this.activeStatContainer)) {
             let name = this.guidToName.has(guid) ?
@@ -291,18 +234,56 @@ export default class WowTimeline extends Vue {
                 }
             }
 
-            series.push({
-                guid,
-                name,
-                x: paddedX,
-                y: paddedY,
-            })
+            let data = new StatXYSeriesData(
+                paddedX,
+                paddedY,
+                'value',
+                'elapsedSeconds',
+                name
+            )
+
+            if (!!this.currentTime && this.showTime) {
+                data.addXMarkLine({
+                    x: this.convertTmToX(this.currentTime),
+                    name: '',
+                    symbol: 'none',
+                    colorOverride: colorToCssString(colors.getSelfColor()),
+                })
+            }
+
+            if (this.showEvents) {
+                for (let e of this.unifiedEvents) {
+                    if (!!e.death) {
+                        if (e.death.guid == guid) {
+                            data.addXMarkLine({
+                                x: this.convertTmToX(e.tm),
+                                name: `Death`,
+                                symbol: `image://assets/wow/stats/skull.png`
+                            })
+                        }
+                    }
+                }
+            }
+
+            if (this.showBloodlust && !!this.events) {
+                for (let aura of this.events.auras) {
+                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
+                        data.addXMarkArea({
+                            start: this.convertTmToX(aura.appliedTm),
+                            end: this.convertTmToX(aura.removedTm),
+                            name: aura.spellName
+                        })
+                    }
+                }
+            }
+
+            series.push(data)
         }
 
-        series.sort((a: IntermediateSeriesData, b: IntermediateSeriesData) => {
-            if (a.name < b.name) {
+        series.sort((a: StatXYSeriesData, b: StatXYSeriesData) => {
+            if (a._name < b._name) {
                 return -1
-            } else if (a.name > b.name) {
+            } else if (a._name > b._name) {
                 return 1
             } else {
                 return 0
