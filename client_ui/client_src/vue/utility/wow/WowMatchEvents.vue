@@ -7,7 +7,8 @@
                         dense
                         solo
                         label="Encounter"
-                        v-model="selectedEncounter"
+                        :value="selectedEncounter"
+                        @input="$emit('update:selectedEncounter', arguments[0])"
                         :items="encounterItems"
                         hide-details
                     >
@@ -263,7 +264,9 @@ import { applyFilterToCondition } from '@client/js/boolean'
 export default class WowMatchEvents extends Vue {
     @Prop({required: true})
     events!: SerializedWowMatchEvents | null
-    selectedEncounter: WowEncounter | null = null
+
+    @Prop({required: true})
+    selectedEncounter!: WowEncounter | null
 
     @Prop({required: true})
     startTime!: Date

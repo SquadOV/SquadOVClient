@@ -42,3 +42,36 @@ export function millisecondsToTimeString(totalMs : number) : string {
         return `${minutesStr}:${secondsStr}.${msStr}`
     }
 }
+
+export function dateMin(a: Date, b: Date): Date {
+    if (a < b) {
+        return a
+    } else if (a > b) {
+        return b
+    }
+    return a
+}
+
+export function dateMax(a: Date, b: Date): Date {
+    if (a < b) {
+        return b;
+    } else if (a > b) {
+        return a
+    }
+    return b
+}
+
+export function dateClamp(x: Date, min: Date, max: Date): Date {
+    return dateMin(dateMax(x, min), max)
+}
+
+export function dateInRange(x: Date, min: Date, max: Date): boolean {
+    return (x >= min && x <= max)
+}
+
+export function dateRangeIntersects(aMin: Date, aMax: Date, bMin: Date, bMax: Date): boolean {
+    return dateInRange(aMin, bMin, bMax) ||
+        dateInRange(aMax, bMin, bMax) ||
+        dateInRange(bMin, aMin, aMax) ||
+        dateInRange(bMax, aMin, aMax)
+}

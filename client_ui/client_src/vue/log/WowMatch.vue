@@ -51,6 +51,7 @@
                             :start-time="startTime"
                             :sync-unified-events.sync="filteredEvents"
                             :match-characters="matchCharacters"
+                            :selected-encounter.sync="selectedEncounter"
                             @go-to-event="goToVodTime"
                         >
                         </wow-match-events>
@@ -62,7 +63,8 @@
                         :user-id="userId"
                         :match-uuid="matchUuid"
                         :start-time="startTime"
-                        :end-time="endTime"
+                        :encounter-start-time="encounterStartTime"
+                        :encounter-end-time="encounterEndTime"
                         :events="events"
                         :unified-events="filteredEvents"
                         :match-characters="matchCharacters"
@@ -84,7 +86,7 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { GenericWowMatchContainer } from '@client/js/wow/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
-import { SerializedWowMatchEvents, UnifiedWowEventContainer } from '@client/js/wow/events'
+import { SerializedWowMatchEvents, UnifiedWowEventContainer, WowEncounter } from '@client/js/wow/events'
 import {
     WowCharacter,
     WoWCharacterUserAssociation
@@ -124,6 +126,7 @@ export default class WowMatch extends Vue {
     characterAssociations: WoWCharacterUserAssociation[] = []
 
     currentMatch: GenericWowMatchContainer | null = null
+    selectedEncounter: WowEncounter | null = null
 
     events: SerializedWowMatchEvents | null = null
     filteredEvents: UnifiedWowEventContainer[] = []
@@ -158,6 +161,20 @@ export default class WowMatch extends Vue {
         return {
             'height': `${this.currentPlayerHeight + 56}px`,
         }
+    }
+
+    get encounterStartTime(): Date {
+        if (!!this.selectedEncounter) {
+            return this.selectedEncounter.startTm
+        }
+        return this.startTime
+    }
+
+    get encounterEndTime(): Date {
+        if (!!this.selectedEncounter) {
+            return this.selectedEncounter.endTm
+        }
+        return this.endTime
     }
 
     get startTime(): Date {

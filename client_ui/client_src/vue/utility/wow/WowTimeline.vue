@@ -82,14 +82,20 @@
             </v-dialog>
         </div>
 
-        <div class="full-width" :style="timelineStyle">
-            <line-graph
-                :series-data="activeSeriesData"
-                :separate-graphs="separateGraphs"
-                @graphclick="handleClick"
-            >
-            </line-graph>
-        </div>
+        <loading-container :is-loading="isLoading">
+            <template v-slot:default="{ loading }">
+                <div class="full-width" :style="timelineStyle" v-if="!loading">
+                    <line-graph
+                        :series-data="activeSeriesData"
+                        :separate-graphs="separateGraphs"
+                        :forced-min-x="encounterMinX"
+                        :forced-max-x="encounterMaxX"
+                        @graphclick="handleClick"
+                    >
+                    </line-graph>
+                </div>
+            </template>
+        </loading-container>
     </div>
 </template>
 
@@ -115,7 +121,12 @@ import * as colors from '@client/js/wow/colors'
 import { colorToCssString } from '@client/js/color'
 import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import { apiClient, ApiData } from '@client/js/api'
+import {
+    dateRangeIntersects,
+    dateClamp
+} from '@client/js/time'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
+import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 const STAT_SECOND_STEP = 5.0
 const STAT_SECOND_INTERVAL = 10.0
@@ -123,6 +134,7 @@ const BASE_GRAPH_HEIGHT = 650
 
 @Component({
     components: {
+        LoadingContainer,
         LineGraph
     }
 })
@@ -133,11 +145,16 @@ export default class WowTimeline extends Vue {
     @Prop({required: true})
     matchUuid!: string
 
+    // Absolute start time - this is what we use to generate our timestamp strings.
     @Prop({required: true})    
     startTime!: Date
 
+    // Start and end time of the current encounter. This is the time period we actually display.
     @Prop({required: true})    
-    endTime!: Date
+    encounterStartTime!: Date
+
+    @Prop({required: true})    
+    encounterEndTime!: Date
 
     @Prop({required: true})    
     currentTime!: Date | null
@@ -153,6 +170,7 @@ export default class WowTimeline extends Vue {
 
     selectedTab: number = 0
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
+    pendingEndpoints: Set<string> = new Set()
 
     // Graph settings
     showSettings: boolean = false
@@ -177,13 +195,13 @@ export default class WowTimeline extends Vue {
     ]
 
     handleClick(evt: {gridIndex: number, pts: number[]}) {
-        let dt = new Date(this.startTime.getTime() + evt.pts[0] * 1000.0)
+        let dt = new Date(this.encounterStartTime.getTime() + evt.pts[0] * 1000.0)
         this.$emit('go-to-time', dt)
     }
 
     get expectedXRange(): number[] {
         let ret: number[] = []
-        let range = (this.endTime.getTime() - this.startTime.getTime()) / 1000
+        let range = (this.encounterEndTime.getTime() - this.encounterStartTime.getTime()) / 1000
         for (let x = 0; x <= range; x += STAT_SECOND_STEP) {
             ret.push(x)
         }
@@ -192,6 +210,10 @@ export default class WowTimeline extends Vue {
 
     get activeEndpoint(): string {
         return this.data[this.selectedTab].endpoint
+    }
+
+    get isLoading(): boolean {
+        return !(this.activeEndpoint in this.cachedStats)
     }
 
     get activeStatContainer(): WowMatchStatContainer {
@@ -203,6 +225,14 @@ export default class WowTimeline extends Vue {
 
     convertTmToX(tm: Date) : number {
         return (tm.getTime() - this.startTime.getTime()) / 1000
+    }
+
+    get encounterMinX(): number {
+        return this.convertTmToX(this.encounterStartTime)
+    }
+
+    get encounterMaxX(): number {
+        return this.convertTmToX(this.encounterEndTime)
     }
 
     get activeSeriesData(): StatXYSeriesData[] {
@@ -235,7 +265,11 @@ export default class WowTimeline extends Vue {
             }
 
             let data = new StatXYSeriesData(
-                paddedX,
+                paddedX.map((ele: number) => {
+                    // Need to account for the offset between the current encounter
+                    // and the start of the match.
+                    return ele + (this.encounterStartTime.getTime() - this.startTime.getTime()) / 1000.0
+                }),
                 paddedY,
                 'value',
                 'elapsedSeconds',
@@ -271,10 +305,14 @@ export default class WowTimeline extends Vue {
 
             if (this.showBloodlust && !!this.events) {
                 for (let aura of this.events.auras) {
+                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
                     if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
                         data.addXMarkArea({
-                            start: this.convertTmToX(aura.appliedTm),
-                            end: this.convertTmToX(aura.removedTm),
+                            start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
+                            end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
                             name: aura.spellName
                         })
                     }
@@ -315,22 +353,37 @@ export default class WowTimeline extends Vue {
         return mapping
     }
 
+    @Watch('encounterStartTime')
+    @Watch('encounterEndTime')
+    forceRefreshData() {
+        Vue.delete(this.cachedStats, this.activeEndpoint)
+        this.refreshData()
+    }
+
     @Watch('selectedTab')
     refreshData() {
         if (this.activeEndpoint in this.cachedStats) {
             return
         }
 
+        if (this.pendingEndpoints.has(this.activeEndpoint)) {
+            return
+        }
+
+        this.pendingEndpoints.add(this.activeEndpoint)
+
         let endpoint = this.activeEndpoint
         apiClient.getWoWMatchStats(this.userId, this.matchUuid, endpoint, {
             psStepSeconds: STAT_SECOND_STEP,
             psIntervalSeconds: STAT_SECOND_INTERVAL,
-            start: this.startTime.getTime(),
-            end: this.endTime.getTime()
+            start: this.encounterStartTime.getTime(),
+            end: this.encounterEndTime.getTime()
         }).then((resp: ApiData<WowMatchStatContainer>) => {
             Vue.set(this.cachedStats, endpoint, resp.data)
         }).catch((err: any) => {
             console.log('Failed to get WoW match stats: ', err)
+        }).finally(() => {
+            this.pendingEndpoints.delete(endpoint)
         })
     }
 

@@ -34,6 +34,12 @@ export default class LineGraph extends Vue {
     separateGraphs!: boolean
     resizeTimeout: number | null = null
 
+    @Prop()
+    forcedMinX!: any | undefined
+
+    @Prop()
+    forcedMaxX!: any | undefined
+
     zoomStart: number = 0
     zoomEnd: number = 100
 
@@ -74,7 +80,7 @@ export default class LineGraph extends Vue {
                 continue
             }
 
-            xAxis.push({
+            let x: any = {
                 type: type,
                 nameTextStyle: {
                     color: '#FFFFFF'
@@ -95,7 +101,17 @@ export default class LineGraph extends Vue {
                 inverse: this.validSeriesData[i].reversed,
                 gridIndex: this.separateGraphs ? i : 0,
                 position: 'top',
-            })
+            }
+
+            if (this.forcedMinX !== undefined) {
+                x['min'] = this.forcedMinX
+            }
+
+            if (this.forcedMaxX !== undefined) {
+                x['max'] = this.forcedMaxX
+            }
+
+            xAxis.push(x)
             seriesToAxis.set(type, xAxis.length - 1)
         }
 
