@@ -253,14 +253,18 @@ export default class WowTimeline extends Vue {
 
             if (this.showEvents) {
                 for (let e of this.unifiedEvents) {
-                    if (!!e.death) {
-                        if (e.death.guid == guid) {
-                            data.addXMarkLine({
-                                x: this.convertTmToX(e.tm),
-                                name: `Death`,
-                                symbol: `image://assets/wow/stats/skull.png`
-                            })
-                        }
+                    if (!!e.death && e.death.guid == guid) {
+                        data.addXMarkLine({
+                            x: this.convertTmToX(e.tm),
+                            name: `Death`,
+                            symbol: `image://assets/wow/stats/skull.png`
+                        })
+                    } else if (!!e.resurrect && e.resurrect.guid == guid) {
+                        data.addXMarkLine({
+                            x: this.convertTmToX(e.tm),
+                            name: `Resurrect`,
+                            symbol: `image://assets/wow/stats/res.png`
+                        })
                     }
                 }
             }

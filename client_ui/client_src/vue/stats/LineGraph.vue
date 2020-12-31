@@ -86,6 +86,9 @@ export default class LineGraph extends Vue {
                 },
                 axisLabel: {
                     formatter: (value: any) => {
+                        if (!this.validSeriesData[i]) {
+                            return value
+                        }
                         return this.validSeriesData[i].xFormatter(value)
                     }
                 },
@@ -129,7 +132,7 @@ export default class LineGraph extends Vue {
     
         let grids: any[] = []
 
-        const parentHeight = this.$refs.graphDiv.offsetHeight
+        const parentHeight = !!this.$refs.graphDiv ? this.$refs.graphDiv.offsetHeight : 650
         const gridHeightMarginPx = 40
         const gridTopReservedPx = 100
         const gridBottomReservedPx = 50

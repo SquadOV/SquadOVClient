@@ -60,82 +60,118 @@
                         </v-card-title>
                         <v-divider></v-divider>
 
-                        <div class="d-flex flex-wrap align-center pa-4">
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showFriendly"
-                                label="Friendly"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                        <div class="d-flex">
+                            <div>
+                                <div class="d-flex justify-center align-center text-h6 font-weight-bold text-uppercase">
+                                    Who
+                                </div>
 
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showHostile"
-                                label="Hostile"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                                <div class="d-flex flex-wrap align-center px-4 pb-4">
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showFriendly"
+                                        label="Friendly"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
 
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showNeutral"
-                                label="Neutral"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
-                        </div>
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showHostile"
+                                        label="Hostile"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
 
-                        <div class="d-flex flex-wrap align-center pa-4">
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showPlayers"
-                                label="Players"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showNeutral"
+                                        label="Neutral"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+                                </div>
 
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showNpc"
-                                label="NPC"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
-                        </div>
+                                <div class="d-flex flex-wrap align-center pa-4">
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showPlayers"
+                                        label="Players"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
 
-                        <div class="d-flex flex-wrap align-center pa-4">
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showPet"
-                                label="Pet"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showNpc"
+                                        label="NPC"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+                                </div>
 
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showTrash"
-                                label="Trash"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                                <div class="d-flex flex-wrap align-center pa-4">
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showPet"
+                                        label="Pet"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
 
-                            <v-checkbox
-                                class="mx-2"
-                                v-model="showRaidBoss"
-                                label="Boss"
-                                dense
-                                hide-details
-                            >
-                            </v-checkbox>
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showTrash"
+                                        label="Trash"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showRaidBoss"
+                                        label="Boss"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+                                </div>
+                            </div>
+
+                            <v-divider vertical></v-divider>
+
+                            <div>
+                                <div class="d-flex justify-center align-center text-h6 font-weight-bold text-uppercase">
+                                    What
+                                </div>
+
+                                <div class="d-flex flex-wrap align-center px-4 pb-4">
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showDeaths"
+                                        label="Deaths"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+
+                                    <v-checkbox
+                                        class="mx-2"
+                                        v-model="showResurrects"
+                                        label="Resurrects"
+                                        dense
+                                        hide-details
+                                    >
+                                    </v-checkbox>
+                                </div>
+                            </div>
                         </div>
 
                         <v-card-actions>
@@ -169,6 +205,13 @@
                                 </v-icon>
                                 {{ eve.death.name }}
                             </template>
+
+                            <template v-else-if="!!eve.resurrect">
+                                <v-icon class="event-icon mr-4" small>
+                                    mdi-heart-pulse
+                                </v-icon>
+                                {{ eve.resurrect.name }}
+                            </template>
                         </v-list-item-content>
 
                         <v-list-item-action class="ml-0" v-if="!!hasVod">
@@ -198,7 +241,9 @@ import {
     SerializedWowMatchEvents,
     WowEncounter,
     WowDeath,
-    UnifiedWowEventContainer
+    WowResurrection,
+    UnifiedWowEventContainer,
+    WowUserTarget
 } from '@client/js/wow/events'
 import {
     WowCharacter
@@ -246,6 +291,9 @@ export default class WowMatchEvents extends Vue {
     showTrash: boolean = false
     showRaidBoss: boolean = true
 
+    showDeaths: boolean = true
+    showResurrects: boolean = true
+
     goToEncounterStart() {
         if (!this.selectedEncounter) {
             return
@@ -264,17 +312,22 @@ export default class WowMatchEvents extends Vue {
         this.$emit('go-to-event', e.tm)
     }
 
+    obtainUserEventHighlightColor(e: WowUserTarget): string {
+        if (e.guid == this.currentCharacter) {
+            return colorToCssString(colors.getSelfColor())
+        } else if (this.friendlyGuidSet.has(e.guid)) {
+            return colorToCssString(colors.getSuccessColor())
+        }
+        return colorToCssString(colors.getFailureColor())
+    }
+
     eventStyling(e : UnifiedWowEventContainer) : any {
         let borderHighlightColor: string = 'transparent'
 
         if (!!e.death) {
-            if (e.death.guid == this.currentCharacter) {
-                borderHighlightColor = colorToCssString(colors.getSelfColor())
-            } else if (this.friendlyGuidSet.has(e.death.guid)) {
-                borderHighlightColor = colorToCssString(colors.getSuccessColor())
-            } else {
-                borderHighlightColor = colorToCssString(colors.getFailureColor())
-            }
+            borderHighlightColor = this.obtainUserEventHighlightColor(e.death)
+        } else if (!!e.resurrect) {
+            borderHighlightColor = this.obtainUserEventHighlightColor(e.resurrect)
         }
 
         let style: any = {
@@ -309,49 +362,92 @@ export default class WowMatchEvents extends Vue {
         this.$emit('update:syncUnifiedEvents', this.unifiedEvents)
     }
 
+    checkFilterPass(ele: WowUserTarget): boolean {
+        let friendly = wowc.isObjectFriendly(ele.flags)
+        let hostile = wowc.isObjectHostile(ele.flags)
+        let neutral = wowc.isObjectNeutral(ele.flags)
+        let player = wowc.isObjectPlayer(ele.flags)
+        let npc = wowc.isObjectNpc(ele.flags)
+        let pet = (friendly || neutral) && wowc.isObjectPet(ele.flags)
+        let trash = hostile && npc && !this.encounterNameSet.has(ele.name)
+        let boss = hostile && npc && this.encounterNameSet.has(ele.name)
+        return applyFilterToCondition(friendly, this.showFriendly)
+            && applyFilterToCondition(hostile, this.showHostile)
+            && applyFilterToCondition(neutral, this.showNeutral)
+            && applyFilterToCondition(player, this.showPlayers)
+            && applyFilterToCondition(npc, this.showNpc)
+            && applyFilterToCondition(pet, this.showPet)
+            && applyFilterToCondition(trash, this.showTrash)
+            && applyFilterToCondition(boss, this.showRaidBoss)
+    }
+
+    mergeUnifiedEventContainers(...args: UnifiedWowEventContainer[][]): UnifiedWowEventContainer[] {
+        let unified: UnifiedWowEventContainer[] = []
+        while (args.some((ele: UnifiedWowEventContainer[]) => ele.length > 0)) {
+            let selectedIndex: number = args.length
+            let minTime: Date = new Date()
+
+            for (let i = 0; i < args.length; ++i) {
+                if (args[i].length == 0) {
+                    continue
+                }
+
+                if (args[i][0].tm <= minTime) {
+                    selectedIndex = i
+                    minTime = args[i][0].tm
+                }
+            }
+
+            if (selectedIndex == args.length) {
+                console.log('Failed to merge event containers???')
+                break
+            }
+
+            unified.push(args[selectedIndex].shift()!)
+        }
+        return unified
+    }
+
     get unifiedEvents(): UnifiedWowEventContainer[] {
         if (!this.events) {
             return []
         }
 
-        let retEvents: UnifiedWowEventContainer[] = []
-        if (!!this.selectedEncounter) {
-            retEvents = this.events.deaths
+        let retEvents: UnifiedWowEventContainer[] = this.mergeUnifiedEventContainers(
+            this.events.deaths
                 .filter((ele: WowDeath) => {
+                    if (!this.selectedEncounter) {
+                        return true
+                    }
+
                     return ele.tm >= this.selectedEncounter!.startTm && ele.tm <= this.selectedEncounter!.endTm
                 })
                 .map((ele: WowDeath) => ({
                     death: ele,
                     tm: ele.tm
-                }
-            ))
-        } else {
-            retEvents = this.events.deaths.map((ele: WowDeath) => ({
-                death: ele,
-                tm: ele.tm
-            }))
-        }
+                })),
+            this.events.resurrections
+                .filter((ele: WowResurrection) => {
+                    if (!this.selectedEncounter) {
+                        return true
+                    }
+
+                    return ele.tm >= this.selectedEncounter!.startTm && ele.tm <= this.selectedEncounter!.endTm
+                })
+                .map((ele: WowResurrection) => ({
+                    resurrect: ele,
+                    tm: ele.tm
+                }))
+        )
 
         return retEvents.filter((ele: UnifiedWowEventContainer) => {
+            // FILTERS MUST BE HERE. I'm not sure why putting the filter checks in the
+            // .filter of the arguments in the mergeUnifiedEventContainers call doesn't work.
             if (!!ele.death) {
-                let friendly = wowc.isObjectFriendly(ele.death.flags)
-                let hostile = wowc.isObjectHostile(ele.death.flags)
-                let neutral = wowc.isObjectNeutral(ele.death.flags)
-                let player = wowc.isObjectPlayer(ele.death.flags)
-                let npc = wowc.isObjectNpc(ele.death.flags)
-                let pet = (friendly || neutral) && wowc.isObjectPet(ele.death.flags)
-                let trash = hostile && npc && !this.encounterNameSet.has(ele.death.name)
-                let boss = hostile && npc && this.encounterNameSet.has(ele.death.name)
-                return applyFilterToCondition(friendly, this.showFriendly)
-                    && applyFilterToCondition(hostile, this.showHostile)
-                    && applyFilterToCondition(neutral, this.showNeutral)
-                    && applyFilterToCondition(player, this.showPlayers)
-                    && applyFilterToCondition(npc, this.showNpc)
-                    && applyFilterToCondition(pet, this.showPet)
-                    && applyFilterToCondition(trash, this.showTrash)
-                    && applyFilterToCondition(boss, this.showRaidBoss)
+                return this.showDeaths && this.checkFilterPass(ele.death)
+            } else if (!!ele.resurrect) {
+                return this.showResurrects && this.checkFilterPass(ele.resurrect)
             }
-
             return true
         })
     }
