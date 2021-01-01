@@ -5,6 +5,7 @@ copyright: "Copyright © 2020 GRCHive, Inc."
 directories:
   app: "."
   output: "package/${os}/${arch}/${version}"
+  buildResources: "../assets"
 
 win:
   target: "nsis"

@@ -15,6 +15,7 @@ process.env.SQUADOV_KAFKA_BROKERS = config["KAFKA_BROKERS"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
     app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../resources/tzdata'
+const iconPath = 'assets/icon.ico'
 
 let win
 
@@ -229,6 +230,7 @@ function startAutoupdater() {
         frame: false,
         resizable: false,
         movable: false,
+        icon: iconPath
     })
 
     if (!app.isPackaged) {
@@ -322,7 +324,8 @@ app.on('ready', async () => {
         height: 720,
         webPreferences: {
             nodeIntegration: true,
-        }
+        },
+        icon: iconPath
     })
 
     if (!app.isPackaged) {
