@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain, net} = require('electron')
+const {app, BrowserWindow, Menu, Tray, ipcMain, net} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
@@ -18,9 +18,33 @@ process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
 const iconPath = 'assets/icon.ico'
 
 let win
+let tray
+let isQuitting = false
 
 function start() {
     win.loadFile('index.html')
+
+    win.on('close', (e) => {
+        if (!isQuitting) {
+            e.preventDefault()
+            win.hide()
+        }
+    })
+
+    tray = new Tray(iconPath)
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Quit SquadOV',
+            click: () => {
+                quit()
+            }
+        }
+    ])
+
+    tray.on('click', () => {
+        win.show()
+    })
+    tray.setContextMenu(contextMenu)
 }
 
 ipcMain.on('request-app-folder', (event) => {
@@ -38,6 +62,7 @@ const { ApiServer } = require('./api_src/api');
 
 let apiServer = new ApiServer()
 async function quit() {
+    isQuitting = true
     zeromqServer.close()
     apiServer.close()
     app.quit()
