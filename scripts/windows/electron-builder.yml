@@ -1,14 +1,15 @@
 appId: "squadov.squadov.app.2020-10-28"
 productName: "SquadOV"
-copyright: "Copyright © 2020 GRCHive, Inc."
+copyright: "Copyright © 2020-2021 GRCHive, Inc."
 
 directories:
   app: "."
   output: "package/${os}/${arch}/${version}"
-  buildResources: "../assets"
+  buildResources: "assets"
 
 win:
   target: "nsis"
+  icon: "assets/icon.ico"
   publish: 
     - provider: generic
       url: https://us-central1.content.squadov.gg/builds
