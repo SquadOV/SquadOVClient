@@ -15,7 +15,7 @@ process.env.SQUADOV_KAFKA_BROKERS = config["KAFKA_BROKERS"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
     app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../resources/tzdata'
-const iconPath = 'assets/icon.ico'
+const iconPath = path.join(__dirname, 'assets/icon.ico')
 
 let win
 let tray
