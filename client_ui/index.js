@@ -21,6 +21,32 @@ let win
 let tray
 let isQuitting = false
 
+if (app.isPackaged) {
+    app.setLoginItemSettings({
+        openAtLogin: true,
+        openAsHidden: true,
+    })
+}
+
+const singleLock = app.requestSingleInstanceLock()
+if (!singleLock) {
+    app.quit()
+} else {
+    app.on('second-instance', () => {
+        if (!!win) {
+            if (!win.isVisible()) {
+                win.show()
+            }
+
+            if (win.isMinimized()) {
+                win.restore()
+            }
+
+            win.focus()
+        }
+    })
+}
+
 function start() {
     win.loadFile('index.html')
 
