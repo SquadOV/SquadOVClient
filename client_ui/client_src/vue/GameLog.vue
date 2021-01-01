@@ -167,7 +167,6 @@ export default class GameLog extends Vue {
         let hearthstoneTo = this.constructPageTo(pi.HearthstoneLogPageId)
         let valorantTo = this.constructPageTo(pi.ValorantLogPageId)
         let wowTo = this.constructPageTo(pi.WowLogPageId)
-        console.log(this.$router.resolve(wowTo).route.path, this.$router.resolve(wowTo).route.fullPath)
         return [
             {
                 'icon': 'assets/aimlab-logo.png',
