@@ -1,4 +1,4 @@
-const {app, BrowserWindow, ipcMain, net} = require('electron')
+const {app, BrowserWindow, Menu, Tray, ipcMain, net} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
@@ -15,11 +15,62 @@ process.env.SQUADOV_KAFKA_BROKERS = config["KAFKA_BROKERS"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
     app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../resources/tzdata'
+const iconPath = 'assets/icon.ico'
 
 let win
+let tray
+let isQuitting = false
+
+if (app.isPackaged) {
+    app.setLoginItemSettings({
+        openAtLogin: true,
+        openAsHidden: true,
+    })
+}
+
+const singleLock = app.requestSingleInstanceLock()
+if (!singleLock) {
+    app.quit()
+} else {
+    app.on('second-instance', () => {
+        if (!!win) {
+            if (!win.isVisible()) {
+                win.show()
+            }
+
+            if (win.isMinimized()) {
+                win.restore()
+            }
+
+            win.focus()
+        }
+    })
+}
 
 function start() {
     win.loadFile('index.html')
+
+    win.on('close', (e) => {
+        if (!isQuitting) {
+            e.preventDefault()
+            win.hide()
+        }
+    })
+
+    tray = new Tray(iconPath)
+    const contextMenu = Menu.buildFromTemplate([
+        {
+            label: 'Quit SquadOV',
+            click: () => {
+                quit()
+            }
+        }
+    ])
+
+    tray.on('click', () => {
+        win.show()
+    })
+    tray.setContextMenu(contextMenu)
 }
 
 ipcMain.on('request-app-folder', (event) => {
@@ -37,6 +88,7 @@ const { ApiServer } = require('./api_src/api');
 
 let apiServer = new ApiServer()
 async function quit() {
+    isQuitting = true
     zeromqServer.close()
     apiServer.close()
     app.quit()
@@ -229,6 +281,7 @@ function startAutoupdater() {
         frame: false,
         resizable: false,
         movable: false,
+        icon: iconPath
     })
 
     if (!app.isPackaged) {
@@ -322,7 +375,8 @@ app.on('ready', async () => {
         height: 720,
         webPreferences: {
             nodeIntegration: true,
-        }
+        },
+        icon: iconPath
     })
 
     if (!app.isPackaged) {

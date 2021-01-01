@@ -668,6 +668,10 @@ class ApiClient {
 
         return axios.post(`v1/bug`, form, cfg)
     }
+
+    markUserActive(): Promise<void> {
+        return axios.post(`v1/users/me/active`, {}, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

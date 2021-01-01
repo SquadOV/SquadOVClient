@@ -321,6 +321,11 @@ const router = new VueRouter({
 
 router.beforeEach((to : any, from : any, next : any) => {
     console.log(`Navigate ${from.fullPath} => ${to.fullPath}`)
+    if (to.name != pi.DashboardPageId) {
+        apiClient.markUserActive().catch((err: any) => {
+            console.log('Failed to mark user active: ', err)
+        })
+    }
     next()
 })
 
