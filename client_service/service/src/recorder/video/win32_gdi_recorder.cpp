@@ -15,13 +15,6 @@ namespace fs = std::filesystem;
 #define LOG_FRAME_TIME 0
 #ifdef _WIN32
 
-namespace {
-
-constexpr size_t desiredFps = 60;
-constexpr double nsPerFrame = 1.0 / desiredFps * 1e+9;
-
-}
-
 namespace service::recorder::video {
 
 using TickClock = std::chrono::high_resolution_clock;
@@ -43,9 +36,11 @@ void Win32GdiRecorderInstance::stopRecording() {
     }
 }
 
-void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEncoder* encoder) {
+void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t fps) {
+    const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
+    
     _recording = true;
-    _recordingThread = std::thread([this, encoder](){ 
+    _recordingThread = std::thread([this, encoder, nsPerFrame](){ 
         HDC hdcWindow = GetDC(_window);
         HDC hdcMem = CreateCompatibleDC(hdcWindow);
         HBITMAP hbm = nullptr;
@@ -74,7 +69,7 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
 
             // Means we're probably minimized.
             if (IsIconic(_window) || width == 0 || height == 0) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
+                std::this_thread::sleep_for(nsPerFrame);
                 continue;
             }
 
@@ -122,15 +117,14 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
             encoder->addVideoFrame(frame);
 
             const auto endFrame = TickClock::now();
-            const auto numNs = std::chrono::duration_cast<std::chrono::nanoseconds>(endFrame - startFrame).count();
+            const auto numNs = std::chrono::duration_cast<std::chrono::nanoseconds>(endFrame - startFrame);
             
 #if LOG_FRAME_TIME
             LOG_INFO("Frame Time - GDI:" << gdiElapsed * 1.0e-6 << " + Queue Encode:" << (numMs - gdiElapsed) * 1.0e-6  << std::endl);
 #endif
 
-            // top out at 60hz? probably not ever going to be a problem with GDI.
-            if (numNs < size_t(nsPerFrame)) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame) - numNs));
+            if (numNs < nsPerFrame) {
+                std::this_thread::sleep_for(nsPerFrame - numNs);
             }
         }
 

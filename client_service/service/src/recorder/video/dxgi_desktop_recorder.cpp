@@ -15,13 +15,6 @@ using namespace std::chrono_literals;
 
 namespace service::recorder::video {
 
-namespace {
-
-constexpr size_t desiredFps = 60;
-constexpr double nsPerFrame = 1.0 / desiredFps * 1e+9;
-
-}
-
 using TickClock = std::chrono::high_resolution_clock;
 
 DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
@@ -168,9 +161,11 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
     }
 }
 
-void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* encoder) {
+void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t fps) {
+    const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
+
     _recording = true;
-    _recordingThread = std::thread([this, encoder](){ 
+    _recordingThread = std::thread([this, encoder, nsPerFrame](){ 
         // Only initialize once we get into the recording thread since we'll need to wait
         // for the window to be not minimizd. This is fine since we'll just be writing black
         // frames until the window is unminimized which is fine!
@@ -224,7 +219,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
                 LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
-                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame)));
+                std::this_thread::sleep_for(nsPerFrame);
                 continue;
             }
 
@@ -284,11 +279,9 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
                 << "\tEncode:" << encodeNs * 1.0e-6  << std::endl);
 #endif
 
-            // Limit our frames to 60hz so that we don't unnecessarily create frames.
-            // TODO: Sync this to the encoder Hz.
-            const auto elapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - startFrameTm).count();
-            if (elapsedNs < size_t(nsPerFrame)) {
-                std::this_thread::sleep_for(std::chrono::nanoseconds(size_t(nsPerFrame) - elapsedNs));
+            const auto elapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - startFrameTm);
+            if (elapsedNs < nsPerFrame) {
+                std::this_thread::sleep_for(nsPerFrame - elapsedNs);
             }
         }
     });

@@ -113,7 +113,7 @@ VodIdentifier GameRecorder::start() {
         //   2) The audio from the user's system.
         //   3) The audio from the user's microphone (if any).
         createVideoRecorder(_windowInfo);
-        _vrecorder->startRecording(_encoder.get());
+        _vrecorder->startRecording(_encoder.get(), static_cast<size_t>(settings.fps));
     }
     
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
