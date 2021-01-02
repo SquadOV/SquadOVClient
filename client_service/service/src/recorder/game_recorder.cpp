@@ -11,6 +11,7 @@
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "system/win32/hwnd_utils.h"
+#include "system/settings.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -91,17 +92,18 @@ VodIdentifier GameRecorder::start() {
 
     _encoder.reset(new encoder::FfmpegAvEncoder(_outputPiper->filePath()));
 
+    const auto settings = service::system::getCurrentSettings()->recording();
     {
         std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
 
         // Initialize streams in the encoder here. Use hard-coded options for to record
-        // video at 1080p@60fps. 
+        // video at 1080p@60fps.
         // TODO: Make some more quality controls for video/audio available here.
         // Note that we don't want to exceed 1080p for now (but we want to maintain the same aspect ratio as the OG resolution)
         const auto aspectRatio = static_cast<double>(_windowInfo.width) / _windowInfo.height;
-        const auto desiredHeight = std::min(_windowInfo.height, size_t(1080));
+        const auto desiredHeight = std::min(_windowInfo.height, static_cast<size_t>(settings.resY));
         _encoder->initializeVideoStream(
-            60,
+            settings.fps,
             static_cast<size_t>(desiredHeight * aspectRatio),
             desiredHeight
         );

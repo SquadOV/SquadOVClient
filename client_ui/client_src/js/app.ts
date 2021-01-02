@@ -330,6 +330,7 @@ router.beforeEach((to : any, from : any, next : any) => {
 })
 
 const store = new Vuex.Store(RootStoreOptions)
+store.dispatch('reloadLocalSettings')
 
 // As soon as the app starts we need to query the main process for
 // the session ID to properly initialize the API client

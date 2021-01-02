@@ -24,7 +24,7 @@
                 <router-view></router-view>
             </div>
 
-            <footer class="flex-grow-0 my-1">
+            <footer class="flex-grow-0 py-1">
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>
@@ -86,6 +86,11 @@
                         @cancel="showHideBug = false"
                     ></bug-reporter>
                 </v-dialog>
+    
+                <recording-status-window
+                    id="recording"
+                >
+                </recording-status-window>
             </footer>
         </template>
         
@@ -108,13 +113,15 @@ import Component from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
 import LicenseData from '@client/vue/LicenseData.vue'
 import BugReporter from '@client/vue/BugReporter.vue'
+import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
 import { version } from '@client/../package.json'
 
 @Component({
     components: {
         AppNav,
         LicenseData,
-        BugReporter
+        BugReporter,
+        RecordingStatusWindow
     }
 })
 export default class App extends Vue {
@@ -152,6 +159,17 @@ footer {
     bottom: 0px;
     left: calc(100% - 250px);
     width: 180px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+#recording {
+    position: fixed;
+    bottom: 0px;
+    left: 10px;
+    width: 360px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     border-bottom-left-radius: 0px;

@@ -22,6 +22,7 @@ SET(SRCS
     src/recorder/pipe/filesystem_piper.cpp
     src/recorder/pipe/gcs_piper.cpp
     src/system/win32/hwnd_utils.cpp
+    src/system/settings.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
 )
@@ -55,6 +56,7 @@ SET(HEADERS
     src/recorder/pipe/filesystem_piper.h
     src/recorder/pipe/gcs_piper.h
     src/system/win32/hwnd_utils.h
+    src/system/settings.h
     src/zeromq/zeromq.h
     src/local/local_data.h
 )
