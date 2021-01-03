@@ -5,6 +5,11 @@
 #include <iomanip>
 
 namespace shared {
+namespace {
+
+const std::chrono::seconds FUTURE_TIME_THRESHOLD = std::chrono::seconds(30);
+
+}
 
 TimePoint zeroTime() {
     return std::chrono::system_clock::from_time_t(0);
@@ -46,6 +51,10 @@ std::string fnameTimeToStr(const TimePoint& tm) {
 
 bool isTimeValid(const TimePoint& tm) {
     return tm != TimePoint::max();
+}
+
+bool isTimeInFuture(const TimePoint& tm) {
+    return tm > (shared::nowUtc() + FUTURE_TIME_THRESHOLD);
 }
 
 }

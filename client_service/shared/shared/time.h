@@ -39,6 +39,7 @@ std::string localTimeToString(const date::local_time<T>& t) {
 // A version of timeToStr that creates a date string that's more compatible with filenames.
 std::string fnameTimeToStr(const TimePoint& tm);
 bool isTimeValid(const TimePoint& tm);
+bool isTimeInFuture(const TimePoint& tm);
 
 template<typename T>
 TimePoint convertTime(const T& tm) {

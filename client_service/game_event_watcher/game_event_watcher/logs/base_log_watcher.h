@@ -43,6 +43,11 @@ protected:
             return;
         }
 
+        if (checkTime && shared::isTimeInFuture(eventTime)) {
+            LOG_INFO("\tDiscarding event due to future time: " << shared::timeToStr(eventTime) << std::endl);
+            return;
+        }
+
         for (const auto& cb : _callbacks.at(event)) {
             cb(eventTime, data);
         }
