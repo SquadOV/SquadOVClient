@@ -7,6 +7,7 @@
 #include "local/local_data.h"
 #include "recorder/game_recorder.h"
 #include "game_event_watcher/aimlab/aimlab_log_watcher.h"
+#include "system/state.h"
 
 #include <atomic>
 #include <iostream>
@@ -84,6 +85,10 @@ void AimlabProcessHandlerInstance::backfill() {
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Start" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
@@ -95,6 +100,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Kill" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
@@ -113,6 +122,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskRestart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Restart" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
@@ -125,6 +138,10 @@ void AimlabProcessHandlerInstance::onAimlabTaskRestart(const shared::TimePoint& 
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& eventTime,const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Finish" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl

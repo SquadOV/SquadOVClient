@@ -9,6 +9,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "api/squadov_api.h"
 #include "recorder/game_recorder.h"
+#include "system/state.h"
 
 namespace service::hearthstone {
 namespace {
@@ -90,6 +91,10 @@ void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& 
 }
 
 void HearthstoneProcessHandlerInstance::onArenaDraftStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!_arenaUuid.empty()) {
         LOG_WARNING("Starting an arena draft in the middle of another arena draft?" << std::endl);
         return;
@@ -105,6 +110,10 @@ void HearthstoneProcessHandlerInstance::onArenaDraftStart(const shared::TimePoin
 }
 
 void HearthstoneProcessHandlerInstance::onArenaDraftChoice(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (_arenaUuid.empty()) {
         return;
     }
@@ -119,6 +128,10 @@ void HearthstoneProcessHandlerInstance::onArenaDraftChoice(const shared::TimePoi
 }
 
 void HearthstoneProcessHandlerInstance::onArenaDraftFinish(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (_arenaUuid.empty()) {
         return;
     }
@@ -134,6 +147,10 @@ void HearthstoneProcessHandlerInstance::onArenaDraftFinish(const shared::TimePoi
 }
 
 void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const game_event_watcher::HearthstoneGameConnectionInfo* info = reinterpret_cast<const game_event_watcher::HearthstoneGameConnectionInfo*>(rawData);
     LOG_INFO("Hearthstone Game Connect [" << shared::timeToStr(eventTime) << "]" << std::endl
         << "\tGame Server:" << info->ip << ":" << info->port << std::endl
@@ -162,6 +179,9 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 }
 
 void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
     LOG_INFO("Hearthstone Game Start [" << shared::timeToStr(eventTime) << "] - " << _currentGame.valid() << std::endl);
 
     // We don't want to handle spectate mode as that isn't this user's match.
@@ -225,6 +245,10 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
 }
 
 void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!_inGame) {
         return;
     }
@@ -252,6 +276,10 @@ void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& event
 }
 
 void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
     LOG_INFO("Hearthstone Game Disconnect [" << shared::timeToStr(eventTime) << "]" << std::endl);
 
     const auto isRecording = _recorder->isRecording();

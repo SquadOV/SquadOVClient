@@ -11,6 +11,7 @@ namespace service::zeromq {
 
 const std::string ZEROMQ_SESSION_ID_TOPIC = "session-id";
 const std::string ZEROMQ_READY_TOPIC = "on-ready";
+const std::string ZEROMQ_CHANGE_PAUSE_TOPIC = "change-state-pause";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

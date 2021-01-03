@@ -1,17 +1,20 @@
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
 import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
+import { SquadOvState, createDefaultState } from '@client/js/system/state' 
 
 interface RootState {
     currentUser: SquadOVUser | null
     settings: SquadOvLocalSettings | null
+    currentState: SquadOvState
 }
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
-        settings: null
+        settings: null,
+        currentState: createDefaultState()
     },
     mutations: {
         setUser(state : RootState, user : SquadOVUser) {
@@ -34,6 +37,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.record.fps = fps
             saveLocalSettings(state.settings)
         },
+        toggleRecordingPause(state: RootState) {
+            state.currentState.paused = !state.currentState.paused
+        },
+        resetState(state: RootState) {
+            state.currentState = createDefaultState()
+        }
     },
     actions: {
         async reloadLocalSettings(context) {

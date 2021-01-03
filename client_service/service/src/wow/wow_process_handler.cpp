@@ -4,6 +4,7 @@
 #include "api/squadov_api.h"
 #include "shared/time.h"
 #include "recorder/game_recorder.h"
+#include "system/state.h"
 
 namespace service::wow {
 
@@ -137,6 +138,10 @@ bool WoWProcessHandlerInstance::hasValidCombatLog() const {
 }
 
 void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (hasValidCombatLog()) {
         return;
     }
@@ -160,6 +165,10 @@ void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, co
 }
 
 void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog()) {
         return;
     }
@@ -174,6 +183,10 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
 }
 
 void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog() || inMatch()) {
         return;
     }
@@ -185,6 +198,10 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
 }
 
 void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog() || !inEncounter()) {
         return;
     }
@@ -206,6 +223,10 @@ void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, cons
 }
 
 void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog() || inMatch()) {
         return;
     }
@@ -217,6 +238,10 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
 }
 
 void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
     if (!hasValidCombatLog() || !inChallenge()) {
         return;
     }
@@ -238,6 +263,10 @@ void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, 
 }
 
 void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog() || !inMatch() || !_expectingCombatants) {
         return;
     }
@@ -248,6 +277,10 @@ void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, con
 }
 
 void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     if (!hasValidCombatLog() || !inMatch() || !_expectingCombatants) {
         return;
     }
@@ -258,6 +291,10 @@ void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& t
 }
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "::" << shared::timeToStr(_matchStartTime) << "] - LOG " << _combatLogId << std::endl);
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
@@ -285,6 +322,10 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 }
 
 void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
     LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG" << _combatLogId << std::endl);
     const auto isRecording = _recorder->isRecording();
     if (isRecording && !_currentMatchUuid.empty()) {

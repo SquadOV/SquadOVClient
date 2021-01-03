@@ -9,6 +9,7 @@
 #include "shared/log/log.h"
 #include "local/local_data.h"
 #include "api/squadov_api.h"
+#include "system/state.h"
 
 #include <iostream>
 #include <queue>
@@ -144,6 +145,10 @@ void ValorantProcessHandlerInstance::onValorantDetectPvpServer(const shared::Tim
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const auto* state = reinterpret_cast<const game_event_watcher::GameLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Match Start" << std::endl
         << "\tMap: " << shared::valorant::mapToName(state->matchMap) << std::endl
@@ -177,6 +182,10 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     const auto* state = reinterpret_cast<const game_event_watcher::GameLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Match End" << std::endl
         << "\tMap: " << shared::valorant::mapToName(state->matchMap) << std::endl
@@ -277,6 +286,10 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
 }
 
 void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint& eventTime, const void*) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Round BUY Start" << std::endl);
     if (!_currentMatch) {
         LOG_WARNING("\tUNEXPECTED ROUND BUY (match nullptr)." << std::endl);
@@ -286,6 +299,10 @@ void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint&
 }
 
 void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoint& eventTime, const void*) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Round PLAY Start" << std::endl);
     if (!_currentMatch) {
         LOG_WARNING("\tUNEXPECTED ROUND START (match nullptr)." << std::endl);

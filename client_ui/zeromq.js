@@ -80,6 +80,10 @@ class ZeroMQServerClient {
         await this._pub.send(['session-id', sessionId])
     }
 
+    async updateRecordingPaused(paused) {
+        await this._pub.send(['change-state-pause', JSON.stringify(paused)])
+    }
+
     on(topic, handler) {
         if (!(topic in this._handlers)) {
             this._handlers[topic] = []

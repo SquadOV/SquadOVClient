@@ -201,6 +201,11 @@ ipcMain.handle('request-session', () => {
     }
 })
 
+// This event gets called whenever the user wants to resume/pause recording.
+ipcMain.on('change-state-pause', (event, paused) => {
+    zeromqServer.updateRecordingPaused(paused)
+})
+
 totalCloseCount = 0
 function startClientService() {
     if (totalCloseCount > 5) {
@@ -249,6 +254,7 @@ function startClientService() {
     child.on('close', (code) => {
         log.log('Unexpected close of client service: ', code)
         totalCloseCount += 1
+        win.webContents.send('reset-state')
         setTimeout(() => {
             startClientService()
         }, 500)

@@ -5,6 +5,7 @@
 #include "valorant/valorant_process_handler.h"
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
+#include "system/state.h"
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
 #include "shared/errors/error.h"
@@ -21,6 +22,7 @@
 #include <date/tz.h>
 #include <filesystem>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <portaudio.h>
 #include <thread>
 
@@ -139,6 +141,17 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Initialize Kafka API" << std::endl);
     service::api::getKafkaApi()->initialize(shared::getEnv("SQUADOV_KAFKA_BROKERS", ""));
+
+    // Initialize global state and start to listen to messages coming via ZeroMQ about
+    // how to update certain state.
+    service::system::getGlobalState();
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_CHANGE_PAUSE_TOPIC, [](const std::string& msg) {
+        const auto json = nlohmann::json::parse(msg);
+        const auto paused = json.get<bool>();
+        LOG_INFO("User Change Pause: " << paused << std::endl);
+        service::system::getGlobalState()->setPause(paused);
+    });
 
     LOG_INFO("Send Ready" << std::endl);
     // At this point we can fire off an event letting the UI know that the service is ready.

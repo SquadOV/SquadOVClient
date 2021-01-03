@@ -39,6 +39,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     }
 
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_SESSION_ID_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_CHANGE_PAUSE_TOPIC);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 
