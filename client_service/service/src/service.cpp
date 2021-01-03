@@ -173,6 +173,23 @@ int main(int argc, char** argv) {
     LOG_INFO("Enable Hearthstone Logging" << std::endl);
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
+    LOG_INFO("Registering State callbacks" << std::endl);
+    service::system::getGlobalState()->addGameRunningCallback([&zeroMqServerClient](const shared::EGameSet& set){
+        const auto setVec = shared::gameSetToVector(set);
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RUNNING_GAMES_TOPIC,
+            shared::gameVectorToJsonArray(setVec).dump()
+        );
+    });
+
+    service::system::getGlobalState()->addGameRecordingCallback([&zeroMqServerClient](const shared::EGameSet& set){
+        const auto setVec = shared::gameSetToVector(set);
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RECORDING_GAMES_TOPIC,
+            shared::gameVectorToJsonArray(setVec).dump()
+        );
+    });
+
     const auto mode = vm["mode"].as<std::string>();
     if (mode == "") {
         defaultMain();

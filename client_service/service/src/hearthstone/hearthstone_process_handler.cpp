@@ -321,6 +321,7 @@ void HearthstoneProcessHandler::onProcessStarts(const process_watcher::process::
     }
 
     LOG_INFO("START HEARTHSTONE" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Hearthstone, true);
     _instance = std::make_unique<HearthstoneProcessHandlerInstance>(p);
 }
 
@@ -329,6 +330,7 @@ void HearthstoneProcessHandler::onProcessStops() {
         return;
     }
     LOG_INFO("STOP HEARTHSTONE" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Hearthstone, false);
     _instance.reset(nullptr);
 }
 

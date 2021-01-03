@@ -206,6 +206,14 @@ ipcMain.on('change-state-pause', (event, paused) => {
     zeromqServer.updateRecordingPaused(paused)
 })
 
+zeromqServer.on('change-running-games', (games) => {
+    win.webContents.send('change-running-games', JSON.parse(games))
+})
+
+zeromqServer.on('change-recording-games', (games) => {
+    win.webContents.send('change-recording-games', JSON.parse(games))
+})
+
 totalCloseCount = 0
 function startClientService() {
     if (totalCloseCount > 5) {

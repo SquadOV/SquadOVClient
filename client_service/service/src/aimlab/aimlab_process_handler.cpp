@@ -141,7 +141,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
-    
+
     const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Finish" << std::endl
         << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
@@ -220,6 +220,7 @@ void AimlabProcessHandler::onProcessStarts(const process_watcher::process::Proce
     }
 
     LOG_INFO("START AIMLAB" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Aimlab, true);
     _instance = std::make_unique<AimlabProcessHandlerInstance>(p);
 }
 
@@ -229,6 +230,7 @@ void AimlabProcessHandler::onProcessStops() {
     }
     
     LOG_INFO("STOP AIMLAB" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Aimlab, false);
     _instance.reset(nullptr);
 }
 

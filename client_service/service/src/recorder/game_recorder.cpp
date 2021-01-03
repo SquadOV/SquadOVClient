@@ -11,6 +11,7 @@
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "system/win32/hwnd_utils.h"
+#include "system/state.h"
 #include "system/settings.h"
 
 #include <chrono>
@@ -136,6 +137,7 @@ VodIdentifier GameRecorder::start() {
     }
 
     _encoder->start();
+    system::getGlobalState()->markGameRecording(_game, true);
     return *_currentId;
 }
 
@@ -158,8 +160,8 @@ void GameRecorder::stop() {
     _encoder->stop();
     _encoder.reset(nullptr);
     _currentId.reset(nullptr);
-
     _outputPiper->wait();
+    system::getGlobalState()->markGameRecording(_game, false);
 }
 
 VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart) {

@@ -375,6 +375,14 @@ ipcRenderer.on('main-update-downloaded', () => {
     globals.hasUpdate = true
 })
 
+ipcRenderer.on('change-running-games', (_, games) => {
+    store.commit('setRunningGames', games)
+})
+
+ipcRenderer.on('change-recording-games', (_, games) => {
+    store.commit('setRecordingGames', games)
+})
+
 new Vue({
     el: '#app',
     components: {

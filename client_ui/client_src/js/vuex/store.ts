@@ -2,6 +2,7 @@ import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
 import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
 import { SquadOvState, createDefaultState } from '@client/js/system/state' 
+import { Root } from 'protobufjs'
 
 interface RootState {
     currentUser: SquadOVUser | null
@@ -42,6 +43,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         resetState(state: RootState) {
             state.currentState = createDefaultState()
+        },
+        setRunningGames(state: RootState, games: string[]) {
+            state.currentState.runningGames = games
+        },
+        setRecordingGames(state: RootState, games: string[]) {
+            state.currentState.recordingGames = games
         }
     },
     actions: {

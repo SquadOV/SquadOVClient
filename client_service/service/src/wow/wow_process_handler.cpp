@@ -325,7 +325,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
-    
+
     LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG" << _combatLogId << std::endl);
     const auto isRecording = _recorder->isRecording();
     if (isRecording && !_currentMatchUuid.empty()) {
@@ -368,6 +368,7 @@ void WoWProcessHandler::onProcessStarts(const process_watcher::process::Process&
     }
 
     LOG_INFO("START WOW" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::WoW, true);
     _instance = std::make_unique<WoWProcessHandlerInstance>(p);
 }
 
@@ -384,6 +385,7 @@ void WoWProcessHandler::onProcessStops() {
         return;
     }
     LOG_INFO("STOP WOW" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::WoW, false);
     _instance->cleanup();
     _instance.reset(nullptr);
 }

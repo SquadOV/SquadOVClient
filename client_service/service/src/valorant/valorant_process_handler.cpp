@@ -302,7 +302,7 @@ void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoin
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
-    
+
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Round PLAY Start" << std::endl);
     if (!_currentMatch) {
         LOG_WARNING("\tUNEXPECTED ROUND START (match nullptr)." << std::endl);
@@ -364,6 +364,7 @@ void ValorantProcessHandler::onProcessStarts(const process_watcher::process::Pro
     }
 
     LOG_INFO("START VALORANT" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Valorant, true);
     _instance = std::make_unique<ValorantProcessHandlerInstance>(p);
 }
 
@@ -372,6 +373,7 @@ void ValorantProcessHandler::onProcessStops() {
         return;
     }
     LOG_INFO("STOP VALORANT" << std::endl);
+    service::system::getGlobalState()->markGameRunning(shared::EGame::Valorant, false);
     _instance.reset(nullptr);
 }
 
