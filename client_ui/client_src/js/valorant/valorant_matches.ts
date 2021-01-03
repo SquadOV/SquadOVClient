@@ -154,6 +154,16 @@ export function getIsCustom(provisioningFlowId : string | null) : boolean {
     return provisioningFlowId === 'CustomGame'
 }
 
+export function getIsDeathmatch(patchId : string | null, gameMode: string | null): boolean {
+    if (!patchId || !gameMode) {
+        return false
+    }
+
+    let cnt = getValorantContent(patchId)
+    let mode = cnt.gameModeToName(gameMode)
+    return mode === 'Deathmatch'
+}
+
 export interface ValorantMatchPlayerRoundMetadata {
     matchId: string
     puuid: string

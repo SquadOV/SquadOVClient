@@ -110,7 +110,24 @@ export default class ValorantVodPovPicker extends Vue {
         if (!this.match) {
             return []
         }
-        return this.getTeamPovs(this.match.getOpposingPlayerTeam(this.refPuuid))
+
+        // Special case for deathmatch where enemy POVs is just everyone
+        // besides the current player (refPuuid).
+        if (this.match.isDeathmatch) {
+            return this.getNonSelfPovs()
+        } else {
+            return this.getTeamPovs(this.match.getOpposingPlayerTeam(this.refPuuid))
+        }
+    }
+
+    getNonSelfPovs(): VodAssociation[] {
+        if (!this.availableVods) {
+            return []
+        }
+        return this.availableVods.vods.filter((ele: VodAssociation) => {
+            let puuid = this.availableVods!.userMapping[ele.userUuid]
+            return this.refPuuid !== puuid
+        })
     }
 
     getTeamPovs(team: ValorantMatchTeamWrapper) : VodAssociation[] {

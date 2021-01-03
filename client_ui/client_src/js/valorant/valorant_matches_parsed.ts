@@ -6,7 +6,8 @@ import {
     ValorantMatchKill,
     ValorantMatchLoadout,
     ValorantMatchDamage,
-    ValorantMatchPlayerRoundStat
+    ValorantMatchPlayerRoundStat,
+    getIsDeathmatch
 } from '@client/js/valorant/valorant_matches'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
 
@@ -304,6 +305,10 @@ export class ValorantMatchDetailsWrapper {
                 }
             }
         }
+    }
+
+    get isDeathmatch(): boolean {
+        return getIsDeathmatch(this._details.matchInfo.gameVersion, this._details.matchInfo.gameMode)
     }
 
     getDamageDoneByPlayer(puuid : string) : number {
