@@ -122,7 +122,7 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
 
 void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop) {
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
-
+    _logPath = combatLogPath;
     using std::placeholders::_1;
     _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks(), false, loop);
     _watcher->disableBatching();
