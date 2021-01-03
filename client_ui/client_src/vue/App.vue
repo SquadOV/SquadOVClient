@@ -152,6 +152,7 @@ footer {
     position: sticky;
     bottom: 0px;
     background-color: #121212;
+    z-index: 1;
 }
 
 #bugreport {
