@@ -137,11 +137,13 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
 
 bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
     if (!info.isWindowed) {
+        LOG_INFO("Rejecting GDI due to non-windowed mode." << std::endl);
         return false;
     }
 
     HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
     if (!wnd) {
+        LOG_INFO("Rejecting GDI due to inability to find window." << std::endl);
         return false;
     }
 

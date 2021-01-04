@@ -70,6 +70,11 @@ void GameRecorder::updateWindowInfo() {
 }
 
 void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
+    LOG_INFO("Attempting to create video recorder: " << std::endl
+        << "\tResolution: " << info.width << "x" << info.height << std::endl
+        << "\tInit: " << info.init << std::endl
+        << "\tWindowed" << info.isWindowed << std::endl);
+
 #ifdef _WIN32
     if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
         return;
@@ -83,9 +88,9 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
 }
 
-VodIdentifier GameRecorder::start() {
+void GameRecorder::start() {
     if (!!_currentId) {
-        return *_currentId;
+        return;
     }
 
     _currentId = createNewVodIdentifier();
@@ -96,6 +101,16 @@ VodIdentifier GameRecorder::start() {
     const auto settings = service::system::getCurrentSettings()->recording();
     {
         std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
+        
+        try {
+            createVideoRecorder(_windowInfo);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
+            _encoder.reset(nullptr);
+            _currentId = {};
+            _outputPiper->stop();
+            return;
+        }
 
         // Initialize streams in the encoder here. Use hard-coded options for to record
         // video at 1080p@60fps.
@@ -113,7 +128,6 @@ VodIdentifier GameRecorder::start() {
         //   1) The video captured from the game.
         //   2) The audio from the user's system.
         //   3) The audio from the user's microphone (if any).
-        createVideoRecorder(_windowInfo);
         _vrecorder->startRecording(_encoder.get(), static_cast<size_t>(settings.fps));
     }
     
@@ -138,7 +152,6 @@ VodIdentifier GameRecorder::start() {
 
     _encoder->start();
     system::getGlobalState()->markGameRecording(_game, true);
-    return *_currentId;
 }
 
 void GameRecorder::stop() {

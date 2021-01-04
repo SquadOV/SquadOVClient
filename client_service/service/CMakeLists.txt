@@ -118,3 +118,19 @@ if(WIN32)
         dxgi
     )
 endif()
+
+
+add_executable(wow_finder
+    src/wow_finder.cpp
+    src/system/win32/hwnd_utils.cpp
+)
+
+target_include_directories(wow_finder
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/client_service/process_watcher
+    ${CMAKE_SOURCE_DIR}/client_service/service/src
+)
+
+target_link_libraries(wow_finder
+    squadov_process_watcher
+)

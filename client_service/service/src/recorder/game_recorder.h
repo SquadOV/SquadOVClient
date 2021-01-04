@@ -29,7 +29,7 @@ public:
     );
     ~GameRecorder();
 
-    VodIdentifier start();
+    void start();
     void stop();
 
     VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);

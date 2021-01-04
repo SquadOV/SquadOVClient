@@ -26,6 +26,8 @@
 #include <portaudio.h>
 #include <thread>
 
+#include "system/win32/hwnd_utils.h"
+
 extern "C" {
 #include <libavutil/log.h>
 }

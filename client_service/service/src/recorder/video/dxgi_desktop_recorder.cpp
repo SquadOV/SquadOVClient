@@ -297,11 +297,13 @@ void DxgiDesktopRecorder::stopRecording() {
 
 bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
     if (info.isWindowed) {
+        LOG_INFO("Rejecting DXGI due to windowed mode." << std::endl);
         return false;
     }
 
     HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
     if (!wnd) {
+        LOG_INFO("Rejecting DXGI due to inability to find window." << std::endl);
         return false;
     }
 

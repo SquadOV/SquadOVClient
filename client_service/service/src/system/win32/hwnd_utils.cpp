@@ -19,7 +19,7 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
     EnumData* data = (EnumData*)param;
     GetWindowThreadProcessId(hwnd, &refPid);
 
-    if (refPid == data->pid) {
+    if (refPid == data->pid && IsWindowEnabled(hwnd) && IsWindowVisible(hwnd)) {
         data->out = hwnd;
         data->found = true;
         return FALSE;
