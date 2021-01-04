@@ -411,6 +411,10 @@ app.on('ready', async () => {
     }
     
     if (!loadSession()) {
+        // Needing to login overrides the hidden flag as we don't display the tray icon until much later.
+        // Maybe that needs to change instead?
+        win.show()
+
         // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
         try {
             await loginFlow(win)
