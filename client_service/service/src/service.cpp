@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
     }
 
     LOG_INFO("Initialize Kafka API" << std::endl);
-    service::api::getKafkaApi()->initialize(shared::getEnv("SQUADOV_KAFKA_BROKERS", ""));
+    service::api::getKafkaApi()->initialize();
 
     // Initialize global state and start to listen to messages coming via ZeroMQ about
     // how to update certain state.

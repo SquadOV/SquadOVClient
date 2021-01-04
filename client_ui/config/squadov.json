@@ -1,4 +1,3 @@
 {
-    "API_URL": "https://api.squadov.gg",
-    "KAFKA_BROKERS": "pkc-43n10.us-central1.gcp.confluent.cloud:9092"
+    "API_URL": "https://api.squadov.gg"
 }

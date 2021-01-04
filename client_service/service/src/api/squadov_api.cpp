@@ -38,19 +38,20 @@ SquadovApi::SquadovApi() {
     }
 }
 
-KafkaApiKeyPair SquadovApi::getKafkaKeyPair() const {
-    const std::string path = "/v1/kafka/credentials";
+KafkaInfo SquadovApi::getKafkaInfo() const {
+    const std::string path = "/v1/kafka/info";
 
     const auto result = _webClient->get(path);
 
     if (result->status != 200) {
-        THROW_ERROR("Failed to get SquadOV Kafka credentials: " << result->status);
-        return KafkaApiKeyPair{};
+        THROW_ERROR("Failed to get SquadOV Kafka info: " << result->status);
+        return KafkaInfo{};
     }
 
     const auto parsedJson = nlohmann::json::parse(result->body);
 
-    KafkaApiKeyPair ret;
+    KafkaInfo ret;
+    ret.servers = parsedJson["servers"].get<std::string>();
     ret.key = parsedJson["key"].get<std::string>();
     ret.secret = parsedJson["secret"].get<std::string>();
     return ret;

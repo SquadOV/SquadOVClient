@@ -36,7 +36,7 @@ public:
     std::string getSessionUserUuid() const;
 
     // Kafka
-    KafkaApiKeyPair getKafkaKeyPair() const;
+    KafkaInfo getKafkaInfo() const;
 
     // User
     shared::squadov::SquadOVUser getCurrentUser() const;

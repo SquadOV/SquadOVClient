@@ -11,11 +11,13 @@ const std::string WOW_COMBAT_LOG_TOPIC("wow_combat_logs");
 
 }
 
-void KafkaApi::initialize(const std::string& bootstrapServers) {
+void KafkaApi::initialize() {
+    const auto info = getGlobalApi()->getKafkaInfo();
+
     std::unique_ptr<RdKafka::Conf> conf(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 
     std::string kafkaErr;
-    if (conf->set("bootstrap.servers", bootstrapServers, kafkaErr) != RdKafka::Conf::CONF_OK) {
+    if (conf->set("bootstrap.servers", info.servers, kafkaErr) != RdKafka::Conf::CONF_OK) {
         THROW_ERROR("Failed to set bootstrap.servers [Kafka]: " << kafkaErr);
         return;
     }
@@ -35,13 +37,12 @@ void KafkaApi::initialize(const std::string& bootstrapServers) {
         return;
     }
 
-    const auto keyPair = getGlobalApi()->getKafkaKeyPair();
-    if (conf->set("sasl.username", keyPair.key, kafkaErr) != RdKafka::Conf::CONF_OK) {
+    if (conf->set("sasl.username", info.key, kafkaErr) != RdKafka::Conf::CONF_OK) {
         THROW_ERROR("Failed to set sasl.username [Kafka]: " << kafkaErr);
         return;
     }
 
-    if (conf->set("sasl.password", keyPair.secret, kafkaErr) != RdKafka::Conf::CONF_OK) {
+    if (conf->set("sasl.password", info.secret, kafkaErr) != RdKafka::Conf::CONF_OK) {
         THROW_ERROR("Failed to set sasl.password [Kafka]: " << kafkaErr);
         return;
     }

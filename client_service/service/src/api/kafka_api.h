@@ -8,14 +8,15 @@
 
 namespace service::api {
 
-struct KafkaApiKeyPair {
+struct KafkaInfo {
+    std::string servers;
     std::string key;
     std::string secret;
 };
 
 class KafkaApi {
 public:
-    void initialize(const std::string& bootstrapServers);
+    void initialize();
     ~KafkaApi();
 
     // WoW
