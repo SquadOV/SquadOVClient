@@ -23,7 +23,9 @@ let isQuitting = false
 if (app.isPackaged) {
     app.setLoginItemSettings({
         openAtLogin: true,
-        openAsHidden: true,
+        args: [
+            '--hidden'
+        ]
     })
 }
 
@@ -404,7 +406,10 @@ app.on('ready', async () => {
         await startAutoupdater()
     }
 
-    win.show()
+    if (!app.commandLine.hasSwitch('hidden')) {
+        win.show()
+    }
+    
     if (!loadSession()) {
         // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
         try {
