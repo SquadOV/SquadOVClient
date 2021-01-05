@@ -3,6 +3,10 @@ import { GraphqlApiData } from '@client/js/api'
 import { GraphqlQueryBuilder } from '@client/js/graphql/graphql'
 import { AllStats, cleanAllStatsFromJson } from '@client/js/graphql/schema'
 
+function buildGraphqlAlias(userUuid: string, instanceUuid: string): string {
+    return `user${userUuid.replace(/-/g, '')}_stat${instanceUuid.replace(/-/g, '')}`
+}
+
 export class StatInstanceContainer {
     private _stats: Map<string, StatInstance[]>
 
@@ -13,8 +17,8 @@ export class StatInstanceContainer {
     buildGraphqlQuery() : string {
         let builder = new GraphqlQueryBuilder()
         for (let [uuid, inst] of this._stats) {
-            let sb = builder.stats(`user${uuid.replace(/-/g, '')}`, `"${uuid}"`)
             for (let st of inst) {
+                let sb = builder.stats(buildGraphqlAlias(uuid, st.uuid), `"${uuid}"`)
                 st.obj.addToGraphqlBuilder(sb, st.options)
             }
         }
@@ -29,10 +33,9 @@ export class StatInstanceContainer {
         }
 
         for (let [uuid, inst] of this._stats) {
-            let userStats: AllStats = response[`user${uuid.replace(/-/g, '')}`]
-            cleanAllStatsFromJson(userStats)
-
             for (let st of inst) {
+                let userStats: AllStats = response[buildGraphqlAlias(uuid, st.uuid)]
+                cleanAllStatsFromJson(userStats)
                 st.obj.parseResponseIntoInstance(userStats, st)
             }
         }

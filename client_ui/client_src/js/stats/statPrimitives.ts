@@ -40,6 +40,7 @@ export interface StatInstance {
     name: string
     obj: StatObject
     options: StatOptionInstance
+    uuid: string
     data?: StatXYSeriesData
 }
 

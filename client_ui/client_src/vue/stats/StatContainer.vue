@@ -103,10 +103,9 @@ import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import StatChooser from '@client/vue/stats/StatChooser.vue'
 import StatOptionChooser from '@client/vue/stats/StatOptionChooser.vue'
 
-interface UniqueStatId {
+interface BoxedStatInstance {
     stat: string
-    id : number
-    alias: string
+    instance: StatInstance | null
 }
 
 @Component({
@@ -132,8 +131,8 @@ export default class StatContainer extends Vue {
     // This is the final set of stats to visualize. This is 
     // separate from the input stats prop array as we may add
     // user-specified stats on top of that.
-    finalStats: string[] = []
-    instances: StatInstance[] = []
+    statInstances: BoxedStatInstance[] = []
+
     seriesData:  (StatXYSeriesData | undefined)[] = []
 
     get allAvailableStats() : string[] {
@@ -142,46 +141,45 @@ export default class StatContainer extends Vue {
 
     @Watch('stats')
     refreshStatSet() {
-        this.finalStats = Array.from(new Set([...this.stats]))
+        this.statInstances = this.stats.map((ele: string) => ({
+            stat: ele,
+            instance: null
+        }))
     }
 
-    get statSet() : Set<string> {
-        return new Set([...this.finalStats])
-    }
 
     addStats() {
-        for (let s of this.statsToAdd) {
-            if (!this.statSet.has(s)) {
-                this.finalStats.push(s)
-            }
-        }
+        this.statInstances.push(...this.statsToAdd.map((ele: string) => ({
+            stat: ele,
+            instance: null
+        })))
         this.statsToAdd = []
         this.showHideAddStats = false
     }
 
     removeStat(stat: StatInstance) {
-        this.instances = this.instances.filter((ele: StatInstance) => ele.id != stat.id)
+        this.statInstances = this.statInstances.filter((ele: BoxedStatInstance) => ele.instance?.uuid !== stat.uuid)
     }
 
-    @Watch('finalStats')
+    @Watch('statInstances')
     refreshStatInstances() {
-        let existingInstances = this.instances.filter((ele : StatInstance) => this.statSet.has(ele.id))
-        let newInstances = new Map<string, StatInstance>(existingInstances.map((ele : StatInstance) => [ele.id, ele]))
-
         // We only need to create instances for the stats that don't already exist.
         // This way we can retain options between pulls.
-        let newStats : StatInstance[] = []
-        for (let stat of this.finalStats) {
-            if (newInstances.has(stat)) {
-                continue
+        this.statInstances.forEach((ele: BoxedStatInstance, idx: number) => {
+            if (!!ele.instance) {
+                return
             }
-            
-            let inst = statLibrary.createInstance(stat)
-            newStats.push(inst)
-            newInstances.set(inst.id, inst)
-        }
+        
+            let inst = statLibrary.createInstance(ele.stat)
+            inst.name = `${inst.name} ${idx}`
+            Vue.set(ele, 'instance', inst)
+        })
+    }
 
-        this.instances = this.finalStats.map((ele : string) => newInstances.get(ele)!)
+    get instances(): StatInstance[] {
+        return this.statInstances.filter((ele: BoxedStatInstance) => !!ele.instance).map((ele: BoxedStatInstance) => {
+            return ele.instance!
+        })
     }
 
     @Watch('instances', {deep:true})

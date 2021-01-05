@@ -177,10 +177,11 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
         while (_recording) {
             IDXGIResource* desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
+            bool reuseOldFrame = false;
 
             const auto startFrameTm = TickClock::now();
 
-            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons. It's possible ReleaseFrame
+            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
             /*
                 SOURCE: https://docs.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe
                 When the client does not own the frame, the operating system copies all desktop updates to the surface. 
@@ -198,70 +199,75 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
                 // call to ReleaseFrame.
             }
 
-            HRESULT hr = _dupl->AcquireNextFrame(500, &frameInfo, &desktopResource);
+            HRESULT hr = _dupl->AcquireNextFrame(10, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
-                LOG_INFO("DXGI Wait timeout." << std::endl);
-                continue;
-            }
+                reuseOldFrame = true;
+            } else {
+                if (hr == DXGI_ERROR_ACCESS_LOST) {
+                    LOG_INFO("DXGI Access Lost." << std::endl);
+                    reacquireDuplicationInterface();
+                    continue;
+                }
 
-            if (hr == DXGI_ERROR_ACCESS_LOST) {
-                LOG_INFO("DXGI Access Lost." << std::endl);
-                reacquireDuplicationInterface();
-                continue;
-            }
-
-            if (hr != S_OK) {
-                LOG_INFO("DXGI NOT OK:" << hr << std::endl);
-                continue;
+                if (hr != S_OK) {
+                    LOG_INFO("DXGI NOT OK:" << hr << std::endl);
+                    continue;
+                }
             }
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
+                if (desktopResource) {
+                    desktopResource->Release();
+                }
                 LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
                 std::this_thread::sleep_for(nsPerFrame);
                 continue;
             }
 
+            reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
+
             const auto postAcquireTm = TickClock::now();
 
-            // I'm not sure why it returns a ID3D11Texture2D but that's what
-            // Microsoft's DXGI desktop duplication example does.
-            // See: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/DXGIDesktopDuplication/cpp/DuplicationManager.cpp
-            ID3D11Texture2D* tex = nullptr;
-            hr = desktopResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&tex);
-            desktopResource->Release();
-            desktopResource = nullptr;
-            if (hr != S_OK) {
-                LOG_INFO("DXGI FAILED TO QUERY INTERFACE: " << hr << std::endl);
-                continue;
+            if (!reuseOldFrame) {
+                // I'm not sure why it returns a ID3D11Texture2D but that's what
+                // Microsoft's DXGI desktop duplication example does.
+                // See: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/DXGIDesktopDuplication/cpp/DuplicationManager.cpp
+                ID3D11Texture2D* tex = nullptr;
+                hr = desktopResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&tex);
+                desktopResource->Release();
+                desktopResource = nullptr;
+                if (hr != S_OK) {
+                    LOG_INFO("DXGI FAILED TO QUERY INTERFACE: " << hr << std::endl);
+                    continue;
+                }
+
+                // TODO: More efficient copy using information about which parts of the image
+                // are dirty/moved?
+                _context->CopyResource(_deviceTexture, tex);
+                tex->Release();
+
+                // Read from the texture onto the CPU and then copy it into our image buffer
+                // to send to the encoder.
+                D3D11_MAPPED_SUBRESOURCE mappedData;
+                hr = _context->Map(_deviceTexture, 0, D3D11_MAP_READ, 0, &mappedData);
+                if (hr != S_OK) {
+                    LOG_INFO("DXGI FAILED TO MAP TEXTURE: " << hr << std::endl);
+                    continue;
+                }
+
+                const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
+                uint8_t* dst = frame.buffer();
+
+                for (size_t r = 0; r < _height; ++r) {
+                    assert(frame.numBytesPerRow() <= mappedData.RowPitch);
+                    std::memcpy(dst, src, frame.numBytesPerRow());
+                    src += mappedData.RowPitch;
+                    dst += frame.numBytesPerRow();
+                }
+                _context->Unmap(_deviceTexture, 0);
             }
-
-            // TODO: More efficient copy using information about which parts of the image
-            // are dirty/moved?
-            _context->CopyResource(_deviceTexture, tex);
-            tex->Release();
-
-            // Read from the texture onto the CPU and then copy it into our image buffer
-            // to send to the encoder.
-            D3D11_MAPPED_SUBRESOURCE mappedData;
-            hr = _context->Map(_deviceTexture, 0, D3D11_MAP_READ, 0, &mappedData);
-            if (hr != S_OK) {
-                LOG_INFO("DXGI FAILED TO MAP TEXTURE: " << hr << std::endl);
-                continue;
-            }
-
-            const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
-            uint8_t* dst = frame.buffer();
-
-            for (size_t r = 0; r < _height; ++r) {
-                assert(frame.numBytesPerRow() <= mappedData.RowPitch);
-                std::memcpy(dst, src, frame.numBytesPerRow());
-                src += mappedData.RowPitch;
-                dst += frame.numBytesPerRow();
-            }
-
-            _context->Unmap(_deviceTexture, 0);
 
             const auto sendToEncoderTm = TickClock::now();
             encoder->addVideoFrame(frame);
@@ -271,9 +277,9 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 #if LOG_FRAME_TIME
             const auto timeToAcquireNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postAcquireTm - startFrameTm).count();
             const auto copyNs = std::chrono::duration_cast<std::chrono::nanoseconds>(sendToEncoderTm - postAcquireTm).count();
-            const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - sendToEncoderTm).count();
+            const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postMapTm - sendToEncoderTm).count();
 
-            LOG_INFO("Frame Time - DXGI:" << std::endl
+            LOG_INFO("Frame Time - DXGI:" << (timeToAcquireNs + copyNs + encodeNs) * 1.0e-6 << " [" << frameInfo.AccumulatedFrames << " frames]" << std::endl
                 << "\tAcquire:" << timeToAcquireNs * 1.0e-6 << std::endl
                 << "\tCopy:" << copyNs * 1.0e-6  << std::endl
                 << "\tEncode:" << encodeNs * 1.0e-6  << std::endl);

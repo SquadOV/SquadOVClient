@@ -52,20 +52,22 @@ export default class LineGraph extends Vue {
         if (!!this.graph) {
             this.graph.clear()
         }
-        this.refreshGraph()
+        this.refreshGraph(this.validSeriesData, this.validSeriesData)
     }
 
     @Watch('validSeriesData')
-    refreshGraph() {
+    refreshGraph(newSeriesData: StatXYSeriesData[], oldSeriesData: StatXYSeriesData[]) {
         // This needs to be up here so that the height computations work properly.
         if (!!this.graph) {
             this.graph.resize()
         }
         this.resizeTimeout = null
 
-        if (this.validSeriesData.length == 0) { 
+        if (this.validSeriesData.length == 0 || newSeriesData.length != oldSeriesData.length) { 
             this.graph.clear()   
-            return
+            if (this.validSeriesData.length == 0) {
+                return
+            }
         }
 
         // Create a new x-axis for each new type of X-axis as determined by the series's type.
@@ -151,8 +153,8 @@ export default class LineGraph extends Vue {
         const parentHeight = !!this.$refs.graphDiv ? this.$refs.graphDiv.offsetHeight : 650
         const gridHeightMarginPx = 40
         const gridTopReservedPx = 100
-        const gridBottomReservedPx = 50
-        const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - Math.max(this.validSeriesData.length - 1, 0) * gridHeightMarginPx 
+        const gridBottomReservedPx = 20
+        const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - (this.separateGraphs ? Math.max(this.validSeriesData.length - 1, 0) * gridHeightMarginPx : 0)
         const gridHeight = this.separateGraphs ? gridUsableHeightPx / this.validSeriesData.length : gridUsableHeightPx
 
         for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
@@ -286,7 +288,7 @@ export default class LineGraph extends Vue {
         }
 
         this.resizeTimeout = window.setTimeout(() => {
-            this.refreshGraph()
+            this.refreshGraph(this.validSeriesData, this.validSeriesData)
         }, 100)
     }
 
@@ -316,7 +318,7 @@ export default class LineGraph extends Vue {
         })
 
         Vue.nextTick(() => {
-            this.refreshGraph()
+            this.refreshGraph(this.validSeriesData, this.validSeriesData)
         })
         window.addEventListener('resize', this.graphResize)
     }
