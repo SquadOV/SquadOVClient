@@ -157,10 +157,6 @@ export default class LineGraph extends Vue {
         const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - (this.separateGraphs ? Math.max(this.validSeriesData.length - 1, 0) * gridHeightMarginPx : 0)
         const gridHeight = this.separateGraphs ? gridUsableHeightPx / this.validSeriesData.length : gridUsableHeightPx
 
-        console.log('parent: ', parentHeight)
-        console.log('usable: ', gridUsableHeightPx)
-        console.log('height: ', gridHeight)
-
         for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
             grids.push({
                 show: false,

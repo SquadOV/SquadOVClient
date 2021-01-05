@@ -195,7 +195,10 @@ export default class WowTimeline extends Vue {
     ]
 
     handleClick(evt: {gridIndex: number, pts: number[]}) {
-        let dt = new Date(this.encounterStartTime.getTime() + evt.pts[0] * 1000.0)
+        // Relative to startTime because we're the way the graph is setup, the time along
+        // the X axis is still going to be relative to the absolute start time of the entire
+        // match and what we're receiving in pts is just the (x, y) coordinates effectively.
+        let dt = new Date(this.startTime.getTime() + evt.pts[0] * 1000.0)
         this.$emit('go-to-time', dt)
     }
 
