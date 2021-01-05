@@ -17,7 +17,7 @@ extern "C" {
 
 namespace service::recorder::audio {
 
-constexpr int numChannels = 2;
+constexpr int maxNumChannels = 2;
 
 class PortaudioAudioRecorderImpl {
 public:
@@ -96,13 +96,13 @@ PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir
     _streamParams.device = defaultDevice;
     _streamParams.suggestedLatency = di->defaultLowInputLatency;
     _streamParams.hostApiSpecificStreamInfo = nullptr;
-    _streamParams.channelCount = numChannels;
+    _streamParams.channelCount = std::min(di->maxInputChannels, maxNumChannels);
     _streamParams.sampleFormat = paFloat32;
     _sampleRate = static_cast<size_t>(di->defaultSampleRate);
 
     // Setup packet properties so that we can communicate with the encoder as to what format the packets will be coming in.
     _props.isPlanar = false;
-    _props.numChannels = numChannels;
+    _props.numChannels = _streamParams.channelCount;
     _props.numSamples = 0;
     _props.samplingRate = _sampleRate;
 }

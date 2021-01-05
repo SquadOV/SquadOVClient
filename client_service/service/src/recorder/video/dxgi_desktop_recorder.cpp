@@ -218,7 +218,9 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
-                desktopResource->Release();
+                if (desktopResource) {
+                    desktopResource->Release();
+                }
                 LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
                 std::this_thread::sleep_for(nsPerFrame);
                 continue;
