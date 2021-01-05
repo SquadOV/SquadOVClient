@@ -181,7 +181,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 
             const auto startFrameTm = TickClock::now();
 
-            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons. It's possible ReleaseFrame
+            // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
             /*
                 SOURCE: https://docs.microsoft.com/en-us/windows/win32/api/dxgi1_2/nf-dxgi1_2-idxgioutputduplication-releaseframe
                 When the client does not own the frame, the operating system copies all desktop updates to the surface. 
@@ -199,29 +199,32 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
                 // call to ReleaseFrame.
             }
 
-            HRESULT hr = _dupl->AcquireNextFrame(500, &frameInfo, &desktopResource);
+            HRESULT hr = _dupl->AcquireNextFrame(10, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 reuseOldFrame = true;
-            }
+            } else {
+                if (hr == DXGI_ERROR_ACCESS_LOST) {
+                    LOG_INFO("DXGI Access Lost." << std::endl);
+                    reacquireDuplicationInterface();
+                    continue;
+                }
 
-            if (hr == DXGI_ERROR_ACCESS_LOST) {
-                LOG_INFO("DXGI Access Lost." << std::endl);
-                reacquireDuplicationInterface();
-                continue;
-            }
-
-            if (hr != S_OK) {
-                LOG_INFO("DXGI NOT OK:" << hr << std::endl);
-                continue;
+                if (hr != S_OK) {
+                    LOG_INFO("DXGI NOT OK:" << hr << std::endl);
+                    continue;
+                }
             }
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window)) {
+                desktopResource->Release();
                 LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
                 std::this_thread::sleep_for(nsPerFrame);
                 continue;
             }
+
+            reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
 
             const auto postAcquireTm = TickClock::now();
 
@@ -274,7 +277,7 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             const auto copyNs = std::chrono::duration_cast<std::chrono::nanoseconds>(sendToEncoderTm - postAcquireTm).count();
             const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postMapTm - sendToEncoderTm).count();
 
-            LOG_INFO("Frame Time - DXGI:" << std::endl
+            LOG_INFO("Frame Time - DXGI:" << (timeToAcquireNs + copyNs + encodeNs) * 1.0e-6 << " [" << frameInfo.AccumulatedFrames << " frames]" << std::endl
                 << "\tAcquire:" << timeToAcquireNs * 1.0e-6 << std::endl
                 << "\tCopy:" << copyNs * 1.0e-6  << std::endl
                 << "\tEncode:" << encodeNs * 1.0e-6  << std::endl);

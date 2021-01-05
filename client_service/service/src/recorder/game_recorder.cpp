@@ -98,6 +98,8 @@ void GameRecorder::start() {
 
     _encoder.reset(new encoder::FfmpegAvEncoder(_outputPiper->filePath()));
 
+    // Just in case the user changed it in the UI already, just sync up via the file.
+    service::system::getCurrentSettings()->reloadSettingsFromFile();
     const auto settings = service::system::getCurrentSettings()->recording();
     {
         std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
@@ -118,9 +120,11 @@ void GameRecorder::start() {
         // Note that we don't want to exceed 1080p for now (but we want to maintain the same aspect ratio as the OG resolution)
         const auto aspectRatio = static_cast<double>(_windowInfo.width) / _windowInfo.height;
         const auto desiredHeight = std::min(_windowInfo.height, static_cast<size_t>(settings.resY));
+        const auto desiredWidth = static_cast<size_t>(desiredHeight * aspectRatio);
+        LOG_INFO("Start Video Stream: " << desiredWidth << "x" << desiredHeight << " @" << settings.fps << "fps" << std::endl);
         _encoder->initializeVideoStream(
             settings.fps,
-            static_cast<size_t>(desiredHeight * aspectRatio),
+            desiredWidth,
             desiredHeight
         );
 
