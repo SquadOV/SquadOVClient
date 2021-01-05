@@ -1,5 +1,6 @@
 import { createAimlabStatFolder } from '@client/js/stats/aimlabStatLibrary'
 import { StatFolder, StatObject, StatInstance } from '@client/js/stats/statPrimitives'
+import { v4 as uuidv4 } from 'uuid'
 
 class StatLibrary {
     _root: StatFolder
@@ -113,6 +114,7 @@ class StatLibrary {
             id: id,
             name: this.getStatName(path),
             obj: obj,
+            uuid: uuidv4(),
             options: {
                 options: obj.availableOptions,
                 data: optionData,
