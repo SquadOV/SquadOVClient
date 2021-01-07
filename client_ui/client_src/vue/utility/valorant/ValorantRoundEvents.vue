@@ -47,7 +47,6 @@
                                 <valorant-agent-icon
                                     v-if="!!eve.kill.killer"
                                     :agent="eve.kill.killer._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -55,7 +54,6 @@
 
                                 <valorant-weapon-ability-icon
                                     :agent="eve.kill.killer._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :equip-type="eve.kill._k.finishingDamage.damageType"
                                     :equip-id="eve.kill._k.finishingDamage.damageItem"
                                     :max-height="40"
@@ -65,7 +63,6 @@
 
                                 <valorant-agent-icon
                                     :agent="eve.kill.victim._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -75,7 +72,6 @@
                             <template v-if="!!eve.plant">
                                 <valorant-agent-icon
                                     :agent="eve.plant._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -93,7 +89,6 @@
                             <template v-if="!!eve.defuse">
                                 <valorant-agent-icon
                                     :agent="eve.defuse._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -226,8 +221,8 @@ export default class ValorantRoundEvents extends Vue {
             } else {
                 color = getRedTeamColor()
             }
-            isSelf = (eventPlayer._p.subject == this.currentPlayer._p.subject) ||
-                (altPlayer?._p.subject == this.currentPlayer._p.subject)
+            isSelf = (eventPlayer._p.puuid == this.currentPlayer._p.puuid) ||
+                (altPlayer?._p.puuid == this.currentPlayer._p.puuid)
         } else {
             if (eventPlayer._p.teamId == 'Blue') {
                 color = getBlueTeamColor()
@@ -270,7 +265,7 @@ export default class ValorantRoundEvents extends Vue {
 
         for (let k of this.round.kills) {
             events.push({
-                roundTimeMs: k._k.roundTime,
+                roundTimeMs: k._k.timeSinceRoundStartMillis,
                 kill: k,
             })
         }

@@ -17,16 +17,6 @@ const std::string WEB_SESSION_HEADER_KEY = "x-squadov-session-id";
 
 SquadovApi::SquadovApi() {
     {
-        // TODO: Need some better way of communicating this OR just removing it altogether and not
-        // having this reliance.
-        std::ostringstream host;
-        host << "https://127.0.0.1:" << shared::getEnv("SQUADOV_API_PORT", "50000");
-        _localClient = std::make_unique<http::HttpClient>(host.str());
-        _localClient->setBearerAuthToken(shared::getEnv("SQUADOV_API_KEY", "AAAAA"));
-        _localClient->enableSelfSigned();
-    }
-
-    {
         std::ostringstream host;
         host << shared::getEnv("API_SQUADOV_URL", "http://127.0.0.1:8080");
         _webClient = std::make_unique<http::HttpClient>(host.str());
@@ -98,105 +88,12 @@ shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     return ret;
 }
 
-shared::riot::RiotRsoToken SquadovApi::refreshValorantRsoToken(const std::string& puuid) const {
-    shared::riot::RiotRsoToken token;
-    token.puuid = puuid;
-
-    std::ostringstream path;
-    path << "/valorant/accounts/" << puuid << "/rso";
-
-    const auto result = _localClient->get(path.str().c_str());
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to obtain RSO token: " << result->status);
-        return token;
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    token.rsoToken = parsedJson["token"].get<std::string>();
-    token.entitlementsToken = parsedJson["entitlements"].get<std::string>();
-    token.expires = shared::strToTime(parsedJson["expires"].get<std::string>(), "%FT%T");
-    return token;
-}
-
-shared::riot::RiotUser SquadovApi::getRiotUserFromPuuid(const std::string& puuid) const {
-    shared::riot::RiotUser user;
-    user.puuid = puuid;
-
-    std::ostringstream path;
-    path << "/valorant/accounts/" << puuid;
-
-    const auto result = _localClient->get(path.str().c_str());
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to obtain Riot user: " << result->status);
-        return user;
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    user.username = parsedJson["username"].get<std::string>();
-    user.tag = parsedJson["tag"].get<std::string>();
-    return user;
-}
-
-shared::riot::RiotUser SquadovApi::updateRiotUsername(const std::string& puuid, const std::string& username, const std::string& tagline) const {
-    shared::riot::RiotUser user;
-    user.puuid = puuid;
-    user.username = username;
-    user.tag = tagline;
-
-    std::ostringstream path;
-    path << "/valorant/accounts/" << puuid << "/username";
-
-    nlohmann::json body;
-    body["username"] = username;
-    body["tag"] = tagline;
-    const auto result = _localClient->post(path.str(), body);
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to update Riot username (local): " << result->status);
-        return user;
-    }
-    
-    return user;
-}
-
-shared::riot::RiotUser SquadovApi::updateRiotUsernameApi(const std::string& puuid, const std::string& username, const std::string& tagline) const {
-    shared::riot::RiotUser user;
-    user.puuid = puuid;
-    user.username = username;
-    user.tag = tagline;
-
-    std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot";
-
-    nlohmann::json body;
-    body["puuid"] = puuid;
-    body["username"] = username;
-    body["tag"] = tagline;
-    const auto result = _webClient->post(path.str(), body);
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to update Riot username (API): " << result->status);
-        return user;
-    }
-    
-    return user;
-}
-
-std::string SquadovApi::uploadValorantMatch(const std::string& matchId,  const nlohmann::json& rawData, const nlohmann::json& playerData) const {
+std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const nlohmann::json& playerData) const {
     const std::string path = "/v1/valorant";
     nlohmann::json body = {
         { "matchId", matchId },
+        { "playerData", playerData } 
     };
-
-    if (!rawData.is_null()) {
-        body["rawData"] = rawData.dump();
-    }
-
-    if (!playerData.is_null()) {
-        body["playerData"] = playerData;
-    }
 
     const auto result = _webClient->post(path, body);
 
@@ -206,29 +103,24 @@ std::string SquadovApi::uploadValorantMatch(const std::string& matchId,  const n
     }
 
     const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson["matchUuid"].get<std::string>();
+    return parsedJson.get<std::string>();
 }
 
-std::vector<std::string> SquadovApi::obtainMissingValorantMatches(const std::vector<std::string>& ids) const {
-    const std::string path = "/v1/valorant/backfill";
-    nlohmann::json body = nlohmann::json::array();
-    for (const auto& id : ids ) {
-        body.push_back(id);
-    }
+void SquadovApi::requestValorantMatchBackfill(const std::string& gameName, const std::string& tagLine) const {
+    std::ostringstream path;
+    path << "/v1/valorant/user/" << getSessionUserId() << "/backfill";
 
-    const auto result = _webClient->post(path, body);
+    const nlohmann::json body = {
+        { "gameName", gameName },
+        { "tagLine", tagLine }
+    };
+
+    const auto result = _webClient->post(path.str(), body);
 
     if (result->status != 200) {
-        THROW_ERROR("Failed to obtain matches to backfill: " << result->status);
-        return std::vector<std::string>();
+        THROW_ERROR("Failed to start match backfill: " << result->status);
+        return;
     }
-
-    std::vector<std::string> ret;
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    for (const auto& v : parsedJson) {
-        ret.push_back(v);
-    }    
-    return ret;
 }
 
 std::string SquadovApi::uploadAimlabTask(const shared::aimlab::TaskData& data) const {

@@ -21,7 +21,6 @@
                         <div class="d-flex justify-space-around align-center">
                             <valorant-agent-icon
                                 :agent="item.player._p.characterId"
-                                :patch="match._details.matchInfo.gameVersion"
                                 :width-height="40"
                                 circular
                             >
@@ -82,7 +81,7 @@ export default class ValorantFullMatchScoreboard extends Vue {
     currentPlayer! : ValorantMatchPlayerWrapper | null
 
     agentName(id : string) : string {
-        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
+        let cnt = getValorantContent(null)
         return cnt.agentIdToName(id)
     }
 
@@ -93,7 +92,7 @@ export default class ValorantFullMatchScoreboard extends Vue {
     teamRowStyle(p : ValorantMatchPlayerWrapper) : any {
         let style : any = {}
 
-        if (p._p.subject == this.currentPlayer?._p.subject) {
+        if (p._p.puuid == this.currentPlayer?._p.puuid) {
             style['border-left'] = '5px solid #FFD700'
         }
 
@@ -128,8 +127,8 @@ export default class ValorantFullMatchScoreboard extends Vue {
                 value: 'player',
                 align: align,
                 sort: (a : any, b : any) : number => {
-                    let aName = this.agentName(a._p.agentId) 
-                    let bName = this.agentName(b._p.agentId)
+                    let aName = this.agentName(a._p.characterId) 
+                    let bName = this.agentName(b._p.characterId)
                     if (aName < bName) {
                         return -1
                     } else if (aName > bName) {
@@ -174,7 +173,7 @@ export default class ValorantFullMatchScoreboard extends Vue {
                     assists: ele._p.stats.assists,
                 },
                 score: (ele._p.stats.roundsPlayed > 0) ? ele._p.stats.score / ele._p.stats.roundsPlayed : 0,
-                damage: (ele._p.stats.roundsPlayed > 0) ? this.match.getDamageDoneByPlayer(ele._p.subject) / ele._p.stats.roundsPlayed : 0,
+                damage: (ele._p.stats.roundsPlayed > 0) ? this.match.getDamageDoneByPlayer(ele._p.puuid) / ele._p.stats.roundsPlayed : 0,
             }
         })
     }

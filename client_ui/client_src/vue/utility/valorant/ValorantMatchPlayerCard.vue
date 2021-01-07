@@ -8,7 +8,6 @@
 
             <valorant-agent-icon
                 :agent="currentPlayer._p.characterId"
-                :patch="match._details.matchInfo.gameVersion"
                 :width-height="50"
                 circular
             >
@@ -124,7 +123,6 @@
                 <valorant-weapon-ability-kill-stats
                     :kills="currentPlayer.kills"
                     :agent="currentPlayer._p.characterId"
-                    :patch="match._details.matchInfo.gameVersion"
                 >
                 </valorant-weapon-ability-kill-stats>
             </v-tab-item>
@@ -191,7 +189,7 @@ export default class ValorantMatchPlayerCard extends Vue {
     forceDisableGoToEvent! : boolean
 
     agentName(id : string) : string {
-        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
+        let cnt = getValorantContent(null)
         return cnt.agentIdToName(id)
     }
 }

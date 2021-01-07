@@ -11,7 +11,6 @@
                 <span>{{ match.getPlayerAgentName(against) }}</span>
                 <valorant-agent-icon
                     :agent="match.getPlayerAgentId(against)"
-                    :patch="match._details.matchInfo.gameVersion"
                     :width-height="40"
                 >
                 </valorant-agent-icon>    
@@ -20,18 +19,18 @@
             <v-expansion-panel-content>
                 <v-list>
                     <v-list-item
-                         :class="`${ (kill.victim._p.subject == against) ? 'kill-highlight' : 'death-highlight'}`"
+                        :class="`${ (kill.victim._p.puuid == against) ? 'kill-highlight' : 'death-highlight'}`"
                         v-for="(kill, index) in chronologicalKillsDeathsAgainst(against)"
                         :key="index"
                         two-line
                     >
                         <v-list-item-content class="round-id flex-grow-0">
                             <v-list-item-title>
-                                Round {{ kill._k.round + 1 }}
+                                Round {{ kill.roundNum + 1 }}
                             </v-list-item-title>
 
                             <v-list-item-subtitle>
-                                {{ formatRoundTime(kill._k.roundTime) }}
+                                {{ formatRoundTime(kill._k.timeSinceRoundStartMillis) }}
                             </v-list-item-subtitle>
                         </v-list-item-content>
 
@@ -40,15 +39,13 @@
                                 <valorant-agent-icon
                                     v-if="!!kill.killer"
                                     :agent="kill.killer._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
                                 </valorant-agent-icon>
 
                                 <valorant-weapon-ability-icon
-                                    :agent="kill.killer._p.agentId"
-                                    :patch="match._details.patchId"
+                                    :agent="kill.killer._p.characterId"
                                     :equip-type="kill._k.finishingDamage.damageType"
                                     :equip-id="kill._k.finishingDamage.damageItem"
                                     :max-height="40"
@@ -58,7 +55,6 @@
 
                                 <valorant-agent-icon
                                     :agent="kill.victim._p.characterId"
-                                    :patch="match._details.matchInfo.gameVersion"
                                     :width-height="40"
                                     circular
                                 >
@@ -128,30 +124,30 @@ export default class ValorantHeadToHeadDisplay extends Vue {
 
     canGoToKill(kill : ValorantMatchKillWrapper) : boolean {
         return !this.forceDisableGoToEvent &&
-            !!this.metadata?.rounds[kill._k.round]?.roundTime
+            !!this.metadata?.rounds[kill.roundNum]?.roundTime
     }
 
     goToKill(kill : ValorantMatchKillWrapper) {
-        let roundStart = this.metadata?.rounds[kill._k.round]?.roundTime!
-        this.$emit('go-to-event', new Date(roundStart.getTime() + kill._k.roundTime - offsetMs))
+        let roundStart = this.metadata?.rounds[kill.roundNum]?.roundTime!
+        this.$emit('go-to-event', new Date(roundStart.getTime() + kill._k.timeSinceRoundStartMillis - offsetMs))
     }
 
     killsAgainst(puuid : string) : ValorantMatchKillWrapper[] {
         return this.kills.filter((ele : ValorantMatchKillWrapper) => {
-            return ele.victim._p.subject == puuid
+            return ele.victim._p.puuid == puuid
         })
     }
 
     deathsAgainst(puuid : string) : ValorantMatchKillWrapper[] {
         return this.deaths.filter((ele : ValorantMatchKillWrapper) => {
-            return ele.killer?._p.subject == puuid
+            return ele.killer?._p.puuid == puuid
         })
     }
 
     chronologicalKillsDeathsAgainst(puuid : string) : ValorantMatchKillWrapper[] {
         let all = [...this.killsAgainst(puuid), ...this.deathsAgainst(puuid)]
         return all.sort((a : ValorantMatchKillWrapper, b: ValorantMatchKillWrapper) => {
-            return (a._k.round - b._k.round) || (a._k.roundTime - b._k.roundTime)
+            return (a._k.timeSinceGameStartMillis - b._k.timeSinceGameStartMillis)
         })
     }
 
@@ -171,7 +167,7 @@ export default class ValorantHeadToHeadDisplay extends Vue {
             if (k.isSelfTeamKill) {
                 continue
             }
-            against.add(k.victim._p.subject)
+            against.add(k.victim._p.puuid)
         }
 
         for (let d of this.deaths) {
@@ -180,7 +176,7 @@ export default class ValorantHeadToHeadDisplay extends Vue {
             }
 
             if (!!d.killer) {
-                against.add(d.killer._p.subject)
+                against.add(d.killer._p.puuid)
             }
         }
 

@@ -8,7 +8,6 @@
             <div class="d-flex justify-space-around align-center">
                 <valorant-weapon-ability-icon
                     :agent="agent"
-                    :patch="patch"
                     :max-height="50"
                     :max-width="120"
                     :equip-type="item.equipment.type"
@@ -51,14 +50,11 @@ export default class ValorantWeaponAbilityKillStats extends Vue {
     @Prop({required: true})
     agent! : string
 
-    @Prop({required: true})
-    patch! : string
-
     @Prop({type:Array, required: true})
     kills! : ValorantMatchKillWrapper[]
 
     getEquipmentName(typ : string, id : string) : string {
-        let cnt = getValorantContent(this.patch)
+        let cnt = getValorantContent(null)
         if (typ == 'Weapon') {
             return cnt.weaponIdToName(id)
         } else if (typ == 'Ability') {

@@ -28,7 +28,6 @@ module.exports = (env, argv) => {
         entry: {
             app: [`${clientSrcDir}/js/app.ts`, `${clientSrcDir}/sass/app.scss`],
             login: [`${clientSrcDir}/js/loginApp.ts`, `${clientSrcDir}/sass/app.scss`],
-            password: [`${clientSrcDir}/js/passwordApp.ts`, `${clientSrcDir}/sass/app.scss`],
             update: [`${clientSrcDir}/js/updateApp.ts`, `${clientSrcDir}/sass/app.scss`],
         },
         output: {

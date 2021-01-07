@@ -5,7 +5,6 @@ const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
-const { createMigrationFlow } = require('./password.js')
 const { getAppDataFolder } = require('./paths.js')
 
 const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
@@ -83,26 +82,11 @@ ipcMain.on('request-app-folder', (event) => {
 const { ZeroMQServerClient } = require('./zeromq')
 let zeromqServer = new ZeroMQServerClient()
 
-// Start a local API server that'll be used manage our connections to the
-// database that holds all the information we want to retrieve.
-const { ApiServer } = require('./api_src/api');
-
-let apiServer = new ApiServer()
 async function quit() {
     isQuitting = true
     zeromqServer.close()
-    apiServer.close()
     app.quit()
 }
-
-app.on('certificate-error', (event, contents, url, error, certificate, callback) => {
-    if (url.startsWith(`https://127.0.0.1:${process.env.SQUADOV_API_PORT}`)) {
-        event.preventDefault()
-        callback(true)
-    } else {
-        callback(false)
-    }
-})
 
 function setAppDataFolderFromEnv() {
     process.env.SQUADOV_USER_APP_FOLDER = path.join(getAppDataFolder(), `${process.env.SQUADOV_USER_ID}`)
@@ -437,23 +421,12 @@ app.on('ready', async () => {
         // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
         // start the UI and the client service (2 things that require querying the API) until we have a valid session.
         // This is particularly relevant when we're loading the session from disk.
-        apiServer.start(async () => {
-            log.log('API Server Start callback.')
-            try {
-                await createMigrationFlow(win)
-            } catch (ex) {
-                log.log('Failure in migration flow: ', ex)
-                logout()
-                return
-            }
-            log.log('Post-migration flow.')
-            start()
+        start()
 
-            if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
-                startClientService()
-                await backendReady
-            }
-        })
+        if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
+            startClientService()
+            await backendReady
+        }
     })
 })
 

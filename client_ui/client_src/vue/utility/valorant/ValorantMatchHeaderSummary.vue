@@ -47,21 +47,21 @@ export default class ValorantMatchHeaderSummary extends Vue {
     }
 
     get mapName() : string {
-        if (!this.match._details.matchInfo.mapId) {
+        if (!this.match._details.data.matchInfo.mapId) {
             return 'Unknown'
         }
 
-        let cnt = getValorantContent(this.match._details.matchInfo.gameVersion)
-        return cnt.mapAssetPathToName(this.match._details.matchInfo.mapId)
+        let cnt = getValorantContent(null)
+        return cnt.mapAssetPathToName(this.match._details.data.matchInfo.mapId)
     }
 
     get queueType() : string {
-        let queue = getGameMode(this.match._details.matchInfo.gameVersion, this.match._details.matchInfo.gameMode, this.match._details.matchInfo.isRanked)
+        let queue = getGameMode(this.match._details.data.matchInfo.gameMode, this.match._details.data.matchInfo.isRanked)
         if (!queue) {
             return 'Unknown'
         }
 
-        if (getIsCustom(this.match._details.matchInfo.provisioningFlowID)) {
+        if (getIsCustom(this.match._details.data.matchInfo.provisioningFlowId)) {
             queue = `[Custom] ${queue}`
         }
         return queue!
@@ -74,18 +74,15 @@ export default class ValorantMatchHeaderSummary extends Vue {
             'background-size': 'contain',
         }
 
-        if (!!this.match._details.matchInfo.gameVersion) {
-            ret['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
-        }
-
+        ret['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
         return ret
     }
 
     get matchTime() : string {
-        if (!this.match._details.matchInfo.serverStartTimeUtc) {
+        if (!this.match._details.data.matchInfo.serverStartTimeUtc) {
             return 'Unknown'
         }
-        return format(this.match._details.matchInfo.serverStartTimeUtc, 'MMMM do uuuu, h:mm a')
+        return format(this.match._details.data.matchInfo.serverStartTimeUtc, 'MMMM do uuuu, h:mm a')
     }
 
 }

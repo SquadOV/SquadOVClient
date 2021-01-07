@@ -21,9 +21,6 @@ export default class ValorantWeaponAbilityIcon extends Vue {
     agent! : string
 
     @Prop({required: true})
-    patch! : string
-
-    @Prop({required: true})
     equipType! : string
 
     @Prop({required: true})
@@ -36,13 +33,13 @@ export default class ValorantWeaponAbilityIcon extends Vue {
     maxWidth!: number
 
     get agentName() : string {
-        let cnt = getValorantContent(this.patch)
+        let cnt = getValorantContent(null)
         return cnt.agentIdToName(this.agent)
     }
 
     get equipFname() : string {
         if (this.equipType == 'Weapon') {
-            let cnt = getValorantContent(this.patch)
+            let cnt = getValorantContent(null)
             let weapon = cnt.weaponIdToName(this.equipId)
             return `assets/valorant/weapons/${weapon}.png`
         } else if (this.equipType == 'Ability') {

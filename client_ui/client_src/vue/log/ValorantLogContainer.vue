@@ -184,11 +184,7 @@ export default class ValorantLogContainer extends Vue {
     
     @Watch('userId')
     refreshAccounts() {
-        let promise = this.isLocalUser ?
-            apiClient.listLocalValorantAccounts() :
-            apiClient.listRiotAccounts(this.userId)
-
-        promise.then((resp : ApiData<RiotAccountData[]>) => {
+        apiClient.listRiotAccounts(this.userId).then((resp : ApiData<RiotAccountData[]>) => {
             this.allAccounts = resp.data
         }).catch((err : any) => {
             console.log('Failed to list valorant accounts: ' + err);

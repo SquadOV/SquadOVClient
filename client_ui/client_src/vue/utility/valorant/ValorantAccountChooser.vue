@@ -1,18 +1,5 @@
 <template>
     <div class="d-flex align-center">
-        <v-tooltip v-if="!!value && !isValorantAccountValid && allowCrud" bottom offset-y>
-            <template v-slot:activator="{on, attrs}">
-                <v-icon v-bind="attrs" v-on="on" color="warning">
-                    mdi-alert
-                </v-icon>
-            </template>
-
-            <span>
-                This Valorant account needs to be reconfigured.
-                Please click the edit button to add a login and password so we can properly pull your match history.
-            </span>
-        </v-tooltip>
-
         <v-select
             :value="value"
             @input="$emit('input', arguments[0])"
@@ -23,81 +10,22 @@
         >
         </v-select>
 
-        <v-dialog
-            v-if="!!value && allowCrud"
-            v-model="showHideEdit"
-            persistent
-            max-width="40%"
+        <v-btn
+            icon
+            color="success"
+            @click="addAccount"
         >
-            <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    icon
-                    color="warning"
-                >
-                    <v-icon>
-                        mdi-pencil
-                    </v-icon>
-                </v-btn>
-            </template>
-
-            <v-card>
-                <v-card-title>
-                    Edit Valorant Account
-                </v-card-title>
-                <v-divider></v-divider>
-
-                <valorant-account-creation
-                    ref="editForm"
-                    :username="value.login"
-                    @cancel="showHideEdit = false"
-                    @save="onEditValorantAccount"
-                >
-                </valorant-account-creation>
-            </v-card>
-        </v-dialog>
-
-        <v-dialog
-            v-model="showHideNew"
-            persistent
-            max-width="40%"
-            v-if="allowCrud"
-        >
-            <template v-slot:activator="{ on, attrs }">
-                <v-btn
-                    v-bind="attrs"
-                    v-on="on"
-                    icon
-                    color="success"
-                >
-                    <v-icon>
-                        mdi-plus
-                    </v-icon>
-                </v-btn>
-            </template>
-
-            <v-card>
-                <v-card-title>
-                    New Valorant Account
-                </v-card-title>
-                <v-divider></v-divider>
-
-                <valorant-account-creation
-                    ref="newForm"
-                    @cancel="showHideNew = false"
-                    @save="onSaveValorantAccount"
-                >
-                </valorant-account-creation>
-            </v-card>            
-        </v-dialog>
+            <v-icon>
+                mdi-plus
+            </v-icon>
+        </v-btn>
 
         <v-snackbar
-            v-model="showHideAccountError"
+            v-model="showHideProgress"
             :timeout="5000"
-            color="error"
+            color="success"
         >
-            You provided incorrect credentials.
+            Please login using Riot's login form that was just opened in your web browser.
         </v-snackbar>
     </div>
 </template>
@@ -109,80 +37,30 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { apiClient, ApiData } from '@client/js/api'
+import { shell } from 'electron'
 
-import ValorantAccountCreation from '@client/vue/utility/valorant/ValorantAccountCreation.vue'
 
-@Component({
-    components: {
-        ValorantAccountCreation
-    }
-})
+@Component
 export default class ValorantAccountChooser extends Vue {
-    $refs!: {
-        editForm: ValorantAccountCreation
-        newForm: ValorantAccountCreation
-    }
-
     @Prop({required: true})
     value! : RiotAccountData | null
 
     @Prop({type: Array, required: true})
     options! : RiotAccountData[]
 
-    @Prop({type: Boolean, default: false})
-    allowCrud!: boolean
-
-    showHideEdit : boolean = false
-    showHideNew : boolean = false
-    showHideAccountError : boolean = false
-
-    get isValorantAccountValid() : boolean {
-        return !!this.value?.login && !!this.value?.encryptedPassword
-    }
+    showHideProgress: boolean = false
 
     get items() : any[] {
         return this.options!.map((ele : RiotAccountData) => ({
-            text: `${ele.username}#${ele.tag}`,
+            text: `${ele.gameName}#${ele.tagLine}`,
             value: ele,
         }))
     }
 
-    onEditValorantAccount(username : string, password : string) {
-        if (!this.value) {
-            return
-        }
-
-        apiClient.editValorantAccount(this.value.puuid, username, password).then((resp : ApiData<RiotAccountData>) => {
-            Vue.set(this.value!, 'login', resp.data.login)
-            Vue.set(this.value!, 'encryptedPassword', resp.data.encryptedPassword)
-            this.showHideEdit = false
-
-            apiClient.syncRiotAccount(this.$store.state.currentUser.id, this.value!).catch((err: any) => {
-                console.log('Failed to sync Riot account (edit): ', err)
-            })
-        }).catch((err : any ) => {
-            this.showHideAccountError = true
-            console.log('Failed to edit valorant account')
-        }).finally(() => {
-            this.$refs.editForm.clear()
-        })
-    }
-
-    onSaveValorantAccount(username : string, password : string) {
-        apiClient.newValorantAccount(username, password).then((resp : ApiData<RiotAccountData>) => {
-            this.$emit('update:options', [...this.options, resp.data])
-            this.$emit('input', resp.data)
-            this.showHideNew = false
-
-            apiClient.syncRiotAccount(this.$store.state.currentUser.id, this.value!).catch((err: any) => {
-                console.log('Failed to sync Riot account (new): ', err)
-            })
-        }).catch((err : any ) => {
-            this.showHideAccountError = true
-            console.log('Failed to create valorant account')
-        }).finally(() => {
-            this.$refs.newForm.clear()
-        })
+    addAccount() {
+        // TODO: Proper RSO login url
+        shell.openExternal('https://www.google.com')
+        this.showHideProgress = true
     }
 }
 

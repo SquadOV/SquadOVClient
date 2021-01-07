@@ -1,13 +1,32 @@
 import { getValorantContent } from '@client/js/valorant/valorant_content'
 
-export interface ValorantMatchTeam {
-    teamId: string
-    won: boolean
-    roundsWon: number
-    roundsPlayed: number
+export interface ValorantMatchInfo {
+    matchId: string
+    mapId: string | null
+    gameLengthMillis: number
+    serverStartTimeUtc: Date
+    provisioningFlowId: string | null
+    gameMode: string | null
+    isRanked: boolean | null
+    seasonId: string | null
 }
 
-export interface ValorantPlayerStats {
+export function cleanValorantMatchInfoFromJson(m: ValorantMatchInfo): ValorantMatchInfo {
+    if (!!m.serverStartTimeUtc) {
+        m.serverStartTimeUtc = new Date(m.serverStartTimeUtc)
+    }
+    return m
+}
+
+export interface ValorantMatchPlayer {
+    puuid: string
+    teamId: string
+    characterId: string
+    stats: ValorantMatchPlayerStats
+    competitiveTier: number
+}
+
+export interface ValorantMatchPlayerStats {
     score: number
     roundsPlayed: number
     kills: number
@@ -15,21 +34,37 @@ export interface ValorantPlayerStats {
     assists: number
 }
 
-export interface ValorantMatchPlayer {
-    subject: string,
-    characterId: string
-    competitiveTier: number
+export interface ValorantMatchTeam {
     teamId: string
-    stats: ValorantPlayerStats
+    won: boolean
+    roundsPlayed: number
+    roundsWon: number
+    numPoints: number
 }
 
-export interface ValorantMatchLoadout {
-    subject: string
-    armor: string
-    weapon: string
-    remaining: number
-    loadoutValue: number
-    spent: number
+export interface ValorantMatchRoundResult {
+    roundNum: number
+    winningTeam: string
+    bombPlanter: string | null
+    bombDefuser: string | null
+    plantRoundTime: number | null
+    defuseRoundTime: number | null
+    playerStats: ValorantMatchPlayerRoundStats[]
+}
+
+export interface ValorantMatchKill {
+    timeSinceGameStartMillis: number
+    timeSinceRoundStartMillis: number
+    killer: string | null
+    victim: string
+    assistants: string[]
+    finishingDamage: ValorantMatchFinishingDamage
+}
+
+export interface ValorantMatchFinishingDamage {
+    damageType: string
+    damageItem: string
+    isSecondaryFireMode: boolean
 }
 
 export interface ValorantMatchDamage {
@@ -40,61 +75,41 @@ export interface ValorantMatchDamage {
     headshots: number
 }
 
-export interface ValorantMatchPlayerRoundStat {
-    subject: string
-    score: number
+export interface ValorantMatchEconomy {
+    loadoutValue: number
+    weapon: string
+    armor: string
+    remaining: number
+    spent: number
+}
+
+export interface ValorantMatchPlayerRoundStats {
+    puuid: string
+    kills: ValorantMatchKill[]
     damage: ValorantMatchDamage[]
+    economy: ValorantMatchEconomy
+    score: number
 }
 
-export interface ValorantMatchRound {
-    roundNum: number
-    plantRoundTime: number | null
-    bombPlanter: string | null
-    defuseRoundTime: number | null
-    bombDefuser: string | null
-    winningTeam: string
-    playerStats: ValorantMatchPlayerRoundStat[]
-    playerEconomies: ValorantMatchLoadout[] | null
+export interface ValorantMatch {
+    matchInfo: ValorantMatchInfo
+    players: ValorantMatchPlayer[]
+    teams: ValorantMatchTeam[]
+    roundResults: ValorantMatchRoundResult[]
 }
 
-export interface ValorantFinishingDamage {
-    damageType: string
-    damageItem: string
-    isSecondaryFireMode: boolean
-}
-
-export interface ValorantMatchKill {
-    roundTime: number
-    round: number
-    finishingDamage: ValorantFinishingDamage
-    killer: string | null
-    victim: string
-}
-
-export interface ValorantMatchMetadata {
-    matchId: string
-    gameMode: string | null
-    mapId: string | null
-    isRanked: boolean | null
-    provisioningFlowID: string | null
-    gameVersion: string | null
-    serverStartTimeUtc: Date | null
+export function cleanValorantMatchFromJson(m: ValorantMatch) : ValorantMatch {
+    cleanValorantMatchInfoFromJson(m.matchInfo)
+    return m
 }
 
 export interface ValorantMatchDetails {
-    matchUuid: string
-    matchInfo: ValorantMatchMetadata
-    teams: ValorantMatchTeam[]
-    players: ValorantMatchPlayer[]
-    roundResults: ValorantMatchRound[]
-    kills: ValorantMatchKill[]
-    rawData: any
+    uuid: string
+    data: ValorantMatch
 }
 
 export function cleanValorantMatchDetails(m :ValorantMatchDetails) : ValorantMatchDetails {
-    if (!!m.matchInfo.serverStartTimeUtc) {
-        m.matchInfo.serverStartTimeUtc = new Date(m.matchInfo.serverStartTimeUtc)
-    }
+    cleanValorantMatchFromJson(m.data)
     return m
 }
 
@@ -103,10 +118,9 @@ export interface ValorantPlayerMatchSummary {
     matchUuid: string
     serverStartTimeUtc: Date | null
     gameMode: string | null
-    map: string | null
+    mapId: string | null
     isRanked: boolean | null
-    provisioningFlowID: string | null
-    gameVersion: string | null
+    provisioningFlowId: string | null
     characterId: string
     won: boolean
     roundsWon: number
@@ -132,12 +146,12 @@ export function cleanValorantPlayerMatchSummary(m :ValorantPlayerMatchSummary) :
     return m
 }
 
-export function getGameMode(patchId : string | null, gameMode: string | null, isRanked : boolean | null) : string | null {
-    if (!patchId || !gameMode) {
+export function getGameMode(gameMode: string | null, isRanked : boolean | null) : string | null {
+    if (!gameMode) {
         return null
     }
 
-    let cnt = getValorantContent(patchId)
+    let cnt = getValorantContent(null)
     let mode = cnt.gameModeToName(gameMode)
     if (mode == "Standard") {
         if (!!isRanked) {
@@ -154,12 +168,12 @@ export function getIsCustom(provisioningFlowId : string | null) : boolean {
     return provisioningFlowId === 'CustomGame'
 }
 
-export function getIsDeathmatch(patchId : string | null, gameMode: string | null): boolean {
-    if (!patchId || !gameMode) {
+export function getIsDeathmatch(gameMode: string | null): boolean {
+    if (!gameMode) {
         return false
     }
 
-    let cnt = getValorantContent(patchId)
+    let cnt = getValorantContent(null)
     let mode = cnt.gameModeToName(gameMode)
     return mode === 'Deathmatch'
 }

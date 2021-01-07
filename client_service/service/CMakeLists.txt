@@ -6,7 +6,6 @@ SET(SRCS
     src/aimlab/aimlab_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
     src/valorant/valorant_match.cpp
-    src/valorant/valorant_api.cpp
     src/hearthstone/hearthstone_process_handler.cpp
     src/wow/wow_process_handler.cpp
     src/http/http_client.cpp
@@ -35,7 +34,6 @@ SET(HEADERS
     src/aimlab/aimlab_process_handler.h
     src/valorant/valorant_process_handler.h
     src/valorant/valorant_match.h
-    src/valorant/valorant_api.h
     src/hearthstone/hearthstone_process_handler.h
     src/wow/wow_process_handler.h
     src/http/http_client.h

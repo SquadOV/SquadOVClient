@@ -11,7 +11,6 @@
                         <valorant-agent-icon
                             :agent="match.characterId"
                             :width-height="100"
-                            :patch="match.gameVersion"
                         >
                         </valorant-agent-icon>
                     </v-col>
@@ -134,12 +133,12 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get queueType() : string {
-        let queue = getGameMode(this.match.gameVersion, this.match.gameMode, this.match.isRanked)
-        if (!queue || !this.match.provisioningFlowID) {
+        let queue = getGameMode(this.match.gameMode, this.match.isRanked)
+        if (!queue || !this.match.provisioningFlowId) {
             return 'Unknown'
         }
 
-        if (getIsCustom(this.match.provisioningFlowID)) {
+        if (getIsCustom(this.match.provisioningFlowId)) {
             queue = `[Custom] ${queue}`
         }
         return queue
@@ -147,8 +146,8 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get queueTypeStyle() : any {
         let color = ''
-        let queue = getGameMode(this.match.gameVersion, this.match.gameMode, this.match.isRanked)
-        if (!!this.match.provisioningFlowID && getIsCustom(this.match.provisioningFlowID)) {
+        let queue = getGameMode(this.match.gameMode, this.match.isRanked)
+        if (!!this.match.provisioningFlowId && getIsCustom(this.match.provisioningFlowId)) {
             color = '#343a40'
         } else if (this.match.isRanked) {
             color = '#6c757d'
@@ -168,12 +167,12 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get mapName() : string {
-        if (!this.match.map) {
+        if (!this.match.mapId) {
             return 'Unknown'
         }
 
-        let cnt = getValorantContent(this.match.gameVersion)
-        return cnt.mapAssetPathToName(this.match.map)
+        let cnt = getValorantContent(null)
+        return cnt.mapAssetPathToName(this.match.mapId)
     }
 
     get style() : any {
@@ -183,7 +182,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
             'background-size': 'contain',
         }
 
-        if (!!this.match.gameVersion && !!this.match.map) {
+        if (!!this.match.mapId) {
             style['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
         }
 
