@@ -284,16 +284,7 @@ void HearthstoneLogWatcher::onPowerLogChange(const LogLinesDelta& lines) {
             }
         }
 
-        // If we are currently not in a game we never want to accumulate logs in the power parser.
-        // This is particularly relevant if the user decides to restart SquadOV in the middle of a
-        // match for some reason (SquadOVClient/#91). In that case, when SquadOV starts back up, it won't
-        // read what has already been read from the power log so it won't see the game start. However,
-        // it'll continue to read events from the game and it'll read the match end and not detect a change in
-        // the difference between wasRunning vs isRunning. Thus, when the next game starts, the user's power
-        // log parser already contains info from the previous game which is erroneous.
-        if (!isRunning) {
-            _powerParser.clear();
-        }
+        _powerParser.postParse();
     }
 }
 

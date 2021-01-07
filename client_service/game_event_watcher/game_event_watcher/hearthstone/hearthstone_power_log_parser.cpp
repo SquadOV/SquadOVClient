@@ -25,6 +25,27 @@ void HearthstonePowerLogParser::parse(const HearthstoneRawLog& log) {
         LOG_INFO("Hearthstone End" << std::endl);
         _gameRunning = false;
         _endPending = false;
+        _clearOnPost = true;
+    }
+}
+
+void HearthstonePowerLogParser::postParse() {
+    // We need to clear the power log parser once the current game is finished. We can't
+    // do it in the parse() function because the log watcher will still need to collect that
+    // info to send to the server at that point. Hence, we must force the log watcher to call
+    // the post parse function for us to safely deal with things after the watcher has no
+    // more use for the data. We can't have the log watcher call clear for us because
+    // the log watcher has no visibility on when the end was detected (only whether the
+    // current running state). If we only try to clear when the state changes, then we run
+    // the risk of collecting data from previous matches if for whatever odd reason the
+    // user decides to restart SquadOV in the middle of a match. If we try to always clear when the
+    // state is false (game is not running), then we won't capture certain important events like
+    // the CREATE_GAME in the beginning. Thus, we must detect when we'd set the _gameRunning flag
+    // to false in parse() and manually mark a flag to note that we should be clearing the
+    // buffer in postParse to successfully keep the power log buffer clear of power logs that
+    // do not belong to the current game.
+    if (_clearOnPost) {
+        clear();
     }
 }
 

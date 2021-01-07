@@ -9,6 +9,8 @@ namespace game_event_watcher {
 class HearthstonePowerLogParser {
 public:
     void parse(const HearthstoneRawLog& log);
+    void postParse();
+
     void clear();
 
     nlohmann::json toJson() const;
@@ -18,6 +20,7 @@ private:
     std::vector<HearthstoneRawLog> _raw;
     bool _gameRunning = false;
     bool _endPending = false;
+    bool _clearOnPost = false;
 };
 
 }
