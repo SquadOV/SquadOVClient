@@ -8,7 +8,7 @@ namespace fs = std::filesystem;
 namespace game_event_watcher {
 namespace {
 
-bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log) {
+bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const fs::path& logPath) {
     // General Format:
     // DATE TIME TOKENS
     std::vector<std::string> parts;
@@ -17,7 +17,7 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log) {
         return false;
     }
 
-    const auto currentLocal = date::make_zoned(date::current_zone(), shared::nowUtc()).get_local_time();
+    const auto currentLocal = date::make_zoned(date::current_zone(), shared::filesystem::timeOfLastFileWrite(logPath)).get_local_time();
     std::ostringstream datetime;
     datetime << parts[0] << "/" << date::year_month_day{date::floor<date::days>(currentLocal)}.year() << " " << parts[1];
 
@@ -136,7 +136,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
         RawWoWCombatLog log;
         log.logLine = _logLine++;
-        if (!parseRawCombatLogLine(ln, log)) {
+        if (!parseRawCombatLogLine(ln, log, _logPath)) {
             LOG_WARNING("Failed to parse WoW combat log line: " << ln << std::endl);
             continue;
         }
