@@ -45,6 +45,7 @@ void HearthstonePowerLogParser::postParse() {
     // buffer in postParse to successfully keep the power log buffer clear of power logs that
     // do not belong to the current game.
     if (_clearOnPost) {
+        _clearOnPost = false;
         clear();
     }
 }
