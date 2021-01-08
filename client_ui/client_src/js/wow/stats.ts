@@ -1,6 +1,5 @@
 export interface WowStatQueryParam {
     psStepSeconds: number,
-    psIntervalSeconds: number,
     // UNIX time in milliseconds 
     start: number,
     end: number

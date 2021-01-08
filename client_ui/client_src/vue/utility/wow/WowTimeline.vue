@@ -129,7 +129,6 @@ import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 const STAT_SECOND_STEP = 5.0
-const STAT_SECOND_INTERVAL = 10.0
 const BASE_GRAPH_HEIGHT = 650
 
 @Component({
@@ -378,7 +377,6 @@ export default class WowTimeline extends Vue {
         let endpoint = this.activeEndpoint
         apiClient.getWoWMatchStats(this.userId, this.matchUuid, endpoint, {
             psStepSeconds: STAT_SECOND_STEP,
-            psIntervalSeconds: STAT_SECOND_INTERVAL,
             start: this.encounterStartTime.getTime(),
             end: this.encounterEndTime.getTime()
         }).then((resp: ApiData<WowMatchStatContainer>) => {
