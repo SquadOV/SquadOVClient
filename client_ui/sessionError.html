@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:;">
+
+        <link href="dist/sessionError.css" rel="stylesheet" type="text/css">
+        <title>SquadOV - Oops!</title>
+    </head>
+    <body>
+        <div id="app">
+            <v-app>
+                <v-main>
+                    <div class="d-flex full-height full-width justify-center align-center flex-column">
+                        <v-progress-circular indeterminate size="64">
+                        </v-progress-circular>
+
+                        <div class="text-h6 mt-4">
+                            An error occurred while connecting to SquadOV...Trying to reconnect.
+                        </div>
+                    </div>
+                </v-main>
+            </v-app>            
+        </div>
+        <script src="rendererLog.js"></script>
+        <script src="dist/sessionError.js"></script>
+    </body>
+</html>

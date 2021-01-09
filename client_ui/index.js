@@ -333,6 +333,8 @@ function startAutoupdater() {
     })
 }
 
+let currentSessionExpiration = null
+let sessionRetryCount = 0
 function startSessionHeartbeat(onBeat) {
     try {
         const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
@@ -345,6 +347,38 @@ function startSessionHeartbeat(onBeat) {
         request.write(JSON.stringify({
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
+
+        request.on('error', (err) => {
+            log.log('Error in Sesssion Heartbeat: ', err)
+
+            let timeoutMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 15000)
+            // We want to retry a few times up until the session is expired
+            // to try and get a new session just in case the user's internet
+            // is spotty (or their computer went to sleep or something). In the case
+            // where we aren't able to obtain a valid session before the session
+            // expires, we want to put the app into an error state that that keeps trying
+            // to update the session but is other not functional.
+            if (!!currentSessionExpiration) {
+                // In the case where we're passed the expiration we need to restart and throw the user
+                // onto the session error screen.
+                if (new Date() > currentSessionExpiration) {
+                    restart()
+                    return
+                }
+            } else {
+                // This is the first session heartbeat. Need to display some sort of loading error
+                // screen so that the user isn't just greeted with nothing.
+                win.loadFile('sessionError.html')
+            }
+
+            log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
+            setTimeout(() => {
+                // We need to push onBeat forward just in case this is the first session heartbeat.
+                startSessionHeartbeat(onBeat)
+            }, timeoutMs)
+            sessionRetryCount += 1
+        })
+
         request.on('response', (resp) => {
             if (resp.statusCode != 200) {
                 log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
@@ -365,12 +399,12 @@ function startSessionHeartbeat(onBeat) {
                         onBeat()
                     }
                     
-                    let expiration = new Date(respBody.expiration)
+                    currentSessionExpiration = new Date(respBody.expiration)
 
                     // Preemptively refresh the session 10 minutes before it's due to expire.
                     setTimeout(() => {
                         startSessionHeartbeat()
-                    }, Math.max(expiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
+                    }, Math.max(currentSessionExpiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
                 })
             }
         })
