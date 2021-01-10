@@ -1,9 +1,0 @@
-{
-    "id": "gridshot",
-    "name": "Gridshot",
-    "includeStats": [
-        "assets/stats/aimlab/gridshot/precision.json",
-        "assets/stats/aimlab/gridshot/speed.json",
-        "assets/stats/aimlab/gridshot/ultimate.json"
-    ]
-}

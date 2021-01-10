@@ -82,8 +82,8 @@ interface ContentMap {
 }
 let content : ContentMap = {}
 
-import data from '@client/js/valorant/data/content'
-import abilityData from '@client/js/valorant/data/abilities'
+import data from '@client/js/valorant/data/content.json'
+import abilityData from '@client/js/valorant/data/abilities.json'
 
 function loadValorantContent(patchId : string) {
     let ct = new ValorantContent(data, abilityData)

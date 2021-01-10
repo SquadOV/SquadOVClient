@@ -1,9 +1,0 @@
-{
-    "id": "microshot",
-    "name": "Microshot",
-    "includeStats": [
-        "assets/stats/aimlab/microshot/precision.json",
-        "assets/stats/aimlab/microshot/speed.json",
-        "assets/stats/aimlab/microshot/ultimate.json"
-    ]
-}

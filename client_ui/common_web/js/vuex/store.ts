@@ -1,26 +1,32 @@
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
+/// #if DESKTOP
 import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
 import { SquadOvState, createDefaultState } from '@client/js/system/state' 
-import { Root } from 'protobufjs'
+/// #endif
 
 interface RootState {
     currentUser: SquadOVUser | null
+/// #if DESKTOP
     settings: SquadOvLocalSettings | null
     currentState: SquadOvState
+/// #endif
 }
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
+/// #if DESKTOP
         settings: null,
         currentState: createDefaultState()
+/// #endif
     },
     mutations: {
         setUser(state : RootState, user : SquadOVUser) {
             state.currentUser = user
         },
+/// #if DESKTOP
         setSettings(state: RootState, settings: SquadOvLocalSettings) {
             state.settings = settings
         },
@@ -50,11 +56,14 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         setRecordingGames(state: RootState, games: string[]) {
             state.currentState.recordingGames = games
         }
+/// #endif
     },
     actions: {
+/// #if DESKTOP
         async reloadLocalSettings(context) {
             let settings = await loadLocalSettings()
             context.commit('setSettings', settings)
         }
+/// #endif
     }
 }

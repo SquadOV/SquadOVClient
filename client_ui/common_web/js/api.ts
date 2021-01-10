@@ -679,6 +679,9 @@ class ApiClient {
 }
 
 export let apiClient = new ApiClient()
+
+/// #if DESKTOP
 ipcRenderer.on('update-session', (event : any, message : string) => {
     apiClient.setSessionId(message)
 })
+/// #endif

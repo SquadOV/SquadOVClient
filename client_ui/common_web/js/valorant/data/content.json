@@ -1,4 +1,4 @@
-const data = {
+{
     "version": "release-01.14",
     "characters": [
         {
@@ -35746,4 +35746,3 @@ const data = {
         }
     ]
 }
-export default data

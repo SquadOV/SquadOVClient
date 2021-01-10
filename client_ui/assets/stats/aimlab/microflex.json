@@ -1,8 +1,0 @@
-{
-    "id": "microflex",
-    "name": "Microflex",
-    "includeStats": [
-        "assets/stats/aimlab/microflex/precision.json",
-        "assets/stats/aimlab/microflex/ultimate.json"
-    ]
-}

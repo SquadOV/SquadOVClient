@@ -2,6 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
+/// #endif
 
 export interface SquadOvRecordingSettings {
     resY: number
@@ -13,16 +14,21 @@ export interface SquadOvLocalSettings {
 }
 
 function getSettingsFname() : string {
+/// #if DESKTOP
     return path.join(process.env.SQUADOV_USER_APP_FOLDER!, 'settings.json')
+/// #endif
 }
 
 export function saveLocalSettings(s: SquadOvLocalSettings) {
+/// #if DESKTOP
     fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
         encoding: 'utf-8',
     })
+/// #endif
 }
 
 export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
+/// #if DESKTOP
     console.log('Generating Default Settings...')
     let baseline = await detectComputerBaselineLevel()
     console.log('Detect Baseline: ', baselineToString(baseline))
@@ -46,12 +52,14 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             }
     }
 
+/// #endif
     return {
         record
     }
 }
 
 export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
+/// #if DESKTOP
     const settingsFname = getSettingsFname()
     console.log('Loading local settings...', settingsFname)
     if (!fs.existsSync(settingsFname)) {
@@ -60,5 +68,5 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     let data = fs.readFileSync(settingsFname , 'utf8')
     return JSON.parse(data)
-}
 /// #endif
+}

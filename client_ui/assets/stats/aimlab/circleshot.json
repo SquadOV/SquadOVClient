@@ -1,7 +1,0 @@
-{
-    "id": "circleshot",
-    "name": "Circleshot",
-    "includeStats": [
-        "assets/stats/aimlab/circleshot/ultimate.json"
-    ]
-}

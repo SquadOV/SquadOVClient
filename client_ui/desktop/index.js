@@ -424,6 +424,7 @@ app.on('ready', async () => {
         height: 720,
         webPreferences: {
             nodeIntegration: true,
+            webSecurity: app.isPackaged
         },
         icon: iconPath
     })

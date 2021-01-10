@@ -1,4 +1,4 @@
-import data from '@client/js/aimlab/aimlab_content_data'
+import data from '@client/js/aimlab/data.json'
 
 interface AimlabRawData {
     tasks: {

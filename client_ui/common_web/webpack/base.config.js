@@ -54,7 +54,7 @@ module.exports = (env, argv, subfolder) => {
             filename: `${baseFilename}.js`,
             chunkFilename: `${chunkBaseFilename}.js`,
             path:path.resolve(__dirname, '../dist', subfolder, target),
-            publicPath: `/dist/${subfolder}/${target}`,
+            publicPath: `${isDesktop ? '' : '/'}dist/`,
         },
         module: {
             rules: [

@@ -1,9 +1,0 @@
-{
-    "id": "spidershot",
-    "name": "Spidershot",
-    "includeStats": [
-        "assets/stats/aimlab/spidershot/precision.json",
-        "assets/stats/aimlab/spidershot/speed.json",
-        "assets/stats/aimlab/spidershot/ultimate.json"
-    ]
-}

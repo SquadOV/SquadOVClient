@@ -1,7 +1,0 @@
-{
-    "id": "strafeshot",
-    "name": "Strafeshot",
-    "includeStats": [
-        "assets/stats/aimlab/strafeshot/ultimate.json"
-    ]
-}

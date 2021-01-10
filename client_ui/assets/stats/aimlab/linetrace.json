@@ -1,7 +1,0 @@
-{
-    "id": "linetrace",
-    "name": "Linetrace",
-    "includeStats": [
-        "assets/stats/aimlab/linetrace/ultimate.json"
-    ]
-}

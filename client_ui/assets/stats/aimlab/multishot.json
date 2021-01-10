@@ -1,9 +1,0 @@
-{
-    "id": "multishot",
-    "name": "Multishot",
-    "includeStats": [
-        "assets/stats/aimlab/multishot/precision.json",
-        "assets/stats/aimlab/multishot/speed.json",
-        "assets/stats/aimlab/multishot/ultimate.json"
-    ]
-}
