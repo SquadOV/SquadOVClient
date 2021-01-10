@@ -1,3 +1,4 @@
+/// #if DESKTOP
 import fs from 'fs'
 import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
@@ -60,3 +61,4 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     let data = fs.readFileSync(settingsFname , 'utf8')
     return JSON.parse(data)
 }
+/// #endif

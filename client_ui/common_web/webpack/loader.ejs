@@ -1,0 +1,17 @@
+[[define "css"]]
+<% for (key in htmlWebpackPlugin.files.css) { %>
+<link
+    href="<%= htmlWebpackPlugin.files.css[key] %>"
+    rel="stylesheet"
+>
+<% } %>
+[[end]]
+
+[[define "js"]]
+<% for (key in htmlWebpackPlugin.files.js) { %>
+<script
+    src="<%= htmlWebpackPlugin.files.js[key] %>"
+>
+</script>
+<% } %>
+[[end]]

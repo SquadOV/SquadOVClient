@@ -79,7 +79,11 @@ import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { apiClient, ApiData } from '@client/js/api'
+
+/// #if DESKTOP
 import { ipcRenderer } from 'electron'
+/// #endif
+
 import { NotificationSummary } from '@client/js/squadov/notification'
 
 @Component
@@ -203,8 +207,13 @@ export default class AppNav extends Vue {
             console.log('Failed to logout: {}', err)
         }).finally(() => {
             // The user should feel like they logged out regardless of what happened on the server.
+/// #if DESKTOP
             ipcRenderer.sendSync('logout')
+/// #else
+            // TODO: Delete session cookie.
+/// #endif
         })
+        
     }
 
     @Watch('$route')

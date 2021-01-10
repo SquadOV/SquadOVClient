@@ -49,7 +49,10 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, ApiData } from '@client/js/api'
 import { WowCharacter } from '@client/js/wow/character'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
+
+/// #if DESKTOP
 import { shell } from 'electron'
+/// #endif
 
 const maxTasksPerRequest : number = 20
 
@@ -78,7 +81,12 @@ export default class WowLogContainer extends Vue {
     }
 
     gotoAutolog() {
-        shell.openExternal('https://www.curseforge.com/wow/addons/autolog')
+        const url = 'https://www.curseforge.com/wow/addons/autolog'
+/// #if DESKTOP
+        shell.openExternal(url)
+/// #else
+        window.open(url, '_blank')
+/// #endif
     }
 
     @Watch('selectedCharacter')

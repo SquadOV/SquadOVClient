@@ -1,47 +1,3 @@
-import { TouchBarOtherItemsProxy } from 'electron'
-import fs from 'fs'
-const path = require('path')
-
-interface ContentFileMap {
-    [patchId : string] : { static: string, abilities: string};
-}
-
-const contentFiles : ContentFileMap = {
-    'release-01.08': {
-        static: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.08.json') :
-            'assets/valorant/content/v1.08.json',
-        abilities: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.08.Abilities.json') :
-            'assets/valorant/content/v1.08.Abilities.json'
-    },
-    'release-01.11': {
-        static: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.json') :
-            'assets/valorant/content/v1.11.json',
-        abilities: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
-            'assets/valorant/content/v1.11.Abilities.json'    
-    },
-    'release-01.12': {
-        static: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.12.json') :
-            'assets/valorant/content/v1.12.json',
-        abilities: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
-            'assets/valorant/content/v1.11.Abilities.json'    
-    },
-    'release-01.14': {
-        static: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.14.json') :
-            'assets/valorant/content/v1.14.json',
-        abilities: process.env.NODE_ENV === 'production' ?  
-            path.join(process.resourcesPath, 'assets/valorant/content/v1.11.Abilities.json') :
-            'assets/valorant/content/v1.11.Abilities.json'   
-    }
-}
-const latestPatch = 'release-01.14'
-
 interface AgentMap {
     [agentId : string] : string;
 }
@@ -126,34 +82,16 @@ interface ContentMap {
 }
 let content : ContentMap = {}
 
-function loadValorantContent(patchId : string) {
-    let usablePatch = patchId
-    if (!(patchId in contentFiles)) {
-        usablePatch = latestPatch
-    }
+import data from '@client/js/valorant/data/content'
+import abilityData from '@client/js/valorant/data/abilities'
 
-    let data = fs.readFileSync(contentFiles[usablePatch].static)
-    let abilityData = fs.readFileSync(contentFiles[usablePatch].abilities)
+function loadValorantContent(patchId : string) {
     let ct = new ValorantContent(data, abilityData)
     content[patchId] = ct
 }
 
-const valorantPatchIdRegex = /(release-\d\d.\d\d)-?.*/
-
 export function getValorantContent(patchId : string | null) {
-    if (!patchId) {
-        patchId = latestPatch
-    } else {
-        // The patch ID is generally in the form of release-XX.YY-OTHER
-        // We just want to extract the release-XX.YY part of the patch.
-        let matches = patchId.match(valorantPatchIdRegex)
-        if (!matches) {
-            patchId = latestPatch
-        } else {
-            patchId = matches[1]
-        }
-    }
-
+    patchId = 'latest'
     if (!(patchId in content)) {
         loadValorantContent(patchId)
     }

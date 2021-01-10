@@ -1,4 +1,4 @@
-{
+const data = {
     "tasks": {
         "gridshot": {
             "name": "Gridshot",
@@ -286,3 +286,4 @@
         }
     }
 }
+export default data

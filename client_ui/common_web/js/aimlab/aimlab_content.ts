@@ -1,7 +1,4 @@
-import fs from 'fs'
-
-const path = require('path')
-const aimlabContentFile =  process.env.NODE_ENV === 'production' ? path.join(process.resourcesPath, 'assets/aimlab/content.json') : 'assets/aimlab/content.json'
+import data from '@client/js/aimlab/aimlab_content_data'
 
 interface AimlabRawData {
     tasks: {
@@ -85,7 +82,6 @@ let content : AimlabContent | null = null
 
 export function getAimlabContent() : AimlabContent {
     if (!content) {
-        let data = fs.readFileSync(aimlabContentFile)
         content = new AimlabContent(data)
     }
 

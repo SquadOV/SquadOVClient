@@ -1,4 +1,3 @@
-import { assert } from 'console'
 import { secondsToTimeString } from '@client/js/time'
 import format from 'date-fns/format'
 
@@ -34,7 +33,9 @@ export class StatXYSeriesData {
     }
 
     constructor(x : any[], y : any[], type : string, subtype: string, name : string) {
-        assert(x.length == y.length)
+        if (x.length != y.length) {
+            console.log('Error in series data: X-Y length mismatch.')
+        }
         this._x = x
         this._y = y
         this._type = type

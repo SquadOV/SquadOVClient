@@ -53,6 +53,7 @@ import {
     WowMatchStatContainer
 } from '@client/js/wow/stats'
 
+/// #if DESKTOP
 import { ipcRenderer } from 'electron'
 
 const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
@@ -80,6 +81,7 @@ const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
         initializer: undefined
     }
 }
+/// #endif
 
 export interface ApiData<T> {
     data: T
@@ -157,6 +159,7 @@ class ApiClient {
         return ret
     }
 
+/// #if DESKTOP
     //
     // Legay Local API
     //
@@ -191,6 +194,7 @@ class ApiClient {
             }
         })
     }
+/// #endif
 
     //
     // Web server API

@@ -13,43 +13,51 @@ Vue.use(Vuetify)
 Vue.use(VueRouter)
 Vue.use(Vuex)
 
+/// #if DESKTOP
 import App from '@client/vue/App.vue'
-import Dashboard from '@client/vue/Dashboard.vue'
-import UserProfile from '@client/vue/profile/UserProfile.vue'
-import UserSquads from '@client/vue/squads/UserSquads.vue'
-import SingleSquadPage from '@client/vue/squads/SingleSquadPage.vue'
+/// #else
+import WebApp from '@client/vue/WebApp.vue'
+/// #endif
 
-import GameLog from '@client/vue/GameLog.vue'
-import LogGameChooser from '@client/vue/log/LogGameChooser.vue'
-import ValorantLogContainer from '@client/vue/log/ValorantLogContainer.vue'
-import ValorantGameLog from '@client/vue/log/ValorantGameLog.vue'
-import ValorantMatch from '@client/vue/log/ValorantMatch.vue'
+const Dashboard = () => import('@client/vue/Dashboard.vue')
+const UserProfile = () => import('@client/vue/profile/UserProfile.vue')
+const UserSquads = () => import('@client/vue/squads/UserSquads.vue')
+const SingleSquadPage = () => import('@client/vue/squads/SingleSquadPage.vue')
 
-import AimlabGameLog from '@client/vue/log/AimlabGameLog.vue'
-import AimlabMatch from '@client/vue/log/AimlabMatch.vue'
+const GameLog = () => import('@client/vue/GameLog.vue')
+const LogGameChooser = () => import('@client/vue/log/LogGameChooser.vue')
+const ValorantLogContainer = () => import('@client/vue/log/ValorantLogContainer.vue')
+const ValorantGameLog = () => import('@client/vue/log/ValorantGameLog.vue')
+const ValorantMatch = () => import('@client/vue/log/ValorantMatch.vue')
 
-import HearthstoneGameLog from '@client/vue/log/HearthstoneGameLog.vue'
-import HearthstoneMatch from '@client/vue/log/HearthstoneMatch.vue'
-import HearthstoneAllMatchesGameLog from '@client/vue/log/HearthstoneAllMatchesGameLog.vue'
-import HearthstoneArenaGameLog from '@client/vue/log/HearthstoneArenaGameLog.vue'
-import HearthstoneDuelGameLog from '@client/vue/log/HearthstoneDuelGameLog.vue'
-import HearthstoneArenaRunMatchLog from '@client/vue/log/HearthstoneArenaRunMatchLog.vue'
-import HearthstoneDuelRunMatchLog from '@client/vue/log/HearthstoneDuelRunMatchLog.vue'
+const AimlabGameLog = () => import('@client/vue/log/AimlabGameLog.vue')
+const AimlabMatch = () => import('@client/vue/log/AimlabMatch.vue')
+
+const HearthstoneGameLog = () => import('@client/vue/log/HearthstoneGameLog.vue')
+const HearthstoneMatch = () => import('@client/vue/log/HearthstoneMatch.vue')
+const HearthstoneAllMatchesGameLog = () => import('@client/vue/log/HearthstoneAllMatchesGameLog.vue')
+const HearthstoneArenaGameLog = () => import('@client/vue/log/HearthstoneArenaGameLog.vue')
+const HearthstoneDuelGameLog = () => import('@client/vue/log/HearthstoneDuelGameLog.vue')
+const HearthstoneArenaRunMatchLog = () => import('@client/vue/log/HearthstoneArenaRunMatchLog.vue')
+const HearthstoneDuelRunMatchLog = () => import('@client/vue/log/HearthstoneDuelRunMatchLog.vue')
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 
-import WowLogContainer from '@client/vue/log/WowLogContainer.vue'
-import WowGameLog from '@client/vue/log/WowGameLog.vue'
-import WowMatch from '@client/vue/log/WowMatch.vue'
-import WowEncounterGameLog from '@client/vue/utility/wow/WowEncounterGameLog.vue'
-import WowKeystoneGameLog from '@client/vue/utility/wow/WowKeystoneGameLog.vue'
-import WowDefaultGameLog from '@client/vue/utility/wow/WowDefaultGameLog.vue'
+const WowLogContainer = () => import('@client/vue/log/WowLogContainer.vue')
+const WowGameLog = () => import('@client/vue/log/WowGameLog.vue')
+const WowMatch = () => import('@client/vue/log/WowMatch.vue')
+const WowEncounterGameLog = () => import('@client/vue/utility/wow/WowEncounterGameLog.vue')
+const WowKeystoneGameLog = () => import('@client/vue/utility/wow/WowKeystoneGameLog.vue')
+const WowDefaultGameLog = () => import('@client/vue/utility/wow/WowDefaultGameLog.vue')
 
-import Performance from '@client/vue/Performance.vue'
-import PerformanceComponentChooser from '@client/vue/performance/PerformanceComponentChooser.vue'
-import VizStats from '@client/vue/performance/VizStats.vue'
+const Performance = () => import('@client/vue/Performance.vue')
+const PerformanceComponentChooser = () => import('@client/vue/performance/PerformanceComponentChooser.vue')
+const VizStats = () => import('@client/vue/performance/VizStats.vue')
 
 import * as pi from '@client/js/pages'
+
+/// #if DESKTOP
 import { ipcRenderer } from 'electron'
+/// #endif
 import { apiClient, ApiData } from '@client/js/api'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 import { RootStoreOptions } from '@client/js/vuex/store'
@@ -330,6 +338,8 @@ router.beforeEach((to : any, from : any, next : any) => {
 })
 
 const store = new Vuex.Store(RootStoreOptions)
+
+/// #if DESKTOP
 store.dispatch('reloadLocalSettings')
 
 ipcRenderer.on('reset-state', () => {
@@ -382,13 +392,18 @@ ipcRenderer.on('change-running-games', (_, games) => {
 ipcRenderer.on('change-recording-games', (_, games) => {
     store.commit('setRecordingGames', games)
 })
+/// #endif
 
 new Vue({
     el: '#app',
     components: {
         VApp,
         VMain,
+/// #if DESKTOP
         App,
+/// #else
+        WebApp,
+/// #endif
     },
     vuetify: new Vuetify({
         theme: {

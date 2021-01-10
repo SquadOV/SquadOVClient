@@ -1,4 +1,4 @@
-{
+const data = {
     "Breach": {
         "GrenadeAbility": "Aftershock",
         "Ability1": "Flashpoint",
@@ -78,3 +78,4 @@
         "Ultimate": "Seekers"        
     }
 }
+export default data

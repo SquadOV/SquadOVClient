@@ -6,7 +6,7 @@ const webpack = require('webpack')
 const path = require('path')
 
 module.exports = (env, argv) => {
-    return merge(base(env, argv), {
+    return merge(base(env, argv, 'production'), {
         mode: 'production',
         optimization: {
             minimize: true,
@@ -16,9 +16,5 @@ module.exports = (env, argv) => {
         },  
         plugins: [
         ],
-        output: {
-            path:path.resolve(__dirname, '../dist', 'production'),
-            publicPath: '/dist/production',
-        }
     })
 }
