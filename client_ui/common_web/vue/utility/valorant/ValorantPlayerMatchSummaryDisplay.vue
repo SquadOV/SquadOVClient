@@ -183,7 +183,8 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         }
 
         if (!!this.match.mapId) {
-            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
+            // @ts-ignore
+            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(${this.$root.generateAssetUri(`assets/valorant/maps/preview/${this.mapName}.png`)})`
         }
 
         return style

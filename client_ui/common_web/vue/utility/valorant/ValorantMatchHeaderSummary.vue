@@ -74,7 +74,8 @@ export default class ValorantMatchHeaderSummary extends Vue {
             'background-size': 'contain',
         }
 
-        ret['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(assets/valorant/maps/preview/${this.mapName}.png)`
+        //@ts-ignore
+        ret['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(${this.$root.generateAssetUri(`assets/valorant/maps/preview/${this.mapName}.png`)})`
         return ret
     }
 
