@@ -13,6 +13,7 @@
         <v-btn
             icon
             color="success"
+            disabled
             @click="addAccount"
         >
             <v-icon>
@@ -59,7 +60,12 @@ export default class ValorantAccountChooser extends Vue {
 
     addAccount() {
         // TODO: Proper RSO login url
-        shell.openExternal('https://www.google.com')
+        const rsoUrl = 'https://www.google.com'
+/// #if DESKTOP        
+        shell.openExternal(rsoUrl)
+/// #else
+        window.open(rsoUrl, '_blank')
+/// #endif
         this.showHideProgress = true
     }
 }
