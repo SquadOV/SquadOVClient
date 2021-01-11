@@ -62,7 +62,12 @@ module.exports = (env, argv, subfolder) => {
                 {
                     test: /\.tsx?$/,
                     use: [
-                        "cache-loader",
+                        {
+                            loader: 'cache-loader',
+                            options: {
+                                cacheIdentifier: `cache-loader:${process.env.NODE_ENV}:${subfolder}:${target}`
+                            }
+                        },
                         "thread-loader",
                         babelLoader,
                         {

@@ -13,8 +13,15 @@ Vue.use(Vuetify)
 Vue.use(VueRouter)
 Vue.use(Vuex)
 
+/// #if DESKTOP
+
 import App from '@client/vue/App.vue'
+
+/// #else
+
 import WebApp from '@client/vue/WebApp.vue'
+
+/// #endif
 
 const Dashboard = () => import('@client/vue/Dashboard.vue')
 const UserProfile = () => import('@client/vue/profile/UserProfile.vue')
@@ -484,8 +491,11 @@ new Vue({
     components: {
         VApp,
         VMain,
+/// #if DESKTOP
         App,
+/// #else
         WebApp,
+/// #endif
     },
     vuetify: new Vuetify({
         theme: {
