@@ -1,0 +1,52 @@
+FROM debian:buster-20200908-slim AS builder
+ARG GCP_PROJECT
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    ca-certificates \
+    build-essential \
+    python \
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs yarn && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /squadov/web
+RUN mkdir -p /squadov/common_web
+COPY assets /squadov/assets
+
+COPY web/views /squadov/web/views
+COPY web/*.js /squadov/web
+COPY web/package.json /squadov/web
+COPY web/yarn.lock /squadov/web
+
+COPY common_web/js /squadov/common_web/js
+COPY common_web/sass /squadov/common_web/sass
+COPY common_web/vue /squadov/common_web/vue
+COPY common_web/webpack /squadov/common_web/webpack
+COPY common_web/*.json /squadov/common_web
+COPY common_web/yarn.lock /squadov/common_web
+
+WORKDIR /squadov
+
+RUN cd common_web && yarn install \
+    && yarn run webpack --config ./webpack/${GCP_PROJECT}.config.js  --env.target=web \
+    && rm -rf node_modules \
+    && yarn install --production
+RUN cp -r assets /squadov/web/assets && cp -r /squadov/common_web/dist/production/web /squadov/web/dist
+RUN cd web && yarn install --production
+
+FROM debian:buster-20200908-slim
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /squadov
+
+WORKDIR /squadov
+COPY --from=builder /squadov/web/assets ./assets
+COPY --from=builder /squadov/web/dist ./dist
+COPY --from=builder /squadov/web/views ./views
+COPY --from=builder /squadov/web/node_modules ./node_modules
+COPY --from=builder /squadov/web/index.js .
+ENTRYPOINT ["node" , "index.js"]

@@ -20,8 +20,8 @@ interface AimlabRawData {
 export class AimlabContent {
     data : AimlabRawData
 
-    constructor(data : any) {
-        this.data = JSON.parse(data)
+    constructor(inputData : any) {
+        this.data = inputData
     }
 
     isTaskSupported(id : string) : boolean {

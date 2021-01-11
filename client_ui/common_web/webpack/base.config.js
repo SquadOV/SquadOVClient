@@ -43,6 +43,7 @@ module.exports = (env, argv, subfolder) => {
     const opts = {
         DESKTOP: isDesktop
     }
+    console.log('Building For Desktop?', isDesktop)
 
     let baseFilename = isDesktop ? '[name]' : '[name].[contenthash]'
     let chunkBaseFilename = isDesktop ? '[id]' : '[id].[chunkhash]'

@@ -13,7 +13,7 @@ const config = JSON.parse(fs.readFileSync(configFile))
 process.env.API_SQUADOV_URL = config["API_URL"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
-    app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../resources/tzdata'
+    app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../../resources/tzdata'
 const iconPath = path.join(__dirname, 'assets/icon.ico')
 
 let win

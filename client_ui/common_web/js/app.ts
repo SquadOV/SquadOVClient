@@ -13,11 +13,8 @@ Vue.use(Vuetify)
 Vue.use(VueRouter)
 Vue.use(Vuex)
 
-/// #if DESKTOP
 import App from '@client/vue/App.vue'
-/// #else
 import WebApp from '@client/vue/WebApp.vue'
-/// #endif
 
 const Dashboard = () => import('@client/vue/Dashboard.vue')
 const UserProfile = () => import('@client/vue/profile/UserProfile.vue')
@@ -366,7 +363,9 @@ const baseRoutes : any[] = [
 ]
 
 const router = new VueRouter({
+/// #if !DESKTOP
     mode :'history',
+/// #endif
     routes: baseRoutes,
 })
 
@@ -374,7 +373,7 @@ const store = new Vuex.Store(RootStoreOptions)
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
 
 router.beforeEach((to : any, from : any, next : any) => {
-    console.log(`Navigate ${from.fullPath} => ${to.fullPath}`)
+    console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
     
 /// #if DESKTOP
     next()
@@ -485,11 +484,8 @@ new Vue({
     components: {
         VApp,
         VMain,
-/// #if DESKTOP
         App,
-/// #else
         WebApp,
-/// #endif
     },
     vuetify: new Vuetify({
         theme: {
@@ -513,4 +509,9 @@ new Vue({
     router: router,
     store: store,
 }).$mount('#app')
-console.log('Loading Vue Application')
+
+/// #if DESKTOP
+console.log('Loading Vue Application - Desktop')
+/// #else
+console.log('Loading Vue Application - Web')
+/// #endif
