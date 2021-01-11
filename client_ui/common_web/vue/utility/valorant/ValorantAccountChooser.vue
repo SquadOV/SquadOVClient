@@ -38,8 +38,10 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { apiClient, ApiData } from '@client/js/api'
-import { shell } from 'electron'
 
+/// #if DESKTOP
+import { shell } from 'electron'
+/// #endif
 
 @Component
 export default class ValorantAccountChooser extends Vue {
@@ -61,7 +63,7 @@ export default class ValorantAccountChooser extends Vue {
     addAccount() {
         // TODO: Proper RSO login url
         const rsoUrl = 'https://www.google.com'
-/// #if DESKTOP        
+/// #if DESKTOP
         shell.openExternal(rsoUrl)
 /// #else
         window.open(rsoUrl, '_blank')
