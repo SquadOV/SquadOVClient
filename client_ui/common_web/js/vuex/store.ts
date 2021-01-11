@@ -7,6 +7,7 @@ import { SquadOvState, createDefaultState } from '@client/js/system/state'
 
 interface RootState {
     currentUser: SquadOVUser | null
+    hasValidSession: boolean
 /// #if DESKTOP
     settings: SquadOvLocalSettings | null
     currentState: SquadOvState
@@ -17,6 +18,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
+        hasValidSession: true,
 /// #if DESKTOP
         settings: null,
         currentState: createDefaultState()
@@ -55,8 +57,11 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         setRecordingGames(state: RootState, games: string[]) {
             state.currentState.recordingGames = games
-        }
+        },
 /// #endif
+        markValidSession(state: RootState, v: boolean) {
+            state.hasValidSession = v
+        },
     },
     actions: {
 /// #if DESKTOP

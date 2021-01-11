@@ -394,6 +394,7 @@ function startSessionHeartbeat(onBeat) {
 
                     updateSession(respBody.sessionId, true)
                     process.env.SQUADOV_PASSWORD = respBody.localenc
+                    sessionRetryCount = 0
 
                     if (!!onBeat) {
                         onBeat()
