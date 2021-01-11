@@ -61,39 +61,6 @@ import {
 import { ipcRenderer } from 'electron'
 /// #endif
 
-const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
-/// #if DESKTOP
-    const ogMethod = descriptor.value
-    descriptor.value = async function(...args : any[]) {
-        let port = process.env.SQUADOV_API_PORT
-        let key = process.env.SQUADOV_API_KEY
-
-        while (port === undefined || key === undefined) {
-            console.log(`Could not find port or key for SQUADOV service...`)
-            
-            // Need to listen to port/key messages from the main process just in case that gets set late...
-            const [newPort, newKey] = ipcRenderer.sendSync('apiServer')
-            port = process.env.SQUADOV_API_PORT = newPort
-            key = process.env.SQUADOV_API_KEY = newKey
-
-            await new Promise(resolve => setTimeout(resolve, 100))
-        }
-        console.log('Found port/key for SQUADOV local API service.')
-        return ogMethod.apply(this, args)
-    }
-
-    return {
-        ...descriptor,
-        initializer: undefined
-    }
-/// #else
-    return {
-        ...descriptor,
-        initializer: undefined
-    }
-/// #endif
-}
-
 export interface ApiData<T> {
     data: T
 }
@@ -170,15 +137,6 @@ class ApiClient {
        storeSessionCookie(s, userId)
     }
 
-    createAxiosConfig(endpoint : string) : any {
-        return {
-            url: `https://127.0.0.1:${process.env.SQUADOV_API_PORT}/${endpoint}`,
-            headers: {
-                'Authorization': `Bearer ${process.env.SQUADOV_API_KEY}`
-            },
-        }
-    }
-
     createWebAxiosConfig() : any {
         let ret : any = {
             baseURL: SQUADOV_API_URL,
@@ -191,59 +149,6 @@ class ApiClient {
         }
 
         return ret
-    }
-
-    //
-    // Legay Local API
-    //
-    @waitForApiServerSetup
-    listLocalValorantAccounts() : Promise<ApiData<RiotAccountData[]>> {
-/// #if DESKTOP
-        return axios({
-            ...this.createAxiosConfig('valorant/accounts'),
-            method: 'get'
-        })
-/// #else
-        return new Promise((resolve, reject) => {
-            reject('Unsupported')
-        })
-/// #endif
-    }
-
-    @waitForApiServerSetup
-    editValorantAccount(puuid : string, login : string, password : string) : Promise<ApiData<RiotAccountData>> {
-/// #if DESKTOP
-        return axios({
-            ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
-            method: 'put',
-            data: {
-                login,
-                password
-            }
-        })
-/// #else
-        return new Promise((resolve, reject) => {
-            reject('Unsupported')
-        })
-/// #endif
-    }
-
-    @waitForApiServerSetup
-    newValorantAccount(login : string, password : string) : Promise<ApiData<RiotAccountData>> {
-/// #if DESKTOP
-        return axios({
-            ...this.createAxiosConfig('valorant/accounts'),
-            method: 'post',
-            data: {
-                login,
-                password
-            }
-        })
-/// #else
-        return new Promise((resolve, reject) => {
-            reject('Unsupported')
-        })
-/// #endif
     }
 
     //
@@ -616,16 +521,9 @@ class ApiClient {
     syncRiotAccount(userId: number, data: RiotAccountData) : Promise<void> {
         return axios.post(`v1/users/${userId}/accounts/riot`, {
             puuid: data.puuid,
-            username: data.username,
-            tag: data.tag
+            username: data.gameName,
+            tag: data.tagLine,
         }, this.createWebAxiosConfig())
-    }
-
-    async syncAllLocalRiotAccounts(userId: number): Promise<any> {
-        let accounts = await this.listLocalValorantAccounts()
-        return Promise.all(accounts.data.map((ele: RiotAccountData) => {
-            return this.syncRiotAccount(userId, ele)
-        }))
     }
 
     listRiotAccounts(userId: number): Promise<ApiData<RiotAccountData[]>> {

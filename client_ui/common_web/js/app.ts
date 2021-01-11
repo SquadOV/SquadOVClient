@@ -450,9 +450,6 @@ ipcRenderer.invoke('request-session').then((session : {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
         store.commit('setUser' , resp.data)
-        apiClient.syncAllLocalRiotAccounts(resp.data.id).catch((err: any) => {
-            console.log('Failed to sync Riot accounts: ', err)
-        })
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover

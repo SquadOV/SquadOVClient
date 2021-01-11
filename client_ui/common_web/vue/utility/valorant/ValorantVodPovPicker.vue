@@ -17,7 +17,6 @@
             >
                 <valorant-agent-icon
                     :agent="agentForPlayer(fvod.userUuid)"
-                    :patch="matchPatch"
                     :width-height="48"
                     :class="(!!vod && fvod.videoUuid === vod.videoUuid) ? 'selected-agent' : 'friendly-agent'"
                     circular
@@ -33,7 +32,6 @@
             >
                 <valorant-agent-icon
                     :agent="agentForPlayer(evod.userUuid)"
-                    :patch="matchPatch"
                     :width-height="48"
                     :class="(!!vod && evod.videoUuid === vod.videoUuid) ? 'selected-agent' : 'enemy-agent'"
                     circular
@@ -92,13 +90,6 @@ export default class ValorantVodPovPicker extends Vue {
         return this.match.getPlayerAgentId(puuid)
     }
 
-    get matchPatch(): string | null {
-        if (!this.match) {
-            return ''
-        }
-        return this.match._details.matchInfo.gameVersion
-    }
-
     get friendlyPovs(): VodAssociation[] {
         if (!this.match) {
             return []
@@ -154,7 +145,7 @@ export default class ValorantVodPovPicker extends Vue {
         if (!this.match) {
             return ''
         }
-        return this.match._details.matchInfo.matchId
+        return this.match._details.data.matchInfo.matchId
     }
 
     get uuidToVod(): Map<string, VodAssociation> {
@@ -222,6 +213,10 @@ export default class ValorantVodPovPicker extends Vue {
     }
 
     selectPuuid(puuid: string) {
+        if (!this.availableVods || this.numPovs == 0) {
+            return
+        }
+
         let uuid = this.puuidToUuid.get(puuid)
         if (!uuid) {
             console.log('Selected an invalid PUUID [uuid]: ', puuid, this.availableVods)

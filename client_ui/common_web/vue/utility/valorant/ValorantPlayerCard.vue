@@ -7,7 +7,7 @@
             >
             </valorant-rank-tier>
             <div>
-                <div>{{ account.username }}#{{ account.tag }}</div>
+                <div>{{ account.gameName }}#{{ account.tagLine }}</div>
 
                 <div class="text-overline">
                     <win-loss-stat

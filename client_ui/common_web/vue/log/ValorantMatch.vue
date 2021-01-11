@@ -175,11 +175,11 @@ export default class ValorantMatch extends Vue {
     }
 
     get currentRound() : ValorantMatchRoundWrapper | null {
-        if (!this.currentMatch) {
+        if (!this.matchWrapper) {
             return null
         }
 
-        return this.matchWrapper!.getRound(this.currentRoundNum)
+        return this.matchWrapper.getRound(this.currentRoundNum)
     }
 
     get hasMatchTiming() : boolean {
@@ -196,31 +196,31 @@ export default class ValorantMatch extends Vue {
         if (!this.currentMatch) {
             return 0
         }
-        return this.currentMatch.teams.length
+        return this.currentMatch.data.teams.length
     }
 
     get primaryTeam() : ValorantMatchTeamWrapper | null {
-        if (!this.currentMatch) {
+        if (!this.matchWrapper) {
             return null
         }
 
         if (!this.currentPlayer) {
-            return this.matchWrapper!.getTeam('Blue')
+            return this.matchWrapper.getTeam('Blue')
         } else {
-            return this.matchWrapper!.getPlayerTeam(this.currentPlayer._p.subject)
+            return this.matchWrapper.getPlayerTeam(this.currentPlayer._p.puuid)
         }
         return null
     }
 
     get secondaryTeam() : ValorantMatchTeamWrapper | null {
-        if (!this.currentMatch) {
+        if (!this.matchWrapper) {
             return null
         }
 
         if (!this.currentPlayer) {
-            return this.matchWrapper!.getTeam('Red')
+            return this.matchWrapper.getTeam('Red')
         } else {
-            return this.matchWrapper!.getOpposingPlayerTeam(this.currentPlayer._p.subject)
+            return this.matchWrapper.getOpposingPlayerTeam(this.currentPlayer._p.puuid)
         }
         return null
     }
@@ -237,11 +237,11 @@ export default class ValorantMatch extends Vue {
     @Watch('puuid')
     @Watch('currentMatch')
     refreshCurrentPlayer() {
-        if (!this.currentMatch || !this.puuid) {
+        if (!this.matchWrapper || !this.puuid) {
             this.currentPlayer = null
             return
         }
-        this.currentPlayer = this.matchWrapper!.getPlayer(this.puuid)
+        this.currentPlayer = this.matchWrapper.getPlayer(this.puuid)
     }
 
     @Watch('matchId')

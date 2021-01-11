@@ -48,7 +48,12 @@ protected:
             return;
         }
 
-        for (const auto& cb : _callbacks.at(event)) {
+        const auto it = _callbacks.find(event);
+        if (it == _callbacks.end()) {
+            return;
+        }
+
+        for (const auto& cb : it->second) {
             cb(eventTime, data);
         }
     }

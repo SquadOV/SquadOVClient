@@ -34,7 +34,6 @@ module.exports = (env, argv, subfolder) => {
     if (isDesktop) {
         Object.assign(entry, {
             login: [`${clientSrcDir}/js/loginApp.ts`, `${clientSrcDir}/sass/app.scss`],
-            password: [`${clientSrcDir}/js/passwordApp.ts`, `${clientSrcDir}/sass/app.scss`],
             update: [`${clientSrcDir}/js/updateApp.ts`, `${clientSrcDir}/sass/app.scss`],
             sessionError: [`${clientSrcDir}/js/sessionError.ts`, `${clientSrcDir}/sass/app.scss`],
         })

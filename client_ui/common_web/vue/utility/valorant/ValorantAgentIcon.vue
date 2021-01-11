@@ -21,9 +21,6 @@ export default class ValorantAgentIcon extends Vue {
     @Prop({required: true})
     agent! : string
 
-    @Prop({required: true})
-    patch! : string
-
     @Prop({type: Number, default: 50})
     widthHeight!: number
 
@@ -31,7 +28,7 @@ export default class ValorantAgentIcon extends Vue {
     circular!: boolean
 
     get agentName() : string {
-        let cnt = getValorantContent(this.patch)
+        let cnt = getValorantContent(null)
         return cnt.agentIdToName(this.agent)
     }
 
