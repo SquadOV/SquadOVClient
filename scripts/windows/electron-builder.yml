@@ -18,7 +18,7 @@ nsis:
   differentialPackage : false
 
 files:
-  - from: "dist/production"
+  - from: "dist"
     to: "dist"
   - from: "assets"
     to: "assets"
@@ -29,6 +29,7 @@ files:
   - "password.html"
   - "login.html"
   - "update.html"
+  - "sessionError.html"
   - "index.js"
   - "password.js"
   - "login.js"
@@ -44,9 +45,9 @@ extraResources:
     to: "assets"
     filter:
       - "**/*.json"
-  - from: "../resources/tzdata"
+  - from: "../../resources/tzdata"
     to: "tzdata"
-  - from: "../build/bin/Release"
+  - from: "../../build/bin/Release"
     to: "service"
   - from: "config/${env.GCP_PROJECT}.json"
     to: "config/config.json"

@@ -13,7 +13,8 @@ Set-Location -Path .\client_ui\common_web
 yarn run webpack --config ./webpack/$GCP_PROJECT.config.js --env.target=electron-renderer
 
 Set-Location -Path ..\desktop
-yarn build
+Copy-Item -Path "..\assets" -Destination "assets" -Recurse -Force
+Copy-Item -Path "..\common_web\dist\production\electron-renderer" -Destination dist -Recurse -Force
 yarn run dist --config ..\..\scripts\windows\electron-builder.yml --publish $PUBLISH
 
 Set-Location -Path ..\..\scripts\windows
