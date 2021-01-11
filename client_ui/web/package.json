@@ -1,0 +1,22 @@
+{
+  "name": "squadov_web_app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SquadOV/SquadOVClient.git"
+  },
+  "author": "Michael Bao <mike.h.bao@gmail.com>",
+  "scripts": {
+    "build": "gulp",
+    "server": "node index.js"
+  },
+  "dependencies": {
+    "ejs": "^3.1.5",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-cli": "^2.3.0"
+  }
+}

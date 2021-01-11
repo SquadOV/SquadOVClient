@@ -1,0 +1,6 @@
+<% for (key in htmlWebpackPlugin.files.js) { %>
+<script
+    src="<%= htmlWebpackPlugin.files.js[key] %>"
+>
+</script>
+<% } %>

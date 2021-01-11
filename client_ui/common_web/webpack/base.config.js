@@ -158,11 +158,17 @@ module.exports = (env, argv, subfolder) => {
                 },
             }),
             new HtmlWebpackPlugin({
-                template: path.resolve(__dirname, 'loader.ejs'),
-                minify: false,
+                filename: 'css.ejs',
                 inject: false,
-                filename: 'loader.tmpl'
-            })
+                template: path.join(__dirname, 'css.template.ejs'),
+                minify: false,
+            }),
+            new HtmlWebpackPlugin({
+                filename: 'js.ejs',
+                inject: false,
+                template: path.join(__dirname, 'js.template.ejs'),
+                minify: false,
+            }),
         ],
         resolve: {
             alias: {

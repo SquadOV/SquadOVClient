@@ -8,3 +8,4 @@ declare module 'bcryptjs'
 declare module 'glob'
 declare module 'adm-zip'
 declare module 'uuid'
+declare var SQUADOV_API_URL: string

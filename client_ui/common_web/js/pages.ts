@@ -24,3 +24,8 @@ export const WowMatchPageId = 'wowMatch'
 
 export const PerformancePageId = 'performance'
 export const VizStatsPageId = 'visualization'
+
+export const LoginPageId = 'login'
+export const RegisterPageId = 'register'
+export const ForgotPasswordPageId = 'forgotPw'
+export const VerifyEmailPageId = 'verifyEmail'

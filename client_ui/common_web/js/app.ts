@@ -53,6 +53,9 @@ const Performance = () => import('@client/vue/Performance.vue')
 const PerformanceComponentChooser = () => import('@client/vue/performance/PerformanceComponentChooser.vue')
 const VizStats = () => import('@client/vue/performance/VizStats.vue')
 
+const Login = () => import('@client/vue/auth/Login.vue')
+const Register = () => import('@client/vue/auth/Register.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -65,6 +68,24 @@ import { RootStoreOptions } from '@client/js/vuex/store'
 
 const baseRoutes : any[] = [
     { path: '/', name: pi.DashboardPageId, component: Dashboard },
+    { path: '/login', name: pi.LoginPageId, component: Login },
+    { path: '/register', name: pi.RegisterPageId, component: Register },
+    {
+        path: '/forgotpw/:changePasswordId',
+        name: pi.ForgotPasswordPageId,
+        component: Dashboard,
+        props: (route : any) => ({
+            changePasswordId: route.params.changePasswordId
+        })
+    },
+    { 
+        path: '/verify/:verificationId',
+        name: pi.VerifyEmailPageId,
+        component: Dashboard,
+        props: (route : any) => ({
+            verificationId: route.params.verificationId
+        })
+    },
     {
         path: '/profile/:userId',
         name: pi.UserProfilePageId,
@@ -325,20 +346,64 @@ const baseRoutes : any[] = [
 ]
 
 const router = new VueRouter({
+    mode :'history',
     routes: baseRoutes,
 })
 
+const store = new Vuex.Store(RootStoreOptions)
+import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
+
 router.beforeEach((to : any, from : any, next : any) => {
     console.log(`Navigate ${from.fullPath} => ${to.fullPath}`)
-    if (to.name != pi.DashboardPageId) {
-        apiClient.markUserActive().catch((err: any) => {
-            console.log('Failed to mark user active: ', err)
-        })
-    }
+    
+/// #if DESKTOP
     next()
-})
+/// #else
+    let hasCookie = checkHasSessionCookie()
+    let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
 
-const store = new Vuex.Store(RootStoreOptions)
+    if (hasCookie && !store.state.currentUser) {
+        // If we have a cookie and the current user isn't set, then send out a request
+        // to verify the session cookie.
+        loadInitialSessionFromCookies(store, () => {
+            // Note that in the web case, the renderer code is responsible for the doing the session
+            // heartbeat as well.
+            if (mustBeInvalid) {
+                next({
+                    name: pi.DashboardPageId
+                })
+            } else {
+                next()
+            }
+        }, () => {
+            if (!mustBeInvalid) {
+                next({
+                    name: pi.LoginPageId
+                })
+            } else {
+                next()
+            }
+        })
+    } else {
+        if (mustBeInvalid && hasCookie) {
+            next({
+                name: pi.DashboardPageId
+            })
+        } else if (!mustBeInvalid && !hasCookie) {
+            next({
+                name: pi.LoginPageId
+            })
+        } else {
+            if (to.name != pi.DashboardPageId && !mustBeInvalid) {
+                apiClient.markUserActive().catch((err: any) => {
+                    console.log('Failed to mark user active: ', err)
+                })
+            }
+            next()
+        }
+    }
+/// #endif
+})
 
 /// #if DESKTOP
 store.dispatch('reloadLocalSettings')
@@ -372,7 +437,6 @@ ipcRenderer.invoke('request-session').then((session : {
     })
 })
 
-
 let globals: any = {
     serviceError: false,
     hasUpdate: false,
@@ -393,6 +457,7 @@ ipcRenderer.on('change-running-games', (_, games) => {
 ipcRenderer.on('change-recording-games', (_, games) => {
     store.commit('setRecordingGames', games)
 })
+
 /// #endif
 
 new Vue({
@@ -412,7 +477,9 @@ new Vue({
         },
     }),
     data: () => ({
+/// #if DESKTOP
         globals
+/// #endif
     }),
     router: router,
     store: store,

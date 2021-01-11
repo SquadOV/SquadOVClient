@@ -5,7 +5,6 @@
             <div class="flex-grow-1">
                 <router-view></router-view>
             </div>
-
         </template>
     </div>
 </template>

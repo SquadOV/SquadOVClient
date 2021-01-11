@@ -15,6 +15,11 @@ module.exports = (env, argv) => {
             })],
         },  
         plugins: [
+            plugins: [
+                new webpack.DefinePlugin({
+                    SQUADOV_API_URL: "'https://api.squadov.gg'"
+                })
+            ],
         ],
     })
 }

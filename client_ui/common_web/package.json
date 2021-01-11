@@ -78,6 +78,7 @@
     "html-webpack-plugin": "^4.5.1",
     "ifdef-loader": "^2.1.5",
     "jwt-decode": "^3.0.0",
+    "local-storage": "^2.0.0",
     "node-forge": "^0.10.0",
     "protobufjs": "^6.10.2",
     "sqlite3": "^5.0.0",

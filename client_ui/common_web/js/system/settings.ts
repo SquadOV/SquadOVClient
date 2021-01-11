@@ -16,6 +16,8 @@ export interface SquadOvLocalSettings {
 function getSettingsFname() : string {
 /// #if DESKTOP
     return path.join(process.env.SQUADOV_USER_APP_FOLDER!, 'settings.json')
+/// #else
+    return ''
 /// #endif
 }
 
@@ -52,10 +54,17 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             }
     }
 
-/// #endif
     return {
         record
     }
+/// #else
+    return {
+        record: {
+            resY: 1080,
+            fps: 60,
+        }
+    }
+/// #endif
 }
 
 export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
@@ -68,5 +77,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     let data = fs.readFileSync(settingsFname , 'utf8')
     return JSON.parse(data)
+/// #else
+    return await generateDefaultSettings()
 /// #endif
 }

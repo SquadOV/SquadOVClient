@@ -95,7 +95,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
+import * as pi from '@client/js/pages'
+
+/// #if DESKTOP
 import { ipcRenderer } from 'electron'
+/// #endif
+
 import { apiClient, ApiData, LoginOutput } from '@client/js/api'
 
 @Component
@@ -157,15 +162,22 @@ export default class Login extends Vue {
             password: this.password,
         }).then((resp : ApiData<LoginOutput>) => {
             // Successful login - store the session ID.
+/// #if DESKTOP
             ipcRenderer.send('obtain-session', [resp.data.sessionId, resp.data.userId])
-
+/// #endif
             // Forcefully set session ID on the Api client just in case
             // we're going to the email verification check page.
-            apiClient.setSessionId(resp.data.sessionId)
+            apiClient.setSessionFull(resp.data.sessionId, resp.data.userId)
 
             if (!!resp.data.verified) {
                 // We can close out the login app now.
+/// #if DESKTOP
                 ipcRenderer.send('finish-login')
+/// #else
+                this.$router.push({
+                    name: pi.DashboardPageId,
+                })
+/// #endif
             } else {
                 // Redirect to a screen to wait for email verification.
                 this.$router.push({

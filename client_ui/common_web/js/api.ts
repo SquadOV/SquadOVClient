@@ -55,8 +55,10 @@ import {
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
+/// #endif
 
 const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
+/// #if DESKTOP
     const ogMethod = descriptor.value
     descriptor.value = async function(...args : any[]) {
         let port = process.env.SQUADOV_API_PORT
@@ -80,8 +82,13 @@ const waitForApiServerSetup = (target : any , key : any, descriptor : any) => {
         ...descriptor,
         initializer: undefined
     }
-}
+/// #else
+    return {
+        ...descriptor,
+        initializer: undefined
+    }
 /// #endif
+}
 
 export interface ApiData<T> {
     data: T
@@ -125,6 +132,8 @@ export interface CheckVerificationOutput {
     verified: boolean
 }
 
+import { storeSessionCookie, getSessionId } from '@client/js/session'
+
 class ApiClient {
     _sessionId: string | null
 
@@ -134,6 +143,22 @@ class ApiClient {
 
     setSessionId(s : string) {
         this._sessionId = s
+    }
+
+    getSessionId(): string | null {
+/// #if DESKTOP
+        return this._sessionId
+/// #else
+        return getSessionId()
+/// #endif                
+    }
+
+    setSessionFull(s: string, userId: number) {
+       this.setSessionId(s)
+
+       // This call should be used on the desktop to store this info
+       // in cookies (as an alternative for storing it on the local system)
+       storeSessionCookie(s, userId)
     }
 
     createAxiosConfig(endpoint : string) : any {
@@ -147,7 +172,7 @@ class ApiClient {
 
     createWebAxiosConfig() : any {
         let ret : any = {
-            baseURL: process.env.API_SQUADOV_URL,
+            baseURL: SQUADOV_API_URL,
         }
 
         if (!!this.setSessionId) {
@@ -159,20 +184,26 @@ class ApiClient {
         return ret
     }
 
-/// #if DESKTOP
     //
     // Legay Local API
     //
     @waitForApiServerSetup
     listLocalValorantAccounts() : Promise<ApiData<RiotAccountData[]>> {
+/// #if DESKTOP
         return axios({
             ...this.createAxiosConfig('valorant/accounts'),
             method: 'get'
         })
+/// #else
+        return new Promise((resolve, reject) => {
+            reject('Unsupported')
+        })
+/// #endif
     }
 
     @waitForApiServerSetup
     editValorantAccount(puuid : string, login : string, password : string) : Promise<ApiData<RiotAccountData>> {
+/// #if DESKTOP
         return axios({
             ...this.createAxiosConfig(`valorant/accounts/${puuid}`),
             method: 'put',
@@ -181,10 +212,16 @@ class ApiClient {
                 password
             }
         })
+/// #else
+        return new Promise((resolve, reject) => {
+            reject('Unsupported')
+        })
+/// #endif
     }
 
     @waitForApiServerSetup
     newValorantAccount(login : string, password : string) : Promise<ApiData<RiotAccountData>> {
+/// #if DESKTOP
         return axios({
             ...this.createAxiosConfig('valorant/accounts'),
             method: 'post',
@@ -193,8 +230,12 @@ class ApiClient {
                 password
             }
         })
-    }
+/// #else
+        return new Promise((resolve, reject) => {
+            reject('Unsupported')
+        })
 /// #endif
+    }
 
     //
     // Web server API
