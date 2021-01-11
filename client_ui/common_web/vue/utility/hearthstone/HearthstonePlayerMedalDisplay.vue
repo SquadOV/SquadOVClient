@@ -128,6 +128,7 @@ export default class HearthstonePlayerMedalDisplay extends Vue {
         return {
             'position': 'absolute',
             'z-index': 1,
+            //@ts-ignore
             'mask-image': `url(${this.$root.generateAssetUri(this.maskImage)})`,
             'mask-size': 'contain'
         }
