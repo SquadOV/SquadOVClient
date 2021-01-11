@@ -1,7 +1,7 @@
 <template>
     <v-img
         v-if="equipFname != ''"
-        :src="equipFname"
+        :src="$root.generateAssetUri(equipFname)"
         :max-height="maxWidthHeight"
         :max-width="maxWidthHeight"
         contain

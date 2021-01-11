@@ -7,7 +7,7 @@
                 <v-img
                     :max-width="32"
                     contain
-                    :src="techLevelIcon(level)"
+                    :src="$root.generateAssetUri(techLevelIcon(level))"
                 >
                 </v-img>
             </v-tab>

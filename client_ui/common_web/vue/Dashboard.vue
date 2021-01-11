@@ -1,7 +1,7 @@
 <template>
     <loading-container :is-loading="!loaded">
         <template v-slot:default="{ loading }">
-            <v-container fluid class="full-parent-height" v-if="loading">
+            <v-container fluid class="full-parent-height" v-if="!loading">
                 <v-row class="full-parent-height flex-column" align-content="center" justify="center">
                     <h1 class="text-center mb-4">Welcome back!</h1>
 
@@ -63,7 +63,6 @@ export default class Dashboard extends Vue {
             }
         }
     }
-
 }
 
 </script>

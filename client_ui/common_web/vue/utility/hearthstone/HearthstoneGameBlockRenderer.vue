@@ -7,7 +7,7 @@
                     <v-img
                         v-if="!isIcon"
                         :max-height="32"
-                        :src="typeIndicatorImage"
+                        :src="$root.generateAssetUri(typeIndicatorImage)"
                         contain
                     >
                     </v-img>
@@ -39,7 +39,7 @@
                         <!-- Image to show that we're doing something to another card -->
                         <v-img
                             :max-height="32"
-                            :src="cardActionImage"
+                            :src="$root.generateAssetUri(cardActionImage)"
                             contain
                             class="flex-shrink-1 flex-grow-0"
                         >

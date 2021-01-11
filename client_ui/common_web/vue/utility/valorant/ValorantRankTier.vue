@@ -1,6 +1,6 @@
 <template>
     <v-img
-        :src="rankImageFName"
+        :src="$root.generateAssetUri(rankImageFName)"
         :max-width="maxWidthHeight"
         :max-height="maxWidthHeight"
         contain

@@ -5,6 +5,7 @@ const path = require('path')
 const ejs = require('ejs')
 app.set('view engine', 'ejs');
 app.use('/dist', express.static(__dirname + '/dist'))
+app.use('/assets', express.static(__dirname + '/assets'))
 
 app.get('*', function (request, response) {
   response.render('index')

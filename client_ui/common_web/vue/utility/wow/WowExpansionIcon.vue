@@ -1,6 +1,6 @@
 <template>
     <v-img
-        :src="src"
+        :src="$root.generateAssetUri(src)"
         class="flex-grow-0"
         :height="height"
         :width="height * WIDTH_MULTIPLIER"

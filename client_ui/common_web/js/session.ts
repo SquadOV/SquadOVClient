@@ -1,10 +1,14 @@
 import { apiClient, ApiData } from '@client/js/api'
-import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
+import { getSquadOVUser, SquadOVUser, SquadOvHeartbeatResponse } from '@client/js/squadov/user'
 import * as ls from 'local-storage'
 
 export function checkHasSessionCookie() : boolean {
     let cookie = ls.get<any>('squadov-session')
     return !!cookie && !!cookie.sessionId
+}
+
+export function clearSessionCookie() {
+    ls.remove('squadov-session')
 }
 
 // In the web case, we need to check to see if the session is set in a cookie instead
@@ -19,12 +23,17 @@ export function loadInitialSessionFromCookies(store: any, onValid: () => void, o
         return
     }
 
-    apiClient.setSessionFull(cookie.sessionId, parseInt(cookie.userId))
-    getSquadOVUser(parseInt(cookie.userId)).then((resp : ApiData<SquadOVUser>) => {
-        store.commit('setUser' , resp.data)
-        onValid()
-    }).catch((err : any ) => {
-        console.log('Failed to obtain user: ', err)
+    apiClient.sessionHeartbeat(cookie.sessionId).then((resp: ApiData<SquadOvHeartbeatResponse>) => {
+        apiClient.setSessionFull(resp.data.sessionId, parseInt(cookie.userId))
+        getSquadOVUser(parseInt(cookie.userId)).then((resp : ApiData<SquadOVUser>) => {
+            store.commit('setUser' , resp.data)
+            onValid()
+        }).catch((err : any ) => {
+            console.log('Failed to obtain user: ', err)
+            onInvalid()
+        })
+    }).catch((err: any) => {
+        console.log('Failed to refresh session')
         onInvalid()
     })
 }

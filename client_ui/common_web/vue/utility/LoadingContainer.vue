@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="full-parent-height full-width">
         <slot v-if="!isLoading" v-bind:loading="isLoading"></slot>
         <div class="d-flex justify-center align-center full-width" v-else>
             <v-progress-circular indeterminate size="64"></v-progress-circular>

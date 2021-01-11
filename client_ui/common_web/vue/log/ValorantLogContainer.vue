@@ -124,7 +124,11 @@ export default class ValorantLogContainer extends Vue {
 */
 
     get isLocalUser(): boolean {
+/// #if DESKTOP        
         return this.userId === this.$store.state.currentUser.id
+/// #else
+        return false
+/// #endif
     }
 
     get hasSelectedAccount(): boolean {

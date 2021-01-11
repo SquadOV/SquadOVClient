@@ -8,7 +8,7 @@
                 <div class="d-flex align-center justify-space-between task-div">
                     <v-img
                         class="mx-4"
-                        :src="content.getTaskIcon(task.taskName)"
+                        :src="$root.generateAssetUri(content.getTaskIcon(task.taskName))"
                         max-width="100"
                         max-height="100"
                         contain

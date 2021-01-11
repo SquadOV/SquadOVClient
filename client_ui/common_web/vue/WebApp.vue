@@ -1,11 +1,9 @@
 <template>
     <div id="appInner">
-        <template v-if="userLoaded">    
-            <app-nav class="flex-grow-0"></app-nav>            
-            <div class="flex-grow-1">
-                <router-view></router-view>
-            </div>
-        </template>
+        <app-nav class="flex-grow-0"></app-nav>            
+        <div class="flex-grow-1">
+            <router-view></router-view>
+        </div>
     </div>
 </template>
 
@@ -20,9 +18,16 @@ import AppNav from '@client/vue/AppNav.vue'
     }
 })
 export default class WebApp extends Vue {
-    get userLoaded(): boolean {
-        return !!this.$store.state.currentUser
-    }
 }
 
 </script>
+
+<style scoped>
+
+#appInner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+</style>

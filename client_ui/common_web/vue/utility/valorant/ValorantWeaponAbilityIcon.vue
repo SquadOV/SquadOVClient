@@ -1,6 +1,6 @@
 <template>
     <v-img
-        :src="equipFname"
+        :src="$root.generateAssetUri(equipFname)"
         :max-height="maxHeight"
         :max-width="maxWidth"
         contain

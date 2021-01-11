@@ -83,7 +83,7 @@
                             <template v-slot:activator="{on, attrs}">
                                 <v-img
                                     width="32px"
-                                    :src="game.icon"
+                                    :src="$root.generateAssetUri(game.icon)"
                                     contain
                                     v-bind="attrs"
                                     v-on="on"

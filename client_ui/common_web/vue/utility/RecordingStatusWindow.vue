@@ -41,7 +41,7 @@
                     :key="`${game}-icon`"
                     contain
                     width="24px"
-                    :src="`assets/${game}-logo.png`"
+                    :src="$root.generateAssetUri(`assets/${game}-logo.png`)"
                 >
                 </v-img>
             </div>

@@ -31,6 +31,10 @@ import {
     SquadMembership, cleanSquadMembershipFromJson
     SquadInvite, cleanSquadInviteFromJson
 } from '@client/js/squadov/squad'
+import {
+    SquadOvHeartbeatResponse,
+    cleanSquadOvHeartbeatResponse
+} from '@client/js/squadov/user'
 import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
@@ -267,6 +271,15 @@ class ApiClient {
 
     logout() : Promise<void> {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
+
+    sessionHeartbeat(sessionId: string): Promise<ApiData<SquadOvHeartbeatResponse>> {
+        return axios.post('auth/session/heartbeat', {
+            sessionId
+        }, this.createWebAxiosConfig()).then((resp: ApiData<SquadOvHeartbeatResponse>) => {
+            cleanSquadOvHeartbeatResponse(resp.data)
+            return resp
+        })
     }
 
     getNotificationSummary(): Promise<ApiData<NotificationSummary>> {

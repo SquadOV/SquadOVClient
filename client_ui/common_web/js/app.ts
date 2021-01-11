@@ -481,6 +481,15 @@ new Vue({
         globals
 /// #endif
     }),
+    methods: {
+        generateAssetUri(s: string): string {
+/// #if DESKTOP
+            return s
+/// #else
+            return `/${s}`
+/// #endif
+        }
+    },
     router: router,
     store: store,
 }).$mount('#app')

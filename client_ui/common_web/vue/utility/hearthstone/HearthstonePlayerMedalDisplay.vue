@@ -2,7 +2,7 @@
     <div class="d-flex flex-column" :style="topDivStyle" v-if="!!medalInfo">
         <div class="d-flex justify-center">
             <v-img
-                :src="starImage"
+                :src="$root.generateAssetUri(starImage)"
                 :width="starWidthHeight"
                 :height="starWidthHeight"
                 contain
@@ -15,7 +15,7 @@
         <div class="d-flex justify-center">
             <div :style="imageDivStyle"> 
                 <v-img
-                    :src="frameImage"
+                    :src="$root.generateAssetUri(frameImage)"
                     :width="maxHeight"
                     :height="maxHeight"
                     contain
@@ -25,7 +25,7 @@
                 </v-img>
 
                 <v-img
-                    :src="portraitImage"
+                    :src="$root.generateAssetUri(portraitImage)"
                     :width="maxHeight"
                     :height="maxHeight"
                     contain

@@ -1,6 +1,6 @@
 <template>
     <v-img
-        :src="agentFname"
+        :src="$root.generateAssetUri(agentFname)"
         :max-width="widthHeight"
         :max-height="widthHeight"
         :style="style"

@@ -1,6 +1,6 @@
 <template>
     <v-img
-        :src="iconUrl"
+        :src="$root.generateAssetUri(iconUrl)"
         :max-width="widthHeight"
         :max-height="widthHeight"
         contain
