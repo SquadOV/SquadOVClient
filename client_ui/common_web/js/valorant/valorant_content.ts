@@ -22,7 +22,7 @@ export class ValorantContent {
     _weapons : { [weaponId : string] : string }
 
     constructor(data : any, abilityData : any) {
-        let jData = JSON.parse(data)
+        let jData = data
         this._agents = {}
 
         this._mapAssetNameToMap = {}
@@ -49,7 +49,7 @@ export class ValorantContent {
             this._weapons[m["ID"] || m["id"]] = m["Name"] || m["name"]
         }
 
-        this._agentAbilities = JSON.parse(abilityData)
+        this._agentAbilities = abilityData
     }
 
     agentIdToName(id : string) : string {
