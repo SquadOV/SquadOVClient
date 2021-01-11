@@ -7,7 +7,7 @@
                         <span class="text-h4">Fully automated.</span>
                         <span class="text-subtitle-1">
                             Install SquadOV, login, play World of Warcraft. That's all you need to do to record a VOD with SquadOV.
-                            No more OBS, no more hotkeys.
+                            No more OBS, no setup required.
                         </span>
                     </div>
                 </v-col>
@@ -91,8 +91,8 @@
                     <div class="d-flex flex-column ">
                         <span class="text-h4">Analytics.</span>
                         <span class="text-subtitle-1">
-                            Automatically keep track of your DPS, heals, and damage received numbers.
-                            See numbers start to drop? Go to the exact moment in the VOD to try and figure out why!
+                            Better visualize your cooldowns used, DPS, heals, and damage received numbers.
+                            Can't figure out why you're wiping? Go to the exact moment in the VOD to try and figure out why!
                         </span>
                     </div>
                 </v-col>

@@ -7,7 +7,7 @@
                         <span class="text-h4">Fully automated.</span>
                         <span class="text-subtitle-1">
                             Install, login, play a game. That's all you need to do to record a VOD with SquadOV.
-                            No more OBS, no more hotkeys.
+                            No more OBS, no setup required.
                         </span>
                     </div>
                 </v-col>
