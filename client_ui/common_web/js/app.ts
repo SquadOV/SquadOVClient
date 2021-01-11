@@ -56,6 +56,14 @@ const VizStats = () => import('@client/vue/performance/VizStats.vue')
 const Login = () => import('@client/vue/auth/Login.vue')
 const Register = () => import('@client/vue/auth/Register.vue')
 
+// Shitty names here are a bit of a legacy from merging two different apps together...
+// EmailVerify = wait for email verification
+// VerifyEmail = endpoint that user goes to when they verify their email.
+// LOL.
+const EmailVerify = () => import('@client/vue/auth/EmailVerify.vue')
+const VerifyEmail = () => import('@client/vue/auth/VerifyEmail.vue')
+const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -68,20 +76,32 @@ import { RootStoreOptions } from '@client/js/vuex/store'
 
 const baseRoutes : any[] = [
     { path: '/', name: pi.DashboardPageId, component: Dashboard },
-    { path: '/login', name: pi.LoginPageId, component: Login },
+    { 
+        path: '/login',
+        name: pi.LoginPageId,
+        component: Login,
+        props: (route : any) => ({
+            reg: route.query.reg
+        })
+    },
     { path: '/register', name: pi.RegisterPageId, component: Register },
     {
         path: '/forgotpw/:changePasswordId',
         name: pi.ForgotPasswordPageId,
-        component: Dashboard,
+        component: ForgotPassword,
         props: (route : any) => ({
             changePasswordId: route.params.changePasswordId
         })
     },
+    {
+        path: '/verify',
+        name: pi.WaitForVerifyPageId,
+        component: EmailVerify,
+    },
     { 
         path: '/verify/:verificationId',
         name: pi.VerifyEmailPageId,
-        component: Dashboard,
+        component: VerifyEmail,
         props: (route : any) => ({
             verificationId: route.params.verificationId
         })

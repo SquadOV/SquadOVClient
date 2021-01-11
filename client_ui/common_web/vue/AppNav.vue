@@ -217,8 +217,13 @@ export default class AppNav extends Vue {
 /// #if DESKTOP
             ipcRenderer.sendSync('logout')
 /// #else
-            // TODO: Delete session cookie.
+            // Delete session cookie and then do a redirect to the login page as we don't have
+            // any facilities to detect this deletion.
             clearSessionCookie()
+
+            this.$router.replace({
+                name: pi.LoginPageId,
+            })
 /// #endif
         })
         

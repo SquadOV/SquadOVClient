@@ -136,6 +136,11 @@ export interface CheckVerificationOutput {
     verified: boolean
 }
 
+interface ChangeForgottenPasswordInput {
+    changePasswordId: string
+    password: string
+}
+
 import { storeSessionCookie, getSessionId } from '@client/js/session'
 
 class ApiClient {
@@ -271,6 +276,16 @@ class ApiClient {
 
     logout() : Promise<void> {
         return axios.post('auth/logout', {}, this.createWebAxiosConfig())
+    }
+    
+    verifyEmail(verificationId : string) : Promise<void> {
+        return axios.post('auth/verify', {
+            verificationId: verificationId,
+        }, this.createWebAxiosConfig())
+    }
+
+    changeForgottenPassword(input: ChangeForgottenPasswordInput) : Promise<void> {
+        return axios.post('auth/forgotpw/change', input, this.createWebAxiosConfig())
     }
 
     sessionHeartbeat(sessionId: string): Promise<ApiData<SquadOvHeartbeatResponse>> {
