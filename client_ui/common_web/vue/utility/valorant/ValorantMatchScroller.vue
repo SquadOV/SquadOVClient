@@ -3,7 +3,7 @@
         <valorant-player-match-summary-display
             class="mb-4"
             v-for="match in matches"
-            :key="match.matchId"
+            :key="match.matchUuid"
             :match="match"
             :user-id="userId"
         >
