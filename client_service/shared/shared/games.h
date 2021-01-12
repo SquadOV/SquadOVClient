@@ -10,7 +10,9 @@ enum class EGame {
     Valorant,
     Aimlab,
     Hearthstone,
-    WoW
+    WoW,
+    LeagueOfLegends,
+    TFT,
 };
 
 using EGameSet = std::unordered_set<EGame>;

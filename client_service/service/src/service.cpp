@@ -5,6 +5,7 @@
 #include "valorant/valorant_process_handler.h"
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
+#include "league/league_process_handler.h"
 #include "system/state.h"
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
@@ -71,6 +72,8 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
+    // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
+    watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
     watcher.start();
 }
 

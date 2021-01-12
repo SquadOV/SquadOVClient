@@ -12,6 +12,10 @@ std::string gameToString(EGame game) {
         return "Hearthstone";
     case EGame::WoW:
         return "World of Warcraft";
+    case EGame::LeagueOfLegends:
+        return "League of Legends";
+    case EGame::TFT:
+        return "Teamfight Tactics";
     }
     return "";
 }
@@ -26,6 +30,10 @@ std::string gameToIconString(EGame game) {
         return "hearthstone";
     case EGame::WoW:
         return "wow";
+    case EGame::LeagueOfLegends:
+        return "lol";
+    case EGame::TFT:
+        return "tft";
     }
     return "";
 }

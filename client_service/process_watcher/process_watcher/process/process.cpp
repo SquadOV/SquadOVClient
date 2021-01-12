@@ -9,6 +9,7 @@
 #include <psapi.h>
 #include <tchar.h>
 #include <errhandlingapi.h>
+#include <winternl.h>
 #endif
 
 #include <iostream>

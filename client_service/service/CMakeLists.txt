@@ -2,12 +2,14 @@ SET(SRCS
     src/service.cpp
     src/api/kafka_api.cpp
     src/api/squadov_api.cpp
+    src/api/league_ingame_api.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
     src/valorant/valorant_match.cpp
     src/hearthstone/hearthstone_process_handler.cpp
     src/wow/wow_process_handler.cpp
+    src/league/league_process_handler.cpp
     src/http/http_client.cpp
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
@@ -30,12 +32,14 @@ SET(SRCS
 SET(HEADERS
     src/api/squadov_api.h
     src/api/kafka_api.h
+    src/api/league_ingame_api.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
     src/valorant/valorant_process_handler.h
     src/valorant/valorant_match.h
     src/hearthstone/hearthstone_process_handler.h
     src/wow/wow_process_handler.h
+    src/league/league_process_handler.h
     src/http/http_client.h
     src/recorder/game_recorder.h
     src/recorder/video/video_recorder.h
