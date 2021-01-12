@@ -357,22 +357,22 @@ class ApiClient {
         return axios.get(`v1/valorant/user/${userId}/accounts/${puuid}/stats`, this.createWebAxiosConfig())
     }
 
-    getValorantMatchDetails(matchId : string) : Promise<ApiData<ValorantMatchDetails>> {
-        return axios.get(`v1/valorant/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchDetails>) => {
+    getValorantMatchDetails(matchUuid : string) : Promise<ApiData<ValorantMatchDetails>> {
+        return axios.get(`v1/valorant/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchDetails>) => {
             cleanValorantMatchDetails(resp.data)
             return resp
         })
     }
 
-    getValorantMatchPlayerMetadata(matchId: string, puuid: string) : Promise<ApiData<ValorantMatchPlayerMatchMetadata>> {
-        return axios.get(`v1/valorant/match/${matchId}/metadata/${puuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+    getValorantMatchPlayerMetadata(matchUuid: string, puuid: string) : Promise<ApiData<ValorantMatchPlayerMatchMetadata>> {
+        return axios.get(`v1/valorant/match/${matchUuid}/metadata/${puuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
             cleanValorantMatchPlayerMatchMetadata(resp.data)
             return resp
         })
     }
 
-    getValorantMatchAccessibleVods(matchId: string, userId: number): Promise<ApiData<ValorantMatchAccessibleVods>> {
-        return axios.get(`v1/valorant/match/${matchId}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+    getValorantMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<ValorantMatchAccessibleVods>> {
+        return axios.get(`v1/valorant/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -515,14 +515,6 @@ class ApiClient {
     graphqlRequest(req : string) : Promise<GraphqlApiData<any>> {
         return axios.post('graphql', {
             query: req
-        }, this.createWebAxiosConfig())
-    }
-
-    syncRiotAccount(userId: number, data: RiotAccountData) : Promise<void> {
-        return axios.post(`v1/users/${userId}/accounts/riot`, {
-            puuid: data.puuid,
-            username: data.gameName,
-            tag: data.tagLine,
         }, this.createWebAxiosConfig())
     }
 

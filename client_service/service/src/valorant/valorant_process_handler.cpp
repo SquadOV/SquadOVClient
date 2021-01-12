@@ -213,6 +213,7 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
         << "\tTagline: " << user->tag << std::endl);
 
     _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(user->username, user->tag);
+    LOG_INFO("Owns Account: " << _ownsAccount << std::endl);
     if (!_ownsAccount) {
         return;
     }

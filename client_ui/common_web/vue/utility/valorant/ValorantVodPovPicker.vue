@@ -68,6 +68,9 @@ export default class ValorantVodPovPicker extends Vue {
     refPuuid!: string
 
     @Prop({required: true})
+    matchUuid!: string
+
+    @Prop({required: true})
     vod!: VodAssociation | null
 
     @Prop({required: true})
@@ -141,13 +144,6 @@ export default class ValorantVodPovPicker extends Vue {
         return this.availableVods.vods.length
     }
 
-    get matchId(): string {
-        if (!this.match) {
-            return ''
-        }
-        return this.match._details.data.matchInfo.matchId
-    }
-
     get uuidToVod(): Map<string, VodAssociation> {
         let map = new Map<string, VodAssociation>()
         if (!!this.availableVods) {
@@ -175,7 +171,7 @@ export default class ValorantVodPovPicker extends Vue {
         }
 
         // Using the current user ID here is correct as we only want the VODS accessible to the current user (not to the user whose match we're viewing).
-        apiClient.getValorantMatchAccessibleVods(this.matchId, this.$store.state.currentUser.id).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+        apiClient.getValorantMatchAccessibleVods(this.matchUuid, this.$store.state.currentUser.id).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Valorant VODs: ', err)
@@ -205,7 +201,7 @@ export default class ValorantVodPovPicker extends Vue {
 
         this.$emit('update:puuid', puuid)
         this.$emit('update:vod', vod)
-        apiClient.getValorantMatchPlayerMetadata(this.matchId, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+        apiClient.getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
             this.$emit('update:playerMetadata', resp.data)
         }).catch((err : any) => {
             console.log('Failed to obtain Valorant VOD Player Metadata: ', err)

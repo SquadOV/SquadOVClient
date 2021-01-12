@@ -22,6 +22,7 @@
                         </video-player>
 
                         <valorant-vod-pov-picker
+                            :match-uuid="matchUuid"
                             :puuid.sync="povPuuid"
                             :vod.sync="vod"
                             :player-metadata.sync="playerMetadata"
@@ -153,7 +154,7 @@ export default class ValorantMatch extends Vue {
     playerMetadata: ValorantMatchPlayerMatchMetadata | null = null
 
     @Prop({required: true})
-    matchId! : string
+    matchUuid! : string
 
     $refs!: {
         player: VideoPlayer
@@ -244,9 +245,9 @@ export default class ValorantMatch extends Vue {
         this.currentPlayer = this.matchWrapper.getPlayer(this.puuid)
     }
 
-    @Watch('matchId')
+    @Watch('matchUuid')
     refreshMatch() {
-        apiClient.getValorantMatchDetails(this.matchId).then((resp : ApiData<ValorantMatchDetails>) => {
+        apiClient.getValorantMatchDetails(this.matchUuid).then((resp : ApiData<ValorantMatchDetails>) => {
             this.currentMatch = resp.data
         }).catch((err : any) => {
             console.log('Failed to get valorant match details: ' + err)

@@ -315,12 +315,12 @@ const baseRoutes : any[] = [
         ],
     },
     {
-        path: '/match/valorant/:matchId',
+        path: '/match/valorant/:matchUuid',
         name: pi.ValorantMatchPageId,
         component: ValorantMatch,
         props: (route : any) => ({
             puuid: route.query.account,
-            matchId: route.params.matchId,
+            matchUuid: route.params.matchUuid,
             userId: parseInt(route.query.userId)
         })
     },

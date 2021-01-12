@@ -421,7 +421,7 @@ bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, con
 
 bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName) const {
     std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/summoner/" << summonerName;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/lol/" << summonerName;
 
     const auto result = _webClient->get(path.str());
     return result->status == 200;
@@ -473,7 +473,11 @@ void SquadovApi::requestLeagueOfLegendsBackfill(const std::string& summonerName)
 }
 
 bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName) const {
-    return verifyLeagueOfLegendsAccountOwnership(summonerName);
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/tft/" << summonerName;
+
+    const auto result = _webClient->get(path.str());
+    return result->status == 200;
 }
 
 std::string SquadovApi::createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId) const {
