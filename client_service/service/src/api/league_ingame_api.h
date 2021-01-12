@@ -1,4 +1,7 @@
 #pragma once
+
+#include "http/http_client.h"
+
 #include <memory>
 #include <string>
 
@@ -17,6 +20,9 @@ public:
 
     LeagueGameStats getGameStats();
     std::string getActivePlayerName();
+
+private:
+    std::unique_ptr<http::HttpClient> _client;
 };
 using LeagueIngameApiPtr = std::unique_ptr<LeagueIngameApi>;
 

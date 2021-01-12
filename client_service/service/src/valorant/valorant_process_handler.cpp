@@ -35,6 +35,7 @@ private:
 
     game_event_watcher::ValorantLogWatcherPtr _logWatcher;
 
+    bool _ownsAccount = false;
     shared::riot::RiotUser _currentUser;
     ValorantMatchPtr _currentMatch;
     process_watcher::process::Process  _process;
@@ -71,7 +72,7 @@ ValorantProcessHandlerInstance::~ValorantProcessHandlerInstance() {
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
-    if (service::system::getGlobalState()->isPaused()) {
+    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
         return;
     }
 
@@ -108,7 +109,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
-    if (service::system::getGlobalState()->isPaused()) {
+    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
         return;
     }
 
@@ -170,11 +171,14 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 }
 
 void ValorantProcessHandlerInstance::backfillMatchHistory() {
+    if (!_ownsAccount) {
+        return;
+    }
     service::api::getGlobalApi()->requestValorantMatchBackfill(_currentUser.username, _currentUser.tag);
 }
 
 void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint& eventTime, const void*) {
-    if (service::system::getGlobalState()->isPaused()) {
+    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
         return;
     }
 
@@ -187,7 +191,7 @@ void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint&
 }
 
 void ValorantProcessHandlerInstance::onValorantRoundStart(const shared::TimePoint& eventTime, const void*) {
-    if (service::system::getGlobalState()->isPaused()) {
+    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
         return;
     }
 
@@ -207,6 +211,11 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
         << "\tPUUID: " << user->puuid << std::endl
         << "\tUsername: " << user->username << std::endl
         << "\tTagline: " << user->tag << std::endl);
+
+    _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(user->username, user->tag);
+    if (!_ownsAccount) {
+        return;
+    }
 
     _currentUser = *user;
 

@@ -1,5 +1,6 @@
 #include "game_event_watcher/league/league_log_watcher.h"
 #include "shared/filesystem/utility.h"
+#include <regex>
 
 namespace fs = std::filesystem;
 using namespace std::literals::chrono_literals;
@@ -8,7 +9,39 @@ namespace game_event_watcher {
 
 namespace {
 
+const std::string CFG_LINE_TOKEN = "CFG| Command Line:";
+const std::regex GAME_ID_REGEX(".*-GameID=(\d*).*");
+const std::regex REGION_REGEX(".*-Region=(.*?)\".*");
+const std::regex PLATFORM_REGEX(".*-PlatformID=(.*?)\".*");
 bool parseLeagueCommandLineCfg(const std::string& line, LeagueCommandLineCfg& cfg) {
+    if (line.find(CFG_LINE_TOKEN) == std::string::npos) {
+        return false;
+    }
+
+    {
+        std::smatch matches;
+        if (!std::regex_search(line, matches, GAME_ID_REGEX)) {
+            return false;
+        }
+        cfg.gameId = static_cast<int64_t>(std::stoll(matches[1].str()));
+    }
+
+    {
+        std::smatch matches;
+        if (!std::regex_search(line, matches, REGION_REGEX)) {
+            return false;
+        }
+        cfg.region = matches[1].str();
+    }
+
+    {
+        std::smatch matches;
+        if (!std::regex_search(line, matches, PLATFORM_REGEX)) {
+            return false;
+        }
+        cfg.platformId = matches[1].str();
+    }
+
     return false;
 }
 

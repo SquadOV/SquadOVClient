@@ -411,6 +411,117 @@ void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const sha
     }
 }
 
+bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const {
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account" << gameName << "/" << tagLine;
+
+    const auto result = _webClient->get(path.str());
+    return result->status == 200;
+}
+
+bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName) const {
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/summoner/" << summonerName;
+
+    const auto result = _webClient->get(path.str());
+    return result->status == 200;
+}
+
+std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId) const {
+    const nlohmann::json body = {
+        { "platform", platform },
+        { "matchId", matchId }
+    };
+
+    std::ostringstream path;
+    path << "/v1/lol";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create LoL match: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::finishLeagueOfLegendsMatch(const std::string& matchUuid) const {
+    std::ostringstream path;
+    path << "/v1/lol/match/" << matchUuid;
+
+    const auto result = _webClient->post(path.str(), {});
+    if (result->status != 200) {
+        THROW_ERROR("Failed to finish LoL match: " << result->status);
+        return;
+    }
+}
+
+void SquadovApi::requestLeagueOfLegendsBackfill(const std::string& summonerName) const {
+    const nlohmann::json body = {
+        { "summonerName", summonerName }
+    };
+
+    std::ostringstream path;
+    path << "/v1/lol/user/" << getSessionUserId() << "/backfill";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to request LoL backfill: " << result->status);
+        return;
+    }
+}
+
+bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName) const {
+    return verifyLeagueOfLegendsAccountOwnership(summonerName);
+}
+
+std::string SquadovApi::createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId) const {
+    const nlohmann::json body = {
+        { "platform", platform },
+        { "region", region },
+        { "matchId", matchId }
+    };
+
+    std::ostringstream path;
+    path << "/v1/tft";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create TFT match: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::finishTftMatch(const std::string& matchUuid) const {
+    std::ostringstream path;
+    path << "/v1/tft/match/" << matchUuid;
+
+    const auto result = _webClient->post(path.str(), {});
+    if (result->status != 200) {
+        THROW_ERROR("Failed to finish TFT match: " << result->status);
+        return;
+    }
+}
+
+void SquadovApi::requestTftBackfill(const std::string& summonerName) const {
+    const nlohmann::json body = {
+        { "summonerName", summonerName }
+    };
+
+    std::ostringstream path;
+    path << "/v1/tft/user/" << getSessionUserId() << "/backfill";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to request TFT backfill: " << result->status);
+        return;
+    }
+}
+
 SquadovApi* getGlobalApi() {
     static SquadovApiPtr global = std::make_unique<SquadovApi>();
     return global.get();

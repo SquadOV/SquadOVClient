@@ -531,7 +531,7 @@ class ApiClient {
     }
 
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  
-        return axios.get(`v1/users/${userId}/accounts/riot/${puuid}`, this.createWebAxiosConfig())
+        return axios.get(`v1/users/${userId}/accounts/riot/valorant/puuid/${puuid}`, this.createWebAxiosConfig())
     }
 
     listWoWCharacters(userId: number): Promise<ApiData<WowCharacter[]>> {
