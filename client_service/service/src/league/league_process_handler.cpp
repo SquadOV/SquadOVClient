@@ -102,18 +102,6 @@ void LeagueProcessHandlerInstance::onGameStart() {
     if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
         return;
     }
-
-    try {
-        // Note that it's the server's responsibility to make sure we don't backfill too often.
-        if (_actualGame == shared::EGame::TFT) {
-            service::api::getGlobalApi()->requestTftBackfill(_activePlayerSummonerName);
-        } else {
-            service::api::getGlobalApi()->requestLeagueOfLegendsBackfill(_activePlayerSummonerName);
-        }
-    } catch (std::exception& ex) {
-        // Not a real error as it doesn't get in the way of us doing anything.
-        LOG_WARNING("Failed to request LoL/TFT backfill: " << ex.what() << std::endl);
-    }
     
     _startTime = shared::nowUtc();
     _recorder->start();
@@ -177,7 +165,8 @@ void LeagueProcessHandlerInstance::onLeagueConfig(const shared::TimePoint& event
     _cfg = *cfg;
 
     // This is where we create the match UUID on the server as we can only get
-    // a unique Riot-based identifier for the match (region/platform + game ID).
+    // a unique Riot-based identifier for the match (region/platform + game ID)
+    // once this event fires.
     try {
         if (_actualGame == shared::EGame::TFT) {
             _currentMatchUuid = service::api::getGlobalApi()->createNewTftMatch(_cfg.region, _cfg.platformId, _cfg.gameId);
@@ -186,6 +175,18 @@ void LeagueProcessHandlerInstance::onLeagueConfig(const shared::TimePoint& event
         }
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create new LoL/TFT match: " << ex.what() << std::endl);
+    }
+
+    try {
+        // Note that it's the server's responsibility to make sure we don't backfill too often.
+        if (_actualGame == shared::EGame::TFT) {
+            service::api::getGlobalApi()->requestTftBackfill(_activePlayerSummonerName, _cfg.region);
+        } else {
+            service::api::getGlobalApi()->requestLeagueOfLegendsBackfill(_activePlayerSummonerName, _cfg.platformId);
+        }
+    } catch (std::exception& ex) {
+        // Not a real error as it doesn't get in the way of us doing anything.
+        LOG_WARNING("Failed to request LoL/TFT backfill: " << ex.what() << std::endl);
     }
 }
 

@@ -457,9 +457,10 @@ void SquadovApi::finishLeagueOfLegendsMatch(const std::string& matchUuid) const 
     }
 }
 
-void SquadovApi::requestLeagueOfLegendsBackfill(const std::string& summonerName) const {
+void SquadovApi::requestLeagueOfLegendsBackfill(const std::string& summonerName, const std::string& platform) const {
     const nlohmann::json body = {
-        { "summonerName", summonerName }
+        { "summonerName", summonerName },
+        { "platform", platform }
     };
 
     std::ostringstream path;
@@ -511,9 +512,10 @@ void SquadovApi::finishTftMatch(const std::string& matchUuid) const {
     }
 }
 
-void SquadovApi::requestTftBackfill(const std::string& summonerName) const {
+void SquadovApi::requestTftBackfill(const std::string& summonerName, const std::string& region) const {
     const nlohmann::json body = {
-        { "summonerName", summonerName }
+        { "summonerName", summonerName },
+        { "region", region }
     };
 
     std::ostringstream path;

@@ -74,13 +74,13 @@ public:
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId) const;
     void finishLeagueOfLegendsMatch(const std::string& matchUuid) const;
     bool verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName) const;
-    void requestLeagueOfLegendsBackfill(const std::string& summonerName) const;
+    void requestLeagueOfLegendsBackfill(const std::string& summonerName, const std::string& platform) const;
 
     // TFT
     std::string createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId) const;
     void finishTftMatch(const std::string& matchUuid) const;
     bool verifyTftAccountOwnership(const std::string& summonerName) const;
-    void requestTftBackfill(const std::string& summonerName) const;
+    void requestTftBackfill(const std::string& summonerName, const std::string& region) const;
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid) const;
