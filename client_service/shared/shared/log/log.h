@@ -10,6 +10,7 @@
 namespace shared::log {
 
 enum class LogType {
+    Debug,
     Info,
     Warning,
     Error
@@ -20,8 +21,14 @@ public:
     explicit Log(const std::string& fname);
     ~Log();
 
+    void setThreshold(LogType t) { _typeThreshold = t; }
+
     template<typename T>
     Log& operator<<(const T& val) {
+        if (!canLogPass()) {
+            return *this;
+        }
+
         std::ostringstream str;
         if (_needPrefix) {
             str << "[" << currentLogLevel() << "]"
@@ -54,6 +61,10 @@ public:
 
     using StdStreamManip = std::ostream&(*)(std::ostream&);
     Log& operator<<(StdStreamManip manip) {
+        if (!canLogPass()) {
+            return *this;
+        }
+
         if (manip == static_cast<StdStreamManip>(std::endl)) {
             _needPrefix = true;
         }
@@ -65,6 +76,10 @@ public:
 
     using StdIoManip = std::ios_base&(*)(std::ios_base&);
     Log& operator<<(StdIoManip manip) {
+        if (!canLogPass()) {
+            return *this;
+        }
+        
         _outLog << manip;
         std::cout << manip;
         return *this;
@@ -73,8 +88,10 @@ public:
 private:
     std::string currentTimeLog() const;
     std::string currentLogLevel() const;
+    bool canLogPass() const;
 
     LogType _currentType = LogType::Info;
+    LogType _typeThreshold = LogType::Info;
     std::ofstream _outLog;
     bool _needPrefix = true;
 };
@@ -83,6 +100,7 @@ Log& getGlobalLogger();
 
 }
 
+#define LOG_DEBUG(x) shared::log::getGlobalLogger() << shared::log::LogType::Debug << x;
 #define LOG_INFO(x) shared::log::getGlobalLogger() << shared::log::LogType::Info << x;
 #define LOG_WARNING(x) shared::log::getGlobalLogger() << shared::log::LogType::Warning << x;
 #define LOG_ERROR(x) shared::log::getGlobalLogger() << shared::log::LogType::Error << x;
