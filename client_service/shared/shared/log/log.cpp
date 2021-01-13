@@ -63,8 +63,14 @@ std::string Log::currentLogLevel() const {
             return "Warning";
         case LogType::Error:
             return "Error";
+        case LogType::Debug:
+            return "Debug";
     }
     return "";
+}
+
+bool Log::canLogPass() const {
+    return (static_cast<int>(_currentType) >= static_cast<int>(_typeThreshold));
 }
 
 Log& getGlobalLogger() {

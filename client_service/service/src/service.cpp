@@ -92,7 +92,12 @@ int main(int argc, char** argv) {
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
 
-        LOG_INFO("Start SquadOV" << std::endl);
+    if (shared::getEnv("SQUADOV_DEBUG") != "") {
+        LOG_INFO("Enabling Debug Logs" << std::endl);
+        shared::log::getGlobalLogger().setThreshold(shared::log::LogType::Debug);   
+    }
+
+    LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif

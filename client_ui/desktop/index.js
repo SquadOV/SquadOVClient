@@ -445,6 +445,10 @@ app.on('ready', async () => {
     if (!app.commandLine.hasSwitch('hidden')) {
         win.show()
     }
+
+    if (app.commandLine.hasSwitch('debug')) {
+        process.env.SQUADOV_DEBUG = '1'
+    }
     
     if (!loadSession()) {
         // Needing to login overrides the hidden flag as we don't display the tray icon until much later.

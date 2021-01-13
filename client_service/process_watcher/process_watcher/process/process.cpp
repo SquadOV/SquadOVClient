@@ -21,11 +21,13 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, id);
 
     if (hProcess == NULL) {
+        LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
     }
 
     TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
     if (GetModuleFileNameEx(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
+        LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
     }
     CloseHandle(hProcess);
@@ -43,10 +45,12 @@ bool listRunningProcesses(std::vector<Process>& out) {
 #ifdef _WIN32
     DWORD aProcesses[1024], cbNeeded, cProcesses;
     if ( !EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded) ) {
+        LOG_WARNING("Failed to enum processes: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return false;
     }
 
     cProcesses = cbNeeded / sizeof(DWORD);
+    LOG_DEBUG("Detected " << cProcesses << " Processes using " << cbNeeded << " bytes out of " << sizeof(aProcesses) << std::endl);
 
     for (DWORD i = 0; i < cProcesses; ++i) {
         if (aProcesses[i] == 0) {
@@ -67,6 +71,10 @@ bool listRunningProcesses(std::vector<Process>& out) {
         return a.name() < b.name();
     });
 
+    LOG_DEBUG("Final number of processes detected: " << out.size() << std::endl);
+    for (const auto& p: out) {
+        LOG_DEBUG("\tProcess: " << p.name() << std::endl);
+    }
     return true;
 }
 
