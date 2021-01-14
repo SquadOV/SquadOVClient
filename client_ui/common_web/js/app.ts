@@ -53,6 +53,14 @@ const WowEncounterGameLog = () => import('@client/vue/utility/wow/WowEncounterGa
 const WowKeystoneGameLog = () => import('@client/vue/utility/wow/WowKeystoneGameLog.vue')
 const WowDefaultGameLog = () => import('@client/vue/utility/wow/WowDefaultGameLog.vue')
 
+const TftLogContainer = () => import('@client/vue/log/TftLogContainer.vue')
+const TftGameLog = () => import('@client/vue/log/TftGameLog.vue')
+const TftMatch = () => import('@client/vue/log/TftMatch.vue')
+
+const LolLogContainer = () => import('@client/vue/log/LolLogContainer.vue')
+const LolGameLog = () => import('@client/vue/log/LolGameLog.vue')
+const LolMatch = () => import('@client/vue/log/LolMatch.vue')
+
 const Performance = () => import('@client/vue/Performance.vue')
 const PerformanceComponentChooser = () => import('@client/vue/performance/PerformanceComponentChooser.vue')
 const VizStats = () => import('@client/vue/performance/VizStats.vue')
@@ -161,6 +169,44 @@ const baseRoutes : any[] = [
                     },
                 ],
                 component: ValorantLogContainer,
+                props: (route : any) => ({
+                    userId: parseInt(route.params.userId),
+                    puuid: route.params.account
+                })
+            },
+            {
+                path: 'tft/account/:account?',
+                children: [
+                    {
+                        path: '',
+                        name: pi.TftLogPageId,
+                        component: TftGameLog,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            puuid: route.params.account
+                        })
+                    },
+                ],
+                component: TftLogContainer,
+                props: (route : any) => ({
+                    userId: parseInt(route.params.userId),
+                    puuid: route.params.account
+                })
+            },
+            {
+                path: 'lol/account/:account?',
+                children: [
+                    {
+                        path: '',
+                        name: pi.LolLogPageId,
+                        component: LolGameLog,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            puuid: route.params.account
+                        })
+                    },
+                ],
+                component: LolLogContainer,
                 props: (route : any) => ({
                     userId: parseInt(route.params.userId),
                     puuid: route.params.account
@@ -318,6 +364,26 @@ const baseRoutes : any[] = [
         path: '/match/valorant/:matchUuid',
         name: pi.ValorantMatchPageId,
         component: ValorantMatch,
+        props: (route : any) => ({
+            puuid: route.query.account,
+            matchUuid: route.params.matchUuid,
+            userId: parseInt(route.query.userId)
+        })
+    },
+    {
+        path: '/match/tft/:matchUuid',
+        name: pi.TftMatchPageId,
+        component: TftMatch,
+        props: (route : any) => ({
+            puuid: route.query.account,
+            matchUuid: route.params.matchUuid,
+            userId: parseInt(route.query.userId)
+        })
+    },
+    {
+        path: '/match/lol/:matchUuid',
+        name: pi.LolMatchPageId,
+        component: LolMatch,
         props: (route : any) => ({
             puuid: route.query.account,
             matchUuid: route.params.matchUuid,
