@@ -382,12 +382,17 @@ import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js
 router.beforeEach((to : any, from : any, next : any) => {
     console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
     
+    let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
+    if (to.name != pi.DashboardPageId && !mustBeInvalid) {
+        apiClient.markUserActive().catch((err: any) => {
+            console.log('Failed to mark user active: ', err)
+        })
+    }
+
 /// #if DESKTOP
     next()
 /// #else
     let hasCookie = checkHasSessionCookie()
-    let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
-
     if (hasCookie && !store.state.currentUser) {
         // If we have a cookie and the current user isn't set, then send out a request
         // to verify the session cookie.
@@ -420,11 +425,6 @@ router.beforeEach((to : any, from : any, next : any) => {
                 name: pi.LoginPageId
             })
         } else {
-            if (to.name != pi.DashboardPageId && !mustBeInvalid) {
-                apiClient.markUserActive().catch((err: any) => {
-                    console.log('Failed to mark user active: ', err)
-                })
-            }
             next()
         }
     }
