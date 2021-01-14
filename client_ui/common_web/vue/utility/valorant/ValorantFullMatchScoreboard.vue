@@ -7,6 +7,7 @@
         <v-data-table
             :headers="headers"
             :items="items"
+            :items-per-page="20"
             hide-default-footer
             id="scoreboardTable"
         >
