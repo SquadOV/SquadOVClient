@@ -76,5 +76,11 @@
         "Ability1": "Trailblazer",
         "Ability2": "Guiding Light",
         "Ultimate": "Seekers"        
+    },
+    "Yoru": {
+        "GrenadeAbility": "Bait",
+        "Ability1": "Stun",
+        "Ability2": "Uninvited Guest",
+        "Ultimate": "Spatial Drift"        
     }
 }
