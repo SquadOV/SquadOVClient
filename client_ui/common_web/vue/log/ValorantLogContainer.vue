@@ -11,35 +11,9 @@
                             <valorant-account-chooser
                                 v-model="selectedAccount"
                                 :options.sync="allAccounts"
-                                :allow-crud="isLocalUser"
                                 class="mr-4"
                             >
                             </valorant-account-chooser>
-<!--
-                            <router-link :to="gamesTo">
-                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
-                                    Games
-                                </v-btn>
-                            </router-link>
-
-                            <router-link :to="agentsTo"> 
-                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
-                                    Agents
-                                </v-btn>
-                            </router-link>
-
-                            <router-link :to="mapsTo">
-                                <v-btn text class="mr-2" :disabled="!hasSelectedAccount">
-                                    Maps
-                                </v-btn>
-                            </router-link>
-
-                            <router-link :to="weaponsTo">
-                                <v-btn text :disabled="!hasSelectedAccount">
-                                    Weapons
-                                </v-btn>
-                            </router-link>
--->
 
                             <v-btn icon @click="refreshAccounts">
                                 <v-icon>
@@ -188,7 +162,7 @@ export default class ValorantLogContainer extends Vue {
     
     @Watch('userId')
     refreshAccounts() {
-        apiClient.listRiotAccounts(this.userId).then((resp : ApiData<RiotAccountData[]>) => {
+        apiClient.listRiotValorantAccounts(this.userId).then((resp : ApiData<RiotAccountData[]>) => {
             this.allAccounts = resp.data
         }).catch((err : any) => {
             console.log('Failed to list valorant accounts: ' + err);

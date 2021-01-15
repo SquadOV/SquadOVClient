@@ -145,6 +145,22 @@ export default class AppNav extends Vue {
                         },
                     },
                     {
+                        name: 'League of Legends',
+                        to: {
+                            name: pi.LolLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
+                    },
+                    {
+                        name: 'Teamfight Tactics',
+                        to: {
+                            name: pi.TftLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
+                    },
+                    {
                         name: 'Valorant',
                         to: {
                             name: pi.ValorantLogPageId,

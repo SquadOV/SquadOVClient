@@ -1,0 +1,1 @@
+export const TFT_RANKED_QUEUE_ID: number = 1100

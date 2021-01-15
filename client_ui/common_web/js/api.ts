@@ -35,6 +35,9 @@ import {
     SquadOvHeartbeatResponse,
     cleanSquadOvHeartbeatResponse
 } from '@client/js/squadov/user'
+import {
+    RiotSummoner
+} from '@client/js/riot/summoner'
 import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
@@ -56,6 +59,10 @@ import {
     WowStatQueryParam,
     WowMatchStatContainer
 } from '@client/js/wow/stats'
+import {
+    TftPlayerMatchSummary,
+    cleanTftPlayerMatchSummaryFromJson
+} from '@client/js/tft/matches'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -518,8 +525,33 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    listRiotAccounts(userId: number): Promise<ApiData<RiotAccountData[]>> {
-        return axios.get(`v1/users/${userId}/accounts/riot`, this.createWebAxiosConfig())
+    listRiotValorantAccounts(userId: number): Promise<ApiData<RiotAccountData[]>> {
+        return axios.get(`v1/users/${userId}/accounts/riot/valorant`, this.createWebAxiosConfig())
+    }
+
+    listRiotTftAccounts(userId: number): Promise<ApiData<RiotSummoner[]>> {
+        return axios.get(`v1/users/${userId}/accounts/riot/tft`, this.createWebAxiosConfig())
+    }
+
+    listTftMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<TftPlayerMatchSummary[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/tft/user/${params.userId}/accounts/${params.puuid}/matches`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<any[]>>) => {
+            resp.data.data.forEach(cleanTftPlayerMatchSummaryFromJson)
+            return resp
+        })
+    }
+
+    listRiotLolAccounts(userId: number): Promise<ApiData<RiotSummoner[]>> {
+        return axios.get(`v1/users/${userId}/accounts/riot/lol`, this.createWebAxiosConfig())
     }
 
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  

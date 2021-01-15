@@ -1,0 +1,173 @@
+<template>
+    <div>
+        <router-link :to="gameTo">
+            <v-sheet
+                class="match-summary"
+                rounded
+                :style="style"
+            >
+                <v-row no-gutters>
+                    <!-- Little legend icon -->
+                    <v-col cols="1" align-self="center">
+                        <tft-little-legend-icon
+                            :content-id="match.companion.contentId"
+                            :width="100"
+                            :height="100"
+                        >
+                        </tft-little-legend-icon>
+                    </v-col>
+
+                    <!-- Placement and Traits -->
+                    <v-col cols="2" align-self="center">
+                        <div class="d-flex flex-column justify-center" :style="placementStyle">
+                            <div class="d-flex justify-center text-h3">{{ placementString }}</div>
+                            <tft-full-trait-display
+                                class="mx-2"
+                                :traits="match.traits"
+                                :tft-set="patch"
+                            >
+                            </tft-full-trait-display>
+                        </div>
+                    </v-col>
+
+                    <!-- Game Info (time, type, match length) -->
+                    <v-col cols="2" align-self="center" class="text-body-2">
+                        <p>
+                            {{ dateTime }}
+                        </p>
+
+                        <p>
+                            {{ queueType }} (Set {{ patch }})
+                        </p>
+
+                        <p>
+                            {{ matchLength }} - {{ match.lastRound }} Rounds
+                        </p>
+                    </v-col>
+
+                    <!-- Units -->
+                    <v-col cols="7" align-self="center">
+                        <tft-full-unit-display
+                            class="mx-2 my-1"
+                            :units="match.units"
+                            :tft-set="patch"
+                            :single-width="48"
+                        >
+                        </tft-full-unit-display>
+                    </v-col>
+                </v-row>
+            </v-sheet>
+        </router-link>
+    </div>
+</template>
+
+<script lang="ts">
+
+import Vue from 'vue'
+import Component from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
+import { TftPlayerMatchSummary, getTftSetNumber } from '@client/js/tft/matches'
+import {
+    getGenericWinColor,
+    getGenericLossColor,
+    colorToCssString,
+    getGenericFirstPlaceColor,
+    getGenericTopPlaceColor,
+    getGenericBottomPlaceColor
+} from '@client/js/color'
+import * as pi from '@client/js/pages'
+import { getOrdinal } from '@client/js/ordinal'
+import { standardFormatTime, secondsToTimeString } from '@client/js/time'
+import { TFT_RANKED_QUEUE_ID } from '@client/js/tft/queue'
+
+import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
+import TftFullTraitDisplay from '@client/vue/utility/tft/TftFullTraitDisplay.vue'
+import TftFullUnitDisplay from '@client/vue/utility/tft/TftFullUnitDisplay.vue'
+
+@Component({
+    components: {
+        TftLittleLegendIcon,
+        TftFullTraitDisplay,
+        TftFullUnitDisplay
+    }
+})
+export default class TftMatchSummary extends Vue {
+    @Prop({required: true})
+    match!: TftPlayerMatchSummary
+
+    @Prop({required: true})
+    userId!: number
+
+    @Prop({required: true})
+    puuid!: string
+
+    get gameTo(): any {
+        return {
+            name: pi.TftMatchPageId,
+            params: {
+                matchUuid: this.match.matchUuid,
+                ...this.$route.params
+            },
+            query: {
+                account: this.puuid,
+                userId: this.userId,
+                ...this.$route.query
+            },
+        }
+    }
+
+    get dateTime(): string {
+        return standardFormatTime(this.match.gameDatetime)
+    }
+
+    get queueType(): string {
+        return (this.match.queueId == TFT_RANKED_QUEUE_ID) ? 'Ranked' : 'Normal'
+    }
+
+    get matchLength(): string {
+        return secondsToTimeString(this.match.gameLength)
+    }
+
+    get patch(): string {
+        return getTftSetNumber(this.match.tftSetNumber, this.match.gameDatetime)
+    }
+
+    get winLossColor(): string {
+        return colorToCssString((this.match.placement > 4) ? getGenericBottomPlaceColor() :
+            (this.match.placement > 1) ? getGenericTopPlaceColor() :
+            getGenericFirstPlaceColor())
+    }
+
+    get style() : any {
+        return {
+            'border-left': `5px solid ${this.winLossColor}`,
+            'background-position': 'right',
+            'background-size': 'contain',
+        }
+    }
+
+    get placementString(): string {
+        return getOrdinal(this.match.placement)
+    }
+
+    get placementStyle(): any {
+        return {
+            'color': this.winLossColor
+        }
+    }
+}
+
+</script>
+
+<style scoped>
+
+.match-summary {
+    width: 100%;
+    position: relative;
+}
+
+p {
+    margin-bottom: 2px !important;
+}
+
+</style>

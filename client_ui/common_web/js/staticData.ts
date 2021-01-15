@@ -42,6 +42,34 @@ class StaticDataClient {
     getWowDifficultyDataUrl(diffId: number | string): string {
         return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/difficulty/${diffId}/data.json`
     }
+
+    getTftLittleLegendIcon(id: string): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/companions/${id}/portrait.png`
+    }
+    
+    getTftTraitIcon(set: string, trait: string): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/traits/${trait}/icon.png`
+    }
+
+    getTftTraitData(set: string, trait: string): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/traits/${trait}/data.json`
+    }
+
+    getTftUnitIcon(set: string, unit: string): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/champions/${unit}/icon.png`
+    }
+
+    getTftUnitData(set: string, unit: string): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/champions/${unit}/data.json`
+    }
+
+    getTftItemIcon(set: string, item: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/items/${item}/icon.png`
+    }
+
+    getTftItemData(set: string, item: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/items/${item}/data.json`
+    }
 }
 
 export let staticClient = new StaticDataClient()

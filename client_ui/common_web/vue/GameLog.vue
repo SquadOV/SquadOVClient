@@ -165,6 +165,8 @@ export default class GameLog extends Vue {
     get supportedGames(): any[] {
         let aimlabTo = this.constructPageTo(pi.AimlabLogPageId)
         let hearthstoneTo = this.constructPageTo(pi.HearthstoneLogPageId)
+        let lolTo = this.constructPageTo(pi.LolLogPageId)
+        let tftTo = this.constructPageTo(pi.TftLogPageId)
         let valorantTo = this.constructPageTo(pi.ValorantLogPageId)
         let wowTo = this.constructPageTo(pi.WowLogPageId)
         return [
@@ -179,6 +181,18 @@ export default class GameLog extends Vue {
                 'name': 'Hearthstone',
                 'to': hearthstoneTo,
                 'route': this.$router.resolve(hearthstoneTo).route
+            },
+            {
+                'icon': 'assets/lol-logo.png',
+                'name': 'League of Legends',
+                'to': lolTo,
+                'route': this.$router.resolve(lolTo).route
+            },
+            {
+                'icon': 'assets/tft-logo.png',
+                'name': 'Teamfight Tactics',
+                'to': tftTo,
+                'route': this.$router.resolve(tftTo).route
             },
             {
                 'icon': 'assets/valorant-logo.png',
