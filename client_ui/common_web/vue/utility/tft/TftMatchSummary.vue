@@ -56,6 +56,12 @@
                         </tft-full-unit-display>
                     </v-col>
                 </v-row>
+
+                <div class="vod-div" v-if="match.hasVod">
+                    <v-icon color="black">
+                        mdi-video
+                    </v-icon>
+                </div>
             </v-sheet>
         </router-link>
     </div>
