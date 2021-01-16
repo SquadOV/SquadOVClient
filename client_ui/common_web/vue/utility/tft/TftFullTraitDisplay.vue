@@ -5,6 +5,7 @@
             :key="idx"
             :trait="trait"
             :tft-set="tftSet"
+            :width-height="singleWidthHeight"
         >
         </tft-single-trait-display>
     </div>
@@ -29,6 +30,9 @@ export default class TftFullTraitDisplay extends Vue {
 
     @Prop({required: true})
     tftSet!: string
+
+    @Prop({default: 32})
+    singleWidthHeight!: number
 
     get filteredTraits(): TftTrait[] {
         let filtered = this.traits.filter((ele: TftTrait) => {

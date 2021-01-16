@@ -135,7 +135,7 @@ export default class TftMatchSummary extends Vue {
     }
 
     get patch(): string {
-        return getTftSetNumber(this.match.tftSetNumber, this.match.gameDatetime)
+        return getTftSetNumber(this.match.tftSetNumber, this.match.gameVersion)
     }
 
     get winLossColor(): string {

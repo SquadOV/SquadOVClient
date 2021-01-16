@@ -1,7 +1,7 @@
 <template>
     <div class="d-flex justify-center flex-wrap">
         <tft-single-unit-display
-            class="mx-2"
+            :style="style"
             v-for="(u, idx) in sortedUnits"
             :key="idx"
             :unit="u"
@@ -35,12 +35,22 @@ export default class TftFullUnitDisplay extends Vue {
     @Prop({default: 64})
     singleWidth!: number
 
+    @Prop({default: 8})
+    margin!: number
+
     get sortedUnits(): TftUnit[] {
         let units = [...this.units]
         units.sort((a: TftUnit, b: TftUnit) => {
             return b.tier - a.tier || b.rarity - a.rarity
         })
         return units
+    }
+
+    get style(): any {
+        return {
+            'margin-left': `${this.margin}px`,
+            'margin-right': `${this.margin}px`,
+        }
     }
 }
 

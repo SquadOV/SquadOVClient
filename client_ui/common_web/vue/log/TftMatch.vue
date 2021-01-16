@@ -3,24 +3,38 @@
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
                 <v-row>
-                    <tft-match-summary
-                        class="m-4"
-                        :match="playerSummary"
-                        :puuid="puuid"
-                        :user-id="userId"
-                    >
-                    </tft-match-summary>
+                    <v-col cols="12">
+                        <tft-match-summary
+                            class="full-width"
+                            :match="playerSummary"
+                            :puuid="puuid"
+                            :user-id="userId"
+                        >
+                        </tft-match-summary>
+                    </v-col>
                 </v-row>
 
-                <video-player
-                    class="mb-4"
-                    v-if="!!vod"
-                    :vod="vod"
-                    id="task-vod"
-                    disable-theater
-                >
-                </video-player>
-            </div>
+                <v-row v-if="!!vod">
+                    <video-player
+                        class="mb-4"
+                        :vod="vod"
+                        id="task-vod"
+                        disable-theater
+                    >
+                    </video-player>
+                </v-row>
+
+                <v-row>
+                    <v-col cols="12">
+                        <tft-scoreboard
+                            :puuid="puuid"
+                            :match="currentMatch"
+                            :patch="patch"
+                        >
+                        </tft-scoreboard>
+                    </v-col>
+                </v-row>
+            </v-container>
         </template>
     </loading-container>
 </template>
@@ -31,17 +45,19 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
-import { WrappedTftMatch, TftPlayerMatchSummary, TftParticipant } from '@client/js/tft/matches'
+import { WrappedTftMatch, TftPlayerMatchSummary, TftParticipant, getTftSetNumber } from '@client/js/tft/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
+import TftScoreboard from '@client/vue/utility/tft/TftScoreboard.vue'
 
 @Component({
     components: {
         LoadingContainer,
         VideoPlayer,
-        TftMatchSummary
+        TftMatchSummary,
+        TftScoreboard
     }
 })
 export default class TftMatch extends Vue {
@@ -65,6 +81,13 @@ export default class TftMatch extends Vue {
             }
         }
         return ret
+    }
+
+    get patch(): string {
+        if (!this.currentMatch) {
+            return ''
+        }
+        return getTftSetNumber(this.currentMatch.data.info.tftSetNumber, this.currentMatch.data.info.gameVersion)
     }
 
     get playerSummary(): TftPlayerMatchSummary | null {

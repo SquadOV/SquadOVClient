@@ -66,16 +66,16 @@ export function cleanTftPlayerMatchSummaryFromJson(s: TftPlayerMatchSummary) : T
     return s
 }
 
-function tftSet35PatchRelease() : Date {
-    let dt = new Date()
-    dt.setUTCFullYear(2020, 6, 10)
-    dt.setUTCHours(6)
-    return dt
+function checkCanBeVersionSet3MidSet(version: string) : boolean {
+    let tokens = version.split('.')
+    let major = parseInt(tokens[0])
+    let minor = parseInt(tokens[1])
+    return (major == 10 && (minor >= 12 || minor <= 18))
 }
 
-export function getTftSetNumber(major: number, tm: Date): string {
+export function getTftSetNumber(major: number, version: string): string {
     if (major == 3) {
-        if (tm >= tftSet35PatchRelease()) {
+        if (checkCanBeVersionSet3MidSet(version)) {
             return `${major}.5`
         } else {
             return `${major}`

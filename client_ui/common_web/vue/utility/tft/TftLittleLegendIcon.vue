@@ -2,7 +2,9 @@
     <v-img
         :src="imgUrl"
         :width="width"
-        :height="height"   
+        :height="height"
+        :max-width="width"
+        :max-height="height"
     >
     </v-img>
 </template>
