@@ -17,10 +17,48 @@ export interface TftPlayerMatchSummary {
     hasVod: boolean
 }
 
+export interface WrappedTftMatch {
+    data: TftMatch
+    puuidToName: { [puuid: string] : string | undefined }
+}
+
+export interface TftMatch {
+    info: TftMatchInfo
+}
+
+export interface TftMatchInfo {
+    gameDatetime: Date
+    gameLength: number
+    gameVariation: string | null
+    gameVersion: string
+    queueId: number
+    tftSetNumber: number
+    participants: TftParticipant[]
+}
+
+export interface TftParticipant {
+    goldLeft: number
+    lastRound: number
+    level: number
+    placement: number
+    playersEliminated: number
+    puuid: string
+    timeEliminated: number
+    totalDamageToPlayers: number
+    traits: TftTrait[]
+    units: TftUnit[]
+    companion: TftCompanion
+}
+
 export interface TftCompanion {
     contentId: string,
     skinId: number,
     species: string
+}
+
+export function cleanWrappedTftMatchFromJson(w: WrappedTftMatch) : WrappedTftMatch {
+    w.data.info.gameDatetime = new Date(w.data.info.gameDatetime)
+    return w
 }
 
 export function cleanTftPlayerMatchSummaryFromJson(s: TftPlayerMatchSummary) : TftPlayerMatchSummary {

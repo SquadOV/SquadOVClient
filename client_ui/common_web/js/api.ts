@@ -61,7 +61,9 @@ import {
 } from '@client/js/wow/stats'
 import {
     TftPlayerMatchSummary,
-    cleanTftPlayerMatchSummaryFromJson
+    cleanTftPlayerMatchSummaryFromJson,
+    WrappedTftMatch,
+    cleanWrappedTftMatchFromJson
 } from '@client/js/tft/matches'
 
 /// #if DESKTOP
@@ -546,6 +548,13 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<any[]>>) => {
             resp.data.data.forEach(cleanTftPlayerMatchSummaryFromJson)
+            return resp
+        })
+    }
+
+    getTftMatch(matchUuid: string): Promise<ApiData<WrappedTftMatch>> {
+        return axios.get(`v1/tft/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<WrappedTftMatch>) => {
+            cleanWrappedTftMatchFromJson(resp.data)
             return resp
         })
     }
