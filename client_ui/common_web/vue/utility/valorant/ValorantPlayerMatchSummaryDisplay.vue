@@ -179,7 +179,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         let style: any = {
             'border-left': `5px solid ${this.winLossColor}`,
             'background-position': 'right',
-            'background-size': 'contain',
+            'background-size': '50% auto',
         }
 
         if (!!this.match.mapId) {

@@ -67,7 +67,7 @@ class LolDdragonClient {
         this.isLoadingChampionCache = false
     }
 
-    getChampionIdFromKey(championId: number): Promise<string> {
+    getChampionDataFromKey(championId: number): Promise<LolDdragonChampionData | undefined> {
         return new Promise(async (resolve, reject) => {
             if (!this.championCache) {
                 await this.loadChampionCache()
@@ -78,11 +78,29 @@ class LolDdragonClient {
                 return
             }
 
-            let id = this.championCache?.championDataForId(championId)?.id
+            resolve(this.championCache?.championDataForId(championId))
+        })
+    }
+
+    getChampionIdFromKey(championId: number): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            let cache = await this.getChampionDataFromKey(championId)
+            let id = cache?.id
             if (!id) {
                 reject(`No LoL champion with key: ${championId}`)
             } else {
                 resolve(id)
+            }
+        })
+    }
+
+    getLolChampionName(championId: number): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let cache = await this.getChampionDataFromKey(championId)
+                resolve(!!cache ? cache.name : 'Unknown')
+            } catch (e) {
+                reject(`Failed to get champion name: ${e}`)
             }
         })
     }
@@ -94,6 +112,17 @@ class LolDdragonClient {
                 resolve(`${DDRAGON_BASE_URL}/${this.ddragonVersion}/img/champion/${key}.png`)
             } catch (e) {
                 reject(`Failed to get champion icon: ${e}`)
+            }
+        })
+    }
+
+    getLolChampionSplashUrl(championId: number): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                let key = await this.getChampionIdFromKey(championId)
+                resolve(`${DDRAGON_BASE_URL}/img/champion/splash/${key}_0.jpg`)
+            } catch (e) {
+                reject(`Failed to get champion splash: ${e}`)
             }
         })
     }

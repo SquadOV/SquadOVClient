@@ -20,18 +20,94 @@
 
                     <!-- Game Info (time, type, match length) -->
                     <v-col cols="2" align-self="center" class="text-body-2">
-                        <div class="px-1">
+                        <div class="pl-2">
+                            <p>
+                                {{ gameMode }} ({{ matchLength }})
+                            </p>
+                            
                             <p>
                                 {{ dateTime }}
-                            </p>
+                            </p                            
+                        </div>
+                    </v-col>
 
-                            <p>
-                                
-                            </p>
+                    <!-- Personal Stats -->
+                    <v-col cols="3" align-self="center" class="text-body-2">
+                        <div>
+                            {{ currentPlayer.kills }} / {{ currentPlayer.deaths}} / {{ currentPlayer.assists }} ({{ kda }})
+                        </div>
 
-                            <p>
-                                {{ matchLength }}
-                            </p>
+                        <div class="d-flex">
+                            <div class="d-flex align-center">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{on, attrs}">
+                                        <img
+                                            class="mr-1"
+                                            :src="$root.generateAssetUri('assets/lol/sword_clipped.png')"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                        />
+                                    </template>
+
+                                    Total Damage Dealt
+                                </v-tooltip>
+                                {{ currentPlayer.totalDamageDealt }}
+                            </div>
+
+                            <div class="d-flex align-center mx-1">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{on, attrs}">
+                                        <img
+                                            class="mr-1"
+                                            :src="$root.generateAssetUri('assets/lol/minion_clipped.png')"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                        />
+                                    </template>
+
+                                    Total Minions Killed
+                                </v-tooltip>
+                                {{ currentPlayer.totalMinionsKilled }}
+                            </div>
+
+                            <div class="d-flex align-center mx-1">
+                                <v-tooltip bottom>
+                                    <template v-slot:activator="{on, attrs}">
+                                        <img
+                                            class="mr-1"
+                                            :src="$root.generateAssetUri('assets/lol/ward_clipped.png')"
+                                            v-on="on"
+                                            v-bind="attrs"
+                                        />
+                                    </template>
+
+                                    Wards Placed
+                                </v-tooltip>
+                                {{ currentPlayer.wardsPlaced }}
+                            </div>
+                        </div>
+                    </v-col>
+
+                    <!-- Team champion match up with hoverable player information -->
+                    <v-col cols="6" align-self="center" class="text-body-2">
+                        <div class="d-flex justify-center align-center">
+                            <lol-match-summary-team-display
+                                :players="sameTeamPlayers"
+                                :same-team="true"
+                                :self-participant-id="currentPlayer.participantId"
+                                :game-version="match.gameVersion"
+                            >
+                            </lol-match-summary-team-display>
+
+                            <div class="text-overline mx-1">VS</div>
+
+                            <lol-match-summary-team-display
+                                :players="enemyTeamPlayers"
+                                :same-team="false"
+                                :self-participant-id="currentPlayer.participantId"
+                                :game-version="match.gameVersion"
+                            >
+                            </lol-match-summary-team-display>
                         </div>
                     </v-col>
                 </v-row>
@@ -51,7 +127,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { LolPlayerMatchSummary, LolMiniParticipantStats } from '@client/js/lol/matches'
+import { LolPlayerMatchSummary, LolMiniParticipantStats, getLolGameMode } from '@client/js/lol/matches'
 import {
     getGenericWinColor,
     getGenericLossColor,
@@ -60,11 +136,14 @@ import {
 import * as pi from '@client/js/pages'
 import { getOrdinal } from '@client/js/ordinal'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
+import { ddragonContainer } from '@client/js/lolDdragon'
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
+import LolMatchSummaryTeamDisplay from '@client/vue/utility/lol/LolMatchSummaryTeamDisplay.vue'
 
 @Component({
     components: {
-        LolChampionIcon
+        LolChampionIcon,
+        LolMatchSummaryTeamDisplay,
     }
 })
 export default class LolMatchSummary extends Vue {
@@ -76,6 +155,21 @@ export default class LolMatchSummary extends Vue {
 
     @Prop({required: true})
     puuid!: string
+
+    backgroundUrl: string = ''
+
+    get kda(): string {
+        if (!this.currentPlayer) {
+            return 'N/A'
+        }
+
+        if (this.currentPlayer.deaths == 0) {
+            return '∞'
+        }
+
+        let kda = (this.currentPlayer.kills + this.currentPlayer.assists) / this.currentPlayer.deaths
+        return kda.toFixed(2)
+    }
 
     get gameTo(): any {
         return {
@@ -96,6 +190,10 @@ export default class LolMatchSummary extends Vue {
         return standardFormatTime(this.match.gameCreation)
     }
 
+    get gameMode() : string {
+        return getLolGameMode(this.match.queueId, this.match.gameMode)
+    }
+
     get matchLength(): string {
         return secondsToTimeString(this.match.gameDuration)
     }
@@ -105,15 +203,50 @@ export default class LolMatchSummary extends Vue {
     }
 
     get style() : any {
-        return {
+        let style: any = {
             'border-left': `5px solid ${this.winLossColor}`,
-            'background-position': 'right',
-            'background-size': 'contain',
+            'background-position': 'right 0% top 30%',
+            'background-size': '50% auto',
         }
+
+        if (this.backgroundUrl.length > 0) {
+            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 10%, transparent), url(${this.backgroundUrl})`
+        }
+
+        return style
     }
 
     get currentPlayer(): LolMiniParticipantStats | undefined {
         return this.match.participants.find((ele: LolMiniParticipantStats) => ele.participantId == this.match.currentParticipantId)
+    }
+
+    get sameTeamPlayers(): LolMiniParticipantStats[] {
+        return this.match.participants.filter((ele: LolMiniParticipantStats) => {
+            return ele.teamId === this.currentPlayer?.teamId
+        })
+    }
+
+    get enemyTeamPlayers(): LolMiniParticipantStats[] {
+        return this.match.participants.filter((ele: LolMiniParticipantStats) => {
+            return ele.teamId !== this.currentPlayer?.teamId
+        })
+    }
+
+    @Watch('currentPlayer')
+    refreshBackgroundImage() {
+        if (!this.currentPlayer) {
+            return
+        }
+
+        ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionSplashUrl(this.currentPlayer.championId).then((resp: string) => {
+            this.backgroundUrl = resp
+        }).catch((err: any) => {
+            console.log('Failed to get LoL champion splash art: ', err)
+        })
+    }
+
+    mounted() {
+        this.refreshBackgroundImage()
     }
 }
 

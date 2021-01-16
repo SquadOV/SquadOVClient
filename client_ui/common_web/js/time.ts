@@ -4,7 +4,7 @@ export function standardFormatTime(dt : Date | null) : string {
     if (!dt) {
         return "None"
     }
-    return format(dt, 'MMMM do uuuu, h:mm a')
+    return format(dt, 'MM/dd/yyyy, h:mm a')
 }
 
 export function secondsToTimeString(totalSeconds : number) : string {
