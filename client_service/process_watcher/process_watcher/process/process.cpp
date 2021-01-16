@@ -18,7 +18,11 @@ namespace {
 #ifdef _WIN32
 
 std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, id);
+    // WE MUST USE PROCESS_QUERY_INFORMATION | PROCESS_VM_READ HERE.
+    // PROCESS_QUERY_INFORMATION and PROCESS_QUERY_LIMITED_INFORMATION by themselves do not work on Windows 7.
+    // Not that it really matters since Windows 7 not supported by Microsoft anymore but we had a couple of 
+    // users who use it so...can't be picky about our users.
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, id);
 
     if (hProcess == NULL) {
         LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
