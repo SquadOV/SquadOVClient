@@ -65,6 +65,10 @@ import {
     WrappedTftMatch,
     cleanWrappedTftMatchFromJson
 } from '@client/js/tft/matches'
+import {
+    LolPlayerMatchSummary,
+    cleanLolPlayerMatchSummaryFromJson,
+} from '@client/js/lol/matches'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -546,7 +550,7 @@ class ApiClient {
                 }
             })
 
-        return promise.then((resp : ApiData<HalResponse<any[]>>) => {
+        return promise.then((resp : ApiData<HalResponse<TftPlayerMatchSummary[]>>) => {
             resp.data.data.forEach(cleanTftPlayerMatchSummaryFromJson)
             return resp
         })
@@ -561,6 +565,23 @@ class ApiClient {
 
     listRiotLolAccounts(userId: number): Promise<ApiData<RiotSummoner[]>> {
         return axios.get(`v1/users/${userId}/accounts/riot/lol`, this.createWebAxiosConfig())
+    }
+
+    listLolMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<LolPlayerMatchSummary[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/lol/user/${params.userId}/accounts/${params.puuid}/matches`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<LolPlayerMatchSummary[]>>) => {
+            resp.data.data.forEach(cleanLolPlayerMatchSummaryFromJson)
+            return resp
+        })
     }
 
     getValorantAccount(userId: number, puuid : string) : Promise<ApiData<RiotAccountData>> {  

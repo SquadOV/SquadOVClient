@@ -1,45 +1,45 @@
 <template>
     <v-container fluid id="tftGameLog">
-    <v-row>
-        <v-col cols="12">
-            <!-- 
-                Game log
-            -->
-            <loading-container :is-loading="!allMatches">
-                <template v-slot:default="{ loading }">
-                    <div v-if="!loading">
-                        <template v-if="allMatches.length > 0">
-                            <tft-match-summary
-                                class="mb-2"
-                                v-for="(match, index) in allMatches"
-                                :key="index"
-                                :match="match"
-                                :puuid="puuid"
-                                :user-id="userId"
-                            >
-                            </tft-match-summary>
+        <v-row>
+            <v-col cols="12">
+                <!-- 
+                    Game log
+                -->
+                <loading-container :is-loading="!allMatches">
+                    <template v-slot:default="{ loading }">
+                        <div v-if="!loading">
+                            <template v-if="allMatches.length > 0">
+                                <tft-match-summary
+                                    class="mb-2"
+                                    v-for="(match, index) in allMatches"
+                                    :key="index"
+                                    :match="match"
+                                    :puuid="puuid"
+                                    :user-id="userId"
+                                >
+                                </tft-match-summary>
 
-                            <v-btn
-                                v-if="hasNext"
-                                color="primary"
-                                block
-                                @click="loadMoreMatches(puuid, puuid)"  
-                            >
-                                Load More
-                            </v-btn>
-                        </template>
+                                <v-btn
+                                    v-if="hasNext"
+                                    color="primary"
+                                    block
+                                    @click="loadMoreMatches(puuid, puuid)"  
+                                >
+                                    Load More
+                                </v-btn>
+                            </template>
 
-                        <div class="d-flex justify-center align-center text-h5" v-else>
-                            <span>
-                            No games found. Open TFT and play a game to sync your matches.
-                            </span>
+                            <div class="d-flex justify-center align-center text-h5" v-else>
+                                <span>
+                                No games found. Open TFT and play a game to sync your matches.
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </template>
-            </loading-container>
-        </v-col>
-    </v-row>
-</v-container>
+                    </template>
+                </loading-container>
+            </v-col>
+        </v-row>
+    </v-container>
 </template>
 
 <script lang="ts">
