@@ -40,7 +40,7 @@
                                 class="mr-1"
                                 :src="$root.generateAssetUri('assets/lol/sword_clipped.png')"
                             />
-                            {{ p.totalDamageDealt }}
+                            {{ p.totalDamageDealtToChampions }}
                         </div>
 
                         <div class="d-flex align-center mx-1">

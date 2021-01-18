@@ -25,7 +25,7 @@ export interface LolMiniParticipantStats {
     kills: number
     deaths: number
     assists: number
-    totalDamageDealt: number
+    totalDamageDealtToChampions: number
     totalMinionsKilled: number
     wardsPlaced: number
     lane: string

@@ -224,7 +224,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ item.participant.stats.totalDamageDealt }}
+                            {{ item.participant.stats.totalDamageDealtToChampions }}
                         </div>
 
                         <div class="d-flex align-center">

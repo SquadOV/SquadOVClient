@@ -51,7 +51,7 @@
 
                                     Total Damage Dealt
                                 </v-tooltip>
-                                {{ currentPlayer.totalDamageDealt }}
+                                {{ currentPlayer.totalDamageDealtToChampions }}
                             </div>
 
                             <div class="d-flex align-center mx-1">

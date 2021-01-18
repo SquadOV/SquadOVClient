@@ -146,7 +146,7 @@ export default class LolMatch extends Vue {
                     kills: ele.stats.kills,
                     deaths: ele.stats.deaths,
                     assists: ele.stats.assists,
-                    totalDamageDealt: ele.stats.totalDamageDealt,
+                    totalDamageDealtToChampions: ele.stats.totalDamageDealtToChampions,
                     totalMinionsKilled: ele.stats.totalMinionsKilled,
                     wardsPlaced: ele.stats.wardsPlaced,
                     lane: ele.timeline.lane,
