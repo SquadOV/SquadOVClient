@@ -3,17 +3,13 @@
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
                 <!-- Header summary -->
-                <v-row>
-                    <v-col cols="12">
-                        <lol-match-summary
-                            class="full-width"
-                            :match="playerSummary"
-                            :puuid="puuid"
-                            :user-id="userId"
-                        >
-                        </lol-match-summary>
-                    </v-col>
-                </v-row>
+                <lol-match-summary
+                    class="full-width"
+                    :match="playerSummary"
+                    :puuid="puuid"
+                    :user-id="userId"
+                >
+                </lol-match-summary>
 
                 <!-- VOD + Event List -->
                 <v-row no-gutters>
@@ -33,43 +29,36 @@
                 </v-row>
 
                 <!-- Alternative match timeline -->
-                <v-row>
-                    <v-col cols="12">
-                    </v-col>
-                </v-row>
 
                 <!-- Scoreboard and stats -->
-                <v-row>
-                    <v-col cols="12">
-                        <v-tabs>
-                            <v-tab>
-                                Scoreboard
-                            </v-tab>
+                <v-tabs v-model="currentTab">
+                    <v-tab>
+                        Scoreboard
+                    </v-tab>
 
-                            <v-tab-item>
-                                <lol-match-scoreboard
-                                    :match="currentMatch.match"
-                                    :current-participant-id="currentParticipantId"
-                                >
-                                </lol-match-scoreboard>
-                            </v-tab-item>
+                    <v-tab>
+                        Advanced
+                    </v-tab>
 
-                            <v-tab>
-                                Advanced
-                            </v-tab>
+                    <v-tab>
+                        Timeline
+                    </v-tab>
+                </v-tabs>
 
-                            <v-tab-item>
-                            </v-tab-item>
+                <lol-match-scoreboard
+                    :match="currentMatch.match"
+                    :current-participant-id="currentParticipantId"
+                    :style="scoreboardStyle"
+                >
+                </lol-match-scoreboard>
 
-                            <v-tab>
-                                Timeline
-                            </v-tab>
-
-                            <v-tab-item>
-                            </v-tab-item>
-                        </v-tabs>
-                    </v-col>
-                </v-row>
+                <lol-match-advanced-stats
+                    class="my-1 full-width"
+                    :match="currentMatch.match"
+                    :current-participant-id="currentParticipantId"
+                    :style="statsStyle"
+                >
+                </lol-match-advanced-stats>
             </v-container>
         </template>
     </loading-container>
@@ -88,13 +77,15 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import LolMatchSummary from '@client/vue/utility/lol/LolMatchSummary.vue'
 import LolMatchScoreboard from '@client/vue/utility/lol/LolMatchScoreboard.vue'
+import LolMatchAdvancedStats from '@client/vue/utility/lol/LolMatchAdvancedStats.vue'
 
 @Component({
     components: {
         LoadingContainer,
         VideoPlayer,
         LolMatchSummary,
-        LolMatchScoreboard
+        LolMatchScoreboard,
+        LolMatchAdvancedStats
     }
 })
 export default class LolMatch extends Vue {
@@ -115,6 +106,7 @@ export default class LolMatch extends Vue {
     }
     currentPlayerHeight : number = 0
     theaterMode: boolean = false
+    currentTab: number = 0
 
     get currentParticipantId() : number | undefined | null {
         return this.currentMatch?.userIdToParticipantId[this.userId]
@@ -169,6 +161,20 @@ export default class LolMatch extends Vue {
 
     mounted() {
         this.refreshData()
+    }
+
+    get scoreboardStyle() : any {
+        return {
+            visibility: this.currentTab === 0 ? 'visible' : 'hidden',
+            display: this.currentTab === 0 ? 'block' : 'none'            
+        }
+    }
+
+    get statsStyle() : any {
+        return {
+            visibility: this.currentTab === 1 ? 'visible' : 'hidden',
+            display: this.currentTab === 1 ? 'table' : 'none'
+        }
     }
 }
 

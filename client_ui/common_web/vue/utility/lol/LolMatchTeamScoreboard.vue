@@ -34,7 +34,7 @@
                     contain
                 >
                 </v-img>
-                {{ formatGoldAmount(totalGoldEarned) }} ({{ formatGoldAmount(totalGoldSpent) }})
+                {{ formatThousands(totalGoldEarned) }} ({{ formatThousands(totalGoldSpent) }})
             </div>
 
             <div class="d-flex align-center">
@@ -156,6 +156,10 @@
                         </div>
                     </td>
 
+                    <td class="level-column">
+                        {{ item.participant.champLevel }}
+                    </td>
+
                     <td class="items-column">
                         <lol-player-items
                             :stats="item.participant.stats"
@@ -179,7 +183,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ formatGoldAmount(item.participant.stats.goldEarned) }} ({{ formatGoldAmount(item.participant.stats.goldSpent) }})
+                            {{ formatThousands(item.participant.stats.goldEarned) }} ({{ formatThousands(item.participant.stats.goldSpent) }})
                         </div>
                     </td>
 
@@ -251,10 +255,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { LolMatch } from '@client/js/lol/matches'
+import { LolMatch, extractSameTeamPlayersFromTeamId } from '@client/js/lol/matches'
 import { LolTeamStats } from '@client/js/lol/team'
 import { LolParticipant, WrappedLolParticipant, LolParticipantIdentity } from '@client/js/lol/participant'
-import { formatGoldAmount } from '@client/js/lol/gold'
+import { formatThousands } from '@client/js/lol/number'
 import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor, colorToCssString } from '@client/js/color'
 import { getLolBlueTeamColor, getLolRedTeamColor } from '@client/js/lol/color'
 import { ddragonContainer } from '@client/js/lolDdragon'
@@ -273,7 +277,7 @@ import LolPlayerItems from '@client/vue/utility/lol/LolPlayerItems.vue'
     }
 })
 export default class LolMatchTeamScoreboard extends Vue {
-    formatGoldAmount: any = formatGoldAmount
+    formatThousands: any = formatThousands
 
     @Prop({required: true})
     match!: LolMatch
@@ -323,22 +327,7 @@ export default class LolMatchTeamScoreboard extends Vue {
     }
 
     get teamPlayers(): WrappedLolParticipant[] {
-        let players = this.match.participants.map((ele: LolParticipant) => {
-            return {
-                participant: ele,
-                identity: this.match.participantIdentities.find((id: LolParticipantIdentity) => {
-                    return id.participantId === ele.participantId
-                })
-            }
-        }).filter((ele: WrappedLolParticipant) => {
-            return ele.participant.teamId === this.teamId
-        })
-
-        players.sort((a: WrappedLolParticipant, b: WrappedLolParticipant) => {
-            return b.participant.stats.totalPlayerScore - a.participant.stats.totalPlayerScore
-        })
-
-        return players
+        return extractSameTeamPlayersFromTeamId(this.match, this.teamId)
     }
 
     get sameTeam(): boolean {
@@ -404,6 +393,10 @@ export default class LolMatchTeamScoreboard extends Vue {
     width: 20%;
 }
 
+.level-column {
+    width: 5%;
+}
+
 .items-column {
     width: 30%;
 }
@@ -417,11 +410,11 @@ export default class LolMatchTeamScoreboard extends Vue {
 }
 
 .minion-column {
-    width: 7.5%;
+    width: 5%;
 }
 
 .ward-column {
-    width: 7.5%;
+    width: 5%;
 }
 
 .damage-column {

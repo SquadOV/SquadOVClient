@@ -1,6 +1,6 @@
-import { LolParticipantIdentity, LolParticipant } from '@client/js/lol/participant'
+import { LolParticipantIdentity, LolParticipant, WrappedLolParticipant } from '@client/js/lol/participant'
 import { LolTeamStats } from '@client/js/lol/team'
-import { LolMatchTimeline } from '@client/js/lol/timeline'
+import { LolMatchEvent, LolMatchTimeline } from '@client/js/lol/timeline'
 
 export interface LolPlayerMatchSummary {
     matchUuid: string
@@ -115,4 +115,43 @@ export function getLolGameMode(queueId: number, gameMode: string): string {
             return 'Nexus Blitz'
     }
     return 'Unknown'
+}
+
+export function getTeamIdFromParticipantId(match: LolMatch, id: number): number | undefined {
+    return match.participants.find((ele: LolParticipant) => ele.participantId === id)?.teamId
+}
+
+export function extractSameTeamPlayersFromParticipantId(match: LolMatch, id: number): WrappedLolParticipant[] | undefined {
+    let teamId = getTeamIdFromParticipantId(match, id)
+    if (!teamId) {
+        return undefined
+    }
+    return extractSameTeamPlayersFromTeamId(match, teamId)
+}
+
+export function extractEnemyTeamPlayersFromParticipantId(match: LolMatch, id: number): WrappedLolParticipant[] | undefined {
+    let teamId = getTeamIdFromParticipantId(match, id)
+    if (!teamId) {
+        return undefined
+    }
+    return extractSameTeamPlayersFromTeamId(match, (teamId === 100) ? 200 : 100)
+}
+
+export function extractSameTeamPlayersFromTeamId(match: LolMatch, id: number): WrappedLolParticipant[] {
+    let players = match.participants.map((ele: LolParticipant) => {
+        return {
+            participant: ele,
+            identity: match.participantIdentities.find((id: LolParticipantIdentity) => {
+                return id.participantId === ele.participantId
+            })
+        }
+    }).filter((ele: WrappedLolParticipant) => {
+        return ele.participant.teamId === id
+    })
+
+    players.sort((a: WrappedLolParticipant, b: WrappedLolParticipant) => {
+        return b.participant.stats.totalPlayerScore - a.participant.stats.totalPlayerScore
+    })
+
+    return players
 }
