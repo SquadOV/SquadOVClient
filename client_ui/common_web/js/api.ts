@@ -68,6 +68,8 @@ import {
 import {
     LolPlayerMatchSummary,
     cleanLolPlayerMatchSummaryFromJson,
+    FullLolMatch,
+    cleanFullLolMatch
 } from '@client/js/lol/matches'
 
 /// #if DESKTOP
@@ -580,6 +582,13 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<LolPlayerMatchSummary[]>>) => {
             resp.data.data.forEach(cleanLolPlayerMatchSummaryFromJson)
+            return resp
+        })
+    }
+
+    getLolMatch(matchUuid: string): Promise<ApiData<FullLolMatch>> {
+        return axios.get(`v1/lol/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<FullLolMatch>) => {
+            cleanFullLolMatch(resp.data)
             return resp
         })
     }

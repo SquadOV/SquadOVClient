@@ -27,7 +27,7 @@
                             
                             <p>
                                 {{ dateTime }}
-                            </p                            
+                            </p>
                         </div>
                     </v-col>
 
@@ -217,18 +217,26 @@ export default class LolMatchSummary extends Vue {
     }
 
     get currentPlayer(): LolMiniParticipantStats | undefined {
-        return this.match.participants.find((ele: LolMiniParticipantStats) => ele.participantId == this.match.currentParticipantId)
+        return this.match.participants.find((ele: LolMiniParticipantStats) => ele.participantId === this.match.currentParticipantId)
     }
 
     get sameTeamPlayers(): LolMiniParticipantStats[] {
         return this.match.participants.filter((ele: LolMiniParticipantStats) => {
-            return ele.teamId === this.currentPlayer?.teamId
+            if (!this.currentPlayer) {
+                return ele.teamId === 100
+            } else {
+                return ele.teamId === this.currentPlayer?.teamId
+            }
         })
     }
 
     get enemyTeamPlayers(): LolMiniParticipantStats[] {
         return this.match.participants.filter((ele: LolMiniParticipantStats) => {
-            return ele.teamId !== this.currentPlayer?.teamId
+            if (!this.currentPlayer) {
+                return ele.teamId === 200
+            } else {
+                return ele.teamId !== this.currentPlayer?.teamId
+            }
         })
     }
 

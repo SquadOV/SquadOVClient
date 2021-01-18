@@ -1,3 +1,7 @@
+import { LolParticipantIdentity, LolParticipant } from '@client/js/lol/participant'
+import { LolTeamStats } from '@client/js/lol/team'
+import { LolMatchTimeline } from '@client/js/lol/timeline'
+
 export interface LolPlayerMatchSummary {
     matchUuid: string
     gameCreation: Date
@@ -8,7 +12,7 @@ export interface LolPlayerMatchSummary {
     seasonId: number
     mapId: number
     gameMode: string
-    currentParticipantId: number
+    currentParticipantId: number | undefined | null
     participants: LolMiniParticipantStats[]
     hasVod: boolean
 }
@@ -16,7 +20,7 @@ export interface LolPlayerMatchSummary {
 export interface LolMiniParticipantStats {
     participantId: number
     championId: number
-    summonerName: string | null
+    summonerName: string | null | undefined
     teamId: number
     kills: number
     deaths: number
@@ -28,8 +32,35 @@ export interface LolMiniParticipantStats {
     win: boolean
 }
 
+export interface FullLolMatch {
+    match: LolMatch
+    timeline: LolMatchTimeline
+    userIdToParticipantId: { [userId: number] : number | undefined }
+}
+
+export interface LolMatch {
+    gameId: number
+    queueId: number
+    gameType: string
+    gameDuration: number
+    platformId: string
+    gameCreation: Date
+    seasonId: number
+    gameVersion: string
+    mapId: number
+    gameMode: string
+    participantIdentities: LolParticipantIdentity[]
+    teams: LolTeamStats[]
+    participants: LolParticipant[]
+}
+
 export function cleanLolPlayerMatchSummaryFromJson(s: LolPlayerMatchSummary): LolPlayerMatchSummary {
     s.gameCreation = new Date(s.gameCreation)
+    return s
+}
+
+export function cleanFullLolMatch(s: FullLolMatch): FullLolMatch {
+    s.match.gameCreation = new Date(s.match.gameCreation)
     return s
 }
 
