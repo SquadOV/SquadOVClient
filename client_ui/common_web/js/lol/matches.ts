@@ -1,6 +1,6 @@
 import { LolParticipantIdentity, LolParticipant, WrappedLolParticipant } from '@client/js/lol/participant'
 import { LolTeamStats } from '@client/js/lol/team'
-import { LolMatchEvent, LolMatchTimeline } from '@client/js/lol/timeline'
+import { LolMatchTimeline } from '@client/js/lol/timeline'
 
 export interface LolPlayerMatchSummary {
     matchUuid: string
@@ -154,4 +154,21 @@ export function extractSameTeamPlayersFromTeamId(match: LolMatch, id: number): W
     })
 
     return players
+}
+
+export function getPlayerFromParticipantId(match: LolMatch, id: number): WrappedLolParticipant | undefined {
+    let player = match.participants.find((ele: LolParticipant) => {
+        return ele.participantId === id
+    })
+
+    if (!player) {
+        return undefined
+    }
+
+    return {
+        participant: player,
+        identity: match.participantIdentities.find((ele: LolParticipantIdentity) => {
+            return id === ele.participantId
+        })
+    }
 }

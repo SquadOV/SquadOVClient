@@ -25,3 +25,11 @@ export default class LolAdvancedStatDisplay extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+>>>.v-input--selection-controls__input {
+    margin-right: 0px !important;
+}
+
+</style>

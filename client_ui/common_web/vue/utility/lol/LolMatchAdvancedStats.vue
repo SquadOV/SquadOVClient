@@ -13,16 +13,19 @@
                     <div class="d-flex flex-column align-center justify-center my-1">
                         <v-tooltip bottom>
                             <template v-slot:activator="{on, attrs}">
-                                <lol-champion-icon
+                                <div
                                     v-on="on"
                                     v-bind="attrs"
-                                    :style="playerChampionStyle(p)"
-                                    :champion-id="p.participant.championId"
-                                    :game-version="match.gameVersion"
-                                    :width="32"
-                                    :height="32"
                                 >
-                                </lol-champion-icon>
+                                    <lol-champion-icon
+                                        :style="playerChampionStyle(p)"
+                                        :champion-id="p.participant.championId"
+                                        :game-version="match.gameVersion"
+                                        :width="32"
+                                        :height="32"
+                                    >
+                                    </lol-champion-icon>
+                                </div>
                             </template>
                             
                             <div class="font-caption font-weight-bold">

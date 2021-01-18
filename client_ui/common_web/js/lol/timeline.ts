@@ -49,3 +49,21 @@ export interface LolMatchTimeline {
     frames: LolMatchFrame[]
     frameInterval: number
 }
+
+export enum LolStaticTargets {
+    EDragon,
+    EDragonAir,
+    EDragonFire,
+    EDragonEarth,
+    EDragonWater,
+    EDragonElder,
+    EBaron,
+    ERiftHerald,
+    ETower,
+    EInhibitor,
+    ESightWard,
+    EControlWard,
+    EYellowTrinket,
+    EBlueTrinket,
+    EWard
+}

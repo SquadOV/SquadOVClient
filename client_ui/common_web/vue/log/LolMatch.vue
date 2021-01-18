@@ -25,6 +25,16 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
+                        <lol-event-manager
+                            :match="currentMatch.match"
+                            :timeline="currentMatch.timeline"
+                            :current-participant-id="currentParticipantId"
+                            :display-events.sync="displayEvents"
+                            :has-vod="!!vod"
+                            :style="eventsStyle"
+                            @go-to-timestamp="goToTimestamp"
+                        >
+                        </lol-event-manager>
                     </v-col>
                 </v-row>
 
@@ -71,6 +81,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { FullLolMatch, LolPlayerMatchSummary } from '@client/js/lol/matches'
 import { LolParticipant, LolParticipantIdentity } from '@client/js/lol/participant'
+import { LolMatchEvent } from '@client/js/lol/timeline'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodAssociation } from '@client/js/squadov/vod'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -78,6 +89,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import LolMatchSummary from '@client/vue/utility/lol/LolMatchSummary.vue'
 import LolMatchScoreboard from '@client/vue/utility/lol/LolMatchScoreboard.vue'
 import LolMatchAdvancedStats from '@client/vue/utility/lol/LolMatchAdvancedStats.vue'
+import LolEventManager from '@client/vue/utility/lol/LolEventManager.vue'
 
 @Component({
     components: {
@@ -85,7 +97,8 @@ import LolMatchAdvancedStats from '@client/vue/utility/lol/LolMatchAdvancedStats
         VideoPlayer,
         LolMatchSummary,
         LolMatchScoreboard,
-        LolMatchAdvancedStats
+        LolMatchAdvancedStats,
+        LolEventManager
     }
 })
 export default class LolMatch extends Vue {
@@ -100,6 +113,7 @@ export default class LolMatch extends Vue {
 
     currentMatch: FullLolMatch | null = null
     vod: VodAssociation | null = null
+    displayEvents: LolMatchEvent[] = []
 
     $refs!: {
         player: VideoPlayer
@@ -107,6 +121,10 @@ export default class LolMatch extends Vue {
     currentPlayerHeight : number = 0
     theaterMode: boolean = false
     currentTab: number = 0
+
+    goToTimestamp(t: number) {
+
+    }
 
     get currentParticipantId() : number | undefined | null {
         return this.currentMatch?.userIdToParticipantId[this.userId]
@@ -174,6 +192,12 @@ export default class LolMatch extends Vue {
         return {
             visibility: this.currentTab === 1 ? 'visible' : 'hidden',
             display: this.currentTab === 1 ? 'table' : 'none'
+        }
+    }
+
+    get eventsStyle() : any {
+        return {
+            'height': `${this.currentPlayerHeight + 64}px`,
         }
     }
 }
