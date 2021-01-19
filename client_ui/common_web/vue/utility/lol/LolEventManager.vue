@@ -138,9 +138,11 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { LolMatch } from '@client/js/lol/matches'
+import { LolMatch, getTeamIdFromParticipantId } from '@client/js/lol/matches'
 import { LolMatchTimeline, LolMatchEvent, LolMatchFrame } from '@client/js/lol/timeline'
 import { formatRoundTime } from '@client/js/valorant/valorant_utility'
+import { Color, getGenericWinColor, getGenericLossColor, colorToCssString } from '@client/js/color'
+import { getLolBlueTeamColor, getLolRedTeamColor } from '@client/js/lol/color'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 
 @Component({
@@ -181,10 +183,45 @@ export default class LolEventManager extends Vue {
     }
 
     eventStyling(e : LolMatchEvent) : any {
-        let borderHighlightColor: string = 'transparent'
+        let borderHighlightColor: Color
+
+        // Style it so that green means the event is beneficial for my team and red 
+        // means that it's deterimental.
+        let benefitsMyTeam = false
+        if (!!this.currentParticipantId) {
+            let myTeam = getTeamIdFromParticipantId(this.match, this.currentParticipantId)
+            if (!!myTeam) {
+                if (!!e.killerId) {
+                    benefitsMyTeam = (myTeam === getTeamIdFromParticipantId(this.match, e.killerId))
+                } else if (!!e.teamId) {
+                    if (e.type == 'BUILDING_KILL') {
+                        benefitsMyTeam = (myTeam !== e.teamId)
+                    } else {
+                        benefitsMyTeam = (myTeam === e.teamId)
+                    }
+                }        
+            }
+        } else {
+            if (!!e.killerId) {
+                benefitsMyTeam = (100 === getTeamIdFromParticipantId(this.match, e.killerId))
+            } else if (!!e.teamId) {
+                if (e.type == 'BUILDING_KILL') {
+                    benefitsMyTeam = (100 !== e.teamId)
+                } else {
+                    benefitsMyTeam = (100 === e.teamId)
+                }
+            }
+        }
+
+        
+        if (!!this.currentParticipantId) {
+            borderHighlightColor = benefitsMyTeam ? getGenericWinColor() : getGenericLossColor()
+        } else {
+            borderHighlightColor = benefitsMyTeam ? getLolBlueTeamColor() : getLolRedTeamColor()
+        }
 
         let style: any = {
-            'border-left': `5px solid ${borderHighlightColor}`
+            'border-left': `5px solid ${colorToCssString(borderHighlightColor)}`
         }
         return style
     }
@@ -198,7 +235,7 @@ export default class LolEventManager extends Vue {
                     || (ev.type === 'BUILDING_KILL' && ev.buildingType === 'INHIBITOR_BUILDING' && this.showInhibitors)
                     || (ev.type === 'ELITE_MONSTER_KILL' && ev.monsterType === 'DRAGON' && this.showDragons)
                     || (ev.type === 'ELITE_MONSTER_KILL' && ev.monsterType === 'BARON_NASHOR' && this.showBarons)
-                    || (ev.type === 'ELITE_MONSTER_KILL' && ev.monsterType === 'RIFTHERALD' && this.showRiftHerald)
+                    || (ev.type === 'ELITE_MONSTER_KILL' && ev.monsterType === 'RIFTHERALD' && !!ev.killerId && this.showRiftHerald)
             })
         }).flat()
 
