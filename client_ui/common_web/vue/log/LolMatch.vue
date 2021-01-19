@@ -38,7 +38,32 @@
                     </v-col>
                 </v-row>
 
-                <!-- Alternative match timeline -->
+                <!-- Alternative match timeline (seconds) -->
+                <generic-match-timeline
+                    class="full-width"
+                    :start="0"
+                    :end="currentMatch.match.gameDuration"
+                    :current="0"
+                    :input-events="genericEvents"
+                    :major-tick-every="90"
+                >
+                    <template v-slot:tick="{ tick }">
+                        {{ secondsToTimeString(tick) }}
+                    </template>
+
+                    <template v-slot:event="{event}">
+                        <lol-event-display
+                            mini
+                            :match="currentMatch.match"
+                            :timeline="currentMatch.timeline"
+                            :current-participant-id="currentParticipantId"
+                            :input-event="event.value"
+                            :height="24"
+                        >
+                        </lol-event-display>
+                    </template>
+                </generic-match-timeline>
+                {{ displayEvents.length }} / {{ genericEvents.length }}
 
                 <!-- Scoreboard and stats -->
                 <v-tabs v-model="currentTab">
@@ -84,12 +109,18 @@ import { LolParticipant, LolParticipantIdentity } from '@client/js/lol/participa
 import { LolMatchEvent } from '@client/js/lol/timeline'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodAssociation } from '@client/js/squadov/vod'
+import { GenericEvent } from '@client/js/event'
+import { secondsToTimeString } from '@client/js/time'
+import { computeColorForLolEvent } from '@client/js/lol/color'
+
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import LolMatchSummary from '@client/vue/utility/lol/LolMatchSummary.vue'
 import LolMatchScoreboard from '@client/vue/utility/lol/LolMatchScoreboard.vue'
 import LolMatchAdvancedStats from '@client/vue/utility/lol/LolMatchAdvancedStats.vue'
 import LolEventManager from '@client/vue/utility/lol/LolEventManager.vue'
+import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
+import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 
 @Component({
     components: {
@@ -98,10 +129,14 @@ import LolEventManager from '@client/vue/utility/lol/LolEventManager.vue'
         LolMatchSummary,
         LolMatchScoreboard,
         LolMatchAdvancedStats,
-        LolEventManager
+        LolEventManager,
+        LolEventDisplay,
+        GenericMatchTimeline,
     }
 })
 export default class LolMatch extends Vue {
+    secondsToTimeString = secondsToTimeString
+
     @Prop()
     puuid! : string | null
 
@@ -199,6 +234,21 @@ export default class LolMatch extends Vue {
         return {
             'height': `${this.currentPlayerHeight + 64}px`,
         }
+    }
+
+    get genericEvents(): GenericEvent[] {
+        if (!this.currentMatch) {
+            return []
+        }
+
+        return this.displayEvents.map((ele: LolMatchEvent) => {
+            return {
+                tm: ele.timestamp / 1000,
+                value: ele,
+                key: ele.type.toLowerCase().replace('_', '-'),
+                color: computeColorForLolEvent(this.currentMatch!.match, ele, this.currentParticipantId)
+            }
+        })
     }
 }
 

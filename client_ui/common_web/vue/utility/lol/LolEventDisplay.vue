@@ -4,18 +4,18 @@
             <lol-participant-display
                 :participant="subject.primary"
                 :match="match"
-                :width-height="48"
+                :width-height="height"
                 :current-participant-id="currentParticipantId"
             >
             </lol-participant-display>
         </div>
 
         <div class="d-flex justify-center align-center" v-if="verb !== null">
-            <v-icon v-if="verb == Verb.EKill">
+            <v-icon v-if="verb == Verb.EKill" small>
                 mdi-sword-cross
             </v-icon>
 
-            <v-icon v-else-if="verb == Verb.EPlace">
+            <v-icon v-else-if="verb == Verb.EPlace" small>
                 mdi-map-marker
             </v-icon>
         </div>
@@ -25,7 +25,7 @@
                 v-if="!!target.participant"
                 :participant="target.participant"
                 :match="match"
-                :width-height="48"
+                :width-height="height"
                 :current-participant-id="currentParticipantId"
             >
             </lol-participant-display>
@@ -33,7 +33,7 @@
             <lol-static-target-display
                 v-if="target.other !== undefined"
                 :target="target.other"
-                :height="48"
+                :height="height"
             >
             </lol-static-target-display>
         </div>
@@ -89,7 +89,17 @@ export default class LolEventDisplay extends Vue {
     @Prop({required: true})
     currentParticipantId!: number | null | undefined
 
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({default: 48})
+    height!: number
+
     get subject(): Subject | null {
+        if (this.mini) {
+            return null
+        }
+
         switch (this.inputEvent.type) {
             case 'CHAMPION_KILL':
             case 'WARD_KILL':
@@ -126,6 +136,10 @@ export default class LolEventDisplay extends Vue {
     }
 
     get verb(): Verb | null {
+        if (this.mini && this.inputEvent.type !== 'CHAMPION_KILL') {
+            return null
+        }
+
         switch (this.inputEvent.type) {
             case 'CHAMPION_KILL':
             case 'WARD_KILL':
@@ -141,6 +155,9 @@ export default class LolEventDisplay extends Vue {
     get target(): Target | null {
         switch (this.inputEvent.type) {
             case 'CHAMPION_KILL':
+                if (this.mini) {
+                    return null
+                }
                 return {
                     participant: getPlayerFromParticipantId(this.match, this.inputEvent.victimId!)
                 }
