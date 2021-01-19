@@ -63,7 +63,6 @@
                         </lol-event-display>
                     </template>
                 </generic-match-timeline>
-                {{ displayEvents.length }} / {{ genericEvents.length }}
 
                 <!-- Scoreboard and stats -->
                 <v-tabs v-model="currentTab">
