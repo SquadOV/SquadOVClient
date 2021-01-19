@@ -13,11 +13,13 @@ import * as echarts from 'echarts/lib/echarts.js'
 import 'echarts/lib/chart/line'
 import 'echarts/lib/component/axisPointer'
 import 'echarts/lib/component/dataZoom'
+import 'echarts/lib/component/grid'
 import 'echarts/lib/component/legend'
 import 'echarts/lib/component/legendScroll'
 import 'echarts/lib/component/tooltip'
 import 'echarts/lib/component/markLine'
 import 'echarts/lib/component/markArea'
+import 'echarts/lib/component/visualMap'
 
 @Component
 export default class LineGraph extends Vue {
@@ -39,6 +41,9 @@ export default class LineGraph extends Vue {
 
     @Prop()
     forcedMaxX!: any | undefined
+
+    @Prop({type: Boolean, default: false})
+    diffGraph!: boolean
 
     zoomStart: number = 0
     zoomEnd: number = 100
@@ -199,6 +204,30 @@ export default class LineGraph extends Vue {
             tooltip: {
                 trigger: 'axis',
             }
+        }
+
+        if (this.diffGraph) {
+            // Need to compute min and max manually because if they're not set then ECharts will error out.
+            // On the other hand, if they're just set to arbitrarily large values then the visual map won't apply.
+            let minVal = (this.validSeriesData.length > 0) ? Math.min(...this.validSeriesData[0]._y) : 0
+            let maxVal = (this.validSeriesData.length > 0) ? Math.max(...this.validSeriesData[0]._y) : 0
+
+            options.visualMap = [{
+                type: 'piecewise',
+                show: false,
+                pieces: [
+                    {
+                        lte: 0,
+                        gt: minVal - 1,
+                        color: '#FF5252',
+                    },
+                    {
+                        gt: 0,
+                        lte: maxVal + 1,
+                        color: '#4CAF50'
+                    }
+                ] 
+            }]
         }
 
         options.series = this.validSeriesData.map((series : StatXYSeriesData, seriesIdx: number) => ({

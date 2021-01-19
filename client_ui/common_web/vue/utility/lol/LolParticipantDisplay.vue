@@ -1,8 +1,9 @@
 <template>
     <div>
-        <v-tooltip bottom>
+        <v-tooltip :disabled="noTooltip" bottom>
             <template v-slot:activator="{on, attrs}">
                 <div
+                    class="d-flex align-center"
                     v-on="on"
                     v-bind="attrs"
                 >
@@ -14,6 +15,10 @@
                         :height="widthHeight"
                     >
                     </lol-champion-icon>
+
+                    <div class="text-caption ml-1 font-weight-bold" v-if="noTooltip">
+                        {{ name }}
+                    </div>
                 </div>
             </template>
 
@@ -53,6 +58,9 @@ export default class LolParticipantDisplay extends Vue {
 
     @Prop({required: true})
     currentParticipantId!: number | null | undefined
+
+    @Prop({type: Boolean, default: false})
+    noTooltip!: boolean
 
     name: string = ''
 

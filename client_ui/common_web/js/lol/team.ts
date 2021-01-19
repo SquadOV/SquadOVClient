@@ -19,3 +19,19 @@ export interface LolTeamBan {
     championId: number
     pickTurn: number
 }
+
+export function lolTeamIdToString(id: number): string {
+    if (id == 100) {
+        return 'Blue'
+    } else {
+        return 'Red'
+    }
+}
+
+export function getOpposingLolTeam(id: number): number {
+    if (id == 100) {
+        return 200
+    } else {
+        return 100
+    }
+}

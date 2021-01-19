@@ -14,6 +14,13 @@ export interface LolMatchParticipantFrame {
     position: LolMatchPosition | null
 }
 
+export enum LolMatchFrameStat {
+    EMinions,
+    EGold,
+    ELevel,
+    EXp
+}
+
 export interface LolMatchEvent {
     laneType: string | null
     skillSlot: string | null
@@ -66,4 +73,8 @@ export enum LolStaticTargets {
     EYellowTrinket,
     EBlueTrinket,
     EWard
+}
+
+export function getLolMatchNonEmptyTimelineFrames(t: LolMatchTimeline): LolMatchFrame[] {
+    return t.frames.filter((ele: LolMatchFrame) => Object.keys(ele.participantFrames).length > 0)
 }

@@ -40,7 +40,7 @@
 
                 <!-- Alternative match timeline (seconds) -->
                 <generic-match-timeline
-                    class="full-width"
+                    class="full-width my-2"
                     :start="0"
                     :end="currentMatch.match.gameDuration"
                     :current="0"
@@ -74,7 +74,7 @@
                         Advanced
                     </v-tab>
 
-                    <v-tab>
+                    <v-tab @change="$refs.stats.refreshGraphs()">
                         Timeline
                     </v-tab>
                 </v-tabs>
@@ -93,6 +93,16 @@
                     :style="statsStyle"
                 >
                 </lol-match-advanced-stats>
+
+                <lol-stat-timeline-container
+                    ref="stats"
+                    class="my-1 full-width"
+                    :match="currentMatch.match"
+                    :timeline="currentMatch.timeline"
+                    :current-participant-id="currentParticipantId"
+                    :style="timelineStyle"
+                >
+                </lol-stat-timeline-container>
             </v-container>
         </template>
     </loading-container>
@@ -120,6 +130,7 @@ import LolMatchAdvancedStats from '@client/vue/utility/lol/LolMatchAdvancedStats
 import LolEventManager from '@client/vue/utility/lol/LolEventManager.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
+import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineContainer.vue'
 
 @Component({
     components: {
@@ -130,6 +141,7 @@ import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
         LolMatchAdvancedStats,
         LolEventManager,
         LolEventDisplay,
+        LolStatTimelineContainer,
         GenericMatchTimeline,
     }
 })
@@ -151,6 +163,7 @@ export default class LolMatch extends Vue {
 
     $refs!: {
         player: VideoPlayer
+        stats: LolStatTimelineContainer
     }
     currentPlayerHeight : number = 0
     theaterMode: boolean = false
@@ -226,6 +239,13 @@ export default class LolMatch extends Vue {
         return {
             visibility: this.currentTab === 1 ? 'visible' : 'hidden',
             display: this.currentTab === 1 ? 'table' : 'none'
+        }
+    }
+
+    get timelineStyle(): any {
+        return {
+            visibility: this.currentTab === 2 ? 'visible' : 'hidden',
+            display: this.currentTab === 2 ? 'table' : 'none'
         }
     }
 

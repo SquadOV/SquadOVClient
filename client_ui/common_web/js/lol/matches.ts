@@ -1,6 +1,6 @@
 import { LolParticipantIdentity, LolParticipant, WrappedLolParticipant } from '@client/js/lol/participant'
 import { LolTeamStats } from '@client/js/lol/team'
-import { LolMatchTimeline } from '@client/js/lol/timeline'
+import { LolMatchTimeline, LolMatchFrameStat, LolMatchFrame, getLolMatchNonEmptyTimelineFrames } from '@client/js/lol/timeline'
 
 export interface LolPlayerMatchSummary {
     matchUuid: string
@@ -171,4 +171,71 @@ export function getPlayerFromParticipantId(match: LolMatch, id: number): Wrapped
             return id === ele.participantId
         })
     }
+}
+
+export function extractLolFrameStatsFromTimelineForPlayer(match: LolMatch, timeline: LolMatchTimeline, stat: LolMatchFrameStat, id: number): number[] {
+    let frameStats = getLolMatchNonEmptyTimelineFrames(timeline).map((ele: LolMatchFrame) => {
+        let frame = ele.participantFrames[`${id}`]!
+        switch (stat) {
+            case LolMatchFrameStat.EGold:
+                return frame.totalGold
+            case LolMatchFrameStat.ELevel:
+                return frame.level
+            case LolMatchFrameStat.EMinions:
+                return frame.minionsKilled
+            case LolMatchFrameStat.EXp:
+                return frame.xp
+        }
+    })
+
+    let player = getPlayerFromParticipantId(match, id)
+    let lastStatVal: number = frameStats[frameStats.length - 1]
+    if (!!player) {
+        switch (stat) {
+            case LolMatchFrameStat.EGold:
+                lastStatVal = player.participant.stats.goldEarned
+            case LolMatchFrameStat.ELevel:
+                lastStatVal = player.participant.stats.champLevel
+            case LolMatchFrameStat.EMinions:
+                lastStatVal = player.participant.stats.totalMinionsKilled
+            case LolMatchFrameStat.EXp:
+                lastStatVal = frameStats[frameStats.length - 1]
+        }
+    }
+
+    return [
+        ...frameStats,
+        lastStatVal
+    ]
+}
+
+export function extractLolFrameStatsFromTimelineForTeam(match: LolMatch, timeline: LolMatchTimeline, stat: LolMatchFrameStat, id: number): number[] {
+    let players = extractSameTeamPlayersFromTeamId(match, id)
+    let stats = players.map((p: WrappedLolParticipant) => extractLolFrameStatsFromTimelineForPlayer(match, timeline, stat, p.participant.participantId))
+    if (stats.length == 1) {
+        return stats[0]
+    } else if (stats.length == 0) {
+        return []
+    } else {
+        return stats.slice(1).reduce((prev: number[], input: number[]) => {
+            return prev.map((y: number, idx: number) => {
+                return y + input[idx]
+            })
+        }, stats[0])
+    }
+}
+
+export function getLolOpposingPlayer(match: LolMatch, timeline: LolMatchTimeline, id: number): number | undefined {
+    let player = getPlayerFromParticipantId(match, id)
+    if (!player) {
+        return undefined
+    }
+
+    let enemies = extractEnemyTeamPlayersFromParticipantId(match, id)
+    if (!enemies) {
+        return undefined
+    }
+
+    let lane = player.participant.timeline.lane
+    return enemies.find((ele: WrappedLolParticipant) => ele.participant.timeline.lane === lane)?.participant.participantId
 }
