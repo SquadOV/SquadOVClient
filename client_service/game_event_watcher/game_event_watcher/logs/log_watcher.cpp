@@ -220,6 +220,10 @@ void LogWatcher::watchWorker() {
 #endif
     }
 
+#ifdef _WIN32
+    CloseHandle(hDir);
+#endif
+
     _isFinished = true;
     pollThread.join();
 }
