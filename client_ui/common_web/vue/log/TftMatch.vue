@@ -14,7 +14,7 @@
                     </v-col>
                 </v-row>
 
-                <v-row v-if="!!vod">
+                <v-row>
                     <video-player
                         class="mb-4"
                         :vod="vod"
@@ -22,6 +22,14 @@
                         disable-theater
                     >
                     </video-player>
+
+                    <tft-vod-picker
+                        :match-uuid="matchUuid"
+                        :puuid="puuid"
+                        :vod.sync="vod"
+                        :match="currentMatch"
+                    >
+                    </tft-vod-picker>
                 </v-row>
 
                 <v-row>
@@ -51,13 +59,15 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
 import TftScoreboard from '@client/vue/utility/tft/TftScoreboard.vue'
+import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
 
 @Component({
     components: {
         LoadingContainer,
         VideoPlayer,
         TftMatchSummary,
-        TftScoreboard
+        TftScoreboard,
+        TftVodPicker,
     }
 })
 export default class TftMatch extends Vue {

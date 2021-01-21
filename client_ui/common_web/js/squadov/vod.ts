@@ -29,6 +29,11 @@ export interface LeagueMatchAccessibleVods {
     userMapping: {[uuid: string] : number | undefined}
 }
 
+export interface TftMatchAccessibleVods {
+    vods: VodAssociation[]
+    // uuid to puuid
+    userMapping: {[uuid: string] : string | undefined}
+}
 
 interface VodSegment {
     uri: string

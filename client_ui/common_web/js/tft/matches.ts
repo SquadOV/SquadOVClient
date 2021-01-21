@@ -70,12 +70,27 @@ function checkCanBeVersionSet3MidSet(version: string) : boolean {
     let tokens = version.split('.')
     let major = parseInt(tokens[0])
     let minor = parseInt(tokens[1])
-    return (major == 10 && (minor >= 12 || minor <= 18))
+    return (major == 10 && minor >= 12 && minor <= 18)
+}
+
+function checkCanBeVersionSet4MidSet(version: string) : boolean {
+    let tokens = version.split('.')
+    let major = parseInt(tokens[0])
+    let minor = parseInt(tokens[1])
+    return (major == 11 && minor >= 2)
 }
 
 export function getTftSetNumber(major: number, version: string): string {
+    let checkVersion = version.replace('Version ', '')
+
     if (major == 3) {
-        if (checkCanBeVersionSet3MidSet(version)) {
+        if (checkCanBeVersionSet3MidSet(checkVersion)) {
+            return `${major}.5`
+        } else {
+            return `${major}`
+        }
+    } else if (major == 4) {
+        if (checkCanBeVersionSet4MidSet(checkVersion)) {
             return `${major}.5`
         } else {
             return `${major}`

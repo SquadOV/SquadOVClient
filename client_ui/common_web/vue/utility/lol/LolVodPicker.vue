@@ -216,7 +216,6 @@ export default class LolVodPicker extends Vue {
     @Watch('availableVods')
     onChangeVods() {
         this.$emit('update:vod', null)
-        this.$emit('update:playerMetadata', null)
         this.selectParticipantId(this.currentParticipantId)
     }
 

@@ -17,7 +17,9 @@ import {
     VodManifest,
     ValorantMatchAccessibleVods,
     HearthstoneMatchAccessibleVods,
-    WowMatchAccessibleVods
+    WowMatchAccessibleVods,
+    LeagueMatchAccessibleVods,
+    TftMatchAccessibleVods
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -71,7 +73,6 @@ import {
     FullLolMatch,
     cleanFullLolMatch
 } from '@client/js/lol/matches'
-import { LeagueMatchAccessibleVods } from '@client/js/squadov/vod'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -562,6 +563,13 @@ class ApiClient {
     getTftMatch(matchUuid: string): Promise<ApiData<WrappedTftMatch>> {
         return axios.get(`v1/tft/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<WrappedTftMatch>) => {
             cleanWrappedTftMatchFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getTftMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<TftMatchAccessibleVods>> {
+        return axios.get(`v1/tft/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<TftMatchAccessibleVods>) => {
+            resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
     }
