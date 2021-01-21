@@ -6,6 +6,11 @@
 #include <algorithm>
 #include <vector>
 
+#ifdef _WIN32
+#include <DbgHelp.h>
+#include <processthreadsapi.h>
+#endif
+
 namespace fs = std::filesystem;
 
 namespace shared::log {
@@ -76,6 +81,49 @@ bool Log::canLogPass() const {
 Log& getGlobalLogger() {
     static Log log("squadov.log");
     return log;
+}
+
+fs::path generateMinidump(EXCEPTION_POINTERS* ex) {
+    const auto dumpDir = shared::filesystem::getSquadOvServiceDumpFolder();
+    if (!fs::exists(dumpDir)) { 
+        fs::create_directories(dumpDir);
+    }
+
+    auto dirIter = fs::directory_iterator(dumpDir);
+    std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
+    shared::filesystem::pruneFilesystemPaths(logPaths, maxLogsToKeep - 1);
+
+    std::ostringstream dumpFname;
+    dumpFname << "squadov_" << shared::fnameTimeToStr(shared::nowUtc()) << ".dmp";
+    const fs::path dumpPath = dumpDir / fs::path(dumpFname.str());
+
+    MINIDUMP_EXCEPTION_INFORMATION info;
+    info.ThreadId = GetCurrentThreadId();
+    info.ExceptionPointers = ex;
+    info.ClientPointers = true;
+
+    HANDLE hFile = CreateFileW(
+        dumpPath.native().c_str(),
+        GENERIC_WRITE,
+        0,
+        NULL,
+        CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+
+    MiniDumpWriteDump(
+        GetCurrentProcess(),
+        GetCurrentProcessId(),
+        hFile,
+        MiniDumpNormal,
+        &info,
+        nullptr,
+        nullptr
+    );
+
+    CloseHandle(hFile);
+    return dumpPath;
 }
 
 }

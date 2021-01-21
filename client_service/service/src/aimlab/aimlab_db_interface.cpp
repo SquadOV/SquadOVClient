@@ -28,9 +28,11 @@ shared::aimlab::TaskData getTaskDataFromSqlStatement(SqlStatement& stmt) {
 
 AimlabDbInterface::AimlabDbInterface(const std::filesystem::path& path):
     _path(path) {
+    LOG_INFO("Loading Aim Lab SQLite3 Database: " << _path << std::endl);
     if (sqlite3_open(shared::filesystem::pathUtf8(_path).c_str(), &_db) != SQLITE_OK) {
         THROW_ERROR("Failed to open database.");
     }
+    LOG_INFO("...Success" << std::endl);
 }
 
 AimlabDbInterface::~AimlabDbInterface() {

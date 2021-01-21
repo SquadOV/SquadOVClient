@@ -116,6 +116,7 @@ if(WIN32)
     target_link_libraries(squadov_client_service
         d3d11
         dxgi
+        dbghelp
     )
 endif()
 

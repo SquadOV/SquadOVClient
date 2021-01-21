@@ -7,6 +7,10 @@
 #include <sstream>
 #include <codecvt>
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 namespace shared::log {
 
 enum class LogType {
@@ -97,6 +101,7 @@ private:
 };
 
 Log& getGlobalLogger();
+std::filesystem::path generateMinidump(EXCEPTION_POINTERS* ex);
 
 }
 
