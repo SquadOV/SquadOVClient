@@ -1,5 +1,6 @@
 const DDRAGON_BASE_URL = 'http://ddragon.leagueoflegends.com/cdn'
 import axios from 'axios'
+import { ApiData } from '@client/js/api'
 
 export interface LolDdragonData {
     key: string | undefined
@@ -275,14 +276,32 @@ class LolDdragonClient {
 
 class LolDdragonClientContainer {
     clientCache: Map<string, LolDdragonClient>
+    validVersions: Set<string>
+    defaultVersion: string = ''
 
     constructor () {
         this.clientCache = new Map()
+        this.validVersions = new Set()
+        this.refreshValidVersions()
+    }
+
+    refreshValidVersions() {
+        axios.get(`http://ddragon.leagueoflegends.com/api/versions.json`).then((resp: ApiData<string[]>) => {
+            resp.data.forEach((ele: string) => this.validVersions.add(ele))
+            this.defaultVersion = resp.data[0]
+        }).catch((err: any) => {
+            console.log('Failed to obtain DDragon version: ', err)
+        })
     }
 
     getClientForVersion(version: string): LolDdragonClient {
         let tokens = version.split('.')
         let key = `${tokens[0]}.${tokens[1]}.1`
+
+        if (!this.validVersions.has(key)) {
+            key = this.defaultVersion
+        }
+
         if (!this.clientCache.has(key)) {
             this.clientCache.set(key, new LolDdragonClient(key))
         }
