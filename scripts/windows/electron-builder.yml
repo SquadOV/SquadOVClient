@@ -49,5 +49,8 @@ extraResources:
     to: "tzdata"
   - from: "../../build/bin/Release"
     to: "service"
+    filter:
+      - "*.dll"
+      - "squadov_client_service.exe"
   - from: "config/${env.GCP_PROJECT}.json"
     to: "config/config.json"
