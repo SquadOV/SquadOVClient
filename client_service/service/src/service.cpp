@@ -45,8 +45,9 @@ process_watcher::ProcessWatcher watcher;
 #ifdef _WIN32
 
 LONG handleTopLevelExceptions(EXCEPTION_POINTERS* ex) {
+    const auto dumpLoc = shared::log::generateMinidump(ex);
     LOG_ERROR(
-        "SquadOV Fatal Error [Code: " << ex->ExceptionRecord->ExceptionCode << "]" << std::endl
+        "SquadOV Fatal Error [Code: " << ex->ExceptionRecord->ExceptionCode << "] @ " << dumpLoc << std::endl
             << boost::stacktrace::stacktrace() << std::endl
     );
     return EXCEPTION_CONTINUE_SEARCH;
@@ -199,7 +200,7 @@ int main(int argc, char** argv) {
             shared::gameVectorToJsonArray(setVec).dump()
         );
     });
-
+    
     const auto mode = vm["mode"].as<std::string>();
     if (mode == "") {
         defaultMain();

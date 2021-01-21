@@ -152,6 +152,12 @@ private:
         int sampleLineSize = 0;
         int64_t maxSamples = 0;
 
+        // Debug Info
+        uint64_t receivedSamples = 0;
+        uint64_t processedSamples = 0;
+        uint64_t convertedSamples = 0;
+        uint64_t encodedSamples = 0;
+
         SwrContext* swr = nullptr;
 
         AudioStreamData() = default;
@@ -178,6 +184,9 @@ private:
     std::mutex _backMutex;
     std::unique_ptr<service::recorder::image::Image> _backBuffer;
     bool _backBufferDirty = false;
+
+    uint64_t _receivedVideoFrames = 0;
+    uint64_t _processedVideoFrames = 0;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -499,6 +508,7 @@ void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& f
 
     _backBuffer->copyFrom(frame);
     _backBufferDirty = true;
+    ++_receivedVideoFrames;
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
@@ -509,6 +519,7 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     // samples in each frame.
     const auto samplesPerPacket = FFmpegAudioPacket::N / view.props().numChannels;
     const auto numQueuePackets = (view.props().numSamples + samplesPerPacket - 1) / samplesPerPacket;
+    streamData.receivedSamples += view.props().numSamples;
 
     for (std::remove_const_t<decltype(numQueuePackets)> i = 0; i < numQueuePackets; ++i) {
         // Start and end indices of the samples in the input packet view to store in the new fixed size packet. End index is non-inculsive.
@@ -602,6 +613,7 @@ void FfmpegAvEncoderImpl::start() {
                 const auto* inputBuffer = _frontBuffer->buffer();
                 const int inputBufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
                 sws_scale(_sws, &inputBuffer, inputBufferStride, 0, static_cast<int>(_frontBuffer->height()), _vframe->data, _vframe->linesize);
+                ++_processedVideoFrames;
             }
 
             for (; frameNum < desiredFrameNum; ++frameNum) {
@@ -643,6 +655,7 @@ void FfmpegAvEncoderImpl::start() {
                 stream->queue->consume_all([this, &stream, &start](const FFmpegAudioPacket& packet){
                     // Use swr_convert to convert the input packet format to the output frame format that
                     // FFmpeg expects. Note that this assumes right now that the input is not planar.
+                    stream->processedSamples += packet.props().numSamples;
                     stream->reinitSampleStorage(static_cast<int>(packet.props().numSamples));
 
                     const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(packet.buffer());                    
@@ -653,6 +666,7 @@ void FfmpegAvEncoderImpl::start() {
                         &inputByteBuffer,
                         static_cast<int>(packet.props().numSamples));
 
+                    stream->convertedSamples += numConverted;
                     stream->writeStoredSamplesToFifo(numConverted);
                 });
             }
@@ -667,6 +681,7 @@ void FfmpegAvEncoderImpl::start() {
                     if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
                         THROW_ERROR("Failed to read from FIFO queue.");
                     }
+                    _astreams[s]->encodedSamples += frameSize;
 
                     // Copy from the tmp frame into the encoding frame.
                     // We are very much assuming a planar output right now.
@@ -722,6 +737,19 @@ void FfmpegAvEncoderImpl::stop() {
     _running = false;
     _videoEncodingThread.join();
     _audioEncodingThread.join();
+
+    LOG_INFO("SquadOV FFMpeg Encoder Stats: " << std::endl
+        << "\tVideo Frames: " << _processedVideoFrames << " [" <<  _receivedVideoFrames << "]" << std::endl
+    );
+
+    for (size_t s = 0; s < _astreams.size(); ++s) {
+        LOG_INFO("\tAudio Samples [" << s 
+            << "]: Receive - " << _astreams[s]->receivedSamples
+            << ":: Process - " << _astreams[s]->processedSamples
+            << ":: Converted - " << _astreams[s]->convertedSamples
+            << ":: Encoded - " << _astreams[s]->encodedSamples
+        << std::endl);
+    }
 
     // Flush packets from encoder.
     encode(_vcodecContext, _avcontext, nullptr, _vstream);

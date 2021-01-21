@@ -116,7 +116,7 @@ export default class BugReporter extends Vue {
         try {
             let appDataFolder = process.env.APPDATA!
             let logDir = path.join(appDataFolder, 'SquadOV' + (!!process.env.SQUADOV_APPDATA_SUFFIX ? process.env.SQUADOV_APPDATA_SUFFIX : ''), 'Logs')    
-            let logFiles = glob.sync(`${logDir}/**/*.log`)
+            let logFiles = glob.sync(`${logDir}/**/*.{log,dmp}`)
             for (let f of logFiles) {
                 let data = fs.readFileSync(f)
                 let zipFname = path.relative(logDir, f).replace('\\', '/')
