@@ -62,6 +62,9 @@ export default class LolParticipantDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     noTooltip!: boolean
 
+    @Prop({type: Boolean, default: false})
+    noBorder!: boolean
+
     name: string = ''
 
     @Watch('participant')
@@ -83,6 +86,10 @@ export default class LolParticipantDisplay extends Vue {
     }
     
     get iconStyle(): any {
+        if (this.noBorder) {
+            return {}
+        }
+
         let borderColor: Color
         let playerTeam = getTeamIdFromParticipantId(this.match, this.participant.participant.participantId)
 

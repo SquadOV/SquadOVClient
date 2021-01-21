@@ -36,6 +36,7 @@ export interface FullLolMatch {
     match: LolMatch
     timeline: LolMatchTimeline
     userIdToParticipantId: { [userId: number] : number | undefined }
+    gameStartTime: Date | null
 }
 
 export interface LolMatch {
@@ -61,6 +62,9 @@ export function cleanLolPlayerMatchSummaryFromJson(s: LolPlayerMatchSummary): Lo
 
 export function cleanFullLolMatch(s: FullLolMatch): FullLolMatch {
     s.match.gameCreation = new Date(s.match.gameCreation)
+    if (!!s.gameStartTime) {
+        s.gameStartTime = new Date(s.gameStartTime)
+    }
     return s
 }
 

@@ -132,6 +132,7 @@
                         :forced-min-x="0"
                         :forced-max-x="match.gameDuration"
                         :diff-graph="diffGraphs"
+                        @graphclick="handleClick"
                     >
                     </line-graph>
                 </div>
@@ -149,6 +150,7 @@
                         :forced-min-x="0"
                         :forced-max-x="match.gameDuration"
                         :diff-graph="diffGraphs"
+                        @graphclick="handleClick"
                     >
                     </line-graph>
                 </div>
@@ -166,6 +168,7 @@
                         :forced-min-x="0"
                         :forced-max-x="match.gameDuration"
                         :diff-graph="diffGraphs"
+                        @graphclick="handleClick"
                     >
                     </line-graph>
                 </div>
@@ -183,6 +186,7 @@
                         :forced-min-x="0"
                         :forced-max-x="match.gameDuration"
                         :diff-graph="diffGraphs"
+                        @graphclick="handleClick"
                     >
                     </line-graph>
                 </div>
@@ -212,6 +216,7 @@ import { LolTeamStats, lolTeamIdToString, getOpposingLolTeam } from '@client/js/
 import { WrappedLolParticipant } from '@client/js/lol/participant'
 import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import { ddragonContainer } from '@client/js/lolDdragon'
+import { colorToCssString, getGenericFirstPlaceColor } from '@client/js/color'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 
@@ -230,6 +235,9 @@ export default class LolStatTimelineContainer extends Vue {
 
     @Prop({required: true})
     currentParticipantId!: number | null | undefined
+
+    @Prop({required: true})
+    currentTime!: number
 
     showSettings: boolean = false
     teamGraphs: boolean = false
@@ -398,13 +406,23 @@ export default class LolStatTimelineContainer extends Vue {
                         console.log('Diff Graph can not be populated due to difference in data length.')
                     }
                 }
-                return new StatXYSeriesData(
+
+                let data = new StatXYSeriesData(
                     x,
                     y,
                     'value',
                     'elapsedSeconds',
                     this.selectOptions.find((ele: any) => ele.value === id)?.text
                 )
+
+                data.addXMarkLine({
+                    x: this.currentTime,
+                    name: '',
+                    symbol: 'none',
+                    colorOverride: colorToCssString(getGenericFirstPlaceColor()),
+                })
+
+                return data
             })
         }
     }
@@ -423,6 +441,10 @@ export default class LolStatTimelineContainer extends Vue {
 
     get minionSeries(): StatXYSeriesData[] {
         return this.computeGraphSeries(LolMatchFrameStat.EMinions)
+    }
+
+    handleClick(evt: {gridIndex: number, pts: number[]}) {
+        this.$emit('go-to-timestamp', evt.pts[0] * 1000.0)
     }
 
     mounted() {

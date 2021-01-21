@@ -8,8 +8,10 @@
 #include "shared/log/log.h"
 #include "system/state.h"
 
+#include <atomic>
 #include <iostream>
 #include <queue>
+#include <mutex>
 #include <unordered_set>
 
 using namespace std::chrono_literals;
@@ -32,15 +34,35 @@ public:
 private:
     void onLeagueConfig(const shared::TimePoint& eventTime, const void* rawData);
 
+    void onLeagueAvailable(const shared::TimePoint& eventTime, const void* rawData);
+    void onLeagueGameStart(const shared::TimePoint& eventTime, const void* rawData);
+
+    void requestMatchCreation();
+    void requestBackfill();
+
+    bool isReady() const;
+
     process_watcher::process::Process  _process;
     game_event_watcher::LeagueCommandLineCfg _cfg;
     service::api::LeagueIngameApiPtr _api;
+    service::api::LeagueIngameApiPollerPtr _apiWatcher;
 
+    // When we started recording
     shared::TimePoint _startTime;
+    // When the game time is 0:00
+    shared::TimePoint _gameStartTime = shared::TimePoint::max();
     bool _ownsAccount = false;
     std::string _currentMatchUuid;
     std::string _activePlayerSummonerName;
     shared::EGame _actualGame;
+
+    mutable std::mutex _configMutex;
+    bool _hasConfig = false;
+    bool _hasInGame = false;
+    bool _hasAccount = false;
+
+    std::atomic_bool _matchCreated = false;
+    std::atomic_bool _backfillRequested = false;
 
     service::recorder::GameRecorderPtr _recorder;
     game_event_watcher::LeagueLogWatcherPtr _logWatcher;
@@ -55,31 +77,11 @@ LeagueProcessHandlerInstance::LeagueProcessHandlerInstance(const process_watcher
     // we're actually playing (LoL vs TFT). We also need to use the in-game API to determine
     // the current player. This information will be used to ensure we can determine which
     // user to do a backfill for (and to ensure that the account is owned by the current user)
-    _api = std::make_unique<service::api::LeagueIngameApi>();
-    try {
-        _activePlayerSummonerName = _api->getActivePlayerName();
-        LOG_INFO("Retrieved Summoner Name: " << _activePlayerSummonerName << std::endl);
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to get active summoner name: " << ex.what() << std::endl);
-        return;
-    }
-
-    try {
-        const auto gameStats = _api->getGameStats();
-        if (gameStats.gameMode == "TFT") {
-            _actualGame = shared::EGame::TFT;
-            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName);
-        } else {
-            _actualGame = shared::EGame::LeagueOfLegends;
-            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName);
-        }
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to get game mode or verify account ownership: " << ex.what() << std::endl);
-        return;
-    }
-
-    LOG_INFO("Determined Game: " << shared::gameToString(_actualGame) << std::endl);
-    LOG_INFO("Owned Account: " << _ownsAccount << std::endl);
+    _api = std::make_shared<service::api::LeagueIngameApi>();
+    _apiWatcher = std::make_shared<service::api::LeagueIngameApiPoller>(_api);
+    _apiWatcher->notifyOnEvent(static_cast<int>(service::api::ELeagueInGameEvent::Available), std::bind(&LeagueProcessHandlerInstance::onLeagueAvailable, this, std::placeholders::_1, std::placeholders::_2));
+    _apiWatcher->notifyOnEvent(static_cast<int>(service::api::ELeagueInGameEvent::Start), std::bind(&LeagueProcessHandlerInstance::onLeagueGameStart, this, std::placeholders::_1, std::placeholders::_2));
+    _apiWatcher->start();
 
     // The log watcher is for finding the log for finding extra information about
     // the game (namely things like the game ID and platform ID). Note that
@@ -88,9 +90,6 @@ LeagueProcessHandlerInstance::LeagueProcessHandlerInstance(const process_watcher
     _logWatcher = std::make_unique<game_event_watcher::LeagueLogWatcher>(shared::nowUtc());
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ELeagueLogEvents::CommandLineCfg), std::bind(&LeagueProcessHandlerInstance::onLeagueConfig, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
-
-    // Now we can create the recorder once we know what we're ACTUALLY playing.
-    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, _actualGame);
 }
 
 LeagueProcessHandlerInstance::~LeagueProcessHandlerInstance() {
@@ -99,47 +98,50 @@ LeagueProcessHandlerInstance::~LeagueProcessHandlerInstance() {
 void LeagueProcessHandlerInstance::onGameStart() {
     service::system::getGlobalState()->markGameRunning(_actualGame, true);
 
-    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
+    if (service::system::getGlobalState()->isPaused()) {
         return;
     }
-    
-    _startTime = shared::nowUtc();
-    _recorder->start();
+
+    LOG_INFO("On LoL/TFT Game Start" << std::endl);
 }
 
 void LeagueProcessHandlerInstance::onGameEnd() {
     service::system::getGlobalState()->markGameRunning(_actualGame, false);
 
-    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
+    if (service::system::getGlobalState()->isPaused()) {
         return;
     }
 
-    const auto vodId = _recorder->currentId();
-    const auto sessionId = _recorder->sessionId();
-    const auto metadata = _recorder->getMetadata();
-    _recorder->stop();
+    LOG_INFO("On LoL/TFT Game End: " << _currentMatchUuid << std::endl);
 
-    if (!_currentMatchUuid.empty()) {
-        try {
-            if (_actualGame == shared::EGame::TFT) {
-                service::api::getGlobalApi()->finishTftMatch(_currentMatchUuid);
-            } else {
-                service::api::getGlobalApi()->finishLeagueOfLegendsMatch(_currentMatchUuid);
-            }
+    if (_recorder->isRecording()) {
+        const auto vodId = _recorder->currentId();
+        const auto sessionId = _recorder->sessionId();
+        const auto metadata = _recorder->getMetadata();
+        _recorder->stop();
 
-            shared::squadov::VodAssociation association;
-            association.matchUuid = _currentMatchUuid;
-            association.userUuid = vodId.userUuid;
-            association.videoUuid = vodId.videoUuid;
-            association.startTime = _startTime;
-            association.endTime = shared::nowUtc();
-            service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
-        }  catch (std::exception& ex) {
-            LOG_WARNING("Failed to upload LoL/TFT match: " << ex.what() << std::endl);
+        if (!_currentMatchUuid.empty() && _ownsAccount) {
             try {
-                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
-            } catch (std::exception& ex) {
-                LOG_WARNING("Failed to delete VOD: " << ex.what());            
+                if (_actualGame == shared::EGame::TFT) {
+                    service::api::getGlobalApi()->finishTftMatch(_currentMatchUuid);
+                } else {
+                    service::api::getGlobalApi()->finishLeagueOfLegendsMatch(_currentMatchUuid);
+                }
+
+                shared::squadov::VodAssociation association;
+                association.matchUuid = _currentMatchUuid;
+                association.userUuid = vodId.userUuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = _startTime;
+                association.endTime = shared::nowUtc();
+                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+            }  catch (std::exception& ex) {
+                LOG_WARNING("Failed to upload LoL/TFT match: " << ex.what() << std::endl);
+                try {
+                    service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Failed to delete VOD: " << ex.what());            
+                }
             }
         }
     }
@@ -147,8 +149,89 @@ void LeagueProcessHandlerInstance::onGameEnd() {
     _currentMatchUuid.clear();
 }
 
+void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
+    const auto* stats = reinterpret_cast<const service::api::LeagueGameStats*>(rawData);
+    if (!stats) {
+        LOG_WARNING("Null League game stats on available?" << std::endl);
+        return;
+    }
+
+    LOG_INFO("League In-Game API Available: " << shared::timeToStr(eventTime) << std::endl 
+        << "\tGame Mode: " << stats->gameMode << std::endl
+        << "\tGame Time: " << stats->gameTime << std::endl
+        << "\tMap Name: " << stats->mapName << std::endl
+        << "\tMap Number: " << stats->mapNumber << std::endl
+    );
+
+    if (stats->gameMode == "TFT") {
+        _actualGame = shared::EGame::TFT;
+    } else {
+        _actualGame = shared::EGame::LeagueOfLegends;
+    }
+
+    // There's no guarantee that the getActivePlayerName endpoint will return a non-empty string right away
+    // so start a thread to start watching for that as soon as the in-game API is available to us.
+    std::thread t([this]() {
+        while (_activePlayerSummonerName.empty()) {
+            try {
+                _activePlayerSummonerName = _api->getActivePlayerName();
+                LOG_INFO("Retrieved Summoner Name: " << _activePlayerSummonerName << std::endl);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to get active summoner name: " << ex.what() << std::endl);
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+
+        if (_actualGame == shared::EGame::TFT) {
+            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName);
+        } else {
+            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName);
+        }
+        
+        LOG_INFO("\tDetermined Game: " << shared::gameToString(_actualGame) << std::endl);
+        LOG_INFO("\tOwned Account: " << _ownsAccount << std::endl);
+        {
+            std::unique_lock<std::mutex> guard(_configMutex);
+            _hasAccount = true;
+        }
+
+        if (_ownsAccount) {
+            _startTime = shared::nowUtc();
+            _recorder->start();
+        }
+
+        requestMatchCreation();
+        requestBackfill();
+    });
+    t.detach();
+    
+    // Now we can create the recorder once we know what we're ACTUALLY playing.
+    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, _actualGame);
+}
+
+void LeagueProcessHandlerInstance::onLeagueGameStart(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
+    LOG_INFO("On League Game Start: " << shared::timeToStr(eventTime) << std::endl);
+    _gameStartTime = eventTime;
+    
+    {
+        std::unique_lock<std::mutex> guard(_configMutex);
+        _hasInGame = true;
+    }
+
+    requestMatchCreation();
+    requestBackfill();
+}
+
 void LeagueProcessHandlerInstance::onLeagueConfig(const shared::TimePoint& eventTime, const void* rawData) {
-    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
+    if (service::system::getGlobalState()->isPaused()) {
         return;
     }
 
@@ -164,18 +247,65 @@ void LeagueProcessHandlerInstance::onLeagueConfig(const shared::TimePoint& event
         << "\tPlatform: " << cfg->platformId << std::endl);
     _cfg = *cfg;
 
+    {
+        std::unique_lock<std::mutex> guard(_configMutex);
+        _hasConfig = true;
+    }
+
+    requestMatchCreation();
+    requestBackfill();
+}
+
+bool LeagueProcessHandlerInstance::isReady() const {
+    std::unique_lock<std::mutex> guard(_configMutex);
+    return _hasInGame && _hasConfig && _hasAccount;
+}
+
+void LeagueProcessHandlerInstance::requestMatchCreation() {
+    // There a couple checks here.
+    // 1) isReady checks for whether onLeagueConfig, onLeagueAvailable, and onLeagueGameStart have all been called.
+    //    Note that the flag checked in isReady is only ticked in onLeagueConfig and onLeagueConfig. There's no call
+    //    in onLeagueAvailable because onLeagueGameStart is guaranteed to be called after onLeagueAvailable in the
+    //    same thread.
+    // 2) Atomic set and check on _matchCreated (for backfill it'd be _backfillRequested) to make sure we only try to create a match once.
+    if (!isReady() || !_ownsAccount) {
+        LOG_INFO("Skipping match creation either due to not ready or not owned account." << std::endl);
+        return;
+    }
+
+    const auto prev = _matchCreated.exchange(true);
+    if (prev) {
+        return;
+    }
+
+    LOG_INFO("Requesting LoL/TFT match creation..." << std::endl);
+
     // This is where we create the match UUID on the server as we can only get
     // a unique Riot-based identifier for the match (region/platform + game ID)
     // once this event fires.
     try {
         if (_actualGame == shared::EGame::TFT) {
-            _currentMatchUuid = service::api::getGlobalApi()->createNewTftMatch(_cfg.region, _cfg.platformId, _cfg.gameId);
+            _currentMatchUuid = service::api::getGlobalApi()->createNewTftMatch(_cfg.region, _cfg.platformId, _cfg.gameId, _gameStartTime);
         } else {
-            _currentMatchUuid = service::api::getGlobalApi()->createNewLeagueOfLegendsMatch(_cfg.platformId, _cfg.gameId);
+            _currentMatchUuid = service::api::getGlobalApi()->createNewLeagueOfLegendsMatch(_cfg.platformId, _cfg.gameId, _gameStartTime);
         }
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create new LoL/TFT match: " << ex.what() << std::endl);
     }
+}
+
+void LeagueProcessHandlerInstance::requestBackfill() {
+    if (!isReady() || !_ownsAccount) {
+        LOG_INFO("Skipping backfill either due to not ready or not owned account." << std::endl);
+        return;
+    }
+
+    const auto prev = _backfillRequested.exchange(true);
+    if (prev) {
+        return;
+    }
+
+    LOG_INFO("Requesting LoL/TFT backfill..." << std::endl);
 
     try {
         // Note that it's the server's responsibility to make sure we don't backfill too often.

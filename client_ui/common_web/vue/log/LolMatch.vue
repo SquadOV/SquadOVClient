@@ -20,8 +20,17 @@
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
+                            :current-time.sync="vodTime"
                         >
                         </video-player>
+
+                        <lol-vod-picker
+                            :vod.sync="vod"
+                            :match-uuid="matchUuid"
+                            :match="currentMatch.match"
+                            :current-participant-id="currentParticipantId"
+                        >
+                        </lol-vod-picker>
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
@@ -43,9 +52,10 @@
                     class="full-width my-2"
                     :start="0"
                     :end="currentMatch.match.gameDuration"
-                    :current="0"
+                    :current="currentMatchTimeSeconds"
                     :input-events="genericEvents"
                     :major-tick-every="90"
+                    @go-to-timestamp="goToTimestampSeconds"
                 >
                     <template v-slot:tick="{ tick }">
                         {{ secondsToTimeString(tick) }}
@@ -101,6 +111,8 @@
                     :timeline="currentMatch.timeline"
                     :current-participant-id="currentParticipantId"
                     :style="timelineStyle"
+                    :current-time="currentMatchTimeSeconds"
+                    @go-to-timestamp="goToTimestamp"
                 >
                 </lol-stat-timeline-container>
             </v-container>
@@ -131,6 +143,7 @@ import LolEventManager from '@client/vue/utility/lol/LolEventManager.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineContainer.vue'
+import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
 
 @Component({
     components: {
@@ -142,6 +155,7 @@ import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineCon
         LolEventManager,
         LolEventDisplay,
         LolStatTimelineContainer,
+        LolVodPicker,
         GenericMatchTimeline,
     }
 })
@@ -168,9 +182,31 @@ export default class LolMatch extends Vue {
     currentPlayerHeight : number = 0
     theaterMode: boolean = false
     currentTab: number = 0
+    vodTime: Date | null = null
+
+    goToTimestampSeconds(t: number) {
+        this.goToTimestamp(t * 1000.0)
+    }
 
     goToTimestamp(t: number) {
+        if (!this.vod || !this.currentMatch?.gameStartTime) {
+            return
+        }
 
+        // Assume t is number of milliseconds since the game started.
+        let diffMs = (this.currentMatch.gameStartTime.getTime() - this.vod.startTime.getTime()) + t
+        this.$refs.player.goToTimeMs(diffMs)
+    }
+
+    // This function is needed to convert from the current VOD time to the match time in seconds
+    // as we're not guaranteed that the VOD starts as soon as the match starts.
+    get currentMatchTimeSeconds(): number {
+        if (!this.vodTime || !this.currentMatch?.gameStartTime) {
+            return 0
+        }
+
+        let diffMs = this.vodTime.getTime() - this.currentMatch.gameStartTime.getTime()
+        return Math.max(diffMs / 1000.0, 0.0)
     }
 
     get currentParticipantId() : number | undefined | null {

@@ -23,6 +23,7 @@ public:
 
     void loadFromExecutable(const std::filesystem::path& exePath);
     void loadFromPath(const std::filesystem::path& logPath);
+    void wait();
 private:
     void onR3dChange(const LogLinesDelta& lines);
 

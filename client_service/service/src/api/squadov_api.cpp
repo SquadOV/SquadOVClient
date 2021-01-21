@@ -427,10 +427,11 @@ bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summon
     return result->status == 200;
 }
 
-std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId) const {
+std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const {
     const nlohmann::json body = {
         { "platform", platform },
-        { "matchId", matchId }
+        { "matchId", matchId },
+        { "gameStartTime", shared::timeToIso(gameStartTime) }
     };
 
     std::ostringstream path;
@@ -481,11 +482,12 @@ bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName) cons
     return result->status == 200;
 }
 
-std::string SquadovApi::createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId) const {
+std::string SquadovApi::createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const {
     const nlohmann::json body = {
         { "platform", platform },
         { "region", region },
-        { "matchId", matchId }
+        { "matchId", matchId },
+        { "gameStartTime", shared::timeToIso(gameStartTime) }
     };
 
     std::ostringstream path;

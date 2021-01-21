@@ -23,6 +23,13 @@ export interface HearthstoneMatchAccessibleVods {
     userToId: {[uuid: string] : number | undefined }
 }
 
+export interface LeagueMatchAccessibleVods {
+    vods: VodAssociation[]
+    // uuid to participant id
+    userMapping: {[uuid: string] : number | undefined}
+}
+
+
 interface VodSegment {
     uri: string
     duration: number

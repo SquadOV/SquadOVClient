@@ -10,7 +10,7 @@ namespace game_event_watcher {
 namespace {
 
 const std::string CFG_LINE_TOKEN = "CFG| Command Line:";
-const std::regex GAME_ID_REGEX(".*-GameID=(\d*).*");
+const std::regex GAME_ID_REGEX(".*-GameID=(\\d*).*");
 const std::regex REGION_REGEX(".*-Region=(.*?)\".*");
 const std::regex PLATFORM_REGEX(".*-PlatformID=(.*?)\".*");
 bool parseLeagueCommandLineCfg(const std::string& line, LeagueCommandLineCfg& cfg) {
@@ -42,7 +42,7 @@ bool parseLeagueCommandLineCfg(const std::string& line, LeagueCommandLineCfg& cf
         cfg.platformId = matches[1].str();
     }
 
-    return false;
+    return true;
 }
 
 }
@@ -55,42 +55,64 @@ LeagueLogWatcher::LeagueLogWatcher(const shared::TimePoint& timeThreshold):
 }
 
 void LeagueLogWatcher::loadFromExecutable(const std::filesystem::path& exePath) {
-    const auto logFolder = exePath.parent_path() / fs::path("Logs") / fs::path("GameLogs");
-    // Need to find the most recent folder and the most recent log file. I'm assuming
-    // that the relevant game folder will be setup by the time we get here.
-    auto dirIter = fs::directory_iterator(logFolder);
-    std::vector<fs::path> gameFolderPaths(fs::begin(dirIter), fs::end(dirIter));
+    const auto logFolder = exePath.parent_path().parent_path() / fs::path("Logs") / fs::path("GameLogs");
+    
+    // Need to use the current time with some negative buffer for inexact timings to find the 
+    // the right log folder to use. Note that this directory may not be immediately available
+    // hence why this needs to be started up in a separate thread.
+    std::thread t([this, logFolder]() {
+        const shared::TimePoint thresholdTime = shared::nowUtc() - std::chrono::minutes(5);
+        bool found = false;
+        while (!found) {
+            // Need to find the most recent folder and the most recent log file. I'm assuming
+            // that the relevant game folder will be setup by the time we get here.
+            auto dirIter = fs::directory_iterator(logFolder);
 
-    shared::TimePoint latestTime = shared::zeroTime();
-    fs::path latestFolder;
+            auto latestTime = thresholdTime;
+            std::vector<fs::path> gameFolderPaths(fs::begin(dirIter), fs::end(dirIter));
+            fs::path latestFolder;
 
-    for (const auto& gameFolder : gameFolderPaths) {
-        // Each folder is conveniently named as a UTC time of the format
-        // YEAR-MONTH-DATETHOUR-MINUTES-SECONDS. So part that to figure out
-        // which folder was made the latest.
-        const auto fname = shared::filesystem::pathUtf8(gameFolder.filename());
-        const auto tm = shared::strToTime(fname, "%FT%H-%M-%S");
-        if (tm > latestTime) {
-            latestTime = tm;
-            latestFolder = gameFolder;
+            for (const auto& gameFolder : gameFolderPaths) {
+                // Each folder is conveniently named as a local time in the format
+                // YEAR-MONTH-DATETHOUR-MINUTES-SECONDS. So parse that to figure out
+                // which folder was made the latest.
+                const auto fname = shared::filesystem::pathUtf8(gameFolder.filename());
+                const auto tm = date::make_zoned(
+                    date::current_zone(),
+                    shared::strToLocalTime(fname, "%FT%H-%M-%S")
+                ).get_sys_time();
+                if (tm > latestTime) {
+                    latestTime = tm;
+                    latestFolder = gameFolder;
+                }
+            }
+
+            if (!fs::exists(latestFolder)) {
+                LOG_WARNING("Failed to find League game log...retrying: " << logFolder << std::endl);
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+                continue;
+            }
+
+            // Now we just need to grab the one file that has r3dlog.txt in it.
+            dirIter = fs::directory_iterator(latestFolder);
+            std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
+            for (const auto& path : logPaths) {
+                const auto fname = shared::filesystem::pathUtf8(path.filename());
+                if (fname.find("r3dlog.txt") != std::string::npos) {
+                    loadFromPath(path);
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                LOG_WARNING("Failed to find r3dlog file in dir: " << latestFolder << std::endl);
+                std::this_thread::sleep_for(std::chrono::milliseconds(300));
+            }
         }
-    }
-
-    if (!fs::exists(latestFolder)) {
-        LOG_ERROR("Failed to find League game log: " << exePath << std::endl);
-        return;
-    }
-
-    // Now we just need to grab the one file that has r3dlog.txt in it.
-    dirIter = fs::directory_iterator(latestFolder);
-    std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
-    for (const auto& path : logPaths) {
-        const auto fname = shared::filesystem::pathUtf8(path.filename());
-        if (fname.find("r3dlog.txt") != std::string::npos) {
-            loadFromPath(fname);
-            break;
-        }
-    }
+    });
+    t.detach();
+    
 }
 
 void LeagueLogWatcher::loadFromPath(const std::filesystem::path& logPath) {
@@ -110,6 +132,10 @@ void LeagueLogWatcher::onR3dChange(const LogLinesDelta& lines) {
             }
         }
     }
+}
+
+void LeagueLogWatcher::wait() {
+    _r3dWatcher->wait();
 }
 
 }

@@ -71,6 +71,7 @@ import {
     FullLolMatch,
     cleanFullLolMatch
 } from '@client/js/lol/matches'
+import { LeagueMatchAccessibleVods } from '@client/js/squadov/vod'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -589,6 +590,13 @@ class ApiClient {
     getLolMatch(matchUuid: string): Promise<ApiData<FullLolMatch>> {
         return axios.get(`v1/lol/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<FullLolMatch>) => {
             cleanFullLolMatch(resp.data)
+            return resp
+        })
+    }
+
+    getLolMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<LeagueMatchAccessibleVods>> {
+        return axios.get(`v1/lol/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
+            resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
     }

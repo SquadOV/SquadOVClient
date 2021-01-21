@@ -40,6 +40,7 @@ public:
     void removeHeaderKey(const std::string& key);
 
     void enableSelfSigned() { _allowSelfSigned = true; }
+    void quiet() { _quiet = true; }
 
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
     void clearResponseInterceptors() { _responseInterceptors.clear(); }
@@ -54,6 +55,7 @@ private:
     HttpResponsePtr sendRequest(const std::string& path, const MethodRequestCallback& cb) const;
 
     void tickRateLimit() const;
+    bool _quiet = false;
     // TLS
     bool _allowSelfSigned = false;
     // Rate limiting

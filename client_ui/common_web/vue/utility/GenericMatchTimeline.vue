@@ -6,11 +6,12 @@
         @mouseenter="startSeeking"
         @mouseleave="seeking = false"
         @mousemove="onMouseMove"
+        @click="changeCurrent"
     >
         <div ref="inner" class="bar-div" :style="progressBarStyle">
         </div>
 
-        <div ref="seekTick" class="seek-div" :style="seekDivStyle">
+        <div ref="seekTick" class="seek-div" :style="seekDivStyle" v-if="seeking">
             <slot name="tick" v-bind:tick="seekingTime">
                 {{ seekingTime }}
             </slot>
@@ -108,10 +109,20 @@ export default class GenericMatchTimeline extends Vue {
     tooltipX: number = 0
     tooltipY: number = 0
 
-    recomputeSeekingTimeFromMouseEvent(e: MouseEvent) {
+    changeCurrent(e: MouseEvent) {
+        let tm = this.computeTimeFromMouseEvent(e)
+        this.$emit('go-to-timestamp', tm)
+    }
+
+    computeTimeFromMouseEvent(e: MouseEvent): number {
         let bounds = this.$refs.parent.getBoundingClientRect()
         let percentage = (e.clientX - bounds.left) / bounds.width
-        this.seekingTime = this.start + (this.end - this.start) * percentage
+        return this.start + (this.end - this.start) * percentage
+    }
+
+    recomputeSeekingTimeFromMouseEvent(e: MouseEvent) {
+        let bounds = this.$refs.parent.getBoundingClientRect()
+        this.seekingTime = this.computeTimeFromMouseEvent(e)
 
         Vue.nextTick(() => {
             let innerBounds = this.$refs.inner.getBoundingClientRect()
