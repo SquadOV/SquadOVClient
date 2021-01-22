@@ -17,6 +17,7 @@ public:
 
     using PlayerMap = process_watcher::memory::mono::types::MapMapper<int, PlayerMapperSPtr>;
     PlayerMap playerMap() const;
+    bool gameOver() const;
 private:
     process_watcher::memory::mono::MonoObjectMapperSPtr _object;
 };

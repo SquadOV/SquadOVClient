@@ -101,6 +101,14 @@ bool HearthstoneMemoryMapper::isSpectator() const {
     return gameMgr->isSpectator();
 }
 
+bool HearthstoneMemoryMapper::inGame() const { 
+    const auto state = types::GameStateMapper::singleton(_mono->image(), _mono->domainId());
+    if (!state) {
+        return false;
+    }
+    return true;
+}
+
 types::CollectionDeckMapperSPtr HearthstoneMemoryMapper::getCurrentArenaDeck() const {
     const auto draftManager = types::HearthstoneServicesMapper::getDraftManager(_mono->image(), _mono->domainId());
     if (!draftManager) {
