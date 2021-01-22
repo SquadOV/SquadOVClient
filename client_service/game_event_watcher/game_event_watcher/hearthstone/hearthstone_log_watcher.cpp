@@ -81,10 +81,6 @@ bool parseConnectToGameServer(const HearthstoneRawLog& line, HearthstoneGameConn
     return true;
 }
 
-bool parseEndingExperiment(const HearthstoneRawLog& line) {
-    return line.log.find("Ending Experiment") != std::string::npos;
-}
-
 bool parseConnectionError(const HearthstoneRawLog& line) {
     return line.log.find("Error.AddWarning() - header=Error message=The game failed to start because your opponent failed to connect. Please try again.") != std::string::npos;
 }
@@ -310,7 +306,7 @@ void HearthstoneLogWatcher::onPrimaryLogChange(const LogLinesDelta& lines) {
             HearthstoneGameConnectionInfo connectionInfo;
             if (parseConnectToGameServer(rawLog, connectionInfo)) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchConnect), rawLog.tm, &connectionInfo);
-            } else if (parseEndingExperiment(rawLog) || parseConnectionError(rawLog)) {
+            } else if (parseConnectionError(rawLog)) {
                 notify(static_cast<int>(EHearthstoneLogEvents::MatchDisconnect), rawLog.tm, nullptr);
             }
         }

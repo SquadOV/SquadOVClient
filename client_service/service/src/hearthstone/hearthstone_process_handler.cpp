@@ -51,6 +51,10 @@ private:
 
     // Arena
     std::string _arenaUuid;
+
+    // In-Game Watcher
+    bool _valid = true;
+    std::thread _watcherThread;
 };
 
 HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -71,7 +75,11 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
 }
 
 HearthstoneProcessHandlerInstance::~HearthstoneProcessHandlerInstance() {
-
+    _inGame = false;
+    _valid = false;
+    if (_watcherThread.joinable()) {
+        _watcherThread.join();
+    }
 }
 
 void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& eventTime, const void* rawData) {
@@ -242,6 +250,20 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
         return;
     }
+
+    // At this point we need to start a thread to watch for when we're no longer in the game as we can't
+    // reliably detect this in the logs.
+    _watcherThread = std::thread([this]() {
+        while (_valid) {
+            if (!_monoMapper->inGame()) {
+                onGameDisconnect(shared::nowUtc(), nullptr);
+                break;
+            }
+
+            // Precision is not needed here as the only thing we'll pay for is a slightly longer VOD.
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
 }
 
 void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& eventTime, const void* rawData) {

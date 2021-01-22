@@ -29,6 +29,7 @@ public:
     types::CollectionDeckMapperSPtr getCurrentArenaDeck() const;
     types::CollectionDeckMapperSPtr getCurrentDuelsDeck() const;
     bool isSpectator() const;
+    bool inGame() const;
     
     // Obtains information about the current players in the game.
     std::unordered_map<int, types::PlayerMapperSPtr> getCurrentPlayers() const;
