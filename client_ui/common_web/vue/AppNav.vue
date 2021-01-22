@@ -20,9 +20,11 @@
                 </template>
 
                 <v-list dense>
-                    <v-list-item v-for="c in m.children" :key="c.name" :to="c.to">
-                        <v-list-item-title>{{ c.name }}</v-list-item-title>
-                    </v-list-item>
+                    <template v-for="c in m.children">
+                        <v-list-item :key="c.name" :to="c.to" v-if="!c.disabled">
+                            <v-list-item-title>{{ c.name }}</v-list-item-title>
+                        </v-list-item>
+                    </template>
                 </v-list>
             </v-menu>
 
@@ -151,6 +153,7 @@ export default class AppNav extends Vue {
                             params: this.gameLogParams,
                             query: this.gameLogQuery
                         },
+                        disabled: !this.$store.state.features.enableLol
                     },
                     {
                         name: 'Teamfight Tactics',
@@ -159,6 +162,7 @@ export default class AppNav extends Vue {
                             params: this.gameLogParams,
                             query: this.gameLogQuery
                         },
+                        disabled: !this.$store.state.features.enableTft
                     },
                     {
                         name: 'Valorant',

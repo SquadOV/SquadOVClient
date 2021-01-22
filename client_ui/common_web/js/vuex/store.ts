@@ -1,11 +1,14 @@
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
 import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
-import { SquadOvState, createDefaultState } from '@client/js/system/state' 
+import { SquadOvState, createDefaultState } from '@client/js/system/state'
+import { FeatureFlags } from '@client/js/squadov/features'
+import { apiClient, ApiData } from '@client/js/api'
 
 interface RootState {
     currentUser: SquadOVUser | null
     hasValidSession: boolean
+    features: FeatureFlags
 /// #if DESKTOP
     settings: SquadOvLocalSettings | null
     currentState: SquadOvState
@@ -17,6 +20,10 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     state: {
         currentUser: null,
         hasValidSession: true,
+        features: {
+            enableLol: false,
+            enableTft: false,
+        },
 /// #if DESKTOP
         settings: null,
         currentState: createDefaultState()
@@ -72,6 +79,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         markValidSession(state: RootState, v: boolean) {
             state.hasValidSession = v
         },
+        setFeatureFlags(state: RootState, flags: FeatureFlags) {
+            state.features = flags
+        }
     },
     actions: {
         async reloadLocalSettings(context) {
@@ -79,6 +89,16 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             let settings = await loadLocalSettings()
             context.commit('setSettings', settings)
 /// #endif
+        },
+        async loadUserFeatureFlags(context) {
+            if (!context.state.currentUser) {
+                return
+            }
+            apiClient.getFeatureFlags(context.state.currentUser.id).then((resp: ApiData<FeatureFlags>) => {
+                context.commit('setFeatureFlags', resp.data)
+            }).catch((err: any) => {
+                console.log('Failed to load feature flags: ', err)
+            })
         }
     }
 }

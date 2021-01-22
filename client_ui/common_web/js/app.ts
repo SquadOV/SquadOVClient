@@ -533,6 +533,7 @@ ipcRenderer.invoke('request-session').then((session : {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
         store.commit('setUser' , resp.data)
+        store.dispatch('loadUserFeatureFlags')
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover

@@ -73,28 +73,30 @@
             <v-divider vertical></v-divider>
 
             <template v-if="!isLoadingCurrentUser">
-                <div
-                    :class="`pa-2 game-div ${$route.path.startsWith(game.route.path) ? 'selected-game' : ''}`"
-                    v-for="(game, idx) in supportedGames"
-                    :key="`game-${idx}`"
-                >
-                    <router-link :to="game.to">
-                        <v-tooltip bottom :open-delay="1000">
-                            <template v-slot:activator="{on, attrs}">
-                                <v-img
-                                    width="32px"
-                                    :src="$root.generateAssetUri(game.icon)"
-                                    contain
-                                    v-bind="attrs"
-                                    v-on="on"
-                                >
-                                </v-img>
-                            </template>
+                <template v-for="(game, idx) in supportedGames">
+                    <div
+                        :class="`pa-2 game-div ${$route.path.startsWith(game.route.path) ? 'selected-game' : ''}`"
+                        :key="`game-${idx}`"
+                        v-if="!game.disabled"
+                    >
+                        <router-link :to="game.to">
+                            <v-tooltip bottom :open-delay="1000">
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-img
+                                        width="32px"
+                                        :src="$root.generateAssetUri(game.icon)"
+                                        contain
+                                        v-bind="attrs"
+                                        v-on="on"
+                                    >
+                                    </v-img>
+                                </template>
 
-                            <span>{{game.name}}</span>
-                        </v-tooltip>
-                    </router-link>
-                </div>
+                                <span>{{game.name}}</span>
+                            </v-tooltip>
+                        </router-link>
+                    </div>
+                </template>
             </template>
 
             <v-spacer></v-spacer>
@@ -186,13 +188,15 @@ export default class GameLog extends Vue {
                 'icon': 'assets/lol-logo.png',
                 'name': 'League of Legends',
                 'to': lolTo,
-                'route': this.$router.resolve(lolTo).route
+                'route': this.$router.resolve(lolTo).route,
+                'disabled': !this.$store.state.features.enableLol
             },
             {
                 'icon': 'assets/tft-logo.png',
                 'name': 'Teamfight Tactics',
                 'to': tftTo,
-                'route': this.$router.resolve(tftTo).route
+                'route': this.$router.resolve(tftTo).route,
+                'disabled': !this.$store.state.features.enableTft
             },
             {
                 'icon': 'assets/valorant-logo.png',

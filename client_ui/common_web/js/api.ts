@@ -73,6 +73,9 @@ import {
     FullLolMatch,
     cleanFullLolMatch
 } from '@client/js/lol/matches'
+import {
+    FeatureFlags
+} from '@client/js/squadov/features'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -725,6 +728,10 @@ class ApiClient {
 
     submitRsoAuthorization(code: string, state: string) : Promise<void> {
         return axios.post(`auth/oauth/riot`, {code, state}, this.createWebAxiosConfig())
+    }
+
+    getFeatureFlags(userId: number): Promise<ApiData<FeatureFlags>> {
+        return axios.get(`v1/users/${userId}/features`, this.createWebAxiosConfig())
     }
 }
 
