@@ -45,3 +45,20 @@ html {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+.footer-text {
+    line-height: 1rem !important;
+}
+
+#footer {
+    position: sticky;
+    bottom: 0px;
+    background-color: #121212;
+    z-index: 1;
+}
+
+#appInner {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}

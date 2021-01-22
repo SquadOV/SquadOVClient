@@ -20,11 +20,11 @@
                 An update for SquadOV is available. Please restart SquadOV to install it.
             </v-banner>
             
-            <div class="flex-grow-1">
+            <div class="d-flex flex-column flex-grow-1">
                 <router-view></router-view>
             </div>
 
-            <footer class="flex-grow-0 py-1">
+            <div id="footer" class="flex-grow-0 py-1">
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>
@@ -91,7 +91,7 @@
                     id="recording"
                 >
                 </recording-status-window>
-            </footer>
+            </div>
         </template>
         
         <v-container v-else>
@@ -137,23 +137,6 @@ export default class App extends Vue {
 </script>
 
 <style scoped>
-
-#appInner {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.footer-text {
-    line-height: 1rem !important;
-}
-
-footer {
-    position: sticky;
-    bottom: 0px;
-    background-color: #121212;
-    z-index: 1;
-}
 
 #bugreport {
     position: fixed;

@@ -1,29 +1,27 @@
 <template>
     <loading-container :is-loading="!loaded">
         <template v-slot:default="{ loading }">
-            <v-container fluid class="full-parent-height" v-if="!loading">
-                <v-row class="full-parent-height flex-column" align-content="center" justify="center">
-                    <h1 class="text-center mb-4">Welcome back!</h1>
+            <div class="d-flex justify-center align-center flex-column full-parent-height" v-if="!loading">
+                <h1 class="text-center mb-4">Welcome back!</h1>
 
-                    <div class="d-flex">
-                        <router-link :to="logsTo">
-                            <v-card class="choice" color="primary">
-                                <v-card-title>
-                                    Game Logs
-                                </v-card-title>
-                            </v-card>
-                        </router-link>
+                <div class="d-flex">
+                    <router-link :to="logsTo">
+                        <v-card class="choice" color="primary">
+                            <v-card-title>
+                                Game Logs
+                            </v-card-title>
+                        </v-card>
+                    </router-link>
 
-                        <router-link :to="performanceTo" >
-                            <v-card class="choice" color="primary">
-                                <v-card-title>
-                                    Performance
-                                </v-card-title>
-                            </v-card>
-                        </router-link>
-                    </div>
-                </v-row>
-            </v-container>
+                    <router-link :to="performanceTo" >
+                        <v-card class="choice" color="primary">
+                            <v-card-title>
+                                Performance
+                            </v-card-title>
+                        </v-card>
+                    </router-link>
+                </div>
+            </div>
         </template>
     </loading-container>
 </template>
