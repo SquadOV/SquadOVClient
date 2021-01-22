@@ -223,10 +223,6 @@ class ApiClient {
         return axios.get(`v1/users/me/notifications`, this.createWebAxiosConfig())
     }
 
-    getLocalEncryptionPassword(): Promise<ApiData<string>> {
-        return axios.get(`v1/users/me/localenc`, this.createWebAxiosConfig())
-    }
-
     getSquad(squadId: number): Promise<ApiData<Squad>> {
         return axios.get(`v1/squad/${squadId}/profile`, this.createWebAxiosConfig()).then((resp: ApiData<Squad>) => {
             cleanSquadFromJson(resp.data)
@@ -721,6 +717,14 @@ class ApiClient {
 
     markUserActive(): Promise<void> {
         return axios.post(`v1/users/me/active`, {}, this.createWebAxiosConfig())
+    }
+
+    getRiotRsoAuthorizeUrl(userId: number): Promise<ApiData<string>> {
+        return axios.get(`v1/users/${userId}/oauth/rso`, this.createWebAxiosConfig())
+    }
+
+    submitRsoAuthorization(code: string, state: string) : Promise<void> {
+        return axios.post(`auth/oauth/riot`, {code, state}, this.createWebAxiosConfig())
     }
 }
 

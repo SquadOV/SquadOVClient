@@ -76,6 +76,8 @@ const EmailVerify = () => import('@client/vue/auth/EmailVerify.vue')
 const VerifyEmail = () => import('@client/vue/auth/VerifyEmail.vue')
 const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 
+const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -433,6 +435,15 @@ const baseRoutes : any[] = [
             },
         ]
     },
+    {
+        path: '/riot/oauth-callback',
+        component: RsoOauthHandler,
+        name: pi.RsoOauthPageId,
+        props: (route : any) => ({
+            code: route.query.code,
+            state: route.query.state,
+        }),
+    }
 ]
 
 const router = new VueRouter({
@@ -453,6 +464,12 @@ router.beforeEach((to : any, from : any, next : any) => {
         apiClient.markUserActive().catch((err: any) => {
             console.log('Failed to mark user active: ', err)
         })
+    }
+
+    // Allow OAuth requests to always go through regardless of whether the user is signed in or not.
+    if (to.name === pi.RsoOauthPageId) {
+        next()
+        return
     }
 
 /// #if DESKTOP

@@ -34,3 +34,5 @@ export const RegisterPageId = 'register'
 export const ForgotPasswordPageId = 'forgotPw'
 export const VerifyEmailPageId = 'verifyEmail'
 export const WaitForVerifyPageId = 'verify'
+
+export const RsoOauthPageId = 'rso'

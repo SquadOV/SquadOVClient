@@ -377,7 +377,6 @@ function startSessionHeartbeat(onBeat) {
                     let respBody = JSON.parse(body)
 
                     updateSession(respBody.sessionId, true)
-                    process.env.SQUADOV_PASSWORD = respBody.localenc
                     sessionRetryCount = 0
 
                     if (!!onBeat) {

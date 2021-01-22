@@ -5,6 +5,7 @@
             @input="$emit('input', arguments[0])"
             label="Summoner"
             :items="items"
+            :loading="loading"
             solo
             hide-details
         >
@@ -13,7 +14,6 @@
         <v-btn
             icon
             color="success"
-            disabled
             @click="addAccount"
         >
             <v-icon>
@@ -28,6 +28,14 @@
         >
             Please login using Riot's login form that was just opened in your web browser.
         </v-snackbar>
+
+        <v-snackbar
+            v-model="showError"
+            :timeout="5000"
+            color="error"
+        >
+            Something went wrong when redirecting you to Riot's login page. Please submit a bug report!
+        </v-snackbar>
     </div>
 </template>
 
@@ -37,10 +45,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { RiotSummoner } from '@client/js/riot/summoner'
-
-/// #if DESKTOP
-import { shell } from 'electron'
-/// #endif
+import { redirectToRsoLogin } from '@client/js/riot/rso'
 
 @Component
 export default class SummonerAccountChooser extends Vue {
@@ -50,6 +55,8 @@ export default class SummonerAccountChooser extends Vue {
     @Prop({type: Array, required: true})
     options! : RiotSummoner[]
 
+    loading: boolean = false
+    showError: boolean = false
     showHideProgress: boolean = false
 
     get items() : any[] {
@@ -60,14 +67,15 @@ export default class SummonerAccountChooser extends Vue {
     }
 
     addAccount() {
-        // TODO: Proper RSO login url
-        const rsoUrl = 'https://www.google.com'
-/// #if DESKTOP
-        shell.openExternal(rsoUrl)
-/// #else
-        window.open(rsoUrl, '_blank')
-/// #endif
-        this.showHideProgress = true
+        this.loading = true
+        redirectToRsoLogin(this.$store.state.currentUser.id).then(() => {
+            this.showHideProgress = true
+        }).catch((err: any) => {
+            console.log('Failed to redirect to RSO: ', err)
+            this.showError = true
+        }).finally(() => {
+            this.loading = false
+        })
     }
 }
 
