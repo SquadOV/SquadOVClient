@@ -17,7 +17,7 @@
 
                             <div class="d-flex flex-column justify-center">
                                 <span class="download-text">Client (x64)</span>
-                                <span class="download-text">{{version}} (91MB)</span>
+                                <span class="download-text">{{version}} (80MB)</span>
                             </div>
                         </div>
                     </v-btn>
@@ -259,7 +259,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.4.10'
+        return 'v0.4.17'
     }
 
     get downloadLink() : string {
