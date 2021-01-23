@@ -21,4 +21,5 @@ target_link_libraries(pe_dumper
     squadov_process_watcher
     squadov_shared
     Boost::program_options
+    dbghelp
 )

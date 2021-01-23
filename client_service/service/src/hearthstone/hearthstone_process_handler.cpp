@@ -267,6 +267,12 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
 }
 
 void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& eventTime, const void* rawData) {
+    _valid = false;
+    if (_watcherThread.joinable()) {
+        _watcherThread.join();
+        _watcherThread = std::thread();
+    }
+
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
