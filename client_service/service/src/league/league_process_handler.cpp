@@ -284,11 +284,22 @@ void LeagueProcessHandlerInstance::requestMatchCreation() {
     // This is where we create the match UUID on the server as we can only get
     // a unique Riot-based identifier for the match (region/platform + game ID)
     // once this event fires.
+    const auto flags = service::api::getGlobalApi()->getSessionFeatures();
     try {
         if (_actualGame == shared::EGame::TFT) {
-            _currentMatchUuid = service::api::getGlobalApi()->createNewTftMatch(_cfg.region, _cfg.platformId, _cfg.gameId, _gameStartTime);
+            if (flags.enableTft) {
+                LOG_INFO("...Creating TFT." << std::endl);
+                _currentMatchUuid = service::api::getGlobalApi()->createNewTftMatch(_cfg.region, _cfg.platformId, _cfg.gameId, _gameStartTime);
+            } else {
+                LOG_INFO("...TFT disabled." << std::endl);
+            }
         } else {
-            _currentMatchUuid = service::api::getGlobalApi()->createNewLeagueOfLegendsMatch(_cfg.platformId, _cfg.gameId, _gameStartTime);
+            if (flags.enableLol) {
+                LOG_INFO("...Creating LoL." << std::endl);
+                _currentMatchUuid = service::api::getGlobalApi()->createNewLeagueOfLegendsMatch(_cfg.platformId, _cfg.gameId, _gameStartTime);
+            } else {
+                LOG_INFO("...LoL disabled." << std::endl);
+            }
         }
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create new LoL/TFT match: " << ex.what() << std::endl);
@@ -308,12 +319,23 @@ void LeagueProcessHandlerInstance::requestBackfill() {
 
     LOG_INFO("Requesting LoL/TFT backfill..." << std::endl);
 
+    const auto flags = service::api::getGlobalApi()->getSessionFeatures();
     try {
         // Note that it's the server's responsibility to make sure we don't backfill too often.
         if (_actualGame == shared::EGame::TFT) {
-            service::api::getGlobalApi()->requestTftBackfill(_activePlayerSummonerName, _cfg.region);
+            if (flags.enableTft) {
+                LOG_INFO("...Backfill TFT." << std::endl);
+                service::api::getGlobalApi()->requestTftBackfill(_activePlayerSummonerName, _cfg.region);
+            } else {
+                LOG_INFO("...TFT disabled." << std::endl);
+            }
         } else {
-            service::api::getGlobalApi()->requestLeagueOfLegendsBackfill(_activePlayerSummonerName, _cfg.platformId);
+            if (flags.enableLol) {
+                LOG_INFO("...Backfill LoL." << std::endl);
+                service::api::getGlobalApi()->requestLeagueOfLegendsBackfill(_activePlayerSummonerName, _cfg.platformId);
+            } else {
+                LOG_INFO("...LoL disabled." << std::endl);
+            }
         }
     } catch (std::exception& ex) {
         // Not a real error as it doesn't get in the way of us doing anything.

@@ -12,6 +12,7 @@
 #include "game_event_watcher/wow/wow_log_watcher.h"
 #include "process_watcher/memory/games/hearthstone/types/collection_deck_mapper.h"
 #include "process_watcher/memory/games/hearthstone/types/player_mapper.h"
+#include "shared/squadov/features.h"
 
 #include <functional>
 #include <memory>
@@ -34,6 +35,8 @@ public:
 
     int64_t getSessionUserId() const;
     std::string getSessionUserUuid() const;
+    shared::squadov::FeatureFlags getSessionFeatures() const { return _features; }
+    void retrieveSessionFeatureFlags();
 
     // Kafka
     KafkaInfo getKafkaInfo() const;
@@ -94,6 +97,7 @@ private:
 
     // I'm not a big fan of leaving this here...
     shared::squadov::SquadOVSessionStorage _session;
+    shared::squadov::FeatureFlags _features;
     mutable std::shared_mutex _sessionMutex;
 };
 

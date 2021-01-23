@@ -68,13 +68,17 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 }
 
 void defaultMain() {
+    const auto flags = service::api::getGlobalApi()->getSessionFeatures();
+
     // Start process watcher to watch for our supported games.
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
-    watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
+    if (flags.enableTft || flags.enableLol) {
+        watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
+    }
     watcher.start();
 }
 
@@ -149,6 +153,8 @@ int main(int argc, char** argv) {
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
         std::exit(1);
     }
+
+    service::api::getGlobalApi()->retrieveSessionFeatureFlags();
 
     LOG_INFO("Initialize Kafka API" << std::endl);
     service::api::getKafkaApi()->initialize();

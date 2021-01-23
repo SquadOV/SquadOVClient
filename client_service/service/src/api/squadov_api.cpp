@@ -67,6 +67,25 @@ std::string SquadovApi::getSessionUserUuid() const {
     return _session.user.uuid;
 }
 
+void SquadovApi::retrieveSessionFeatureFlags() {
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/features";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get SquadOV features: " << result->status);
+        return;
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    LOG_INFO("Obtain feature flags: " << parsedJson.dump(4) << std::endl);
+    shared::squadov::FeatureFlags flags;
+    flags.enableLol = parsedJson["enableLol"].get<bool>();
+    flags.enableTft = parsedJson["enableTft"].get<bool>();
+    _features = flags;
+}
+
 shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     const std::string path = "/v1/users/me/profile";
 
