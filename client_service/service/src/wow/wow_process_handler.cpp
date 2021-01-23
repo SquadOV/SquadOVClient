@@ -175,11 +175,13 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     }
 
     // Send combat log line to server associated with the current combat log.
-    const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);;
-    try {
-        service::api::getKafkaApi()->uploadWoWCombatLogLine(_combatLogId, log);
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _combatLogId << std::endl);
+    const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);
+    if (log.parsed || inMatch()) {
+        try {
+            service::api::getKafkaApi()->uploadWoWCombatLogLine(_combatLogId, log);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _combatLogId << std::endl);
+        }
     }
 }
 

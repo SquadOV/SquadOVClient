@@ -193,6 +193,10 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
+        // We use this flag to determine whether or not we MUST send this log line to the server since it's
+        // presumably important.
+        log.parsed = true;
+
         // Every log line needs to get passed to the CombatLogLine event
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
     }
