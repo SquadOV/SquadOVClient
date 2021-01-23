@@ -432,7 +432,7 @@ void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const sha
 
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const {
     std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account" << gameName << "/" << tagLine;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account/" << gameName << "/" << tagLine;
 
     const auto result = _webClient->get(path.str());
     return result->status == 200;
