@@ -268,7 +268,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
             }
 
             // Precision is not needed here as the only thing we'll pay for is a slightly longer VOD.
-            std::this_thread::sleep_for(std::chrono::seconds(200));
+            std::this_thread::sleep_for(std::chrono::milliseconds(200));
         }
     });
 }
