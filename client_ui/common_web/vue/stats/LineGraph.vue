@@ -63,12 +63,24 @@ export default class LineGraph extends Vue {
     @Watch('validSeriesData')
     refreshGraph(newSeriesData: StatXYSeriesData[], oldSeriesData: StatXYSeriesData[]) {
         // This needs to be up here so that the height computations work properly.
-        if (!!this.graph) {
-            this.graph.resize()
-        }
+        // Needs to in a nextTick because otherwise we might get an error saying that we
+        // can't call resize in the main process?
+        Vue.nextTick(() => {
+            if (!!this.graph) {
+                this.graph.resize()
+            }
+        })
         this.resizeTimeout = null
 
-        if (this.validSeriesData.length == 0 || newSeriesData.length != oldSeriesData.length) { 
+        // Looking for conditions where we want to clear the graph and redraw as we don't want to do this
+        // *every* time we get some update to the series data (i.e. when we're only updating a marker).
+        // The safe scenarios where we can clear as when there's no more data to display (validSeriesData.length)
+        // or when some sort of incompatbile change happens in the series data. For example, if we add more data
+        // or remove data we should trigger a redraw. Furthermore, if the axis types are different then it'll
+        // be good to do a clear as well.
+        if (this.validSeriesData.length == 0 || 
+            newSeriesData.length != oldSeriesData.length || 
+            newSeriesData.some((a: StatXYSeriesData, idx: number) => !a.compatibleWith(oldSeriesData[idx]))) { 
             this.graph.clear()   
             if (this.validSeriesData.length == 0) {
                 return
@@ -237,7 +249,7 @@ export default class LineGraph extends Vue {
             name: series._name,
             type: 'line',
             smooth: true,
-            smoothMonotone: 'x',
+            //smoothMonotone: 'x',
             sampling: 'average',
             showSymbol: false,
             width: 4,

@@ -24,6 +24,10 @@ export class StatXYSeriesData {
     _xLines: XLineMarker[]
     _xAreas: XAreaMarker[]
 
+    compatibleWith(other: StatXYSeriesData): boolean {
+        return this._type === other._type && this._subtype === other._subtype
+    }
+
     addXMarkLine(ln: XLineMarker) {
         this._xLines.push(ln)
     }
