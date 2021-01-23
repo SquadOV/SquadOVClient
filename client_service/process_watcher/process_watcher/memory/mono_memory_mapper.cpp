@@ -109,7 +109,8 @@ MonoMemoryMapper::MonoMemoryMapper(const ModuleMemoryMapperSPtr& memory, const P
         uint32_t imagePointer = 0;
         memory->readProcessMemory(&imagePointer, static_cast<uintptr_t>(data + MONO_ASSEMBLY_IMAGE_PTR_OFFSET));
 
-        _images[std::string(nameBuffer.data())] = std::make_unique<mono::MonoImageMapper>(memory, imagePointer);
+        const std::string nameString(nameBuffer.data());
+        _images[nameString] = std::make_unique<mono::MonoImageMapper>(memory, imagePointer);
         domainAssembliesListPtr = next;
     }
 }

@@ -4,6 +4,7 @@ namespace process_watcher::memory::mono {
 namespace {
 
 constexpr uint32_t MONO_IMAGE_CLASS_CACHE_OFFSET = 852;
+constexpr uint32_t MONO_CLASSDEF_NEXT_CLASS_CACHE_OFFSET = 148 + 4 + 4 + 4 + 4 + 4;
 
 struct MonoInternalHashTable {
     uint32_t hashFunc;
@@ -28,14 +29,17 @@ MonoImageMapper::MonoImageMapper(const process_watcher::memory::ModuleMemoryMapp
     // The "tablePtr" is just an array of pointers of size "size". Out of the "size" entries, there should
     // be "numEntries" that are null. Each pointer points to an object of type MonoClass.
     for (int32_t i = 0; i < hashTable.size; ++i) {
+        // Note that for every hash table entry, we need to iterate through a linked list of classes
+        // that's pointed to by the MonoClassDef "next_class_cache" pointer. You can see the setup of this
+        // hashtable in the mono_image_init function where it calls mono_internal_hash_table_init.
+        // See class_next_value (right above it).
         uint32_t hashtableEntryPtr = 0;
         _memory->readProcessMemory(&hashtableEntryPtr, hashTable.tablePtr + sizeof(uint32_t) * i);
 
-        if (!hashtableEntryPtr) {
-            continue;
+        while (hashtableEntryPtr) {
+            loadClassFromPtr(static_cast<uintptr_t>(hashtableEntryPtr));
+            _memory->readProcessMemory(&hashtableEntryPtr, static_cast<uintptr_t>(hashtableEntryPtr + MONO_CLASSDEF_NEXT_CLASS_CACHE_OFFSET));
         }
-
-        loadClassFromPtr(static_cast<uintptr_t>(hashtableEntryPtr));
     }
 }
 
