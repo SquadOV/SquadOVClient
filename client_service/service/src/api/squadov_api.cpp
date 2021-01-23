@@ -212,7 +212,7 @@ void SquadovApi::uploadHearthstonePowerLogs(
     }
 #endif
 
-    const auto result = _webClient->post(path.str(), logs);
+    const auto result = _webClient->post(path.str(), logs, true);
     if (result->status != 200) {
         THROW_ERROR("Failed to upload Hearthstone match power logs: " << result->status);
     }

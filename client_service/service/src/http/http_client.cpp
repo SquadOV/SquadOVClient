@@ -40,11 +40,11 @@ public:
     HttpResponsePtr execute();
 
     void doDelete();
-    void doPost(const nlohmann::json& body);
+    void doPost(const nlohmann::json& body, bool forceGzip);
     void doPut(const char* buffer, size_t numBytes);
 
 private:
-    void setJsonBody(const nlohmann::json& body);
+    void setJsonBody(const nlohmann::json& body, bool forceGzip);
     void setRawBuffer(const char* buffer, size_t size);
 
     CURL* _curl = nullptr;
@@ -140,7 +140,7 @@ void HttpRequest::doDelete() {
     curl_easy_setopt(_curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 }
 
-void HttpRequest::setJsonBody(const nlohmann::json& body) {
+void HttpRequest::setJsonBody(const nlohmann::json& body, bool forceGzip) {
     if (body.is_null()) {
         curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, 0);
     } else {
@@ -148,7 +148,7 @@ void HttpRequest::setJsonBody(const nlohmann::json& body) {
 
         const std::string jsonBody = body.dump();
         // TODO: Make this GZIP functionality more general?
-        if (jsonBody.size() > MAX_RAW_JSON_POST_BYTES_SIZE) {
+        if (forceGzip || jsonBody.size() > MAX_RAW_JSON_POST_BYTES_SIZE) {
             _headers = curl_slist_append(_headers, "Content-Encoding: gzip");
 
             std::vector<char> gzipBuffer;
@@ -170,9 +170,9 @@ void HttpRequest::setJsonBody(const nlohmann::json& body) {
     }
 }
 
-void HttpRequest::doPost(const nlohmann::json& body) {
+void HttpRequest::doPost(const nlohmann::json& body, bool forceGzip) {
     curl_easy_setopt(_curl, CURLOPT_POST, 1);
-    setJsonBody(body);
+    setJsonBody(body, forceGzip);
 }
 
 void HttpRequest::setRawBuffer(const char* buffer, size_t size) {
@@ -224,9 +224,9 @@ HttpResponsePtr HttpClient::get(const std::string& path) const {
     return sendRequest(path, nullptr);
 }
 
-HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body) const {
-    return sendRequest(path, [&body](HttpRequest& req){
-        req.doPost(body);
+HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body, bool forceGzip) const {
+    return sendRequest(path, [&body, forceGzip](HttpRequest& req){
+        req.doPost(body, forceGzip);
     });
 }
 

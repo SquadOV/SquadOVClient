@@ -253,6 +253,13 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
 
     // At this point we need to start a thread to watch for when we're no longer in the game as we can't
     // reliably detect this in the logs.
+    _valid = false;
+    if (_watcherThread.joinable()) {
+        _watcherThread.join();
+    }
+    _watcherThread = std::thread();
+    _valid = true;
+
     _watcherThread = std::thread([this]() {
         while (_valid) {
             if (!_monoMapper->inGame()) {
@@ -261,18 +268,12 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
             }
 
             // Precision is not needed here as the only thing we'll pay for is a slightly longer VOD.
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(std::chrono::seconds(200));
         }
     });
 }
 
 void HearthstoneProcessHandlerInstance::onGameEnd(const shared::TimePoint& eventTime, const void* rawData) {
-    _valid = false;
-    if (_watcherThread.joinable()) {
-        _watcherThread.join();
-        _watcherThread = std::thread();
-    }
-
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
