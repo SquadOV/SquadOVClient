@@ -95,8 +95,9 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
         << "\tMap: " << state->taskMap << std::endl
         << "\tVersion: " << state->gameVersion << std::endl);
 
-    _recorder->start();
-    _taskStartTime = eventTime;
+    _recorder->start([this](){
+        _taskStartTime = shared::nowUtc();
+    });
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {

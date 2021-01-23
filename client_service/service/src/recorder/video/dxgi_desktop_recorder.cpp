@@ -39,6 +39,9 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
         THROW_ERROR("Failed to create D3D11 device.");
     }
 
+    // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
+    initialize();
+
     TCHAR windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
     LOG_INFO("DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl);
@@ -150,6 +153,7 @@ void DxgiDesktopRecorder::initialize() {
 }
 
 void DxgiDesktopRecorder::reacquireDuplicationInterface() {
+    THROW_ERROR("TEST");
     if (!!_dupl) {
         _dupl->Release();
         _dupl = nullptr;        
@@ -166,11 +170,6 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
 
     _recording = true;
     _recordingThread = std::thread([this, encoder, nsPerFrame](){ 
-        // Only initialize once we get into the recording thread since we'll need to wait
-        // for the window to be not minimizd. This is fine since we'll just be writing black
-        // frames until the window is unminimized which is fine!
-        initialize();
-
         service::recorder::image::Image frame;
         frame.initializeImage(_width, _height);
 

@@ -88,7 +88,7 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
 }
 
-void GameRecorder::start() {
+void GameRecorder::start(std::function<void()> cb) {
     if (!!_currentId) {
         return;
     }
@@ -101,11 +101,16 @@ void GameRecorder::start() {
     // Just in case the user changed it in the UI already, just sync up via the file.
     service::system::getCurrentSettings()->reloadSettingsFromFile();
     const auto settings = service::system::getCurrentSettings()->recording();
-    {
+    const auto windowInfo = [this](){
         std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
-        
+        return _windowInfo;
+    }();
+    
+    // This needs to be in a separate thread so that we can wait for the window to be non-iconic before moving forward
+    // in initialization.
+    std::thread initThread([this, windowInfo, settings, cb](){
         try {
-            createVideoRecorder(_windowInfo);
+            createVideoRecorder(windowInfo);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
             _encoder.reset(nullptr);
@@ -133,29 +138,31 @@ void GameRecorder::start() {
         //   2) The audio from the user's system.
         //   3) The audio from the user's microphone (if any).
         _vrecorder->startRecording(_encoder.get(), static_cast<size_t>(settings.fps));
-    }
-    
-    _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
-    _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));
 
-    // For each audio stream we need to first start recording on the audio side to determine
-    // the audio stream properties (e.g. # of samples, # of channels, sample rate) and then pass
-    // that to the encoder so the encoder knows how to handle the audio packets it gets. The encoder
-    // will then pass back information to let the audio recorder know which stream to record into.
-    // The audio recorder will not pass audio packets to the encoder until it has that information.
-    _encoder->initializeAudioStream();
-    if (_aoutRecorder->exists()) {
-        const auto encoderIndex = _encoder->addAudioInput(_aoutRecorder->props());
-        _aoutRecorder->startRecording(_encoder.get(), encoderIndex);
-    }
+        _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
+        _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));
 
-    if (_ainRecorder->exists()) {
-        const auto encoderIndex = _encoder->addAudioInput(_ainRecorder->props());
-        _ainRecorder->startRecording(_encoder.get(), encoderIndex);
-    }
+        // For each audio stream we need to first start recording on the audio side to determine
+        // the audio stream properties (e.g. # of samples, # of channels, sample rate) and then pass
+        // that to the encoder so the encoder knows how to handle the audio packets it gets. The encoder
+        // will then pass back information to let the audio recorder know which stream to record into.
+        // The audio recorder will not pass audio packets to the encoder until it has that information.
+        _encoder->initializeAudioStream();
+        if (_aoutRecorder->exists()) {
+            const auto encoderIndex = _encoder->addAudioInput(_aoutRecorder->props());
+            _aoutRecorder->startRecording(_encoder.get(), encoderIndex);
+        }
 
-    _encoder->start();
-    system::getGlobalState()->markGameRecording(_game, true);
+        if (_ainRecorder->exists()) {
+            const auto encoderIndex = _encoder->addAudioInput(_ainRecorder->props());
+            _ainRecorder->startRecording(_encoder.get(), encoderIndex);
+        }
+
+        _encoder->start();
+        cb();
+        system::getGlobalState()->markGameRecording(_game, true);
+    });
+    initThread.detach();
 }
 
 void GameRecorder::stop() {

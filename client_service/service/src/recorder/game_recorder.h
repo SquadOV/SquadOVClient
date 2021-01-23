@@ -9,6 +9,7 @@
 #include "shared/squadov/vod.h"
 #include "shared/time.h"
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <shared_mutex>
 #include <thread>
@@ -29,7 +30,7 @@ public:
     );
     ~GameRecorder();
 
-    void start();
+    void start(std::function<void()> cb);
     void stop();
 
     VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);

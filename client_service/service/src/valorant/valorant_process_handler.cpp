@@ -39,6 +39,7 @@ private:
     shared::riot::RiotUser _currentUser;
     ValorantMatchPtr _currentMatch;
     process_watcher::process::Process  _process;
+    shared::TimePoint _vodStartTime;
 
     service::recorder::GameRecorderPtr _recorder;
 };
@@ -105,7 +106,9 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 
     // When the match starts, we de facto start the first buy round too.
     onValorantBuyStart(eventTime, nullptr);
-    _recorder->start();
+    _recorder->start([this](){
+        _vodStartTime = shared::nowUtc();
+    });
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
@@ -149,7 +152,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             association.matchUuid = matchUuid;
             association.userUuid = vodId.userUuid;
             association.videoUuid = vodId.videoUuid;
-            association.startTime = _currentMatch->startTime();
+            association.startTime = _vodStartTime;
             association.endTime = _currentMatch->endTime();
             service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata(), sessionId);
         } catch (std::exception& ex) {

@@ -65,6 +65,7 @@ private:
     std::string _combatLogId;
     std::string _currentMatchUuid;
     shared::TimePoint _matchStartTime;
+    shared::TimePoint _vodStartTime;
 
     game_event_watcher::WoWChallengeModeStart _currentChallenge;
     game_event_watcher::WoWEncounterStart _currentEncounter;
@@ -315,9 +316,12 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     }
 
     if (!_process.empty()) {
-        _recorder->start();
+        _recorder->start([this](){
+            _vodStartTime = shared::nowUtc();
+        });
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
+        _vodStartTime = _manualVodStartTime;
     }
 }
 
@@ -345,7 +349,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
                 association.matchUuid = _currentMatchUuid;
                 association.userUuid = vodId.userUuid;
                 association.videoUuid = vodId.videoUuid;
-                association.startTime = _matchStartTime;
+                association.startTime = _vodStartTime;
                 association.endTime = tm;
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             } catch (const std::exception& ex) {

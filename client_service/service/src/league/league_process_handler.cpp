@@ -200,8 +200,9 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
         }
 
         if (_ownsAccount) {
-            _startTime = shared::nowUtc();
-            _recorder->start();
+            _recorder->start([this](){
+                _startTime = shared::nowUtc();
+            });
         }
 
         requestMatchCreation();

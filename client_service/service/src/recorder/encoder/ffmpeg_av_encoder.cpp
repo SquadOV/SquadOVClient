@@ -257,8 +257,11 @@ FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
     av_frame_free(&_aframe);
     av_frame_free(&_aTmpFrame);
     avcodec_free_context(&_acodecContext);
-    avio_flush(_avcontext->pb);
-    avio_closep(&_avcontext->pb);
+
+    if (_avcontext->pb) {
+        avio_flush(_avcontext->pb);
+        avio_closep(&_avcontext->pb);
+    }
     avformat_free_context(_avcontext);
 }
 
