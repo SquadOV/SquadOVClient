@@ -185,6 +185,7 @@ export default class StatContainer extends Vue {
     @Watch('instances', {deep:true})
     pullGraphqlData() {
         if (this.instances.length == 0) {
+            this.seriesData = []
             return
         }
 
