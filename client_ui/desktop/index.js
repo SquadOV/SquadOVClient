@@ -198,6 +198,15 @@ ipcMain.on('change-state-pause', (event, paused) => {
     zeromqServer.updateRecordingPaused(paused)
 })
 
+let hasUpdate = false
+ipcMain.on('request-restart', () => {
+    if (hasUpdate) {
+        autoUpdater.quitAndInstall(true, true)
+    } else {
+        restart()
+    }
+})
+
 zeromqServer.on('change-running-games', (games) => {
     win.webContents.send('change-running-games', JSON.parse(games))
 })

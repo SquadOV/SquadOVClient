@@ -12,12 +12,23 @@
             </v-banner>
 
             <v-banner
-                v-if="$root.globals.hasUpdate"
                 single-line
                 sticky
                 color="primary"
             >
-                An update for SquadOV is available. Please restart SquadOV to install it.
+                <div
+                    class="d-flex align-center"
+                    v-if="$root.globals.hasUpdate"
+                >
+                    An update for SquadOV is available. Please restart SquadOV to install it.
+                    <v-spacer></v-spacer>
+                    <v-btn
+                        solo
+                        @click="restart"
+                    >
+                        Restart Now
+                    </v-btn>
+                </div>
             </v-banner>
             
             <div class="d-flex flex-column flex-grow-1">
@@ -116,6 +127,10 @@ import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
 import { version } from '@client/package.json'
 
+/// #if DESKTOP
+import { ipcRenderer } from 'electron'
+/// #endif
+
 @Component({
     components: {
         AppNav,
@@ -131,6 +146,12 @@ export default class App extends Vue {
 
     get userLoaded(): boolean {
         return !!this.$store.state.currentUser
+    }
+    
+    restart() {
+/// #if DESKTOP
+        ipcRenderer.send('request-restart')
+/// #endif
     }
 }
 
