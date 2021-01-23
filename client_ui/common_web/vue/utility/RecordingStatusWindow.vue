@@ -1,5 +1,5 @@
 <template>
-    <v-sheet>
+    <v-sheet v-if="hasSettings">
         <v-btn
             color="secondary"
             block
@@ -172,9 +172,21 @@ export default class RecordingStatusWindow extends Vue {
         ipcRenderer.send('change-state-pause', this.isPaused)
     }
 
-    mounted() {
+    get hasSettings(): boolean {
+        return !!this.$store.state.settings
+    }
+
+    @Watch('hasSettings')
+    reloadSettings() {
+        if (!this.hasSettings) {
+            return
+        }
         this.res = this.$store.state.settings.record.resY
         this.fps = this.$store.state.settings.record.fps
+    }
+
+    mounted() {
+        this.reloadSettings()
     }
 }
 

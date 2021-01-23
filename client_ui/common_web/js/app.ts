@@ -515,7 +515,10 @@ router.beforeEach((to : any, from : any, next : any) => {
 })
 
 /// #if DESKTOP
-store.dispatch('reloadLocalSettings')
+ipcRenderer.invoke('request-app-folder').then((appFolder: string) => {
+    process.env.SQUADOV_USER_APP_FOLDER = appFolder
+    store.dispatch('reloadLocalSettings')
+})
 
 ipcRenderer.on('reset-state', () => {
     store.commit('resetState')

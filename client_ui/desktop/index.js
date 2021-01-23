@@ -186,6 +186,13 @@ ipcMain.handle('request-session', () => {
     }
 })
 
+// This gets called when the app starts. It's needed to pass the USER_APP_FOLDER
+// env variable to the app since we can't rely on the environment variable being 
+// set properly the first time the user starts the app.
+ipcMain.handle('request-app-folder', () => {
+    return process.env.SQUADOV_USER_APP_FOLDER
+})
+
 // This event gets called whenever the user wants to resume/pause recording.
 ipcMain.on('change-state-pause', (event, paused) => {
     zeromqServer.updateRecordingPaused(paused)
