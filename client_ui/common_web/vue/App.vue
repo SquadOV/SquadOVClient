@@ -12,13 +12,13 @@
             </v-banner>
 
             <v-banner
+                v-if="$root.globals.hasUpdate"
                 single-line
                 sticky
                 color="primary"
             >
                 <div
                     class="d-flex align-center"
-                    v-if="$root.globals.hasUpdate"
                 >
                     An update for SquadOV is available. Please restart SquadOV to install it.
                     <v-spacer></v-spacer>
