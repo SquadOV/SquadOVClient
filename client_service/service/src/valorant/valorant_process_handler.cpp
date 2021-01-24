@@ -135,7 +135,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
     if (_currentMatch->matchId() == state->matchId && state->stagedMatchEnd) {
         _currentMatch->finishMatch(eventTime);
 
-        const auto& vodId = _recorder->currentId();
+        const auto vodId = _recorder->currentId();
         const auto sessionId = _recorder->sessionId();
 
         try {

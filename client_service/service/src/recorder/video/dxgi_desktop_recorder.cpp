@@ -153,7 +153,6 @@ void DxgiDesktopRecorder::initialize() {
 }
 
 void DxgiDesktopRecorder::reacquireDuplicationInterface() {
-    THROW_ERROR("TEST");
     if (!!_dupl) {
         _dupl->Release();
         _dupl = nullptr;        
