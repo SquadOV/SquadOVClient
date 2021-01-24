@@ -45,7 +45,7 @@ public:
     shared::squadov::SquadOVUser getCurrentUser() const;
 
     // Valorant
-    std::string uploadValorantMatch(const std::string& matchId, const nlohmann::json& playerData) const;
+    std::string uploadValorantMatch(const std::string& matchId, const std::string& gameName, const std::string& tagLine, const nlohmann::json& playerData) const;
     void requestValorantMatchBackfill(const std::string& gameName, const std::string& tagLine) const;
     bool verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const;
 

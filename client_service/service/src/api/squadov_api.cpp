@@ -107,10 +107,12 @@ shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     return ret;
 }
 
-std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const nlohmann::json& playerData) const {
+std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& gameName, const std::string& tagLine, const nlohmann::json& playerData) const {
     const std::string path = "/v1/valorant";
     nlohmann::json body = {
         { "matchId", matchId },
+        { "gameName", gameName },
+        { "tagLine", tagLine },
         { "playerData", playerData } 
     };
 

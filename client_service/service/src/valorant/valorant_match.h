@@ -15,7 +15,7 @@ struct ValorantRoundMetadata {
     shared::TimePoint buyTime = shared::TimePoint::max();
     shared::TimePoint startTime = shared::TimePoint::max();
 
-    nlohmann::json toJson(const std::string& matchId, const std::string& puuid) const;
+    nlohmann::json toJson() const;
 };
 
 // Stores information about a Valorant game from the *player's* perspective.
@@ -36,7 +36,7 @@ public:
     void goToRoundState(const shared::TimePoint& tm, shared::valorant::EValorantRoundState state);
     void finishMatch(const shared::TimePoint& tm);
 
-    nlohmann::json toJson(const std::string& puuid) const;
+    nlohmann::json toJson() const;
 private:
     shared::TimePoint _startTime;
     shared::TimePoint _endTime;

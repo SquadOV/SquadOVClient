@@ -179,8 +179,6 @@ export function getIsDeathmatch(gameMode: string | null): boolean {
 }
 
 export interface ValorantMatchPlayerRoundMetadata {
-    matchUuid: string
-    puuid: string
     round: number
     buyTime: Date | null
     roundTime: Date | null
@@ -198,8 +196,6 @@ export function cleanValorantMatchPlayerRoundMetadata(v : ValorantMatchPlayerRou
 }
 
 export interface ValorantMatchPlayerMatchMetadata {
-    matchUuid: string
-    puuid: string
     startTime: Date
     endTime: Date
     rounds: ValorantMatchPlayerRoundMetadata[]

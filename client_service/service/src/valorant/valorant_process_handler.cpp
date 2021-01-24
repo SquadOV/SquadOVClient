@@ -143,7 +143,9 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             // Grab the match via backfill later.
             const auto matchUuid = service::api::getGlobalApi()->uploadValorantMatch(
                 _currentMatch->matchId(),
-                _currentMatch->toJson(_currentUser.puuid)
+                _currentUser.username,
+                _currentUser.tag,
+                _currentMatch->toJson()
             );
             
             // Associate the match with the video so that we know which video to load later
