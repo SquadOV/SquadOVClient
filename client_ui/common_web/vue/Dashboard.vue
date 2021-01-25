@@ -13,7 +13,7 @@
 
                     <v-col cols="3">
                         <!-- News and updates -->
-                        <status-display></status-display>
+                        <status-display class="mb-4"></status-display>
                         <news-display></news-display>
                     </v-col>
                 </v-row>

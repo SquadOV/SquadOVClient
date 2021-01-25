@@ -172,7 +172,7 @@ export default class StatusDisplay extends Vue {
         this.refreshStatus()
         setInterval(() => {
             this.refreshStatus()
-        }, 10000)
+        }, 30000)
     }
 }
 
