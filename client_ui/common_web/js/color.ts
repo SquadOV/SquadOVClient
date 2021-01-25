@@ -42,3 +42,35 @@ export function getGenericTopPlaceColor(): Color {
 export function getGenericBottomPlaceColor(): Color {
     return getGenericLossColor()
 }
+
+export function getStatusOkColor(): Color {
+    return {
+        r: 76,
+        g: 175,
+        b: 80,
+    }
+}
+
+export function getStatusCriticalColor(): Color {
+    return {
+        r: 255,
+        g: 82,
+        b: 82,
+    }
+}
+
+export function getStatusMajorColor(): Color {
+    return {
+        r: 255,
+        g: 165,
+        b: 0,
+    }
+}
+
+export function getStatusMinorColor(): Color {
+    return {
+        r: 255,
+        g: 193,
+        b: 7,
+    }
+}

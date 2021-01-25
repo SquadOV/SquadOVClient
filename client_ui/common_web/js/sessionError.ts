@@ -7,6 +7,7 @@ import Vuetify, {
     VMain,
     VProgressCircular
 } from 'vuetify/lib'
+import StatusDisplay from '@client/vue/utility/squadov/StatusDisplay.vue'
 
 Vue.use(Vuetify)
 
@@ -15,7 +16,8 @@ new Vue({
     components: {
         VApp,
         VMain,
-        VProgressCircular
+        VProgressCircular,
+        StatusDisplay
     },
     vuetify: new Vuetify({
         theme: {

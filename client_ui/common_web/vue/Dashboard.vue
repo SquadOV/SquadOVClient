@@ -1,27 +1,23 @@
 <template>
     <loading-container :is-loading="!loaded">
         <template v-slot:default="{ loading }">
-            <div class="d-flex justify-center align-center flex-column full-parent-height" v-if="!loading">
-                <h1 class="text-center mb-4">Welcome back!</h1>
+            <v-container v-if="!loading">
+                <v-row>
+                    <v-col cols="3">
+                        <!-- User and squad -->
+                    </v-col>
 
-                <div class="d-flex">
-                    <router-link :to="logsTo">
-                        <v-card class="choice" color="primary">
-                            <v-card-title>
-                                Game Logs
-                            </v-card-title>
-                        </v-card>
-                    </router-link>
+                    <v-col cols="6">
+                        <!-- Recent games -->
+                    </v-col>
 
-                    <router-link :to="performanceTo" >
-                        <v-card class="choice" color="primary">
-                            <v-card-title>
-                                Performance
-                            </v-card-title>
-                        </v-card>
-                    </router-link>
-                </div>
-            </div>
+                    <v-col cols="3">
+                        <!-- News and updates -->
+                        <status-display></status-display>
+                        <news-display></news-display>
+                    </v-col>
+                </v-row>
+            </v-container>
         </template>
     </loading-container>
 </template>
@@ -32,10 +28,14 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import * as pi from '@client/js/pages'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import StatusDisplay from '@client/vue/utility/squadov/StatusDisplay.vue'
+import NewsDisplay from '@client/vue/utility/squadov/NewsDisplay.vue'
 
 @Component({
     components: {
-        LoadingContainer
+        LoadingContainer,
+        StatusDisplay,
+        NewsDisplay,
     }
 })
 export default class Dashboard extends Vue {

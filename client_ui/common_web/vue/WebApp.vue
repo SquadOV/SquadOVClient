@@ -8,9 +8,11 @@
                     <v-progress-circular indeterminate size="64">
                     </v-progress-circular>
 
-                    <div class="text-h6 mt-4">
+                    <div class="text-h6 my-4">
                         An error occurred while connecting to SquadOV...Trying to reconnect.
                     </div>
+
+                    <status-display style="width: 500px;"></status-display>
                 </div>
             </template>
 
