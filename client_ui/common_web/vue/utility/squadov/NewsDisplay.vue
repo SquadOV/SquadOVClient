@@ -101,8 +101,6 @@ export default class NewsDisplay extends Vue {
 
     get newsWindowStyle(): any {
         return {
-            'border': '1px solid white',
-            'border-radius': '5px'
         }
     }
 }

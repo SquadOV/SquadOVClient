@@ -89,12 +89,13 @@
                         <div class="d-flex justify-center long-text text-subtitle-1" v-else>
                             Nobody's here just yet. Invite your friends!
                         </div>
+
+                        <!-- Recent recorded play time -->
+                        <total-recorded-playtime-widget class="mt-4"></total-recorded-playtime-widget>
                     </v-col>
 
-                    <v-col cols="6">                        
-                        <!-- Recent recorded play time -->
-
-                        <!-- Recent games -->
+                    <v-col cols="6">
+                        <!-- Recent recorded games -->
                     </v-col>
 
                     <v-col cols="3">
@@ -123,6 +124,7 @@ import NewsDisplay from '@client/vue/utility/squadov/NewsDisplay.vue'
 import SquadCreationCard from '@client/vue/utility/squads/SquadCreationCard.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
 import UserActivityDisplay from '@client/vue/utility/squadov/UserActivityDisplay.vue'
+import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecordedPlaytimeWidget.vue'
 
 @Component({
     components: {
@@ -132,6 +134,7 @@ import UserActivityDisplay from '@client/vue/utility/squadov/UserActivityDisplay
         SquadCreationCard,
         SquadInviteCreateCard,
         UserActivityDisplay,
+        TotalRecordedPlaytimeWidget,
     }
 })
 export default class Dashboard extends Vue {

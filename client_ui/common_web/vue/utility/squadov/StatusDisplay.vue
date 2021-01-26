@@ -181,7 +181,7 @@ export default class StatusDisplay extends Vue {
 <style scoped>
 
 .status-window {
-    border: 1px solid white;
+    border: 1px solid red;
     border-radius: 5px;
 }
 

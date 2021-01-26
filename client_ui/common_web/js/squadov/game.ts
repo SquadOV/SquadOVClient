@@ -24,6 +24,23 @@ export function gameToIcon(game: SquadOvGames): string {
     }
 }
 
+export function gameToName(game: SquadOvGames): string {
+    switch (game) {
+        case SquadOvGames.AimLab:
+            return 'Aim Lab'
+        case SquadOvGames.Hearthstone:
+            return 'Hearthstone'
+        case SquadOvGames.LeagueOfLegends:
+            return 'League of Legends'
+        case SquadOvGames.TeamfightTactics:
+            return 'Teamfight Tactics'
+        case SquadOvGames.Valorant:
+            return 'Valorant'
+        case SquadOvGames.WorldOfWarcraft:
+            return 'World of Warcraft'
+    }
+}
+
 export function gameShorthandToGame(str: string): SquadOvGames {
     switch (str) {
         case 'aimlab':

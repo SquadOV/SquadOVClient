@@ -76,6 +76,7 @@ import {
 import {
     FeatureFlags
 } from '@client/js/squadov/features'
+import { TotalRecordedPlaytime } from '@client/js/squadov/playtime'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -781,6 +782,15 @@ class ApiClient {
 
     getFeatureFlags(userId: number): Promise<ApiData<FeatureFlags>> {
         return axios.get(`v1/users/${userId}/features`, this.createWebAxiosConfig())
+    }
+
+    getRecentPlaytime(seconds: number): Promise<ApiData<TotalRecordedPlaytime>> {
+        return axios.get('v1/users/me/playtime', {
+            params: {
+                seconds
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 }
 
