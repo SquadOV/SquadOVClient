@@ -45,26 +45,28 @@
                                 </squad-creation-card>
                             </v-dialog>
 
-                            <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
-                                <template v-slot:activator="{on, attrs}">
-                                    <v-btn
-                                        v-if="!!selectedSquad"
-                                        v-on="on"
-                                        v-bind="attrs"
-                                        small
-                                        class="flex-grow-1 ml-2"
-                                        color="primary"
-                                    >
-                                        Invite
-                                    </v-btn>
-                                </template>
+                            <template v-if="!!selectedSquad">
+                                <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-btn
+                                            v-on="on"
+                                            v-bind="attrs"
+                                            small
+                                            class="flex-grow-1 ml-2"
+                                            color="primary"
+                                        >
+                                            Invite
+                                        </v-btn>
+                                    </template>
 
-                                <squad-invite-create-card
-                                    @on-cancel-invite="showHideInviteSquad = false"
-                                    @on-send-invite="showHideInviteSquad = false"
-                                >
-                                </squad-invite-create-card>
-                            </v-dialog>
+                                    <squad-invite-create-card
+                                        :squad-id="selectedSquad.id"
+                                        @on-cancel-invite="showHideInviteSquad = false"
+                                        @on-send-invite="showHideInviteSquad = false"
+                                    >
+                                    </squad-invite-create-card>
+                                </v-dialog>
+                            </template>
                         </div>
 
                         <!-- Squad member list and status -->

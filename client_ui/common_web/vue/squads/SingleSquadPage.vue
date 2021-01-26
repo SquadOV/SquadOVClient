@@ -121,6 +121,7 @@
                         </template>
 
                         <squad-invite-create-card
+                            :squad-id="squadId"
                             @on-cancel-invite="showHideInvite = false"
                             @on-send-invite="onSendInvite"
                         >
