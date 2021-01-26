@@ -71,7 +71,12 @@ export class TrackedUserStatsManager {
             }
 
             this._connection.onclose = (e: CloseEvent) => {
+                console.log('User Activty Websocket Close: ', e.code)
                 if (e.code != 1001) {
+                    if (!!this._connection) {
+                        this._connection.close()
+                    }
+                    this._connection = null
                     this.reconnect()
                 }
             }
@@ -84,7 +89,7 @@ export class TrackedUserStatsManager {
         }).catch((err : any) => {
             console.log('Failed to connect websocket: ', err)
             this._reconnectCount += 1
-            setInterval(() => {
+            setTimeout(() => {
                 this.reconnect()
             }, Math.min(Math.pow(2, this._reconnectCount) + Math.random() * 1000, 15000))
         })
@@ -96,7 +101,9 @@ export class TrackedUserStatsManager {
         }
         console.log('Attempting websocket reconnection...')
         this.connect(this._userId, () => {
+            // Once we reconnect we must resub and resend our current status.
             this.subscribeTo(Array.from(this._subscribed))
+            this.refreshCurrentUserStatus()
         })
     }
 
