@@ -130,6 +130,10 @@ interface ChangeForgottenPasswordInput {
 
 import { storeSessionCookie, getSessionId } from '@client/js/session'
 
+interface WebsocketAuthenticationResponse {
+    success: boolean
+}
+
 class ApiClient {
     _sessionId: string | null
 
@@ -169,6 +173,51 @@ class ApiClient {
         }
 
         return ret
+    }
+
+    //
+    // WebSocket
+    //
+    connectWebsocket(path: string): Promise<WebSocket> {
+        let ws = new WebSocket(SQUADOV_API_URL.replace('https', 'wss').replace('http', 'ws') + path)
+        return new Promise((resolve, reject) => {
+            let clearWsCallbacks = () => {
+                ws.onopen = null
+                ws.onmessage = null
+                ws.onopen = null
+            }
+
+            let onSuccess = () => {
+                clearWsCallbacks()
+                resolve(ws)
+            }
+
+            let onFail = (msg: any) => {
+                clearWsCallbacks()
+                ws.close()
+                reject(msg)
+            }
+
+            ws.onopen = () => {
+                ws.send(JSON.stringify({
+                    type: 'Authenticate',
+                    sessionId: this._sessionId,
+                }))
+            }
+
+            ws.onmessage = (e: MessageEvent) => {
+                let resp: WebsocketAuthenticationResponse = JSON.parse(e.data)
+                if (!!resp.success) {
+                    onSuccess()
+                } else {
+                    onFail('WebSocket Authentication Failure')
+                }
+            }
+
+            ws.onclose = () => {
+                onFail('Websocket closed prematurely')
+            }
+        })
     }
 
     //

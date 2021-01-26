@@ -1,19 +1,12 @@
+import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
 import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
-import { SquadOvState, createDefaultState } from '@client/js/system/state'
+import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
-
-interface RootState {
-    currentUser: SquadOVUser | null
-    hasValidSession: boolean
-    features: FeatureFlags
-/// #if DESKTOP
-    settings: SquadOvLocalSettings | null
-    currentState: SquadOvState
-/// #endif
-}
+import { RootState } from '@client/js/vuex/state'
+import { TrackedUserStatus } from '@client/js/squadov/status'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
@@ -26,8 +19,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
 /// #if DESKTOP
         settings: null,
-        currentState: createDefaultState()
+        currentState: createDefaultState(),
 /// #endif
+        status: { status:{} },
     },
     mutations: {
         setUser(state : RootState, user : SquadOVUser) {
@@ -81,6 +75,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         setFeatureFlags(state: RootState, flags: FeatureFlags) {
             state.features = flags
+        },
+        setUserActivityStatus(state: RootState, params: {userId: number, status: TrackedUserStatus}) {
+            Vue.set(state.status.status, params.userId, params.status)
         }
     },
     actions: {

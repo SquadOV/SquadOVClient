@@ -454,6 +454,10 @@ const router = new VueRouter({
 })
 
 const store = new Vuex.Store(RootStoreOptions)
+
+import { TrackedUserStatsManager } from '@client/js/squadov/status'
+const statusTracker = new TrackedUserStatsManager(store)
+
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
 
 router.beforeEach((to : any, from : any, next : any) => {
@@ -562,10 +566,12 @@ ipcRenderer.on('main-update-downloaded', () => {
 
 ipcRenderer.on('change-running-games', (_, games) => {
     store.commit('setRunningGames', games)
+    statusTracker.refreshCurrentUserStatus()
 })
 
 ipcRenderer.on('change-recording-games', (_, games) => {
     store.commit('setRecordingGames', games)
+    statusTracker.refreshCurrentUserStatus()
 })
 
 /// #endif
@@ -588,8 +594,9 @@ new Vue({
     }),
     data: () => ({
 /// #if DESKTOP
-        globals
+        globals,
 /// #endif
+        statusTracker,
     }),
     methods: {
         generateAssetUri(s: string): string {

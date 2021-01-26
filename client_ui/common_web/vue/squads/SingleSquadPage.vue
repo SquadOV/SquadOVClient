@@ -120,40 +120,11 @@
                             </v-btn>
                         </template>
 
-                        <v-card>
-                            <v-card-title>
-                                Invite Users
-                            </v-card-title>
-                            <v-divider></v-divider>
-
-                            <v-combobox
-                                v-model="inviteUsernames"
-                                clearable
-                                filled
-                                chips
-                                label="Usernames"
-                                multiple
-                                deletable-chips
-                            >
-                            </v-combobox>
-
-                            <v-card-actions>
-                                <v-btn color="error" @click="cancelInvite">
-                                    Cancel
-                                </v-btn>
-
-                                <v-spacer></v-spacer>
-
-                                <v-btn
-                                    color="success"
-                                    :loading="invitePending"
-                                    @click="sendInvite"
-                                    :disabled="inviteUsernames.length == 0"
-                                >
-                                    Send
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
+                        <squad-invite-create-card
+                            @on-cancel-invite="showHideInvite = false"
+                            @on-send-invite="onSendInvite"
+                        >
+                        </squad-invite-create-card>
                     </v-dialog>
                     
                 </div>
@@ -212,13 +183,15 @@ import {
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
+import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
     components: {
         LoadingContainer,
         SquadMemberTable,
-        SquadInviteTable
+        SquadInviteTable,
+        SquadInviteCreateCard
     }
 })
 export default class SingleSquadPage extends Vue {
@@ -234,8 +207,6 @@ export default class SingleSquadPage extends Vue {
     editPending: boolean = false
 
     showHideInvite: boolean = false
-    invitePending: boolean = false
-    inviteUsernames: string[] = []
 
     localMembership: SquadMembership | null = null
     squadMembers: SquadMembership[] | null = null
@@ -366,24 +337,9 @@ export default class SingleSquadPage extends Vue {
         })
     }
 
-    cancelInvite() {
+    onSendInvite() {
         this.showHideInvite = false
-        this.inviteUsernames = []
-    }
-
-    sendInvite() {
-        this.invitePending = true
-        apiClient.sendSquadInvite(this.squadId, this.inviteUsernames).then(() => {
-            this.cancelInvite()
-            this.showSuccess('Invites successfully sent.')
-            // Refresh all data instead of just invites because we want to re-pull the invite count too.
-            this.refreshData()
-        }).catch((err: any) => {
-            console.log('Failed to send squad invites: ', err)
-            this.showError('Failed to send invites, please double check the usernames and try again.')
-        }).finally(() => {
-            this.invitePending = false
-        })
+        this.refreshInvites()
     }
 
     onSquadKick() {
