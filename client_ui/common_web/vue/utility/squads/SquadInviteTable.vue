@@ -104,7 +104,7 @@ export default class SquadInviteTable extends Vue {
         }
         return this.value.map((ele: SquadInvite) => {
             return {
-                recipient: ele.username,
+                recipient: !!ele.username ? ele.username : ele.email,
                 inviter: ele.inviterUsername,
                 sent: ele.inviteTime!,
                 uuid: ele.inviteUuid,

@@ -34,7 +34,9 @@ export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembershi
 
 export interface SquadInvite {
     squadId: number
-    username: string
+    username: string | null
+    // Not sure how I feel about sending the email here.
+    email: string
     userId: number
     joined: boolean
     responseTime: Date | null
