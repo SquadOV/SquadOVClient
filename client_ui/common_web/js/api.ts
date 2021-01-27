@@ -347,9 +347,10 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    sendSquadInvite(squadId: number, usernames: string[]): Promise<void> {
+    sendSquadInvite(squadId: number, usernames: string[], emails: string[]): Promise<void> {
         return axios.post(`v1/squad/${squadId}/invite`, {
             usernames,
+            emails,
         }, this.createWebAxiosConfig())
     }
 

@@ -8,7 +8,7 @@
                         <div class="text-h6 font-weight-bold">
                             Welcome back, {{ $store.state.currentUser.username }}!
                         </div>
-                        <v-divider class="my-1"></v-divider>
+                        <v-divider class="mt-2 mb-4"></v-divider>
 
                         <!-- Dropdown with user squads -->
                         <div class="d-flex align-center mb-1">
@@ -45,28 +45,38 @@
                                 </squad-creation-card>
                             </v-dialog>
 
-                            <template v-if="!!selectedSquad">
-                                <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
-                                    <template v-slot:activator="{on, attrs}">
-                                        <v-btn
-                                            v-on="on"
-                                            v-bind="attrs"
-                                            small
-                                            class="flex-grow-1 ml-2"
-                                            color="primary"
-                                        >
-                                            Invite
-                                        </v-btn>
-                                    </template>
+                            <v-btn
+                                :disabled="!selectedSquad"
+                                :to="manageSquadTo"
+                                color="secondary"
+                                small
+                                class="flex-grow-1 ml-2"
+                            >
+                                Manage
+                            </v-btn>
+                        </div>
 
-                                    <squad-invite-create-card
-                                        :squad-id="selectedSquad.id"
-                                        @on-cancel-invite="showHideInviteSquad = false"
-                                        @on-send-invite="showHideInviteSquad = false"
+                        <div class="mt-2" v-if="!!selectedSquad">
+                            <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-btn
+                                        v-on="on"
+                                        v-bind="attrs"
+                                        block
+                                        small
+                                        color="primary"
                                     >
-                                    </squad-invite-create-card>
-                                </v-dialog>
-                            </template>
+                                        Invite
+                                    </v-btn>
+                                </template>
+
+                                <squad-invite-create-card
+                                    :squad-id="selectedSquad.squad.id"
+                                    @on-cancel-invite="showHideInviteSquad = false"
+                                    @on-send-invite="showHideInviteSquad = false"
+                                >
+                                </squad-invite-create-card>
+                            </v-dialog>
                         </div>
 
                         <!-- Squad member list and status -->
@@ -86,9 +96,7 @@
                             </template>
                         </v-data-table>
 
-                        <div class="d-flex justify-center long-text text-subtitle-1" v-else>
-                            Nobody's here just yet. Invite your friends!
-                        </div>
+                        <div class="d-flex justify-center long-text text-subtitle-1" v-else>Nobody's here just yet. Invite your friends!</div>
 
                         <!-- Recent recorded play time -->
                         <total-recorded-playtime-widget class="mt-4"></total-recorded-playtime-widget>
@@ -257,6 +265,19 @@ export default class Dashboard extends Vue {
         this.preselectedSquad = squadName
         this.showHideCreateSquad = false
         this.refreshSquads()
+    }
+
+    get manageSquadTo(): any {
+        if (!this.selectedSquad) {
+            return {}
+        }
+
+        return {
+            name: pi.SingleSquadPageId,
+            params: {
+                squadId: this.selectedSquad.squad.id
+            }
+        }
     }
 }
 

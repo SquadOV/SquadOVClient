@@ -43,7 +43,7 @@
                         </v-list-item-content>
                     </v-list-item>
 
-                    <div class="refresh-text long-text pa-2">Last refreshed {{ minutesSinceLastRefresh }} ago. Next refresh in {{ minutesToNextRefresh }}.</div>
+                    <div class="refresh-text long-text px-2 pt-2">Last refreshed {{ minutesSinceLastRefresh }} ago. Next refresh in {{ minutesToNextRefresh }}.</div>
                 </v-list>
 
                 

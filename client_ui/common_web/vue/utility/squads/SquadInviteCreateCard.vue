@@ -13,6 +13,23 @@
             label="Usernames"
             multiple
             deletable-chips
+            hide-details
+        >
+        </v-combobox>
+
+        <div class="d-flex my-4 justify-center align-center">
+            OR
+        </div>
+
+        <v-combobox
+            v-model="inviteEmails"
+            clearable
+            filled
+            chips
+            label="Emails"
+            multiple
+            deletable-chips
+            hide-details
         >
         </v-combobox>
 
@@ -27,7 +44,7 @@
                 color="success"
                 :loading="invitePending"
                 @click="sendInvite"
-                :disabled="inviteUsernames.length == 0"
+                :disabled="totalInvites == 0"
             >
                 Send
             </v-btn>
@@ -49,15 +66,26 @@ export default class SquadInviteCreateCard extends Vue {
 
     invitePending: boolean = false
     inviteUsernames: string[] = []
+    inviteEmails: string[] = []
 
     showSuccess: boolean = false
     showError: boolean = false
 
+    get totalInvites(): number {
+        return this.inviteUsernames.length + this.inviteEmails.length
+    }
+
+    clear() {
+        this.inviteUsernames = []
+        this.inviteEmails = []
+    }
+
     sendInvite() {
         this.invitePending = true
-        apiClient.sendSquadInvite(this.squadId, this.inviteUsernames).then(() => {
+        apiClient.sendSquadInvite(this.squadId, this.inviteUsernames, this.inviteEmails).then(() => {
             this.showSuccess = true
             this.$emit('on-send-invite')
+            this.clear()
         }).catch((err: any) => {
             console.log('Failed to send squad invites: ', err)
             this.showError = true
