@@ -228,8 +228,11 @@ class ApiClient {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
     }
 
-    register(inp : RegisterInput) : Promise<void> {
-        return axios.post('auth/register', inp, this.createWebAxiosConfig())
+    register(inp : RegisterInput, params: any) : Promise<void> {
+        return axios.post('auth/register', inp, {
+            params,
+            ...this.createWebAxiosConfig()
+        })
     }
 
     resendVerification() : Promise<void> {
@@ -324,6 +327,24 @@ class ApiClient {
 
     rejectSquadInvite(squadId: number, inviteUuid: string): Promise<void> {
         return axios.post(`v1/squad/${squadId}/invite/${inviteUuid}/reject`, {}, this.createWebAxiosConfig())
+    }
+
+    publicAcceptSquadInvite(squadId: number, inviteUuid: string, sig: string): Promise<void> {
+        return axios.post(`public/squad/${squadId}/invite/${inviteUuid}/accept`, {}, {
+            params: {
+                sig
+            },
+            ...this.createWebAxiosConfig()
+        })
+    }
+
+    publicRejectSquadInvite(squadId: number, inviteUuid: string, sig: string): Promise<void> {
+        return axios.post(`public/squad/${squadId}/invite/${inviteUuid}/reject`, {}, {
+            params: {
+                sig
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
     deleteSquad(squadId: number): Promise<void> {

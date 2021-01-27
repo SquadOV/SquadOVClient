@@ -77,6 +77,7 @@ const VerifyEmail = () => import('@client/vue/auth/VerifyEmail.vue')
 const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
+const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -95,10 +96,19 @@ const baseRoutes : any[] = [
         name: pi.LoginPageId,
         component: Login,
         props: (route : any) => ({
-            reg: route.query.reg
+            reg: route.query.reg,
         })
     },
-    { path: '/register', name: pi.RegisterPageId, component: Register },
+    {
+        path: '/register',
+        name: pi.RegisterPageId,
+        component: Register,
+        props: (route : any) => ({
+            inviteUuid: route.query.inviteUuid,
+            squadId: parseInt(route.query.squadId),
+            sig: route.query.sig,
+        })
+    },
     {
         path: '/forgotpw/:changePasswordId',
         name: pi.ForgotPasswordPageId,
@@ -443,6 +453,18 @@ const baseRoutes : any[] = [
             code: route.query.code,
             state: route.query.state,
         }),
+    },
+    {
+        path: '/invite/:inviteUuid/:action',
+        component: SquadInviteResponsePage,
+        name: pi.InviteResponsePageId,
+        props: (route: any) => ({
+            inviteUuid: route.params.inviteUuid,
+            action: route.params.action,
+            isUser: (route.query.isUser === 'true'),
+            squadId: parseInt(route.query.squadId),
+            sig: route.query.sig,
+        })
     }
 ]
 
@@ -470,8 +492,8 @@ router.beforeEach((to : any, from : any, next : any) => {
         })
     }
 
-    // Allow OAuth requests to always go through regardless of whether the user is signed in or not.
-    if (to.name === pi.RsoOauthPageId) {
+    // Allow OAuth requests and squad invite responses to always go through regardless of whether the user is signed in or not.
+    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId) {
         next()
         return
     }

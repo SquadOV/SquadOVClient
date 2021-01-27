@@ -76,13 +76,20 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import { apiClient } from '@client/js/api'
-
-const saltRounds = 10
 
 @Component
 export default class Register extends Vue {
+    @Prop()
+    inviteUuid!: string | undefined
+
+    @Prop()
+    squadId!: number | undefined
+
+    @Prop()
+    sig!: string | undefined
+
     formValid: boolean = false
     inProgress: boolean = false
     showHideGenericError : boolean = false
@@ -132,6 +139,10 @@ export default class Register extends Vue {
             username: this.username,
             password: this.password,
             email: this.email,
+        }, {
+            inviteUuid: this.inviteUuid,
+            squadId: !!this.squadId ? this.squadId.toString() : undefined,
+            sig: this.sig,
         }).then(() => {
             // Successful registration. Redirect to the login page.
             // Have the login page notify the user their registration succeeded.

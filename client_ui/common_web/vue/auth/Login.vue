@@ -111,6 +111,7 @@ export default class Login extends Vue {
     // using this as the username.
     @Prop({default: ''})
     reg!: string
+
     showRegistrationBanner: boolean = false
     showHideGenericError: boolean = false
     showHideAuthError: boolean = false
@@ -174,14 +175,14 @@ export default class Login extends Vue {
 /// #if DESKTOP
                 ipcRenderer.send('finish-login')
 /// #else
-                this.$router.push({
+                this.$router.replace({
                     name: pi.DashboardPageId,
                 })
 /// #endif
             } else {
                 // Redirect to a screen to wait for email verification.
-                this.$router.push({
-                    name: 'verify'
+                this.$router.replace({
+                    name: pi.WaitForVerifyPageId,
                 })
             }
         }).catch((err : any) => {

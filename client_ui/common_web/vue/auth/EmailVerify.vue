@@ -55,7 +55,6 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Watch, Prop } from 'vue-property-decorator'
 import { apiClient, ApiData, CheckVerificationOutput } from '@client/js/api'
 import * as pi from '@client/js/pages'
 
