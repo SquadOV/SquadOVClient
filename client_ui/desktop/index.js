@@ -204,7 +204,7 @@ ipcMain.on('change-state-pause', (event, paused) => {
 let hasUpdate = false
 ipcMain.on('request-restart', () => {
     if (hasUpdate) {
-        autoUpdater.quitAndInstall(true, true)
+        autoUpdater.quitAndInstall(false, true)
     } else {
         restart()
     }
@@ -323,7 +323,7 @@ function startAutoupdater() {
         autoUpdater.on('update-available', (info) => {
             log.log('Index Update Available: ', info)
             autoUpdater.once('update-downloaded', () => {
-                autoUpdater.quitAndInstall(true, true)
+                autoUpdater.quitAndInstall(false, true)
             })
             updateWindow.webContents.send('update-update-available', info)            
         })
