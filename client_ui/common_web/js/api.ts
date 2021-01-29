@@ -77,6 +77,10 @@ import {
     FeatureFlags
 } from '@client/js/squadov/features'
 import { TotalRecordedPlaytime } from '@client/js/squadov/playtime'
+import {
+    RecentMatch,
+    cleanRecentMatchFromJson,
+} from '@client/js/squadov/recentMatch'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -812,6 +816,23 @@ class ApiClient {
                 seconds
             },
             ...this.createWebAxiosConfig()
+        })
+    }
+
+    listMyRecentMatches(params : {next : string | null, start : number, end : number}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/users/me/recent`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
+            resp.data.data.forEach(cleanRecentMatchFromJson)
+            return resp
         })
     }
 }

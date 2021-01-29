@@ -104,6 +104,7 @@
 
                     <v-col cols="6">
                         <!-- Recent recorded games -->
+                        <recent-recorded-matches></recent-recorded-matches>
                     </v-col>
 
                     <v-col cols="3">
@@ -133,6 +134,7 @@ import SquadCreationCard from '@client/vue/utility/squads/SquadCreationCard.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
 import UserActivityDisplay from '@client/vue/utility/squadov/UserActivityDisplay.vue'
 import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecordedPlaytimeWidget.vue'
+import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 
 @Component({
     components: {
@@ -143,6 +145,7 @@ import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecord
         SquadInviteCreateCard,
         UserActivityDisplay,
         TotalRecordedPlaytimeWidget,
+        RecentRecordedMatches,
     }
 })
 export default class Dashboard extends Vue {

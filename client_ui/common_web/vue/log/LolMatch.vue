@@ -6,7 +6,6 @@
                 <lol-match-summary
                     class="full-width"
                     :match="playerSummary"
-                    :puuid="puuid"
                     :user-id="userId"
                 >
                 </lol-match-summary>
@@ -161,9 +160,6 @@ import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
 })
 export default class LolMatch extends Vue {
     secondsToTimeString = secondsToTimeString
-
-    @Prop()
-    puuid! : string | null
 
     @Prop()
     userId!: number

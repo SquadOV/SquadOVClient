@@ -30,7 +30,7 @@ if (app.isPackaged) {
 
 const singleLock = app.requestSingleInstanceLock()
 if (!singleLock) {
-    app.quit()
+    app.exit(1)
 } else {
     app.on('second-instance', () => {
         if (!!win) {
@@ -85,7 +85,7 @@ let zeromqServer = new ZeroMQServerClient()
 async function quit() {
     isQuitting = true
     zeromqServer.close()
-    app.quit()
+    app.exit(0)
 }
 
 function setAppDataFolderFromEnv() {

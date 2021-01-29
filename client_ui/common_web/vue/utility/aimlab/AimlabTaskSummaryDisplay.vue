@@ -2,22 +2,26 @@
     <div>
         <router-link :to="to">
             <v-sheet
-                class="task-summary"
+                :class="`task-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
             >
-                <div class="d-flex align-center justify-space-between task-div">
-                    <v-img
-                        class="mx-4"
-                        :src="$root.generateAssetUri(content.getTaskIcon(task.taskName))"
-                        max-width="100"
-                        max-height="100"
-                        contain
-                    >
-                    </v-img>
+                <v-row no-gutters :class="`task-summary ${fill ? 'full-parent-height' : ''}`">
+                    <v-col cols="2" align-self="center">
+                        <v-img
+                            class="mx-4"
+                            :src="$root.generateAssetUri(content.getTaskIcon(task.taskName))"
+                            max-width="100"
+                            max-height="100"
+                            contain
+                        >
+                        </v-img>
+                    </v-col>
 
-                    <span class="mr-4 text-h5">{{ timeStr }}</span>
+                    <v-col cols="4" align-self="center">
+                        <span class="mr-4 text-h6">{{ timeStr }}</span>
+                    </v-col>
 
-                    <div class="d-flex flex-column mr-4">
+                    <v-col cols="4" align-self="center">
                         <span class="text-h5">
                             {{ content.getTaskName(task.taskName) }}
                         </span>
@@ -25,12 +29,14 @@
                         <span class="text-subtitle">
                             {{ content.getTaskMode(task.taskName, task.mode) }}
                         </span>
-                    </div>
+                    </v-col>
 
                     <v-spacer></v-spacer>
 
-                    <span class="mx-4 text-h5">{{ task.score }}</span>
-                </div>
+                    <v-col cols="2" align-self="center">
+                        <span class="text-h6">{{ task.score }}</span>
+                    </v-col>
+                </v-row>
 
                 <div class="vod-div" v-if="hasVod">
                     <v-icon color="black">
@@ -61,6 +67,9 @@ export default class AimlabTaskSummaryDisplay extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     @Prop()
     syncVod! : VodAssociation | null

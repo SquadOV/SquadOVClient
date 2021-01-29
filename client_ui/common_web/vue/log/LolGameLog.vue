@@ -14,7 +14,6 @@
                                     v-for="(match, index) in allMatches"
                                     :key="index"
                                     :match="match"
-                                    :puuid="puuid"
                                     :user-id="userId"
                                 >
                                 </lol-match-summary>

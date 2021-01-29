@@ -123,7 +123,8 @@ export default class TftMatch extends Vue {
             placement: participant.placement,
             traits: participant.traits,
             units: participant.units,
-            hasVod: !!this.vod
+            hasVod: !!this.vod,
+            puuid: this.puuid,
         }
     }
 

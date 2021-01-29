@@ -1,6 +1,6 @@
 <template>
     <v-row>
-        <v-col cols="4">
+        <v-col :cols="!mini ? 4 : 12">
             <svg width="100%" height="90px" viewBox="0 0 40 80">
                 <path id="Head"
                         :fill="headFill" stroke="black" stroke-width="0.2"
@@ -48,7 +48,7 @@
             </svg>
         </v-col>
 
-        <v-col cols="8" class="d-flex flex-column justify-space-around">
+        <v-col cols="8" class="d-flex flex-column justify-space-around" v-if="!mini">
             <div>
                 Head: <span class="percentage" :style="{ color: headFill }">{{ hspStr }}</span> ({{ headshots }})
             </div>
@@ -80,6 +80,9 @@ export default class ValorantHitTracker extends Vue {
 
     @Prop({type : Number, default: 0})
     legshots! : number
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
 
     percentageToOpacity(p : number) : number {
         const minOpacity = 0.2

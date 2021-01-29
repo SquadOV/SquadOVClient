@@ -2,11 +2,11 @@
     <div>
         <router-link :to="gameTo">
             <v-sheet
-                class="match-summary"
+                :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
                 :style="style"
             >
-                <v-row no-gutters>
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
                     <v-col cols="2" align-self="center">
                         <valorant-agent-icon
                             :agent="match.characterId"
@@ -15,7 +15,7 @@
                         </valorant-agent-icon>
                     </v-col>
 
-                    <v-col cols="1" align-self="center">
+                    <v-col :cols="mini ? 2 : 1" align-self="center">
                         <p :style="wlColorStyle">
                             {{ match.roundsWon }} - {{ match.roundsLost }}
                         </p>
@@ -23,18 +23,19 @@
                         <v-chip :style="csRankStyle">{{ csRank }}</v-chip>
                     </v-col>
 
-                    <v-col cols="4" align-self="center">
+                    <v-col :cols="mini ? 2 : 4" align-self="center">
                         <valorant-hit-tracker
                             :headshots="match.headshots"
                             :bodyshots="match.bodyshots"
                             :legshots="match.legshots"
+                            :mini="mini"
                         >
                         </valorant-hit-tracker>
                     </v-col>
 
-                    <v-col cols="3" align-self="center">
+                    <v-col :cols="mini ? 4 : 3" align-self="center">
                         <div>
-                            {{ match.kills }} / {{ match.deaths}} / {{ match.assists }} ({{ kda }})
+                            {{ match.kills }} / {{ match.deaths}} / {{ match.assists }} <span v-if="!mini">({{ kda }})</span>
                         </div>
 
                         <div>
@@ -87,6 +88,12 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     vod: VodAssociation | null = null
 

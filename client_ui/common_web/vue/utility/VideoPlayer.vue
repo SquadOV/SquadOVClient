@@ -17,7 +17,6 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import * as vod from '@client/js/squadov/vod'
 import videojs from 'video.js'
-import fs from 'fs'
 import 'video.js/dist/video-js.css' 
 
 @Component

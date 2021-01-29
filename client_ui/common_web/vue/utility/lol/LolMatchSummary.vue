@@ -134,7 +134,6 @@ import {
     colorToCssString,
 } from '@client/js/color'
 import * as pi from '@client/js/pages'
-import { getOrdinal } from '@client/js/ordinal'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
 import { ddragonContainer } from '@client/js/lolDdragon'
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
@@ -152,9 +151,6 @@ export default class LolMatchSummary extends Vue {
 
     @Prop({required: true})
     userId!: number
-
-    @Prop({required: true})
-    puuid!: string
 
     backgroundUrl: string = ''
 
@@ -179,7 +175,6 @@ export default class LolMatchSummary extends Vue {
                 ...this.$route.params
             },
             query: {
-                account: this.puuid,
                 userId: this.userId,
                 ...this.$route.query
             },

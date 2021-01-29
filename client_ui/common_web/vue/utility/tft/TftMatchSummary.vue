@@ -71,11 +71,9 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import { TftPlayerMatchSummary, getTftSetNumber } from '@client/js/tft/matches'
 import {
-    getGenericWinColor,
-    getGenericLossColor,
     colorToCssString,
     getGenericFirstPlaceColor,
     getGenericTopPlaceColor,

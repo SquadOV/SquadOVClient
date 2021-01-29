@@ -14,7 +14,8 @@ export interface TftPlayerMatchSummary {
     placement: number,
     traits: TftTrait[],
     units: TftUnit[],
-    hasVod: boolean
+    hasVod: boolean,
+    puuid: string
 }
 
 export interface WrappedTftMatch {

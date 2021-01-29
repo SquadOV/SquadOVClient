@@ -76,8 +76,11 @@ export function dateRangeIntersects(aMin: Date, aMax: Date, bMin: Date, bMax: Da
         dateInRange(bMax, aMin, aMax)
 }
 
-export function daysAgo(d: Date): string {
-    let diffDays = Math.floor((new Date().getTime() - d.getTime()) / (24 * 60 * 60 * 1000))
+export function numDaysAgo(d: Date): number {
+    return Math.floor((new Date().getTime() - d.getTime()) / (24 * 60 * 60 * 1000))
+}
+
+export function numDaysAgoToString(diffDays: number): string {
     if (diffDays == 0) {
         return 'Today'
     } else if (diffDays == 1) {
@@ -85,4 +88,9 @@ export function daysAgo(d: Date): string {
     } else {
         return `${diffDays} days ago`
     }
+}
+
+export function daysAgo(d: Date): string {
+    let diffDays = numDaysAgo(d)
+    return numDaysAgoToString(diffDays)
 }

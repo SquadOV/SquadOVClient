@@ -397,7 +397,6 @@ const baseRoutes : any[] = [
         name: pi.LolMatchPageId,
         component: LolMatch,
         props: (route : any) => ({
-            puuid: route.query.account,
             matchUuid: route.params.matchUuid,
             userId: parseInt(route.query.userId)
         })
