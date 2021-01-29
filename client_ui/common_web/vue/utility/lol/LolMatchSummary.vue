@@ -2,13 +2,13 @@
     <div v-if="!!currentPlayer">
         <router-link :to="gameTo">
             <v-sheet
-                class="match-summary"
+                :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
                 :style="style"
             >
-                <v-row no-gutters>
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
                     <!-- Champion icon -->
-                    <v-col cols="1" align-self="center">
+                    <v-col :cols="mini ? 3 : 1" align-self="center">
                         <lol-champion-icon
                             :champion-id="currentPlayer.championId"
                             :game-version="match.gameVersion"
@@ -19,7 +19,7 @@
                     </v-col>
 
                     <!-- Game Info (time, type, match length) -->
-                    <v-col cols="2" align-self="center" class="text-body-2">
+                    <v-col :cols="mini ? 4 : 2" align-self="center" class="text-body-2">
                         <div class="pl-2">
                             <p>
                                 {{ gameMode }} ({{ matchLength }})
@@ -32,7 +32,7 @@
                     </v-col>
 
                     <!-- Personal Stats -->
-                    <v-col cols="3" align-self="center" class="text-body-2">
+                    <v-col :cols="mini ? 5 : 3" align-self="center" class="text-body-2">
                         <div>
                             {{ currentPlayer.kills }} / {{ currentPlayer.deaths}} / {{ currentPlayer.assists }} ({{ kda }})
                         </div>
@@ -89,7 +89,7 @@
                     </v-col>
 
                     <!-- Team champion match up with hoverable player information -->
-                    <v-col cols="6" align-self="center" class="text-body-2">
+                    <v-col cols="6" align-self="center" class="text-body-2" v-if="!mini">
                         <div class="d-flex justify-center align-center">
                             <lol-match-summary-team-display
                                 :players="sameTeamPlayers"
@@ -151,6 +151,12 @@ export default class LolMatchSummary extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     backgroundUrl: string = ''
 

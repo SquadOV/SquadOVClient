@@ -2,13 +2,13 @@
     <div>
         <router-link :to="gameTo">
             <v-sheet
-                class="match-summary"
+                :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
                 :style="style"
             >
-                <v-row no-gutters>
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
                     <!-- Little legend icon -->
-                    <v-col cols="1" align-self="center">
+                    <v-col :cols="mini ? 3 : 1" align-self="center">
                         <tft-little-legend-icon
                             :content-id="match.companion.contentId"
                             :width="100"
@@ -18,7 +18,7 @@
                     </v-col>
 
                     <!-- Placement and Traits -->
-                    <v-col cols="2" align-self="center">
+                    <v-col :cols="mini ? 5 : 2" align-self="center">
                         <div class="d-flex flex-column justify-center" :style="placementStyle">
                             <div class="d-flex justify-center text-h3">{{ placementString }}</div>
                             <tft-full-trait-display
@@ -31,7 +31,7 @@
                     </v-col>
 
                     <!-- Game Info (time, type, match length) -->
-                    <v-col cols="2" align-self="center" class="text-body-2">
+                    <v-col :cols="mini ? 4 : 2" align-self="center" class="text-body-2">
                         <p>
                             {{ dateTime }}
                         </p>
@@ -46,7 +46,7 @@
                     </v-col>
 
                     <!-- Units -->
-                    <v-col cols="7" align-self="center">
+                    <v-col cols="7" align-self="center" v-if="!mini">
                         <tft-full-unit-display
                             class="mx-2 my-1"
                             :units="match.units"
@@ -104,6 +104,12 @@ export default class TftMatchSummary extends Vue {
 
     @Prop({required: true})
     puuid!: string
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     get gameTo(): any {
         return {
