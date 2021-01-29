@@ -278,7 +278,7 @@ function startAutoupdater() {
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
     autoUpdater.logger = log
-    autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'release'
+    autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
 
     // This event is for when an update is available and we're past
     // the initial start-up workflow. In this case we need to indicate
