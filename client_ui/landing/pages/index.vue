@@ -5,7 +5,13 @@
             </video>
 
             <div id="headerContent" class="d-flex flex-column align-center justify-center">
-                <h1>SquadOV</h1>
+                <div class="d-flex align-start">
+                    <h1>
+                        SquadOV
+                    </h1>
+
+                    <span class="text-caption font-weight-bold ml-1">BETA</span>
+                </div>
                 <h2>Free automatic VOD recording, match history, and stat analysis to help you improve.</h2>
 
                 <div class="mt-4">
@@ -237,7 +243,7 @@ export default class Index extends Vue {
 
     head() : any {
         return {
-            title: 'SquadOV - Automatic VOD Analysis for your Squad',
+            title: 'SquadOV  - Automatic VOD Analysis for your Squad',
             htmlAttrs: {
                 lang: 'en'
             },
@@ -259,7 +265,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.4.17'
+        return 'v0.5.3'
     }
 
     get downloadLink() : string {

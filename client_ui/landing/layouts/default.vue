@@ -17,7 +17,8 @@
                         >
                         </v-img>
 
-                        SquadOV
+                        <span class="mr-1">SquadOV</span>
+                        <span class="text-caption">(Beta)</span>
                     </div>
                 </NuxtLink>
             </v-toolbar-title>
