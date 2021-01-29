@@ -1,13 +1,12 @@
 <template>
-    <div v-if="!!heroCard">
-        <v-img
-            :src="imageUrl"
-            :max-height="maxHeight"
-            :max-width="maxHeight"
-            contain
-        >
-        </v-img>
-    </div>
+    <v-img
+        v-if="!!heroCard"
+        :src="imageUrl"
+        :max-height="cssMaxHeight"
+        :max-width="maxHeight"
+        contain
+    >
+    </v-img>
 </template>
 
 <script lang="ts">
@@ -24,6 +23,13 @@ export default class HearthstoneHeroDisplay extends Vue {
 
     @Prop({default: 100})
     maxHeight!: number
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
+    get cssMaxHeight(): string {
+        return this.fill ? '100%' : `${this.maxHeight}px`
+    }
 
     get imageUrl() : string {
         return staticClient.getHearthstoneCardPortraitUrl(this.heroCard!)

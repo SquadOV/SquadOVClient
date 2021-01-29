@@ -2,17 +2,18 @@
     <div>
         <router-link :to="to">
             <v-sheet
-                class="task-summary"
+                :class="`task-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
                 :style="divStyle"
             >
-                <v-row no-gutters v-if="!!currentMatch">
+                <v-row no-gutters v-if="!!currentMatch" :class="`${fill ? 'full-parent-height' : ''}`">
                     <!-- Hero class + Deck Name (if applicable) -->
-                    <v-col cols="2" align-self="center">
+                    <v-col :cols="mini ? 4 : 2" align-self="center">
                         <div class="d-flex justify-start">
                             <hearthstone-hero-display
                                 :hero-card="deckHeroCard"
-                                :max-height="150"
+                                :max-height="100"
+                                fill
                             >
                             </hearthstone-hero-display>
                         </div>
@@ -25,7 +26,7 @@
                     </v-col>
 
                     <!-- DateTime + Game Mode -->
-                    <v-col cols="2" align-self="center" class="text-body-2">
+                    <v-col :cols="mini ? 5 : 2" align-self="center" class="text-body-2">
                         <p>
                             {{ dateTime }}
                         </p>
@@ -43,7 +44,7 @@
                     </v-col>
 
                     <!-- Rank (if relevant) -->
-                    <v-col cols="1" align-self="center">
+                    <v-col :cols="mini ? 3 : 1" align-self="center">
                         <hearthstone-player-medal-display
                             v-if="isRanked && !matchWrapper.isBattlegrounds"
                             :medal-info="medalInfo"
@@ -67,7 +68,7 @@
                     </v-col>
 
                     <!-- Board State -->
-                    <v-col :cols="matchWrapper.isBattlegrounds ? 7 : 5" align-self="center">
+                    <v-col :cols="matchWrapper.isBattlegrounds ? 7 : 5" align-self="center" v-if="!mini">
                         <hearthstone-mini-board-state-display
                             :snapshot="latestSnapshot"
                             :player-match-id="localPlayerMatchId"
@@ -76,11 +77,11 @@
                     </v-col>
 
                     <!-- Enemy hero -->
-                    <v-col cols="2" align-self="center" v-if="!matchWrapper.isBattlegrounds">
+                    <v-col cols="2" align-self="center" v-if="!matchWrapper.isBattlegrounds && !mini">
                         <div class="d-flex justify-end">
                             <hearthstone-hero-display
                                 :hero-card="enemyHeroCard"
-                                :max-height="150"
+                                :max-height="100"
                             >
                             </hearthstone-hero-display>
                         </div>
@@ -137,6 +138,12 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
 
     vod: VodAssociation | null = null
     currentMatch: HearthstoneMatch | null = null
@@ -339,6 +346,10 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 .task-summary {
     width: 100%;
     position: relative;
+}
+
+p {
+    margin-bottom: 2px !important;
 }
 
 </style>

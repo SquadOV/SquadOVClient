@@ -4,6 +4,7 @@
             v-for="(cardId, idx) in orderedCardIds"
             :card-id="cardId"
             :key="idx"
+            :max-height="100"
         >
         </hearthstone-mini-card-display>
     </div>

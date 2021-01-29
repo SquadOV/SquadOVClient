@@ -82,8 +82,10 @@
             <hearthstone-match-summary-display
                 class="flex-grow-1 recent-match-item"
                 v-else
-                :match-id="match.matchUuid"
+                :match-id="match.base.matchUuid"
                 :user-id="$store.state.currentUser.id"
+                mini
+                fill
             >
             </hearthstone-match-summary-display>
         </div>
