@@ -27,6 +27,23 @@ export interface RecentMatch {
     wowEncounter?: WowEncounter
 }
 
+export function checkRecentMatchValidity(r: RecentMatch): boolean {
+    switch (r.base.game) {
+        case SquadOvGames.AimLab:
+            return !!r.aimlabTask
+        case SquadOvGames.WorldOfWarcraft:
+            return !!r.wowChallenge || !!r.wowEncounter
+        case SquadOvGames.TeamfightTactics:
+            return !!r.tftMatch
+        case SquadOvGames.LeagueOfLegends:
+            return !!r.lolMatch
+        case SquadOvGames.Valorant:
+            return !!r.valorantMatch
+        case SquadOvGames.Hearthstone:
+            return true
+    }
+}
+
 export function cleanRecentMatchFromJson(r: RecentMatch): RecentMatch {
     r.base.tm = new Date(r.base.tm)
 

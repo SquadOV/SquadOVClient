@@ -52,7 +52,7 @@ const maxTasksPerRequest : number = 20
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { RecentMatch } from '@client/js/squadov/recentMatch'
+import { RecentMatch, checkRecentMatchValidity } from '@client/js/squadov/recentMatch'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { numDaysAgo, numDaysAgoToString } from '@client/js/time'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -78,13 +78,19 @@ export default class RecentRecordedMatches extends Vue {
         return !!this.nextLink
     }
 
-    get groupedMatches(): GroupedMatch[] {
+    get filteredMatches() : RecentMatch[] {
         if (!this.recentMatches) {
             return []
         }
 
+        return this.recentMatches.filter((ele: RecentMatch) => {
+            return checkRecentMatchValidity(ele)
+        })
+    }
+
+    get groupedMatches(): GroupedMatch[] {
         let grouped: Map<number, RecentMatch[]> = new Map()
-        this.recentMatches.forEach((ele: RecentMatch) => {
+        this.filteredMatches.forEach((ele: RecentMatch) => {
             let days = numDaysAgo(ele.base.tm)
             if (!grouped.has(days)) {
                 grouped.set(days, [])
