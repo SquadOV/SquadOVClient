@@ -12,6 +12,7 @@ export interface BaseRecentMatch {
     game: SquadOvGames
     vod: VodManifest
     username: string
+    userId: number
 }
 
 export interface RecentMatch {

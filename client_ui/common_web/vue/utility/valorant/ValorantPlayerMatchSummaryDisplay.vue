@@ -95,6 +95,9 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     fill!: boolean
 
+    @Prop({required: true})
+    account!: string
+
     vod: VodAssociation | null = null
 
     get hasVod() : boolean {
@@ -109,7 +112,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
                 ...this.$route.params
             },
             query: {
-                account: this.$route.params.account,
+                account: this.account,
                 userId: this.userId,
                 ...this.$route.query
             },

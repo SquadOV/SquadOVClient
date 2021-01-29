@@ -186,6 +186,7 @@ void LogWatcher::watchWorker() {
 
                 // If numBytes == 0 then the system has too much info to give us...uhhh. TBD.
                 if (!ok || numBytes == 0) {
+                    LOG_WARNING("Failed to read directory changes [OK: " << ok << "] [BYTES: " << numBytes << "]" << std::endl);
                     // For whatever reason we failed...try again later.
                     std::this_thread::sleep_for(500ms);
                     continue;

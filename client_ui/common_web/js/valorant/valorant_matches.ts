@@ -137,6 +137,7 @@ export interface ValorantPlayerMatchSummary {
     bodyshots: number
     legshots: number
     hasVod: boolean
+    puuid: string
 }
 
 export function cleanValorantPlayerMatchSummary(m :ValorantPlayerMatchSummary) : ValorantPlayerMatchSummary {

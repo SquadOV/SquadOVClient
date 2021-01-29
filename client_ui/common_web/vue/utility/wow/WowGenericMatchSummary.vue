@@ -2,16 +2,16 @@
     <div>
         <router-link :to="to">
             <v-sheet
-                class="d-flex align-center match-summary pa-4"
+                :class="`d-flex align-center match-summary pa-2 ${fill ? 'full-parent-height' : ''}`"
                 rounded
                 :style="style"
             >
-                <v-row no-gutters>
-                    <v-col cols="2" align-self="center">
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
+                    <v-col :cols="mini ? 4 : 2" align-self="center">
                         <slot v-bind="{ instanceName }"></slot>
                     </v-col>
 
-                    <v-col cols="3" align-self="center">
+                    <v-col :cols="mini ? 5 : 3" align-self="center">
                         <div class="text-h6">
                             {{ timestamp }}
                         </div>
@@ -21,7 +21,7 @@
                         </div>
                     </v-col>
 
-                    <v-col cols="5" v-if="!!relevantCharacters" align-self="center">
+                    <v-col cols="5" v-if="!!relevantCharacters && !mini" align-self="center">
                         <div class="d-flex flex-wrap">
                             <v-tooltip
                                 offset-x right
@@ -49,7 +49,7 @@
                         </div>
                     </v-col>
 
-                    <v-col cols="2" align-self="center">
+                    <v-col :cols="mini ? 3 : 2" align-self="center">
                         <div class="d-flex align-center">
                             <wow-expansion-icon v-if="!!instanceData"
                                 class="mr-4"
@@ -58,7 +58,7 @@
                             >
                             </wow-expansion-icon>
 
-                            <div class="text-overline">
+                            <div class="text-overline" v-if="!mini">
                                 {{ match.build }}
                             </div>
                         </div>
@@ -114,6 +114,12 @@ export default class WowGenericMatchSummary extends Vue {
     @Prop({type: String, required: true})
     elapsedTime!: string
 
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
     instanceData: WowInstanceData | null = null
@@ -135,7 +141,7 @@ export default class WowGenericMatchSummary extends Vue {
         let style: any = {
             'border-left': `5px solid rgb(${wlColor.r}, ${wlColor.g}, ${wlColor.b})`,
             'background-position': 'right',
-            'background-size': '50% auto',
+            'background-size': this.mini ? 'auto 150%' : '50% auto',
         }
 
         style['background-image'] = `linear-gradient(to right, #1E1E1E 0 10%, transparent), url(${staticClient.getWowInstanceBackgroundUrl(this.match.instanceId)})`

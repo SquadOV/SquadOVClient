@@ -6,6 +6,7 @@
             :key="match.matchUuid"
             :match="match"
             :user-id="userId"
+            :account="account"
         >
         </valorant-player-match-summary-display>
 
@@ -44,6 +45,9 @@ export default class ValorantMatchScroller extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop({required: true})
+    account!: string
 
     loadMore() {
         this.$emit('load-more')

@@ -147,7 +147,10 @@ function updateSession(sessionId, sendIpc) {
     if (!!sendIpc) {
         zeromqServer.updateSessionId(sessionId)
     }
-    win.webContents.send('update-session', sessionId)
+
+    if (!!win) {
+        win.webContents.send('update-session', sessionId)
+    }
 }
 
 

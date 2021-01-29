@@ -3,6 +3,8 @@
         :match="encounter"
         :user-id="userId"
         :elapsed-time="elapsedTime"
+        :mini="mini"
+        :fill="fill"
     >
         <template v-slot="{ instanceName }">
             <div class="text-h6">
@@ -41,6 +43,12 @@ export default class WowEncounterSummary extends Vue {
 
     @Prop({type: Number, required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     difficultyData: WowDifficultyData | null = null
     instanceData: WowInstanceData | null = null

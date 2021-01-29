@@ -20,10 +20,13 @@
 
         <div
             class="d-flex align-center full-width"
+            @mouseover="onHover"
+            @mouseout="onLeave"
         >
             <video-preview-player
                 :vod="match.base.vod"
                 class="recent-match-item preview-item"
+                ref="player"
             >
             </video-preview-player>
 
@@ -31,7 +34,7 @@
                 class="flex-grow-1 recent-match-item"
                 v-if="!!match.aimlabTask"
                 :task="match.aimlabTask"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
                 fill
             >
             </aimlab-task-summary-display>
@@ -40,7 +43,7 @@
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.lolMatch"
                 :match="match.lolMatch"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
             >
             </lol-match-summary>
 
@@ -48,7 +51,7 @@
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.tftMatch"
                 :match="match.tftMatch"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
                 :puuid="match.tftMatch.puuid"
             >
             </tft-match-summary>
@@ -57,25 +60,30 @@
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.valorantMatch"
                 :match="match.valorantMatch"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
+                :account="match.valorantMatch.puuid"
                 fill
                 mini
             >
             </valorant-player-match-summary-display>
 
-            <wow-challenge-summary
+            <wow-keystone-summary
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.wowChallenge"
                 :challenge="match.wowChallenge"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
+                mini
+                fill
             >
-            </wow-challenge-summary>
+            </wow-keystone-summary>
 
             <wow-encounter-summary
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.wowEncounter"
                 :encounter="match.wowEncounter"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
+                mini
+                fill
             >
             </wow-encounter-summary>
 
@@ -83,7 +91,7 @@
                 class="flex-grow-1 recent-match-item"
                 v-else
                 :match-id="match.base.matchUuid"
-                :user-id="$store.state.currentUser.id"
+                :user-id="match.base.userId"
                 mini
                 fill
             >
@@ -125,6 +133,18 @@ export default class RecentMatchDisplay extends Vue {
 
     @Prop({required: true})
     match!: RecentMatch
+
+    $refs!: {
+        player: VideoPreviewPlayer
+    }
+
+    onHover() {
+        this.$refs.player.startPlay()
+    }
+
+    onLeave() {
+        this.$refs.player.pausePlay()
+    }
 }
 
 </script>

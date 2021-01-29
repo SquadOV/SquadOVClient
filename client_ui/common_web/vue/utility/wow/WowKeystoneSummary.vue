@@ -3,6 +3,8 @@
         :match="challenge"
         :user-id="userId"
         :elapsed-time="elapsedTime"
+        :mini="mini"
+        :fill="fill"
     >
         <div class="text-h6">
             {{ challengeName }}
@@ -42,6 +44,12 @@ export default class WowKeystoneSummary extends Vue {
 
     @Prop({type: Number, required: true})
     userId!: number
+
+    @Prop({type: Boolean, default: false})
+    mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
 
     get challengeName(): string {
         return this.challenge.challengeName.replace(/"/g, '')

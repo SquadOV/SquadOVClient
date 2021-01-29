@@ -30,6 +30,7 @@
                                 :can-load-more="hasNext"
                                 @load-more="loadMoreMatches"
                                 :user-id="userId"
+                                :account="puuid"
                             >
                             </valorant-match-scroller>
 

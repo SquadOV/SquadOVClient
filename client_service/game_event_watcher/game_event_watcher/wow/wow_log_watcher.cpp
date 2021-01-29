@@ -3,6 +3,8 @@
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
+#define DEBUG_TIMING 0
+
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 namespace game_event_watcher {
@@ -134,13 +136,25 @@ void WoWLogWatcher::wait() {
 
 void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
+#if DEBUG_TIMING
+        const auto start = std::chrono::high_resolution_clock::now();
+#endif
+
         RawWoWCombatLog log;
         log.logLine = _logLine++;
         if (!parseRawCombatLogLine(ln, log, _logPath)) {
             LOG_WARNING("Failed to parse WoW combat log line: " << ln << std::endl);
             continue;
         }
-        
+
+#if DEBUG_TIMING
+        {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Raw Combat Log Line: " << numMs << "ms" << std::endl);
+        }
+#endif
+
         bool parsed = false;
 
         if (!parsed) {
@@ -151,6 +165,14 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Start Line: " << numMs << "ms" << std::endl);
+        }
+#endif
+
         if (!parsed) {
             WoWEncounterStart encounter;
             if (parseEncounterStart(log, encounter)) {
@@ -158,7 +180,15 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 parsed = true;
             }
         }
-        
+
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Encounter Start Line: " << numMs << "ms" << std::endl);
+        }
+#endif
+
         if (!parsed) {
             WoWEncounterEnd encounter;
             if (parseEncounterEnd(log, encounter)) {
@@ -166,6 +196,14 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 parsed = true;
             }
         }
+
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Encounter End Line: " << numMs << "ms" << std::endl);
+        }
+#endif
 
         if (!parsed) {
             WoWChallengeModeStart challenge;
@@ -175,6 +213,14 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Challenge Start Line: " << numMs << "ms" << std::endl);
+        }
+#endif
+
         if (!parsed) {
             WoWChallengeModeEnd challenge;
             if (parseChallengeModeEnd(log, challenge)) {
@@ -182,6 +228,14 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 parsed = true;
             }
         }
+
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Challenge End Line: " << numMs << "ms" << std::endl);
+        }
+#endif
 
         if (!parsed) {
             WoWCombatantInfo info;
@@ -193,12 +247,28 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
+#if DEBUG_TIMING
+        if (parsed) {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Parse Combat Log Combatant Info Line: " << numMs << "ms" << std::endl);
+        }
+#endif
+
         // We use this flag to determine whether or not we MUST send this log line to the server since it's
         // presumably important.
-        log.parsed = true;
+        log.parsed = parsed;
 
         // Every log line needs to get passed to the CombatLogLine event
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
+
+#if DEBUG_TIMING
+        {
+            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
+            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+            LOG_INFO("Notify Combat Log Line: " << numMs << "ms" << std::endl);
+        }
+#endif
     }
 }
 
