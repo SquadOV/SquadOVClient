@@ -78,7 +78,7 @@ export default class SquadInviteResponsePage extends Vue {
     respond() {
         // Note that we must redirect the user to the registration page if the server tells us
         // they weren't a user already.
-        if (!this.isUser && !this.$store.state.currentUser) {
+        if (!this.isUser) {
             if (this.action === 'accept') {
                 this.$router.replace({
                     name: pi.RegisterPageId,
@@ -92,20 +92,10 @@ export default class SquadInviteResponsePage extends Vue {
                 apiClient.publicRejectSquadInvite(this.squadId, this.inviteUuid, this.sig).then(() => { this.onSuccess() }).catch(() => { this.onError() })
             }
         } else {
-            // If we're logged in use our existing credentials. If not, use the signature passed to us
-            // by the server.
-            if (!!this.$store.state.currentUser) {
-                if (this.action === 'accept') {
-                    apiClient.acceptSquadInvite(this.squadId, this.inviteUuid).then(() => { this.onSuccess() }).catch(() => { this.onError() })
-                } else {
-                    apiClient.rejectSquadInvite(this.squadId, this.inviteUuid).then(() => { this.onSuccess() }).catch(() => { this.onError() })
-                }
+            if (this.action === 'accept') {
+                apiClient.publicAcceptSquadInvite(this.squadId, this.inviteUuid, this.sig).then(() => { this.onSuccess() }).catch(() => { this.onError() })
             } else {
-                if (this.action === 'accept') {
-                    apiClient.publicAcceptSquadInvite(this.squadId, this.inviteUuid, this.sig).then(() => { this.onSuccess() }).catch(() => { this.onError() })
-                } else {
-                    apiClient.publicRejectSquadInvite(this.squadId, this.inviteUuid, this.sig).then(() => { this.onSuccess() }).catch(() => { this.onError() })
-                }
+                apiClient.publicRejectSquadInvite(this.squadId, this.inviteUuid, this.sig).then(() => { this.onSuccess() }).catch(() => { this.onError() })
             }
         }
     }
