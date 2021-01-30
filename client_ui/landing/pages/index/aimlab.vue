@@ -17,7 +17,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="assets/aimlab_triple_1.png"
+                            src="/assets/aimlab_triple_1.png"
                             contain
                         >
                         </v-img>
@@ -31,7 +31,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="assets/AimlabMatchHistory.png"
+                            src="/assets/AimlabMatchHistory.png"
                             contain
                         >
                         </v-img>
@@ -66,7 +66,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="assets/aimlab_graph.png"
+                            src="/assets/aimlab_graph.png"
                             contain
                         >
                         </v-img>

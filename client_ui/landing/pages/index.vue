@@ -50,10 +50,10 @@
                 </div>
 
                 <div class="d-flex mt-4 game-div">
-                    <NuxtLink to="/aimlab">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/aimlab' ? 'selected-game-div' : ''}`">
+                    <NuxtLink to="/aimlab/">
+                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/aimlab') ? 'selected-game-div' : ''}`">
                             <v-img
-                                src="assets/aimlab_box.jpg"
+                                src="/assets/aimlab_box.jpg"
                                 height="250px"
                                 width="188px"
                                 contain
@@ -71,10 +71,10 @@
                         </div>
                     </NuxtLink>
 
-                    <NuxtLink to="/hearthstone">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/hearthstone' ? 'selected-game-div' : ''}`">
+                    <NuxtLink to="/hearthstone/">
+                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/hearthstone') ? 'selected-game-div' : ''}`">
                             <v-img
-                                src="assets/hearthstone_box.jpg"
+                                src="/assets/hearthstone_box.jpg"
                                 height="250px"
                                 width="188px"
                                 contain
@@ -92,9 +92,9 @@
                         </div>
                     </NuxtLink>
 
-                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/lol' ? 'selected-game-div' : ''}`">
+                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/lol') ? 'selected-game-div' : ''}`">
                         <v-img
-                            src="assets/lol_box.jpg"
+                            src="/assets/lol_box.jpg"
                             height="250px"
                             width="188px"
                             contain
@@ -111,9 +111,9 @@
                         </div>
                     </div>
 
-                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/tft' ? 'selected-game-div' : ''}`">
+                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/tft') ? 'selected-game-div' : ''}`">
                         <v-img
-                            src="assets/tft_box.jpg"
+                            src="/assets/tft_box.jpg"
                             height="250px"
                             width="188px"
                             contain
@@ -130,10 +130,10 @@
                         </div>
                     </div>
 
-                    <NuxtLink to="/valorant">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/valorant' ? 'selected-game-div' : ''}`">
+                    <NuxtLink to="/valorant/">
+                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/valorant') ? 'selected-game-div' : ''}`">
                             <v-img
-                                src="assets/valorant_box.jpg"
+                                src="/assets/valorant_box.jpg"
                                 height="250px"
                                 width="188px"
                                 contain
@@ -151,10 +151,10 @@
                         </div>
                     </NuxtLink>
 
-                    <NuxtLink to="/wow">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path == '/wow' ? 'selected-game-div' : ''}`">
+                    <NuxtLink to="/wow/">
+                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/wow') ? 'selected-game-div' : ''}`">
                             <v-img
-                                src="assets/wow_box.jpg"
+                                src="/assets/wow_box.jpg"
                                 height="250px"
                                 width="188px"
                                 contain
@@ -230,9 +230,9 @@ import Vue from 'vue'
 import Component from 'nuxt-class-component'
 
 const availableHeaderVideos : string[] = [
-    'assets/videos/aimlab.mp4',
-    'assets/videos/valorant_clip.mp4',
-    'assets/videos/hearthstone_clip.mp4'
+    '/assets/videos/aimlab.mp4',
+    '/assets/videos/valorant_clip.mp4',
+    '/assets/videos/hearthstone_clip.mp4'
 ]
 
 @Component
