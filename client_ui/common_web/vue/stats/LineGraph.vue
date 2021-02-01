@@ -363,6 +363,10 @@ export default class LineGraph extends Vue {
         })
         window.addEventListener('resize', this.graphResize)
     }
+
+    beforeDestroy() {
+        window.removeEventListener('resize', this.graphResize)
+    }
 }
 
 </script>

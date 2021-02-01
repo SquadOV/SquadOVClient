@@ -1,5 +1,5 @@
 <template>
-    <div v-if="hasPreview" @mouseover="startPlay" @mouseout="pausePlay"> 
+    <div @mouseover="startPlay" @mouseout="pausePlay"> 
         <video class="video-js vjs-fill" ref="video">
         </video>
     </div>
@@ -50,12 +50,14 @@ export default class VideoPreviewPlayer extends Vue {
     }
 
     onVideoUriChange() {
-        this.player = videojs(this.$refs.video, {
-            controls: false,
-            autoplay: false,
-            loop: true,
-            preload: 'auto',
-        })
+        if (!this.player) {
+            this.player = videojs(this.$refs.video, {
+                controls: false,
+                autoplay: false,
+                loop: true,
+                preload: 'auto',
+            })
+        }
 
         // Just in case videoUri and audioUri got set earlier.
         if (!!this.videoUri) {
@@ -104,6 +106,13 @@ export default class VideoPreviewPlayer extends Vue {
 
     mounted() {
         this.refreshPreviewUri()
+    }
+
+    beforeDestroy() {
+        if (!!this.player) {
+            this.player.dispose()
+        }
+        this.player = null
     }
 }
 

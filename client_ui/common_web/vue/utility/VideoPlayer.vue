@@ -217,6 +217,13 @@ export default class VideoPlayer extends Vue {
     mounted() {
         this.refreshPlaylist(this.vod, null)
     }
+
+    beforeDestroy() {
+        if (!!this.player) {
+            this.player.dispose()
+        }
+        this.player = null
+    }
 }
 
 </script>

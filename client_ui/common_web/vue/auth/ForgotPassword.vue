@@ -100,6 +100,7 @@ export default class ForgotPassword extends Vue {
 
     success: boolean | null = null
     redirectSeconds: number = 5
+    itvl: number = 0
 
     get passwordRules() : any[] {
         return [
@@ -130,7 +131,7 @@ export default class ForgotPassword extends Vue {
             password: this.password,
         }).then(() => {
             this.success = true
-            setInterval(() => {
+            this.itvl = window.setInterval(() => {
                 this.redirectSeconds -= 1
                 if (this.redirectSeconds <= 0) {
                     this.redirect()
@@ -141,6 +142,12 @@ export default class ForgotPassword extends Vue {
         }).finally(() => {
             this.inProgress = false
         })
+    }
+
+    beforeDestroy() {
+        if (!!this.itvl) {
+            window.clearInterval(this.itvl)
+        }
     }
 }
 

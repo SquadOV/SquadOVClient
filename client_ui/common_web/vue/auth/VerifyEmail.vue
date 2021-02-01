@@ -42,6 +42,7 @@ export default class VerifyEmail extends Vue {
 
     verified : boolean | null = null
     redirectSeconds: number = 5
+    itvl: number = 0
 
     redirect() {
         this.$router.replace({
@@ -54,7 +55,7 @@ export default class VerifyEmail extends Vue {
         apiClient.verifyEmail(this.verificationId).then(() => {
             this.verified = true
             this.redirectSeconds = 5
-            setInterval(() => {
+            this.itvl = window.setInterval(() => {
                 this.redirectSeconds -= 1
                 if (this.redirectSeconds <= 0) {
                     this.redirect()
@@ -63,6 +64,12 @@ export default class VerifyEmail extends Vue {
         }).catch((err : any) => {
             this.verified = false
         })
+    }
+
+    beforeDestroy() {
+        if (!!this.itvl) {
+            window.clearInterval(this.itvl)
+        }
     }
 
     mounted() {

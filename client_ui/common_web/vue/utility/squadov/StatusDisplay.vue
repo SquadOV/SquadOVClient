@@ -51,6 +51,7 @@ interface Incident {
 export default class StatusDisplay extends Vue {
     indicator: string = 'none'
     incidents: Incident[] = []
+    itvl: number = 0
 
     goToStatusPage() {
         openUrlInBrowser('https://squadov.statuspage.io')
@@ -170,9 +171,13 @@ export default class StatusDisplay extends Vue {
 
     mounted() {
         this.refreshStatus()
-        setInterval(() => {
+        this.itvl = window.setInterval(() => {
             this.refreshStatus()
         }, 30000)
+    }
+
+    beforeDestroy() {
+        window.clearInterval(this.itvl)
     }
 }
 

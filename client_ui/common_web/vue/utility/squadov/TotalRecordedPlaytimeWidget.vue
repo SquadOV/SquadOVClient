@@ -83,6 +83,7 @@ export default class TotalRecordedPlaytimeWidget extends Vue {
     lastRefresh: Date | null = null
     minutesSinceLastRefresh: string = ''
     msToNextRefresh: number = REFRESH_FREQUENCY_MS
+    itvl: number = 0
 
     updateMinutesSinceLastRefresh() {
         if (!this.lastRefresh) {
@@ -183,13 +184,19 @@ export default class TotalRecordedPlaytimeWidget extends Vue {
     }
 
     startRefreshLoop() {
-        setInterval(() => {
+        this.itvl = window.setInterval(() => {
             this.msToNextRefresh -= REFRESH_INTERVAL_MS
             if (this.msToNextRefresh <= 0) {
                 this.refreshData()
             }
             this.updateMinutesSinceLastRefresh()
         }, REFRESH_INTERVAL_MS)
+    }
+
+    beforeDestroy() {
+        if (!!this.itvl) {
+            window.clearInterval(this.itvl)
+        }
     }
 
     mounted () {

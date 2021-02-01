@@ -64,6 +64,7 @@ export default class NewsDisplay extends Vue {
     newsIndex: NewsIndex[] | null = null
     selected: NewsIndex | null = null
     showNews: boolean = false
+    itvl: number = 0
 
     selectNews(n: NewsIndex) {
         this.showNews = true
@@ -94,9 +95,15 @@ export default class NewsDisplay extends Vue {
 
     mounted() {
         this.refreshNews()
-        setInterval(() => {
+        this.itvl = window.setInterval(() => {
             this.refreshNews()
         }, 600000)
+    }
+
+    beforeDestroy() {
+        if (!!this.itvl) {
+            window.clearInterval(this.itvl)
+        }
     }
 
     get newsWindowStyle(): any {
