@@ -166,15 +166,25 @@ export default class WowMatch extends Vue {
     get encounterStartTime(): Date {
         if (!!this.selectedEncounter) {
             return this.selectedEncounter.startTm
+        } else if (!!this.currentMatch?.encounter) {
+            return this.currentMatch.encounter.tm
+        } else if (!!this.currentMatch?.challenge) {
+            return this.currentMatch.challenge.tm
+        } else {
+            return this.startTime
         }
-        return this.startTime
     }
 
     get encounterEndTime(): Date {
         if (!!this.selectedEncounter) {
             return this.selectedEncounter.endTm
+        } else if (!!this.currentMatch?.encounter?.finishTime) {
+            return this.currentMatch.encounter.finishTime
+        } else if (!!this.currentMatch?.challenge?.finishTime) {
+            return this.currentMatch.challenge.finishTime
+        } else {
+            return this.endTime
         }
-        return this.endTime
     }
 
     get startTime(): Date {
