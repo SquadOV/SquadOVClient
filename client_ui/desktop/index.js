@@ -276,7 +276,7 @@ function startClientService() {
 function startAutoupdater() {
     const { autoUpdater } = require("electron-updater")
     autoUpdater.autoDownload = true
-    autoUpdater.autoInstallOnAppQuit = true
+    autoUpdater.autoInstallOnAppQuit = false
     autoUpdater.logger = log
     autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
 
@@ -284,6 +284,7 @@ function startAutoupdater() {
     // the initial start-up workflow. In this case we need to indicate
     // to the user that an update is available and have them restart.
     autoUpdater.on('update-downloaded', (info) => {
+        hasUpdate = true
         win.webContents.send('main-update-downloaded', info.version)
     })
 
