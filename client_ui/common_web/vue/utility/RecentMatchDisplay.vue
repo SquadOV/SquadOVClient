@@ -14,7 +14,7 @@
             </v-img>
 
             <div class="text-center text-caption">
-                {{ match.base.username }} played... {{ match.base.matchUuid }}
+                {{ match.base.username }} played...
             </div>
         </div>
 

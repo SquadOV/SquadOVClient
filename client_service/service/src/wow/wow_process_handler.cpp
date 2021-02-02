@@ -345,6 +345,17 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     }
 
     LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "::" << shared::timeToStr(_matchStartTime) << "] - LOG " << _combatLogId << std::endl);
+
+    // Start recording first just in case the API takes a long time to respond.
+    if (!_process.empty()) {
+        _recorder->start([this](){
+            _vodStartTime = shared::nowUtc();
+        });
+    } else {
+        _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
+        _vodStartTime = tm;
+    }
+
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
         if (inChallenge()) {
@@ -364,15 +375,6 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
             << "\tArena: " << _currentArena << std::endl
             << "\tCombatants: " << _combatants << std::endl);
         return;
-    }
-
-    if (!_process.empty()) {
-        _recorder->start([this](){
-            _vodStartTime = shared::nowUtc();
-        });
-    } else {
-        _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
-        _vodStartTime = tm;
     }
 }
 

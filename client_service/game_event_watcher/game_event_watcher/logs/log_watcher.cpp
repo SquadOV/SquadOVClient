@@ -187,9 +187,9 @@ void LogWatcher::watchWorker() {
                 // If numBytes == 0 then the system has too much info to give us...uhhh. TBD.
                 if (!ok || numBytes == 0) {
                     LOG_WARNING("Failed to read directory changes [OK: " << ok << "] [BYTES: " << numBytes << "]" << std::endl);
-                    // For whatever reason we failed...try again later.
-                    std::this_thread::sleep_for(500ms);
-                    continue;
+                    // For whatever reason we failed - in that case just assume we detected a change and continue on.
+                    foundChanges = true;
+                    break;
                 }
 
                 BYTE* rawNotif = buffer.get();
@@ -211,6 +211,7 @@ void LogWatcher::watchWorker() {
                 }
 
                 if (!foundChanges) {
+                    LOG_WARNING("\tFailed to detect log changes." << std::endl);
                     // If we get here we didn't receive a notification about the file in question.
                     std::this_thread::sleep_for(10ms);
                 }
