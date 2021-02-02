@@ -14,7 +14,7 @@
             </v-img>
 
             <div class="text-center text-caption">
-                {{ match.base.username }} played...
+                {{ match.base.username }} played... {{ match.base.matchUuid }}
             </div>
         </div>
 
@@ -91,6 +91,16 @@
             >
             </wow-encounter-summary>
 
+            <wow-arena-summary
+                class="flex-grow-1 recent-match-item"
+                v-else-if="!!match.wowArena && match.base.game == SquadOvGames.WorldOfWarcraft"
+                :arena="match.wowArena"
+                :user-id="match.base.userId"
+                mini
+                fill
+            >
+            </wow-arena-summary>
+
             <hearthstone-match-summary-display
                 class="flex-grow-1 recent-match-item"
                 v-else-if="match.base.game == SquadOvGames.Hearthstone"
@@ -118,6 +128,7 @@ import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
 import ValorantPlayerMatchSummaryDisplay from '@client/vue/utility/valorant/ValorantPlayerMatchSummaryDisplay.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
+import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 
 @Component({
@@ -129,6 +140,7 @@ import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
         ValorantPlayerMatchSummaryDisplay,
         WowKeystoneSummary,
         WowEncounterSummary,
+        WowArenaSummary,
         VideoPreviewPlayer,
     }
 })

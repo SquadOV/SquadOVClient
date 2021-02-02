@@ -3,6 +3,7 @@ export interface WowCharacter {
     name: string
     ilvl: number
     specId: number
+    team: number
 }
 
 export interface WowClassSpecData {

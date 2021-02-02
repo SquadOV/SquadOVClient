@@ -25,7 +25,8 @@ private:
     bool hasValidCombatLog() const;
     bool inChallenge() const { return !_currentChallenge.challengeName.empty(); }
     bool inEncounter() const { return !_currentEncounter.encounterName.empty(); }
-    bool inMatch() const { return inChallenge() || inEncounter(); }
+    bool inArena() const { return !_currentArena.type.empty(); }
+    bool inMatch() const { return inChallenge() || inEncounter() || inArena(); }
 
     // The general story of how we expect these events to play out is as follows:
     // 1) The user starts the combat log via /combatlog and we obtain a COMBAT_LOG_VERSION
@@ -54,6 +55,8 @@ private:
     void onEncounterEnd(const shared::TimePoint& tm, const void* data);
     void onChallengeModeStart(const shared::TimePoint& tm, const void* data);
     void onChallengeModeEnd(const shared::TimePoint& tm, const void* data);
+    void onArenaStart(const shared::TimePoint& tm, const void* data);
+    void onArenaEnd(const shared::TimePoint& tm, const void* data);
     void onCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
 
@@ -69,6 +72,7 @@ private:
 
     game_event_watcher::WoWChallengeModeStart _currentChallenge;
     game_event_watcher::WoWEncounterStart _currentEncounter;
+    game_event_watcher::WoWArenaStart _currentArena;
     std::vector<game_event_watcher::WoWCombatantInfo> _combatants;
     bool _expectingCombatants = false;
 
@@ -90,6 +94,8 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::EncounterEnd), std::bind(&WoWProcessHandlerInstance::onEncounterEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeStart), std::bind(&WoWProcessHandlerInstance::onChallengeModeStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeEnd), std::bind(&WoWProcessHandlerInstance::onChallengeModeEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ArenaStart), std::bind(&WoWProcessHandlerInstance::onArenaStart, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ArenaEnd), std::bind(&WoWProcessHandlerInstance::onArenaEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -265,6 +271,46 @@ void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, 
     genericMatchEnd(tm);
 }
 
+void WoWProcessHandlerInstance::onArenaStart(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
+    if (!hasValidCombatLog() || inMatch()) {
+        return;
+    }
+
+    _currentArena = *reinterpret_cast<const game_event_watcher::WoWArenaStart*>(data);
+    _matchStartTime = tm;
+    LOG_INFO("WoW Arena Start [" <<  shared::timeToStr(tm) << "]: " << _currentArena << std::endl);
+    _expectingCombatants = true;
+}
+
+void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const void* data) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+    
+    if (!hasValidCombatLog() || !inArena()) {
+        return;
+    }
+
+    const auto end = *reinterpret_cast<const game_event_watcher::WoWArenaEnd*>(data);
+    LOG_INFO("WoW Arena End [" <<  shared::timeToStr(tm) << "]: " << end  << std::endl);
+    if (!_currentMatchUuid.empty()) {
+        try {
+            service::api::getGlobalApi()->finishWoWArenaMatch(_currentMatchUuid, tm, end);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to finish WoW arena: " << ex.what() << "\t" << _currentMatchUuid << std::endl);
+        }
+    } else {
+        LOG_WARNING("\tNo match UUID?" << std::endl);
+    }
+    _currentArena = {};
+    _combatants.clear();
+    genericMatchEnd(tm);
+}
+
 void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
     if (service::system::getGlobalState()->isPaused()) {
         return;
@@ -305,14 +351,17 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
             _currentMatchUuid = service::api::getGlobalApi()->createWoWChallengeMatch(_matchStartTime, _combatLogId, _currentChallenge, _combatants);
         } else if (inEncounter()) {
             _currentMatchUuid = service::api::getGlobalApi()->createWoWEncounterMatch(_matchStartTime, _combatLogId, _currentEncounter, _combatants);
+        } else if (inArena()) {
+            _currentMatchUuid = service::api::getGlobalApi()->createWoWArenaMatch(_matchStartTime, _combatLogId, _currentArena, _combatants);
         } else {
-            THROW_ERROR("Match start without challenge or encounter." << std::endl);
+            THROW_ERROR("Match start without challenge or encounter or arena." << std::endl);
         }
         LOG_INFO("\tWoW Match Uuid: " << _currentMatchUuid << std::endl);
     } catch (std::exception& ex) {
-        LOG_WARNING("Failed to create WoW challenge/encounter: " << ex.what() << std::endl
+        LOG_WARNING("Failed to create WoW challenge/encounter/arena: " << ex.what() << std::endl
             << "\tChallenge: " << _currentChallenge << std::endl
             << "\tEncounter: " << _currentEncounter << std::endl
+            << "\tArena: " << _currentArena << std::endl
             << "\tCombatants: " << _combatants << std::endl);
         return;
     }
@@ -323,7 +372,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
         });
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
-        _vodStartTime = _manualVodStartTime;
+        _vodStartTime = tm;
     }
 }
 

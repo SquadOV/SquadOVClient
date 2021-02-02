@@ -12,6 +12,12 @@
             >
                 Keystones
             </v-tab>
+
+            <v-tab
+                :to="arenaTo"
+            >
+                Arena
+            </v-tab>
         </v-tabs>
         <router-view></router-view>
     </div>
@@ -43,6 +49,14 @@ export default class WoWGameLog extends Vue {
     get keystoneTo(): any {
         return {
             name: pi.WowChallengeLogPageId,
+            params: this.$route.params,
+            query: this.$route.query
+        }
+    }
+
+    get arenaTo(): any {
+        return {
+            name: pi.WowArenaLogPageId,
             params: this.$route.params,
             query: this.$route.query
         }

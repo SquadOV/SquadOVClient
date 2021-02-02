@@ -37,9 +37,29 @@ export function cleanWowChallengeFromJson(c: WowChallenge): WowChallenge {
     return c
 }
 
+export interface WowArena extends WowCommonMatch {
+    type: string
+    winningTeamId: number | null
+    matchDurationSeconds: number | null
+    newRatings: number[] | null
+}
+
+export function getOppositeWowArenaTeam(t: number) : number {
+    return (t + 1) % 2
+}
+
+export function cleanWowArenaFromJson(c: WowArena): WowArena {
+    c.tm = new Date(c.tm)
+    if (!!c.finishTime) {
+        c.finishTime = new Date(c.finishTime)
+    }
+    return c
+}
+
 export interface GenericWowMatchContainer {
     encounter: WowEncounter | null
     challenge: WowChallenge | null
+    arena: WowArena | null
 }
 
 export function cleanGenericWowMatchContainerFromJson(c: GenericWowMatchContainer): GenericWowMatchContainer {
@@ -49,6 +69,10 @@ export function cleanGenericWowMatchContainerFromJson(c: GenericWowMatchContaine
     
     if (!!c.challenge) {
         cleanWowChallengeFromJson(c.challenge)
+    }
+
+    if (!!c.arena) {
+        cleanWowArenaFromJson(c.arena)
     }
 
     return c

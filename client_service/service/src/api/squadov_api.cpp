@@ -432,6 +432,47 @@ void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const sha
     }
 }
 
+std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWArenaStart& arena, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "combatants", combatantArray },
+        { "data", arena.toJson() },
+        { "combatLogUuid", combatLogUuid }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/arena";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW arena: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaEnd& arena) {
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", arena.toJson() }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/arena/" << matchUuid;
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to finish WoW arena: " << result->status);
+    }
+}
+
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const {
     std::ostringstream path;
     path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account/" << gameName << "/" << tagLine;

@@ -22,30 +22,39 @@
                     </v-col>
 
                     <v-col cols="5" v-if="!!relevantCharacters && !mini" align-self="center">
-                        <div class="d-flex flex-wrap">
-                            <v-tooltip
-                                offset-x right
-                                v-for="(char, idx) in relevantCharacters"
-                                :key="idx"
-                            >
-                                <template v-slot:activator="{on, attrs}">
-                                    <div
-                                        v-bind="attrs"
-                                        v-on="on"
-                                        class="ma-1"
-                                    >
-                                        <wow-class-spec-icon
-                                            :spec-id="char.specId"
-                                        >
-                                        </wow-class-spec-icon>    
-                                    </div>
-                                </template>
-
-                                <wow-character-display
-                                    :character="char"
+                        <div class="d-flex align-center flex-wrap">
+                            <template v-for="(char, idx) in relevantCharacters">
+                                <v-tooltip
+                                    offset-x right
+                                    :key="`tooltip-${idx}`"
                                 >
-                                </wow-character-display>    
-                            </v-tooltip>
+                                    <template v-slot:activator="{on, attrs}">
+                                        <div
+                                            v-bind="attrs"
+                                            v-on="on"
+                                            :class="`ma-1 ${(char.team === friendlyTeam) ? 'friendly-char' : 'enemy-char'}`"
+                                        >
+                                            <wow-class-spec-icon
+                                                :spec-id="char.specId"
+                                            >
+                                            </wow-class-spec-icon>    
+                                        </div>
+                                    </template>
+
+                                    <wow-character-display
+                                        :character="char"
+                                    >
+                                    </wow-character-display>    
+                                </v-tooltip>
+
+                                <span
+                                    v-if="useTeams && idx < relevantCharacters.length - 1 && relevantCharacters[idx].team != relevantCharacters[idx+1].team"
+                                    :key="`vs-${idx}`"
+                                    class="mx-1 text-overline"
+                                >
+                                    VS
+                                </span>
+                            </template>
                         </div>
                     </v-col>
 
@@ -120,6 +129,12 @@ export default class WowGenericMatchSummary extends Vue {
     @Prop({type: Boolean, default: false})
     fill!: boolean
 
+    @Prop({type: Boolean, default: false})
+    useTeams!: boolean
+
+    @Prop({default: 0})
+    friendlyTeam!: number
+
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
     instanceData: WowInstanceData | null = null
@@ -164,7 +179,7 @@ export default class WowGenericMatchSummary extends Vue {
         }
     }
 
-    @Watch('challenge')
+    @Watch('match')
     @Watch('userId')
     refreshVod() {
         apiClient.findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
@@ -174,18 +189,21 @@ export default class WowGenericMatchSummary extends Vue {
         })
     }
 
-    @Watch('challenge')
+    @Watch('match')
     @Watch('userId')
     refreshCharacters() {
         this.relevantCharacters = null
         apiClient.listWoWCharactersForMatch(this.match.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
             this.relevantCharacters = resp.data
+            this.relevantCharacters!.sort((a: WowCharacter, b: WowCharacter) => {
+                return a.team - b.team
+            })
         }).catch((err: any) => {
             console.log('Failed to get characters for WoW match: ', err)
         })
     }
 
-    @Watch('challenge')
+    @Watch('match')
     refreshInstanceData() {
         let url = staticClient.getWowInstanceDataUrl(this.match.instanceId)
         axios.get(url).then((resp: ApiData<WowInstanceData>) => {
@@ -209,6 +227,14 @@ export default class WowGenericMatchSummary extends Vue {
 .match-summary {
     width: 100%;
     position: relative;
+}
+
+.friendly-char {
+    border: 2px solid rgb(76, 175, 80) !important;
+}
+
+.enemy-char {
+    border: 2px solid rgb(255, 82, 82) !important;
 }
 
 </style>

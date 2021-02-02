@@ -17,6 +17,13 @@
                             class="full-width"
                         >
                         </wow-encounter-summary>
+
+                        <wow-arena-summary v-else-if="!!currentMatch.arena"
+                            :arena="currentMatch.arena"
+                            :user-id="userId"
+                            class="full-width"
+                        >
+                        </wow-arena-summary>
                     </v-col>
                 </v-row>
 
@@ -95,6 +102,7 @@ import {
 import WowMatchEvents from '@client/vue/utility/wow/WowMatchEvents.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
+import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
@@ -105,6 +113,7 @@ import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
         WowMatchEvents,
         WowKeystoneSummary,
         WowEncounterSummary,
+        WowArenaSummary,
         LoadingContainer,
         VideoPlayer,
         WowTimeline,
@@ -170,6 +179,8 @@ export default class WowMatch extends Vue {
             return this.currentMatch.encounter.tm
         } else if (!!this.currentMatch?.challenge) {
             return this.currentMatch.challenge.tm
+        } else if (!!this.currentMatch?.arena) {
+            return this.currentMatch.arena.tm
         } else {
             return this.startTime
         }
@@ -182,6 +193,8 @@ export default class WowMatch extends Vue {
             return this.currentMatch.encounter.finishTime
         } else if (!!this.currentMatch?.challenge?.finishTime) {
             return this.currentMatch.challenge.finishTime
+        } else if (!!this.currentMatch?.arena?.finishTime) {
+            return this.currentMatch.arena.finishTime
         } else {
             return this.endTime
         }
@@ -196,6 +209,8 @@ export default class WowMatch extends Vue {
             return this.currentMatch.encounter.tm
         } else if (!!this.currentMatch.challenge) {
             return this.currentMatch.challenge.tm
+        } else if (!!this.currentMatch.arena) {
+            return this.currentMatch.arena.tm
         } else {
             return new Date()
         }
@@ -206,10 +221,12 @@ export default class WowMatch extends Vue {
             return new Date()
         } else if (!!this.vod) {
             return this.vod.endTime
-        } else if (!!this.currentMatch.encounter && !!this.currentMatch.encounter.finishTime) {
+        } else if (!!this.currentMatch.encounter?.finishTime) {
             return this.currentMatch.encounter.finishTime
-        } else if (!!this.currentMatch.challenge && !!this.currentMatch.challenge.finishTime) {
+        } else if (!!this.currentMatch.challenge?.finishTime) {
             return this.currentMatch.challenge.finishTime
+        } else if (!!this.currentMatch.arena?.finishTime) {
+            return this.currentMatch.arena.finishTime
         } else {
             return new Date()
         }

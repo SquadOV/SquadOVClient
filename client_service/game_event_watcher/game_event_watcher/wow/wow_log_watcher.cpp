@@ -1,5 +1,6 @@
 #include "game_event_watcher/wow/wow_log_watcher.h"
 #include "shared/filesystem/utility.h"
+#include "shared/timer.h"
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
@@ -100,6 +101,29 @@ bool parseChallengeModeEnd(const RawWoWCombatLog& log, WoWChallengeModeEnd& chal
     return true;    
 }
 
+bool parseArenaStart(const RawWoWCombatLog& log, WoWArenaStart& arena) {
+    if (log.log[0] != "ARENA_MATCH_START") {
+        return false;
+    }
+
+    arena.instanceId = std::stoi(log.log[1]);
+    arena.type = log.log[3];
+    arena.localTeamId = std::stoi(log.log[4]);
+    return true;
+}
+
+bool parseArenaEnd(const RawWoWCombatLog& log, WoWArenaEnd& arena) {
+    if (log.log[0] != "ARENA_MATCH_END") {
+        return false;
+    }
+
+    arena.winningTeamId = std::stoi(log.log[1]);
+    arena.matchDurationSeconds = std::stoi(log.log[2]);
+    arena.newRatings[0] = std::stoi(log.log[3]);
+    arena.newRatings[1] = std::stoi(log.log[4]);
+    return true;
+}
+
 bool parseCombatantInfo(const RawWoWCombatLog& log, WoWCombatantInfo& info) {
     if (log.log[0] != "COMBATANT_INFO") {
         return false;
@@ -137,7 +161,7 @@ void WoWLogWatcher::wait() {
 void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
 #if DEBUG_TIMING
-        const auto start = std::chrono::high_resolution_clock::now();
+        shared::Timer timer("Parse WoW Combat Log Line");
 #endif
 
         RawWoWCombatLog log;
@@ -148,11 +172,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Raw Combat Log Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Raw Combat Log");
 #endif
 
         bool parsed = false;
@@ -166,11 +186,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Start Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Raw Combat Log State");
 #endif
 
         if (!parsed) {
@@ -182,11 +198,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Encounter Start Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Encounter Start");
 #endif
 
         if (!parsed) {
@@ -198,11 +210,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Encounter End Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Encounter End");
 #endif
 
         if (!parsed) {
@@ -214,11 +222,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Challenge Start Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Challenge Start");
 #endif
 
         if (!parsed) {
@@ -230,11 +234,31 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Challenge End Line: " << numMs << "ms" << std::endl);
+        timer.tick("Challenge End");
+#endif
+        
+        if (!parsed) {
+            WoWArenaStart arena;
+            if (parseArenaStart(log, arena)) {
+                notify(static_cast<int>(EWoWLogEvents::ArenaStart), log.timestamp, (void*)&arena);
+                parsed = true;
+            }
         }
+
+#if DEBUG_TIMING
+        timer.tick("Arena Start");
+#endif
+
+        if (!parsed) {
+            WoWArenaEnd arena;
+            if (parseArenaEnd(log, arena)) {
+                notify(static_cast<int>(EWoWLogEvents::ArenaEnd), log.timestamp, (void*)&arena);
+                parsed = true;
+            }
+        }
+
+#if DEBUG_TIMING
+        timer.tick("Arena End");
 #endif
 
         if (!parsed) {
@@ -248,11 +272,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
 #if DEBUG_TIMING
-        if (parsed) {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Parse Combat Log Combatant Info Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Combatant Info");
 #endif
 
         // We use this flag to determine whether or not we MUST send this log line to the server since it's
@@ -263,11 +283,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
 
 #if DEBUG_TIMING
-        {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - start;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Notify Combat Log Line: " << numMs << "ms" << std::endl);
-        }
+        timer.tick("Generic Combat Log Line");
 #endif
     }
 }
@@ -336,6 +352,26 @@ nlohmann::json WoWEncounterStart::toJson() const {
     };
 }
 
+nlohmann::json WoWArenaStart::toJson() const {
+    return {
+        { "instanceId", instanceId },
+        { "type", type },
+        { "localTeamId", localTeamId }
+    };
+}
+
+nlohmann::json WoWArenaEnd::toJson() const {
+    nlohmann::json ratings = nlohmann::json::array();
+    ratings.push_back(newRatings[0]);
+    ratings.push_back(newRatings[1]);
+
+    return {
+        { "winningTeamId", winningTeamId },
+        { "matchDurationSeconds", matchDurationSeconds },
+        { "newRatings", ratings }
+    };
+}
+
 nlohmann::json WoWEncounterEnd::toJson() const {
     return {
         { "encounterId", encounterId },
@@ -383,6 +419,15 @@ std::ostream& operator<<(std::ostream& os, const WoWChallengeModeStart& e) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, const WoWArenaStart& e) {
+    os << "{"
+       << "Instance Id: " << e.instanceId 
+       << ", Type:" << e.type
+       << ", Local Team Id: " << e.localTeamId
+       << "}";
+    return os;
+}
+
 std::ostream& operator<<(std::ostream& os, const WoWEncounterEnd& e) {
     os << "{"
        << "Id: " << e.encounterId 
@@ -400,6 +445,16 @@ std::ostream& operator<<(std::ostream& os, const WoWChallengeModeEnd& e) {
        << ", Success:" << e.success
        << ", Keystone: " << e.keystoneLevel
        << ", Time (ms): " << e.timeMs
+       << "}";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const WoWArenaEnd& e) {
+    os << "{"
+       << "Winning Team: " << e.winningTeamId 
+       << ", Match Duration (s):" << e.matchDurationSeconds
+       << ", Ratings[0]: " << e.newRatings[0]
+       << ", Ratings[1]: " << e.newRatings[1]
        << "}";
     return os;
 }

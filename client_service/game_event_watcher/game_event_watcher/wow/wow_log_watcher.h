@@ -21,6 +21,8 @@ enum class EWoWLogEvents {
     EncounterEnd,
     ChallengeModeStart,
     ChallengeModeEnd,
+    ArenaStart,
+    ArenaEnd,
     CombatantInfo,
     // This event is fired whenever the line is not a COMBATANT_INFO. Should only
     // be handled after you start to exepct COMBATANT_INFO events.
@@ -81,6 +83,22 @@ struct WoWChallengeModeEnd {
     nlohmann::json toJson() const;
 };
 
+struct WoWArenaStart {
+    int instanceId;
+    std::string type;
+    int localTeamId;
+
+    nlohmann::json toJson() const;
+};
+
+struct WoWArenaEnd {
+    int winningTeamId;
+    int matchDurationSeconds;
+    int newRatings[2];
+
+    nlohmann::json toJson() const;
+};
+
 struct WoWCombatantInfo {
     std::string guid;
 
@@ -107,8 +125,10 @@ using WoWLogWatcherPtr = std::unique_ptr<WoWLogWatcher>;
 
 std::ostream& operator<<(std::ostream& os, const WoWEncounterStart& e);
 std::ostream& operator<<(std::ostream& os, const WoWChallengeModeStart& e);
+std::ostream& operator<<(std::ostream& os, const WoWArenaStart& e);
 std::ostream& operator<<(std::ostream& os, const WoWEncounterEnd& e);
 std::ostream& operator<<(std::ostream& os, const WoWChallengeModeEnd& e);
+std::ostream& operator<<(std::ostream& os, const WoWArenaEnd& e);
 std::ostream& operator<<(std::ostream& os, const WoWCombatantInfo& e);
 std::ostream& operator<<(std::ostream& os, const std::vector<WoWCombatantInfo>& e);
 

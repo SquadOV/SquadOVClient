@@ -248,6 +248,7 @@ export default class LineGraph extends Vue {
             }),
             name: series._name,
             type: 'line',
+            clip: false,
             smooth: true,
             //smoothMonotone: 'x',
             sampling: 'average',

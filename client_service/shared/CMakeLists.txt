@@ -2,6 +2,7 @@ SET(SRCS
     shared/games.cpp
     shared/valorant/valorant.cpp
     shared/time.cpp
+    shared/timer.cpp
     shared/env.cpp
     shared/strings/strings.cpp
     shared/filesystem/common_paths.cpp
@@ -23,6 +24,7 @@ SET(HEADERS
     shared/constants.h
     shared/env.h
     shared/time.h
+    shared/timer.cpp
     shared/strings/strings.h
     shared/filesystem/common_paths.h
     shared/filesystem/utility.h
