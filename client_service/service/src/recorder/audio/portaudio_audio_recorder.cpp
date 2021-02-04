@@ -23,7 +23,7 @@ namespace service::recorder::audio {
 constexpr int maxNumChannels = 2;
 constexpr size_t audioSamplesPerFrame = 1024;
 using AudioPacket = FixedSizeAudioPacket<float, audioSamplesPerFrame>;
-using AudioPacketQueue = boost::lockfree::spsc_queue<AudioPacket, boost::lockfree::capacity<1024>, boost::lockfree::fixed_sized<true>>;
+using AudioPacketQueue = boost::lockfree::spsc_queue<AudioPacket, boost::lockfree::capacity<4096>, boost::lockfree::fixed_sized<true>>;
 using FAudioPacketView = AudioPacketView<float>;
 
 class PortaudioAudioRecorderImpl {

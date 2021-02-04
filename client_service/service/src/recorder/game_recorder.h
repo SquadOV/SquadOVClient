@@ -41,6 +41,7 @@ public:
     void startDvrSession();
     void start(const shared::TimePoint& start, RecordingMode mode);
     void stop();
+    void stopInputs();
     std::string stopDvrSession();
     void cleanDvrSession(const std::string& id);
 
@@ -88,6 +89,7 @@ private:
     shared::TimePoint _vodStartTime;
 
     void switchToNewActiveEncoder(const EncoderDatum& data);
+    void switchToNullEncoder();
     video::VideoRecorderPtr _vrecorder;
     audio::AudioRecorderPtr _aoutRecorder;
     audio::AudioRecorderPtr _ainRecorder;
@@ -129,9 +131,10 @@ private:
         shared::TimePoint startTime;
         shared::TimePoint endTime;
 
-        ~DvrSegment();
+        void cleanup() const;
     };
     std::deque<DvrSegment> _dvrSegments;
+    void startNewDvrSegment(const std::filesystem::path& dir);
     size_t findDvrSegmentForVodStartTime(const shared::TimePoint& tm) const;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;

@@ -7,6 +7,7 @@
 #include "shared/timer.h"
 #include "shared/filesystem/utility.h"
 
+#include <atomic>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <cstdio>
 #include <chrono>
@@ -19,10 +20,10 @@
 #include <vector>
 
 extern "C" {
+#include <libavutil/audio_fifo.h>
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
-#include <libavutil/audio_fifo.h>
 #include <libavutil/opt.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/mathematics.h>
@@ -50,11 +51,8 @@ int packetPropsToFFmpegSampleRate(const service::recorder::audio::AudioPacketPro
     return static_cast<int>(props.samplingRate);
 }
 
-constexpr int audioQueueCapacity = 2048;
 constexpr size_t audioNumChannels = 2;
-constexpr size_t audioSamplesPerFrame = 1024;
-using FFmpegAudioPacket = service::recorder::audio::FixedSizeAudioPacket<float, audioSamplesPerFrame * audioNumChannels>;
-using AudioPacketQueue = boost::lockfree::spsc_queue<FFmpegAudioPacket, boost::lockfree::capacity<audioQueueCapacity>>;
+constexpr size_t audioSamplesPerFrame = 480;
 
 void encode(AVCodecContext* cctx, AVFormatContext* fctx, AVFrame* frame, AVStream* st, int64_t ptsOffset, int64_t dtsOffset){
     // Encode video frame.
@@ -145,12 +143,8 @@ private:
     int64_t _aFrameNum = 0;
 
     struct AudioStreamData {
-        // *Input* packet queue. When an audio recorder
-        // notifies us there's a packet of whatever size,
-        // we stick it in here.
-        std::unique_ptr<AudioPacketQueue> queue;
         // *Output* packet queue. Once we process the input
-        // packet, we'll  convert it into whatever format
+        // packet, we'll convert it into whatever format
         // is needed for output and store it in this queue.
         // Once the queue reaches the size of an actual frame,
         // we'll send that to the encoder to be written out.
@@ -181,8 +175,6 @@ private:
     };
     using AudioStreamDataPtr = std::unique_ptr<AudioStreamData>;
     std::vector<AudioStreamDataPtr> _astreams;
-
-    std::thread _audioEncodingThread;
 
     std::mutex _pauseMutex;
     std::condition_variable _pauseCv;
@@ -230,6 +222,11 @@ void FfmpegAvEncoderImpl::AudioStreamData::reinitSampleStorage(int inputSamples)
     }
 
     maxSamples = newMaxSamples;
+    if (samplesStorage) {
+        av_freep(&samplesStorage[0]);
+        samplesStorage = nullptr;
+    }
+
     if (av_samples_alloc_array_and_samples(
         &samplesStorage,
         &sampleLineSize,
@@ -403,7 +400,7 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
     _acodecContext->channels = static_cast<int>(audioNumChannels);
     _acodecContext->channel_layout = AV_CH_LAYOUT_STEREO;
     _acodecContext->time_base = AVRational{1, sampleRate};
-    _acodecContext->frame_size = 480;// audioSamplesPerFrame;
+    _acodecContext->frame_size = audioSamplesPerFrame;
     if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
         _acodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
@@ -419,18 +416,6 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
     _astream->id = _avcontext->nb_streams - 1;
     _astream->time_base = _acodecContext->time_base;
     avcodec_parameters_from_context(_astream->codecpar, _acodecContext);
-
-    _aframe = av_frame_alloc();
-    _aframe->nb_samples = _acodecContext->frame_size;
-    _aframe->format = _acodecContext->sample_fmt;
-    _aframe->channel_layout = _acodecContext->channel_layout;
-    _aframe->channels = _acodecContext->channels;
-    _aframe->sample_rate = _acodecContext->sample_rate;
-    _aframe->pts = 0;
-
-    if (av_frame_get_buffer(_aframe, 0) < 0) {
-        THROW_ERROR("Failed to get audio buffer.");
-    }
 
     _aframe = createAudioFrame();
     _aTmpFrame = createAudioFrame();
@@ -454,8 +439,6 @@ AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
 size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) {
     AudioStreamDataPtr streamDataPtr = std::make_unique<AudioStreamData>();
     AudioStreamData& streamData = *streamDataPtr;
-
-    streamData.queue.reset(new AudioPacketQueue);
 
     streamData.swr = swr_alloc_set_opts(nullptr,
         _acodecContext->channel_layout, // out_ch_layout
@@ -533,28 +516,60 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
         return;
     }
     auto& streamData = *_astreams[encoderIdx];
+    streamData.receivedSamples += view.props().numSamples;
 
-    // Split input packet into multiple packets based on the size of the input packet.
-    // The packets that we store in the queue must have a max of audioSamplesPerFrame
-    // samples in each frame.
-    const auto samplesPerPacket = FFmpegAudioPacket::N / view.props().numChannels;
-    const auto numQueuePackets = (view.props().numSamples + samplesPerPacket - 1) / samplesPerPacket;
-    for (std::remove_const_t<decltype(numQueuePackets)> i = 0; i < numQueuePackets; ++i) {
-        // Start and end indices of the samples in the input packet view to store in the new fixed size packet. End index is non-inculsive.
-        const auto start = i * samplesPerPacket;
-        const auto end = (i == numQueuePackets - 1) ?
-            view.props().numSamples :
-            (i + 1) * samplesPerPacket;
+    // Immediately process input audio packets to try to best achieve real-time processing.
+    streamData.reinitSampleStorage(static_cast<int>(view.props().numSamples));
 
-        // We need to change numSamples to be how many samples we actually store
-        // in this packet.
-        service::recorder::audio::AudioPacketProperties props = view.props();
-        props.numSamples = end - start; 
+    const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(view.buffer());                    
+    const auto numConverted = swr_convert(
+        streamData.swr,
+        streamData.samplesStorage,
+        static_cast<int>(streamData.maxSamples),
+        &inputByteBuffer,
+        static_cast<int>(view.props().numSamples));
 
-        FFmpegAudioPacket packet(props, tm);
-        packet.copyFrom(view, start * view.props().numChannels, end * view.props().numChannels);
-        streamData.receivedSamples += packet.props().numSamples;
-        streamData.queue->push(packet);
+    streamData.processedSamples += view.props().numSamples;
+    streamData.convertedSamples += numConverted;
+    streamData.writeStoredSamplesToFifo(numConverted);
+
+    const auto frameSize = _acodecContext->frame_size;
+    while (hasAudioFrameAvailable()) {
+        for (size_t s = 0; s < _astreams.size(); ++s) {
+            const auto numChannels = _acodecContext->channels;
+
+            if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
+                THROW_ERROR("Failed to read from FIFO queue.");
+            }
+            _astreams[s]->encodedSamples += frameSize;
+
+            // Copy from the tmp frame into the encoding frame.
+            // We are very much assuming a planar output right now.
+            for (auto c = 0; c < _acodecContext->channels; ++c) {
+                const float* input = (const float*)_aTmpFrame->data[c];
+                float* output = (float*)_aframe->data[c];
+
+                for (auto i = 0; i < frameSize; ++i) {
+                    if (s == 0) {
+                        output[i] = input[i];
+                    } else {
+                        output[i] += input[i];
+                    }
+                }
+            }
+        }
+
+        if (av_frame_make_writable(_aframe) < 0) {
+            THROW_ERROR("Failed to make frame writable.");
+        }
+
+        _aframe->pts = _aFrameNum;
+        _aFrameNum += frameSize;
+
+        {
+            std::unique_lock<std::mutex> guard(_encodeMutex);
+            encode(_acodecContext, _avcontext, _aframe, _astream, _ptsOffset, _dtsOffset);
+        }
     }
 }
 
@@ -620,7 +635,7 @@ void FfmpegAvEncoderImpl::start() {
                 std::this_thread::sleep_until(refFrameTime);
             } else {
                 const auto elapsedFrames = std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count() / _nsPerFrame.count();
-                desiredFrameNum += elapsedFrames;
+                desiredFrameNum += std::max(elapsedFrames, long long(1));
             }
 
 #if LOG_FRAME_TIME
@@ -655,100 +670,6 @@ void FfmpegAvEncoderImpl::start() {
 #endif
         }
     });
-
-    // Start another thread that takes care of audio so that the video can stay at a constant
-    // 60fps without interruption.
-    _audioEncodingThread = std::thread([this, start](){
-        if (!_acodecContext) {
-            return;
-        }
-
-        const auto frameSize = _acodecContext->frame_size;
-
-        while (true) {
-            std::unique_lock<std::mutex> pausedLock(_pauseMutex);
-            _pauseCv.wait(pausedLock, [this](){ return !_pauseInput; });
-            
-            size_t totalConsumed = 0;
-            for (auto& stream : _astreams) {     
-                // Pop packets off the input queue and convert them. Add the converted packets
-                // into the AVAudioFifo queue.
-                uint64_t processed = 0;
-
-                totalConsumed += stream->queue->consume_all([this, &stream, &start, &processed](const FFmpegAudioPacket& packet){
-                    // Use swr_convert to convert the input packet format to the output frame format that
-                    // FFmpeg expects. Note that this assumes right now that the input is not planar.
-                    stream->processedSamples += packet.props().numSamples;
-
-                    processed += packet.props().numSamples;
-                    stream->reinitSampleStorage(static_cast<int>(packet.props().numSamples));
-
-                    const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(packet.buffer());                    
-                    const auto numConverted = swr_convert(
-                        stream->swr,
-                        stream->samplesStorage,
-                        static_cast<int>(stream->maxSamples),
-                        &inputByteBuffer,
-                        static_cast<int>(packet.props().numSamples));
-
-                    stream->convertedSamples += numConverted;
-                    stream->writeStoredSamplesToFifo(numConverted);
-                });
-            }
-            // At this point we've populated each stream's FIFO queue. Now we need to combine the inputs
-            // to get the final audio to send to the encoder. **Every** FIFO queue for the stream inputs
-            // must have an appropriate number of samples before we send it to the encoder.
-            while (hasAudioFrameAvailable()) {
-                for (size_t s = 0; s < _astreams.size(); ++s) {
-                    const auto numChannels = _acodecContext->channels;
-
-                    if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
-                        THROW_ERROR("Failed to read from FIFO queue.");
-                    }
-                    _astreams[s]->encodedSamples += frameSize;
-
-                    // Copy from the tmp frame into the encoding frame.
-                    // We are very much assuming a planar output right now.
-                    for (auto c = 0; c < _acodecContext->channels; ++c) {
-                        const float* input = (const float*)_aTmpFrame->data[c];
-                        float* output = (float*)_aframe->data[c];
-
-                        for (auto i = 0; i < frameSize; ++i) {
-                            if (s == 0) {
-                                output[i] = input[i];
-                            } else {
-                                output[i] += input[i];
-                            }
-                        }
-                    }
-                }
-
-                if (av_frame_make_writable(_aframe) < 0) {
-                    THROW_ERROR("Failed to make frame writable.");
-                }
-
-                _aframe->pts = _aFrameNum;
-                _aFrameNum += frameSize;
-
-                {
-                    std::unique_lock<std::mutex> guard(_encodeMutex);
-                    encode(_acodecContext, _avcontext, _aframe, _astream, _ptsOffset, _dtsOffset);
-                }
-            }
-
-            if (!_running && totalConsumed == 0) {
-                break;
-            }
-
-            // Not sure what a good sleep here is since we don't want the thread to
-            // run continuosly and we can wait a hot (milli)second to wait for the
-            // audio packet queue to fill up. This sleep is also good here to reduce
-            // contention on the lock free queue.
-            if (_running) {
-                std::this_thread::sleep_for(16ms);
-            }
-        }
-    });
 }
 
 bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
@@ -767,7 +688,6 @@ void FfmpegAvEncoderImpl::stop() {
 
     _running = false;
     _videoEncodingThread.join();
-    _audioEncodingThread.join();
 
     LOG_INFO("SquadOV FFMpeg Encoder Stats: " << std::endl
         << "\tVideo Frames: [Receive: " << _receivedVideoFrames  << "] [Process: " << _processedVideoFrames << "]" << std::endl
@@ -800,7 +720,7 @@ void FfmpegAvEncoderImpl::pauseInputRecorderProcessing(bool pause) {
     // Better than nothing?
     std::lock_guard<std::mutex> guard(_pauseMutex);
     _pauseInput = pause;
-    if (pause) {
+    if (!pause) {
         _pauseCv.notify_all();
     }
 }
@@ -843,8 +763,8 @@ void FfmpegAvEncoderImpl::appendFromVideoFile(const std::filesystem::path& vodPa
             
             av_packet_rescale_ts(&inputPacket, istream->time_base, ostream->time_base);
 
-            vodPts = inputPacket.pts;
-            vodDts = inputPacket.dts;
+            vodPts = std::max(vodPts, inputPacket.pts);
+            vodDts = std::max(vodDts, inputPacket.dts);
 
             // Note that we're doing a remux here not a transcode! Hence we can save ourselves from
             // doing a decode/encode. Instead we can just move the packet to the right place and call it a day! (:

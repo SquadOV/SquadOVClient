@@ -40,9 +40,16 @@ GameRecorder::EncoderDatum::~EncoderDatum() {
     }
 }
 
-GameRecorder::DvrSegment::~DvrSegment() {
+void GameRecorder::DvrSegment::cleanup() const {
     if (fs::exists(outputPath)) {
-        fs::remove(outputPath);
+        for (auto i = 0; i < 10; ++i) {
+            try {
+                //fs::remove(outputPath);
+                break;
+            } catch (...) {
+                std::this_thread::sleep_for(std::chrono::seconds(1));
+            }
+        }
     }
 }
 
@@ -122,8 +129,53 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     if (_aoutRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output) != data.audioEncoderIndex.end()) {
         _aoutRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Output));
     }
-
     data.encoder->start();
+}
+
+void GameRecorder::switchToNullEncoder() {
+    _vrecorder->setActiveEncoder(nullptr);
+
+    if (_ainRecorder) {
+        _ainRecorder->setActiveEncoder(nullptr, 0);
+    }
+
+    if (_aoutRecorder) {
+        _aoutRecorder->setActiveEncoder(nullptr, 0);
+    }
+}
+
+void GameRecorder::startNewDvrSegment(const fs::path& dir) {
+    std::ostringstream segmentFname;
+    segmentFname << "segment_" << _dvrId++ << ".mp4";
+
+    // At the given interval, create a new DVR segment.
+    DvrSegment segment;
+    segment.outputPath = dir / fs::path(segmentFname.str());
+    segment.startTime = shared::nowUtc();
+    segment.endTime = shared::zeroTime();
+
+    // Create a new DVR encoder. This encoder is responsible for outputting the video to the specified location on disk.
+    EncoderDatum data = createEncoder(shared::filesystem::pathUtf8(segment.outputPath));
+
+    // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
+    // Note that the flush happens on destruction in the encoder wrapper. We want this order to ensure that
+    // there's no loss of data between the two video files.
+    switchToNewActiveEncoder(data);
+
+    if (_dvrEncoder.hasEncoder()) {
+        _dvrEncoder.encoder->stop();
+    }
+
+    _dvrEncoder = std::move(data);
+    if (_dvrSegments.size() > 1) {
+        _dvrSegments.back().endTime = segment.startTime;
+    }
+    _dvrSegments.emplace_back(std::move(segment));
+
+    if (_dvrSegments.size() > MAX_DVR_SEGMENTS) {
+        _dvrSegments.front().cleanup();
+        _dvrSegments.pop_front();
+    }
 }
 
 void GameRecorder::startDvrSession() {
@@ -143,51 +195,32 @@ void GameRecorder::startDvrSession() {
     _dvrSessionId = shared::generateUuidv4();
     _dvrRunning = true;
     _dvrId = 0;
-    _dvrThread = std::thread([this](){
-        const auto threshold = std::chrono::milliseconds(DVR_SEGMENT_LENGTH_SECONDS * 1000);
-        const auto step = std::chrono::milliseconds(100);
-        auto timeSinceLastDvrSegment = threshold;
 
-        const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
-        if (!fs::exists(dir)) {
-            fs::create_directories(dir);
-        }
+    // Do initial setup here so that we don't return from this function until we actually start DVR recording.
+    const auto threshold = std::chrono::milliseconds(DVR_SEGMENT_LENGTH_SECONDS * 1000);
+    const auto step = std::chrono::milliseconds(100);
 
+    const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
+    if (!fs::exists(dir)) {
+        fs::create_directories(dir);
+    }
+    startNewDvrSegment(dir);
+
+    _dvrThread = std::thread([this, threshold, step, dir](){
+        auto timeSinceLastDvrSegment = std::chrono::milliseconds(0);
         while (_dvrRunning) {
             if (timeSinceLastDvrSegment >= threshold) {
                 timeSinceLastDvrSegment = std::chrono::milliseconds(0);
-
-                std::ostringstream segmentFname;
-                segmentFname << "segment_" << _dvrId++ << ".mp4";
-
-                // At the given interval, create a new DVR segment.
-                DvrSegment segment;
-                segment.outputPath = dir / fs::path(segmentFname.str());
-                segment.startTime = shared::nowUtc();
-                segment.endTime = shared::zeroTime();
-
-                // Create a new DVR encoder. This encoder is responsible for outputting the video to the specified location on disk.
-                EncoderDatum data = createEncoder(shared::filesystem::pathUtf8(segment.outputPath));
-
-                // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
-                // Note that the flush happens on destruction in the encoder wrapper. We want this order to ensure that
-                // there's no loss of data between the two video files.
-                switchToNewActiveEncoder(data);
-
-                _dvrEncoder = std::move(data);
-                if (_dvrSegments.size() > 1) {
-                    _dvrSegments.back().endTime = segment.startTime;
-                }
-                _dvrSegments.emplace_back(std::move(segment));
-
-                if (_dvrSegments.size() > MAX_DVR_SEGMENTS) {
-                    _dvrSegments.pop_front();
-                }
+                startNewDvrSegment(dir);
             }
 
             std::this_thread::sleep_for(step);
             timeSinceLastDvrSegment += step;
-        } 
+        }
+
+        if (_dvrEncoder.hasEncoder()) {
+            _dvrEncoder.encoder->stop();
+        }
     });
 }
 
@@ -205,10 +238,10 @@ std::string GameRecorder::stopDvrSession() {
 
 void GameRecorder::cleanDvrSession(const std::string& id) {
     const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
+    _dvrSegments.clear();
     if (fs::exists(dir)) {
         fs::remove(dir);
     }
-    _dvrSegments.clear();
 }
 
 void GameRecorder::loadCachedInfo() {
@@ -352,6 +385,8 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         if (totalBackFillTime > std::chrono::milliseconds(30 * 1000)) {
             LOG_WARNING("Backfilling more than 30 seconds of footage from DVR!!!" << std::endl);
         }
+
+        cleanDvrSession(sessionId);
     } else {
         _vodStartTime = shared::nowUtc();
     }
@@ -368,22 +403,28 @@ size_t GameRecorder::findDvrSegmentForVodStartTime(const shared::TimePoint& tm) 
     return _dvrSegments.size() - 1;
 }
 
-void GameRecorder::stop() {
-    if (!_encoder.encoder) {
-        return;
+void GameRecorder::stopInputs() {
+    if (_vrecorder) {
+        _vrecorder->stopRecording();
+        _vrecorder.reset(nullptr);
     }
-    _vrecorder->stopRecording();
-    _vrecorder.reset(nullptr);
 
-    if (!!_aoutRecorder) {
+    if (_aoutRecorder) {
         _aoutRecorder->stop();
         _aoutRecorder.reset(nullptr);
     }
 
-    if (!!_ainRecorder) {
+    if (_ainRecorder) {
         _ainRecorder->stop();
         _ainRecorder.reset(nullptr);
     }
+}
+
+void GameRecorder::stop() {
+    if (!_encoder.encoder) {
+        return;
+    }
+    stopInputs();
     _encoder.encoder->stop();
     _encoder = {};
     _currentId.reset(nullptr);

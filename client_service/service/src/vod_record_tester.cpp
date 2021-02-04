@@ -87,14 +87,13 @@ int main(int argc, char** argv) {
         });
     } else if (mode == "DVR") {
         const auto duration = vm["duration"].as<int>();
-        const auto delay = vm["delay"].as<int>();
-        const auto offset = vm["offset"].as<int>();
-        workerThread = std::thread([&recorder, duration, delay, offset](){
+        workerThread = std::thread([&recorder, duration](){
+            LOG_INFO("START DVR" << std::endl);
             recorder.startDvrSession();
-            std::this_thread::sleep_for(std::chrono::seconds(delay));
-            recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
-            recorder.stop();
+            LOG_INFO("STOP DVR" << std::endl);
+            recorder.stopDvrSession();
+            recorder.stopInputs();
         });
     }
 
