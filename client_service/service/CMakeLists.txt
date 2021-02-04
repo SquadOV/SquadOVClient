@@ -1,5 +1,4 @@
 SET(SRCS
-    src/service.cpp
     src/api/kafka_api.cpp
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
@@ -65,75 +64,67 @@ SET(HEADERS
     src/local/local_data.h
 )
 
-add_executable(squadov_client_service
-    ${SRCS}
-    ${HEADERS}
-)
-
-target_include_directories(squadov_client_service
-    PUBLIC
-    ${CMAKE_SOURCE_DIR}/client_service/shared
-    ${CMAKE_SOURCE_DIR}/client_service/process_watcher
-    ${CMAKE_SOURCE_DIR}/client_service/game_event_watcher
-    ${CMAKE_SOURCE_DIR}/client_service/service/src
-    ${CMAKE_SOURCE_DIR}/deps/curl/curl
-    ${CMAKE_SOURCE_DIR}/deps/json/single_include
-    ${CMAKE_SOURCE_DIR}/deps/sqlite3
-    ${CMAKE_SOURCE_DIR}/deps/libpng
-    ${CMAKE_SOURCE_DIR}/deps/portaudio/include
-    ${CMAKE_SOURCE_DIR}/deps/cppzmq
-    ${CMAKE_SOURCE_DIR}/deps/libzmq/include
-    ${OPENSSL_INCLUDE_DIR}
-    ${FFMPEG_INCLUDE_DIR}
-    ${Boost_INCLUDE_DIRS}
-)
-
-target_link_libraries(squadov_client_service
-    squadov_process_watcher
-    squadov_game_event_watcher
-    squadov_shared
-    tinyxml2
-    libcurl
-    date-tz
-    sqlite3
-    png
-    portaudio
-    libzmq
-    ZLIB::ZLIB
-    RdKafka::rdkafka RdKafka::rdkafka++
-    ${Boost_LIBRARIES}
-    ${OPENSSL_LIBRARIES}
-    ${FFMPEG_LIBRARIES}
-    ${OPENH264_LIBRARIES}
-)
-
-if(WIN32)
-    file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
-    add_custom_command(
-        TARGET squadov_client_service
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:squadov_client_service>
+MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME)
+    add_executable(${EXE_NAME}
+        ${CPP_NAME}
+        ${SRCS}
+        ${HEADERS}
     )
 
-    target_link_libraries(squadov_client_service
-        d3d11
-        dxgi
-        dbghelp
+    target_include_directories(${EXE_NAME}
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/client_service/process_watcher
+        ${CMAKE_SOURCE_DIR}/client_service/game_event_watcher
+        ${CMAKE_SOURCE_DIR}/client_service/service/src
+        ${CMAKE_SOURCE_DIR}/deps/curl/curl
+        ${CMAKE_SOURCE_DIR}/deps/json/single_include
+        ${CMAKE_SOURCE_DIR}/deps/sqlite3
+        ${CMAKE_SOURCE_DIR}/deps/libpng
+        ${CMAKE_SOURCE_DIR}/deps/portaudio/include
+        ${CMAKE_SOURCE_DIR}/deps/cppzmq
+        ${CMAKE_SOURCE_DIR}/deps/libzmq/include
+        ${OPENSSL_INCLUDE_DIR}
+        ${FFMPEG_INCLUDE_DIR}
+        ${Boost_INCLUDE_DIRS}
     )
-endif()
 
+    target_link_libraries(${EXE_NAME}
+        squadov_process_watcher
+        squadov_game_event_watcher
+        squadov_shared
+        tinyxml2
+        libcurl
+        date-tz
+        sqlite3
+        png
+        portaudio
+        libzmq
+        ZLIB::ZLIB
+        RdKafka::rdkafka RdKafka::rdkafka++
+        ${Boost_LIBRARIES}
+        ${OPENSSL_LIBRARIES}
+        ${FFMPEG_LIBRARIES}
+        ${OPENH264_LIBRARIES}
+    )
 
-add_executable(wow_finder
-    src/wow_finder.cpp
-    src/system/win32/hwnd_utils.cpp
-)
+    if(WIN32)
+        file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
+        add_custom_command(
+            TARGET ${EXE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:${EXE_NAME}>
+        )
 
-target_include_directories(wow_finder
-    PUBLIC
-    ${CMAKE_SOURCE_DIR}/client_service/process_watcher
-    ${CMAKE_SOURCE_DIR}/client_service/service/src
-)
+        target_link_libraries(${EXE_NAME}
+            d3d11
+            dxgi
+            dbghelp
+        )
+    endif()
 
-target_link_libraries(wow_finder
-    squadov_process_watcher
-)
+ENDMACRO()
+
+CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp")
+CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp")
+CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp")

@@ -31,6 +31,8 @@ public:
 
     virtual void start() = 0;
     virtual void stop() = 0;
+    virtual void pauseInputRecorderProcessing(bool pause) = 0;
+    virtual void appendFromVideoFile(const std::filesystem::path& vodPath, int64_t startMs) = 0;
     virtual shared::squadov::VodMetadata getMetadata() const = 0;
 };
 using AvEncoderPtr = std::unique_ptr<AvEncoder>;

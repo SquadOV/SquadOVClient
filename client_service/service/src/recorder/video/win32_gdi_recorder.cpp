@@ -36,11 +36,16 @@ void Win32GdiRecorderInstance::stopRecording() {
     }
 }
 
-void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t fps) {
+void Win32GdiRecorderInstance::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
+    std::lock_guard<std::mutex> guard(_encoderMutex);
+    _activeEncoder = encoder;
+}
+
+void Win32GdiRecorderInstance::startRecording(size_t fps) {
     const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
     
     _recording = true;
-    _recordingThread = std::thread([this, encoder, nsPerFrame](){ 
+    _recordingThread = std::thread([this, nsPerFrame](){ 
         HDC hdcWindow = GetDC(_window);
         HDC hdcMem = CreateCompatibleDC(hdcWindow);
         HBITMAP hbm = nullptr;
@@ -114,7 +119,12 @@ void Win32GdiRecorderInstance::startRecording(service::recorder::encoder::AvEnco
             const auto gdiElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(endCapture - startFrame).count();
 #endif
 
-            encoder->addVideoFrame(frame);
+            {
+                std::lock_guard<std::mutex> guard(_encoderMutex);
+                if (_activeEncoder) {
+                    _activeEncoder->addVideoFrame(frame);
+                }
+            }
 
             const auto endFrame = TickClock::now();
             const auto numNs = std::chrono::duration_cast<std::chrono::nanoseconds>(endFrame - startFrame);

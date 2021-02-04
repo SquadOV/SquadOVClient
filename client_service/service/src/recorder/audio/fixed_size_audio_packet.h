@@ -32,7 +32,7 @@ public:
     const SyncTime& syncTime() const { return _tm; }
     
     void copyFrom(const AudioPacketView<T>& view, size_t start = 0, size_t end = N) {
-        assert((end - start) == (view.props().numSamples * view.props().numChannels));
+        assert((end - start) == (props().numSamples * props().numChannels));
         size_t bi = 0;
         for (size_t i = start; i < end; ++i) {
             _buffer[bi++] = view.buffer()[i];

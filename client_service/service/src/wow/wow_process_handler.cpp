@@ -68,7 +68,6 @@ private:
     std::string _combatLogId;
     std::string _currentMatchUuid;
     shared::TimePoint _matchStartTime;
-    shared::TimePoint _vodStartTime;
 
     game_event_watcher::WoWChallengeModeStart _currentChallenge;
     game_event_watcher::WoWEncounterStart _currentEncounter;
@@ -88,6 +87,8 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())) {
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
+    _recorder->startDvrSession();
+
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogLine), std::bind(&WoWProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::EncounterStart), std::bind(&WoWProcessHandlerInstance::onEncounterStart, this, std::placeholders::_1, std::placeholders::_2));
@@ -137,6 +138,7 @@ void WoWProcessHandlerInstance::cleanup() {
 
     // Move the current combat log to backup so that it doesn't get too big.
     // This assumes that this is being called on WoW process stop so this should be safe to do.
+    LOG_INFO("Moving log to backup..." << std::endl);
     _logWatcher->moveLogToBackup();
 }
 
@@ -348,12 +350,9 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
-        _recorder->start([this](){
-            _vodStartTime = shared::nowUtc();
-        });
+        _recorder->start(tm, service::recorder::RecordingMode::DVR);
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
-        _vodStartTime = tm;
     }
 
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
@@ -389,9 +388,11 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
         const auto vodId = _recorder->currentId();
         const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
+        const auto vodStartTime = _recorder->vodStartTime();
 
         if (!_process.empty()) {
             _recorder->stop();
+            _recorder->startDvrSession();
         } else {
             _recorder->stopFromSource(tm);
         }
@@ -400,9 +401,9 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
             try {
                 shared::squadov::VodAssociation association;
                 association.matchUuid = _currentMatchUuid;
-                association.userUuid = vodId.userUuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
                 association.videoUuid = vodId.videoUuid;
-                association.startTime = _vodStartTime;
+                association.startTime = vodStartTime;
                 association.endTime = tm;
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             } catch (const std::exception& ex) {

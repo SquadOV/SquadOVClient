@@ -4,8 +4,11 @@
 #include "shared/log/log.h"
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/audio/audio_packet_view.h"
+#include "recorder/audio/fixed_size_audio_packet.h"
 
+#include <boost/lockfree/spsc_queue.hpp>
 #include <iostream>
+#include <mutex>
 
 #ifdef _WIN32
 #include <objbase.h>
@@ -18,13 +21,18 @@ extern "C" {
 namespace service::recorder::audio {
 
 constexpr int maxNumChannels = 2;
+constexpr size_t audioSamplesPerFrame = 1024;
+using AudioPacket = FixedSizeAudioPacket<float, audioSamplesPerFrame>;
+using AudioPacketQueue = boost::lockfree::spsc_queue<AudioPacket, boost::lockfree::capacity<1024>, boost::lockfree::fixed_sized<true>>;
+using FAudioPacketView = AudioPacketView<float>;
 
 class PortaudioAudioRecorderImpl {
 public:
     explicit PortaudioAudioRecorderImpl(EAudioDeviceDirection dir);
     ~PortaudioAudioRecorderImpl();
 
-    void startRecording(service::recorder::encoder::AvEncoder* encoder, size_t encoderIdx);
+    void startRecording();
+    void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
 
     bool exists() const { return _exists; }
@@ -43,9 +51,15 @@ private:
 
     service::recorder::encoder::AvEncoder* _encoder = nullptr;
     size_t _encoderIdx = 0;
+    std::mutex _encoderMutex;
 
     PaTime _startTime;
     service::recorder::encoder::AVSyncClock::time_point _syncStartTime;
+
+    bool _running = false;
+    std::thread _packetThread;
+    AudioPacketQueue _packetQueue;
+    void addToPacketQueue(const FAudioPacketView& view, const service::recorder::encoder::AVSyncClock::time_point& tm);
 };
 
 int gPortaudioCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData) {
@@ -112,10 +126,6 @@ PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 }
 
 int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags) {
-    if (!_encoder) {
-        return paContinue;
-    }
-
     // The total number of frames we're being sent here is frameCount * numChannels.
     // Create audio packet and send it to the encoder.
     const float* buffer = reinterpret_cast<const float*>(input);
@@ -129,18 +139,38 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
     packetProps.numSamples = static_cast<size_t>(frameCount);
 
     FAudioPacketView view(buffer, packetProps);
-    _encoder->addAudioFrame(view, _encoderIdx, inputTime);
+    // It's not safe to do mutex operations here so we need to copy all this data into a queue that another thread
+    // reads from to feed to the encoder.
+    addToPacketQueue(view, inputTime);
+
     return paContinue;
 }
 
-void PortaudioAudioRecorderImpl::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t encoderIdx) {  
+void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, const service::recorder::encoder::AVSyncClock::time_point& tm) {
+    const auto samplesPerPacket = AudioPacket::N / view.props().numChannels;
+    const auto numQueuePackets = (view.props().numSamples + samplesPerPacket - 1) / samplesPerPacket;
+    for (std::remove_const_t<decltype(numQueuePackets)> i = 0; i < numQueuePackets; ++i) {
+        // Start and end indices of the samples in the input packet view to store in the new fixed size packet. End index is non-inculsive.
+        const auto start = i * samplesPerPacket;
+        const auto end = (i == numQueuePackets - 1) ?
+            view.props().numSamples :
+            (i + 1) * samplesPerPacket;
+
+        // We need to change numSamples to be how many samples we actually store in this packet.
+        service::recorder::audio::AudioPacketProperties props = view.props();
+        props.numSamples = end - start; 
+
+        AudioPacket packet(props, tm);
+        packet.copyFrom(view, start * view.props().numChannels, end * view.props().numChannels);
+        _packetQueue.push(packet);
+    }
+}
+
+void PortaudioAudioRecorderImpl::startRecording() {  
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
-
-    _encoder = encoder;
-    _encoderIdx = encoderIdx;
 
     const PaDeviceInfo* di = Pa_GetDeviceInfo(_streamParams.device);
 
@@ -161,11 +191,36 @@ void PortaudioAudioRecorderImpl::startRecording(service::recorder::encoder::AvEn
         }
     }
 
+    _running = true;
+    _packetThread = std::thread([this](){
+        while (_running) {
+            std::lock_guard<std::mutex> guard(_encoderMutex);
+            if (_encoder) {
+                _packetQueue.consume_all([this](const AudioPacket& packet){
+                    FAudioPacketView view(packet.buffer(), packet.props());
+                    _encoder->addAudioFrame(view, _encoderIdx, packet.syncTime());
+                });
+            }
+            // Need this sleep in here to reduce contetion on the lockfree queues.
+            std::this_thread::sleep_for(std::chrono::milliseconds(33));
+        }
+    });
+}
+
+void PortaudioAudioRecorderImpl::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) {
+    std::lock_guard<std::mutex> guard(_encoderMutex);
+    _encoder = encoder;
+    _encoderIdx = encoderIndex;
 }
 
 void PortaudioAudioRecorderImpl::stop() {
     Pa_AbortStream(_stream);
     Pa_CloseStream(_stream);
+
+    _running = false;
+    if (_packetThread.joinable()) {
+        _packetThread.join();
+    }
 }
 
 PortaudioAudioRecorder::PortaudioAudioRecorder(EAudioDeviceDirection dir):
@@ -175,9 +230,14 @@ PortaudioAudioRecorder::PortaudioAudioRecorder(EAudioDeviceDirection dir):
 
 PortaudioAudioRecorder::~PortaudioAudioRecorder() = default;
 
-void PortaudioAudioRecorder::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) {
-    _impl->startRecording(encoder, encoderIndex);
+void PortaudioAudioRecorder::startRecording() {
+    _impl->startRecording();
 }
+
+void PortaudioAudioRecorder::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) {
+    _impl->setActiveEncoder(encoder, encoderIndex);
+}
+
 
 void PortaudioAudioRecorder::stop() {
     _impl->stop();

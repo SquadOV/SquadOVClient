@@ -36,7 +36,6 @@ private:
 
     service::recorder::GameRecorderPtr _recorder;
     AimlabDbInterfacePtr _aimlab;
-    shared::TimePoint _taskStartTime;
 };
 
 AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -95,9 +94,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
         << "\tMap: " << state->taskMap << std::endl
         << "\tVersion: " << state->gameVersion << std::endl);
 
-    _recorder->start([this](){
-        _taskStartTime = shared::nowUtc();
-    });
+    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {
@@ -156,6 +153,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
         const auto vodId = _recorder->currentId();
         const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
+        const auto vodStartTime = _recorder->vodStartTime();
 
         // It might take a few tries to grab the data from the SQLite database.
         // I'm assuming it's because Aim Lab will write exclusively to the database
@@ -188,9 +186,9 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
 
             shared::squadov::VodAssociation association;
             association.matchUuid = matchUuid;
-            association.userUuid = vodId.userUuid;
+            association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
             association.videoUuid = vodId.videoUuid;
-            association.startTime = _taskStartTime;
+            association.startTime = vodStartTime;
             association.endTime = eventTime;
             service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             success = true;

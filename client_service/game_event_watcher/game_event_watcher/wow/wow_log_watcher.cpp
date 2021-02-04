@@ -293,6 +293,9 @@ void WoWLogWatcher::moveLogToBackup() {
         return;
     }
 
+    // Force destruction fo the log watcher to release any handles we might have on this log file.
+    _watcher.reset(nullptr);
+
     fs::rename(_logPath, shared::filesystem::generateTimestampBackupFileName(_logPath));
 
     // Remove older log files.

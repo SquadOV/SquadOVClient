@@ -8,6 +8,7 @@
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <thread>
+#include <mutex>
 
 namespace service::recorder::video {
 
@@ -16,7 +17,8 @@ public:
     explicit DxgiDesktopRecorder(HWND window);
     ~DxgiDesktopRecorder();
 
-    void startRecording(service::recorder::encoder::AvEncoder* encoder, size_t fps) override;
+    void startRecording(size_t fps) override;
+    void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) override;
     void stopRecording() override;
     
 private:
@@ -29,6 +31,8 @@ private:
 
     size_t _width = 0;
     size_t _height = 0;
+    service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
+    std::mutex _encoderMutex;
 
     // DX11 and DXGI related pointers.
     ID3D11Device* _device = nullptr;

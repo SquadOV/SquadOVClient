@@ -164,11 +164,16 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
     }
 }
 
-void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* encoder, size_t fps) {
+void DxgiDesktopRecorder::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
+    std::lock_guard<std::mutex> guard(_encoderMutex);
+    _activeEncoder = encoder;
+}
+
+void DxgiDesktopRecorder::startRecording(size_t fps) {
     const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 
     _recording = true;
-    _recordingThread = std::thread([this, encoder, nsPerFrame](){ 
+    _recordingThread = std::thread([this, nsPerFrame](){ 
         service::recorder::image::Image frame;
         frame.initializeImage(_width, _height);
 
@@ -268,7 +273,12 @@ void DxgiDesktopRecorder::startRecording(service::recorder::encoder::AvEncoder* 
             }
 
             const auto sendToEncoderTm = TickClock::now();
-            encoder->addVideoFrame(frame);
+            {
+                std::lock_guard<std::mutex> guard(_encoderMutex);
+                if (_activeEncoder) {
+                    _activeEncoder->addVideoFrame(frame);
+                }
+            }
 
             const auto postEncoderTm = TickClock::now();
 

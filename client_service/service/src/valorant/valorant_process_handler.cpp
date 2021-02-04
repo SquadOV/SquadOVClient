@@ -106,9 +106,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 
     // When the match starts, we de facto start the first buy round too.
     onValorantBuyStart(eventTime, nullptr);
-    _recorder->start([this](){
-        _vodStartTime = shared::nowUtc();
-    });
+    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {
@@ -137,6 +135,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 
         const auto vodId = _recorder->currentId();
         const auto sessionId = _recorder->sessionId();
+        const auto vodStartTime = _recorder->vodStartTime();
 
         try {
             // Store match details. Upload match without match details first just to get the match populated.
@@ -152,9 +151,9 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             // AND so we know which videos to not delete in our cleanup phase.
             shared::squadov::VodAssociation association;
             association.matchUuid = matchUuid;
-            association.userUuid = vodId.userUuid;
+            association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
             association.videoUuid = vodId.videoUuid;
-            association.startTime = _vodStartTime;
+            association.startTime = vodStartTime;
             association.endTime = _currentMatch->endTime();
             service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata(), sessionId);
         } catch (std::exception& ex) {

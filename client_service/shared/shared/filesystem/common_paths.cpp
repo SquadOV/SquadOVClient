@@ -52,6 +52,10 @@ std::filesystem::path getSquadOvServiceDumpFolder() {
     return appData / std::filesystem::path("Dumps");
 }
 
+std::filesystem::path getSquadOvDvrSessionFolder() {
+    return getSquadOvRecordFolder();
+}
+
 std::filesystem::path getAimlabAppDataFolder() {
     return getAppDataPath().parent_path() / fs::path("LocalLow") / fs::path("Statespace") / fs::path("aimlab_tb");
 }

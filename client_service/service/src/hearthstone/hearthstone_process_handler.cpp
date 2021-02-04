@@ -44,8 +44,6 @@ private:
     game_event_watcher::HearthstoneGameConnectionInfo _currentGame;
     std::string _matchUuid;
     bool _inGame = false;
-    // This is when the game started from the perspective of the VOD.
-    shared::TimePoint _gameStartTime;
     // This is when the game started from the perspective of the log.
     shared::TimePoint _gameStartEventTime;
 
@@ -178,9 +176,7 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 
     // We need to start recording now because the game start event comes much later so if we don't start recording now then we
     // might miss parts of the mulligan.
-    _recorder->start([this](){
-        _gameStartTime = shared::nowUtc();
-    });
+    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
 
     if (_inGame) {
         onGameStart(eventTime, nullptr);
@@ -318,7 +314,7 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
         const auto vodId = _recorder->currentId();
         const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
-
+        const auto vodStartTime = _recorder->vodStartTime();
         _recorder->stop();
         // Need this check here just in case for whatever reason we connected to a game but never
         // actually caught the "game start" event.
@@ -326,9 +322,9 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
             try {
                 shared::squadov::VodAssociation association;
                 association.matchUuid = _matchUuid;
-                association.userUuid = vodId.userUuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
                 association.videoUuid = vodId.videoUuid;
-                association.startTime = _gameStartTime;
+                association.startTime = vodStartTime;
                 association.endTime = eventTime;
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             } catch (const std::exception& ex) {

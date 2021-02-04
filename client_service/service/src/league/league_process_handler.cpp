@@ -47,8 +47,6 @@ private:
     service::api::LeagueIngameApiPtr _api;
     service::api::LeagueIngameApiPollerPtr _apiWatcher;
 
-    // When we started recording
-    shared::TimePoint _startTime;
     // When the game time is 0:00
     shared::TimePoint _gameStartTime = shared::TimePoint::max();
     bool _ownsAccount = false;
@@ -118,6 +116,7 @@ void LeagueProcessHandlerInstance::onGameEnd() {
         const auto vodId = _recorder->currentId();
         const auto sessionId = _recorder->sessionId();
         const auto metadata = _recorder->getMetadata();
+        const auto vodStartTime = _recorder->vodStartTime();
         _recorder->stop();
 
         if (!_currentMatchUuid.empty() && _ownsAccount) {
@@ -130,9 +129,9 @@ void LeagueProcessHandlerInstance::onGameEnd() {
 
                 shared::squadov::VodAssociation association;
                 association.matchUuid = _currentMatchUuid;
-                association.userUuid = vodId.userUuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
                 association.videoUuid = vodId.videoUuid;
-                association.startTime = _startTime;
+                association.startTime = vodStartTime;
                 association.endTime = shared::nowUtc();
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             }  catch (std::exception& ex) {
@@ -175,7 +174,7 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
 
     // There's no guarantee that the getActivePlayerName endpoint will return a non-empty string right away
     // so start a thread to start watching for that as soon as the in-game API is available to us.
-    std::thread t([this]() {
+    std::thread t([this, eventTime]() {
         while (_activePlayerSummonerName.empty()) {
             try {
                 _activePlayerSummonerName = _api->getActivePlayerName();
@@ -200,9 +199,7 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
         }
 
         if (_ownsAccount) {
-            _recorder->start([this](){
-                _startTime = shared::nowUtc();
-            });
+            _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
         }
 
         requestMatchCreation();

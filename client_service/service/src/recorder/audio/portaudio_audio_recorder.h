@@ -10,7 +10,8 @@ public:
     PortaudioAudioRecorder(EAudioDeviceDirection dir);
     ~PortaudioAudioRecorder();
 
-    void startRecording(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) override;
+    void startRecording() override;
+    void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) override;
     void stop() override;
 
     bool exists() const override;

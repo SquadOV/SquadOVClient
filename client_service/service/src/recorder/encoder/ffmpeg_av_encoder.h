@@ -21,6 +21,8 @@ public:
 
     void start() override;
     void stop() override;
+    void pauseInputRecorderProcessing(bool pause) override;
+    void appendFromVideoFile(const std::filesystem::path& vodPath, int64_t startMs) override;
     shared::squadov::VodMetadata getMetadata() const override;
 private:
     std::unique_ptr<FfmpegAvEncoderImpl> _impl;

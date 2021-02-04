@@ -30,5 +30,4 @@ private:
 };
 
 using FAudioPacketView = AudioPacketView<float>;
-
 }
