@@ -24,6 +24,12 @@ void FileOutputPiper::start() {
 
         const auto* buffer = _pipe->buffer();
         while (_running) {
+            std::unique_lock<std::mutex> lock(_pauseMutex);
+            if (!_pauseCv.wait_for(lock, std::chrono::milliseconds(100), [this](){ return !_paused; })) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                continue;
+            }
+
             const auto numBytes = _pipe->readFromBuffer();
 
             if (!handleBuffer(buffer, numBytes)) {
@@ -60,6 +66,27 @@ FileOutputPiperPtr createFileOutputPiper(const std::string& id, const std::strin
         return std::make_unique<GCSPiper>(destination, std::move(pipe));
     } else {
         return std::make_unique<FilesystemPiper>(destination, std::move(pipe));
+    }
+}
+
+void FileOutputPiper::appendFromFile(const std::filesystem::path& path) {
+    std::ifstream input(path, std::ios::binary);
+    std::array<char, 2048> buffer;
+    while (!input.eof()) {
+        input.read(buffer.data(), buffer.size());
+        const auto read = input.gcount();
+        handleBuffer(buffer.data(), static_cast<size_t>(read));
+    }
+}
+
+void FileOutputPiper::pauseProcessingFromPipe(bool pause) {
+    {
+        std::lock_guard<std::mutex> lock(_pauseMutex);
+        _paused = pause;
+    }
+
+    if (!_paused) {
+        _pauseCv.notify_all();
     }
 }
 

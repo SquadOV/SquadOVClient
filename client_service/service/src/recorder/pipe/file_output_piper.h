@@ -1,7 +1,9 @@
 #pragma once
 
 #include "recorder/pipe/pipe.h"
+#include <filesystem>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -22,6 +24,8 @@ public:
     // we can use.
     const std::string& filePath() const { return _pipe->filePath(); }
     virtual std::string sessionId() const { return ""; }
+    void appendFromFile(const std::filesystem::path& path);
+    void pauseProcessingFromPipe(bool pause);
 
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
@@ -31,6 +35,10 @@ private:
     bool _running = true;
     std::thread _pipeThread;
     PipePtr _pipe;
+
+    bool _paused = false;
+    std::mutex _pauseMutex;
+    std::condition_variable _pauseCv;
 };
 
 using FileOutputPiperPtr = std::unique_ptr<FileOutputPiper>;

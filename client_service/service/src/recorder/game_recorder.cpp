@@ -29,28 +29,28 @@ namespace service::recorder {
 namespace {
 
 constexpr int DVR_SEGMENT_LENGTH_SECONDS = 30;
-constexpr int MAX_DVR_SEGMENTS = 2;
+constexpr int MAX_DVR_SEGMENTS = 6;
 
-}
-
-GameRecorder::EncoderDatum::~EncoderDatum() {
-    if (hasEncoder()) {
-        encoder->stop();
-        encoder.reset(nullptr);
-    }
 }
 
 void GameRecorder::DvrSegment::cleanup() const {
-    if (fs::exists(outputPath)) {
-        for (auto i = 0; i < 10; ++i) {
-            try {
-                //fs::remove(outputPath);
-                break;
-            } catch (...) {
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+    // There's no particular reason the cleanup neesd to happen immediately so start off
+    // a new thread to do it. We're not guaranteed that this will succeed immediately anyway
+    // so this is for the best.
+    fs::path copyOutputPath = outputPath;
+    std::thread t([copyOutputPath](){
+        if (fs::exists(copyOutputPath)) {
+            for (auto i = 0; i < 30; ++i) {
+                try {
+                    fs::remove(copyOutputPath);
+                    break;
+                } catch (...) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                }
             }
         }
-    }
+    });
+    t.detach();
 }
 
 GameRecorder::GameRecorder(
@@ -120,6 +120,7 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     if (!data.hasEncoder()) {
         return;
     }
+
     _vrecorder->setActiveEncoder(data.encoder.get());
 
     if (_ainRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input) != data.audioEncoderIndex.end()) {
@@ -129,24 +130,13 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     if (_aoutRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output) != data.audioEncoderIndex.end()) {
         _aoutRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Output));
     }
+
     data.encoder->start();
-}
-
-void GameRecorder::switchToNullEncoder() {
-    _vrecorder->setActiveEncoder(nullptr);
-
-    if (_ainRecorder) {
-        _ainRecorder->setActiveEncoder(nullptr, 0);
-    }
-
-    if (_aoutRecorder) {
-        _aoutRecorder->setActiveEncoder(nullptr, 0);
-    }
 }
 
 void GameRecorder::startNewDvrSegment(const fs::path& dir) {
     std::ostringstream segmentFname;
-    segmentFname << "segment_" << _dvrId++ << ".mp4";
+    segmentFname << "segment_" << _dvrId++ << ".ts";
 
     // At the given interval, create a new DVR segment.
     DvrSegment segment;
@@ -157,9 +147,16 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
     // Create a new DVR encoder. This encoder is responsible for outputting the video to the specified location on disk.
     EncoderDatum data = createEncoder(shared::filesystem::pathUtf8(segment.outputPath));
 
+    // If we had an old encoder we want to transfer the old front buffer to be the new back buffer in the new encoder.
+    // This way we remove the possibility of starting the new video with a green frame. This needs to happen before the
+    // video encoding thread starts in switchToNewActiveEncoder.
+    if (_dvrEncoder.hasEncoder()) {
+        const auto frontBuffer = _dvrEncoder.encoder->getFrontBuffer();
+        data.encoder->addVideoFrame(frontBuffer);
+    }
+
     // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
-    // Note that the flush happens on destruction in the encoder wrapper. We want this order to ensure that
-    // there's no loss of data between the two video files.
+    // We want this order to ensure that there's minimal loss of data between the two video files.
     switchToNewActiveEncoder(data);
 
     if (_dvrEncoder.hasEncoder()) {
@@ -239,9 +236,21 @@ std::string GameRecorder::stopDvrSession() {
 void GameRecorder::cleanDvrSession(const std::string& id) {
     const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
     _dvrSegments.clear();
-    if (fs::exists(dir)) {
-        fs::remove(dir);
-    }
+
+    std::thread t([dir](){
+        if (!fs::exists(dir)) {
+            return;
+        }
+        for (int i = 0; i < 30; ++i) {
+            try {
+                fs::remove_all(dir);
+                break;
+            } catch(...) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(150));
+            }
+        }
+    });
+    t.detach();
 }
 
 void GameRecorder::loadCachedInfo() {
@@ -290,6 +299,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
         data.audioEncoderIndex[audio::EAudioDeviceDirection::Input] = encoderIndex;
     }
 
+    data.encoder->open();
     return data;
 }
 
@@ -353,14 +363,27 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
     // Note that we must pause the input recorder processing beforing switching the inputs to use the new encoder.
     // Otherwise the first frames may be of what's currently recording instead of what's recorded in the DVR.
     if (useDvr) {
-        _encoder.encoder->pauseInputRecorderProcessing(true);
+        if (_dvrEncoder.hasEncoder()) {
+            const auto frontBuffer = _dvrEncoder.encoder->getFrontBuffer();
+            _encoder.encoder->addVideoFrame(frontBuffer);
+        }
+        _outputPiper->pauseProcessingFromPipe(true);
     }
+    // Needs to be after the pause or else we'll wait indefinitely for the pause lock when asking for a pause
+    // as it'll wait on the named pipe.
+    _outputPiper->start();
+
     switchToNewActiveEncoder(_encoder);
 
     if (useDvr) {
         // We can stop this DVR session at this point. It'll be up to the caller to re-start another DVR
         // session when/if this recording ends.
         const auto sessionId = stopDvrSession();
+        
+        // This should be here because we don't want to destruct it too soon or else we won't have switched to the new
+        // active encoder and we'll thus risk sending info to an invalid pointer.
+        _dvrEncoder = {};
+        LOG_INFO("DVR Backfill Session: " << sessionId << std::endl);
 
         // Now that we know all the recorder data is being buffered, we can safely do DVR processing. Loop through
         // the segments to find the segment with a start time before the input start time. If we can't, do a best effort.
@@ -369,23 +392,19 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         std::chrono::milliseconds totalBackFillTime(0);
         const auto startIndex = findDvrSegmentForVodStartTime(start);
         for (auto i = startIndex; i < _dvrSegments.size(); ++i) {
-            _encoder.encoder->appendFromVideoFile(
-                _dvrSegments[i].outputPath,
-                (i == startIndex) ? std::max(std::chrono::duration_cast<std::chrono::milliseconds>(start - _dvrSegments[i].startTime).count(), int64_t(0)) : 0
-            );
-
-            const auto startTime = (i == startIndex) ? 
-                (_dvrSegments[i].startTime < start) ? start : _dvrSegments[i].startTime :
-                _dvrSegments[i].startTime;
-            totalBackFillTime += std::chrono::duration_cast<std::chrono::milliseconds>(_dvrSegments[i].endTime - startTime);                
+            // We can directly append to the output pipe because of the fact that we're using MPEG-TS which is file-level concat-able.
+            // This does result in a file that's not really default playable by most video players; however, we'll assume that the user
+            // won't be able to view the video until it's processed by the server after which case the VOD should be normal.
+            _outputPiper->appendFromFile(_dvrSegments[i].outputPath);
+            totalBackFillTime += std::chrono::duration_cast<std::chrono::milliseconds>(_dvrSegments[i].endTime - _dvrSegments[i].startTime);
         }
         
-        _encoder.encoder->pauseInputRecorderProcessing(false);
+        _outputPiper->pauseProcessingFromPipe(false);
         _vodStartTime = (_dvrSegments[startIndex].startTime < start) ? start : _dvrSegments[startIndex].startTime;
         if (totalBackFillTime > std::chrono::milliseconds(30 * 1000)) {
             LOG_WARNING("Backfilling more than 30 seconds of footage from DVR!!!" << std::endl);
         }
-
+        LOG_INFO("Finish DVR backfill." << std::endl);
         cleanDvrSession(sessionId);
     } else {
         _vodStartTime = shared::nowUtc();
@@ -439,6 +458,7 @@ VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath
 
     _currentId = createNewVodIdentifier();
     initializeFileOutputPiper();
+    _outputPiper->start();
 
     _manualVodPath = vodPath;
     _manualVodTimeStart = vodStart;
@@ -461,7 +481,7 @@ void GameRecorder::stopFromSource(const shared::TimePoint& end) {
             << " -y -i \"" << _manualVodPath.string() << "\""
             << " -ss " << static_cast<double>(startMs / 1000.0)
             << " -to " << static_cast<double>(toMs / 1000.0)
-            << " -c:v h264_nvenc -c:a aac -movflags +empty_moov+frag_keyframe+default_base_moof -f mp4 "
+            << " -c:v h264_nvenc -c:a aac -f mpegts "
             << _outputPiper->filePath()
             << "\"";
 
@@ -493,13 +513,12 @@ void GameRecorder::initializeFileOutputPiper() {
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
-    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid);
+    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, "mpegts");
     setFileOutputFromUri(_currentId->videoUuid, outputUri);
 }
 
 void GameRecorder::setFileOutputFromUri(const std::string& videoUuid, const std::string& uri) {
     _outputPiper = pipe::createFileOutputPiper(videoUuid, uri);
-    _outputPiper->start();
 }
 
 shared::squadov::VodMetadata GameRecorder::getMetadata() const {

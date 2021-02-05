@@ -181,17 +181,22 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
                 continue;
             }
 
-            const auto matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
-            service::local::getLocalData()->markAimlabBackfillTime(lastData.createDate);
+            try {
+                const auto matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
+                service::local::getLocalData()->markAimlabBackfillTime(lastData.createDate);
 
-            shared::squadov::VodAssociation association;
-            association.matchUuid = matchUuid;
-            association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-            association.videoUuid = vodId.videoUuid;
-            association.startTime = vodStartTime;
-            association.endTime = eventTime;
-            service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
-            success = true;
+                shared::squadov::VodAssociation association;
+                association.matchUuid = matchUuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = vodStartTime;
+                association.endTime = eventTime;
+                association.rawContainerFormat = "mpegts";
+                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+                success = true;
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to upload Aim lab task or associate Aim Lab VOD: " << ex.what() << std::endl);
+            }
             break;
         }
 

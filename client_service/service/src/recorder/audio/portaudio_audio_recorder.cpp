@@ -194,13 +194,13 @@ void PortaudioAudioRecorderImpl::startRecording() {
     _running = true;
     _packetThread = std::thread([this](){
         while (_running) {
-            std::lock_guard<std::mutex> guard(_encoderMutex);
-            if (_encoder) {
-                _packetQueue.consume_all([this](const AudioPacket& packet){
-                    FAudioPacketView view(packet.buffer(), packet.props());
+            _packetQueue.consume_all([this](const AudioPacket& packet){
+                std::lock_guard<std::mutex> guard(_encoderMutex);
+                FAudioPacketView view(packet.buffer(), packet.props());
+                if (_encoder) {
                     _encoder->addAudioFrame(view, _encoderIdx, packet.syncTime());
-                });
-            }
+                }
+            });
             // Need this sleep in here to reduce contetion on the lockfree queues.
             std::this_thread::sleep_for(std::chrono::milliseconds(33));
         }

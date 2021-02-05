@@ -18,6 +18,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import * as vod from '@client/js/squadov/vod'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
+import { Parser as M3u8Parser } from 'm3u8-parser'
 
 @Component
 export default class VideoPlayer extends Vue {
@@ -110,6 +111,25 @@ export default class VideoPlayer extends Vue {
         return track.segments[0].uri
     }
 
+    get vodLengthSeconds(): number {
+        if (!this.vod) {
+            return 0
+        }
+        return (this.vod.endTime.getTime() - this.vod.startTime.getTime()) / 1000
+    }
+
+    get currentMimeType(): string {
+        if (!this.manifest) {
+            return ''
+        }
+
+        let track = vod.getVideoQualityTrack(this.manifest!, 'source')
+        if (!track) {
+            return ''
+        }
+        return track.segments[0].mimeType
+    }
+
     @Watch('currentVideoSourceUri')
     refreshVideoSource() {
         if (this.currentVideoSourceUri == '') {
@@ -131,12 +151,33 @@ export default class VideoPlayer extends Vue {
         }
 
         if (!!this.videoUri) {
-            this.player.src([
-                {
-                    src: this.videoUri,
-                    type: 'video/mp4',
-                },
-            ])
+            if (this.currentMimeType == 'video/mp2t') {
+                // Need to generate a manifest to get video.js to play a mpeg-ts file.
+                const parser = new M3u8Parser();
+                parser.push([
+                    '#EXTM3U',
+                    '#EXT-X-VERSION:3',
+                    `#EXT-X-TARGETDURATION:${this.vodLengthSeconds}`,
+                    '#EXT-X-MEDIA-SEQUENCE:0',
+                    '#EXT-X-DISCONTINUITY-SEQUENCE:0',
+                    `#EXTINF:${this.vodLengthSeconds}`,
+                    this.videoUri,
+                    '#EXT-X-ENDLIST'
+                ].join('\n'));
+                parser.end();
+
+                this.player.src({
+                    src: `data:application/vnd.videojs.vhs+json,${JSON.stringify(parser.manifest)}`,
+                    type: 'application/vnd.videojs.vhs+json'
+                });
+            } else {
+                this.player.src([
+                    {
+                        src: this.videoUri,
+                        type: this.currentMimeType,
+                    },
+                ])
+            }
         }
     }
 

@@ -133,6 +133,7 @@ void LeagueProcessHandlerInstance::onGameEnd() {
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = vodStartTime;
                 association.endTime = shared::nowUtc();
+                association.rawContainerFormat = "mpegts";
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             }  catch (std::exception& ex) {
                 LOG_WARNING("Failed to upload LoL/TFT match: " << ex.what() << std::endl);

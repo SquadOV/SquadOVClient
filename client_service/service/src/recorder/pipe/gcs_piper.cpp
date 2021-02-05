@@ -47,7 +47,7 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
     _gcsThread = std::thread(std::bind(&GCSPiper::tickGcsThread, this));
 
 #if DUMP_GCS_REF_VIDEO
-    const auto path = shared::filesystem::getSquadOvUserFolder() / std::filesystem::path("gcs_ref.mp4");
+    const auto path = shared::filesystem::getSquadOvUserFolder() / std::filesystem::path("gcs_ref.ts");
     _refVideo.open(path, std::ios_base::binary | std::ios_base::out);
 #endif
 }

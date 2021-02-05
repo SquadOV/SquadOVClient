@@ -35,9 +35,12 @@ public:
     GCSPiper(const std::string& destination, PipePtr&& pipe);
     ~GCSPiper();
 
-    bool handleBuffer(const char* buffer, size_t numBytes) override;
     std::string sessionId() const override { return _sessionUri; }
+
+protected:
+    bool handleBuffer(const char* buffer, size_t numBytes) override;
     void flush() override;
+
 private:
     void tickGcsThread();
 

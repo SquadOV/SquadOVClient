@@ -12,6 +12,7 @@ struct VodAssociation {
     std::string videoUuid;
     shared::TimePoint startTime;
     shared::TimePoint endTime;
+    std::string rawContainerFormat;
 
     nlohmann::json toJson() const;
 };

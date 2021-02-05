@@ -14,15 +14,15 @@ public:
     void initializeVideoStream(size_t fps, size_t width, size_t height) override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;
+    service::recorder::image::Image getFrontBuffer() const override;
 
     void initializeAudioStream() override;
     size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) override;
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) override;
 
+    void open() override;
     void start() override;
     void stop() override;
-    void pauseInputRecorderProcessing(bool pause) override;
-    void appendFromVideoFile(const std::filesystem::path& vodPath, int64_t startMs) override;
     shared::squadov::VodMetadata getMetadata() const override;
 private:
     std::unique_ptr<FfmpegAvEncoderImpl> _impl;

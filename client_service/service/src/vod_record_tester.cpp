@@ -95,6 +95,20 @@ int main(int argc, char** argv) {
             recorder.stopDvrSession();
             recorder.stopInputs();
         });
+    } else if (mode == "DVRJOIN") {
+        const auto duration = vm["duration"].as<int>();
+        const auto delay = vm["delay"].as<int>();
+        const auto offset = vm["offset"].as<int>();
+        workerThread = std::thread([&recorder, duration, delay, offset](){
+            LOG_INFO("START DVR" << std::endl);
+            recorder.startDvrSession();
+            std::this_thread::sleep_for(std::chrono::seconds(delay));
+            LOG_INFO("DO JOIN" << std::endl);
+            recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR);
+            std::this_thread::sleep_for(std::chrono::seconds(duration));
+            LOG_INFO("STOP RECORDING" << std::endl);
+            recorder.stop();
+        });
     }
 
     workerThread.join();

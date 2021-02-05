@@ -13,6 +13,7 @@ public:
     FilesystemPiper(const std::string& destination, PipePtr&& pipe);
     ~FilesystemPiper();
 
+protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
     void flush() override {}
 private:

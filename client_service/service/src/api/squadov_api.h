@@ -88,7 +88,7 @@ public:
     void requestTftBackfill(const std::string& summonerName, const std::string& region) const;
 
     // VOD
-    std::string createVodDestinationUri(const std::string& videoUuid) const;
+    std::string createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const;
     void deleteVod(const std::string& videoUuid) const;
 

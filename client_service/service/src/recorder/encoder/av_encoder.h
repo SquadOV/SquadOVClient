@@ -24,15 +24,15 @@ public:
     virtual void initializeVideoStream(size_t fps, size_t width, size_t height) = 0;
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;
+    virtual service::recorder::image::Image getFrontBuffer() const = 0;
 
     virtual void initializeAudioStream() = 0;
     virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) = 0;
     virtual void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) = 0;
 
+    virtual void open() = 0;
     virtual void start() = 0;
     virtual void stop() = 0;
-    virtual void pauseInputRecorderProcessing(bool pause) = 0;
-    virtual void appendFromVideoFile(const std::filesystem::path& vodPath, int64_t startMs) = 0;
     virtual shared::squadov::VodMetadata getMetadata() const = 0;
 };
 using AvEncoderPtr = std::unique_ptr<AvEncoder>;

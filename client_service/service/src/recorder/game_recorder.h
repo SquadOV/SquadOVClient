@@ -61,12 +61,6 @@ private:
         encoder::AvEncoderPtr encoder;
         std::unordered_map<audio::EAudioDeviceDirection, size_t> audioEncoderIndex;
 
-        EncoderDatum() = default;
-        EncoderDatum(EncoderDatum&& o) = default;
-        ~EncoderDatum();
-
-        EncoderDatum& operator=(EncoderDatum&& o) = default;
-
         bool hasEncoder() const { return !!encoder; }
     };
 
@@ -89,7 +83,6 @@ private:
     shared::TimePoint _vodStartTime;
 
     void switchToNewActiveEncoder(const EncoderDatum& data);
-    void switchToNullEncoder();
     video::VideoRecorderPtr _vrecorder;
     audio::AudioRecorderPtr _aoutRecorder;
     audio::AudioRecorderPtr _ainRecorder;

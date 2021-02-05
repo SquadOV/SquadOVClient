@@ -155,6 +155,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             association.videoUuid = vodId.videoUuid;
             association.startTime = vodStartTime;
             association.endTime = _currentMatch->endTime();
+            association.rawContainerFormat = "mpegts";
             service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata(), sessionId);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to upload valorant match: " << ex.what() << std::endl);

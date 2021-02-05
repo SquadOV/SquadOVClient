@@ -10,6 +10,7 @@ nlohmann::json VodAssociation::toJson() const {
         { "videoUuid", videoUuid },
         { "startTime", shared::timeToIso(startTime) },
         { "endTime", shared::timeToIso(endTime  ) },
+        { "rawContainerFormat", rawContainerFormat }
     };
 }
 

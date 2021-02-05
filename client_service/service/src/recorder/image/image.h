@@ -32,4 +32,6 @@ private:
     std::unique_ptr<uint8_t[]> _buffer;
 };
 
+using ImagePtr = std::unique_ptr<Image>;
+
 }

@@ -284,11 +284,12 @@ void SquadovApi::uploadHearthstoneArenaDeck(const process_watcher::memory::games
     }
 }
 
-std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid) const {
+std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const {
     const std::string path = "/v1/vod";
 
     const nlohmann::json body = {
         { "videoUuid", videoUuid },
+        { "containerFormat", containerFormat }
     };
     const auto result = _webClient->post(path, body);
 

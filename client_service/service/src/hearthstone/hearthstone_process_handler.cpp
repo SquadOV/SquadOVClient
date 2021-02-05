@@ -326,6 +326,7 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = vodStartTime;
                 association.endTime = eventTime;
+                association.rawContainerFormat = "mpegts";
                 service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
             } catch (const std::exception& ex) {
                 LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);

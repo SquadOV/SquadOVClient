@@ -80,6 +80,7 @@
     "ifdef-loader": "^2.1.5",
     "jwt-decode": "^3.0.0",
     "local-storage": "^2.0.0",
+    "m3u8-parser": "^4.5.2",
     "marked": "^1.2.7",
     "node-forge": "^0.10.0",
     "protobufjs": "^6.10.2",

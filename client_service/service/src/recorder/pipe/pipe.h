@@ -9,7 +9,9 @@
 #endif
 
 namespace service::recorder::pipe {
-constexpr int MAX_BUFFER_SIZE = 1 * 1024 * 1024; // (1MB buffer should be plenty?)
+// 16MB buffer should be plenty? Keeping it on the higher side just in case
+// we need to buffer a lot for the DVR functionality.
+constexpr int MAX_BUFFER_SIZE = 16 * 1024 * 1024;
 
 // This class wraps functionality around whatever the OS's named pipe
 // functionality is. Note that this as the pipe's server and FFmpeg acts as the client.

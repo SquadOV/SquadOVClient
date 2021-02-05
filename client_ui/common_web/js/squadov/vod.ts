@@ -39,6 +39,7 @@ interface VodSegment {
     uri: string
     duration: number
     segmentStart: number
+    mimeType: string
 }
 
 interface VodMetadata {
