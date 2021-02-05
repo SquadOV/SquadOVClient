@@ -211,7 +211,6 @@ void LogWatcher::watchWorker() {
                 }
 
                 if (!foundChanges) {
-                    LOG_WARNING("\tFailed to detect log changes." << std::endl);
                     // If we get here we didn't receive a notification about the file in question.
                     std::this_thread::sleep_for(10ms);
                 }

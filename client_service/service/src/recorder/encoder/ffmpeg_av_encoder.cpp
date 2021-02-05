@@ -592,7 +592,7 @@ service::recorder::image::Image FfmpegAvEncoderImpl::getFrontBuffer() const {
 void FfmpegAvEncoderImpl::open() {
     // This is what actually gets us to write to a file.
     if (avio_open2(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr) < 0) {
-        THROW_ERROR("Failed to open video for output");
+        THROW_ERROR("Failed to open video for output: " << _streamUrl);
     }
 
     if (avformat_write_header(_avcontext, nullptr) < 0) {

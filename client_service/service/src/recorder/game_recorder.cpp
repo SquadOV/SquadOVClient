@@ -423,6 +423,7 @@ size_t GameRecorder::findDvrSegmentForVodStartTime(const shared::TimePoint& tm) 
 }
 
 void GameRecorder::stopInputs() {
+    _streamsInit = false;
     if (_vrecorder) {
         _vrecorder->stopRecording();
         _vrecorder.reset(nullptr);
@@ -448,6 +449,7 @@ void GameRecorder::stop() {
     _encoder = {};
     _currentId.reset(nullptr);
     _outputPiper->wait();
+    _outputPiper.reset(nullptr);
     system::getGlobalState()->markGameRecording(_game, false);
 }
 
@@ -497,6 +499,7 @@ void GameRecorder::stopFromSource(const shared::TimePoint& end) {
     _manualVodTimeStart = shared::zeroTime();
     _currentId.reset(nullptr);
     _outputPiper->wait();
+    _outputPiper.reset(nullptr);
 }
 
 std::unique_ptr<VodIdentifier> GameRecorder::createNewVodIdentifier() const {
