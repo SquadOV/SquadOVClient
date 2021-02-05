@@ -204,6 +204,7 @@ ipcMain.on('change-state-pause', (event, paused) => {
 let hasUpdate = false
 ipcMain.on('request-restart', () => {
     if (hasUpdate) {
+        const { autoUpdater } = require("electron-updater")
         autoUpdater.quitAndInstall(false, true)
     } else {
         restart()
