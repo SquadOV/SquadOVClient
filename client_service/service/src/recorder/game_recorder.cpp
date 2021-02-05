@@ -398,7 +398,9 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         // in the new encoder.
         std::chrono::milliseconds totalBackFillTime(0);
         const auto startIndex = findDvrSegmentForVodStartTime(start);
+        LOG_INFO("Choosing backfill index: " << startIndex << " out of " << _dvrSegments.size() << std::endl);
         for (auto i = startIndex; i < _dvrSegments.size(); ++i) {
+            LOG_INFO("\tUse Backfill Video from [" << i << "]: " << shared::timeToStr(_dvrSegments[i].startTime) << " to " << shared::timeToStr(_dvrSegments[i].end) << std::endl);
             // We can directly append to the output pipe because of the fact that we're using MPEG-TS which is file-level concat-able.
             // This does result in a file that's not really default playable by most video players; however, we'll assume that the user
             // won't be able to view the video until it's processed by the server after which case the VOD should be normal.
@@ -407,9 +409,9 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         }
         
         _outputPiper->pauseProcessingFromPipe(false);
-        _vodStartTime = (_dvrSegments[startIndex].startTime < start) ? start : _dvrSegments[startIndex].startTime;
+        _vodStartTime = _dvrSegments[startIndex].startTime;
         if (totalBackFillTime > std::chrono::milliseconds(30 * 1000)) {
-            LOG_WARNING("Backfilling more than 30 seconds of footage from DVR!!!" << std::endl);
+            LOG_WARNING("Backfilling more than 30 seconds of footage from DVR!!! [" << totalBackFillTime.count() / 1000.0 << "s]" << std::endl);
         }
         LOG_INFO("Finish DVR backfill." << std::endl);
         cleanDvrSession(sessionId);
