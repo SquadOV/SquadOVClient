@@ -58,42 +58,11 @@ GameRecorder::GameRecorder(
     shared::EGame game):
     _process(process),
     _game(game) {
-
-    // Start a new thread to determine the current window status of the game. We'll need it for initializing the
-    // video recorder.
-    _updateWindowInfoThread = std::thread(std::bind(&GameRecorder::updateWindowInfo, this));
 }
 
 GameRecorder::~GameRecorder() {
     if (isRecording()) {
         stop();
-    }
-
-    if (_updateWindowInfoThread.joinable()) {
-        _running = false;
-        _updateWindowInfoThread.join();
-    }
-}
-
-void GameRecorder::updateWindowInfo() {
-    if (_process.empty()) {
-        return;
-    }
-
-    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(120000));
-    while (_running) {
-        if (!IsIconic(wnd)) {
-            HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
-            RECT windowRes;
-            GetClientRect(wnd, &windowRes);
-
-            std::unique_lock<std::shared_mutex> guard(_windowInfoMutex);
-            _windowInfo.width = windowRes.right - windowRes.left;
-            _windowInfo.height = windowRes.bottom - windowRes.top;
-            _windowInfo.init = true;
-            _windowInfo.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor);
-        }
-        std::this_thread::sleep_for(100ms);
     }
 }
 
@@ -181,6 +150,8 @@ void GameRecorder::startDvrSession() {
         return;
     }
 
+    loadCachedInfo();
+
     if (!areInputStreamsInitialized()) {
         std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this);
         if (!successFut.get()) {
@@ -227,13 +198,21 @@ std::string GameRecorder::stopDvrSession() {
         _dvrThread.join();
         _dvrThread = {};
     }
-    _dvrSegments.back().endTime = shared::nowUtc();
+
+    if (!_dvrSegments.empty()) {
+        _dvrSegments.back().endTime = shared::nowUtc();
+    }
+
     const auto id = _dvrSessionId;
     _dvrSessionId.clear();
     return id;
 }
 
 void GameRecorder::cleanDvrSession(const std::string& id) {
+    if (id.empty()) {
+        return;
+    }
+
     const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
     _dvrSegments.clear();
 
@@ -254,25 +233,54 @@ void GameRecorder::cleanDvrSession(const std::string& id) {
 }
 
 void GameRecorder::loadCachedInfo() {
-    if (!_cachedWindowInfo || !_cachedRecordingSettings) {
-        // Just in case the user changed it in the UI already, just sync up via the file.
-        service::system::getCurrentSettings()->reloadSettingsFromFile();
-        _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
-        _cachedWindowInfo = std::make_unique<video::VideoWindowInfo>([this](){
-            std::shared_lock<std::shared_mutex> guard(_windowInfoMutex);
-            return _windowInfo;
-        }());
+    if (_process.empty()) {
+        LOG_ERROR("Failed to load cached info from empty process." << std::endl);
+        return;
+    }
+
+    if (_cachedRecordingSettings || _cachedWindowInfo) {
+        return;
+    }
+
+    LOG_INFO("Load cache info: Settings" << std::endl);
+    // Just in case the user changed it in the UI already, just sync up via the file.
+    service::system::getCurrentSettings()->reloadSettingsFromFile();
+    _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
+
+    LOG_INFO("Load cache info: Window Information" << std::endl);
+    std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
+        video::VideoWindowInfo ret;
+        HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(120000));
+        while (true) {
+            if (!IsIconic(wnd)) {
+                HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
+                RECT windowRes;
+                GetClientRect(wnd, &windowRes);
+
+                ret.width = windowRes.right - windowRes.left;
+                ret.height = windowRes.bottom - windowRes.top;
+                ret.init = true;
+                ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor);
+                break;
+            }
+            std::this_thread::sleep_for(100ms);
+        }
+        return ret;
+    });
+    _cachedWindowInfo = std::make_unique<video::VideoWindowInfo>(fut.get());
+    LOG_INFO("Finish loading cache info." << std::endl);
+
+    if (!_cachedRecordingSettings || !_cachedWindowInfo) {
+        THROW_ERROR("Failed to create cached info objects.");
     }
 }
 
+void GameRecorder::clearCachedInfo() {
+    _cachedRecordingSettings.reset(nullptr);
+    _cachedWindowInfo.reset(nullptr);
+}
+
 GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
-    loadCachedInfo();
-
-    if (!_cachedWindowInfo || !_cachedRecordingSettings) {
-        THROW_ERROR("Failed to obtain cached window info or recording settings.");
-        return {};
-    }
-
     EncoderDatum data;
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
@@ -308,8 +316,6 @@ bool GameRecorder::areInputStreamsInitialized() const {
 }
 
 bool GameRecorder::initializeInputStreams() {
-    loadCachedInfo();
-
     _streamsInit = true;
     try {
         createVideoRecorder(*_cachedWindowInfo);
@@ -338,6 +344,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         return;
     }
 
+    loadCachedInfo();
     _currentId = createNewVodIdentifier();
     initializeFileOutputPiper();
 
@@ -441,15 +448,21 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop() {
-    if (!_encoder.encoder) {
-        return;
-    }
     stopInputs();
-    _encoder.encoder->stop();
-    _encoder = {};
+    if (_dvrEncoder.hasEncoder()) {
+        const auto session = stopDvrSession();
+        cleanDvrSession(session);
+    }
+    clearCachedInfo();
+    if (_encoder.hasEncoder()) {
+        _encoder.encoder->stop();
+        _encoder = {};
+    }
     _currentId.reset(nullptr);
-    _outputPiper->wait();
-    _outputPiper.reset(nullptr);
+    if (_outputPiper) {
+        _outputPiper->wait();
+        _outputPiper.reset(nullptr);
+    }
     system::getGlobalState()->markGameRecording(_game, false);
 }
 

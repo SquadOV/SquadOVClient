@@ -88,16 +88,12 @@ private:
     audio::AudioRecorderPtr _ainRecorder;
     bool _streamsInit = false;
 
-    bool _running = true;
-    std::thread _updateWindowInfoThread;
-    std::shared_mutex _windowInfoMutex;
-    video::VideoWindowInfo _windowInfo;
-
     // Locked Settings. We need the video settings between the DVR recording
     // and the final video to stay the same so cache the results here.
     std::unique_ptr<video::VideoWindowInfo> _cachedWindowInfo;
     std::unique_ptr<service::system::RecordingSettings> _cachedRecordingSettings;
     void loadCachedInfo();
+    void clearCachedInfo();
 
     // Manual Video File Controls
     std::filesystem::path _manualVodPath;
