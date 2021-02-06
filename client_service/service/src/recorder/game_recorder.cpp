@@ -133,7 +133,7 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
     }
 
     _dvrEncoder = std::move(data);
-    if (_dvrSegments.size() > 1) {
+    if (!_dvrSegments.empty()) {
         _dvrSegments.back().endTime = segment.startTime;
     }
     _dvrSegments.emplace_back(std::move(segment));
@@ -344,6 +344,8 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         return;
     }
 
+    LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << std::endl);
+
     loadCachedInfo();
     _currentId = createNewVodIdentifier();
     initializeFileOutputPiper();
@@ -400,7 +402,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         const auto startIndex = findDvrSegmentForVodStartTime(start);
         LOG_INFO("Choosing backfill index: " << startIndex << " out of " << _dvrSegments.size() << std::endl);
         for (auto i = startIndex; i < _dvrSegments.size(); ++i) {
-            LOG_INFO("\tUse Backfill Video from [" << i << "]: " << shared::timeToStr(_dvrSegments[i].startTime) << " to " << shared::timeToStr(_dvrSegments[i].end) << std::endl);
+            LOG_INFO("\tUse Backfill Video from [" << i << "]: " << shared::timeToStr(_dvrSegments[i].startTime) << " to " << shared::timeToStr(_dvrSegments[i].endTime) << std::endl);
             // We can directly append to the output pipe because of the fact that we're using MPEG-TS which is file-level concat-able.
             // This does result in a file that's not really default playable by most video players; however, we'll assume that the user
             // won't be able to view the video until it's processed by the server after which case the VOD should be normal.
@@ -419,6 +421,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
         _vodStartTime = shared::nowUtc();
     }
 
+    LOG_INFO("Final VOD Start Time: " << shared::timeToStr(_vodStartTime) << std::endl);
     system::getGlobalState()->markGameRecording(_game, true);
 }
 
