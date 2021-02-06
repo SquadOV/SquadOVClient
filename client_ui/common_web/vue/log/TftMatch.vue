@@ -2,17 +2,22 @@
     <loading-container :is-loading="!currentMatch">
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
-                <v-row>
-                    <v-col cols="12">
-                        <tft-match-summary
-                            class="full-width"
-                            :match="playerSummary"
-                            :puuid="puuid"
-                            :user-id="userId"
-                        >
-                        </tft-match-summary>
-                    </v-col>
-                </v-row>
+                <div class="d-flex align-center">
+                    <tft-match-summary
+                        class="flex-grow-1 mb-4"
+                        :match="playerSummary"
+                        :puuid="puuid"
+                        :user-id="userId"
+                    >
+                    </tft-match-summary>
+
+                    <match-share-button
+                        :match-uuid="matchUuid"
+                        :game="SquadOvGames.TeamfightTactics"
+                        :user-id="userId"
+                    >
+                    </match-share-button>
+                </div>
 
                 <v-row>
                     <video-player
@@ -55,11 +60,14 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { WrappedTftMatch, TftPlayerMatchSummary, TftParticipant, getTftSetNumber } from '@client/js/tft/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
+import { SquadOvGames } from '@client/js/squadov/game'
+
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
 import TftScoreboard from '@client/vue/utility/tft/TftScoreboard.vue'
 import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 
 @Component({
     components: {
@@ -68,9 +76,12 @@ import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
         TftMatchSummary,
         TftScoreboard,
         TftVodPicker,
+        MatchShareButton,
     }
 })
 export default class TftMatch extends Vue {
+    SquadOvGames: any = SquadOvGames
+
     @Prop({required: true})
     puuid!: string
 

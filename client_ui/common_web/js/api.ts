@@ -83,6 +83,7 @@ import {
     RecentMatch,
     cleanRecentMatchFromJson,
 } from '@client/js/squadov/recentMatch'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -853,6 +854,13 @@ class ApiClient {
             resp.data.data.forEach(cleanRecentMatchFromJson)
             return resp
         })
+    }
+
+    getMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames): Promise<ApiData<string>> {
+        return axios.post(`v1/match/${matchUuid}/share`, {
+            fullPath,
+            game,
+        }, this.createWebAxiosConfig())
     }
 }
 

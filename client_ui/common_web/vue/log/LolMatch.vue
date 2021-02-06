@@ -3,12 +3,21 @@
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
                 <!-- Header summary -->
-                <lol-match-summary
-                    class="full-width"
-                    :match="playerSummary"
-                    :user-id="userId"
-                >
-                </lol-match-summary>
+                <div class="d-flex align-center">
+                    <lol-match-summary
+                        class="flex-grow-1 mb-4"
+                        :match="playerSummary"
+                        :user-id="userId"
+                    >
+                    </lol-match-summary>
+
+                    <match-share-button
+                        :match-uuid="matchUuid"
+                        :game="SquadOvGames.LeagueOfLegends"
+                        :user-id="userId"
+                    >
+                    </match-share-button>
+                </div>
 
                 <!-- VOD + Event List -->
                 <v-row no-gutters>
@@ -132,6 +141,7 @@ import { VodAssociation } from '@client/js/squadov/vod'
 import { GenericEvent } from '@client/js/event'
 import { secondsToTimeString } from '@client/js/time'
 import { computeColorForLolEvent } from '@client/js/lol/color'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
@@ -143,6 +153,7 @@ import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineContainer.vue'
 import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 
 @Component({
     components: {
@@ -156,9 +167,11 @@ import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
         LolStatTimelineContainer,
         LolVodPicker,
         GenericMatchTimeline,
+        MatchShareButton,
     }
 })
 export default class LolMatch extends Vue {
+    SquadOvGames: any = SquadOvGames
     secondsToTimeString = secondsToTimeString
 
     @Prop()

@@ -7,12 +7,20 @@
                     Namely, we want to know the two heros, final life count, final turn, match duration.
                     Whether the player won or lost.
                 -->
-                <v-row>
+                <div class="d-flex align-center">
                     <hearthstone-match-header-display
+                        class="flex-grow-1 mb-4"
                         :current-match="matchWrapper"
                     >
                     </hearthstone-match-header-display>
-                </v-row>
+
+                    <match-share-button
+                        :match-uuid="matchId"
+                        :game="SquadOvGames.Hearthstone"
+                        :user-id="userId"
+                    >
+                    </match-share-button>
+                </div>
                 
                 <!--
                     VOD and navigatable Per-round actions            
@@ -156,6 +164,8 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { HearthstoneMatch as RawHearthstoneMatch, HearthstoneMatchWrapper, HearthstoneMatchLogs} from '@client/js/hearthstone/hearthstone_match'
+import { SquadOvGames } from '@client/js/squadov/game'
+
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import HearthstoneMatchHeaderDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchHeaderDisplay.vue'
 import HearthstoneTurnEventsDisplay from '@client/vue/utility/hearthstone/HearthstoneTurnEventsDisplay.vue'
@@ -166,6 +176,7 @@ import HearthstoneBattlegroundTavernSummary from '@client/vue/utility/hearthston
 import HearthstoneCurrentDeckState from '@client/vue/utility/hearthstone/HearthstoneCurrentDeckState.vue'
 import HearthstoneVodPovPicker from '@client/vue/utility/hearthstone/HearthstoneVodPovPicker.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 
 @Component({
   components: {
@@ -178,10 +189,13 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
     HearthstoneBattlegroundTavernSummary,
     HearthstoneCurrentDeckState,
     HearthstoneVodPovPicker,
-    VideoPlayer
+    VideoPlayer,
+    MatchShareButton,
   }
 })
 export default class HearthstoneMatch extends Vue {
+    SquadOvGames: any = SquadOvGames
+    
     @Prop({required: true})
     matchId!: string
 

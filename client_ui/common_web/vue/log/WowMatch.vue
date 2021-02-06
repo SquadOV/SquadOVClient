@@ -2,30 +2,35 @@
     <loading-container :is-loading="!currentMatch">
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
-                <v-row>
-                    <v-col cols="12">
-                        <wow-keystone-summary v-if="!!currentMatch.challenge"
-                            :challenge="currentMatch.challenge"
-                            :user-id="userId"
-                            class="full-width"
-                        >
-                        </wow-keystone-summary>
+                <div class="d-flex align-center">
+                    <wow-keystone-summary v-if="!!currentMatch.challenge"
+                        :challenge="currentMatch.challenge"
+                        :user-id="userId"
+                        class="flex-grow-1 mb-4"
+                    >
+                    </wow-keystone-summary>
 
-                        <wow-encounter-summary v-else-if="!!currentMatch.encounter"
-                            :encounter="currentMatch.encounter"
-                            :user-id="userId"
-                            class="full-width"
-                        >
-                        </wow-encounter-summary>
+                    <wow-encounter-summary v-else-if="!!currentMatch.encounter"
+                        :encounter="currentMatch.encounter"
+                        :user-id="userId"
+                        class="flex-grow-1 mb-4"
+                    >
+                    </wow-encounter-summary>
 
-                        <wow-arena-summary v-else-if="!!currentMatch.arena"
-                            :arena="currentMatch.arena"
-                            :user-id="userId"
-                            class="full-width"
-                        >
-                        </wow-arena-summary>
-                    </v-col>
-                </v-row>
+                    <wow-arena-summary v-else-if="!!currentMatch.arena"
+                        :arena="currentMatch.arena"
+                        :user-id="userId"
+                        class="flex-grow-1 mb-4"
+                    >
+                    </wow-arena-summary>
+
+                    <match-share-button
+                        :match-uuid="matchUuid"
+                        :game="SquadOvGames.WorldOfWarcraft"
+                        :user-id="userId"
+                    >
+                    </match-share-button>
+                </div>
 
                 <v-row no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
@@ -98,6 +103,7 @@ import {
     WowCharacter,
     WoWCharacterUserAssociation
 } from '@client/js/wow/character'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 import WowMatchEvents from '@client/vue/utility/wow/WowMatchEvents.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
@@ -107,6 +113,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
 import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 
 @Component({
     components: {
@@ -117,10 +124,13 @@ import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
         LoadingContainer,
         VideoPlayer,
         WowTimeline,
-        WowVodPovPicker
+        WowVodPovPicker,
+        MatchShareButton,
     }
 })
 export default class WowMatch extends Vue {
+    SquadOvGames: any = SquadOvGames
+    
     @Prop({type:Number, required: true})
     userId!: number
 

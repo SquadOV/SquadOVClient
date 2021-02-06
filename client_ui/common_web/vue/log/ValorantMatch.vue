@@ -2,13 +2,21 @@
     <loading-container :is-loading="!currentMatch">
         <template v-slot:default="{ loading }">
             <v-container fluid v-if="!loading">
-                <v-row>
+                <div class="d-flex align-center">
                     <valorant-match-header-summary
+                        class="flex-grow-1 mb-4"
                         :match="matchWrapper"
                         :current-player="puuid"
                     >
                     </valorant-match-header-summary>
-                </v-row>
+
+                    <match-share-button
+                        :match-uuid="matchUuid"
+                        :game="SquadOvGames.Valorant"
+                        :user-id="userId"
+                    >
+                    </match-share-button>
+                </div>
 
                 <v-row no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
@@ -118,6 +126,7 @@ import {
     ValorantMatchPlayerWrapper,
     ValorantMatchTeamWrapper,
 } from '@client/js/valorant/valorant_matches_parsed'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ValorantMatchHeaderSummary from '@client/vue/utility/valorant/ValorantMatchHeaderSummary.vue'
@@ -128,6 +137,7 @@ import ValorantTeamRoundDisplay from '@client/vue/utility/valorant/ValorantTeamR
 import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFullMatchScoreboard.vue'
 import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchPlayerCard.vue'
 import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPicker.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 
 @Component({
     components: {
@@ -139,10 +149,13 @@ import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPic
         ValorantTeamRoundDisplay,
         ValorantFullMatchScoreboard,
         ValorantMatchPlayerCard,
-        ValorantVodPovPicker
+        ValorantVodPovPicker,
+        MatchShareButton,
     }
 })
 export default class ValorantMatch extends Vue {
+    SquadOvGames: any = SquadOvGames
+    
     @Prop()
     puuid! : string | null
 
