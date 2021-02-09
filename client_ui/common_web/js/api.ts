@@ -184,6 +184,12 @@ class ApiClient {
         return this._tempSessionId
     }
 
+    clearSession() {
+        this._sessionId = null
+        this._tempSessionId = null
+        this._tempUserId = null
+    }
+
     setSessionFull(s: string, userId: number) {
        this.setSessionId(s)
 

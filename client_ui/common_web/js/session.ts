@@ -7,8 +7,10 @@ export function checkHasSessionCookie() : boolean {
     return !!cookie && !!cookie.sessionId
 }
 
-export function clearSessionCookie() {
+export function clearSessionCookie(store: any) {
     ls.remove('squadov-session')
+    store.commit('setUser' , null)
+    apiClient.clearSession()
 }
 
 let currentSessionExpiration: Date | null = null
