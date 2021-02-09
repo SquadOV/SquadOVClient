@@ -71,14 +71,15 @@ export class TrackedUserStatsManager {
             }
 
             this._connection.onclose = (e: CloseEvent) => {
-                console.log('User Activty Websocket Close: ', e.code)
+                console.log('User Activity Websocket Close: ', e.code, e.reason)
                 if (e.code != 1001) {
-                    if (!!this._connection) {
-                        this._connection.close()
-                    }
-                    this._connection = null
-                    this.reconnect()
+                    this.recoverFromError()
                 }
+            }
+
+            this._connection.onerror = (err: any) => {
+                console.log('User Activity Websocket Error: ' , err)
+                this.recoverFromError()
             }
             
             this._reconnectCount = 0
@@ -93,6 +94,14 @@ export class TrackedUserStatsManager {
                 this.reconnect()
             }, Math.min(Math.pow(2, this._reconnectCount) + Math.random() * 1000, 15000))
         })
+    }
+
+    recoverFromError() {
+        if (!!this._connection) {
+            this._connection.close()
+        }
+        this._connection = null
+        this.reconnect()
     }
 
     reconnect() {
@@ -159,6 +168,7 @@ export class TrackedUserStatsManager {
 
     receiveMessage(e: MessageEvent) {
         let status: TrackedUserStatusContainer = JSON.parse(e.data)
+        console.log('Receive status update: ', status)
         for (let [userId, st] of Object.entries(status.status)) {
             this._store.commit('setUserActivityStatus', {
                 userId: parseInt(userId),
