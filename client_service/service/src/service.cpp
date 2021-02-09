@@ -64,7 +64,7 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     vsprintf(buffer, fmt, v1);
 
     std::string sBuffer(buffer);
-    LOG_INFO(sBuffer);
+    LOG_INFO(sBuffer << std::endl);
 }
 
 void defaultMain() {

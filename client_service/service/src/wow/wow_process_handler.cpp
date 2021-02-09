@@ -143,6 +143,8 @@ void WoWProcessHandlerInstance::cleanup() {
 
     LOG_INFO("Ending DVR session..." << std::endl);
     _recorder->stop();
+
+    LOG_INFO("Finish WoW cleanup..." << std::endl);
 }
 
 bool WoWProcessHandlerInstance::hasValidCombatLog() const {
@@ -450,6 +452,7 @@ void WoWProcessHandler::onProcessStops() {
     service::system::getGlobalState()->markGameRunning(shared::EGame::WoW, false);
     _instance->cleanup();
     _instance.reset(nullptr);
+    LOG_INFO("\tWoW fully stopped." << std::endl);
 }
 
 }

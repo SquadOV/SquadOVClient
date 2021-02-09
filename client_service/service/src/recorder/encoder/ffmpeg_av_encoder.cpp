@@ -161,6 +161,17 @@ private:
 
     uint64_t _receivedVideoFrames = 0;
     uint64_t _processedVideoFrames = 0;
+
+    // We need this so that in the off-chance that start/stop are called around the same time
+    // the stop will take precendence and not allow the start method to finish. The scenario I'm
+    // particularly worried about is that we call start/stop around the same time and then the
+    // order of operations becomes
+    // 1) stop: Set running to false
+    // 2) start: Set running to true
+    // 3) start: create threads
+    // 4) stop: block on thread join (won't finish until running is false)
+    mutable std::mutex _startMutex;
+    bool _canStart = true;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -512,7 +523,6 @@ void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& f
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
-    std::lock_guard<std::mutex> guard(_runningMutex);
     if (!_running) {
         return;
     }
@@ -602,6 +612,12 @@ void FfmpegAvEncoderImpl::open() {
 }
 
 void FfmpegAvEncoderImpl::start() {
+    std::lock_guard<std::mutex> guard(_startMutex);
+
+    if (!_canStart) {
+        LOG_INFO("Abortin start due to existing stop call." << std::endl);
+    }
+
     if (!_vstream) {
         return;
     }
@@ -710,6 +726,10 @@ bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
 }
 
 void FfmpegAvEncoderImpl::stop() {
+    LOG_INFO("Requesting FFmpeg Encoder Stop: " << _running << std::endl);
+    std::lock_guard<std::mutex> guard(_startMutex);
+    _canStart = false;
+
     if (!_running) {
         return;
     }
@@ -718,6 +738,8 @@ void FfmpegAvEncoderImpl::stop() {
         std::lock_guard<std::mutex> guard(_runningMutex);
         _running = false;
     }
+
+    LOG_INFO("Waiting for encoding/IO threads to finish..." << std::endl);
     _videoEncodingThread.join();
     _packetThread.join();
 

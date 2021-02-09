@@ -70,7 +70,7 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
         << "\tInit: " << info.init << std::endl
-        << "\tWindowed" << info.isWindowed << std::endl);
+        << "\tWindowed: " << info.isWindowed << std::endl);
 
 #ifdef _WIN32
     if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
