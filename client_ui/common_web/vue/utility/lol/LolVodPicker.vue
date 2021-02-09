@@ -62,6 +62,7 @@ import {
     getPlayerFromParticipantId,
 } from '@client/js/lol/matches'
 import { WrappedLolParticipant } from '@client/js/lol/participant'
+import { getActiveUserId } from '@client/js/app'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 
 @Component({
@@ -94,7 +95,7 @@ export default class LolVodPicker extends Vue {
     @Watch('matchUuid')
     refreshData() {
         this.availableVods = null
-        apiClient.getLolMatchAccessibleVods(this.matchUuid, this.$store.state.currentUser.id).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
+        apiClient.getLolMatchAccessibleVods(this.matchUuid, getActiveUserId()).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain LoL VODs: ', err)

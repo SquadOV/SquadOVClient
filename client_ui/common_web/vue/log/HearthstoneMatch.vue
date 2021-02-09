@@ -61,7 +61,7 @@
                                 </hearthstone-turn-events-display>
                             </v-tab-item>
 
-                            <template v-if="matchWrapper.isBattlegrounds">
+                            <template v-if="matchWrapper.isBattlegrounds && !!$store.state.currentUser">
                                 <!-- This show the current deck STATE (e.g. hand, graveyard, in play, etc.) -->
                                 <v-tab>
                                     Tavern
@@ -75,7 +75,7 @@
                                 </v-tab-item>
                             </template>
 
-                            <template v-else>
+                            <template v-else-if="!matchWrapper.isBattlegrounds">
                                 <!-- This show the current deck state for the start of the given round (e.g. hand, graveyard, in play, etc.) -->
                                 <v-tab>
                                     Deck

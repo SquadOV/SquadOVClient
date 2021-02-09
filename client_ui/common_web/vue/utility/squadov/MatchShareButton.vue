@@ -86,6 +86,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { StatPermission } from '@client/js/stats/statLibrary'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 @Component({
@@ -102,6 +103,9 @@ export default class MatchShareButton extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    @Prop()
+    graphqlStats!: StatPermission[]
 
     showHideError: boolean = false
     showHideShare: boolean = false
@@ -123,7 +127,7 @@ export default class MatchShareButton extends Vue {
             return
         }
         this.shareUrl = null
-        apiClient.getMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game).then((resp: ApiData<string>) => {
+        apiClient.getMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game, this.graphqlStats).then((resp: ApiData<string>) => {
             this.shareUrl = resp.data
         }).catch((err: any) => {
             this.showHideError = true

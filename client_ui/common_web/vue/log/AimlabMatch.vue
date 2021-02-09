@@ -30,6 +30,7 @@
 
                 <aimlab-task-performance-history
                     :task="data"
+                    :user-id="userId"
                 >
                 </aimlab-task-performance-history>
             </div>

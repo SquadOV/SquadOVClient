@@ -79,6 +79,7 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
+const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -474,6 +475,14 @@ const baseRoutes : any[] = [
             squadId: parseInt(route.query.squadId),
             sig: route.query.sig,
         })
+    },
+    {
+        path: '/share/:accessTokenId',
+        component: ShareRedirect,
+        name: pi.ShareRedirectPageId,
+        props: (route: any) => ({
+            accessTokenId: route.params.accessTokenId,
+        })
     }
 ]
 
@@ -495,23 +504,30 @@ router.beforeEach((to : any, from : any, next : any) => {
     console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
     
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
-    if (to.name != pi.DashboardPageId && !mustBeInvalid) {
+    if (to.name != pi.DashboardPageId && !mustBeInvalid && !!store.state.currentUser) {
         apiClient.markUserActive().catch((err: any) => {
             console.log('Failed to mark user active: ', err)
         })
     }
 
-    // Allow OAuth requests and squad invite responses to always go through regardless of whether the user is signed in or not.
-    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId) {
+    // Allow OAuth requests, squad invite responses, and shared pages to always go through regardless of whether the user is signed in or not.
+    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId) {
         next()
         return
     }
+
+    // the domain here doesn't matter as we don't use it.
+    let nextUrl = new URL(to.fullPath, 'http://localhost')
+    apiClient.setTempSessionId(nextUrl.searchParams.get('share'), nextUrl.searchParams.get('uid'))
+
+    let isTmpSession = apiClient.hasTempSession
+    let isAuth = !!store.state.currentUser || isTmpSession
 
 /// #if DESKTOP
     next()
 /// #else
     let hasCookie = checkHasSessionCookie()
-    if (hasCookie && !store.state.currentUser) {
+    if (hasCookie && !isAuth) {
         // If we have a cookie and the current user isn't set, then send out a request
         // to verify the session cookie.
         loadInitialSessionFromCookies(store, () => {
@@ -534,7 +550,9 @@ router.beforeEach((to : any, from : any, next : any) => {
             }
         })
     } else {
-        if (mustBeInvalid && hasCookie) {
+        if (isTmpSession) {
+            next()
+        } else if (mustBeInvalid && hasCookie) {
             next({
                 name: pi.DashboardPageId
             })
@@ -647,3 +665,7 @@ console.log('Loading Vue Application - Desktop')
 /// #else
 console.log('Loading Vue Application - Web')
 /// #endif
+
+export function getActiveUserId(): number {
+    return apiClient.hasTempSession ? apiClient._tempUserId! : store.state.currentUser?.id!
+}

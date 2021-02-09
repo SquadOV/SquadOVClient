@@ -3,6 +3,7 @@
         <stat-container
             title="Stat Visualization"
             editable
+            :user-id="$store.state.currentUser.id"
         >
             <template v-slot:default="{ data }">
                 <line-graph
@@ -28,7 +29,6 @@ import LineGraph from '@client/vue/stats/LineGraph.vue'
     }
 })
 export default class VizStats extends Vue {
-
 }
 
 </script>

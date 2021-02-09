@@ -84,6 +84,8 @@ import {
     cleanRecentMatchFromJson,
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { ShareAccessTokenResponse } from '@client/js/squadov/share'
+import { StatPermission } from '@client/js/stats/statLibrary'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -144,13 +146,30 @@ interface WebsocketAuthenticationResponse {
 
 class ApiClient {
     _sessionId: string | null
+    _tempSessionId: string | null
+    _tempUserId: number | null
 
     constructor() {
         this._sessionId = null
+        this._tempSessionId = null
+        this._tempUserId = null
     }
 
     setSessionId(s : string) {
         this._sessionId = s
+    }
+
+    setTempSessionId(s: string | null, uid: string | null) {
+        this._tempSessionId = s
+        if (!!uid) {
+            this._tempUserId = parseInt(uid)
+        } else {
+            this._tempUserId = null
+        }
+    }
+
+    get hasTempSession(): boolean {
+        return !!this._tempSessionId && (this._tempUserId !== null)
     }
 
     getSessionId(): string | null {
@@ -159,6 +178,10 @@ class ApiClient {
 /// #else
         return getSessionId()
 /// #endif                
+    }
+
+    getTempSessionId(): string | null {
+        return this._tempSessionId
     }
 
     setSessionFull(s: string, userId: number) {
@@ -174,9 +197,13 @@ class ApiClient {
             baseURL: SQUADOV_API_URL,
         }
 
-        if (!!this.setSessionId) {
+        if (!!this._sessionId) {
             ret.headers = {
                 'x-squadov-session-id': this._sessionId,
+            }
+        } else if (!!this._tempSessionId) {
+            ret.headers = {
+                'x-squadov-share-id': this._tempSessionId,
             }
         }
 
@@ -856,11 +883,16 @@ class ApiClient {
         })
     }
 
-    getMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames): Promise<ApiData<string>> {
+    getMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames, graphqlStats: StatPermission[] | undefined): Promise<ApiData<string>> {
         return axios.post(`v1/match/${matchUuid}/share`, {
             fullPath,
             game,
+            graphqlStats,
         }, this.createWebAxiosConfig())
+    }
+
+    exchangeShareAccessToken(accessTokenId: string): Promise<ApiData<ShareAccessTokenResponse>> {
+        return axios.post(`public/share/${accessTokenId}/exchange`, {}, this.createWebAxiosConfig())
     }
 }
 

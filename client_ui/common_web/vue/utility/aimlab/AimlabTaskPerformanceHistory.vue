@@ -9,6 +9,7 @@
                 class="pa-4 task-stat-container"
                 :stats="[content.getTaskCommonScoreStat(task.taskName, task.mode)]"
                 :title="getStatTitle(content.getTaskCommonScoreStat(task.taskName, task.mode))"
+                :user-id="userId"
             >
                 <template v-slot:default="{ data }">
                     <line-graph
@@ -35,6 +36,7 @@
                             class="pa-4 task-stat-container"
                             :stats="[stat]"
                             :title="getStatTitle(stat)"
+                            :user-id="userId"
                         >
                             <template v-slot:default="{ data }">
                                 <line-graph
@@ -70,6 +72,9 @@ import LineGraph from '@client/vue/stats/LineGraph.vue'
 export default class AimlabTaskPerformanceHistory extends Vue {
     @Prop({required: true})
     task! : AimlabTaskData
+
+    @Prop({required: true})
+    userId!: number
 
     content : AimlabContent = getAimlabContent()
 

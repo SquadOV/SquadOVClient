@@ -104,6 +104,7 @@ import {
     WoWCharacterUserAssociation
 } from '@client/js/wow/character'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { getActiveUserId } from '@client/js/app'
 
 import WowMatchEvents from '@client/vue/utility/wow/WowMatchEvents.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
@@ -267,7 +268,7 @@ export default class WowMatch extends Vue {
     @Watch('matchUuid')
     refreshCharacterAssociations() {
         this.characterAssociations = []
-        apiClient.listWoWMatchCharacterAssociations(this.$store.state.currentUser.id, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
+        apiClient.listWoWMatchCharacterAssociations(getActiveUserId(), this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
             this.characterAssociations = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW character associations: ', err)

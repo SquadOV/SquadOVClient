@@ -27,9 +27,18 @@
                     </template>
                 </v-list>
             </v-menu>
+        </template>
 
-            <v-spacer></v-spacer>
+        <v-spacer></v-spacer>
 
+        <v-btn v-if="!isDesktop" class="mr-2" color="primary" :href="downloadUrl">
+            <v-icon class="mr-1">
+                mdi-microsoft-windows
+            </v-icon>
+            Windows Client
+        </v-btn>
+
+        <template v-if="isLoggedIn">
             <v-menu bottom offset-y>
                 <template v-slot:activator="{on, attrs}">
                     <v-btn text v-bind="attrs" v-on="on">
@@ -73,6 +82,12 @@
                 </v-list>
             </v-menu>
         </template>
+
+        <template v-else>
+            <v-btn color="success" :to="registerTo">
+                Register
+            </v-btn>
+        </template>
     </v-app-bar>
 </template>
 
@@ -94,6 +109,24 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 @Component
 export default class AppNav extends Vue {
     notifications: NotificationSummary | null = null
+
+    get isDesktop(): boolean {
+/// #if DESKTOP
+        return true
+/// #else
+        return false
+/// #endif
+    }
+
+    get downloadUrl(): string {
+        return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe'
+    }
+
+    get registerTo(): any { 
+        return {
+            name: pi.RegisterPageId
+        }
+    }
 
     get isLoggedIn(): boolean {
         return !!this.$store.state.currentUser

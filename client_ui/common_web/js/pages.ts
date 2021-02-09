@@ -38,3 +38,4 @@ export const WaitForVerifyPageId = 'verify'
 
 export const RsoOauthPageId = 'rso'
 export const InviteResponsePageId = 'inviteResponse'
+export const ShareRedirectPageId = 'share'

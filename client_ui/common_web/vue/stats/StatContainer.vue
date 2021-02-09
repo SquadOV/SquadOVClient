@@ -121,6 +121,9 @@ export default class StatContainer extends Vue {
     @Prop({type: Boolean, default: false})
     editable!: boolean
 
+    @Prop({required: true})
+    userId!: number
+
     // These are the stats to pull and obtain series data for.
     // These stats will be made available to the slot display.
     @Prop({type: Array, default: () => []})
@@ -190,7 +193,7 @@ export default class StatContainer extends Vue {
         }
 
         // TODO: Figure out *what* changed exactly so we can only request data that we expect to be different.
-        let container = new StatInstanceContainer(new Map([[this.$store.state.currentUser.uuid, this.instances]]))
+        let container = new StatInstanceContainer(new Map([[this.userId, this.instances]]))
         let request = container.buildGraphqlQuery()
         apiClient.graphqlRequest(request).then((resp : GraphqlApiData<any>) => {
             container.parseGraphqlResponse(resp)

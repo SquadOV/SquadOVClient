@@ -47,13 +47,14 @@ import { apiClient, ApiData } from '@client/js/api'
 import { TftMatchAccessibleVods } from '@client/js/squadov/vod'
 import { WrappedTftMatch, TftParticipant } from '@client/js/tft/matches'
 import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
+import { getActiveUserId } from '@client/js/app'
 
 @Component({
     components: {
         TftLittleLegendIcon
     }
 })
-export default class LolVodPicker extends Vue {
+export default class TftVodPicker extends Vue {
     @Prop({required: true})
     matchUuid!: string
 
@@ -96,7 +97,7 @@ export default class LolVodPicker extends Vue {
     @Watch('matchUuid')
     refreshData() {
         this.availableVods = null
-        apiClient.getTftMatchAccessibleVods(this.matchUuid, this.$store.state.currentUser.id).then((resp: ApiData<TftMatchAccessibleVods>) => {
+        apiClient.getTftMatchAccessibleVods(this.matchUuid, getActiveUserId()).then((resp: ApiData<TftMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain TFT VODs: ', err)
