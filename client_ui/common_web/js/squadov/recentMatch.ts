@@ -42,6 +42,8 @@ export function checkRecentMatchValidity(r: RecentMatch): boolean {
             return !!r.valorantMatch
         case SquadOvGames.Hearthstone:
             return true
+        case SquadOvGames.Unknown:
+            return false
     }
 }
 
