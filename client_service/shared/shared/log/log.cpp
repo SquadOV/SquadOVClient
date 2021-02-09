@@ -48,9 +48,62 @@ Log::Log(const std::string& fname) {
         throw std::runtime_error("Failed to open log file.");
         return;
     }
+
+    // Start a thread to write to console/file from the queue.
+    _queueThread = std::thread(std::bind(&Log::queueWorker, this));
+}
+
+void Log::queueWorker() {
+    while (_running) {
+        std::unique_lock<std::mutex> lock(_queueMutex);
+        if (!_queueCv.wait_for(lock, std::chrono::milliseconds(100), [this](){ return !_queue.empty(); })) {
+            continue;
+        }
+
+        while (!_queue.empty()) {
+            const auto& item = _queue.front();
+
+            if (item.type.has_value()) {
+                _currentType = item.type.value();
+            }
+            
+            if (canLogPass()) {
+                if (item.needPrefix.value_or(false)) {
+                    _needPrefix = true;
+                }
+
+                if (item.io.has_value()) {
+                    _outLog << item.io.value();
+                    std::cout << item.io.value();
+                }
+
+                if (item.stream.has_value()) {
+                    _outLog << item.stream.value();
+                    std::cout << item.stream.value();
+                }
+
+                if (item.text.has_value()) {
+                    std::ostringstream str;
+                    if (_needPrefix) {
+                        str << "[" << currentLogLevel() << "]"
+                            << "[" << currentTimeLog() << "] ";
+                        _needPrefix = false;
+                    }
+                    _outLog << str.str() << item.text.value();
+                    std::cout << str.str() << item.text.value();
+                }
+            }
+
+            _queue.pop_front();
+        }
+    }
 }
 
 Log::~Log() {
+    _running = false;
+    if (_queueThread.joinable()) {
+        _queueThread.join();
+    }
     if (_outLog.is_open()) {
         _outLog.close();
     }
