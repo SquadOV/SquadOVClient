@@ -44,6 +44,9 @@ export default class VideoPlayer extends Vue {
     @Prop()
     currentTime!: Date | null
 
+    @Prop()
+    ready!: boolean | undefined
+
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
@@ -92,7 +95,7 @@ export default class VideoPlayer extends Vue {
     }
 
     goToTimeMs(tmMs : number) {
-        if (!this.player) {
+        if (!this.player || this.player.readyState() < 3) {
             return
         }
 
@@ -151,6 +154,7 @@ export default class VideoPlayer extends Vue {
         }
 
         if (!!this.videoUri) {
+            this.$emit('update:ready', false)
             if (this.currentMimeType == 'video/mp2t') {
                 // Need to generate a manifest to get video.js to play a mpeg-ts file.
                 const parser = new M3u8Parser();
@@ -219,6 +223,7 @@ export default class VideoPlayer extends Vue {
                     this.player.play()
                 }
             }
+            this.$emit('update:ready', true)
         })
 
         this.player.on('timeupdate', () => {

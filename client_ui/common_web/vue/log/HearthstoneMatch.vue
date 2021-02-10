@@ -33,6 +33,7 @@
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
+                            :ready.sync="vodReady"
                         >
                         </video-player>
 
@@ -56,7 +57,7 @@
                                     :turn="currentTurn"
                                     :style="roundEventsStyle"
                                     @go-to-event="goToVodTime"
-                                    :has-vod="hasVod"
+                                    :has-vod="hasVod && vodReady"
                                 >
                                 </hearthstone-turn-events-display>
                             </v-tab-item>
@@ -218,6 +219,7 @@ export default class HearthstoneMatch extends Vue {
 
     // Match loading
     ready: boolean = false
+    vodReady: boolean = false
 
     get roundEventsStyle() : any {
         return {

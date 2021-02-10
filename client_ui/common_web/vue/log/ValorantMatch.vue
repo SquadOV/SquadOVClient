@@ -26,6 +26,7 @@
                             :player-height.sync="currentPlayerHeight"
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
+                            :ready.sync="vodReady"
                         >
                         </video-player>
 
@@ -44,7 +45,7 @@
                         <valorant-round-events
                             :match="matchWrapper"
                             :round="currentRound"
-                            :force-disable-go-to-event="!hasMatchTiming"
+                            :force-disable-go-to-event="!hasMatchTiming || !vodReady"
                             :style="roundEventsStyle"
                             :current-player="currentPlayer"
                             :metadata="playerMetadata"
@@ -180,6 +181,7 @@ export default class ValorantMatch extends Vue {
     currentRoundNum : number = 0
 
     theaterMode: boolean = false
+    vodReady: boolean = false
     
     get matchWrapper() : ValorantMatchDetailsWrapper | null {
         if (!this.currentMatch) {

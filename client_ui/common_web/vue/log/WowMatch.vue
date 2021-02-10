@@ -41,6 +41,7 @@
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :current-time.sync="vodTime"
+                            :ready.sync="vodReady"
                         >
                         </video-player>
 
@@ -58,7 +59,7 @@
                         <wow-match-events
                             :events="events"
                             :style="roundEventsStyle"
-                            :has-vod="!!vod"
+                            :has-vod="!!vod && vodReady"
                             :current-character="currentCharacter"
                             :start-time="startTime"
                             :sync-unified-events.sync="filteredEvents"
@@ -155,6 +156,7 @@ export default class WowMatch extends Vue {
     vodTime: Date | null = null
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
+    vodReady: boolean = false
 
     goToVodTime(tm : Date) {
         if (!this.vod) {

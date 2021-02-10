@@ -29,6 +29,7 @@
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :current-time.sync="vodTime"
+                            :ready.sync="vodReady"
                         >
                         </video-player>
 
@@ -47,7 +48,7 @@
                             :timeline="currentMatch.timeline"
                             :current-participant-id="currentParticipantId"
                             :display-events.sync="displayEvents"
-                            :has-vod="!!vod"
+                            :has-vod="!!vod && vodReady"
                             :style="eventsStyle"
                             @go-to-timestamp="goToTimestamp"
                         >
@@ -192,6 +193,7 @@ export default class LolMatch extends Vue {
     theaterMode: boolean = false
     currentTab: number = 0
     vodTime: Date | null = null
+    vodReady: boolean = false
 
     goToTimestampSeconds(t: number) {
         this.goToTimestamp(t * 1000.0)
