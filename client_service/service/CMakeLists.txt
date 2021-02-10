@@ -64,9 +64,10 @@ SET(HEADERS
     src/local/local_data.h
 )
 
-MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME)
+MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     add_executable(${EXE_NAME}
         ${CPP_NAME}
+        ${MANIFEST_FILE}
         ${SRCS}
         ${HEADERS}
     )
@@ -114,6 +115,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME)
             TARGET ${EXE_NAME}
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:${EXE_NAME}>
+            COMMENT "Copying DLLs..."
         )
 
         target_link_libraries(${EXE_NAME}
@@ -125,6 +127,6 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME)
 
 ENDMACRO()
 
-CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp")
-CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp")
-CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp")
+CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp" "src/squadov_client_service.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
