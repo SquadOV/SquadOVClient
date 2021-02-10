@@ -4,6 +4,7 @@
 
 #include <thread>
 #include <iostream>
+#include "shared/log/log.h"
 
 namespace service::system::win32 {
 namespace {
@@ -66,6 +67,7 @@ bool isFullscreen(HWND wnd, HMONITOR monitor) {
     if (!GetMonitorInfoA(monitor, &info)) {
         return false;
     }
+    LOG_INFO("Check fullscreen: " << hwndRect << " vs " << info.rcMonitor << std::endl);
     return hwndRect == info.rcMonitor;
 }
 
