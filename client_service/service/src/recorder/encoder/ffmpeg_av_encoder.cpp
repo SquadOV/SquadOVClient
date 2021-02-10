@@ -17,6 +17,7 @@
 #include <thread>
 #include <memory>
 #include <mutex>
+#include <shared_mutex>
 #include <stdint.h>
 #include <vector>
 
@@ -120,6 +121,7 @@ private:
         // Once the queue reaches the size of an actual frame,
         // we'll send that to the encoder to be written out.
         AVAudioFifo* fifo = nullptr;
+        std::shared_mutex fifoMutex;
 
         // samplesStorage is the place where we'll use swr to convert the
         // input audio packet into the output format.
@@ -217,6 +219,8 @@ void FfmpegAvEncoderImpl::AudioStreamData::reinitSampleStorage(int inputSamples)
 }
 
 void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSamples) {
+    std::unique_lock<std::shared_mutex> guard(fifoMutex);
+
     const auto newNumSamples = av_audio_fifo_space(fifo) + numSamples;
     if (av_audio_fifo_realloc(fifo, newNumSamples) < 0) {
         THROW_ERROR("Failed to reallocate FIFO queue.");
@@ -260,7 +264,7 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
     // Encode video frame.
     auto ret = avcodec_send_frame(cctx, frame);
     if (ret < 0) {
-        THROW_ERROR("Failed to send  frame: " << ret);
+        THROW_ERROR("Failed to send frame: " << ret);
     }
 
     while (true) {
@@ -545,39 +549,48 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     streamData.convertedSamples += numConverted;
     streamData.writeStoredSamplesToFifo(numConverted);
 
-    const auto frameSize = _acodecContext->frame_size;
-    while (hasAudioFrameAvailable()) {
-        for (size_t s = 0; s < _astreams.size(); ++s) {
-            const auto numChannels = _acodecContext->channels;
+    // I don't believe there's a need to do this on multiple encoder indexes...The only
+    // time this *might* screw up is if encoder index 0 receives 0 audio packets. Oh well?
+    // The FIFO is protected by a shared mutex because each audio input stream is fed in from a
+    // separate thread.
+    if (encoderIdx == 0) {
+        const auto frameSize = _acodecContext->frame_size;
+        while (hasAudioFrameAvailable()) {
+            for (size_t s = 0; s < _astreams.size(); ++s) {
+                const auto numChannels = _acodecContext->channels;
 
-            if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
-                THROW_ERROR("Failed to read from FIFO queue.");
-            }
-            _astreams[s]->encodedSamples += frameSize;
+                {
+                    std::shared_lock<std::shared_mutex> guard(_astreams[s]->fifoMutex);
+                    if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
+                        THROW_ERROR("Failed to read from FIFO queue.");
+                    }
+                }
+                _astreams[s]->encodedSamples += frameSize;
 
-            // Copy from the tmp frame into the encoding frame.
-            // We are very much assuming a planar output right now.
-            for (auto c = 0; c < _acodecContext->channels; ++c) {
-                const float* input = (const float*)_aTmpFrame->data[c];
-                float* output = (float*)_aframe->data[c];
+                // Copy from the tmp frame into the encoding frame.
+                // We are very much assuming a planar output right now.
+                for (auto c = 0; c < _acodecContext->channels; ++c) {
+                    const float* input = (const float*)_aTmpFrame->data[c];
+                    float* output = (float*)_aframe->data[c];
 
-                for (auto i = 0; i < frameSize; ++i) {
-                    if (s == 0) {
-                        output[i] = input[i];
-                    } else {
-                        output[i] += input[i];
+                    for (auto i = 0; i < frameSize; ++i) {
+                        if (s == 0) {
+                            output[i] = input[i];
+                        } else {
+                            output[i] += input[i];
+                        }
                     }
                 }
             }
-        }
 
-        if (av_frame_make_writable(_aframe) < 0) {
-            THROW_ERROR("Failed to make frame writable.");
-        }
+            if (av_frame_make_writable(_aframe) < 0) {
+                THROW_ERROR("Failed to make frame writable.");
+            }
 
-        _aframe->pts = _aFrameNum;
-        _aFrameNum += frameSize;
-        encode(_acodecContext, _aframe, _astream);
+            _aframe->pts = _aFrameNum;
+            _aFrameNum += frameSize;
+            encode(_acodecContext, _aframe, _astream);
+        }
     }
 }
 
@@ -718,6 +731,7 @@ void FfmpegAvEncoderImpl::flushPacketQueue() {
 
 bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
     for (const auto& stream : _astreams) {
+        std::shared_lock<std::shared_mutex> guard(stream->fifoMutex);
         if (av_audio_fifo_size(stream->fifo) < _acodecContext->frame_size) {
             return false;
         }
