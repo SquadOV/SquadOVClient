@@ -66,6 +66,8 @@
                             :match-characters="matchCharacters"
                             :selected-encounter.sync="selectedEncounter"
                             :is-arena="!!currentMatch.arena"
+                            :use-teams="!!currentMatch.arena"
+                            :friendly-team="friendlyTeam"
                             @go-to-event="goToVodTime"
                         >
                         </wow-match-events>
@@ -97,7 +99,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
-import { GenericWowMatchContainer } from '@client/js/wow/matches'
+import { GenericWowMatchContainer, getOppositeWowArenaTeam } from '@client/js/wow/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { SerializedWowMatchEvents, UnifiedWowEventContainer, WowEncounter } from '@client/js/wow/events'
@@ -158,6 +160,15 @@ export default class WowMatch extends Vue {
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
     vodReady: boolean = false
+
+    get friendlyTeam(): number {
+        let winningTeamId = this.currentMatch?.arena?.winningTeamId
+        if (winningTeamId === null || winningTeamId === undefined) {
+            return 0
+        }
+
+        return !!this.currentMatch?.arena?.success ? winningTeamId : getOppositeWowArenaTeam(winningTeamId)
+    }
 
     goToVodTime(tm : Date) {
         if (!this.vod) {

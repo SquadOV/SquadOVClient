@@ -286,6 +286,12 @@ export default class WowMatchEvents extends Vue {
     @Prop({type: Boolean, required: true})
     isArena!: boolean
 
+    @Prop({type: Boolean, default: false})
+    useTeams!: boolean
+
+    @Prop({default: 0})
+    friendlyTeam!: number
+
     // Event filters
     showFilters: boolean = false
     showFriendly: boolean = true
@@ -348,7 +354,9 @@ export default class WowMatchEvents extends Vue {
     }
 
     get friendlyGuidSet(): Set<string> {
-        return new Set(this.matchCharacters.map((ele: WowCharacter) => ele.guid))
+        return new Set(this.matchCharacters.filter((ele: WowCharacter) => {
+            return !this.useTeams || (ele.team === this.friendlyTeam)
+        }).map((ele: WowCharacter) => ele.guid))
     }
 
     get encounterNameSet(): Set<string> {
