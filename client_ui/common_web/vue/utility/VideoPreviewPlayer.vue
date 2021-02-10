@@ -50,6 +50,10 @@ export default class VideoPreviewPlayer extends Vue {
     }
 
     onVideoUriChange() {
+        if (!this.$refs.video) {
+            return
+        }
+
         if (!this.player) {
             this.player = videojs(this.$refs.video, {
                 controls: false,

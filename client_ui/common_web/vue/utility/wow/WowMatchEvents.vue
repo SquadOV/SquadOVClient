@@ -283,6 +283,9 @@ export default class WowMatchEvents extends Vue {
     @Prop({type: Array})
     syncUnifiedEvents!: UnifiedWowEventContainer[]
 
+    @Prop({type: Boolean, required: true})
+    isArena!: boolean
+
     // Event filters
     showFilters: boolean = false
     showFriendly: boolean = true
@@ -371,7 +374,7 @@ export default class WowMatchEvents extends Vue {
         let neutral = wowc.isObjectNeutral(ele.flags)
         let player = wowc.isObjectPlayer(ele.flags)
         let npc = wowc.isObjectNpc(ele.flags)
-        let pet = (friendly || neutral) && wowc.isObjectPet(ele.flags)
+        let pet = (friendly || neutral || (this.isArena && hostile)) && wowc.isObjectPet(ele.flags)
         let trash = hostile && npc && !this.encounterNameSet.has(ele.name)
         let boss = hostile && npc && this.encounterNameSet.has(ele.name)
         return applyFilterToCondition(friendly, this.showFriendly)

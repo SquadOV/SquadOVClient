@@ -65,6 +65,7 @@
                             :sync-unified-events.sync="filteredEvents"
                             :match-characters="matchCharacters"
                             :selected-encounter.sync="selectedEncounter"
+                            :is-arena="!!currentMatch.arena"
                             @go-to-event="goToVodTime"
                         >
                         </wow-match-events>
