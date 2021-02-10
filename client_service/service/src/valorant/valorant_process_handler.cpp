@@ -142,8 +142,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             // Grab the match via backfill later.
             const auto matchUuid = service::api::getGlobalApi()->uploadValorantMatch(
                 _currentMatch->matchId(),
-                _currentUser.username,
-                _currentUser.tag,
+                _currentUser.puuid,
                 _currentMatch->toJson()
             );
             
@@ -179,7 +178,7 @@ void ValorantProcessHandlerInstance::backfillMatchHistory() {
     if (!_ownsAccount) {
         return;
     }
-    service::api::getGlobalApi()->requestValorantMatchBackfill(_currentUser.username, _currentUser.tag);
+    service::api::getGlobalApi()->requestValorantMatchBackfill(_currentUser.puuid);
 }
 
 void ValorantProcessHandlerInstance::onValorantBuyStart(const shared::TimePoint& eventTime, const void*) {
@@ -217,7 +216,7 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
         << "\tUsername: " << user->username << std::endl
         << "\tTagline: " << user->tag << std::endl);
 
-    _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(user->username, user->tag);
+    _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(user->username, user->tag, user->puuid);
     LOG_INFO("Owns Account: " << _ownsAccount << std::endl);
     if (!_ownsAccount) {
         return;

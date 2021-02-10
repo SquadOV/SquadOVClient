@@ -900,6 +900,14 @@ class ApiClient {
     exchangeShareAccessToken(accessTokenId: string): Promise<ApiData<ShareAccessTokenResponse>> {
         return axios.post(`public/share/${accessTokenId}/exchange`, {}, this.createWebAxiosConfig())
     }
+
+    deleteRiotAccount(userId: number, puuid: string): Promise<ApiData<void>> {
+        return axios.delete(`v1/users/${userId}/accounts/riot/generic/${puuid}`, this.createWebAxiosConfig())
+    }
+
+    resyncRiotAccount(userId: number, puuid: string): Promise<ApiData<void>> {
+        return axios.post(`v1/users/${userId}/accounts/riot/generic/${puuid}`, {}, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

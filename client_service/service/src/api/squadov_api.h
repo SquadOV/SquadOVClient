@@ -45,9 +45,9 @@ public:
     shared::squadov::SquadOVUser getCurrentUser() const;
 
     // Valorant
-    std::string uploadValorantMatch(const std::string& matchId, const std::string& gameName, const std::string& tagLine, const nlohmann::json& playerData) const;
-    void requestValorantMatchBackfill(const std::string& gameName, const std::string& tagLine) const;
-    bool verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const;
+    std::string uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const;
+    void requestValorantMatchBackfill(const std::string& puuid) const;
+    bool verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const;
 
     // Aim Lab
     std::string uploadAimlabTask(const shared::aimlab::TaskData& data) const;
@@ -78,13 +78,13 @@ public:
     // League of Legends
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;
     void finishLeagueOfLegendsMatch(const std::string& matchUuid) const;
-    bool verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName) const;
+    bool verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName, const std::string& puuid) const;
     void requestLeagueOfLegendsBackfill(const std::string& summonerName, const std::string& platform) const;
 
     // TFT
     std::string createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;
     void finishTftMatch(const std::string& matchUuid) const;
-    bool verifyTftAccountOwnership(const std::string& summonerName) const;
+    bool verifyTftAccountOwnership(const std::string& summonerName, const std::string& puuid) const;
     void requestTftBackfill(const std::string& summonerName, const std::string& region) const;
 
     // VOD

@@ -107,12 +107,11 @@ shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     return ret;
 }
 
-std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& gameName, const std::string& tagLine, const nlohmann::json& playerData) const {
+std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const {
     const std::string path = "/v1/valorant";
     nlohmann::json body = {
         { "matchId", matchId },
-        { "gameName", gameName },
-        { "tagLine", tagLine },
+        { "puuid", puuid },
         { "playerData", playerData } 
     };
 
@@ -127,13 +126,12 @@ std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const st
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::requestValorantMatchBackfill(const std::string& gameName, const std::string& tagLine) const {
+void SquadovApi::requestValorantMatchBackfill(const std::string& puuid) const {
     std::ostringstream path;
     path << "/v1/valorant/user/" << getSessionUserId() << "/backfill";
 
     const nlohmann::json body = {
-        { "gameName", gameName },
-        { "tagLine", tagLine }
+        { "puuid", puuid }
     };
 
     const auto result = _webClient->post(path.str(), body);
@@ -474,20 +472,44 @@ void SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const shared:
     }
 }
 
-bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine) const {
-    std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account/" << gameName << "/" << tagLine;
+bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {
+    const nlohmann::json body = {
+        { "gameName", gameName },
+        { "tagLine", tagLine },
+        { "puuid", puuid }
+    };
 
-    const auto result = _webClient->get(path.str());
-    return result->status == 200;
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account";
+
+    const auto result = _webClient->post(path.str(), body);
+    return result->status == 204;
 }
 
-bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName) const {
-    std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/lol/" << summonerName;
+bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName, const std::string& puuid) const {
+    const nlohmann::json body = {
+        { "summonerName", summonerName },
+        { "puuid", puuid }
+    };
 
-    const auto result = _webClient->get(path.str());
-    return result->status == 200;
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/lol/account";
+
+    const auto result = _webClient->post(path.str(), body);
+    return result->status == 204;
+}
+
+bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName, const std::string& puuid) const {
+    const nlohmann::json body = {
+        { "summonerName", summonerName },
+        { "puuid", puuid }
+    };
+
+    std::ostringstream path;
+    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/tft/account";
+
+    const auto result = _webClient->post(path.str(), body);
+    return result->status == 204;
 }
 
 std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const {
@@ -535,14 +557,6 @@ void SquadovApi::requestLeagueOfLegendsBackfill(const std::string& summonerName,
         THROW_ERROR("Failed to request LoL backfill: " << result->status);
         return;
     }
-}
-
-bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName) const {
-    std::ostringstream path;
-    path << "/v1/users/" << getSessionUserId() << "/accounts/riot/tft/" << summonerName;
-
-    const auto result = _webClient->get(path.str());
-    return result->status == 200;
 }
 
 std::string SquadovApi::createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const {

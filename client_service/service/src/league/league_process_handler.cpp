@@ -33,6 +33,7 @@ public:
 
 private:
     void onLeagueConfig(const shared::TimePoint& eventTime, const void* rawData);
+    void onLeagueLocalPlayer(const shared::TimePoint& eventTime, const void* rawData);
 
     void onLeagueAvailable(const shared::TimePoint& eventTime, const void* rawData);
     void onLeagueGameStart(const shared::TimePoint& eventTime, const void* rawData);
@@ -53,6 +54,10 @@ private:
     std::string _currentMatchUuid;
     std::string _activePlayerSummonerName;
     shared::EGame _actualGame;
+
+    mutable std::mutex _puuidMutex;
+    std::condition_variable _puuidCv;
+    std::string _localPuuid;
 
     mutable std::mutex _configMutex;
     bool _hasConfig = false;
@@ -87,6 +92,7 @@ LeagueProcessHandlerInstance::LeagueProcessHandlerInstance(const process_watcher
     // we'll upload it.
     _logWatcher = std::make_unique<game_event_watcher::LeagueLogWatcher>(shared::nowUtc());
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ELeagueLogEvents::CommandLineCfg), std::bind(&LeagueProcessHandlerInstance::onLeagueConfig, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ELeagueLogEvents::LocalPlayer), std::bind(&LeagueProcessHandlerInstance::onLeagueLocalPlayer, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
 }
 
@@ -186,10 +192,14 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
 
+        std::unique_lock<std::mutex> lock(_puuidMutex);
+        _puuidCv.wait(lock, [this](){ return !_localPuuid.empty(); });
+        LOG_INFO("Obtained local PUUID: " << _localPuuid << std::endl);
+
         if (_actualGame == shared::EGame::TFT) {
-            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName);
+            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName, _localPuuid);
         } else {
-            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName);
+            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName, _localPuuid);
         }
         
         LOG_INFO("\tDetermined Game: " << shared::gameToString(_actualGame) << std::endl);
@@ -227,6 +237,28 @@ void LeagueProcessHandlerInstance::onLeagueGameStart(const shared::TimePoint& ev
 
     requestMatchCreation();
     requestBackfill();
+}
+
+void LeagueProcessHandlerInstance::onLeagueLocalPlayer(const shared::TimePoint& eventTime, const void* rawData) {
+    if (service::system::getGlobalState()->isPaused()) {
+        return;
+    }
+
+    const auto* player = reinterpret_cast<const game_event_watcher::LeagueLocalPlayer*>(rawData);
+    if (!player) {
+        LOG_WARNING("Null League Local Player?" << std::endl);
+        return;
+    }
+
+    LOG_INFO("League Local Player: " << std::endl
+        << "\tName: " << player->name << std::endl
+        << "\tPUUID: " << player->puuid << std::endl);
+    
+    {
+        std::lock_guard<std::mutex> guard(_puuidMutex);
+        _localPuuid = player->puuid;
+    }
+    _puuidCv.notify_all();
 }
 
 void LeagueProcessHandlerInstance::onLeagueConfig(const shared::TimePoint& eventTime, const void* rawData) {

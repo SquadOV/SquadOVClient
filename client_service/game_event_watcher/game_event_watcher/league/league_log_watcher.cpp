@@ -45,6 +45,18 @@ bool parseLeagueCommandLineCfg(const std::string& line, LeagueCommandLineCfg& cf
     return true;
 }
 
+const std::regex CONNECTION_READY_REGEX("CONNECTION READY \\| TeamOrder \\d*\\)\\s(.*)\\s\\*\\*LOCAL\\*\\*\\s-.*PUUID\\((.*?)\\)");
+bool parseLeagueLocalPlayer(const std::string& line, LeagueLocalPlayer& player) {
+    std::smatch matches;
+    if (!std::regex_search(line, matches, CONNECTION_READY_REGEX)) {
+        return false;
+    }
+
+    player.name = matches[1].str();
+    player.puuid = matches[2].str();
+    return true;
+}
+
 }
 
 
@@ -124,11 +136,21 @@ void LeagueLogWatcher::loadFromPath(const std::filesystem::path& logPath) {
 
 void LeagueLogWatcher::onR3dChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
+        bool parsed = false;
         {
             LeagueCommandLineCfg cfg;
             if (parseLeagueCommandLineCfg(ln, cfg)) {
                 // We could parse the actual time  but MEH.
                 notify(static_cast<int>(ELeagueLogEvents::CommandLineCfg), shared::nowUtc(), &cfg);
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            LeagueLocalPlayer player;
+            if (parseLeagueLocalPlayer(ln, player)) {
+                notify(static_cast<int>(ELeagueLogEvents::LocalPlayer), shared::nowUtc(), &player);
+                parsed = true;
             }
         }
     }

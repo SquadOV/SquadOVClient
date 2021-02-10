@@ -3,7 +3,7 @@
         <v-select
             :value="value"
             @input="$emit('input', arguments[0])"
-            label="Summoner"
+            label="Valorant Account"
             :items="items"
             solo
             hide-details
@@ -17,27 +17,20 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { RiotSummoner } from '@client/js/riot/summoner'
+import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import GenericRiotUserChooser from '@client/vue/utility/riot/GenericRiotUserChooser.vue'
 
 @Component({
     components: {
-        GenericRiotUserChooser
+        GenericRiotUserChooser,
     }
 })
-export default class SummonerAccountChooser extends Vue {
+export default class RiotAccountChooser extends Vue {
     @Prop({required: true})
-    value! : RiotSummoner | null
+    value! : RiotAccountData | null
 
     @Prop({type: Array, required: true})
-    options! : RiotSummoner[]
-
-    get items() : any[] {
-        return this.options!.map((ele : RiotSummoner) => ({
-            text: ele.summonerName,
-            value: ele,
-        }))
-    }
+    options! : RiotAccountData[]
 
     get puuid(): string | null {
         if (!this.value) {
@@ -46,11 +39,18 @@ export default class SummonerAccountChooser extends Vue {
         return this.value.puuid
     }
 
+    get items() : any[] {
+        return this.options!.map((ele : RiotAccountData) => ({
+            text: `${ele.gameName}#${ele.tagLine}`,
+            value: ele,
+        }))
+    }
+
     get account(): string | null {
         if (!this.value) {
             return null
         }
-        return this.value.summonerName
+        return `${this.value.gameName}#${this.value.tagLine}`
     }
 }
 

@@ -8,12 +8,13 @@
                             Header div that lets user select accounts and also do some easy stats navigation.
                         -->
                         <div class="d-flex align-center">
-                            <valorant-account-chooser
+                            <riot-account-chooser
                                 v-model="selectedAccount"
+                                @on-account-change="refreshAccounts"
                                 :options.sync="allAccounts"
                                 class="mr-4"
                             >
-                            </valorant-account-chooser>
+                            </riot-account-chooser>
 
                             <v-btn icon @click="refreshAccounts">
                                 <v-icon>
@@ -51,13 +52,13 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import ValorantAccountChooser from '@client/vue/utility/valorant/ValorantAccountChooser.vue'
+import RiotAccountChooser from '@client/vue/utility/riot/RiotAccountChooser.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
     components: {
         LoadingContainer,
-        ValorantAccountChooser
+        RiotAccountChooser
     }
 })
 export default class ValorantLogContainer extends Vue {

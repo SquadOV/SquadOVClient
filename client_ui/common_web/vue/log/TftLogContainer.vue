@@ -8,6 +8,7 @@
                             <summoner-account-chooser
                                 v-model="selectedAccount"
                                 :options.sync="allAccounts"
+                                @on-account-change="refreshAccounts"
                                 class="mr-4"
                             >
                             </summoner-account-chooser>
