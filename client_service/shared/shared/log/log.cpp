@@ -62,36 +62,13 @@ void Log::queueWorker() {
 
         while (!_queue.empty()) {
             const auto& item = _queue.front();
-
-            if (item.type.has_value()) {
-                _currentType = item.type.value();
-            }
             
-            if (canLogPass()) {
-                if (item.needPrefix.value_or(false)) {
-                    _needPrefix = true;
-                }
-
-                if (item.io.has_value()) {
-                    _outLog << item.io.value();
-                    std::cout << item.io.value();
-                }
-
-                if (item.stream.has_value()) {
-                    _outLog << item.stream.value();
-                    std::cout << item.stream.value();
-                }
-
-                if (item.text.has_value()) {
-                    std::ostringstream str;
-                    if (_needPrefix) {
-                        str << "[" << currentLogLevel() << "]"
-                            << "[" << currentTimeLog() << "] ";
-                        _needPrefix = false;
-                    }
-                    _outLog << str.str() << item.text.value();
-                    std::cout << str.str() << item.text.value();
-                }
+            if (canLogPass(item)) {
+                std::ostringstream str;
+                str << "[" << item.currentLogLevel() << "]"
+                    << "[" << currentTimeLog() << "] ";
+                _outLog << str.str() << item.data() << std::flush;
+                std::cout << str.str() << item.data() << std::flush;
             }
 
             _queue.pop_front();
@@ -113,8 +90,8 @@ std::string Log::currentTimeLog() const {
     return shared::timeToStr(shared::nowUtc());
 }
 
-std::string Log::currentLogLevel() const {
-    switch (_currentType) {
+std::string LogItem::currentLogLevel() const {
+    switch (_type) {
         case LogType::Info:
             return "Info";
         case LogType::Warning:
@@ -127,8 +104,8 @@ std::string Log::currentLogLevel() const {
     return "";
 }
 
-bool Log::canLogPass() const {
-    return (static_cast<int>(_currentType) >= static_cast<int>(_typeThreshold));
+bool Log::canLogPass(const LogItem& t) const {
+    return (static_cast<int>(t.type()) >= static_cast<int>(_typeThreshold));
 }
 
 Log& getGlobalLogger() {
