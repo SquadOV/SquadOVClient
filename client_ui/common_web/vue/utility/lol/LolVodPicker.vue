@@ -1,49 +1,22 @@
 <template>
-    <div class="d-flex align-center pa-2" v-if="numPovs > 0">
-        <div>
-            <v-icon>
-                mdi-eye
-            </v-icon>
-        </div>
-
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex">
-            <div
-                class="selection-div mr-2"
-                v-for="(fvod, fidx) in friendlyPovs"
-                :key="`friendly-${fidx}`"
-                @click="selectVod(fvod)"
+    <generic-vod-picker
+        :value="vod"
+        @input="selectVod"
+        :options="orderedVods"
+        :match-uuid="matchUuid"
+    >
+        <template v-slot:vod="{ivod, selected}">
+            <lol-participant-display
+                :participant="participantFromUserUuid(ivod.userUuid)"
+                :current-participant-id="currentParticipantId"
+                :match="match"
+                :width-height="48"
+                no-border
+                :class="(!!selected && ivod.videoUuid === selected.videoUuid) ? 'selected-pov' : (friendlyPovSet.has(ivod.videoUuid)) ? 'friendly-pov' : 'enemy-pov'"
             >
-                <lol-participant-display
-                    :participant="participantFromUserUuid(fvod.userUuid)"
-                    :current-participant-id="currentParticipantId"
-                    :match="match"
-                    :width-height="48"
-                    no-border
-                    :class="(!!vod && fvod.videoUuid === vod.videoUuid) ? 'selected-pov' : 'friendly-pov'"
-                >
-                </lol-participant-display>
-            </div>
-
-            <div
-                class="selection-div mr-2"
-                v-for="(evod, eidx) in enemyPovs"
-                :key="`enemy-${eidx}`"
-                @click="selectVod(evod)"
-            >
-                <lol-participant-display
-                    :participant="participantFromUserUuid(evod.userUuid)"
-                    :current-participant-id="currentParticipantId"
-                    :match="match"
-                    :width-height="48"
-                    no-border
-                    :class="(!!vod && evod.videoUuid === vod.videoUuid) ? 'selected-pov' : 'enemy-pov'"
-                >
-                </lol-participant-display>
-            </div>
-        </div>
-    </div>
+            </lol-participant-display>
+        </template>
+    </generic-vod-picker>
 </template>
 
 <script lang="ts">
@@ -64,10 +37,12 @@ import {
 import { WrappedLolParticipant } from '@client/js/lol/participant'
 import { getActiveUserId } from '@client/js/app'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
+import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 
 @Component({
     components: {
-        LolParticipantDisplay
+        LolParticipantDisplay,
+        GenericVodPicker,
     }
 })
 export default class LolVodPicker extends Vue {
@@ -151,6 +126,10 @@ export default class LolVodPicker extends Vue {
         }
     }
 
+    get orderedVods(): VodAssociation[] {
+        return [...this.friendlyPovs, ...this.enemyPovs]
+    }
+
     get friendlyPovs(): VodAssociation[] {
         return <VodAssociation[]>this.friendlyParticipants.map((ele: WrappedLolParticipant) => {
             let userUuid = this.participantIdToUserUuid.get(ele.participant.participantId)
@@ -162,6 +141,10 @@ export default class LolVodPicker extends Vue {
         }).filter((ele: VodAssociation | undefined) => {
             return !!ele
         })
+    }
+
+    get friendlyPovSet(): Set<string> {
+        return new Set(this.friendlyPovs.map((ele: VodAssociation) => ele.videoUuid))
     }
 
     get enemyPovs(): VodAssociation[] {

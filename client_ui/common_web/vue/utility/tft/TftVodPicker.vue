@@ -1,40 +1,30 @@
 <template>
-    <div class="d-flex align-center pa-2" v-if="numPovs > 0">
-        <div>
-            <v-icon>
-                mdi-eye
-            </v-icon>
-        </div>
+    <generic-vod-picker
+        :value="vod"
+        @input="selectVod"
+        :options="allPovs"
+        :match-uuid="matchUuid"
+    >
+        <template v-slot:vod="{ivod}">
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <div
+                        v-on="on"
+                        v-bind="attrs"
+                    >
+                        <tft-little-legend-icon
+                            :content-id="uuidToParticipant(ivod.userUuid).companion.contentId"
+                            :width="48"
+                            :height="48"
+                        >
+                        </tft-little-legend-icon>
+                    </div>
+                </template>
 
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex">
-            <template v-for="(pov, idx) in allPovs">
-                <div
-                    :class="`${(!!vod && pov.videoUuid === vod.videoUuid) ? 'selected-pov' : (!!selfPov && pov.videoUuid === selfPov.videoUuid) ? 'friendly-pov' : 'enemy-pov'} mx-4`"
-                    :key="idx"
-                >
-                    <v-tooltip bottom>
-                        <template v-slot:activator="{on, attrs}">
-                            <div
-                                v-on="on"
-                                v-bind="attrs"
-                            >
-                                <tft-little-legend-icon
-                                    :content-id="uuidToParticipant(pov.userUuid).companion.contentId"
-                                    :width="48"
-                                    :height="48"
-                                >
-                                </tft-little-legend-icon>
-                            </div>
-                        </template>
-
-                        {{ uuidToName(pov.userUuid) }}
-                    </v-tooltip>
-                </div>
-            </template>
-        </div>
-    </div>
+                {{ uuidToName(ivod.userUuid) }}
+            </v-tooltip>
+        </template>
+    </generic-vod-picker>
 </template>
 
 <script lang="ts">
@@ -46,12 +36,14 @@ import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { TftMatchAccessibleVods } from '@client/js/squadov/vod'
 import { WrappedTftMatch, TftParticipant } from '@client/js/tft/matches'
-import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
 import { getActiveUserId } from '@client/js/app'
+import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
+import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 
 @Component({
     components: {
-        TftLittleLegendIcon
+        TftLittleLegendIcon,
+        GenericVodPicker
     }
 })
 export default class TftVodPicker extends Vue {

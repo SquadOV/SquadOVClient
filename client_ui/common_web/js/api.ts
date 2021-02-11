@@ -908,6 +908,10 @@ class ApiClient {
     resyncRiotAccount(userId: number, puuid: string): Promise<ApiData<void>> {
         return axios.post(`v1/users/${userId}/accounts/riot/generic/${puuid}`, {}, this.createWebAxiosConfig())
     }
+
+    deleteVod(vodUuid: string): Promise<ApiData<void>> {
+        return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

@@ -1,41 +1,19 @@
 <template>
-    <div class="d-flex align-center pa-2" v-if="numPovs > 0">
-        <v-icon>
-            mdi-eye
-        </v-icon>
-
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex">
-            <div
-                class="selection-div mr-2"
-                v-for="(fvod, fidx) in friendlyPovs"
-                :key="`friendly-${fidx}`"
-                @click="selectVodForUserUuid(fvod.userUuid)"
+    <generic-vod-picker
+        :value="vod"
+        @input="selectVodForUserUuid(arguments[0].userUuid)"
+        :options="orderedVods"
+        :match-uuid="matchId"
+    >
+        <template v-slot:vod="{ivod, selected}">
+            <hearthstone-hero-display
+                :hero-card="uuidToHeroCard.get(ivod.userUuid)"
+                :max-height="48"
+                :class="`${(!!selected && ivod.videoUuid === selected.videoUuid) ? 'selected-hero' : (friendlyPovSet.has(ivod.videoUuid)) ? 'friendly-hero' : 'enemy-hero'} generic-hero`"
             >
-                <hearthstone-hero-display
-                    :hero-card="uuidToHeroCard.get(fvod.userUuid)"
-                    :max-height="48"
-                    :class="`${(!!vod && fvod.videoUuid === vod.videoUuid) ? 'selected-hero' : 'friendly-hero'} generic-hero`"
-                >
-                </hearthstone-hero-display> 
-            </div>
-
-            <div
-                class="selection-div mr-2"
-                v-for="(evod, eidx) in enemyPovs"
-                :key="`enemy-${eidx}`"
-                @click="selectVodForUserUuid(evod.userUuid)"
-            >
-                <hearthstone-hero-display
-                    :hero-card="uuidToHeroCard.get(evod.userUuid)"
-                    :max-height="48"
-                    :class="`${(!!vod && evod.videoUuid === vod.videoUuid) ? 'selected-hero' : 'enemy-hero'} generic-hero`"
-                >
-                </hearthstone-hero-display>
-            </div>
-        </div>
-    </div>
+            </hearthstone-hero-display> 
+        </template>
+    </generic-vod-picker>
 </template>
 
 <script lang="ts">
@@ -48,10 +26,12 @@ import { apiClient, ApiData } from '@client/js/api'
 import { HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
 import { getActiveUserId } from '@client/js/app'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
+import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 
 @Component({
     components: {
-        HearthstoneHeroDisplay
+        HearthstoneHeroDisplay,
+        GenericVodPicker,
     }
 })
 export default class HearthstoneVodPovPicker extends Vue {
@@ -66,6 +46,10 @@ export default class HearthstoneVodPovPicker extends Vue {
 
     availableVods: HearthstoneMatchAccessibleVods | null = null
 
+    get orderedVods(): VodAssociation[] {
+        return [...this.friendlyPovs, ...this.enemyPovs]
+    }
+
     get friendlyPovs(): VodAssociation[] {
         if (!this.availableVods) {
             return []
@@ -73,6 +57,10 @@ export default class HearthstoneVodPovPicker extends Vue {
         return this.availableVods.vods.filter((ele: VodAssociation) => {
             return this.refUserId === this.availableVods!.userToId[ele.userUuid]
         })
+    }
+
+    get friendlyPovSet(): Set<string> {
+        return new Set(this.friendlyPovs.map((ele: VodAssociation) => ele.videoUuid))
     }
 
     get enemyPovs(): VodAssociation[] {

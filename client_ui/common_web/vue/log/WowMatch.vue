@@ -32,7 +32,7 @@
                     </match-share-button>
                 </div>
 
-                <v-row no-gutters>
+                <v-row class="my-2" no-gutters>
                     <v-col :cols="theaterMode ? 12 : 8">
                         <video-player
                             ref="player"

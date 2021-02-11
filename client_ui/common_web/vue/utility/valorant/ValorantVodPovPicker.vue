@@ -1,45 +1,20 @@
 <template>
-    <div class="d-flex align-center pa-2" v-if="numPovs > 0">
-        <div>
-            <v-icon>
-                mdi-eye
-            </v-icon>
-        </div>
-
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex">
-            <div
-                class="selection-div mr-2"
-                v-for="(fvod, fidx) in friendlyPovs"
-                :key="`friendly-${fidx}`"
-                @click="selectVod(fvod)"
+    <generic-vod-picker
+        :value="vod"
+        @input="selectVod"
+        :options="orderedVods"
+        :match-uuid="matchUuid"
+    >
+        <template v-slot:vod="{ivod, selected}">
+            <valorant-agent-icon
+                :agent="agentForPlayer(ivod.userUuid)"
+                :width-height="48"
+                :class="(!!selected && ivod.videoUuid === selected.videoUuid) ? 'selected-agent' : (friendlyPovSet.has(ivod.videoUuid)) ? 'friendly-agent' : 'enemy-agent'"
+                circular
             >
-                <valorant-agent-icon
-                    :agent="agentForPlayer(fvod.userUuid)"
-                    :width-height="48"
-                    :class="(!!vod && fvod.videoUuid === vod.videoUuid) ? 'selected-agent' : 'friendly-agent'"
-                    circular
-                >
-                </valorant-agent-icon>
-            </div>
-
-            <div
-                class="selection-div mr-2"
-                v-for="(evod, eidx) in enemyPovs"
-                :key="`enemy-${eidx}`"
-                @click="selectVod(evod)"
-            >
-                <valorant-agent-icon
-                    :agent="agentForPlayer(evod.userUuid)"
-                    :width-height="48"
-                    :class="(!!vod && evod.videoUuid === vod.videoUuid) ? 'selected-agent' : 'enemy-agent'"
-                    circular
-                >
-                </valorant-agent-icon>
-            </div>
-        </div>
-    </div>
+            </valorant-agent-icon>
+        </template>
+    </generic-vod-picker>
 </template>
 
 <script lang="ts">
@@ -55,10 +30,12 @@ import { ValorantMatchAccessibleVods } from '@client/js/squadov/vod'
 import { getActiveUserId } from '@client/js/app'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
+import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 
 @Component({
     components: {
-        ValorantAgentIcon
+        GenericVodPicker,
+        ValorantAgentIcon,
     }
 })
 export default class ValorantVodPovPicker extends Vue {
@@ -95,11 +72,19 @@ export default class ValorantVodPovPicker extends Vue {
         return this.match.getPlayerAgentId(puuid)
     }
 
+    get orderedVods(): VodAssociation[] {
+        return [...this.friendlyPovs, ...this.enemyPovs]
+    }
+
     get friendlyPovs(): VodAssociation[] {
         if (!this.match) {
             return []
         }
         return this.getTeamPovs(this.match.getPlayerTeam(this.refPuuid))
+    }
+    
+    get friendlyPovSet(): Set<string> {
+        return new Set(this.friendlyPovs.map((ele: VodAssociation) => ele.videoUuid))
     }
 
     get enemyPovs(): VodAssociation[] {

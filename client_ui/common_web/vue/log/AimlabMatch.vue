@@ -19,14 +19,24 @@
                     </match-share-button>
                 </div>
 
-                <video-player
-                    class="mb-4"
-                    v-if="!!vod"
-                    :vod="vod"
-                    id="task-vod"
-                    disable-theater
-                >
-                </video-player>
+                <template v-if="!!vod">
+                    <video-player
+                        class="mb-1"
+                        :vod="vod"
+                        id="task-vod"
+                        disable-theater
+                    >
+                    </video-player>
+
+                    <aimlab-vod-picker
+                        v-if="!!data"
+                        class="mb-2"
+                        :task-id="taskId"
+                        :task-name="data.taskName"
+                        :vod="vod"
+                    >
+                    </aimlab-vod-picker>
+                </template>
 
                 <aimlab-task-performance-history
                     :task="data"
@@ -50,6 +60,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
 
 import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
 import AimlabTaskPerformanceHistory from '@client/vue/utility/aimlab/AimlabTaskPerformanceHistory.vue'
+import AimlabVodPicker from '@client/vue/utility/aimlab/AimlabVodPicker.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
@@ -58,6 +69,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
     components: {
         AimlabTaskSummaryDisplay,
         AimlabTaskPerformanceHistory,
+        AimlabVodPicker,
         LoadingContainer,
         VideoPlayer,
         MatchShareButton,

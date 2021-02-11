@@ -54,7 +54,7 @@ interface VodMetadata {
     fname: string
 }
 
-interface VodTrack {
+export interface VodTrack {
     metadata: VodMetadata
     segments: VodSegment[]
     preview: string | null

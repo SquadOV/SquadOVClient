@@ -1,43 +1,33 @@
 <template>
-    <div class="d-flex align-center pa-2">
-        <div>
-            <v-icon>
-                mdi-eye
-            </v-icon>
-        </div>
-
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex">
-            <div
-                class="selection-div mr-2"
-                v-for="(pvod, idx) in allPovs"
-                :key="`pov-${idx}`"
-                @click="selectVod(pvod)"
-            >
-                <v-tooltip offset-x right>
-                    <template v-slot:activator="{on, attrs}">
-                        <div
-                            v-bind="attrs"
-                            v-on="on"
-                            class="ma-1"
-                        >
-                            <wow-class-spec-icon
-                                :spec-id="charForUuid(pvod.userUuid).specId"
-                                :class="(!!vod && vod.videoUuid === pvod.videoUuid) ? 'selected-char' : 'unselected-char'"
-                            >
-                            </wow-class-spec-icon>    
-                        </div>
-                    </template>
-
-                    <wow-character-display
-                        :character="charForUuid(pvod.userUuid)"
+    <generic-vod-picker
+        :value="vod"
+        @input="selectVod"
+        :options="allPovs"
+        :match-uuid="matchUuid"
+    >
+        <template v-slot:vod="{ivod, selected}">
+            <v-tooltip offset-x right>
+                <template v-slot:activator="{on, attrs}">
+                    <div
+                        v-bind="attrs"
+                        v-on="on"
+                        class="ma-1"
                     >
-                    </wow-character-display>    
-                </v-tooltip>
-            </div>
-        </div>
-    </div>
+                        <wow-class-spec-icon
+                            :spec-id="charForUuid(ivod.userUuid).specId"
+                            :class="(!!selected && selected.videoUuid === ivod.videoUuid) ? 'selected-char' : 'unselected-char'"
+                        >
+                        </wow-class-spec-icon>    
+                    </div>
+                </template>
+
+                <wow-character-display
+                    :character="charForUuid(ivod.userUuid)"
+                >
+                </wow-character-display>    
+            </v-tooltip>
+        </template>
+    </generic-vod-picker>
 </template>
 
 <script lang="ts">
@@ -55,11 +45,13 @@ import { getActiveUserId } from '@client/js/app'
 
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
+import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 
 @Component({
     components: {
         WowClassSpecIcon,
-        WowCharacterDisplay
+        WowCharacterDisplay,
+        GenericVodPicker
     }
 })
 export default class WowVodPovPicker extends Vue {
