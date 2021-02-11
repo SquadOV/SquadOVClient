@@ -270,8 +270,8 @@ class ApiClient {
 
     register(inp : RegisterInput, params: any) : Promise<void> {
         return axios.post('auth/register', inp, {
+            ...this.createWebAxiosConfig(),
             params,
-            ...this.createWebAxiosConfig()
         })
     }
 
@@ -371,19 +371,19 @@ class ApiClient {
 
     publicAcceptSquadInvite(squadId: number, inviteUuid: string, sig: string): Promise<void> {
         return axios.post(`public/squad/${squadId}/invite/${inviteUuid}/accept`, {}, {
+            ...this.createWebAxiosConfig(),
             params: {
                 sig
             },
-            ...this.createWebAxiosConfig()
         })
     }
 
     publicRejectSquadInvite(squadId: number, inviteUuid: string, sig: string): Promise<void> {
         return axios.post(`public/squad/${squadId}/invite/${inviteUuid}/reject`, {}, {
+            ...this.createWebAxiosConfig(),
             params: {
                 sig
             },
-            ...this.createWebAxiosConfig()
         })
     }
 
@@ -823,8 +823,8 @@ class ApiClient {
 
     getWoWMatchStats(userId: number, matchUuid: string, endpoint: string, query: WowStatQueryParam): Promise<ApiData<WowMatchStatContainer>> {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/${endpoint}`, {
+            ...this.createWebAxiosConfig(),
             params: query,
-            ...this.createWebAxiosConfig()
         })
     }
 
@@ -865,10 +865,10 @@ class ApiClient {
 
     getRecentPlaytime(seconds: number): Promise<ApiData<TotalRecordedPlaytime>> {
         return axios.get('v1/users/me/playtime', {
+            ...this.createWebAxiosConfig(),
             params: {
                 seconds
             },
-            ...this.createWebAxiosConfig()
         })
     }
 

@@ -108,13 +108,13 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         return {
             name: pi.ValorantMatchPageId,
             params: {
+                ...this.$route.params,
                 matchUuid: this.match.matchUuid,
-                ...this.$route.params
             },
             query: {
+                ...this.$route.query,
                 account: this.account,
                 userId: this.userId,
-                ...this.$route.query
             },
         }
     }

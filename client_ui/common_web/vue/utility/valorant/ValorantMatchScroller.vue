@@ -29,8 +29,6 @@ import { Prop } from 'vue-property-decorator'
 import { ValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
 import ValorantPlayerMatchSummaryDisplay from '@client/vue/utility/valorant/ValorantPlayerMatchSummaryDisplay.vue'
 
-const loadMoreMatches: number = 20
-
 @Component({
     components: {
         ValorantPlayerMatchSummaryDisplay,

@@ -115,13 +115,13 @@ export default class TftMatchSummary extends Vue {
         return {
             name: pi.TftMatchPageId,
             params: {
+                ...this.$route.params,
                 matchUuid: this.match.matchUuid,
-                ...this.$route.params
             },
             query: {
+                ...this.$route.query,
                 account: this.puuid,
                 userId: this.userId,
-                ...this.$route.query
             },
         }
     }
