@@ -26,7 +26,7 @@ export function startSessionHeartbeat(store: any, initialSession: SquadOvHeartbe
             sessionRetryCount = 0
         }).catch((err: any) => {
             console.log('Tick session heartbeat failure: ', err)
-            nextTickTimeMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 15000)
+            nextTickTimeMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 60000)
 
             // At this point we aren't able to move forward and do anything in the app so
             // mark the current state as such in the store.
