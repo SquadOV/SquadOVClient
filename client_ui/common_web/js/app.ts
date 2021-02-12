@@ -511,7 +511,7 @@ router.beforeEach((to : any, from : any, next : any) => {
     }
 
     // Allow OAuth requests, squad invite responses, and shared pages to always go through regardless of whether the user is signed in or not.
-    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId) {
+    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId || to.name === pi.VerifyEmailPageId) {
         next()
         return
     }
