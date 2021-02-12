@@ -110,14 +110,14 @@
             </template>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon>
+            <v-btn color="primary" icon disabled>
                 <v-icon>
                     mdi-filmstrip-box-multiple
                 </v-icon>
             </v-btn>
 
             <!-- create clip button -->
-            <v-btn color="success" icon v-if="hasFastify">
+            <v-btn color="success" icon v-if="hasFastify" disabled>
                 <v-icon>
                     mdi-content-cut
                 </v-icon>
