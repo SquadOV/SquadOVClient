@@ -34,7 +34,7 @@
                 </v-progress-circular>
             </template>
 
-            This VOD is still being processed. Loading will be slow and some features will be disabled until it is finished processing. Check back soon!
+            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and some features will be disabled until it is finished processing. Check back soon!
         </v-tooltip>
 
         <template v-if="!!$store.state.currentUser">

@@ -42,7 +42,23 @@ namespace service::recorder::encoder {
 namespace {
 
 int64_t packetPropsToFFmpegChannelLayout(const service::recorder::audio::AudioPacketProperties& props) {
-    return (props.numChannels == 2) ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    if (props.numChannels == 8) {
+        return AV_CH_LAYOUT_7POINT1;
+    } else if (props.numChannels == 7) {
+        return AV_CH_LAYOUT_6POINT1;
+    } else if (props.numChannels == 6) {
+        return AV_CH_LAYOUT_5POINT1;
+    } else if (props.numChannels == 5) {
+        return AV_CH_LAYOUT_5POINT0;
+    } else if (props.numChannels == 4) {
+        return AV_CH_LAYOUT_QUAD;
+    } else if (props.numChannels == 3) {
+        return AV_CH_LAYOUT_2POINT1;
+    } else if (props.numChannels == 2) {
+        return AV_CH_LAYOUT_STEREO;
+    } else {
+        return AV_CH_LAYOUT_MONO;
+    }
 }
 
 AVSampleFormat packetPropsToFFmpegSampleFmt(const service::recorder::audio::AudioPacketProperties& props) {
@@ -698,6 +714,8 @@ void FfmpegAvEncoderImpl::start() {
             LOG_INFO("FFMPEG Encode: " << numMs << "ms [SKIP:" << skipFrame << "]" << std::endl);
 #endif
         }
+
+        LOG_INFO("Finish encoding thread." << std::endl);
     });
 
     // The packet thread is responsible for actually writing the encoded packets to the file.
@@ -710,6 +728,8 @@ void FfmpegAvEncoderImpl::start() {
 
             flushPacketQueue();
         }
+
+        LOG_INFO("Finish packet thread." << std::endl);
     });
 }
 
@@ -753,9 +773,16 @@ void FfmpegAvEncoderImpl::stop() {
         _running = false;
     }
 
-    LOG_INFO("Waiting for encoding/IO threads to finish..." << std::endl);
-    _videoEncodingThread.join();
-    _packetThread.join();
+    LOG_INFO("Waiting for video encoding/IO threads to finish [" << _running << "]..." << std::endl);
+    if (_videoEncodingThread.joinable()) {
+        LOG_INFO("\tJoining video encoding thread..." << std::endl);
+        _videoEncodingThread.join();
+    }
+
+    if (_packetThread.joinable()) {
+        LOG_INFO("\tJoining packet thread..." << std::endl);
+        _packetThread.join();
+    }
 
     LOG_INFO("SquadOV FFMpeg Encoder Stats: " << std::endl
         << "\tVideo Frames: [Receive: " << _receivedVideoFrames  << "] [Process: " << _processedVideoFrames << "]" << std::endl

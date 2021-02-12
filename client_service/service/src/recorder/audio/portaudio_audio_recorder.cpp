@@ -20,7 +20,6 @@ extern "C" {
 
 namespace service::recorder::audio {
 
-constexpr int maxNumChannels = 2;
 constexpr size_t audioSamplesPerFrame = 1024;
 using AudioPacket = FixedSizeAudioPacket<float, audioSamplesPerFrame>;
 using AudioPacketQueue = boost::lockfree::spsc_queue<AudioPacket, boost::lockfree::capacity<4096>, boost::lockfree::fixed_sized<true>>;
@@ -110,7 +109,7 @@ PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir
     _streamParams.device = defaultDevice;
     _streamParams.suggestedLatency = di->defaultLowInputLatency;
     _streamParams.hostApiSpecificStreamInfo = nullptr;
-    _streamParams.channelCount = std::min(di->maxInputChannels, maxNumChannels);
+    _streamParams.channelCount = di->maxInputChannels;
     _streamParams.sampleFormat = paFloat32;
     _sampleRate = static_cast<size_t>(di->defaultSampleRate);
 
@@ -173,6 +172,10 @@ void PortaudioAudioRecorderImpl::startRecording() {
 #endif
 
     const PaDeviceInfo* di = Pa_GetDeviceInfo(_streamParams.device);
+    if (!di) {
+        THROW_ERROR("Failed to get device info: " << _streamParams.device << "/" << Pa_GetDeviceCount() << std::endl);
+    }
+    LOG_INFO("Start recording device: " << di->name << " (" << _streamParams.device << "/" << Pa_GetDeviceCount() << ")" << std::endl);
 
     {
         const auto err = Pa_OpenStream(&_stream, &_streamParams, nullptr, static_cast<double>(_sampleRate), paFramesPerBufferUnspecified, paNoFlag , gPortaudioCallback, (void*)this);

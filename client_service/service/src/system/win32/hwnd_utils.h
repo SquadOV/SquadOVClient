@@ -9,7 +9,7 @@
 namespace service::system::win32 {
 
 HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds& maxDelayMs = std::chrono::milliseconds(0));
-bool isFullscreen(HWND wnd, HMONITOR monitor);
+bool isFullscreen(HWND wnd, HMONITOR monitor, int margin);
 
 }
 

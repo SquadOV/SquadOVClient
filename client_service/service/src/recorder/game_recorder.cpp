@@ -263,7 +263,7 @@ void GameRecorder::loadCachedInfo() {
                 ret.width = windowRes.right - windowRes.left;
                 ret.height = windowRes.bottom - windowRes.top;
                 ret.init = true;
-                ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor);
+                ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor, 4);
                 break;
             }
             std::this_thread::sleep_for(100ms);

@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
             std::cout << windowRes << std::endl;
             std::cout << "Width: " << windowRes.right - windowRes.left << std::endl;
             std::cout << "Height: " << windowRes.bottom - windowRes.top << std::endl;
-            std::cout << "Window: " << !service::system::win32::isFullscreen(wnd, refMonitor) << std::endl;
+            std::cout << "Window: " << !service::system::win32::isFullscreen(wnd, refMonitor, 4) << std::endl;
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }

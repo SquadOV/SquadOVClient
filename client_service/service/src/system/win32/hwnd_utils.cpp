@@ -55,7 +55,7 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     return NULL;
 }
 
-bool isFullscreen(HWND wnd, HMONITOR monitor) {
+bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {
     RECT hwndRect;
     if(!GetWindowRect(wnd, &hwndRect)) {
         return false;
@@ -67,8 +67,15 @@ bool isFullscreen(HWND wnd, HMONITOR monitor) {
     if (!GetMonitorInfoA(monitor, &info)) {
         return false;
     }
-    LOG_INFO("Check fullscreen: " << hwndRect << " vs " << info.rcMonitor << std::endl);
-    return hwndRect == info.rcMonitor;
+
+    const auto wndWidth = hwndRect.right - hwndRect.left;
+    const auto wndHeight = hwndRect.bottom - hwndRect.top;
+
+    const auto monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
+    const auto monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
+
+    return (std::abs(wndWidth - monitorWidth) <= margin) &&
+        (std::abs(wndHeight - monitorHeight) <= margin);
 }
 
 }
