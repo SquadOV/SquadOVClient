@@ -201,14 +201,8 @@ ipcMain.on('change-state-pause', (event, paused) => {
     zeromqServer.updateRecordingPaused(paused)
 })
 
-let hasUpdate = false
 ipcMain.on('request-restart', () => {
-    if (hasUpdate) {
-        const { autoUpdater } = require("electron-updater")
-        autoUpdater.quitAndInstall(false, true)
-    } else {
-        restart()
-    }
+    restart()
 })
 
 zeromqServer.on('change-running-games', (games) => {
@@ -285,7 +279,6 @@ function startAutoupdater() {
     // the initial start-up workflow. In this case we need to indicate
     // to the user that an update is available and have them restart.
     autoUpdater.on('update-downloaded', (info) => {
-        hasUpdate = true
         win.webContents.send('main-update-downloaded', info.version)
     })
 
