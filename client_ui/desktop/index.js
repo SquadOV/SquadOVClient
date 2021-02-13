@@ -349,9 +349,7 @@ function startSessionHeartbeat(onBeat) {
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
 
-        request.on('error', (err) => {
-            log.log('Error in Sesssion Heartbeat: ', err)
-
+        let retrySessionHeartbeat = () => {
             let timeoutMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 15000)
             // We want to retry a few times up until the session is expired
             // to try and get a new session just in case the user's internet
@@ -378,12 +376,19 @@ function startSessionHeartbeat(onBeat) {
                 startSessionHeartbeat(onBeat)
             }, timeoutMs)
             sessionRetryCount += 1
+        }
+
+        request.on('error', (err) => {
+            log.log('Error in Sesssion Heartbeat: ', err)
+            retrySessionHeartbeat()
         })
 
         request.on('response', (resp) => {
-            if (resp.statusCode != 200) {
-                log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
+            if (resp.statusCode == 401) {
+                log.log('Sesssion Heartbeat Unauthorized: ', resp.statusCode, resp.statusMessage)
                 logout()
+            } else if (resp.statusCode != 200) {
+                retrySessionHeartbeat()
             } else {
                 let body = ''
                 resp.on('data', (chunk) => {
