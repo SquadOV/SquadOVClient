@@ -58,6 +58,11 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     return NULL;
 }
 
+bool isWindowTopmost(HWND wnd) {
+    HWND refWnd = GetForegroundWindow();
+    return wnd == refWnd;
+}
+
 bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {
     RECT hwndRect;
     if(!GetWindowRect(wnd, &hwndRect)) {
