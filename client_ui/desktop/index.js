@@ -270,7 +270,7 @@ function startClientService() {
 
 function startAutoupdater() {
     const { autoUpdater } = require("electron-updater")
-    autoUpdater.autoDownload = true
+    autoUpdater.autoDownload = false
     autoUpdater.autoInstallOnAppQuit = false
     autoUpdater.logger = log
     autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
@@ -278,7 +278,7 @@ function startAutoupdater() {
     // This event is for when an update is available and we're past
     // the initial start-up workflow. In this case we need to indicate
     // to the user that an update is available and have them restart.
-    autoUpdater.on('update-downloaded', (info) => {
+    autoUpdater.on('update-available', (info) => {
         win.webContents.send('main-update-downloaded', info.version)
     })
 
@@ -318,8 +318,10 @@ function startAutoupdater() {
 
         autoUpdater.on('update-available', (info) => {
             log.log('Index Update Available: ', info)
-            autoUpdater.once('update-downloaded', () => {
+            autoUpdater.downloadUpdate().then(() => {
                 autoUpdater.quitAndInstall(false, true)
+            }).catch((err) => {
+                console.log('Failed to update: ', err)
             })
             updateWindow.webContents.send('update-update-available', info)            
         })
