@@ -10,6 +10,7 @@
 #include "api/squadov_api.h"
 #include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
+#include "recorder/video/windows_graphics_capture.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "system/win32/hwnd_utils.h"
@@ -66,18 +67,23 @@ GameRecorder::~GameRecorder() {
     }
 }
 
-void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
+void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
         << "\tInit: " << info.init << std::endl
-        << "\tWindowed: " << info.isWindowed << std::endl);
+        << "\tWindowed: " << info.isWindowed << std::endl
+        << "\tFlags: " << flags << std::endl);
 
 #ifdef _WIN32
-    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
+    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 
-    if (video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
+    if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
+        return;
+    }
+
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
         return;
     }
 #endif
@@ -144,7 +150,7 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
     }
 }
 
-void GameRecorder::startDvrSession() {
+void GameRecorder::startDvrSession(int flags) {
     if (_encoder.hasEncoder()) {
         LOG_WARNING("Can not start DVR session while a VOD encoder is active." << std::endl);
         return;
@@ -153,7 +159,7 @@ void GameRecorder::startDvrSession() {
     loadCachedInfo();
 
     if (!areInputStreamsInitialized()) {
-        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this);
+        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
         if (!successFut.get()) {
             LOG_WARNING("Failed to start DVR session." << std::endl);
             return;
@@ -318,10 +324,10 @@ bool GameRecorder::areInputStreamsInitialized() const {
     return _streamsInit;
 }
 
-bool GameRecorder::initializeInputStreams() {
+bool GameRecorder::initializeInputStreams(int flags) {
     _streamsInit = true;
     try {
-        createVideoRecorder(*_cachedWindowInfo);
+        createVideoRecorder(*_cachedWindowInfo, flags);
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
         _streamsInit = false;
@@ -342,7 +348,7 @@ bool GameRecorder::initializeInputStreams() {
     return true;
 }
 
-void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
+void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int flags) {
     if (!!_currentId) {
         return;
     }
@@ -354,7 +360,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode) {
     initializeFileOutputPiper();
 
     if (!areInputStreamsInitialized()) {
-        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this);
+        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
         if (!successFut.get()) {
             LOG_WARNING("Failed to start game recording." << std::endl);
             _currentId = {};

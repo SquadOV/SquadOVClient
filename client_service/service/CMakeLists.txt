@@ -13,6 +13,7 @@ SET(SRCS
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
     src/recorder/video/dxgi_desktop_recorder.cpp
+    src/recorder/video/windows_graphics_capture.cpp
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
@@ -44,6 +45,7 @@ SET(HEADERS
     src/recorder/video/video_recorder.h
     src/recorder/video/win32_gdi_recorder.h
     src/recorder/video/dxgi_desktop_recorder.h
+    src/recorder/video/windows_graphics_capture.h
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
@@ -110,6 +112,10 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     )
 
     if(WIN32)
+        set_property(TARGET ${EXE_NAME} PROPERTY
+            VS_PACKAGE_REFERENCES "Microsoft.Windows.CppWinRT_2.0.210211.2"
+        )
+
         file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
         add_custom_command(
             TARGET ${EXE_NAME}
@@ -122,7 +128,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             d3d11
             dxgi
             dbghelp
-        )
+        )        
     endif()
 
 ENDMACRO()
