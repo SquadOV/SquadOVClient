@@ -29,6 +29,11 @@ enum class RecordingMode {
     Normal
 };
 
+constexpr int FLAG_DXGI_RECORDING = 0b001;
+constexpr int FLAG_GDI_RECORDING = 0b010;
+constexpr int FLAG_WGC_RECORDING = 0b100;
+constexpr int FLAG_ALL_RECORDING = FLAG_WGC_RECORDING | FLAG_GDI_RECORDING | FLAG_DXGI_RECORDING;
+
 // Records a video of the specified game.
 class GameRecorder {
 public:
@@ -38,8 +43,8 @@ public:
     );
     ~GameRecorder();
 
-    void startDvrSession();
-    void start(const shared::TimePoint& start, RecordingMode mode);
+    void startDvrSession(int flags = FLAG_ALL_RECORDING);
+    void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_ALL_RECORDING);
     void stop();
     void stopInputs();
     std::string stopDvrSession();
@@ -64,13 +69,13 @@ private:
         bool hasEncoder() const { return !!encoder; }
     };
 
-    void createVideoRecorder(const video::VideoWindowInfo& info);
+    void createVideoRecorder(const video::VideoWindowInfo& info, int flags);
     void updateWindowInfo();
     std::unique_ptr<VodIdentifier> createNewVodIdentifier() const;
     void initializeFileOutputPiper();
 
     bool areInputStreamsInitialized() const;
-    bool initializeInputStreams();
+    bool initializeInputStreams(int flags);
     EncoderDatum createEncoder(const std::string& outputFname);
 
     process_watcher::process::Process _process;

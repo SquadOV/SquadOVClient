@@ -87,7 +87,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())) {
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
-    _recorder->startDvrSession();
+    _recorder->startDvrSession(service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogLine), std::bind(&WoWProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
@@ -355,7 +355,11 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
+<<<<<<< HEAD
         _recorder->start(tm, service::recorder::RecordingMode::DVR);
+=======
+        _recorder->start(tm, service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
+>>>>>>> release
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
     }
@@ -397,7 +401,11 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
 
         if (!_process.empty()) {
             _recorder->stop();
+<<<<<<< HEAD
             _recorder->startDvrSession();
+=======
+            _recorder->startDvrSession(service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
+>>>>>>> release
         } else {
             _recorder->stopFromSource(tm);
         }

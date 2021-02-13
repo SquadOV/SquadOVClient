@@ -23,7 +23,7 @@ Win32GdiRecorderInstance::Win32GdiRecorderInstance(HWND window):
     _window(window) {
     
     // For debugging print ouf the window name that we're recording from.
-    TCHAR windowTitle[1024];
+    char windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
     LOG_INFO("Win32 GDI Recording Window: " << windowTitle << std::endl);
 }
@@ -57,6 +57,10 @@ void Win32GdiRecorderInstance::startRecording(size_t fps) {
         bi.biPlanes = 1;    
         bi.biBitCount = 32;    
         bi.biCompression = BI_RGB;
+        bi.biXPelsPerMeter = 0;
+        bi.biYPelsPerMeter = 0;
+        bi.biClrUsed = 0;
+        bi.biClrImportant = 0;
 
         bmfHeader.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER);
         bmfHeader.bfType = 0x4D42; //BM  
@@ -78,12 +82,16 @@ void Win32GdiRecorderInstance::startRecording(size_t fps) {
                 continue;
             }
 
-            if (!hbm) {
+            if (!hbm || width != frame.width() || height != frame.height()) {
+                if (hbm) {
+                    DeleteObject(hbm);
+                }
                 hbm = CreateCompatibleBitmap(hdcWindow, width, height);
                 frame.initializeImage(width, height);
                 bi.biWidth = width;
                 // Make bitmaps draw normally (i.e. Y=0 is the top of image...)
                 bi.biHeight = -height;
+                bi.biSizeImage = width * height * 4;
             }
 
             const DWORD dwBmpSize = width * height * 4;
@@ -138,7 +146,7 @@ void Win32GdiRecorderInstance::startRecording(size_t fps) {
             }
         }
 
-        DeleteObject(hbm);    
+        DeleteObject(hbm);
         
         DeleteDC(hdcMem);
         ReleaseDC(_window, hdcWindow);
