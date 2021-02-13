@@ -110,14 +110,14 @@
             </template>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon disabled>
+            <v-btn color="primary" icon>
                 <v-icon>
                     mdi-filmstrip-box-multiple
                 </v-icon>
             </v-btn>
 
             <!-- create clip button -->
-            <v-btn color="success" icon v-if="hasFastify" disabled>
+            <v-btn color="success" icon v-if="hasFastify" @click="openEditingWindow">
                 <v-icon>
                     mdi-content-cut
                 </v-icon>
@@ -133,6 +133,7 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
+import { openVodEditingWindow } from '@client/js/vods/editor'
 import * as vod from '@client/js/squadov/vod'
 
 @Component
@@ -228,6 +229,13 @@ export default class GenericVodPicker extends Vue {
             return false
         }
         return this.track.segments[0].mimeType !== 'video/mp2t'
+    }
+
+    openEditingWindow() {
+        if (!this.value) {
+            return
+        }
+        openVodEditingWindow(this.value.videoUuid)
     }
 
     mounted () {

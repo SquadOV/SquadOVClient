@@ -16,6 +16,7 @@ process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
 const iconPath = path.join(__dirname, 'assets/icon.ico')
 
 let win
+let editorWin
 let tray
 let isQuitting = false
 
@@ -151,6 +152,10 @@ function updateSession(sessionId, sendIpc) {
     if (!!win) {
         win.webContents.send('update-session', sessionId)
     }
+
+    if (!!editorWin) {
+        editorWin.webContents.send('update-session', sessionId)
+    }
 }
 
 
@@ -203,6 +208,33 @@ ipcMain.on('change-state-pause', (event, paused) => {
 
 ipcMain.on('request-restart', () => {
     restart()
+})
+
+ipcMain.handle('open-vod-editor', (event, videoUuid) => {
+    if (!editorWin) {
+        editorWin = new BrowserWindow({
+            width: 1280,
+            height: 720,
+            webPreferences: {
+                nodeIntegration: true,
+                webSecurity: app.isPackaged,
+            },
+            icon: iconPath
+        })
+    
+        if (!app.isPackaged) {
+            editorWin.webContents.toggleDevTools()
+        }
+
+        editorWin.setMenu(null)
+        editorWin.setMenuBarVisibility(false)
+        editorWin.on('close', () => {
+            editorWin = null
+        })
+    }
+
+    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}`)
+    editorWin.show()
 })
 
 zeromqServer.on('change-running-games', (games) => {
