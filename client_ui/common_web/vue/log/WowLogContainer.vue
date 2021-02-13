@@ -26,7 +26,8 @@
                         <h2 class="text-center">
                             <span v-if="isLocalUser">
                                 Run SquadOV while running a dungeon or raid in WoW and SquadOV will automatically detect your characters.
-                                Be sure to be running an auto-combat log enabler such as <a href="#" @click="gotoAutolog">AutoLog</a>.
+                                Be sure to be running an auto-combat log enabler such as <a href="#" @click="gotoAutolog">AutoLog</a> or <a href="#" @click="gotoLoggerHead">LoggerHead</a>.
+                                If you're doing arena runs, use <a href="#" @click="gotoArenaCombatLogger">Arena Combat Logger</a> instead.
                             </span>
 
                             <span v-else>
@@ -82,6 +83,24 @@ export default class WowLogContainer extends Vue {
 
     gotoAutolog() {
         const url = 'https://www.curseforge.com/wow/addons/autolog'
+/// #if DESKTOP
+        shell.openExternal(url)
+/// #else
+        window.open(url, '_blank')
+/// #endif
+    }
+
+    gotoLoggerHead() {
+        const url = 'https://www.curseforge.com/wow/addons/loggerhead'
+/// #if DESKTOP
+        shell.openExternal(url)
+/// #else
+        window.open(url, '_blank')
+/// #endif
+    }
+
+    gotoArenaCombatLogger() {
+        const url = 'https://www.curseforge.com/wow/addons/arena-combat-logger'
 /// #if DESKTOP
         shell.openExternal(url)
 /// #else
