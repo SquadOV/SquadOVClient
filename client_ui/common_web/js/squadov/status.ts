@@ -183,7 +183,7 @@ export class TrackedUserStatsManager {
 
     disconnect() {
         if (!!this._connection) {
-            this._connection.close()
+            this._connection.close(MANUAL_CLOSE)
         }
         this._userId = undefined
         this._ready = false
