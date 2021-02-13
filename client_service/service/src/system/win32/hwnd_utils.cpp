@@ -45,6 +45,9 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     while (delay < maxDelayMs) {
         EnumWindows(enumWindowCallback, (LPARAM)&window);
         if (window.found) {
+            char windowTitle[1024];
+            GetWindowTextA(window.out, windowTitle, 1024);
+            LOG_INFO("Found Window for Process: " << windowTitle << std::endl);
             return window.out;
         }
 
@@ -53,6 +56,11 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     }
     
     return NULL;
+}
+
+bool isWindowTopmost(HWND wnd) {
+    HWND refWnd = GetForegroundWindow();
+    return wnd == refWnd;
 }
 
 bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {

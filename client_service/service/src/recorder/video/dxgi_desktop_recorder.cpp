@@ -220,11 +220,10 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
-            if (IsIconic(_window)) {
+            if (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
                 if (desktopResource) {
                     desktopResource->Release();
                 }
-                LOG_INFO("DXGI IS ICONIC:" << hr << std::endl);
                 std::this_thread::sleep_for(nsPerFrame);
                 continue;
             }
