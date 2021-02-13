@@ -12,6 +12,7 @@ export interface SquadOVUser {
 export interface SquadOvHeartbeatResponse {
     sessionId: string
     expiration: Date
+    expiresIn: number
 }
 
 export function cleanSquadOvHeartbeatResponse(s: SquadOvHeartbeatResponse) : SquadOvHeartbeatResponse {

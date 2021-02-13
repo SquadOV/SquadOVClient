@@ -20,8 +20,8 @@ export function startSessionHeartbeat(store: any, initialSession: SquadOvHeartbe
         let nextTickTimeMs: number = 0
         apiClient.sessionHeartbeat(apiClient.getSessionId()!).then((resp: ApiData<SquadOvHeartbeatResponse>) => {
             apiClient.setSessionFull(resp.data.sessionId, getSessionUserId())
-            currentSessionExpiration = resp.data.expiration
-            nextTickTimeMs = currentSessionExpiration!.getTime() - Date.now() - 10 * 60 * 1000
+            currentSessionExpiration = new Date(Date.now() + resp.data.expiresIn)
+            nextTickTimeMs = (resp.data.expiresIn - 10 * 60) * 1000
             store.commit('markValidSession', true)
             sessionRetryCount = 0
         }).catch((err: any) => {
@@ -39,8 +39,8 @@ export function startSessionHeartbeat(store: any, initialSession: SquadOvHeartbe
         })
     }
 
-    currentSessionExpiration = initialSession.expiration
-    setTimeout(tickSessionHeartbeat, Math.max(initialSession.expiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
+    currentSessionExpiration = new Date(Date.now() + initialSession.expiresIn)
+    setTimeout(tickSessionHeartbeat, Math.max((initialSession.expiresIn - 10 * 60) * 1000, 0))
 }
 
 // In the web case, we need to check to see if the session is set in a cookie instead

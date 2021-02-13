@@ -398,12 +398,12 @@ function startSessionHeartbeat(onBeat) {
                         onBeat()
                     }
                     
-                    currentSessionExpiration = new Date(respBody.expiration)
+                    currentSessionExpiration = new Date(Date.now() + respBody.expiresIn * 1000)
 
                     // Preemptively refresh the session 10 minutes before it's due to expire.
                     setTimeout(() => {
                         startSessionHeartbeat()
-                    }, Math.max(currentSessionExpiration.getTime() - Date.now() - 10 * 60 * 1000, 0))
+                    }, Math.max((respBody.expiresIn - 10 * 60) * 1000, 0))
                 })
             }
         })
