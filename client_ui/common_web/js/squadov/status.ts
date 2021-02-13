@@ -4,6 +4,8 @@ import { RootState } from '@client/js/vuex/state'
 import { apiClient } from '@client/js/api'
 import { gameShorthandToGame } from '@client/js/squadov/game'
 
+const MANUAL_CLOSE = 4000
+
 export enum SquadOvActivity {
     Online,
     InGame,
@@ -28,6 +30,7 @@ export class TrackedUserStatsManager {
     _subscribed: Set<number>
     _messageQueue: string[]
     _reconnectCount: number
+    _errorCount: number
 
     constructor(store: Store<RootState>) {
         this._store = store
@@ -43,6 +46,7 @@ export class TrackedUserStatsManager {
         this._subscribed = new Set()
         this._messageQueue = []
         this._reconnectCount = 0
+        this._errorCount = 0
     }
 
     changeCurrentUserId(userId: number | undefined) {
@@ -72,7 +76,7 @@ export class TrackedUserStatsManager {
 
             this._connection.onclose = (e: CloseEvent) => {
                 console.log('User Activity Websocket Close: ', e.code, e.reason)
-                if (e.code != 1001) {
+                if (e.code != 1001 && e.code != MANUAL_CLOSE) {
                     this.recoverFromError()
                 }
             }
@@ -98,7 +102,7 @@ export class TrackedUserStatsManager {
 
     recoverFromError() {
         if (!!this._connection) {
-            this._connection.close()
+            this._connection.close(MANUAL_CLOSE)
         }
         this._connection = null
         this.reconnect()
