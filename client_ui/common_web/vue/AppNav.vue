@@ -2,6 +2,20 @@
     <v-app-bar
         dense
     >
+        <template v-if="useIntegratedAppNav">
+            <v-btn small icon @click="navBack">
+                <v-icon>
+                    mdi-chevron-left
+                </v-icon>
+            </v-btn>
+
+            <v-btn small icon @click="navForward">
+                <v-icon>
+                    mdi-chevron-right
+                </v-icon>
+            </v-btn>
+        </template>
+
         <v-toolbar-title class="mr-4">
             <router-link :to="homeTo">
                 SquadOV 
@@ -298,6 +312,22 @@ export default class AppNav extends Vue {
 
     mounted() {
         this.refreshNotifications()
+    }
+
+    get useIntegratedAppNav(): boolean {
+/// #if DESKTOP
+        return true
+/// #else
+        return false
+/// #endif
+    }
+
+    navBack() {
+        this.$router.back()
+    }
+
+    navForward() {
+        this.$router.forward()
     }
 }
 

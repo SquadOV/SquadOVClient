@@ -80,7 +80,6 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
-const VodEditor = () => import('@client/vue/utility/vods/VodEditor.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -483,14 +482,6 @@ const baseRoutes : any[] = [
         name: pi.ShareRedirectPageId,
         props: (route: any) => ({
             accessTokenId: route.params.accessTokenId,
-        })
-    },
-    {
-        path: '/editor/:videoUuid',
-        component: VodEditor,
-        name: pi.VideoEditorPageId,
-        props: (route: any) => ({
-            videoUuid: route.params.videoUuid,
         })
     }
 ]
