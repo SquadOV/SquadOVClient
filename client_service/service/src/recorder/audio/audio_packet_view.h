@@ -16,16 +16,19 @@ namespace service::recorder::audio {
 template<typename T>
 class AudioPacketView {
 public:
-    AudioPacketView(const T* buffer, const AudioPacketProperties& props):
+    AudioPacketView(const T* buffer, const AudioPacketProperties& props, double volume):
         _buffer(buffer),
+        _volume(volume),
         _props(props) {
     }
 
     const T* buffer() const { return _buffer; }
     const AudioPacketProperties& props() const { return _props; }
+    double volume() const { return _volume; }
 
 private:
     const T* _buffer = nullptr;
+    const double _volume = 0.0;
     const AudioPacketProperties _props;
 };
 

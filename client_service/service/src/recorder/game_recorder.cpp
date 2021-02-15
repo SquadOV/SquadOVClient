@@ -334,12 +334,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
     _vrecorder->startRecording(_cachedRecordingSettings->fps);
 
-    _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
+    _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
+    _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume);
     if (_aoutRecorder->exists()) {
         _aoutRecorder->startRecording();
     }
 
-    _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));
+    _ainRecorder.reset(new audio::PortaudioAudioRecorder());
+    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->inputVolume);
     if (_ainRecorder->exists()) {
         _ainRecorder->startRecording();
     }

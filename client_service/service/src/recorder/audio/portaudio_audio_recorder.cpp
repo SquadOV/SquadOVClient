@@ -27,12 +27,13 @@ using FAudioPacketView = AudioPacketView<float>;
 
 class PortaudioAudioRecorderImpl {
 public:
-    explicit PortaudioAudioRecorderImpl(EAudioDeviceDirection dir);
+    PortaudioAudioRecorderImpl();
     ~PortaudioAudioRecorderImpl();
 
     void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
+    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume);
 
     bool exists() const { return _exists; }
     const AudioPacketProperties& props() { return _props; }
@@ -41,7 +42,8 @@ public:
 private:
 
     EAudioDeviceDirection _dir;
-    bool _exists = false;    
+    bool _exists = false;
+    double _volume = 1.0;
 
     size_t _sampleRate = 0;
     PaStreamParameters _streamParams;
@@ -100,20 +102,53 @@ AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirecti
     return response;
 }
 
-PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir):
-    _dir(dir) {
+PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl() {
+}
 
-    // Use the default input/output devices for now.
-    PaDeviceIndex defaultDevice = 
-        (dir == EAudioDeviceDirection::Input) ?
-            Pa_GetDefaultInputDevice() :
-            Pa_GetDefaultOutputDevice();
+PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 
-    if (defaultDevice == paNoDevice) {
+}
+
+void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) {
+    // Try to find the selected device. If we can't find it then use the default device.
+    PaDeviceIndex selectedDevice = paNoDevice;
+    for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount() ; ++i) {
+        const PaDeviceInfo* ldi = Pa_GetDeviceInfo(i);
+        const std::string ldiName(ldi->name);
+
+        const PaHostApiInfo* hostInfo = Pa_GetHostApiInfo(ldi->hostApi);
+        if (hostInfo->type != paWASAPI) {
+            continue;
+        }
+
+        if ((dir == EAudioDeviceDirection::Output && ldi->maxOutputChannels == 0) || (dir == EAudioDeviceDirection::Input && ldi->maxInputChannels == 0)) {
+            continue;
+        }
+
+        if (ldiName.find("(loopback)") != std::string::npos) {
+            continue;
+        }
+
+        if (ldiName == selected) {
+            selectedDevice = i;
+            break;
+        }
+    }
+
+    // Use the default device as fallback.
+    if (selectedDevice == paNoDevice) {
+        selectedDevice =
+            (dir == EAudioDeviceDirection::Input) ?
+                Pa_GetDefaultInputDevice() :
+                Pa_GetDefaultOutputDevice();
+    }
+
+    // If we still have no device then just don't record from this input.
+    if (selectedDevice == paNoDevice) {
         return;
     }
 
-    const PaDeviceInfo* di = Pa_GetDeviceInfo(defaultDevice);
+    const PaDeviceInfo* di = Pa_GetDeviceInfo(selectedDevice);
     const std::string diName(di->name);
 
     // In the case we want to capture an output device we need to find the equivalent loopback device.
@@ -125,7 +160,7 @@ PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir
             if (ldiName.substr(0, diName.size()) == diName &&
                 ldiName.substr(ldiName.size() - loopbackSuffix.size()) == loopbackSuffix) {
 
-                defaultDevice = i;
+                selectedDevice = i;
                 di = ldi;
                 break;
             }
@@ -138,24 +173,28 @@ PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir
         return;
     }
 
-    _exists = true;
-    LOG_INFO("Found Audio Device [" << audioDeviceDirectionToStr(_dir) << "]: " << di->name << " CHANNELS: " << di->maxInputChannels << std::endl);
-    _streamParams.device = defaultDevice;
+    LOG_INFO("Found Audio Device [" << audioDeviceDirectionToStr(dir) << "]: " << di->name << " CHANNELS: " << di->maxInputChannels << std::endl);
+    _streamParams.device = selectedDevice;
     _streamParams.suggestedLatency = di->defaultLowInputLatency;
     _streamParams.hostApiSpecificStreamInfo = nullptr;
     _streamParams.channelCount = di->maxInputChannels;
     _streamParams.sampleFormat = paFloat32;
     _sampleRate = static_cast<size_t>(di->defaultSampleRate);
 
+    if (Pa_IsFormatSupported(&_streamParams, nullptr, static_cast<double>(_sampleRate)) != paNoError) {
+        LOG_WARNING("Selected format is unsupported for device: " << std::endl
+            << "\tSample Rate: " << _sampleRate << std::endl);
+        return;
+    }
+
     // Setup packet properties so that we can communicate with the encoder as to what format the packets will be coming in.
     _props.isPlanar = false;
     _props.numChannels = _streamParams.channelCount;
     _props.numSamples = 0;
     _props.samplingRate = _sampleRate;
-}
 
-PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
-
+    _exists = true;
+    _volume = volume;
 }
 
 int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags) {
@@ -171,7 +210,7 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
     AudioPacketProperties packetProps = props();
     packetProps.numSamples = static_cast<size_t>(frameCount);
 
-    FAudioPacketView view(buffer, packetProps);
+    FAudioPacketView view(buffer, packetProps, _volume);
     // It's not safe to do mutex operations here so we need to copy all this data into a queue that another thread
     // reads from to feed to the encoder.
     addToPacketQueue(view, inputTime);
@@ -233,7 +272,9 @@ void PortaudioAudioRecorderImpl::startRecording() {
         while (_running) {
             _packetQueue.consume_all([this](const AudioPacket& packet){
                 std::lock_guard<std::mutex> guard(_encoderMutex);
-                FAudioPacketView view(packet.buffer(), packet.props());
+
+                // Volume needs to be 1.0 here to avoid double applying the volume
+                FAudioPacketView view(packet.buffer(), packet.props(), 1.0);
                 if (_encoder) {
                     _encoder->addAudioFrame(view, _encoderIdx, packet.syncTime());
                 }
@@ -260,8 +301,8 @@ void PortaudioAudioRecorderImpl::stop() {
     }
 }
 
-PortaudioAudioRecorder::PortaudioAudioRecorder(EAudioDeviceDirection dir):
-    _impl(new PortaudioAudioRecorderImpl(dir)) {
+PortaudioAudioRecorder::PortaudioAudioRecorder():
+    _impl(new PortaudioAudioRecorderImpl) {
 
 }
 
@@ -275,13 +316,16 @@ void PortaudioAudioRecorder::setActiveEncoder(service::recorder::encoder::AvEnco
     _impl->setActiveEncoder(encoder, encoderIndex);
 }
 
-
 void PortaudioAudioRecorder::stop() {
     _impl->stop();
 }
 
 bool PortaudioAudioRecorder::exists() const {
     return _impl->exists();
+}
+
+void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) {
+    _impl->loadDevice(dir, selected, volume);
 }
 
 const AudioPacketProperties& PortaudioAudioRecorder::props() const {
