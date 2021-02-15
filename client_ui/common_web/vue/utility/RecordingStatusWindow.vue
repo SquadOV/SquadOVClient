@@ -102,15 +102,17 @@
                     mdi-headphones
                 </v-icon>
                 <span class="text-overline font-weight-bold ml-1 mr-4">Output:</span>
-                <v-select
-                    v-model="selectedOutput"
-                    :items="audioOutputItems"
-                    dense
-                    hide-details
-                    single-line
-                    solo
-                >
-                </v-select>
+                <div class="audio-select-div">
+                    <v-select
+                        v-model="selectedOutput"
+                        :items="audioOutputItems"
+                        dense
+                        hide-details
+                        single-line
+                        solo
+                    >
+                    </v-select>
+                </div>
 
                 <v-btn icon small @click="refreshAvailableOutputs">
                     <v-icon>
@@ -137,15 +139,17 @@
                     mdi-microphone
                 </v-icon>
                 <span class="text-overline font-weight-bold ml-1 mr-4">Input:</span>
-                <v-select
-                    v-model="selectedInput"
-                    :items="audioInputItems"
-                    dense
-                    hide-details
-                    single-line
-                    solo
-                >
-                </v-select>
+                <div class="audio-select-div">
+                    <v-select
+                        v-model="selectedInput"
+                        :items="audioInputItems"
+                        dense
+                        hide-details
+                        single-line
+                        solo
+                    >
+                    </v-select>
+                </div>
 
                 <v-btn icon small @click="refreshAvailableInputs">
                     <v-icon>
@@ -387,6 +391,10 @@ export default class RecordingStatusWindow extends Vue {
     50% {
         background-color: red;
     }
+}
+
+.audio-select-div {
+    max-width: 215px;
 }
 
 </style>
