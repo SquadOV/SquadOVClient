@@ -57,6 +57,7 @@ private:
     void onChallengeModeEnd(const shared::TimePoint& tm, const void* data);
     void onArenaStart(const shared::TimePoint& tm, const void* data);
     void onArenaEnd(const shared::TimePoint& tm, const void* data);
+    void onZoneChange(const shared::TimePoint& tm, const void* data);
     void onCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
 
@@ -97,6 +98,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ChallengeModeEnd), std::bind(&WoWProcessHandlerInstance::onChallengeModeEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ArenaStart), std::bind(&WoWProcessHandlerInstance::onArenaStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ArenaEnd), std::bind(&WoWProcessHandlerInstance::onArenaEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ZoneChange), std::bind(&WoWProcessHandlerInstance::onZoneChange, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
 
@@ -304,6 +306,7 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
 
     const auto end = *reinterpret_cast<const game_event_watcher::WoWArenaEnd*>(data);
     LOG_INFO("WoW Arena End [" <<  shared::timeToStr(tm) << "]: " << end  << std::endl);
+
     if (!_currentMatchUuid.empty()) {
         try {
             service::api::getGlobalApi()->finishWoWArenaMatch(_currentMatchUuid, tm, end);
@@ -316,6 +319,32 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
     _currentArena = {};
     _combatants.clear();
     genericMatchEnd(tm);
+}
+
+void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const void* data) {
+    bool isMatchEnd = hasValidCombatLog() && (inArena() || inChallenge());
+
+    if (!isMatchEnd) {
+        return;
+    }
+
+    LOG_INFO("Using Zone Change as Match End." << std::endl);
+    if (inArena()) {
+        game_event_watcher::WoWArenaEnd end;
+        end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
+        end.matchDurationSeconds = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(tm - _matchStartTime).count());
+        end.newRatings[0] = 0;
+        end.newRatings[1] = 0;
+        onArenaEnd(tm, &end);
+    } else if (inChallenge()) {
+        game_event_watcher::WoWChallengeModeEnd end;
+        end.instanceId = _currentChallenge.instanceId;
+        end.keystoneLevel = _currentChallenge.keystoneLevel;
+        end.success = false;
+        end.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(tm - _matchStartTime).count();
+        onChallengeModeEnd(tm, &end);
+    }
+
 }
 
 void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
