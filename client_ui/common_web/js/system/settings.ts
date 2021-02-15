@@ -114,6 +114,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.record.inputVolume = 1.0
     }
 
+    saveLocalSettings(parsedData)
     return parsedData
 /// #else
     return await generateDefaultSettings()
