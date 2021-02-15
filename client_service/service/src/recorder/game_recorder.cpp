@@ -261,10 +261,9 @@ void GameRecorder::loadCachedInfo() {
             if (!IsIconic(wnd)) {
                 HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
                 RECT windowRes;
-
-                // Using GetWindowRect here instead of GetClientRect just in case the border makes it full screen so in that case we can just
-                // use a full-screen recorder instead? IDK. I was seeing cases where the height was 1 pixel off which is...bizarre.
-                GetWindowRect(wnd, &windowRes);
+                if (!GetClientRect(wnd, &windowRes)) {
+                    LOG_ERROR("Failed to get client rect: " << shared::errors::getWin32ErrorAsString() << std::endl);
+                }
 
                 ret.width = windowRes.right - windowRes.left;
                 ret.height = windowRes.bottom - windowRes.top;
