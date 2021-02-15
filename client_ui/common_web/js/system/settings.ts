@@ -129,7 +129,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.minimizeToTray = true
     }
 
-    if (!parsedData.runOnStartup === undefined) {
+    if (parsedData.runOnStartup === undefined) {
         parsedData.runOnStartup = true
     }
 

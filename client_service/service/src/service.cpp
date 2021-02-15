@@ -171,6 +171,21 @@ int main(int argc, char** argv) {
         service::system::getGlobalState()->setPause(paused);
     });
 
+    LOG_INFO("Registering ZeroMQ Audio Device Callbacks" << std::endl);
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
+        );
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
+        );
+    });
+
     LOG_INFO("Send Ready" << std::endl);
     // At this point we can fire off an event letting the UI know that the service is ready.
     // The reason we need this is because setSessionId will fire off an API request to get the
@@ -205,21 +220,6 @@ int main(int argc, char** argv) {
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RECORDING_GAMES_TOPIC,
             shared::gameVectorToJsonArray(setVec).dump()
-        );
-    });
-
-    LOG_INFO("Registering ZeroMQ Audio Device Callbacks" << std::endl);
-    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
-        zeroMqServerClient.sendMessage(
-            service::zeromq::ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC,
-            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
-        );
-    });
-
-    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
-        zeroMqServerClient.sendMessage(
-            service::zeromq::ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC,
-            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
         );
     });
     

@@ -218,12 +218,20 @@ ipcMain.on('request-restart', () => {
     restart()
 })
 
-ipcMain.on('request-output-devices', async () => {
+async function requestOutputDevices() {
     await zeromqServer.requestAudioOutputOptions()
+}
+
+async function requestInputDevices() {
+    await zeromqServer.requestAudioInputOptions()
+}
+
+ipcMain.on('request-output-devices', async () => {
+    await requestOutputDevices()
 })
 
 ipcMain.on('request-input-devices', async () => {
-    await zeromqServer.requestAudioInputOptions()
+    await requestInputDevices()
 })
 
 zeromqServer.on('change-running-games', (games) => {
@@ -516,6 +524,9 @@ app.on('ready', async () => {
         if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
             startClientService()
             await backendReady
+            
+            await requestOutputDevices()
+            await requestInputDevices()
         }
     })
 })
