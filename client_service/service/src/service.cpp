@@ -14,6 +14,7 @@
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+#include "recorder/audio/portaudio_audio_recorder.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -204,6 +205,21 @@ int main(int argc, char** argv) {
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RECORDING_GAMES_TOPIC,
             shared::gameVectorToJsonArray(setVec).dump()
+        );
+    });
+
+    LOG_INFO("Registering ZeroMQ Audio Device Callbacks" << std::endl);
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
+        );
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
         );
     });
     

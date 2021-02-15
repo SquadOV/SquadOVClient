@@ -110,6 +110,14 @@ class ZeroMQServerClient {
         this._sub.close()
         this._pub.close()
     }
+
+    async requestAudioOutputOptions() {
+        await this._pub.send(['request-audio-output', ''])
+    }
+
+    async requestAudioInputOptions() {
+        await this._pub.send(['request-audio-input', ''])
+    }
 }
 
 module.exports.ZeroMQServerClient = ZeroMQServerClient

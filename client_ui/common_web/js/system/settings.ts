@@ -7,6 +7,10 @@ import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@c
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
+    outputDevice: string
+    outputVolume: number
+    inputDevice: string
+    inputVolume: number
 }
 
 export interface SquadOvLocalSettings {
@@ -40,17 +44,29 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         case BaselineLevel.Low:
             record = {
                 resY: 720,
-                fps: 30
+                fps: 30,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
         case BaselineLevel.Medium:
             record = {
                 resY: 720,
-                fps: 60
+                fps: 60,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
         case BaselineLevel.High:
             record = {
                 resY: 1080,
-                fps: 60
+                fps: 60,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
     }
 
@@ -62,6 +78,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         record: {
             resY: 1080,
             fps: 60,
+            outputDevice: 'Default Device',
+            outputVolume: 1.0,
+            inputDevice: 'Default Device',
+            inputVolume: 1.0,
         }
     }
 /// #endif
@@ -76,7 +96,25 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     }
 
     let data = fs.readFileSync(settingsFname , 'utf8')
-    return JSON.parse(data)
+    let parsedData = JSON.parse(data)
+
+    if (!parsedData.record.outputDevice) {
+        parsedData.record.outputDevice = 'Default Device'
+    }
+
+    if (!parsedData.record.outputVolume) {
+        parsedData.record.outputVolume = 1.0
+    }
+
+    if (!parsedData.record.inputDevice) {
+        parsedData.record.inputDevice = 'Default Device'
+    }
+
+    if (!parsedData.record.inputVolume) {
+        parsedData.record.inputVolume = 1.0
+    }
+
+    return parsedData
 /// #else
     return await generateDefaultSettings()
 /// #endif

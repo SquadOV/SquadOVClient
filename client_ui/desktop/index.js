@@ -205,12 +205,28 @@ ipcMain.on('request-restart', () => {
     restart()
 })
 
+ipcMain.on('request-output-devices', async () => {
+    await zeromqServer.requestAudioOutputOptions()
+})
+
+ipcMain.on('request-input-devices', async () => {
+    await zeromqServer.requestAudioInputOptions()
+})
+
 zeromqServer.on('change-running-games', (games) => {
     win.webContents.send('change-running-games', JSON.parse(games))
 })
 
 zeromqServer.on('change-recording-games', (games) => {
     win.webContents.send('change-recording-games', JSON.parse(games))
+})
+
+zeromqServer.on('respond-output-devices', (r) => {
+    win.webContents.send('respond-output-devices', JSON.parse(r))
+})
+
+zeromqServer.on('respond-input-devices', (r) => {
+    win.webContents.send('respond-input-devices', JSON.parse(r))
 })
 
 totalCloseCount = 0

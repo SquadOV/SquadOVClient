@@ -66,6 +66,40 @@ int gPortaudioCallback(const void* input, void* output, unsigned long frameCount
     return impl->portaudioCallback(input, output, frameCount, timeInfo, statusFlags);
 }
 
+AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirection dir) {
+    AudioDeviceResponse response;
+
+    PaDeviceIndex defaultDevice = 
+        (dir == EAudioDeviceDirection::Input) ?
+            Pa_GetDefaultInputDevice() :
+            Pa_GetDefaultOutputDevice();
+
+    for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount() ; ++i) {
+        const PaDeviceInfo* ldi = Pa_GetDeviceInfo(i);
+        const std::string ldiName(ldi->name);
+        if (i == defaultDevice) {
+            response.default = ldiName;
+        }
+
+        const PaHostApiInfo* hostInfo = Pa_GetHostApiInfo(ldi->hostApi);
+        if (hostInfo->type != paWASAPI) {
+            continue;
+        }
+
+        if ((dir == EAudioDeviceDirection::Output && ldi->maxOutputChannels == 0) || (dir == EAudioDeviceDirection::Input && ldi->maxInputChannels == 0)) {
+            continue;
+        }
+
+        if (ldiName.find("(loopback)") != std::string::npos) {
+            continue;
+        }
+
+        response.options.push_back(ldiName);
+    }
+
+    return response;
+}
+
 PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl(EAudioDeviceDirection dir):
     _dir(dir) {
 
