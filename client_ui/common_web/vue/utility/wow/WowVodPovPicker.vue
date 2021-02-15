@@ -4,6 +4,7 @@
         @input="selectVod"
         :options="allPovs"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-tooltip offset-x right>
@@ -69,6 +70,9 @@ export default class WowVodPovPicker extends Vue {
 
     @Prop({required: true})
     characterAssociations!: WoWCharacterUserAssociation[]
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     allAccessibleVods: WowMatchAccessibleVods | null = null
 

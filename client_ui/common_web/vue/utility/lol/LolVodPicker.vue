@@ -4,6 +4,7 @@
         @input="selectVod"
         :options="orderedVods"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod, selected}">
             <lol-participant-display
@@ -57,6 +58,9 @@ export default class LolVodPicker extends Vue {
 
     @Prop({required: true})
     vod!: VodAssociation | null
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     availableVods: LeagueMatchAccessibleVods | null = null
 

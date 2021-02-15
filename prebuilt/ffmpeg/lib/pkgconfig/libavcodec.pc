@@ -10,5 +10,5 @@ Requires:
 Requires.private: libswresample >= 3.7.100, libavutil >= 56.51.100
 Conflicts:
 Libs: -L${libdir}  -lavcodec 
-Libs.private: -libpath:../../prebuilt/openh264/lib openh264.lib mfplat.lib mfuuid.lib ole32.lib strmiids.lib ole32.lib user32.lib
+Libs.private: -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/opus/lib opus.lib -libpath:../../prebuilt/openh264/lib openh264.lib mfplat.lib mfuuid.lib ole32.lib strmiids.lib ole32.lib user32.lib
 Cflags: -I${includedir}

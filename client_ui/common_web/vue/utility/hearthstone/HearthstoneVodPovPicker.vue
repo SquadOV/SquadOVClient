@@ -4,6 +4,7 @@
         @input="selectVodForUserUuid(arguments[0].userUuid)"
         :options="orderedVods"
         :match-uuid="matchId"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod, selected}">
             <hearthstone-hero-display
@@ -43,6 +44,9 @@ export default class HearthstoneVodPovPicker extends Vue {
 
     @Prop({required: true})
     vod!: VodAssociation | null
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     availableVods: HearthstoneMatchAccessibleVods | null = null
 

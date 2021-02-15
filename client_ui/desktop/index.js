@@ -210,7 +210,12 @@ ipcMain.on('request-restart', () => {
     restart()
 })
 
-ipcMain.handle('open-vod-editor', (event, videoUuid) => {
+ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => {
+    let retPath = await zeromqServer.performVodClip(task, source, start, end)
+    return retPath
+})
+
+ipcMain.on('open-vod-editor', (event, videoUuid) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
             width: 1280,

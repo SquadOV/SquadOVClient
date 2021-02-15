@@ -27,6 +27,7 @@
                             id="match-vod"
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :ready.sync="vodReady"
+                            :current-time.sync="vodTime"
                         >
                         </video-player>
 
@@ -37,6 +38,7 @@
                             :player-metadata.sync="playerMetadata"
                             :match="matchWrapper"
                             :ref-puuid="puuid"
+                            :timestamp="vodTime"
                         >
                         </valorant-vod-pov-picker>
                     </v-col>
@@ -182,6 +184,7 @@ export default class ValorantMatch extends Vue {
 
     theaterMode: boolean = false
     vodReady: boolean = false
+    vodTime: Date | null = null
     
     get matchWrapper() : ValorantMatchDetailsWrapper | null {
         if (!this.currentMatch) {

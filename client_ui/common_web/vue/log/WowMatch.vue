@@ -51,6 +51,7 @@
                             :user-id="userId"
                             :match-characters ="matchCharacters"
                             :character-associations="characterAssociations"
+                            :timestamp="vodTime"
                         >
                         </wow-vod-pov-picker>
                     </v-col>

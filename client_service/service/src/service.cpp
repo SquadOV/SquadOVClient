@@ -14,6 +14,7 @@
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+#include "vod/vod_clipper.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -64,7 +65,7 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     vsprintf(buffer, fmt, v1);
 
     std::string sBuffer(buffer);
-    LOG_INFO(sBuffer << std::endl);
+    LOG_INFO(sBuffer);
 }
 
 void defaultMain() {
@@ -131,6 +132,7 @@ int main(int argc, char** argv) {
         LOG_INFO("RECEIVE SESSION ID: " << msg << std::endl);
         service::api::getGlobalApi()->setSessionId(msg);
     });
+
     zeroMqServerClient.start();
 
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
@@ -199,12 +201,27 @@ int main(int argc, char** argv) {
         );
     });
 
+
     service::system::getGlobalState()->addGameRecordingCallback([&zeroMqServerClient](const shared::EGameSet& set){
         const auto setVec = shared::gameSetToVector(set);
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RECORDING_GAMES_TOPIC,
             shared::gameVectorToJsonArray(setVec).dump()
         );
+    });
+
+    LOG_INFO("Add VOD Clip request handler..." << std::endl);    
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_VOD_CLIP_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE VOD CLIP REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto resp = service::vod::vodClip(service::vod::VodClipRequest::fromJson(json));
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_VOD_CLIP_TOPIC,
+                resp.toJson().dump()
+            );
+        });
+        t.detach();
     });
     
     const auto mode = vm["mode"].as<std::string>();

@@ -3,6 +3,7 @@
         :value="vod"
         :options="options"
         :match-uuid="taskId"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-img
@@ -41,6 +42,9 @@ export default class AimlabVodPicker extends Vue {
 
     @Prop({required: true})
     vod!: VodAssociation
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     get options(): VodAssociation[] {
         return [this.vod]

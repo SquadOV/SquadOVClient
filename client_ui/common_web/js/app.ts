@@ -13,9 +13,11 @@ Vue.use(Vuetify)
 Vue.use(VueRouter)
 Vue.use(Vuex)
 
+import App from '@client/vue/App.vue'
+
 /// #if DESKTOP
 
-import App from '@client/vue/App.vue'
+import PrimaryApp from '@client/vue/PrimaryApp.vue'
 
 /// #else
 
@@ -80,6 +82,7 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
+const VodEditor = () => import('@client/vue/utility/vods/VodEditor.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -91,398 +94,420 @@ import { apiClient, ApiData } from '@client/js/api'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 import { RootStoreOptions } from '@client/js/vuex/store'
 
+function isDesktop(): boolean {
+/// #if DESKTOP
+    return true
+/// #else
+    return false
+/// #endif
+}
+
 const baseRoutes : any[] = [
-    { path: '/', name: pi.DashboardPageId, component: Dashboard },
-    { 
-        path: '/login',
-        name: pi.LoginPageId,
-        component: Login,
-        props: (route : any) => ({
-            reg: route.query.reg,
-        })
-    },
     {
-        path: '/register',
-        name: pi.RegisterPageId,
-        component: Register,
-        props: (route : any) => ({
-            inviteUuid: route.query.inviteUuid,
-            squadId: parseInt(route.query.squadId),
-            sig: route.query.sig,
-        })
-    },
-    {
-        path: '/forgotpw/:changePasswordId',
-        name: pi.ForgotPasswordPageId,
-        component: ForgotPassword,
-        props: (route : any) => ({
-            changePasswordId: route.params.changePasswordId
-        })
-    },
-    {
-        path: '/verify',
-        name: pi.WaitForVerifyPageId,
-        component: EmailVerify,
-    },
-    { 
-        path: '/verify/:verificationId',
-        name: pi.VerifyEmailPageId,
-        component: VerifyEmail,
-        props: (route : any) => ({
-            verificationId: route.params.verificationId
-        })
-    },
-    {
-        path: '/profile/:userId',
-        name: pi.UserProfilePageId,
-        component: UserProfile,
-        props: (route : any) => ({
-            userId: parseInt(route.params.userId)
-        })
-    },
-    {
-        path: '/profile/:userId/squads',
-        name: pi.UserSquadsPageId,
-        component: UserSquads,
+        path: '/editor/:videoUuid',
+        component: VodEditor,
+        name: pi.VideoEditorPageId,
         props: (route: any) => ({
-            userId: parseInt(route.params.userId)
+            videoUuid: route.params.videoUuid,
         })
     },
     {
-        path: '/squad/:squadId',
-        name: pi.SingleSquadPageId,
-        component: SingleSquadPage,
-        props: (route: any) => ({
-            squadId: parseInt(route.params.squadId)
-        })
-    },
-    { 
-        path: '/logs/:userId',
-        component: GameLog,
-        props: (route: any) => ({
-            squadId: parseInt(route.query.squadId),
-            userId: parseInt(route.params.userId),
-        }),
+        path: '/',
+        component: isDesktop() ? PrimaryApp : WebApp,
         children: [
-            {
-                path: '',
-                name: pi.LogPageId,
-                component: LogGameChooser
-            },
-            {
-                path: 'valorant/account/:account?',
-                children: [
-                    {
-                        path: '',
-                        name: pi.ValorantLogPageId,
-                        component: ValorantGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                            puuid: route.params.account
-                        })
-                    },
-                ],
-                component: ValorantLogContainer,
+            { path: '', name: pi.DashboardPageId, component: Dashboard },
+            { 
+                path: 'login',
+                name: pi.LoginPageId,
+                component: Login,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
-                    puuid: route.params.account
+                    reg: route.query.reg,
                 })
             },
             {
-                path: 'tft/account/:account?',
-                children: [
-                    {
-                        path: '',
-                        name: pi.TftLogPageId,
-                        component: TftGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                            puuid: route.params.account
-                        })
-                    },
-                ],
-                component: TftLogContainer,
+                path: 'register',
+                name: pi.RegisterPageId,
+                component: Register,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
-                    puuid: route.params.account
+                    inviteUuid: route.query.inviteUuid,
+                    squadId: parseInt(route.query.squadId),
+                    sig: route.query.sig,
                 })
             },
             {
-                path: 'lol/account/:account?',
-                children: [
-                    {
-                        path: '',
-                        name: pi.LolLogPageId,
-                        component: LolGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                            puuid: route.params.account
-                        })
-                    },
-                ],
-                component: LolLogContainer,
+                path: 'forgotpw/:changePasswordId',
+                name: pi.ForgotPasswordPageId,
+                component: ForgotPassword,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
-                    puuid: route.params.account
+                    changePasswordId: route.params.changePasswordId
                 })
             },
             {
-                path: 'aimlab',
-                name: pi.AimlabLogPageId,
-                component: AimlabGameLog,
+                path: 'verify',
+                name: pi.WaitForVerifyPageId,
+                component: EmailVerify,
+            },
+            { 
+                path: 'verify/:verificationId',
+                name: pi.VerifyEmailPageId,
+                component: VerifyEmail,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
+                    verificationId: route.params.verificationId
                 })
             },
             {
-                path: 'hearthstone',
-                component: HearthstoneGameLog,
+                path: 'profile/:userId',
+                name: pi.UserProfilePageId,
+                component: UserProfile,
                 props: (route : any) => ({
+                    userId: parseInt(route.params.userId)
+                })
+            },
+            {
+                path: 'profile/:userId/squads',
+                name: pi.UserSquadsPageId,
+                component: UserSquads,
+                props: (route: any) => ({
+                    userId: parseInt(route.params.userId)
+                })
+            },
+            {
+                path: 'squad/:squadId',
+                name: pi.SingleSquadPageId,
+                component: SingleSquadPage,
+                props: (route: any) => ({
+                    squadId: parseInt(route.params.squadId)
+                })
+            },
+            { 
+                path: 'logs/:userId',
+                component: GameLog,
+                props: (route: any) => ({
+                    squadId: parseInt(route.query.squadId),
                     userId: parseInt(route.params.userId),
                 }),
                 children: [
                     {
                         path: '',
-                        name: pi.HearthstoneLogPageId,
-                        component: HearthstoneAllMatchesGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                        }),
+                        name: pi.LogPageId,
+                        component: LogGameChooser
                     },
                     {
-                        path: 'constructed',
-                        name: pi.HearthstoneConstructedLogPageId,
-                        component: HearthstoneAllMatchesGameLog,
+                        path: 'valorant/account/:account?',
+                        children: [
+                            {
+                                path: '',
+                                name: pi.ValorantLogPageId,
+                                component: ValorantGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                    puuid: route.params.account
+                                })
+                            },
+                        ],
+                        component: ValorantLogContainer,
                         props: (route : any) => ({
-                            filteredGameTypes: [
-                                HearthstoneGameType.Ranked,
-                                HearthstoneGameType.Casual
-                            ],
+                            userId: parseInt(route.params.userId),
+                            puuid: route.params.account
+                        })
+                    },
+                    {
+                        path: 'tft/account/:account?',
+                        children: [
+                            {
+                                path: '',
+                                name: pi.TftLogPageId,
+                                component: TftGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                    puuid: route.params.account
+                                })
+                            },
+                        ],
+                        component: TftLogContainer,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            puuid: route.params.account
+                        })
+                    },
+                    {
+                        path: 'lol/account/:account?',
+                        children: [
+                            {
+                                path: '',
+                                name: pi.LolLogPageId,
+                                component: LolGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                    puuid: route.params.account
+                                })
+                            },
+                        ],
+                        component: LolLogContainer,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            puuid: route.params.account
+                        })
+                    },
+                    {
+                        path: 'aimlab',
+                        name: pi.AimlabLogPageId,
+                        component: AimlabGameLog,
+                        props: (route : any) => ({
                             userId: parseInt(route.params.userId),
                         })
                     },
                     {
-                        path: 'arena',
-                        name: pi.HearthstoneArenaLogPageId,
-                        component: HearthstoneArenaGameLog,
+                        path: 'hearthstone',
+                        component: HearthstoneGameLog,
                         props: (route : any) => ({
                             userId: parseInt(route.params.userId),
-                        }),
-                    },
-                    {
-                        path: 'arena/:arenaId',
-                        name: pi.HearthstoneArenaRunMatchLogPageId,
-                        component: HearthstoneArenaRunMatchLog,
-                        props: (route: any) => ({
-                            runId: route.params.arenaId,
-                            userId: parseInt(route.params.userId),
-                        })
-                    },
-                    {
-                        path: 'brawl',
-                        name: pi.HearthstoneBrawlLogPageId,
-                        component: HearthstoneAllMatchesGameLog,
-                        props: (route : any) => ({
-                            filteredGameTypes: [
-                                HearthstoneGameType.TavernBrawl,
-                                HearthstoneGameType.Tb1pVsAi,
-                                HearthstoneGameType.Tb2pCoop,
-                                HearthstoneGameType.FsgBrawlVsFriend,
-                                HearthstoneGameType.FsgBrawl,
-                                HearthstoneGameType.FsgBrawl1pVsAi,
-                                HearthstoneGameType.FsgBrawl2pCoop,
-                            ],
-                            userId: parseInt(route.params.userId),
-                        })
-                    },
-                    {
-                        path: 'battlegrounds',
-                        name: pi.HearthstoneBattlegroundsLogPageId,
-                        component: HearthstoneAllMatchesGameLog,
-                        props: (route : any) => ({
-                            filteredGameTypes: [
-                                HearthstoneGameType.Battlegrounds,
-                                HearthstoneGameType.BattlegroundsFriendly
-                            ],
-                            userId: parseInt(route.params.userId),
-                        })
-                    },
-                    {
-                        path: 'duels',
-                        name: pi.HearthstoneDuelLogPageId,
-                        component: HearthstoneDuelGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                        }),
-                    },
-                    {
-                        path: 'duels/:duelId',
-                        name: pi.HearthstoneDuelRunMatchLogPageId,
-                        component: HearthstoneDuelRunMatchLog,
-                        props: (route: any) => ({
-                            runId: route.params.duelId,
-                            userId: parseInt(route.params.userId),
-                        })
-                    },
-                ]
-            },
-            {
-                path: 'wow/character/:guid?',
-                children: [
-                    {
-                        path: '',
-                        component: WowGameLog,
-                        props: (route : any) => ({
-                            userId: parseInt(route.params.userId),
-                            guid: route.params.guid,
                         }),
                         children: [
                             {
                                 path: '',
-                                name: pi.WowLogPageId,
-                                // Use this as the component instead of using a redirect
-                                // so that when the game nav tries to get the path of this route
-                                // we get the non-redirected URL.
-                                component: WowDefaultGameLog,
-                            },
-                            {
-                                path: 'encounters',
-                                name: pi.WowEncounterLogPageId,
-                                component: WowEncounterGameLog,
+                                name: pi.HearthstoneLogPageId,
+                                component: HearthstoneAllMatchesGameLog,
                                 props: (route : any) => ({
                                     userId: parseInt(route.params.userId),
-                                    guid: route.params.guid,
                                 }),
                             },
                             {
-                                path: 'challenges',
-                                name: pi.WowChallengeLogPageId,
-                                component: WowKeystoneGameLog,
+                                path: 'constructed',
+                                name: pi.HearthstoneConstructedLogPageId,
+                                component: HearthstoneAllMatchesGameLog,
                                 props: (route : any) => ({
+                                    filteredGameTypes: [
+                                        HearthstoneGameType.Ranked,
+                                        HearthstoneGameType.Casual
+                                    ],
                                     userId: parseInt(route.params.userId),
-                                    guid: route.params.guid,
-                                }),
+                                })
                             },
                             {
                                 path: 'arena',
-                                name: pi.WowArenaLogPageId,
-                                component: WowArenaGameLog,
+                                name: pi.HearthstoneArenaLogPageId,
+                                component: HearthstoneArenaGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                }),
+                            },
+                            {
+                                path: 'arena/:arenaId',
+                                name: pi.HearthstoneArenaRunMatchLogPageId,
+                                component: HearthstoneArenaRunMatchLog,
+                                props: (route: any) => ({
+                                    runId: route.params.arenaId,
+                                    userId: parseInt(route.params.userId),
+                                })
+                            },
+                            {
+                                path: 'brawl',
+                                name: pi.HearthstoneBrawlLogPageId,
+                                component: HearthstoneAllMatchesGameLog,
+                                props: (route : any) => ({
+                                    filteredGameTypes: [
+                                        HearthstoneGameType.TavernBrawl,
+                                        HearthstoneGameType.Tb1pVsAi,
+                                        HearthstoneGameType.Tb2pCoop,
+                                        HearthstoneGameType.FsgBrawlVsFriend,
+                                        HearthstoneGameType.FsgBrawl,
+                                        HearthstoneGameType.FsgBrawl1pVsAi,
+                                        HearthstoneGameType.FsgBrawl2pCoop,
+                                    ],
+                                    userId: parseInt(route.params.userId),
+                                })
+                            },
+                            {
+                                path: 'battlegrounds',
+                                name: pi.HearthstoneBattlegroundsLogPageId,
+                                component: HearthstoneAllMatchesGameLog,
+                                props: (route : any) => ({
+                                    filteredGameTypes: [
+                                        HearthstoneGameType.Battlegrounds,
+                                        HearthstoneGameType.BattlegroundsFriendly
+                                    ],
+                                    userId: parseInt(route.params.userId),
+                                })
+                            },
+                            {
+                                path: 'duels',
+                                name: pi.HearthstoneDuelLogPageId,
+                                component: HearthstoneDuelGameLog,
+                                props: (route : any) => ({
+                                    userId: parseInt(route.params.userId),
+                                }),
+                            },
+                            {
+                                path: 'duels/:duelId',
+                                name: pi.HearthstoneDuelRunMatchLogPageId,
+                                component: HearthstoneDuelRunMatchLog,
+                                props: (route: any) => ({
+                                    runId: route.params.duelId,
+                                    userId: parseInt(route.params.userId),
+                                })
+                            },
+                        ]
+                    },
+                    {
+                        path: 'wow/character/:guid?',
+                        children: [
+                            {
+                                path: '',
+                                component: WowGameLog,
                                 props: (route : any) => ({
                                     userId: parseInt(route.params.userId),
                                     guid: route.params.guid,
                                 }),
-                            }
-                        ]
-                    },
+                                children: [
+                                    {
+                                        path: '',
+                                        name: pi.WowLogPageId,
+                                        // Use this as the component instead of using a redirect
+                                        // so that when the game nav tries to get the path of this route
+                                        // we get the non-redirected URL.
+                                        component: WowDefaultGameLog,
+                                    },
+                                    {
+                                        path: 'encounters',
+                                        name: pi.WowEncounterLogPageId,
+                                        component: WowEncounterGameLog,
+                                        props: (route : any) => ({
+                                            userId: parseInt(route.params.userId),
+                                            guid: route.params.guid,
+                                        }),
+                                    },
+                                    {
+                                        path: 'challenges',
+                                        name: pi.WowChallengeLogPageId,
+                                        component: WowKeystoneGameLog,
+                                        props: (route : any) => ({
+                                            userId: parseInt(route.params.userId),
+                                            guid: route.params.guid,
+                                        }),
+                                    },
+                                    {
+                                        path: 'arena',
+                                        name: pi.WowArenaLogPageId,
+                                        component: WowArenaGameLog,
+                                        props: (route : any) => ({
+                                            userId: parseInt(route.params.userId),
+                                            guid: route.params.guid,
+                                        }),
+                                    }
+                                ]
+                            },
+                        ],
+                        component: WowLogContainer,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                            guid: route.params.guid,
+                        }),
+                    }
                 ],
-                component: WowLogContainer,
-                props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
-                    guid: route.params.guid,
-                }),
-            }
-        ],
-    },
-    {
-        path: '/match/valorant/:matchUuid',
-        name: pi.ValorantMatchPageId,
-        component: ValorantMatch,
-        props: (route : any) => ({
-            puuid: route.query.account,
-            matchUuid: route.params.matchUuid,
-            userId: parseInt(route.query.userId)
-        })
-    },
-    {
-        path: '/match/tft/:matchUuid',
-        name: pi.TftMatchPageId,
-        component: TftMatch,
-        props: (route : any) => ({
-            puuid: route.query.account,
-            matchUuid: route.params.matchUuid,
-            userId: parseInt(route.query.userId)
-        })
-    },
-    {
-        path: '/match/lol/:matchUuid',
-        name: pi.LolMatchPageId,
-        component: LolMatch,
-        props: (route : any) => ({
-            matchUuid: route.params.matchUuid,
-            userId: parseInt(route.query.userId)
-        })
-    },
-    {
-        path: '/match/aimlab/:taskId',
-        name: pi.AimlabMatchPageId,
-        component: AimlabMatch,
-        props: (route : any) => ({
-            taskId: route.params.taskId,
-            userId: parseInt(route.query.userId)
-        })
-    },
-    {
-        path: '/match/hearthstone/:matchId',
-        name: pi.HearthstoneMatchPageId,
-        component: HearthstoneMatch,
-        props: (route : any) => ({
-            matchId: route.params.matchId,
-            userId: parseInt(route.query.userId)
-        })
-    },
-    {
-        path: '/match/wow/:matchUuid',
-        name: pi.WowMatchPageId,
-        component: WowMatch,
-        props: (route : any) => ({
-            userId: parseInt(route.query.userId),
-            matchUuid: route.params.matchUuid
-        }),
-    },
-    { 
-        path: '/performance',
-        component: Performance,
-        children: [
-            {
-                path: '',
-                name: pi.PerformancePageId,
-                component: PerformanceComponentChooser,
             },
             {
-                path: 'visualization',
-                name: pi.VizStatsPageId,
-                component: VizStats,
+                path: 'match/valorant/:matchUuid',
+                name: pi.ValorantMatchPageId,
+                component: ValorantMatch,
+                props: (route : any) => ({
+                    puuid: route.query.account,
+                    matchUuid: route.params.matchUuid,
+                    userId: parseInt(route.query.userId)
+                })
+            },
+            {
+                path: 'match/tft/:matchUuid',
+                name: pi.TftMatchPageId,
+                component: TftMatch,
+                props: (route : any) => ({
+                    puuid: route.query.account,
+                    matchUuid: route.params.matchUuid,
+                    userId: parseInt(route.query.userId)
+                })
+            },
+            {
+                path: 'match/lol/:matchUuid',
+                name: pi.LolMatchPageId,
+                component: LolMatch,
+                props: (route : any) => ({
+                    matchUuid: route.params.matchUuid,
+                    userId: parseInt(route.query.userId)
+                })
+            },
+            {
+                path: 'match/aimlab/:taskId',
+                name: pi.AimlabMatchPageId,
+                component: AimlabMatch,
+                props: (route : any) => ({
+                    taskId: route.params.taskId,
+                    userId: parseInt(route.query.userId)
+                })
+            },
+            {
+                path: 'match/hearthstone/:matchId',
+                name: pi.HearthstoneMatchPageId,
+                component: HearthstoneMatch,
+                props: (route : any) => ({
+                    matchId: route.params.matchId,
+                    userId: parseInt(route.query.userId)
+                })
+            },
+            {
+                path: 'match/wow/:matchUuid',
+                name: pi.WowMatchPageId,
+                component: WowMatch,
+                props: (route : any) => ({
+                    userId: parseInt(route.query.userId),
+                    matchUuid: route.params.matchUuid
+                }),
+            },
+            { 
+                path: 'performance',
+                component: Performance,
+                children: [
+                    {
+                        path: '',
+                        name: pi.PerformancePageId,
+                        component: PerformanceComponentChooser,
+                    },
+                    {
+                        path: 'visualization',
+                        name: pi.VizStatsPageId,
+                        component: VizStats,
+                    },
+                ]
+            },
+            {
+                path: 'riot/oauth-callback',
+                component: RsoOauthHandler,
+                name: pi.RsoOauthPageId,
+                props: (route : any) => ({
+                    code: route.query.code,
+                    state: route.query.state,
+                }),
+            },
+            {
+                path: 'invite/:inviteUuid/:action',
+                component: SquadInviteResponsePage,
+                name: pi.InviteResponsePageId,
+                props: (route: any) => ({
+                    inviteUuid: route.params.inviteUuid,
+                    action: route.params.action,
+                    isUser: (route.query.isUser === 'true'),
+                    squadId: parseInt(route.query.squadId),
+                    sig: route.query.sig,
+                })
+            },
+            {
+                path: 'share/:accessTokenId',
+                component: ShareRedirect,
+                name: pi.ShareRedirectPageId,
+                props: (route: any) => ({
+                    accessTokenId: route.params.accessTokenId,
+                })
             },
         ]
-    },
-    {
-        path: '/riot/oauth-callback',
-        component: RsoOauthHandler,
-        name: pi.RsoOauthPageId,
-        props: (route : any) => ({
-            code: route.query.code,
-            state: route.query.state,
-        }),
-    },
-    {
-        path: '/invite/:inviteUuid/:action',
-        component: SquadInviteResponsePage,
-        name: pi.InviteResponsePageId,
-        props: (route: any) => ({
-            inviteUuid: route.params.inviteUuid,
-            action: route.params.action,
-            isUser: (route.query.isUser === 'true'),
-            squadId: parseInt(route.query.squadId),
-            sig: route.query.sig,
-        })
-    },
-    {
-        path: '/share/:accessTokenId',
-        component: ShareRedirect,
-        name: pi.ShareRedirectPageId,
-        props: (route: any) => ({
-            accessTokenId: route.params.accessTokenId,
-        })
     }
 ]
 
@@ -630,11 +655,7 @@ new Vue({
     components: {
         VApp,
         VMain,
-/// #if DESKTOP
         App,
-/// #else
-        WebApp,
-/// #endif
     },
     vuetify: new Vuetify({
         theme: {

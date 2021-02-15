@@ -1,42 +1,131 @@
-import { VodAssociation } from '@client/js/squadov/vods'
+import { VodAssociation } from '@client/js/squadov/vod'
+import { v4 as uuidv4 } from 'uuid'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
-import { Message } from 'protobufjs'
 /// #endif
 
 export function openVodEditingWindow(videoUuid: string) {
 /// #if DESKTOP
-    ipcRenderer.invoke('open-vod-editor', videoUuid)
+    ipcRenderer.send('open-vod-editor', videoUuid)
 /// #else
-
+    console.log('VOD Editing not yet supported on the web.')
 /// #endif
 }
 
+// Returns a promise that returns the accessible file containing 
+export function requestVodClip(source: string, start: number, end: number): Promise<string> {
+    let taskId = uuidv4()
+    return new Promise((resolve, reject) => {
+/// #if DESKTOP
+        ipcRenderer.invoke('request-vod-clip', {
+            task: taskId,
+            source,
+            start,
+            end
+        }).then(resolve).catch(reject)
+/// #else
+        reject('VOD Editing not yet supported on the web.')
+/// #endif
+    })
+
+}
+
 enum VodEditorMessageType {
-    RequestVodAssociation
+    RequestVodAssociation,
+    RespondVodAssociation,
+    TimestampSync,
+}
+
+export enum VodEditorChannelType {
+    Editor,
+    Source,
+}
+
+interface VodEditorMessagePacket {
+    type: VodEditorMessageType
+    data: any
 }
 
 export class VodEditorContext {
     _uuid: string
     _channel: BroadcastChannel
+    _type: VodEditorChannelType
+    _vod: VodAssociation | null
+    _timeListeners: ((a: Date) => void)[]
 
     constructor(uuid: string) {
         this._uuid = uuid
         this._channel = new BroadcastChannel(`squadov-vod-editor-${uuid}`)
         this._channel.addEventListener('message', (e: MessageEvent) => { this.handleMessages(e) })
+        this._type = VodEditorChannelType.Editor
+        this._vod = null
+        this._timeListeners = []
+    }
+
+    startSource(v: VodAssociation) {
+        this._vod = v
+        this._type = VodEditorChannelType.Source
     }
 
     handleMessages(e: MessageEvent) {
-        
+        let respMessage: VodEditorMessagePacket = e.data
+        switch (respMessage.type) {
+            case VodEditorMessageType.RequestVodAssociation:
+                if (this._type == VodEditorChannelType.Source && !!this._vod) {
+                    this._channel.postMessage({
+                        type: VodEditorMessageType.RespondVodAssociation,
+                        data: this._vod,
+                    })
+                }
+            case VodEditorMessageType.TimestampSync:
+                this.onSyncTime(respMessage.data)
+        }
+    }
+
+    addTimeSyncListener(ln: (a: Date) => void) {
+        this._timeListeners.push(ln)
+    }
+
+    onSyncTime(t: Date) {
+        for (let ln of this._timeListeners) {
+            ln(t)
+        }
+    }
+
+    syncTime(t: Date) {
+        this._channel.postMessage({
+            type: VodEditorMessageType.TimestampSync,
+            data: t,
+        })
     }
 
     requestVodAssociation(): Promise<VodAssociation> {
         return new Promise((resolve, reject) => {
-            let requestListener = (e: Message) => {
+            let removeTmpListeners = () => {
+                this._channel.removeEventListener('message', requestListener)
+                this._channel.removeEventListener('messageerror', errorListener)
             }
+
+            let requestListener = (e: MessageEvent) => {
+                let respMessage: VodEditorMessagePacket = e.data
+                if (respMessage.type == VodEditorMessageType.RespondVodAssociation) {
+                    removeTmpListeners()
+                    resolve(respMessage.data)
+                }
+            }
+
+            let errorListener = () => {
+                removeTmpListeners()
+                reject('Failed to get VOD association for editor.')
+            }
+            
             this._channel.addEventListener('message', requestListener)
-            this._channel.postMessage(VodEditorMessageType.RequestVodAssociation)
+            this._channel.addEventListener('messageerror', errorListener)
+            this._channel.postMessage({
+                type: VodEditorMessageType.RequestVodAssociation,
+                data: undefined,
+            })
         })
     }
 

@@ -10,10 +10,7 @@
 #include "api/squadov_api.h"
 #include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
-<<<<<<< HEAD
-=======
 #include "recorder/video/windows_graphics_capture.h"
->>>>>>> release
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "system/win32/hwnd_utils.h"
@@ -70,20 +67,6 @@ GameRecorder::~GameRecorder() {
     }
 }
 
-<<<<<<< HEAD
-void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
-    LOG_INFO("Attempting to create video recorder: " << std::endl
-        << "\tResolution: " << info.width << "x" << info.height << std::endl
-        << "\tInit: " << info.init << std::endl
-        << "\tWindowed: " << info.isWindowed << std::endl);
-
-#ifdef _WIN32
-    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
-        return;
-    }
-
-    if (video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
-=======
 void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
@@ -101,7 +84,6 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
     }
 
     if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
->>>>>>> release
         return;
     }
 #endif

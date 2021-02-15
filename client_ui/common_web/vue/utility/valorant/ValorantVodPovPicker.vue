@@ -4,6 +4,7 @@
         @input="selectVod"
         :options="orderedVods"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod, selected}">
             <valorant-agent-icon
@@ -57,6 +58,9 @@ export default class ValorantVodPovPicker extends Vue {
 
     @Prop({required: true})
     match!: ValorantMatchDetailsWrapper | null
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     availableVods: ValorantMatchAccessibleVods | null = null
 

@@ -13,10 +13,7 @@ SET(SRCS
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
     src/recorder/video/dxgi_desktop_recorder.cpp
-<<<<<<< HEAD
-=======
     src/recorder/video/windows_graphics_capture.cpp
->>>>>>> release
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
@@ -30,6 +27,7 @@ SET(SRCS
     src/system/state.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
+    src/vod/vod_clipper.cpp
 )
 
 SET(HEADERS
@@ -48,10 +46,7 @@ SET(HEADERS
     src/recorder/video/video_recorder.h
     src/recorder/video/win32_gdi_recorder.h
     src/recorder/video/dxgi_desktop_recorder.h
-<<<<<<< HEAD
-=======
     src/recorder/video/windows_graphics_capture.h
->>>>>>> release
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
@@ -70,6 +65,7 @@ SET(HEADERS
     src/system/state.h
     src/zeromq/zeromq.h
     src/local/local_data.h
+    src/vod/vod_clipper.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)

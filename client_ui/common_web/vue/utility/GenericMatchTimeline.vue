@@ -4,7 +4,8 @@
         class="parent-div"
         :style="style"
         @mouseenter="startSeeking"
-        @mouseleave="seeking = false"
+        @mouseleave="clearMouseMoveHandlers"
+        @mouseup="clearMouseMoveHandlers"
         @mousemove="onMouseMove"
         @click="changeCurrent"
     >
@@ -17,7 +18,20 @@
             </slot>
         </div>
 
-        <div class="full-parent-height full-width tick-parent">
+        <div class="d-flex justify-space-between clip-div" v-if="hasClipHandles" :style="clipBarStyle">
+            <div
+                class="clip-start-div"
+                @mousedown="moveStart = true"
+                @mouseup="moveStart = false"
+            ></div>
+            <div
+                class="clip-end-div"
+                @mousedown="moveEnd = true"
+                @mouseup="moveEnd = false"
+            ></div>
+        </div>
+
+        <div class="full-parent-height tick-parent" :style="parentTickDivStyle">
             <div
                 class="tick-div major-tick"
                 v-for="(tick, idx) in majorTicks"
@@ -92,10 +106,22 @@ export default class GenericMatchTimeline extends Vue {
     height!: number
 
     @Prop({default: 0})
+    xPadding!: number
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
+    @Prop({default: 0})
     current!: number
 
     @Prop({type: Array, required: true})
     inputEvents!: GenericEvent[]
+
+    @Prop()
+    clipStartHandle!: number
+
+    @Prop()
+    clipEndHandle!: number
 
     $refs!: {
         parent: HTMLElement
@@ -106,8 +132,32 @@ export default class GenericMatchTimeline extends Vue {
     seekingTime: number = 0
     lastMouseMove: Date = new Date()
 
+    moveStart: boolean = false
+    moveEnd: boolean = false
+
     tooltipX: number = 0
     tooltipY: number = 0
+
+    get hasClipHandles(): boolean {
+        return this.clipStartHandle !== undefined && this.clipEndHandle !== undefined
+    }
+    get clipBarStyle(): any {
+        if (!this.hasClipHandles) {
+            return {}
+        }
+        let clipStartPercentage = this.computePercentage(this.clipStartHandle)
+        let clipEndPercentage = this.computePercentage(this.clipEndHandle)
+        return {
+            'width': `calc(${clipEndPercentage - clipStartPercentage}%)`,
+            'left': `calc(${clipStartPercentage}% + ${this.xPadding}px)`,
+        }
+    }
+
+    clearMouseMoveHandlers() {
+        this.seeking = false
+        this.moveStart = false
+        this.moveEnd = false
+    }
 
     changeCurrent(e: MouseEvent) {
         let tm = this.computeTimeFromMouseEvent(e)
@@ -116,7 +166,7 @@ export default class GenericMatchTimeline extends Vue {
 
     computeTimeFromMouseEvent(e: MouseEvent): number {
         let bounds = this.$refs.parent.getBoundingClientRect()
-        let percentage = (e.clientX - bounds.left) / bounds.width
+        let percentage = (e.clientX - bounds.left - this.xPadding) / (bounds.width - 2 * this.xPadding)
         return this.start + (this.end - this.start) * percentage
     }
 
@@ -148,16 +198,23 @@ export default class GenericMatchTimeline extends Vue {
     }
 
     onMouseMove(e: MouseEvent) {
-        if (!this.seeking) {
-            return
-        }
-
         let now = new Date()
         if ((now.getTime() - this.lastMouseMove.getTime()) < 33) {
             return
         }
         this.lastMouseMove = now
-        this.recomputeSeekingTimeFromMouseEvent(e)
+
+        if (this.moveStart) {
+            this.$emit('update:clipStartHandle', this.computeTimeFromMouseEvent(e))
+        }
+
+        if (this.moveEnd) {
+            this.$emit('update:clipEndHandle', this.computeTimeFromMouseEvent(e))
+        }
+
+        if (this.seeking && !this.moveStart && !this.moveEnd) {
+            this.recomputeSeekingTimeFromMouseEvent(e)
+        }
     }
 
     get majorTicks(): number[] {
@@ -178,8 +235,14 @@ export default class GenericMatchTimeline extends Vue {
     }
 
     get style(): any {
-        return {
-            'height': `${this.height}px`
+        if (!this.fill) {
+            return {
+                'height': `${this.height}px`
+            }
+        } else {
+            return {
+                'height': '100%'
+            }
         }
     }
 
@@ -198,9 +261,15 @@ export default class GenericMatchTimeline extends Vue {
     }
 
     get progressBarStyle(): any {
-        return {
+        let style: any = {
             'width': `${this.percentage}%`
         }
+
+        if (this.hasClipHandles) {
+            style['background-color'] = 'transparent !important'
+        }
+
+        return style
     }
 
     tickDivStyle(t: number): any {
@@ -221,6 +290,12 @@ export default class GenericMatchTimeline extends Vue {
             'left': `${this.tooltipX}px`,
         }
     }
+
+    get parentTickDivStyle(): any {
+        return {
+            'width': `calc(100% - ${this.xPadding * 2}px)`
+        }
+    }
 }
 
 </script>
@@ -233,6 +308,7 @@ export default class GenericMatchTimeline extends Vue {
     background-color: #1E1E1E;
     z-index: 0;
     position: relative;
+    user-select: none;
 }
 
 .bar-div {
@@ -240,6 +316,31 @@ export default class GenericMatchTimeline extends Vue {
     background-color: rgba(255, 255, 255, 0.1);
     border-right: 3px solid rgb(255, 215, 0);
     z-index: 1;
+}
+
+.clip-div {
+    position: absolute;
+    top: 0;
+    width: 200px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.1);
+    z-index: 5;
+}
+
+.clip-start-div{
+    background-color: #4CAF50;
+    height: 100%;
+    width: 5px;
+    cursor: pointer;
+    z-index: 5;
+}
+
+.clip-end-div{
+    background-color: #FF5252;
+    height: 100%;
+    width: 5px;
+    cursor: pointer;
+    z-index: 5;
 }
 
 .tick-parent {

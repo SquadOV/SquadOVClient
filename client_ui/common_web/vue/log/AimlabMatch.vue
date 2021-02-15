@@ -25,6 +25,7 @@
                         :vod="vod"
                         id="task-vod"
                         disable-theater
+                        :current-time.sync="vodTime"
                     >
                     </video-player>
 
@@ -34,6 +35,7 @@
                         :task-id="taskId"
                         :task-name="data.taskName"
                         :vod="vod"
+                        :timestamp="vodTime"
                     >
                     </aimlab-vod-picker>
                 </template>
@@ -87,6 +89,7 @@ export default class AimlabMatch extends Vue {
     // Synced from the task summary display. Kind of a yikes there...
     vod : VodAssociation | null = null
     data : AimlabTaskData | null = null
+    vodTime: Date | null = null
 
     @Watch('taskId')
     refreshTask() {

@@ -32,6 +32,7 @@ class ZeroMQServerClient {
         this._port = 0
         this._handlers = {}
         this._started = false
+        this._currentId = 0
     }
 
     async start() {
@@ -71,7 +72,7 @@ class ZeroMQServerClient {
             }
 
             for (let h of this._handlers[topic]) {
-                h(msgStr)
+                h.handler(msgStr)
             }
         }
     }
@@ -89,7 +90,42 @@ class ZeroMQServerClient {
             this._handlers[topic] = []
         }
 
-        this._handlers[topic].push(handler)
+        this._currentId += 1
+        this._handlers[topic].push({
+            handler,
+            id: this._currentId
+        })
+        return this._currentId
+    }
+
+    remove(topic, id) {
+        if (!(topic in this._handlers)) {
+            return
+        }
+
+        let idx = this._handlers[topic].findIndex((e) => e.id === id)
+        if (idx === -1) {
+            return
+        }
+        this._handlers[topic].splice(idx)
+    }
+
+    performVodClip(task, source, start, end) {
+        return new Promise(async (resolve, reject) => {
+            let handlerId = this.on('respond-vod-clip', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-vod-clip', handlerId)
+                    if (resp.success) {
+                        resolve(parsedResp.path)
+                    } else {
+                        reject('Failure in VOD clipping.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-vod-clip', JSON.stringify({task, source, start, end})])
+        })
     }
 
     async close() {

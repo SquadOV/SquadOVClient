@@ -4,6 +4,7 @@
         @input="selectVod"
         :options="allPovs"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
     >
         <template v-slot:vod="{ivod}">
             <v-tooltip bottom>
@@ -58,6 +59,9 @@ export default class TftVodPicker extends Vue {
 
     @Prop({required: true})
     match!: WrappedTftMatch
+
+    @Prop()
+    timestamp!: Date | undefined | null
 
     availableVods: TftMatchAccessibleVods | null = null
 

@@ -38,6 +38,7 @@
                             :match-uuid="matchUuid"
                             :match="currentMatch.match"
                             :current-participant-id="currentParticipantId"
+                            :timestamp="vodTime"
                         >
                         </lol-vod-picker>
                     </v-col>

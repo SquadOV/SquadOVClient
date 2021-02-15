@@ -1,6 +1,6 @@
 <template>
-    <div id="vod-container">
-        <video v-if="hasVideo" class="video-js vjs-fluid" ref="video">
+    <div>
+        <video v-if="hasVideo" :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
         </video>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
@@ -46,6 +46,18 @@ export default class VideoPlayer extends Vue {
 
     @Prop()
     ready!: boolean | undefined
+
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    loopClip!: boolean
+
+    @Prop()
+    clipStart!: number | undefined
+
+    @Prop()
+    clipEnd!: number | undefined
 
     player: videojs.Player | null = null
     $refs!: {
@@ -228,6 +240,13 @@ export default class VideoPlayer extends Vue {
 
         this.player.on('timeupdate', () => {
             if (!!this.vod && !!this.player) {
+                if (this.loopClip && this.clipEnd !== undefined && this.clipStart !== undefined) {
+                    if (this.player.currentTime() > this.clipEnd || this.player.currentTime() < this.clipStart) {
+                        console.log('force move to clip start')
+                        this.player.currentTime(this.clipStart)
+                    }
+                }
+
                 let newCurrentTime = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
 
                 // We don't particularly need to update this very often so cap it at showing 1s differences.
@@ -275,11 +294,6 @@ export default class VideoPlayer extends Vue {
 </script>
 
 <style scoped>
-
-#vod-container {
-    width: 100%;
-    height: 100%;
-}
 
 .empty-container {
     height: 500px;
