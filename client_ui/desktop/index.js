@@ -19,13 +19,22 @@ let win
 let tray
 let isQuitting = false
 
-if (app.isPackaged) {
-    app.setLoginItemSettings({
-        openAtLogin: true,
-        args: [
-            '--hidden'
-        ]
-    })
+let appSettings = null
+function loadAppSettings() {
+    const fname = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'settings.json')
+    if (fs.existsSync(fname)) {
+        const data = fs.readFileSync(fname)
+        appSettings = JSON.parse(data)
+    }
+
+    if (app.isPackaged) {
+        app.setLoginItemSettings({
+            openAtLogin: appSettings.runOnStartup === true,
+            args: [
+                '--hidden'
+            ]
+        })
+    }
 }
 
 const singleLock = app.requestSingleInstanceLock()
@@ -52,8 +61,12 @@ function start() {
 
     win.on('close', (e) => {
         if (!isQuitting) {
-            e.preventDefault()
-            win.hide()
+            if (!!appSettings.minimizeToTray) {
+                e.preventDefault()
+                win.hide()
+            } else {
+                quit()
+            }
         }
     })
 
@@ -509,4 +522,8 @@ app.on('ready', async () => {
 
 app.on('window-all-closed', () => {
     quit()
+})
+
+ipcMain.on('reload-app-settings', () => {
+    loadAppSettings()
 })

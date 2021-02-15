@@ -90,6 +90,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.currentState.recordingGames = games
 /// #endif
         },
+        setRunOnStartup(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.runOnStartup = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        setMinimizeToSystemTray(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.minimizeToTray = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         markValidSession(state: RootState, v: boolean) {
             state.hasValidSession = v
         },

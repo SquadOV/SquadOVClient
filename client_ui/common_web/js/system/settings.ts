@@ -2,6 +2,7 @@
 import fs from 'fs'
 import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
+import { ipcRenderer } from 'electron'
 /// #endif
 
 export interface SquadOvRecordingSettings {
@@ -15,6 +16,8 @@ export interface SquadOvRecordingSettings {
 
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
+    minimizeToTray: boolean
+    runOnStartup: boolean
 }
 
 function getSettingsFname() : string {
@@ -30,6 +33,10 @@ export function saveLocalSettings(s: SquadOvLocalSettings) {
     fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
         encoding: 'utf-8',
     })
+
+    setTimeout(() => {
+        ipcRenderer.send('reload-app-settings')
+    }, 1)
 /// #endif
 }
 
@@ -71,7 +78,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
     }
 
     return {
-        record
+        record,
+        minimizeToTray: true,
+        runOnStartup: true
     }
 /// #else
     return {
@@ -82,7 +91,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             outputVolume: 1.0,
             inputDevice: 'Default Device',
             inputVolume: 1.0,
-        }
+        },
+        minimizeToTray: true,
+        runOnStartup: true
     }
 /// #endif
 }
@@ -112,6 +123,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (!parsedData.record.inputVolume) {
         parsedData.record.inputVolume = 1.0
+    }
+
+    if (parsedData.minimizeToTray === undefined) {
+        parsedData.minimizeToTray = true
+    }
+
+    if (!parsedData.runOnStartup === undefined) {
+        parsedData.runOnStartup = true
     }
 
     saveLocalSettings(parsedData)

@@ -80,6 +80,7 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
+const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPage.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -483,7 +484,12 @@ const baseRoutes : any[] = [
         props: (route: any) => ({
             accessTokenId: route.params.accessTokenId,
         })
-    }
+    },
+    {
+        path: '/settings',
+        component: AppSettingsPage,
+        name: pi.SettingsPageId,
+    },
 ]
 
 const router = new VueRouter({

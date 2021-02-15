@@ -90,6 +90,10 @@
                         </v-list-item-title>
                     </v-list-item>
 
+                    <v-list-item :to="settingsTo" v-if="settingsEnabled">
+                        <v-list-item-title>Settings</v-list-item-title>
+                    </v-list-item>
+
                     <v-list-item @click="logout">
                         <v-list-item-title>Logout</v-list-item-title>
                     </v-list-item>
@@ -273,6 +277,20 @@ export default class AppNav extends Vue {
                 userId: this.$store.state.currentUser!.id
             }
         }
+    }
+
+    get settingsTo(): any {
+        return {
+            name: pi.SettingsPageId,
+        }
+    }
+
+    get settingsEnabled(): boolean {
+/// #if DESKTOP
+        return true
+/// #else  
+        return false
+/// #endif
     }
 
     logout() {
