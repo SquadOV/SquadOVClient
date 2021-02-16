@@ -16,10 +16,8 @@
         </video-player>
 
         <div class="mb-1 mx-2">
-            <div id="editor-timeline">
+            <div id="editor-timeline" class="px-2">
                 <generic-match-timeline
-                    class="px-4"
-                    :x-padding="16"
                     :start="start"
                     :end="end"
                     :current="currentTimestamp"

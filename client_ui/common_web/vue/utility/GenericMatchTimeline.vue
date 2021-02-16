@@ -18,7 +18,7 @@
             </slot>
         </div>
 
-        <div class="d-flex justify-space-between clip-div" v-if="hasClipHandles" :style="clipBarStyle">
+        <div class="clip-div" v-if="hasClipHandles" :style="clipBarStyle">
             <div
                 class="clip-start-div"
                 @mousedown="moveStart = true"
@@ -105,9 +105,6 @@ export default class GenericMatchTimeline extends Vue {
     @Prop({default: 64})
     height!: number
 
-    @Prop({default: 0})
-    xPadding!: number
-
     @Prop({type: Boolean, default: false})
     fill!: boolean
 
@@ -149,7 +146,7 @@ export default class GenericMatchTimeline extends Vue {
         let clipEndPercentage = this.computePercentage(this.clipEndHandle)
         return {
             'width': `calc(${clipEndPercentage - clipStartPercentage}%)`,
-            'left': `calc(${clipStartPercentage}% + ${this.xPadding}px)`,
+            'left': `calc(${clipStartPercentage}%)`,
         }
     }
 
@@ -166,7 +163,7 @@ export default class GenericMatchTimeline extends Vue {
 
     computeTimeFromMouseEvent(e: MouseEvent): number {
         let bounds = this.$refs.parent.getBoundingClientRect()
-        let percentage = (e.clientX - bounds.left - this.xPadding) / (bounds.width - 2 * this.xPadding)
+        let percentage = (e.clientX - bounds.left) / (bounds.width)
         return this.start + (this.end - this.start) * percentage
     }
 
@@ -293,7 +290,7 @@ export default class GenericMatchTimeline extends Vue {
 
     get parentTickDivStyle(): any {
         return {
-            'width': `calc(100% - ${this.xPadding * 2}px)`
+            'width': `calc(100%)`
         }
     }
 }
@@ -333,6 +330,9 @@ export default class GenericMatchTimeline extends Vue {
     width: 5px;
     cursor: pointer;
     z-index: 5;
+    position: absolute;
+    left: -5px;
+    top: 0px;
 }
 
 .clip-end-div{
@@ -341,6 +341,9 @@ export default class GenericMatchTimeline extends Vue {
     width: 5px;
     cursor: pointer;
     z-index: 5;
+    position: absolute;
+    left: 100%;
+    top: 0px;
 }
 
 .tick-parent {
