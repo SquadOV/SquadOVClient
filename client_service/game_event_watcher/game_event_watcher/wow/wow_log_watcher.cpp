@@ -132,13 +132,10 @@ bool parseCombatantInfo(const RawWoWCombatLog& log, WoWCombatantInfo& info) {
     return true;
 }
 
-<<<<<<< HEAD
-=======
 bool parseZoneChange(const RawWoWCombatLog& log) {
     return log.log[0] == "ZONE_CHANGE";
 }
 
->>>>>>> release
 constexpr auto maxLogsToKeep = 10;
 
 }

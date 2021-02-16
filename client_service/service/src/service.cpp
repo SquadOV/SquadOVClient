@@ -14,11 +14,8 @@
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
-<<<<<<< HEAD
 #include "vod/vod_clipper.h"
-=======
 #include "recorder/audio/portaudio_audio_recorder.h"
->>>>>>> release
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -69,11 +66,7 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     vsprintf(buffer, fmt, v1);
 
     std::string sBuffer(buffer);
-<<<<<<< HEAD
     LOG_INFO(sBuffer);
-=======
-    LOG_INFO(sBuffer << std::endl);
->>>>>>> release
 }
 
 void defaultMain() {
@@ -140,10 +133,6 @@ int main(int argc, char** argv) {
         LOG_INFO("RECEIVE SESSION ID: " << msg << std::endl);
         service::api::getGlobalApi()->setSessionId(msg);
     });
-<<<<<<< HEAD
-
-=======
->>>>>>> release
     zeroMqServerClient.start();
 
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){

@@ -18,6 +18,8 @@ const std::string ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC = "request-audio-input";
 const std::string ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC = "respond-input-devices";
 const std::string ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC = "request-audio-output";
 const std::string ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC = "respond-output-devices";
+const std::string ZEROMQ_REQUEST_VOD_CLIP_TOPIC = "request-vod-clip";
+const std::string ZEROMQ_RESPOND_VOD_CLIP_TOPIC = "respond-vod-clip";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 
