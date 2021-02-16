@@ -4,3 +4,8 @@
 *.lib binary
 *.dll binary
 *.o binary
+*.png binary
+*.ico binary
+*.mp4 binary
+*.webm binary
+*.jpg binary

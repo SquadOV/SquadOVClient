@@ -32,10 +32,7 @@ class ZeroMQServerClient {
         this._port = 0
         this._handlers = {}
         this._started = false
-<<<<<<< HEAD
         this._currentId = 0
-=======
->>>>>>> release
     }
 
     async start() {
