@@ -499,7 +499,6 @@ app.on('ready', async () => {
     await zeromqServer.start()
     zeromqServer.run()
 
-    log.log('1', app.isPackaged, iconPath)
     win = new BrowserWindow({
         width: 1280,
         height: 720,
@@ -510,27 +509,22 @@ app.on('ready', async () => {
         icon: iconPath
     })
 
-    log.log('2')
     if (!app.isPackaged) {
         win.webContents.toggleDevTools()
     }
 
-    log.log('3')
     win.setMenu(null)
     win.setMenuBarVisibility(false)
     win.hide()
 
-    log.log('4')
     if (app.isPackaged) {
         await startAutoupdater()
     }
 
-    log.log('5')
     if (!app.commandLine.hasSwitch('hidden')) {
         win.show()
     }
 
-    log.log('6')
     if (app.commandLine.hasSwitch('debug')) {
         process.env.SQUADOV_DEBUG = '1'
     }
