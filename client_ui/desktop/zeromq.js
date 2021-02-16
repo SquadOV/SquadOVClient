@@ -116,7 +116,7 @@ class ZeroMQServerClient {
                 let parsedResp = JSON.parse(resp)
                 if (parsedResp.task === task) {
                     this.remove('respond-vod-clip', handlerId)
-                    if (resp.success) {
+                    if (parsedResp.success) {
                         resolve(parsedResp.path)
                     } else {
                         reject('Failure in VOD clipping.')

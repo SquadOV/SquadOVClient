@@ -63,6 +63,7 @@ export default class VideoPlayer extends Vue {
     $refs!: {
         video: HTMLVideoElement
     }
+    hasMadeProgress: boolean = false
 
     get hasVideo() : boolean {
         if (!this.vod) {
@@ -219,7 +220,7 @@ export default class VideoPlayer extends Vue {
 
         // Just in case videoUri and audioUri got set earlier.
         this.refreshPlayerSources()
-        
+        this.hasMadeProgress = true
         this.player.on('playerresize', () => {
             this.$emit('update:playerHeight', this.player!.currentHeight())
         })
@@ -241,13 +242,14 @@ export default class VideoPlayer extends Vue {
         this.player.on('timeupdate', () => {
             if (!!this.vod && !!this.player) {
                 if (this.loopClip && this.clipEnd !== undefined && this.clipStart !== undefined) {
-                    if (this.player.currentTime() > this.clipEnd || this.player.currentTime() < this.clipStart) {
-                        console.log('force move to clip start')
+                    if (this.hasMadeProgress && (this.player.currentTime() > this.clipEnd || this.player.currentTime() < this.clipStart)) {
                         this.player.currentTime(this.clipStart)
+                        this.hasMadeProgress= false
                     }
                 }
 
                 let newCurrentTime = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
+                this.hasMadeProgress = !this.currentTime || (newCurrentTime > this.currentTime)
 
                 // We don't particularly need to update this very often so cap it at showing 1s differences.
                 let diff = (!!this.currentTime ? Math.abs(this.currentTime.getTime() - newCurrentTime.getTime()) : 1000000000000000000) / 1000.0

@@ -164,8 +164,8 @@ void VodClipper::openInput() {
         THROW_ERROR("0-index stream is not a video. Did we make this?");
     }
 
-    const int64_t scaled_ts = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, vstream->time_base);
-    if (avformat_seek_file(_inputContext, -1, INT64_MIN, scaled_ts, scaled_ts, 0) < 0) {
+    const int64_t scaledTs = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, vstream->time_base);
+    if (avformat_seek_file(_inputContext, 0, INT64_MIN, scaledTs, scaledTs, 0) < 0) {
         THROW_ERROR("Failed to seek to specified start time in input.");
     }
 }
@@ -220,6 +220,9 @@ void VodClipper::run() {
         THROW_ERROR("Failed to open video for output: " << path);
     }
 
+    // I can't figure out why we can't successfully write the trailer with the faststart flag.
+    // I'm assuming this clip is going to go through the same video processing pipeline as regular
+    // VODS though so it's probably fine.
     if (avformat_write_header(_outputContext, nullptr) < 0) {
         THROW_ERROR("Failed to write header");
     }
@@ -315,8 +318,10 @@ void VodClipper::run() {
                         }
 
                         outputAudioFrame->pts = audioPts;
+                        if (av_compare_ts(outputAudioFrame->pts, outputContainer->codecContext->time_base, (_request.end - _request.start) * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) < 0) {
+                            encode(outputContainer->codecContext, outputAudioFrame, outputContainer->stream);
+                        }
                         audioPts += frameSize;
-                        encode(outputContainer->codecContext, outputAudioFrame, outputContainer->stream);
                     }
                 }
             }
@@ -331,7 +336,11 @@ void VodClipper::run() {
     for (const auto& kvp: _streamPairs) {
         encode(kvp.second.second->codecContext, nullptr, kvp.second.second->stream);
     }
-    av_write_trailer(_outputContext);
+    
+    const auto ret = av_write_trailer(_outputContext);
+    if (ret < 0) {
+        THROW_ERROR("Failed to write trailer: " << ret << std::endl);
+    }
 }
 
 std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* stream) const {
@@ -359,7 +368,7 @@ std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* st
         THROW_ERROR("Failed to open decoder codec.");
     }
 
-    container->startTs = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, stream->time_base);
+    container->startTs = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, container->codecContext->time_base);
     return container;
 }
 
@@ -391,6 +400,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 THROW_ERROR("Failed to alloc encoder context for output stream.");
             }
 
+            AVDictionary *options = nullptr;
             if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
                 container->codecContext->width = icontainer.codecContext->width;
                 container->codecContext->height = icontainer.codecContext->height;
@@ -401,6 +411,11 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                     container->codecContext->pix_fmt = icontainer.codecContext->pix_fmt;
                 }
                 container->codecContext->time_base = av_inv_q(icontainer.codecContext->framerate);
+                container->codecContext->bit_rate = icontainer.codecContext->bit_rate;
+                container->codecContext->gop_size = container->codecContext->time_base.den * 5;
+                container->codecContext->max_b_frames = 1;
+
+                av_dict_set(&options, "preset", "medium", 0);
             } else {
                 container->codecContext->sample_rate = icontainer.codecContext->sample_rate;
                 container->codecContext->channel_layout = icontainer.codecContext->channel_layout;
@@ -409,13 +424,12 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->time_base = AVRational{1, container->codecContext->sample_rate};
             }
 
-            if (_outputFormat->flags & AVFMT_GLOBALHEADER) {
-                container->codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-            }
-
-            if (avcodec_open2(container->codecContext, codec, nullptr) < 0) {
+            container->codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+            if (avcodec_open2(container->codecContext, codec, &options) < 0) {
+                av_dict_free(&options);
                 THROW_ERROR("Failed to open output codec.");
             }
+            av_dict_free(&options);
             break;
         } catch (std::exception& ex) {
             LOG_INFO("Failed to load codec: " << c << " :: " << ex.what() << std::endl);

@@ -115,12 +115,12 @@
             persistent
             max-width="60%"
         >
-            <v-card>
+            <v-card :key="clipKey">
                 <v-card-title>
                     Your New Clip
                 </v-card-title>
                 <v-divider></v-divider>
-
+            
                 <template v-if="clipInProgress">
                     <div id="clip-progress-div" class="d-flex flex-column justify-center align-center">
                         <div class="text-h6 font-weight-bold mb-2">
@@ -131,6 +131,13 @@
                 </template>
 
                 <template v-else>
+                    <div class="ma-2">
+                        <div id="editor-clip-preview">
+                            <video class="video-js vjs-fill" ref="video">
+                            </video>
+                        </div>
+                    </div>
+
                     <v-card-actions>
                         <v-btn
                             color="error"
@@ -173,6 +180,9 @@ import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
 
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
+import videojs from 'video.js'
+import 'video.js/dist/video-js.css' 
+import fs from 'fs'
 
 const MAX_CLIP_LENGTH_SECONDS = 45
 
@@ -206,10 +216,13 @@ export default class VodEditor extends Vue {
     showHideClipDialog: boolean = false
     clipError: boolean = false
     localClipPath: string | null = null
+    clipKey: number = 0
 
     $refs!: {
         player: VideoPlayer
+        video: HTMLVideoElement
     }
+    player: videojs.Player | null = null
 
     enabled(): boolean {
 ///#if DESKTOP
@@ -346,6 +359,14 @@ export default class VodEditor extends Vue {
         }
         this.showHideClipDialog = false
         this.clipInProgress = false
+        if (!!this.player) {
+            this.player.dispose()
+        }
+        this.player = null
+
+        if (fs.existsSync(this.localClipPath)) {
+            fs.unlinkSync(this.localClipPath)
+        }
     }
 
     doClip() {
@@ -361,13 +382,45 @@ export default class VodEditor extends Vue {
         this.clipInProgress = true
         this.showHideClipDialog = true
         requestVodClip(videoUri, this.clipStart, this.clipEnd).then((resp: string) => {
-            this.localClipPath = resp
+            let normalPath = resp.replace(/\\/g, '/')
+            this.clipInProgress = false
+            this.clipKey += 1
+            this.localClipPath = `file:///${normalPath}`
         }).catch((err: any) => {
             console.log('Failed to clip: ', err)
             this.clipError = true
             this.showHideClipDialog = false
-        }).finally(() => {
             this.clipInProgress = false
+        })
+    }
+
+    @Watch('localClipPath')
+    refreshVideoPlayer() {
+        if (!this.localClipPath) {
+            return
+        }
+
+        Vue.nextTick(() => {
+            this.player = videojs(this.$refs.video, {
+                controls: true,
+                autoplay: false,
+                preload: 'auto',
+                playbackRates: [
+                    0.25,
+                    0.5,
+                    1.0,
+                    1.25,
+                    1.5,
+                    2.0
+                ]
+            })
+
+            this.player.src([
+                {
+                    src: this.localClipPath!,
+                    type: 'video/mp4',
+                },
+            ])
         })
     }
 }
@@ -388,6 +441,11 @@ export default class VodEditor extends Vue {
 
 #clip-progress-div {
     height: 500px;
+}
+
+#editor-clip-preview {
+    width: 100%;
+    height: 400px;
 }
 
 >>>.v-input--selection-controls {
