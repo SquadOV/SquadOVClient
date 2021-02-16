@@ -535,6 +535,7 @@ app.on('window-all-closed', () => {
     quit()
 })
 
-ipcMain.on('reload-app-settings', () => {
+ipcMain.handle('reload-app-settings', () => {
     loadAppSettings()
+    return true
 })

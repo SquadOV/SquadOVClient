@@ -28,15 +28,29 @@ function getSettingsFname() : string {
 /// #endif
 }
 
-export function saveLocalSettings(s: SquadOvLocalSettings) {
+let inProgress: boolean = false
+let saveTimer: number | undefined = undefined
+export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false) {
 /// #if DESKTOP
-    fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
-        encoding: 'utf-8',
-    })
+    if (inProgress) {
+        return
+    }
 
-    setTimeout(() => {
-        ipcRenderer.send('reload-app-settings')
-    }, 1)
+    if (saveTimer !== undefined) {
+        window.clearTimeout(saveTimer)
+    }
+
+    saveTimer = window.setTimeout(() => {
+        inProgress = true
+        fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
+            encoding: 'utf-8',
+        })
+    
+        ipcRenderer.invoke('reload-app-settings').finally(() => {
+            inProgress = false
+        })
+        saveTimer = undefined
+    }, immediate ? 500 : 0)
 /// #endif
 }
 
@@ -103,7 +117,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     const settingsFname = getSettingsFname()
     console.log('Loading local settings...', settingsFname)
     if (!fs.existsSync(settingsFname)) {
-        saveLocalSettings(await generateDefaultSettings())
+        saveLocalSettings(await generateDefaultSettings(), true)
     }
 
     let data = fs.readFileSync(settingsFname , 'utf8')
@@ -133,7 +147,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.runOnStartup = true
     }
 
-    saveLocalSettings(parsedData)
+    saveLocalSettings(parsedData, true)
     return parsedData
 /// #else
     return await generateDefaultSettings()
