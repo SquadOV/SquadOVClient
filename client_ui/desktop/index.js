@@ -20,13 +20,22 @@ let editorWin
 let tray
 let isQuitting = false
 
-if (app.isPackaged) {
-    app.setLoginItemSettings({
-        openAtLogin: true,
-        args: [
-            '--hidden'
-        ]
-    })
+let appSettings = null
+function loadAppSettings() {
+    const fname = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'settings.json')
+    if (fs.existsSync(fname)) {
+        const data = fs.readFileSync(fname)
+        appSettings = JSON.parse(data)
+    }
+
+    if (app.isPackaged) {
+        app.setLoginItemSettings({
+            openAtLogin: appSettings.runOnStartup === true,
+            args: [
+                '--hidden'
+            ]
+        })
+    }
 }
 
 const singleLock = app.requestSingleInstanceLock()
@@ -53,8 +62,12 @@ function start() {
 
     win.on('close', (e) => {
         if (!isQuitting) {
-            e.preventDefault()
-            win.hide()
+            if (!!appSettings.minimizeToTray) {
+                e.preventDefault()
+                win.hide()
+            } else {
+                quit()
+            }
         }
     })
 
@@ -242,12 +255,36 @@ ipcMain.on('open-vod-editor', (event, videoUuid) => {
     editorWin.show()
 })
 
+async function requestOutputDevices() {
+    await zeromqServer.requestAudioOutputOptions()
+}
+
+async function requestInputDevices() {
+    await zeromqServer.requestAudioInputOptions()
+}
+
+ipcMain.on('request-output-devices', async () => {
+    await requestOutputDevices()
+})
+
+ipcMain.on('request-input-devices', async () => {
+    await requestInputDevices()
+})
+
 zeromqServer.on('change-running-games', (games) => {
     win.webContents.send('change-running-games', JSON.parse(games))
 })
 
 zeromqServer.on('change-recording-games', (games) => {
     win.webContents.send('change-recording-games', JSON.parse(games))
+})
+
+zeromqServer.on('respond-output-devices', (r) => {
+    win.webContents.send('respond-output-devices', JSON.parse(r))
+})
+
+zeromqServer.on('respond-input-devices', (r) => {
+    win.webContents.send('respond-input-devices', JSON.parse(r))
 })
 
 totalCloseCount = 0
@@ -524,10 +561,17 @@ app.on('ready', async () => {
         if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
             startClientService()
             await backendReady
+            
+            await requestOutputDevices()
+            await requestInputDevices()
         }
     })
 })
 
 app.on('window-all-closed', () => {
     quit()
+})
+
+ipcMain.on('reload-app-settings', () => {
+    loadAppSettings()
 })

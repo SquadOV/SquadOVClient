@@ -14,7 +14,11 @@
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+<<<<<<< HEAD
 #include "vod/vod_clipper.h"
+=======
+#include "recorder/audio/portaudio_audio_recorder.h"
+>>>>>>> release
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -65,7 +69,11 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     vsprintf(buffer, fmt, v1);
 
     std::string sBuffer(buffer);
+<<<<<<< HEAD
     LOG_INFO(sBuffer);
+=======
+    LOG_INFO(sBuffer << std::endl);
+>>>>>>> release
 }
 
 void defaultMain() {
@@ -132,7 +140,10 @@ int main(int argc, char** argv) {
         LOG_INFO("RECEIVE SESSION ID: " << msg << std::endl);
         service::api::getGlobalApi()->setSessionId(msg);
     });
+<<<<<<< HEAD
 
+=======
+>>>>>>> release
     zeroMqServerClient.start();
 
     service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
@@ -172,6 +183,21 @@ int main(int argc, char** argv) {
         service::system::getGlobalState()->setPause(paused);
     });
 
+    LOG_INFO("Registering ZeroMQ Audio Device Callbacks" << std::endl);
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
+        );
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC,
+            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
+        );
+    });
+
     LOG_INFO("Send Ready" << std::endl);
     // At this point we can fire off an event letting the UI know that the service is ready.
     // The reason we need this is because setSessionId will fire off an API request to get the
@@ -200,7 +226,6 @@ int main(int argc, char** argv) {
             shared::gameVectorToJsonArray(setVec).dump()
         );
     });
-
 
     service::system::getGlobalState()->addGameRecordingCallback([&zeroMqServerClient](const shared::EGameSet& set){
         const auto setVec = shared::gameSetToVector(set);

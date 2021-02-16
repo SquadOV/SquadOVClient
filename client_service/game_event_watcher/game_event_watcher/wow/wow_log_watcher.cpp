@@ -132,6 +132,13 @@ bool parseCombatantInfo(const RawWoWCombatLog& log, WoWCombatantInfo& info) {
     return true;
 }
 
+<<<<<<< HEAD
+=======
+bool parseZoneChange(const RawWoWCombatLog& log) {
+    return log.log[0] == "ZONE_CHANGE";
+}
+
+>>>>>>> release
 constexpr auto maxLogsToKeep = 10;
 
 }
@@ -260,6 +267,12 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
 #if DEBUG_TIMING
         timer.tick("Arena End");
 #endif
+
+        if (!parsed) {
+            if (parseZoneChange(log)) {
+                notify(static_cast<int>(EWoWLogEvents::ZoneChange), log.timestamp, nullptr);
+            }
+        }
 
         if (!parsed) {
             WoWCombatantInfo info;

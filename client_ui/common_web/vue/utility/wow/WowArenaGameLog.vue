@@ -33,7 +33,7 @@ import { WowArena } from '@client/js/wow/matches'
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
-const maxTasksPerRequest : number = 20
+const maxTasksPerRequest : number = 10
 
 @Component({
     components: {

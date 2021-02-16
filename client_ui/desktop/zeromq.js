@@ -32,7 +32,10 @@ class ZeroMQServerClient {
         this._port = 0
         this._handlers = {}
         this._started = false
+<<<<<<< HEAD
         this._currentId = 0
+=======
+>>>>>>> release
     }
 
     async start() {
@@ -145,6 +148,14 @@ class ZeroMQServerClient {
 
         this._sub.close()
         this._pub.close()
+    }
+
+    async requestAudioOutputOptions() {
+        await this._pub.send(['request-audio-output', ''])
+    }
+
+    async requestAudioInputOptions() {
+        await this._pub.send(['request-audio-input', ''])
     }
 }
 

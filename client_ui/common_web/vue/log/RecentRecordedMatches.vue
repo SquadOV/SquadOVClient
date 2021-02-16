@@ -48,7 +48,7 @@
 
 <script lang="ts">
 
-const maxTasksPerRequest : number = 20
+const maxTasksPerRequest : number = 10
 
 import Vue from 'vue'
 import Component from 'vue-class-component'

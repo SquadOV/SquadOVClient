@@ -14,8 +14,10 @@ const std::string ZEROMQ_READY_TOPIC = "on-ready";
 const std::string ZEROMQ_CHANGE_PAUSE_TOPIC = "change-state-pause";
 const std::string ZEROMQ_RUNNING_GAMES_TOPIC = "change-running-games";
 const std::string ZEROMQ_RECORDING_GAMES_TOPIC = "change-recording-games";
-const std::string ZEROMQ_REQUEST_VOD_CLIP_TOPIC = "request-vod-clip";
-const std::string ZEROMQ_RESPOND_VOD_CLIP_TOPIC = "respond-vod-clip";
+const std::string ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC = "request-audio-input";
+const std::string ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC = "respond-input-devices";
+const std::string ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC = "request-audio-output";
+const std::string ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC = "respond-output-devices";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 
