@@ -266,6 +266,9 @@ void VodClipper::run() {
                 }
 
                 frame->pts = av_rescale_q(frame->best_effort_timestamp - inputContainer->startTs, inputContainer->codecContext->time_base, outputContainer->codecContext->time_base);
+                if (frame->pts < 0) {
+                    continue;
+                }
 
                 if (av_frame_make_writable(frame) < 0) {
                     THROW_ERROR("Failed to make frame writeable.");
