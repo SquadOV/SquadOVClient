@@ -116,9 +116,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     )
 
     if(WIN32)
-        set_property(TARGET ${EXE_NAME} PROPERTY
-            VS_PACKAGE_REFERENCES "Microsoft.Windows.CppWinRT_2.0.210211.2"
-        )
+        add_dependencies(${EXE_NAME} libwgc)
 
         file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
         add_custom_command(
@@ -136,6 +134,32 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     endif()
 
 ENDMACRO()
+
+if(WIN32)
+    add_library(
+        libwgc SHARED
+        libwgc/wgc.h
+        libwgc/wgc.cpp
+        src/recorder/image/image.cpp
+        src/recorder/image/image.h
+    )
+
+    target_include_directories(libwgc
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/client_service/service
+        ${CMAKE_SOURCE_DIR}/client_service/service/src
+        ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/deps/date/include
+        ${CMAKE_SOURCE_DIR}/deps/json/single_include
+        ${CMAKE_SOURCE_DIR}/deps/libpng
+    )
+
+    target_link_libraries(libwgc
+        squadov_shared
+        date-tz
+        png
+    )
+endif()
 
 CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp" "src/squadov_client_service.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.manifest")
