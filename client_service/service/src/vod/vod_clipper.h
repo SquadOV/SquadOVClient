@@ -2,6 +2,8 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "shared/squadov/vod.h"
+
 namespace service::vod {
 
 struct VodClipRequest {
@@ -17,6 +19,7 @@ struct VodClipResponse {
     std::string task;
     std::string path;
     bool success;
+    shared::squadov::VodMetadata metadata;
 
     nlohmann::json toJson() const;
 };

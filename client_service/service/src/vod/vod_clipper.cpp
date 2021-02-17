@@ -47,7 +47,7 @@ public:
     VodClipper(const fs::path& output, const VodClipRequest& request);
     ~VodClipper();
 
-    void run();
+    shared::squadov::VodMetadata run();
 
 private:
     fs::path _output;
@@ -197,7 +197,7 @@ void VodClipper::openInputOutputCodecPairs() {
     }
 }
 
-void VodClipper::run() {
+shared::squadov::VodMetadata VodClipper::run() {
     // Clipping the video is effectively just doing a transcoding of a sub-part of the input video.
     // So all we need to do is
     //  1) Open the input (with a delay for a set duration) as well as the output.
@@ -336,14 +336,49 @@ void VodClipper::run() {
     av_frame_free(&outputAudioFrame);
     av_frame_free(&frame);
 
+    shared::squadov::VodMetadata metadata;
+    metadata.id = "source";
+    metadata.videoUuid = "";
+
     for (const auto& kvp: _streamPairs) {
         encode(kvp.second.second->codecContext, nullptr, kvp.second.second->stream);
+
+        if (kvp.second.second->stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            // Bandwidth
+            {
+                const auto* props = reinterpret_cast<const AVCPBProperties*>(av_stream_get_side_data(
+                    kvp.second.second->stream,
+                    AV_PKT_DATA_CPB_PROPERTIES,
+                    nullptr
+                ));
+
+                if (props) {
+                    metadata.avgBitrate = props->avg_bitrate;
+                    metadata.maxBitrate = props->max_bitrate;
+                    metadata.minBitrate = props->min_bitrate;
+                } else if (kvp.second.second->stream->codecpar->bit_rate) {
+                    metadata.avgBitrate = kvp.second.second->stream->codecpar->bit_rate;
+                    metadata.maxBitrate = kvp.second.second->stream->codecpar->bit_rate;
+                    metadata.minBitrate = kvp.second.second->stream->codecpar->bit_rate;
+                }
+            }
+
+            // Resolution
+            {
+                metadata.resX = kvp.second.second->codecContext->width;
+                metadata.resY = kvp.second.second->codecContext->height;
+            }
+
+            // FPS
+            metadata.fps = static_cast<int>(static_cast<double>(kvp.second.second->codecContext->framerate.num) / kvp.second.second->codecContext->framerate.den);
+        }
     }
     
     const auto ret = av_write_trailer(_outputContext);
     if (ret < 0) {
         THROW_ERROR("Failed to write trailer: " << ret << std::endl);
     }
+    return metadata;
 }
 
 std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* stream) const {
@@ -512,7 +547,8 @@ nlohmann::json VodClipResponse::toJson() const {
     return {
         { "task", task },
         { "path", path },
-        { "success", success }
+        { "success", success },
+        { "metadata", metadata.toJson() }
     };
 }
 
@@ -534,7 +570,7 @@ VodClipResponse vodClip(const VodClipRequest& request) {
 
     try {
         VodClipper clipper(clipFile, request);
-        clipper.run();
+        response.metadata = clipper.run();
         response.success = true;
     } catch(std::exception& ex) {
         LOG_WARNING("Failed to perform VOD clip: " << ex.what() << std::endl);
