@@ -425,7 +425,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
         return;
     }
 
-    LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG" << _combatLogId << std::endl);
+    LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG " << _combatLogId << std::endl);
     const auto isRecording = _recorder->isRecording();
     if (isRecording && !_currentMatchUuid.empty()) {
         const auto vodId = _recorder->currentId();

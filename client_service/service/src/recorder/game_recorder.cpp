@@ -475,8 +475,14 @@ void GameRecorder::stop() {
     }
     _currentId.reset(nullptr);
     if (_outputPiper) {
-        _outputPiper->wait();
-        _outputPiper.reset(nullptr);
+        // Move the output piper to a new thread to wait for it to finish
+        // so we don't get bottlenecked by any user's poor internet speeds.
+        std::thread uploadThread([this](){
+            pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
+            _outputPiper.reset(nullptr);
+            outputPiper->wait();
+        });
+        uploadThread.detach();
     }
     system::getGlobalState()->markGameRecording(_game, false);
 }
