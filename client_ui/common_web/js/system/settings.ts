@@ -127,7 +127,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.record.outputDevice = 'Default Device'
     }
 
-    if (!parsedData.record.outputVolume) {
+    if (parsedData.record.outputVolume === undefined) {
         parsedData.record.outputVolume = 1.0
     }
 
@@ -135,7 +135,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.record.inputDevice = 'Default Device'
     }
 
-    if (!parsedData.record.inputVolume) {
+    if (parsedData.record.inputVolume === undefined) {
         parsedData.record.inputVolume = 1.0
     }
 
