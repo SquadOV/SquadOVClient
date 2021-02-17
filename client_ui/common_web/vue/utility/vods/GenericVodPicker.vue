@@ -25,16 +25,19 @@
 
         <v-tooltip bottom :open-delay="1000">
             <template v-slot:activator="{on, attrs}">
-                <v-progress-circular
-                    indeterminate size="16"
+                <div
                     v-if="!hasFastify"
                     v-on="on"
                     v-bind="attrs"
                 >
-                </v-progress-circular>
+                    <v-progress-circular
+                        indeterminate size="16"
+                    >
+                    </v-progress-circular>
+                </div>
             </template>
 
-            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and some features will be disabled until it is finished processing. Check back soon!
+            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
         </v-tooltip>
 
         <template v-if="!!$store.state.currentUser">
@@ -135,6 +138,7 @@ import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodEditorContext, openVodEditingWindow } from '@client/js/vods/editor'
 import * as vod from '@client/js/squadov/vod'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component
 export default class GenericVodPicker extends Vue {
@@ -149,6 +153,9 @@ export default class GenericVodPicker extends Vue {
 
     @Prop()
     timestamp!: Date | undefined | null
+
+    @Prop({required: true})
+    game!: SquadOvGames
 
     showHideDeleteConfirm: boolean = false
     loadingDelete: boolean = false
@@ -257,7 +264,7 @@ export default class GenericVodPicker extends Vue {
         }
         this.context = new VodEditorContext(this.value.videoUuid)
         this.context.startSource(this.value)
-        openVodEditingWindow(this.value.videoUuid)
+        openVodEditingWindow(this.value.videoUuid, this.game)
     }
 
 

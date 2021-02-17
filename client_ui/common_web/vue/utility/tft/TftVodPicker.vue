@@ -5,6 +5,7 @@
         :options="allPovs"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod}">
             <v-tooltip bottom>
@@ -40,6 +41,7 @@ import { WrappedTftMatch, TftParticipant } from '@client/js/tft/matches'
 import { getActiveUserId } from '@client/js/app'
 import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -64,6 +66,10 @@ export default class TftVodPicker extends Vue {
     timestamp!: Date | undefined | null
 
     availableVods: TftMatchAccessibleVods | null = null
+
+    get game(): SquadOvGames {
+        return SquadOvGames.TeamfightTactics
+    }
 
     get numPovs(): number {
         if (!this.availableVods) {

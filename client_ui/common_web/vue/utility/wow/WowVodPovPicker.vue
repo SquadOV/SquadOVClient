@@ -5,6 +5,7 @@
         :options="allPovs"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-tooltip offset-x right>
@@ -47,6 +48,7 @@ import { getActiveUserId } from '@client/js/app'
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -75,6 +77,10 @@ export default class WowVodPovPicker extends Vue {
     timestamp!: Date | undefined | null
 
     allAccessibleVods: WowMatchAccessibleVods | null = null
+
+    get game(): SquadOvGames {
+        return SquadOvGames.WorldOfWarcraft
+    }
 
     get uuidToVod(): Map<string, VodAssociation> {
         let map = new Map<string, VodAssociation>()

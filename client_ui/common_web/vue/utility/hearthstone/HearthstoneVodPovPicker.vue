@@ -5,6 +5,7 @@
         :options="orderedVods"
         :match-uuid="matchId"
         :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod, selected}">
             <hearthstone-hero-display
@@ -28,6 +29,7 @@ import { HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
 import { getActiveUserId } from '@client/js/app'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -49,6 +51,10 @@ export default class HearthstoneVodPovPicker extends Vue {
     timestamp!: Date | undefined | null
 
     availableVods: HearthstoneMatchAccessibleVods | null = null
+
+    get game(): SquadOvGames {
+        return SquadOvGames.Hearthstone
+    }
 
     get orderedVods(): VodAssociation[] {
         return [...this.friendlyPovs, ...this.enemyPovs]

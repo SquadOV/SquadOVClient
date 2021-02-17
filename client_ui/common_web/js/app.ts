@@ -110,6 +110,7 @@ const baseRoutes : any[] = [
         name: pi.VideoEditorPageId,
         props: (route: any) => ({
             videoUuid: route.params.videoUuid,
+            game: route.query.game,
         })
     },
     {

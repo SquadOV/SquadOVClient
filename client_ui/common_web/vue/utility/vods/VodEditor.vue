@@ -134,9 +134,55 @@
                             <video class="video-js vjs-fill" ref="video">
                             </video>
                         </div>
+
+                        <v-form v-model="formValid">
+                            <v-text-field
+                                v-model="clipTitle"
+                                label="Title"
+                                filled
+                                :rules="titleRules"
+                                :readonly="!!clipUuid"
+                            >
+                            </v-text-field>
+
+                            <v-textarea
+                                filled
+                                label="Description"
+                                v-model="clipDescription"
+                                hide-details
+                                :readonly="!!clipUuid"
+                            >
+                            </v-textarea>
+                        </v-form>
+
+                        <template v-if="!!clipUuid">
+                            <v-text-field
+                                :value="clipShareUrl"
+                                :loading="!clipShareUrl"
+                                :success-messages="shareMessages"
+                                single-line
+                                outlined
+                                dense
+                                readonly
+                                ref="urlInput"
+                            >
+                                <template v-slot:append-outer>
+                                    <v-btn
+                                        icon
+                                        color="success"
+                                        @click="doCopy"
+                                        :disabled="!clipShareUrl"
+                                    >
+                                        <v-icon>
+                                            mdi-content-copy
+                                        </v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-text-field>
+                        </template>
                     </div>
 
-                    <v-card-actions>
+                    <v-card-actions v-if="!clipUuid">
                         <v-btn
                             color="error"
                             @click="cancelClip"
@@ -148,8 +194,22 @@
 
                         <v-btn
                             color="success"
+                            :disabled="!formValid"
+                            :loading="saveInProgress"
+                            @click="saveClip"
                         >
                             Save
+                        </v-btn>
+                    </v-card-actions>
+
+                    <v-card-actions v-else>
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            color="success"
+                            @click="cancelClip"
+                        >
+                            Finish
                         </v-btn>
                     </v-card-actions>
                 </template>
@@ -163,6 +223,14 @@
         >
             Failed to create the clip. Please try again (and submit a bug report!).
         </v-snackbar>
+
+        <v-snackbar
+            v-model="shareError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to generate a URL for sharing the clip.
+        </v-snackbar>
     </div>
 </template>
 
@@ -172,7 +240,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodEditorContext, requestVodClip } from '@client/js/vods/editor'
-import { VodAssociation } from '@client/js/squadov/vod'
+import { VodAssociation, VodMetadata } from '@client/js/squadov/vod'
 import { GenericEvent} from '@client/js/event'
 import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
 
@@ -181,6 +249,8 @@ import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 import fs from 'fs'
+import { apiClient, ApiData } from '@client/js/api'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 const MAX_CLIP_LENGTH_SECONDS = 45
 
@@ -195,6 +265,9 @@ export default class VodEditor extends Vue {
 
     @Prop({required: true})
     videoUuid!: string
+
+    @Prop({required: true})
+    game!: SquadOvGames
 
     context: VodEditorContext | undefined = undefined
     vod: VodAssociation | null = null
@@ -214,13 +287,36 @@ export default class VodEditor extends Vue {
     showHideClipDialog: boolean = false
     clipError: boolean = false
     localClipPath: string | null = null
+    metadata: VodMetadata | null = null
+
     clipKey: number = 0
+
+    formValid: boolean = false
+    clipTitle: string = ''
+    clipDescription: string = ''
+    saveInProgress: boolean = false
+
+    clipUuid: string | null = null
+    clipShareUrl: string | null = null
+    shareMessages: string[] = []
+    shareError: boolean = false
 
     $refs!: {
         player: VideoPlayer
         video: HTMLVideoElement
+        urlInput: any
     }
     player: videojs.Player | null = null
+
+    doCopy() {
+        let inputEle = this.$refs.urlInput.$el.querySelector('input')
+        inputEle.select()
+        document.execCommand('copy')
+        this.shareMessages = ['Copied URL to clipboard!']
+        setTimeout(() => {
+            this.shareMessages = []
+        }, 5000)
+    }
 
     enabled(): boolean {
 ///#if DESKTOP
@@ -228,6 +324,12 @@ export default class VodEditor extends Vue {
 ///#else
         return false
 ///#endif
+    }
+
+    get titleRules() : any[] {
+        return [
+            (value : any) => (!!value && value.length > 0) || 'Required.',
+        ]
     }
 
     updateTimestampFromTimeline(t: number) {
@@ -352,9 +454,6 @@ export default class VodEditor extends Vue {
     }
 
     cancelClip() {
-        if (!this.localClipPath) {
-            return
-        }
         this.showHideClipDialog = false
         this.clipInProgress = false
         if (!!this.player) {
@@ -362,9 +461,51 @@ export default class VodEditor extends Vue {
         }
         this.player = null
 
-        if (fs.existsSync(this.localClipPath)) {
+        if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
             fs.unlinkSync(this.localClipPath)
         }
+
+        this.clipTitle = ''
+        this.clipDescription = ''
+        this.localClipPath = null
+        this.metadata = null
+        this.clipUuid = null
+        this.clipShareUrl = null
+    }
+
+    saveClip() {
+        if (!this.localClipPath || !this.metadata) {
+            return
+        }
+
+        this.saveInProgress = true
+        apiClient.createClip(this.videoUuid, this.localClipPath, this.metadata, this.clipTitle, this.clipDescription).then((resp: ApiData<string>) => {
+            this.clipUuid = resp.data
+        }).catch((err: any) => {
+            this.clipError = true
+            console.log('Failed to create clip: ', err)
+        }).finally(() => {
+            this.saveInProgress = false
+        })
+    }
+
+    get clipPathTo(): any {
+        return {}
+    }
+
+    @Watch('clipUuid')
+    refreshClipShareUrl() {
+        this.clipShareUrl = null
+        if (!this.clipUuid) {
+            return
+        }
+
+        apiClient.getClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath, this.game).then((resp: ApiData<string>) => {
+            this.clipShareUrl = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get share URL for clip: ', err)
+            this.shareError = true
+        })
     }
 
     doClip() {
@@ -379,11 +520,15 @@ export default class VodEditor extends Vue {
 
         this.clipInProgress = true
         this.showHideClipDialog = true
-        requestVodClip(videoUri, this.clipStart, this.clipEnd).then((resp: string) => {
-            let normalPath = resp.replace(/\\/g, '/')
+        requestVodClip(videoUri, this.clipStart, this.clipEnd).then((resp: {
+            path: string,
+            metadata: VodMetadata,
+        }) => {
+            let normalPath = resp.path.replace(/\\/g, '/')
             this.clipInProgress = false
             this.clipKey += 1
             this.localClipPath = `file:///${normalPath}`
+            this.metadata = resp.metadata
         }).catch((err: any) => {
             console.log('Failed to clip: ', err)
             this.clipError = true

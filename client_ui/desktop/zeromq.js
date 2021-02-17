@@ -117,7 +117,10 @@ class ZeroMQServerClient {
                 if (parsedResp.task === task) {
                     this.remove('respond-vod-clip', handlerId)
                     if (parsedResp.success) {
-                        resolve(parsedResp.path)
+                        resolve({
+                            path: parsedResp.path,
+                            metadata: parsedResp.metadata,
+                        })
                     } else {
                         reject('Failure in VOD clipping.')
                     }

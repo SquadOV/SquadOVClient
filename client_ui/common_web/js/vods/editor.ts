@@ -1,20 +1,24 @@
-import { VodAssociation } from '@client/js/squadov/vod'
+import { VodAssociation, VodMetadata } from '@client/js/squadov/vod'
 import { v4 as uuidv4 } from 'uuid'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
 /// #endif
 
-export function openVodEditingWindow(videoUuid: string) {
+export function openVodEditingWindow(videoUuid: string, game: SquadOvGames) {
 /// #if DESKTOP
-    ipcRenderer.send('open-vod-editor', videoUuid)
+    ipcRenderer.send('open-vod-editor', {
+        videoUuid,
+        game
+    })
 /// #else
     console.log('VOD Editing not yet supported on the web.')
 /// #endif
 }
 
 // Returns a promise that returns the accessible file containing 
-export function requestVodClip(source: string, start: number, end: number): Promise<string> {
+export function requestVodClip(source: string, start: number, end: number): Promise<{path: string, metadata: VodMetadata}> {
     let taskId = uuidv4()
     return new Promise((resolve, reject) => {
 /// #if DESKTOP

@@ -228,7 +228,7 @@ ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => 
     return retPath
 })
 
-ipcMain.on('open-vod-editor', (event, videoUuid) => {
+ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
             width: 1280,
@@ -251,7 +251,7 @@ ipcMain.on('open-vod-editor', (event, videoUuid) => {
         })
     }
 
-    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}`)
+    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}`)
     editorWin.show()
 })
 

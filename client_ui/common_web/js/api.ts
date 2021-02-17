@@ -19,7 +19,8 @@ import {
     HearthstoneMatchAccessibleVods,
     WowMatchAccessibleVods,
     LeagueMatchAccessibleVods,
-    TftMatchAccessibleVods
+    TftMatchAccessibleVods,
+    VodMetadata
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -86,6 +87,7 @@ import {
 import { SquadOvGames } from '@client/js/squadov/game'
 import { ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statLibrary'
+import { uploadLocalFileToGcs } from '@client/js/gcs'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -897,6 +899,13 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
+    getClipShareUrl(clipUuid: string, fullPath: string, game: SquadOvGames): Promise<ApiData<string>> {
+        return axios.post(`v1/clip/${clipUuid}/share`, {
+            fullPath,
+            game,
+        }, this.createWebAxiosConfig())
+    }
+
     exchangeShareAccessToken(accessTokenId: string): Promise<ApiData<ShareAccessTokenResponse>> {
         return axios.post(`public/share/${accessTokenId}/exchange`, {}, this.createWebAxiosConfig())
     }
@@ -911,6 +920,32 @@ class ApiClient {
 
     deleteVod(vodUuid: string): Promise<ApiData<void>> {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
+    }
+
+    createClip(parentVodUuid: string, clipPath: string, metadata: VodMetadata, title: string, description: string) : Promise<ApiData<string>> {
+        interface ClipResponse {
+            uuid: string
+            uploadPath: string
+        }
+
+        // First post responds with the clip uuid and upload path.
+        return axios.post(`v1/vod/${parentVodUuid}/clip`, {
+            title,
+            description
+        }, this.createWebAxiosConfig()).then(async (resp: ApiData<ClipResponse>) => {
+            // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
+            // doing a resumable upload here but I think the clip should be small enough to just upload it
+            // all in one go.
+            await uploadLocalFileToGcs(clipPath, resp.data.uploadPath)
+            await this.finishClip(resp.data.uuid, metadata)
+            return {
+                data: resp.data.uuid
+            }
+        })
+    }
+
+    finishClip(clipUuid: string, metadata: VodMetadata): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}`, metadata, this.createWebAxiosConfig())
     }
 }
 

@@ -42,7 +42,7 @@ interface VodSegment {
     mimeType: string
 }
 
-interface VodMetadata {
+export interface VodMetadata {
     videoUuid: string
     resX: number
     resY: number
