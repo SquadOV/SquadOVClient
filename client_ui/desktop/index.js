@@ -231,8 +231,8 @@ ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => 
 ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
-            width: 1280,
-            height: 720,
+            width: 1600,
+            height: 900,
             webPreferences: {
                 nodeIntegration: true,
                 webSecurity: app.isPackaged,
@@ -500,8 +500,8 @@ app.on('ready', async () => {
     zeromqServer.run()
 
     win = new BrowserWindow({
-        width: 1280,
-        height: 720,
+        width: 1600,
+        height: 900,
         webPreferences: {
             nodeIntegration: true,
             webSecurity: app.isPackaged
