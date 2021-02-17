@@ -7,7 +7,7 @@ namespace service::api {
 namespace {
 
 constexpr int MAX_KAFKA_RETRY = 10;
-const std::string WOW_COMBAT_LOG_TOPIC("wow_combat_logs");
+const std::string WOW_COMBAT_LOG_TOPIC("wow_combat_logs_2");
 
 }
 
