@@ -474,12 +474,18 @@ export default class VodEditor extends Vue {
     }
 
     saveClip() {
-        if (!this.localClipPath || !this.metadata) {
+        if (!this.localClipPath || !this.metadata || !this.vod) {
             return
         }
 
         this.saveInProgress = true
-        apiClient.createClip(this.videoUuid, this.localClipPath, this.metadata, this.clipTitle, this.clipDescription).then((resp: ApiData<string>) => {
+        apiClient.createClip(this.videoUuid, this.localClipPath, {
+            matchUuid: this.vod.matchUuid,
+            userUuid: this.$store.state.currentUser.uuid,
+            videoUuid: '',
+            startTime: new Date(this.vod.startTime.getTime() + this.clipStart * 1000.0),
+            endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
+        }, this.metadata, this.clipTitle, this.clipDescription).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
         }).catch((err: any) => {
             this.clipError = true

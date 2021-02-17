@@ -922,7 +922,7 @@ class ApiClient {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
     }
 
-    createClip(parentVodUuid: string, clipPath: string, metadata: VodMetadata, title: string, description: string) : Promise<ApiData<string>> {
+    createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string) : Promise<ApiData<string>> {
         interface ClipResponse {
             uuid: string
             uploadPath: string
@@ -936,16 +936,22 @@ class ApiClient {
             // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
             // doing a resumable upload here but I think the clip should be small enough to just upload it
             // all in one go.
-            await uploadLocalFileToGcs(clipPath, resp.data.uploadPath)
-            await this.finishClip(resp.data.uuid, metadata)
+            let sessionUri = await uploadLocalFileToGcs(clipPath, resp.data.uploadPath)
+
+            association.videoUuid = resp.data.uuid
+            await this.associateVod(association, metadata, sessionUri)
             return {
                 data: resp.data.uuid
             }
         })
     }
 
-    finishClip(clipUuid: string, metadata: VodMetadata): Promise<void> {
-        return axios.post(`v1/clip/${clipUuid}`, metadata, this.createWebAxiosConfig())
+    associateVod(association: VodAssociation, metadata: VodMetadata, sessionUri: string): Promise<void> {
+        return axios.post(`v1/vod/${association.videoUuid}`, {
+            association,
+            metadata,
+            sessionUri,
+        }, this.createWebAxiosConfig())
     }
 }
 
