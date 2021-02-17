@@ -5,8 +5,17 @@
 #include "shared/time.h"
 #include "recorder/game_recorder.h"
 #include "system/state.h"
+#include <VersionHelpers.h>
 
 namespace service::wow {
+namespace {
+
+int getWowRecordingFlags() {
+    return service::recorder::FLAG_DXGI_RECORDING |
+        (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
+}
+
+}
 
 class WoWProcessHandlerInstance {
 public:
@@ -88,7 +97,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())) {
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
-    _recorder->startDvrSession(service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
+    _recorder->startDvrSession(getWowRecordingFlags());
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogLine), std::bind(&WoWProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
@@ -384,7 +393,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
-        _recorder->start(tm, service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
+        _recorder->start(tm, service::recorder::RecordingMode::DVR, getWowRecordingFlags());
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
     }
@@ -426,7 +435,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
 
         if (!_process.empty()) {
             _recorder->stop();
-            _recorder->startDvrSession(service::recorder::FLAG_DXGI_RECORDING | service::recorder::FLAG_WGC_RECORDING);
+            _recorder->startDvrSession(getWowRecordingFlags());
         } else {
             _recorder->stopFromSource(tm);
         }
