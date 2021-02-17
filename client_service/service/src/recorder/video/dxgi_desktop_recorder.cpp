@@ -90,13 +90,13 @@ void DxgiDesktopRecorder::initialize() {
     dxgiDevice = nullptr;
 
     // Wait for the window to become unminimized so that we can grab the correct monitor.
-    while (IsIconic(_window)) {
+    while (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100ms));
     }
 
     // IDXGIOutput represents a monitor output. We need to grab the output that
     // corresponds to the monitor the input window is on.
-    HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTOPRIMARY);
+    HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
     if (!refMonitor) {
         THROW_ERROR("Failed to get reference monitor.");
     }
@@ -120,7 +120,7 @@ void DxgiDesktopRecorder::initialize() {
 
     dxgiAdapter->Release();
     dxgiAdapter = nullptr;
-    if (hr != S_OK) {
+    if (hr != S_OK || !dxgiOutput) {
         THROW_ERROR("Failed to get IDXGIOutput.");
     }
 
@@ -150,6 +150,8 @@ void DxgiDesktopRecorder::initialize() {
     if (hr != S_OK) {
         THROW_ERROR("Failed to create device texture: " << hr);
     }
+
+    dxgiOutput->Release();
 }
 
 void DxgiDesktopRecorder::reacquireDuplicationInterface() {

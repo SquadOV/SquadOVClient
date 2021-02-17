@@ -240,9 +240,5 @@ service::recorder::video::VideoRecorder* createWindowsGraphicsCaptureInterface(c
         return nullptr;
     }
 
-    if (!info.isWindowed) {
-        return nullptr;
-    }
-
     return new WindowsGraphicsCaptureItf(window);
 }
