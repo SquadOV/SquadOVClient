@@ -10,6 +10,7 @@
 #include <tchar.h>
 #include <errhandlingapi.h>
 #include <winternl.h>
+#include <VersionHelpers.h>
 #endif
 
 #include <iostream>
@@ -23,7 +24,8 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     // PROCESS_QUERY_INFORMATION and PROCESS_QUERY_LIMITED_INFORMATION by themselves do not work on Windows 7.
     // Not that it really matters since Windows 7 not supported by Microsoft anymore but we had a couple of 
     // users who use it so...can't be picky about our users.
-    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, id);
+    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    HANDLE hProcess = OpenProcess(access, FALSE, id);
 
     if (hProcess == NULL) {
         LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
