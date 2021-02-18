@@ -135,7 +135,7 @@
 
                         <template v-if="!!clipUuid">
                             <v-text-field
-                                class="my-2"
+                                class="mt-2"
                                 :value="clipShareUrl"
                                 :loading="!clipShareUrl"
                                 :success-messages="shareMessages"
@@ -517,7 +517,7 @@ export default class VodEditor extends Vue {
             return
         }
 
-        apiClient.getClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath, this.game).then((resp: ApiData<string>) => {
+        apiClient.getClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<string>) => {
             this.clipShareUrl = resp.data
         }).catch((err: any) => {
             console.log('Failed to get share URL for clip: ', err)

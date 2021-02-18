@@ -899,10 +899,9 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    getClipShareUrl(clipUuid: string, fullPath: string, game: SquadOvGames): Promise<ApiData<string>> {
+    getClipShareUrl(clipUuid: string, fullPath: string): Promise<ApiData<string>> {
         return axios.post(`v1/clip/${clipUuid}/share`, {
             fullPath,
-            game,
         }, this.createWebAxiosConfig())
     }
 
