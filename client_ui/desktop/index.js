@@ -228,6 +228,11 @@ ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => 
     return retPath
 })
 
+ipcMain.handle('request-gcs-upload', async (event, {task, file, uri}) => {
+    let retSession = await zeromqServer.performClipUpload(task, file, uri)
+    return retSession
+})
+
 ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({

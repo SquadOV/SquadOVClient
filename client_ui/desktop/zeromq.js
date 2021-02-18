@@ -131,6 +131,24 @@ class ZeroMQServerClient {
         })
     }
 
+    performClipUpload(task, file, uri) {
+        return new Promise(async (resolve, reject) => {
+            let handlerId = this.on('respond-gcs-upload', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-gcs-upload', handlerId)
+                    if (parsedResp.success) {
+                        resolve(parsedResp.session)
+                    } else {
+                        reject('Failure in VOD clip upload.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-gcs-upload', JSON.stringify({task, file, uri})])
+        })
+    }
+
     async close() {
         if (this._started) {
             try {

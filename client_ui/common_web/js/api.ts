@@ -939,6 +939,7 @@ class ApiClient {
             let sessionUri = await uploadLocalFileToGcs(clipPath, resp.data.uploadPath)
 
             association.videoUuid = resp.data.uuid
+            metadata.videoUuid = resp.data.uuid
             await this.associateVod(association, metadata, sessionUri)
             return {
                 data: resp.data.uuid

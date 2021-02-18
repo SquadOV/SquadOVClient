@@ -370,7 +370,7 @@ shared::squadov::VodMetadata VodClipper::run() {
             }
 
             // FPS
-            metadata.fps = static_cast<int>(static_cast<double>(kvp.second.second->codecContext->framerate.num) / kvp.second.second->codecContext->framerate.den);
+            metadata.fps = static_cast<int>(static_cast<double>(kvp.second.second->codecContext->time_base.den) / kvp.second.second->codecContext->time_base.num);
         }
     }
     

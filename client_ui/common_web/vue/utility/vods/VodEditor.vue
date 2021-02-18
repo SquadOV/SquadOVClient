@@ -119,44 +119,23 @@
                 </v-card-title>
                 <v-divider></v-divider>
             
-                <template v-if="clipInProgress">
-                    <div id="clip-progress-div" class="d-flex flex-column justify-center align-center">
-                        <div class="text-h6 font-weight-bold mb-2">
-                            Clipping in progress! One moment please...
-                        </div>
-                        <v-progress-circular indeterminate size="64"></v-progress-circular>
+                <div id="clip-progress-div" class="d-flex flex-column justify-center align-center" :style="progressStyle">
+                    <div class="text-h6 font-weight-bold mb-2">
+                        Clipping in progress! One moment please...
                     </div>
-                </template>
+                    <v-progress-circular indeterminate size="64"></v-progress-circular>
+                </div>
 
-                <template v-else>
+                <template v-if="!clipInProgress">
                     <div class="ma-2">
                         <div id="editor-clip-preview">
                             <video class="video-js vjs-fill" ref="video">
                             </video>
                         </div>
 
-                        <v-form v-model="formValid">
-                            <v-text-field
-                                v-model="clipTitle"
-                                label="Title"
-                                filled
-                                :rules="titleRules"
-                                :readonly="!!clipUuid"
-                            >
-                            </v-text-field>
-
-                            <v-textarea
-                                filled
-                                label="Description"
-                                v-model="clipDescription"
-                                hide-details
-                                :readonly="!!clipUuid"
-                            >
-                            </v-textarea>
-                        </v-form>
-
                         <template v-if="!!clipUuid">
                             <v-text-field
+                                class="my-2"
                                 :value="clipShareUrl"
                                 :loading="!clipShareUrl"
                                 :success-messages="shareMessages"
@@ -180,6 +159,26 @@
                                 </template>
                             </v-text-field>
                         </template>
+
+                        <v-form v-model="formValid">
+                            <v-text-field
+                                v-model="clipTitle"
+                                label="Title"
+                                filled
+                                :rules="titleRules"
+                                :readonly="!!clipUuid"
+                            >
+                            </v-text-field>
+
+                            <v-textarea
+                                filled
+                                label="Description"
+                                v-model="clipDescription"
+                                hide-details
+                                :readonly="!!clipUuid"
+                            >
+                            </v-textarea>
+                        </v-form>
                     </div>
 
                     <v-card-actions v-if="!clipUuid">
@@ -324,6 +323,16 @@ export default class VodEditor extends Vue {
 ///#else
         return false
 ///#endif
+    }
+
+    get progressStyle(): any {
+        if (!!this.clipInProgress) {
+            return {}
+        } else {
+            return {
+                'display': 'none !important'
+            }
+        }
     }
 
     get titleRules() : any[] {
@@ -485,6 +494,8 @@ export default class VodEditor extends Vue {
             videoUuid: '',
             startTime: new Date(this.vod.startTime.getTime() + this.clipStart * 1000.0),
             endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
+            rawContainerFormat: 'mp4',
+            isClip: true,
         }, this.metadata, this.clipTitle, this.clipDescription).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
         }).catch((err: any) => {

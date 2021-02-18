@@ -1,22 +1,14 @@
-import axios from 'axios'
+/// #if DESKTOP
+import { ipcRenderer } from 'electron'
+import { v4 as uuidv4 } from 'uuid'
+/// #endif
 
-export async function uploadLocalFileToGcs(localFile: string, gcsUri: string) {
-    let res = await axios.post(gcsUri, {}, {
-        headers: {
-            'x-goog-resumable': 'start',
-            'content-type': 'application/octet-stream',
-        }
+export function uploadLocalFileToGcs(localFile: string, gcsUri: string): Promise<string> {
+    // Dump this task to C++ since that functionality is already there. No need
+    // to reinvent the wheel here.
+    return ipcRenderer.invoke('request-gcs-upload', {
+        task: uuidv4(),
+        file: localFile,
+        uri: gcsUri
     })
-    if (res.status != 201) {
-        throw(`Failed to post to initial resumable GCS upload: ${res.data}`)
-    }
-
-    let putUri = res.headers['Location']
-    let putRes = await axios.put(putUri, {}, {
-        headers: {
-            'Content-Length': '0',
-            'Content-Range': '',
-        }
-    })    
-    return putUri
 }

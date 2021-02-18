@@ -4,6 +4,8 @@ export interface VodAssociation {
     videoUuid: string
     startTime: Date
     endTime: Date
+    rawContainerFormat: string
+    isClip: boolean
 }
 
 export interface ValorantMatchAccessibleVods {

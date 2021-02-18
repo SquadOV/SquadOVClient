@@ -16,6 +16,7 @@
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "vod/vod_clipper.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "recorder/pipe/gcs_piper.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -233,6 +234,27 @@ int main(int argc, char** argv) {
             zeroMqServerClient.sendMessage(
                 service::zeromq::ZEROMQ_RESPOND_VOD_CLIP_TOPIC,
                 resp.toJson().dump()
+            );
+        });
+        t.detach();
+    });
+
+    LOG_INFO("Add Clip upload handler..." << std::endl);
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE GCS UPLOAD REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::recorder::pipe::GCSUploadRequest::fromJson(json);
+            const auto resp = service::recorder::pipe::uploadToGcs(request);
+
+            nlohmann::json retData;
+            retData["task"] = request.task;
+            retData["success"] = !resp.empty();
+            retData["session"] = resp;
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC,
+                retData.dump()
             );
         });
         t.detach();

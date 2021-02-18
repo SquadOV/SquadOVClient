@@ -26,6 +26,7 @@ public:
     virtual std::string sessionId() const { return ""; }
     void appendFromFile(const std::filesystem::path& path);
     void pauseProcessingFromPipe(bool pause);
+    void sendNullBuffer() { handleBuffer(nullptr, 0); }
 
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
