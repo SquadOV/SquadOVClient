@@ -85,6 +85,9 @@ const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
 const VodEditor = () => import('@client/vue/utility/vods/VodEditor.vue')
 const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPage.vue')
 
+const ClipLibrary = () => import('@client/vue/utility/vods/ClipLibrary.vue')
+const ClipView = () => import('@client/vue/utility/vods/ClipView.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -110,7 +113,7 @@ const baseRoutes : any[] = [
         name: pi.VideoEditorPageId,
         props: (route: any) => ({
             videoUuid: route.params.videoUuid,
-            game: route.query.game,
+            game: parseInt(route.query.game),
         })
     },
     {
@@ -510,10 +513,26 @@ const baseRoutes : any[] = [
                 })
             },
             {
-                path: '/settings',
+                path: 'settings',
                 component: AppSettingsPage,
                 name: pi.SettingsPageId,
             },
+            {
+                path: 'clip',
+                name: pi.ClipLibraryPageId,
+                component: ClipLibrary,
+                props: (route: any) => ({
+                    matchUuid: route.query.matchUuid
+                })
+            },
+            {
+                path: 'clip/:clipUuid',
+                name: pi.ClipPageId,
+                component: ClipView,
+                props: (route: any) => ({
+                    clipUuid: route.params.clipUuid
+                })
+            }
         ]
     }
 ]
@@ -553,7 +572,7 @@ router.beforeEach((to : any, from : any, next : any) => {
     apiClient.setTempSessionId(nextUrl.searchParams.get('share'), nextUrl.searchParams.get('uid'))
 
     let isTmpSession = apiClient.hasTempSession
-    let isAuth = !!store.state.currentUser || isTmpSession
+    let isAuth = !!store.state.currentUser
 
 /// #if DESKTOP
     next()
@@ -573,7 +592,7 @@ router.beforeEach((to : any, from : any, next : any) => {
                 next()
             }
         }, () => {
-            if (!mustBeInvalid) {
+            if (!mustBeInvalid && !isTmpSession) {
                 next({
                     name: pi.LoginPageId
                 })

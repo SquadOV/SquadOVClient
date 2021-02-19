@@ -244,6 +244,17 @@ export default class AppNav extends Vue {
                     },
                 ]
             },
+            {
+                name: 'Library',
+                children: [
+                    {
+                        name: 'Clips',
+                        to: {
+                            name: pi.ClipLibraryPageId,
+                        },
+                    },
+                ]
+            }
         ]
     }
 

@@ -21,7 +21,6 @@ namespace {
 
 struct InputStreamContainer {
     AVCodecContext* codecContext = nullptr;
-    int64_t startTs = 0;
 
     ~InputStreamContainer();
 };
@@ -29,6 +28,9 @@ using InputStreamContainerPtr = std::unique_ptr<InputStreamContainer>;
 
 struct OutputStreamContainer {
     AVStream* stream = nullptr;
+    
+    bool firstFrame = false;
+    int64_t startPts = 0;
 
     ~OutputStreamContainer();
 };
@@ -190,19 +192,23 @@ shared::squadov::VodMetadata VodClipper::run() {
         if (it != _streamPairs.end()) {
             const auto* inputContainer = it->second.first.get();
             auto* outputContainer = it->second.second.get();
+
             
             av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, inputContainer->codecContext->time_base);
-            packet.pts = av_rescale_q(packet.pts - inputContainer->startTs, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
-            if (packet.pts < 0) {
-                continue;
+            if (!outputContainer->firstFrame) {
+                outputContainer->startPts = packet.pts;
+                outputContainer->firstFrame = true;
             }
 
-            if (av_compare_ts(packet.pts, outputContainer->stream->time_base, (_request.end - _request.start) * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) >= 0) {
+
+            packet.pts = av_rescale_q(packet.pts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
+            packet.dts = av_rescale_q(packet.dts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
+
+            if (av_compare_ts(packet.pts, outputContainer->stream->time_base, (_request.end - _request.start) * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) > 0) {
                 finished = true;
                 break;
             }
 
-            packet.dts = av_rescale_q(packet.dts - inputContainer->startTs, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
             if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
                 THROW_ERROR("Failed to write to output.");
             }
@@ -283,7 +289,6 @@ std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* st
         THROW_ERROR("Failed to open decoder codec.");
     }
 
-    container->startTs = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, container->codecContext->time_base);
     return container;
 }
 

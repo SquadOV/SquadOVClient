@@ -246,10 +246,14 @@ import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import videojs from 'video.js'
-import 'video.js/dist/video-js.css' 
+import 'video.js/dist/video-js.css'
+
+///#if DESKTOP
 import fs from 'fs'
+///#endif
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
+import * as pi from '@client/js/pages'
 
 const MAX_CLIP_LENGTH_SECONDS = 45
 
@@ -265,7 +269,7 @@ export default class VodEditor extends Vue {
     @Prop({required: true})
     videoUuid!: string
 
-    @Prop({required: true})
+    @Prop({type: Number, required: true})
     game!: SquadOvGames
 
     context: VodEditorContext | undefined = undefined
@@ -470,9 +474,11 @@ export default class VodEditor extends Vue {
         }
         this.player = null
 
+///#if DESKTOP
         if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
             fs.unlinkSync(this.localClipPath)
         }
+///#endif
 
         this.clipTitle = ''
         this.clipDescription = ''
@@ -496,7 +502,7 @@ export default class VodEditor extends Vue {
             endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
             rawContainerFormat: 'mp4',
             isClip: true,
-        }, this.metadata, this.clipTitle, this.clipDescription).then((resp: ApiData<string>) => {
+        }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
         }).catch((err: any) => {
             this.clipError = true
@@ -507,7 +513,12 @@ export default class VodEditor extends Vue {
     }
 
     get clipPathTo(): any {
-        return {}
+        return {
+            name: pi.ClipPageId,
+            params: {
+                clipUuid: this.clipUuid
+            }
+        }
     }
 
     @Watch('clipUuid')

@@ -20,7 +20,12 @@ import {
     WowMatchAccessibleVods,
     LeagueMatchAccessibleVods,
     TftMatchAccessibleVods,
-    VodMetadata
+    VodMetadata,
+    VodClip,
+    cleanVodClipFromJson,
+    ClipReact,
+    ClipComment,
+    cleanClipCommentFromJson
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -921,16 +926,16 @@ class ApiClient {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
     }
 
-    createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string) : Promise<ApiData<string>> {
+    createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {
         interface ClipResponse {
             uuid: string
             uploadPath: string
         }
-
         // First post responds with the clip uuid and upload path.
         return axios.post(`v1/vod/${parentVodUuid}/clip`, {
             title,
-            description
+            description,
+            game
         }, this.createWebAxiosConfig()).then(async (resp: ApiData<ClipResponse>) => {
             // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
             // doing a resumable upload here but I think the clip should be small enough to just upload it
@@ -952,6 +957,71 @@ class ApiClient {
             metadata,
             sessionUri,
         }, this.createWebAxiosConfig())
+    }
+
+    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number}): Promise<ApiData<HalResponse<VodClip[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get('v1/clip', {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                    matchUuid: params.matchUuid,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<VodClip[]>>) => {
+            resp.data.data.forEach(cleanVodClipFromJson)
+            return resp
+        })
+    }
+
+    getClip(clipUuid: string): Promise<ApiData<VodClip>> {
+        return axios.get(`v1/clip/${clipUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<VodClip>) => {
+            cleanVodClipFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getClipReacts(clipUuid: string): Promise<ApiData<ClipReact[]>> {
+        return axios.get(`v1/clip/${clipUuid}/react`, this.createWebAxiosConfig())
+    }
+
+    reactToClip(clipUuid: string): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}/react`, {}, this.createWebAxiosConfig())
+    }
+
+    removeReactToClip(clipUuid: string): Promise<void> {
+        return axios.delete(`v1/clip/${clipUuid}/react`, this.createWebAxiosConfig())
+    }
+
+    markClipView(clipUuid: string): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}/view`, {}, this.createWebAxiosConfig())
+    }
+
+    getClipComments(params : {next : string | null, clipUuid : string , start : number, end : number}): Promise<ApiData<HalResponse<ClipComment[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/clip/${params.clipUuid}/comments`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<ClipComment[]>>) => {
+            resp.data.data.forEach(cleanClipCommentFromJson)
+            return resp
+        })
+    }
+
+    addNewClipComment(clipUuid: string, comment: string): Promise<ApiData<ClipComment>> {
+        return axios.post(`v1/clip/${clipUuid}/comments`, { comment }, this.createWebAxiosConfig()).then((resp: ApiData<ClipComment>) => {
+            cleanClipCommentFromJson(resp.data)
+            return resp
+        })
     }
 }
 

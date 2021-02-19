@@ -1,5 +1,5 @@
 <template>
-    <div v-if="isLocalUser">
+    <div>
         <v-btn
             icon
             color="primary"
@@ -60,7 +60,7 @@
                                 </div>
 
                                 <div class="text-caption">
-                                    Warning: Everyone with this link will be able to view this match and your recorded VOD!
+                                    Warning: Everyone with this link will be able to view this clip!
                                 </div>
                             </div>
                         </template>
@@ -94,18 +94,9 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
         LoadingContainer
     }
 })
-export default class MatchShareButton extends Vue {
+export default class ClipShareButton extends Vue {
     @Prop({required: true})
-    matchUuid!: string
-
-    @Prop({required: true})
-    game!: SquadOvGames
-
-    @Prop({required: true})
-    userId!: number
-
-    @Prop()
-    graphqlStats!: StatPermission[]
+    clipUuid!: string
 
     showHideError: boolean = false
     showHideShare: boolean = false
@@ -115,19 +106,12 @@ export default class MatchShareButton extends Vue {
     $refs!: {
         urlInput: any
     }
-    
-    get isLocalUser(): boolean {
-        return this.userId === this.$store.state.currentUser?.id
-    }
 
     @Watch('$route.fullPath')
-    @Watch('matchUuid')
+    @Watch('clipUuid')
     regenerateShareUrl() {
-        if (!this.isLocalUser) {
-            return
-        }
         this.shareUrl = null
-        apiClient.getMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game, this.graphqlStats).then((resp: ApiData<string>) => {
+        apiClient.getClipShareUrl(this.clipUuid, this.$route.fullPath).then((resp: ApiData<string>) => {
             this.shareUrl = resp.data
         }).catch((err: any) => {
             this.showHideError = true

@@ -260,6 +260,26 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     editorWin.show()
 })
 
+ipcMain.on('open-path-window', (event, path) => {
+    let pathWin = new BrowserWindow({
+        width: 1600,
+        height: 900,
+        webPreferences: {
+            nodeIntegration: true,
+            webSecurity: app.isPackaged,
+        },
+        icon: iconPath
+    })
+    if (!app.isPackaged) {
+        pathWin.webContents.toggleDevTools()
+    }
+
+    pathWin.setMenu(null)
+    pathWin.setMenuBarVisibility(false)
+    pathWin.loadURL(`file://${__dirname}/index.html${path}`)
+    pathWin.show()
+})
+
 async function requestOutputDevices() {
     await zeromqServer.requestAudioOutputOptions()
 }

@@ -110,19 +110,19 @@
                         mdi-download
                     </v-icon>
                 </v-btn>
+                
+                <!-- create clip button -->
+                <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
+                    <v-icon>
+                        mdi-content-cut
+                    </v-icon>
+                </v-btn>
             </template>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon>
+            <v-btn color="primary" icon @click="openClipWindowForMatch">
                 <v-icon>
                     mdi-filmstrip-box-multiple
-                </v-icon>
-            </v-btn>
-
-            <!-- create clip button -->
-            <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
-                <v-icon>
-                    mdi-content-cut
                 </v-icon>
             </v-btn>
         </template>
@@ -138,7 +138,9 @@ import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodEditorContext, openVodEditingWindow } from '@client/js/vods/editor'
 import * as vod from '@client/js/squadov/vod'
+import * as pi from '@client/js/pages'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { openPathInNewWindow } from '@client/js/external'
 
 @Component
 export default class GenericVodPicker extends Vue {
@@ -256,6 +258,16 @@ export default class GenericVodPicker extends Vue {
             return false
         }
         return this.track.segments[0].mimeType !== 'video/mp2t'
+    }
+
+    openClipWindowForMatch() {
+        let path = this.$router.resolve({
+            name: pi.ClipLibraryPageId,
+            query: {
+                matchUuid: this.matchUuid
+            }
+        })
+        openPathInNewWindow(path.href)
     }
 
     openEditingWindow() {
