@@ -276,6 +276,7 @@ export default class GenericVodPicker extends Vue {
         }
         this.context = new VodEditorContext(this.value.videoUuid)
         this.context.startSource(this.value)
+        this.onChangeTimestamp()
         openVodEditingWindow(this.value.videoUuid, this.game)
     }
 

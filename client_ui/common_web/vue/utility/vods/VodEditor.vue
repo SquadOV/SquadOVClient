@@ -174,10 +174,15 @@
 
                 <template v-if="!clipInProgress">
                     <div class="ma-2">
-                        <div id="editor-clip-preview">
-                            <video class="video-js vjs-fill" ref="video">
-                            </video>
-                        </div>
+                        <video-player
+                            v-if="!!localClipPath"
+                            id="editor-clip-preview"
+                            :vod="undefined"
+                            fill
+                            loop-clip
+                            :override-uri="localClipPath"
+                        >
+                        </video-player>
 
                         <template v-if="!!clipUuid">
                             <v-text-field
@@ -291,8 +296,6 @@ import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
 
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
-import videojs from 'video.js'
-import 'video.js/dist/video-js.css'
 
 ///#if DESKTOP
 import fs from 'fs'
@@ -328,6 +331,7 @@ export default class VodEditor extends Vue {
     syncTimestamp: boolean = true
     enableAudio: boolean = true
     previewClip: boolean = false
+    initialSync: boolean = false
 
     startKey: number = 0
     endKey: number = 0
@@ -352,10 +356,8 @@ export default class VodEditor extends Vue {
 
     $refs!: {
         player: VideoPlayer
-        video: HTMLVideoElement
         urlInput: any
     }
-    player: videojs.Player | null = null
 
     get videoDurationSeconds(): number {
         return this.end - this.start
@@ -422,11 +424,18 @@ export default class VodEditor extends Vue {
     }
 
     updateTimestampFromContext(dt: Date, force: boolean = false) {
-        if (!this.syncTimestamp && !force) {
+        if (this.initialSync && (!this.syncTimestamp && !force)) {
             return
         }
 
         this.updateTimestampFromPlayer(dt)
+
+        if (!this.initialSync) {
+            this.setClipStart(this.currentTimestamp)
+            this.setClipEnd(this.currentTimestamp + MAX_CLIP_LENGTH_SECONDS)
+            this.$refs.player.setPinned(dt)
+            this.initialSync = true
+        }
 
         if (!!this.vod) {
             this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime())
@@ -457,6 +466,7 @@ export default class VodEditor extends Vue {
         this.context.requestVodAssociation().then((v: VodAssociation) => {
             this.vod = v
             this.resetClip()
+            this.context!.requestTimeSync()
         }).catch((err: any) => {
             console.log('Failed to request VOD association: ', err)
         })
@@ -538,10 +548,6 @@ export default class VodEditor extends Vue {
     cancelClip() {
         this.showHideClipDialog = false
         this.clipInProgress = false
-        if (!!this.player) {
-            this.player.dispose()
-        }
-        this.player = null
 
 ///#if DESKTOP
         if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
@@ -617,7 +623,9 @@ export default class VodEditor extends Vue {
 
         this.clipInProgress = true
         this.showHideClipDialog = true
-        requestVodClip(videoUri, this.clipStart, this.clipEnd).then((resp: {
+
+        // Add a second to the end of the video to ensure that we capture that last second completely.
+        requestVodClip(videoUri, this.clipStart, this.clipEnd + 1).then((resp: {
             path: string,
             metadata: VodMetadata,
         }) => {
@@ -631,36 +639,6 @@ export default class VodEditor extends Vue {
             this.clipError = true
             this.showHideClipDialog = false
             this.clipInProgress = false
-        })
-    }
-
-    @Watch('localClipPath')
-    refreshVideoPlayer() {
-        if (!this.localClipPath) {
-            return
-        }
-
-        Vue.nextTick(() => {
-            this.player = videojs(this.$refs.video, {
-                controls: true,
-                autoplay: false,
-                preload: 'auto',
-                playbackRates: [
-                    0.25,
-                    0.5,
-                    1.0,
-                    1.25,
-                    1.5,
-                    2.0
-                ]
-            })
-
-            this.player.src([
-                {
-                    src: this.localClipPath!,
-                    type: 'video/mp4',
-                },
-            ])
         })
     }
 }

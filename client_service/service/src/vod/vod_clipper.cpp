@@ -28,6 +28,14 @@ using InputStreamContainerPtr = std::unique_ptr<InputStreamContainer>;
 
 struct OutputStreamContainer {
     AVStream* stream = nullptr;
+    AVCodecContext* codecContext = nullptr;
+
+    // Audio only
+    AVAudioFifo* fifo = nullptr;
+    SwrContext* swr = nullptr;
+    uint8_t** samplesStorage = nullptr;
+    int sampleLineSize = 0;
+    int64_t maxSamples = 0;
     
     bool firstFrame = false;
     int64_t startPts = 0;
@@ -49,6 +57,7 @@ private:
 
     void openInputOutputCodecPairs();
     std::unordered_map<int, std::pair<InputStreamContainerPtr, OutputStreamContainerPtr>> _streamPairs;
+    void encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st);
 
     // Output
     AVOutputFormat* _outputFormat = nullptr;
@@ -70,6 +79,21 @@ InputStreamContainer::~InputStreamContainer() {
 }
 
 OutputStreamContainer::~OutputStreamContainer() {
+    if (codecContext) {
+        avcodec_free_context(&codecContext);
+    }
+
+    if (samplesStorage) {
+        av_freep(&samplesStorage[0]);
+    }
+
+    if (fifo) {
+        av_audio_fifo_free(fifo);
+    }
+
+    if (swr) {
+        swr_free(&swr);
+    }
 }
 
 VodClipper::VodClipper(const fs::path& output, const VodClipRequest& request):
@@ -88,6 +112,32 @@ VodClipper::~VodClipper() {
 
     if (_inputContext) {
         avformat_close_input(&_inputContext);
+    }
+}
+
+void VodClipper::encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st) {
+    auto ret = avcodec_send_frame(cctx, frame);
+    if (ret < 0) {
+        THROW_ERROR("Failed to send frame: " << ret);
+    }
+
+    while (true) {
+        AVPacket packet = { 0 };
+        const auto ret = avcodec_receive_packet(cctx, &packet);
+        if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+            break;
+        } else if (ret < 0) {
+            THROW_ERROR("Failed to receive encoded packet.");
+        }
+
+        av_packet_rescale_ts(&packet, cctx->time_base, st->time_base);
+        packet.stream_index = st->index;
+
+        if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
+            THROW_ERROR("Failed to write to output.");
+        }
+
+        av_packet_unref(&packet);
     }
 }
 
@@ -179,7 +229,10 @@ shared::squadov::VodMetadata VodClipper::run() {
     av_dump_format(_outputContext, 0, path.c_str(), 1);
 
     AVPacket packet;
+    AVFrame* frame = av_frame_alloc();
+    AVFrame* outputAudioFrame = nullptr;
     int64_t audioPts = 0;
+
     bool finished = false;
 
     while (!finished) {
@@ -188,31 +241,106 @@ shared::squadov::VodMetadata VodClipper::run() {
         }
 
         const auto streamIndex = packet.stream_index;
+        const auto streamType = _inputContext->streams[streamIndex]->codecpar->codec_type;
         const auto it = _streamPairs.find(streamIndex);
         if (it != _streamPairs.end()) {
             const auto* inputContainer = it->second.first.get();
             auto* outputContainer = it->second.second.get();
 
-            
             av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, inputContainer->codecContext->time_base);
-            if (!outputContainer->firstFrame) {
-                outputContainer->startPts = packet.pts;
-                outputContainer->firstFrame = true;
-            } else if (av_compare_ts(packet.pts, inputContainer->codecContext->time_base, _request.end * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) >= 0)  {
-                finished = true;
+            int ret = avcodec_send_packet(inputContainer->codecContext, &packet);
+            if (ret < 0) {
+                THROW_ERROR("Failed to decode frame.");
                 break;
             }
-            packet.pts = av_rescale_q(packet.pts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
-            packet.dts = av_rescale_q(packet.dts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
 
-            if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
-                THROW_ERROR("Failed to write to output.");
+            while (true) {
+                ret = avcodec_receive_frame(inputContainer->codecContext, frame);
+                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                    break;
+                } else if (ret < 0) {
+                    THROW_ERROR("Failed to receive decoded frame.");
+                    break;
+                }
+
+                if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) < 0) {
+                    continue;
+                } else if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.end * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) >= 0)  {
+                    finished = true;
+                    break;
+                }
+
+                if (!outputContainer->firstFrame) {
+                    outputContainer->startPts = frame->best_effort_timestamp;
+                    outputContainer->firstFrame = true;
+                }
+
+                frame->pts = av_rescale_q(frame->best_effort_timestamp - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->codecContext->time_base);
+
+                if (streamType == AVMEDIA_TYPE_VIDEO) {
+                    encode(outputContainer->codecContext, frame, outputContainer->stream);
+                } else {
+                    const auto numConverted = swr_convert(
+                        outputContainer->swr,
+                        outputContainer->samplesStorage,
+                        static_cast<int>(outputContainer->maxSamples),
+                        (const uint8_t**)&frame->data[0],
+                        frame->nb_samples
+                    );
+
+                    const auto newFifoSize = av_audio_fifo_space(outputContainer->fifo) + numConverted;
+                    if (av_audio_fifo_realloc(outputContainer->fifo, newFifoSize) < 0) {
+                        THROW_ERROR("Failed to reallocate FIFO queue.");
+                    }
+
+                    if (av_audio_fifo_write(outputContainer->fifo, (void**)outputContainer->samplesStorage, numConverted) < numConverted) {
+                        THROW_ERROR("Failed to write to FIFO queue.");
+                    }
+
+                    if (!outputAudioFrame) {
+                        outputAudioFrame = av_frame_alloc();
+                        outputAudioFrame->nb_samples = outputContainer->codecContext->frame_size;
+                        outputAudioFrame->channel_layout = outputContainer->codecContext->channel_layout;
+                        outputAudioFrame->format = outputContainer->codecContext->sample_fmt;
+                        outputAudioFrame->sample_rate = outputContainer->codecContext->sample_rate;
+                        if (av_frame_get_buffer(outputAudioFrame, 0) < 0) {
+                            THROW_ERROR("Failed to get audio buffer.");
+                        }
+                    }
+
+                    if (av_frame_make_writable(outputAudioFrame) < 0) {
+                        THROW_ERROR("Failed to make output audio frame writable.");
+                    }
+
+                    const auto frameSize = outputContainer->codecContext->frame_size;
+                    if (av_audio_fifo_size(outputContainer->fifo) >= frameSize) {
+                        if (av_audio_fifo_read(outputContainer->fifo, (void**)outputAudioFrame->data, frameSize) < frameSize) {
+                            THROW_ERROR("Failed to read from FIFO queue.");
+                        }
+
+                        outputAudioFrame->pts = audioPts;
+                        audioPts += frameSize;
+                        encode(outputContainer->codecContext, outputAudioFrame, outputContainer->stream);
+                    }
+                }
             }
         }
 
         av_packet_unref(&packet);
     }
     av_packet_unref(&packet);
+
+    av_frame_free(&outputAudioFrame);
+    av_frame_free(&frame);
+
+    for (const auto& kvp: _streamPairs) {
+        encode(kvp.second.second->codecContext, nullptr, kvp.second.second->stream);
+    }
+
+    const auto ret = av_write_trailer(_outputContext);
+    if (ret < 0) {
+        THROW_ERROR("Failed to write trailer: " << ret << std::endl);
+    }
 
     shared::squadov::VodMetadata metadata;
     metadata.id = "source";
@@ -252,11 +380,6 @@ shared::squadov::VodMetadata VodClipper::run() {
             metadata.fps = static_cast<int>(static_cast<double>(inputContainer->codecContext->time_base.den) / inputContainer->codecContext->time_base.num);
         }
     }
-    
-    const auto ret = av_write_trailer(_outputContext);
-    if (ret < 0) {
-        THROW_ERROR("Failed to write trailer: " << ret << std::endl);
-    }
     return metadata;
 }
 
@@ -289,12 +412,126 @@ std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* st
 }
 
 std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AVStream* stream, const InputStreamContainer& icontainer) const {
+    const auto isVideo = (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO);
     auto container = std::make_unique<OutputStreamContainer>();
 
+    std::vector<std::string> codecsToTry;
+    AVCodec* codec = nullptr;
+    if (isVideo) {
+        codecsToTry = {
+            "h264_amf",
+            "h264_nvenc",
+            "libopenh264"
+        };
+    } else {
+        codecsToTry = { "aac" };
+    }
+
+    for (const auto& c: codecsToTry) {
+        try {
+            codec = avcodec_find_encoder_by_name(c.c_str());
+            if (!codec) {
+                THROW_ERROR("Failed to find encoder.");
+            }
+
+            container->codecContext = avcodec_alloc_context3(codec);
+            if (!container->codecContext) {
+                THROW_ERROR("Failed to alloc encoder context for output stream.");
+            }
+
+            AVDictionary *options = nullptr;
+            if (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+                container->codecContext->width = icontainer.codecContext->width;
+                container->codecContext->height = icontainer.codecContext->height;
+                container->codecContext->sample_aspect_ratio = icontainer.codecContext->sample_aspect_ratio;
+                if (codec->pix_fmts) {
+                    container->codecContext->pix_fmt = codec->pix_fmts[0];
+                } else {
+                    container->codecContext->pix_fmt = icontainer.codecContext->pix_fmt;
+                }
+                container->codecContext->time_base = av_inv_q(icontainer.codecContext->framerate);
+                container->codecContext->bit_rate = icontainer.codecContext->bit_rate;
+                container->codecContext->gop_size = container->codecContext->time_base.den * 5;
+                container->codecContext->max_b_frames = 1;
+
+                av_dict_set(&options, "preset", "medium", 0);
+            } else {
+                container->codecContext->sample_rate = icontainer.codecContext->sample_rate;
+                container->codecContext->channel_layout = icontainer.codecContext->channel_layout;
+                container->codecContext->channels = av_get_channel_layout_nb_channels(container->codecContext->channel_layout);
+                container->codecContext->sample_fmt = codec->sample_fmts[0];
+                container->codecContext->time_base = AVRational{1, container->codecContext->sample_rate};
+            }
+
+            if (_outputFormat->flags & AVFMT_GLOBALHEADER) {
+                container->codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+            }
+
+            if (avcodec_open2(container->codecContext, codec, &options) < 0) {
+                av_dict_free(&options);
+                THROW_ERROR("Failed to open output codec.");
+            }
+            av_dict_free(&options);
+            break;
+        } catch (std::exception& ex) {
+            LOG_INFO("Failed to load codec: " << c << " :: " << ex.what() << std::endl);
+            if (container->codecContext) {
+                avcodec_free_context(&container->codecContext);
+                container->codecContext = nullptr;
+            }
+        }
+    }
+
+    if (!container->codecContext) {
+        THROW_ERROR("Failed to find appropriate codec.");
+    }
+
     AVStream* ostream = avformat_new_stream(_outputContext, nullptr);
-    if (avcodec_parameters_copy(ostream->codecpar, stream->codecpar) < 0) {
+    if (avcodec_parameters_from_context(ostream->codecpar, container->codecContext) < 0) {
         THROW_ERROR("Failed to copy context parameters to encoding stream.")
     }
+
+    if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
+        container->swr = swr_alloc_set_opts(nullptr,
+            container->codecContext->channel_layout, // out_ch_layout
+            container->codecContext->sample_fmt, // out_sample_fmt
+            container->codecContext->sample_rate, // out_sample_rate
+            icontainer.codecContext->channel_layout, // in_ch_layout
+            icontainer.codecContext->sample_fmt, // in_sample_fmt
+            icontainer.codecContext->sample_rate, // in_sample_rate,
+            0, // log_offset,
+            nullptr // log_ctx
+        );
+        if (!container->swr) {
+            THROW_ERROR("Failed to alloc swr and set options.");
+        }
+
+        if (swr_init(container->swr) < 0) {
+            THROW_ERROR("Failed to init swr.");
+        }
+
+        container->fifo = av_audio_fifo_alloc(
+            container->codecContext->sample_fmt,
+            container->codecContext->channels,
+            container->codecContext->frame_size * 2
+        );
+
+        if (!container->fifo) {
+            THROW_ERROR("Failed to create audio fifo");
+        }
+
+        container->maxSamples = av_rescale_rnd(icontainer.codecContext->frame_size, container->codecContext->sample_rate, icontainer.codecContext->sample_rate, AV_ROUND_UP);
+        if (av_samples_alloc_array_and_samples(
+            &container->samplesStorage,
+            &container->sampleLineSize,
+            container->codecContext->channels,
+            static_cast<int>(container->maxSamples),
+            container->codecContext->sample_fmt, 0) < 0) {
+            THROW_ERROR("Failed to allocate converted samples.");
+        }
+    }
+
+    ostream->time_base = container->codecContext->time_base;
     container->stream = ostream;
     return container;
 }

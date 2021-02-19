@@ -24,6 +24,9 @@ import { Parser as M3u8Parser } from 'm3u8-parser'
 export default class VideoPlayer extends Vue {
     @Prop({required: true})
     vod! : vod.VodAssociation | null | undefined
+    
+    @Prop()
+    overrideUri!: string | undefined
 
     // Our custom manifest file format that lists all the available options
     // for video quality as well as the urls to get that particular
@@ -66,7 +69,7 @@ export default class VideoPlayer extends Vue {
     hasMadeProgress: boolean = false
 
     get hasVideo() : boolean {
-        if (!this.vod) {
+        if (!this.vod && !this.overrideUri) {
             return false
         }
         return true
@@ -208,6 +211,10 @@ export default class VideoPlayer extends Vue {
 
     setNoVideo() {
         this.$emit('update:playerHeight', 500)
+    }
+
+    setPinned(dt: Date) {
+        this.pinnedTimeStamp = dt
     }
 
     // This should only happen once. Manifest updates should be handled by the media source.
@@ -379,7 +386,12 @@ export default class VideoPlayer extends Vue {
     }
 
     mounted() {
-        this.refreshPlaylist(this.vod, null)
+        if (!!this.overrideUri) {
+            this.videoUri = this.overrideUri
+            this.toggleHasVideo()
+        } else {
+            this.refreshPlaylist(this.vod, null)
+        }
     }
 
     beforeDestroy() {

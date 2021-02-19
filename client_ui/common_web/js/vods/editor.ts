@@ -38,6 +38,7 @@ export function requestVodClip(source: string, start: number, end: number): Prom
 enum VodEditorMessageType {
     RequestVodAssociation,
     RespondVodAssociation,
+    RequestTimestampSync,
     TimestampSync,
 }
 
@@ -57,6 +58,7 @@ export class VodEditorContext {
     _type: VodEditorChannelType
     _vod: VodAssociation | null
     _timeListeners: ((a: Date) => void)[]
+    _lastSyncTime: Date | null
 
     constructor(uuid: string) {
         this._uuid = uuid
@@ -65,6 +67,7 @@ export class VodEditorContext {
         this._type = VodEditorChannelType.Editor
         this._vod = null
         this._timeListeners = []
+        this._lastSyncTime = null
     }
 
     startSource(v: VodAssociation) {
@@ -82,9 +85,24 @@ export class VodEditorContext {
                         data: this._vod,
                     })
                 }
+            case VodEditorMessageType.RequestTimestampSync:
+                if (this._type == VodEditorChannelType.Source && !!this._lastSyncTime) {
+                    this._channel.postMessage({
+                        type: VodEditorMessageType.TimestampSync,
+                        data: this._lastSyncTime,
+                    })
+                }
             case VodEditorMessageType.TimestampSync:
+                this._lastSyncTime = respMessage.data
                 this.onSyncTime(respMessage.data)
         }
+    }
+
+    requestTimeSync() {
+        this._channel.postMessage({
+            type: VodEditorMessageType.RequestTimestampSync,
+            data: undefined,
+        })
     }
 
     addTimeSyncListener(ln: (a: Date) => void) {
@@ -98,6 +116,7 @@ export class VodEditorContext {
     }
 
     syncTime(t: Date) {
+        this._lastSyncTime = t
         this._channel.postMessage({
             type: VodEditorMessageType.TimestampSync,
             data: t,
