@@ -107,6 +107,14 @@ export default class VideoPlayer extends Vue {
         })
     }
 
+    goToPercentage(percent: number) {
+        if (!this.player) {
+            return
+        }
+        let time = this.player.duration() * percent
+        this.goToTimeMs(time * 1000.0)
+    }
+
     goToTimeMs(tmMs : number) {
         if (!this.player || this.player.readyState() < 3) {
             return
@@ -268,9 +276,12 @@ export default class VideoPlayer extends Vue {
                 constructor: function() {
                     //@ts-ignore
                     button.apply(this, arguments)
-                    this.addClass('vjs-icon-square')
+                    this.addClass('mdi')
+                    this.addClass('mdi-fix')
+                    this.addClass('mdi-rectangle-outline')
+                    this.controlText('Toggle Theater Mode')
                 },
-            })        
+            })
             videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
 
             let controlBar = this.player.getChild('controlBar')!
@@ -279,6 +290,92 @@ export default class VideoPlayer extends Vue {
                 this.$emit('toggle-theater-mode')
             })
         }
+
+        this.player.on('keydown', (e: KeyboardEvent) => {
+            if (!this.player) {
+                return
+            }
+
+            let cmp = e.key.toLowerCase()
+            let handled = false
+            if (cmp == ' ' || cmp == 'k') {
+                // Play/Pause
+                if (this.player.paused()) {
+                    this.player.play()
+                } else {
+                    this.player.pause()
+                }
+                handled = true
+            } else if (cmp == 'f') {
+                // Full-Screen
+                if (this.player.isFullscreen()) {
+                    this.player.exitFullscreen()
+                } else {
+                    this.player.requestFullscreen()
+                }
+                handled = true
+            } else if (cmp == 'arrowleft') {
+                // Jump back 5 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 - 5000)
+                handled = true
+            } else if (cmp == 'arrowright') {
+                // Jump forward 5 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 + 5000)
+                handled = true
+            } else if (cmp == 'j') {
+                // Jump back 10 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 - 10000)
+                handled = true
+            } else if (cmp == 'l') {
+                // Jump forward 10 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 + 10000)
+                handled = true
+            } else if (cmp == 'arrowup') {
+                // Volume up
+                this.player.volume(Math.min(Math.max(this.player.volume() + 0.05, 0.0), 1.0))
+                handled = true
+            } else if (cmp == 'arrowdown') {
+                // Volume down
+                this.player.volume(Math.min(Math.max(this.player.volume() - 0.05, 0.0), 1.0))
+                handled = true
+            } else if (cmp == 'm') {
+                // Mute/un-mute
+                if (this.player.muted()) {
+                    this.player.muted(false)
+                } else {
+                    this.player.muted(true)
+                }
+                handled = true
+            } else if (!isNaN(parseInt(cmp))) {
+                // Jump to % in video
+                let percent = parseInt(cmp) / 10.0
+                this.goToPercentage(percent)
+                handled = true
+            } else if (cmp == 'home') {
+                // Go to beginning
+                this.goToPercentage(0.0)
+                handled = true
+            } else if (cmp == 'end') {
+                // Go to near end
+                this.goToPercentage(0.99)
+                handled = true
+            } else if (cmp == 'i') {
+                //@ts-ignore
+                if (this.player.isInPictureInPicture()) {
+                    //@ts-ignore
+                    this.player.exitPictureInPicture()
+                } else {
+                    //@ts-ignore
+                    this.player.requestPictureInPicture()
+                }
+            } else if (cmp == 't') {
+                this.$emit('toggle-theater-mode')
+            }
+
+            if (handled) {
+                e.preventDefault()
+            }
+        })
     }
 
     mounted() {
@@ -299,6 +396,16 @@ export default class VideoPlayer extends Vue {
 
 .empty-container {
     height: 500px;
+}
+
+>>>.mdi-fix {
+    font-size: 24px;
+    width: initial;
+}
+
+.video-default-view {
+    transform: scaleY(0.5);
+    transform-origin: center;
 }
 
 </style>
