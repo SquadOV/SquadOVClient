@@ -93,10 +93,7 @@ export class TrackedUserStatsManager {
             }
         }).catch((err : any) => {
             console.log('Failed to connect websocket: ', err)
-            this._reconnectCount += 1
-            setTimeout(() => {
-                this.reconnect()
-            }, Math.min(Math.pow(2, this._reconnectCount) + Math.random() * 1000, 15000))
+            this.recoverFromError()
         })
     }
 
@@ -105,7 +102,10 @@ export class TrackedUserStatsManager {
             this._connection.close(MANUAL_CLOSE)
         }
         this._connection = null
-        this.reconnect()
+        this._reconnectCount += 1
+        setTimeout(() => {
+            this.reconnect()
+        }, Math.min(Math.pow(2, this._reconnectCount) + Math.random() * 1000, 15000))
     }
 
     reconnect() {
@@ -124,9 +124,8 @@ export class TrackedUserStatsManager {
         if (!this._connection) {
             return
         }
-        for (let m of this._messageQueue) {
-            this._connection.send(m)
-        }
+        // I don't particularly want to re-attemp to send messages just in case
+        // we spam our own server lol.
         this._messageQueue = []
     }
 
