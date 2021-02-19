@@ -15,6 +15,7 @@
 
                 <v-form
                     v-model="formValid"
+                    @submit.prevent="login"
                 >
                     <v-text-field
                         v-model="username"
@@ -33,19 +34,19 @@
                         type="password"
                     >
                     </v-text-field>
-                </v-form>
 
-                <div class="mb-4">
-                    <v-btn
-                        :disabled="!formValid"
-                        block
-                        color="success"
-                        @click="login"
-                        :loading="inProgress"
-                    >
-                        Login
-                    </v-btn>
-                </div>
+                    <div class="mb-4">
+                        <v-btn
+                            :disabled="!formValid"
+                            block
+                            color="success"
+                            :loading="inProgress"
+                            type="submit"
+                        >
+                            Login
+                        </v-btn>
+                    </div>
+                </v-form>
 
                 <div class="d-flex">
                     <a href="#"  @click="forgotPassword" v-if="!forgotInProgress">
