@@ -16,19 +16,37 @@
         </video-player>
 
         <div class="mb-1 mx-2">
-            <div id="editor-timeline" class="px-2">
+            <div class="px-2 editor-timeline">
                 <generic-match-timeline
                     :start="start"
                     :end="end"
                     :current="currentTimestamp"
                     :input-events="events"
-                    :major-tick-every="60"
+                    :major-tick-every="majorTicksEvery"
+                    :interval-ticks="intervalTicksEvery"
+                    @go-to-timestamp="updateTimestampFromTimeline"
+                    fill
+                >
+                    <template v-slot:tick="{ tick }">
+                        {{ secondsToTimeString(tick) }}
+                    </template>
+                </generic-match-timeline>
+            </div>
+
+            <div class="px-2 editor-timeline mt-1">
+                <generic-match-timeline
+                    :start="start"
+                    :end="end"
+                    :current="currentTimestamp"
+                    :input-events="events"
+                    :major-tick-every="majorTicksEvery"
+                    :interval-ticks="intervalTicksEvery"
                     :clip-start-handle="clipStart"
                     @update:clipStartHandle="setClipStart"
                     :clip-end-handle="clipEnd"
                     @update:clipEndHandle="setClipEnd"
-                    @go-to-timestamp="updateTimestampFromTimeline"
                     fill
+                    disable-seeking
                 >
                     <template v-slot:tick="{ tick }">
                         {{ secondsToTimeString(tick) }}
@@ -53,6 +71,7 @@
                 label="Enable Audio"
                 hide-details
                 dense
+                v-if="false"
             >
             </v-checkbox>
 
@@ -64,6 +83,18 @@
                 dense
             >
             </v-checkbox>
+
+            <v-text-field
+                class="flex-grow-0"
+                prepend-icon="mdi-timer"
+                :value="currentTimeStr"
+                hide-details
+                dense
+                solo
+                single-line
+                readonly
+            >
+            </v-text-field>
 
             <v-spacer></v-spacer>
 
@@ -78,6 +109,13 @@
                 single-line
                 :key="`start-${startKey}`"
             >
+                <template v-slot:append>
+                    <v-btn icon @click="setClipStart(currentTimestamp)" class="import-button">
+                        <v-icon>
+                            mdi-import
+                        </v-icon>
+                    </v-btn>
+                </template>
             </v-text-field>
 
             <div class="mx-1">
@@ -95,6 +133,13 @@
                 single-line
                 :key="`end-${endKey}`"
             >
+                <template v-slot:append>
+                    <v-btn icon @click="setClipEnd(currentTimestamp)" class="import-button">
+                        <v-icon>
+                            mdi-import
+                        </v-icon>
+                    </v-btn>
+                </template>
             </v-text-field>
         </div>
 
@@ -103,6 +148,7 @@
                 color="success"
                 block
                 @click="doClip"
+                :disabled="clipDuration == 0"
             >
                 Clip it!
             </v-btn>
@@ -311,6 +357,19 @@ export default class VodEditor extends Vue {
     }
     player: videojs.Player | null = null
 
+    get videoDurationSeconds(): number {
+        return this.end - this.start
+    }
+
+    get majorTicksEvery(): number {
+        let ticks = this.videoDurationSeconds / 30.0
+        return Math.round(ticks)
+    }
+
+    get intervalTicksEvery(): number {
+        return Math.round(this.majorTicksEvery / 10.0)
+    }
+
     doCopy() {
         let inputEle = this.$refs.urlInput.$el.querySelector('input')
         inputEle.select()
@@ -430,6 +489,10 @@ export default class VodEditor extends Vue {
         return []
     }
 
+    get currentTimeStr(): string {
+        return secondsToTimeString(this.currentTimestamp)
+    }
+
     get clipStartStr(): string {
         return secondsToTimeString(this.clipStart)
     }
@@ -443,9 +506,12 @@ export default class VodEditor extends Vue {
     }
 
     setClipStart(s: number) {
-        this.clipStart = Math.min(Math.max(s, this.start), this.clipEnd)
-        if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-            this.clipEnd = this.clipStart + MAX_CLIP_LENGTH_SECONDS
+        let oldDuration = this.clipDuration
+        this.clipStart = Math.min(Math.max(s, this.start), this.end)
+        if (this.clipDuration < 0) {
+            this.clipEnd = Math.min(this.clipStart + oldDuration, this.end)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
+            this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_SECONDS, this.end)
         }
         this.startKey += 1
     }
@@ -459,9 +525,12 @@ export default class VodEditor extends Vue {
     }
 
     setClipEnd(s: number) {
-        this.clipEnd = Math.min(Math.max(s, this.clipStart), this.end)
-        if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-            this.clipStart = this.clipEnd - MAX_CLIP_LENGTH_SECONDS
+        let oldDuration = this.clipDuration
+        this.clipEnd = Math.min(Math.max(s, this.start), this.end)
+        if (this.clipDuration < 0) {
+            this.clipStart = Math.max(this.clipEnd - oldDuration, this.start)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
+            this.clipStart = Math.max(this.clipEnd - MAX_CLIP_LENGTH_SECONDS, this.start)
         }
         this.endKey += 1
     }
@@ -605,9 +674,9 @@ export default class VodEditor extends Vue {
     max-height: 75vh;
 }
 
-#editor-timeline {
-    height: 10vh;
-    max-height: 10vh;
+.editor-timeline {
+    height: 5vh;
+    max-height: 5vh;
 }
 
 #clip-progress-div {
@@ -622,6 +691,10 @@ export default class VodEditor extends Vue {
 >>>.v-input--selection-controls {
     margin-top: 0px !important;
     padding-top: 0px !important;
+}
+
+.import-button {
+    transform: rotateZ(90deg);
 }
 
 </style>

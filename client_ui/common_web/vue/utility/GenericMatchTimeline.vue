@@ -9,10 +9,10 @@
         @mousemove="onMouseMove"
         @click="changeCurrent"
     >
-        <div ref="inner" class="bar-div" :style="progressBarStyle">
+        <div ref="inner" class="bar-div" :style="progressBarStyle" v-if="!disableSeeking">
         </div>
 
-        <div ref="seekTick" class="seek-div" :style="seekDivStyle" v-if="seeking">
+        <div ref="seekTick" class="seek-div" :style="seekDivStyle" v-if="seeking && !disableSeeking">
             <slot name="tick" v-bind:tick="seekingTime">
                 {{ seekingTime }}
             </slot>
@@ -120,6 +120,9 @@ export default class GenericMatchTimeline extends Vue {
     @Prop()
     clipEndHandle!: number
 
+    @Prop({type: Boolean, default: false })
+    disableSeeking!: boolean
+
     $refs!: {
         parent: HTMLElement
         inner: HTMLElement
@@ -168,6 +171,10 @@ export default class GenericMatchTimeline extends Vue {
     }
 
     recomputeSeekingTimeFromMouseEvent(e: MouseEvent) {
+        if (this.disableSeeking) {
+            return
+        }
+        
         let bounds = this.$refs.parent.getBoundingClientRect()
         this.seekingTime = this.computeTimeFromMouseEvent(e)
 
@@ -190,6 +197,9 @@ export default class GenericMatchTimeline extends Vue {
     }
 
     startSeeking(e : MouseEvent) {
+        if (this.disableSeeking) {
+            return
+        }
         this.seeking = true
         this.recomputeSeekingTimeFromMouseEvent(e)
     }
@@ -327,7 +337,7 @@ export default class GenericMatchTimeline extends Vue {
 .clip-start-div{
     background-color: #4CAF50;
     height: 100%;
-    width: 5px;
+    width: 8px;
     cursor: pointer;
     z-index: 5;
     position: absolute;
@@ -338,7 +348,7 @@ export default class GenericMatchTimeline extends Vue {
 .clip-end-div{
     background-color: #FF5252;
     height: 100%;
-    width: 5px;
+    width: 8px;
     cursor: pointer;
     z-index: 5;
     position: absolute;

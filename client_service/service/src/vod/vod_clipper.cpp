@@ -196,10 +196,14 @@ shared::squadov::VodMetadata VodClipper::run() {
             
             av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, inputContainer->codecContext->time_base);
             if (!outputContainer->firstFrame) {
+                const auto newFirstFrame = (av_compare_ts(packet.pts, inputContainer->codecContext->time_base, _request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) >= 0);
+                if (!newFirstFrame) {
+                    continue;
+                }
+
                 outputContainer->startPts = packet.pts;
                 outputContainer->firstFrame = true;
             }
-
 
             packet.pts = av_rescale_q(packet.pts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
             packet.dts = av_rescale_q(packet.dts - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->stream->time_base);
