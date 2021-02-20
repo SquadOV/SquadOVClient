@@ -26,7 +26,8 @@ enum class EWoWLogEvents {
     CombatantInfo,
     // This event is fired whenever the line is not a COMBATANT_INFO. Should only
     // be handled after you start to exepct COMBATANT_INFO events.
-    FinishCombatantInfo
+    FinishCombatantInfo,
+    ZoneChange
 };
 
 struct WoWCombatLogState {

@@ -50,6 +50,26 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.outputDevice = params.device
+            state.settings.record.outputVolume = params.volume
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeInputDevice(state: RootState, params: {device: string, volume : number}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.inputDevice = params.device
+            state.settings.record.inputVolume = params.volume
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         toggleRecordingPause(state: RootState) {
 /// #if DESKTOP
             state.currentState.paused = !state.currentState.paused
@@ -68,6 +88,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         setRecordingGames(state: RootState, games: string[]) {
 /// #if DESKTOP
             state.currentState.recordingGames = games
+/// #endif
+        },
+        setRunOnStartup(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.runOnStartup = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        setMinimizeToSystemTray(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.minimizeToTray = v
+            saveLocalSettings(state.settings)
 /// #endif
         },
         markValidSession(state: RootState, v: boolean) {

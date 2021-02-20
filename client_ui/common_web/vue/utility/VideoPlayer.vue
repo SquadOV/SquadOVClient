@@ -1,6 +1,6 @@
 <template>
-    <div id="vod-container">
-        <video v-if="hasVideo" class="video-js vjs-fluid" ref="video">
+    <div>
+        <video v-if="hasVideo" :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
         </video>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
@@ -24,6 +24,9 @@ import { Parser as M3u8Parser } from 'm3u8-parser'
 export default class VideoPlayer extends Vue {
     @Prop({required: true})
     vod! : vod.VodAssociation | null | undefined
+    
+    @Prop()
+    overrideUri!: string | undefined
 
     // Our custom manifest file format that lists all the available options
     // for video quality as well as the urls to get that particular
@@ -47,13 +50,26 @@ export default class VideoPlayer extends Vue {
     @Prop()
     ready!: boolean | undefined
 
+    @Prop({type: Boolean, default: false})
+    fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    loopClip!: boolean
+
+    @Prop()
+    clipStart!: number | undefined
+
+    @Prop()
+    clipEnd!: number | undefined
+
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
     }
+    hasMadeProgress: boolean = false
 
     get hasVideo() : boolean {
-        if (!this.vod) {
+        if (!this.vod && !this.overrideUri) {
             return false
         }
         return true
@@ -92,6 +108,14 @@ export default class VideoPlayer extends Vue {
         }).catch((err : any) => {
             console.log('Failed to obtain VOD manifest: ', err)
         })
+    }
+
+    goToPercentage(percent: number) {
+        if (!this.player) {
+            return
+        }
+        let time = this.player.duration() * percent
+        this.goToTimeMs(time * 1000.0)
     }
 
     goToTimeMs(tmMs : number) {
@@ -189,6 +213,10 @@ export default class VideoPlayer extends Vue {
         this.$emit('update:playerHeight', 500)
     }
 
+    setPinned(dt: Date) {
+        this.pinnedTimeStamp = dt
+    }
+
     // This should only happen once. Manifest updates should be handled by the media source.
     toggleHasVideo() {
         this.player = videojs(this.$refs.video, {
@@ -207,7 +235,7 @@ export default class VideoPlayer extends Vue {
 
         // Just in case videoUri and audioUri got set earlier.
         this.refreshPlayerSources()
-        
+        this.hasMadeProgress = true
         this.player.on('playerresize', () => {
             this.$emit('update:playerHeight', this.player!.currentHeight())
         })
@@ -228,7 +256,15 @@ export default class VideoPlayer extends Vue {
 
         this.player.on('timeupdate', () => {
             if (!!this.vod && !!this.player) {
+                if (this.loopClip && this.clipEnd !== undefined && this.clipStart !== undefined) {
+                    if (this.hasMadeProgress && (this.player.currentTime() > this.clipEnd || this.player.currentTime() < this.clipStart)) {
+                        this.player.currentTime(this.clipStart)
+                        this.hasMadeProgress= false
+                    }
+                }
+
                 let newCurrentTime = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
+                this.hasMadeProgress = !this.currentTime || (newCurrentTime > this.currentTime)
 
                 // We don't particularly need to update this very often so cap it at showing 1s differences.
                 let diff = (!!this.currentTime ? Math.abs(this.currentTime.getTime() - newCurrentTime.getTime()) : 1000000000000000000) / 1000.0
@@ -247,9 +283,12 @@ export default class VideoPlayer extends Vue {
                 constructor: function() {
                     //@ts-ignore
                     button.apply(this, arguments)
-                    this.addClass('vjs-icon-square')
+                    this.addClass('mdi')
+                    this.addClass('mdi-fix')
+                    this.addClass('mdi-rectangle-outline')
+                    this.controlText('Toggle Theater Mode')
                 },
-            })        
+            })
             videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
 
             let controlBar = this.player.getChild('controlBar')!
@@ -258,10 +297,101 @@ export default class VideoPlayer extends Vue {
                 this.$emit('toggle-theater-mode')
             })
         }
+
+        this.player.on('keydown', (e: KeyboardEvent) => {
+            if (!this.player) {
+                return
+            }
+
+            let cmp = e.key.toLowerCase()
+            let handled = false
+            if (cmp == ' ' || cmp == 'k') {
+                // Play/Pause
+                if (this.player.paused()) {
+                    this.player.play()
+                } else {
+                    this.player.pause()
+                }
+                handled = true
+            } else if (cmp == 'f') {
+                // Full-Screen
+                if (this.player.isFullscreen()) {
+                    this.player.exitFullscreen()
+                } else {
+                    this.player.requestFullscreen()
+                }
+                handled = true
+            } else if (cmp == 'arrowleft') {
+                // Jump back 5 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 - 5000)
+                handled = true
+            } else if (cmp == 'arrowright') {
+                // Jump forward 5 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 + 5000)
+                handled = true
+            } else if (cmp == 'j') {
+                // Jump back 10 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 - 10000)
+                handled = true
+            } else if (cmp == 'l') {
+                // Jump forward 10 seconds
+                this.goToTimeMs(this.player.currentTime() * 1000 + 10000)
+                handled = true
+            } else if (cmp == 'arrowup') {
+                // Volume up
+                this.player.volume(Math.min(Math.max(this.player.volume() + 0.05, 0.0), 1.0))
+                handled = true
+            } else if (cmp == 'arrowdown') {
+                // Volume down
+                this.player.volume(Math.min(Math.max(this.player.volume() - 0.05, 0.0), 1.0))
+                handled = true
+            } else if (cmp == 'm') {
+                // Mute/un-mute
+                if (this.player.muted()) {
+                    this.player.muted(false)
+                } else {
+                    this.player.muted(true)
+                }
+                handled = true
+            } else if (!isNaN(parseInt(cmp))) {
+                // Jump to % in video
+                let percent = parseInt(cmp) / 10.0
+                this.goToPercentage(percent)
+                handled = true
+            } else if (cmp == 'home') {
+                // Go to beginning
+                this.goToPercentage(0.0)
+                handled = true
+            } else if (cmp == 'end') {
+                // Go to near end
+                this.goToPercentage(0.99)
+                handled = true
+            } else if (cmp == 'i') {
+                //@ts-ignore
+                if (this.player.isInPictureInPicture()) {
+                    //@ts-ignore
+                    this.player.exitPictureInPicture()
+                } else {
+                    //@ts-ignore
+                    this.player.requestPictureInPicture()
+                }
+            } else if (cmp == 't') {
+                this.$emit('toggle-theater-mode')
+            }
+
+            if (handled) {
+                e.preventDefault()
+            }
+        })
     }
 
     mounted() {
-        this.refreshPlaylist(this.vod, null)
+        if (!!this.overrideUri) {
+            this.videoUri = this.overrideUri
+            this.toggleHasVideo()
+        } else {
+            this.refreshPlaylist(this.vod, null)
+        }
     }
 
     beforeDestroy() {
@@ -276,13 +406,18 @@ export default class VideoPlayer extends Vue {
 
 <style scoped>
 
-#vod-container {
-    width: 100%;
-    height: 100%;
-}
-
 .empty-container {
     height: 500px;
+}
+
+>>>.mdi-fix {
+    font-size: 24px;
+    width: initial;
+}
+
+.video-default-view {
+    transform: scaleY(0.5);
+    transform-origin: center;
 }
 
 </style>

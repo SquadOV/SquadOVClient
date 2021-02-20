@@ -25,6 +25,7 @@
                         :vod="vod"
                         id="task-vod"
                         disable-theater
+                        :current-time.sync="vodTime"
                     >
                     </video-player>
 
@@ -33,6 +34,7 @@
                         :puuid="puuid"
                         :vod.sync="vod"
                         :match="currentMatch"
+                        :timestamp="vodTime"
                     >
                     </tft-vod-picker>
                 </v-row>
@@ -93,6 +95,7 @@ export default class TftMatch extends Vue {
 
     currentMatch: WrappedTftMatch | null = null
     vod: VodAssociation | null = null
+    vodTime: Date | null = null
 
     get participantMap(): Map<string, TftParticipant> {
         let ret = new Map()

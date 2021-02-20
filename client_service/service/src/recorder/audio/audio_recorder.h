@@ -32,6 +32,7 @@ public:
     virtual void startRecording() = 0;
     virtual void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) = 0;
     virtual void stop() = 0;
+    virtual void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) = 0;
 
     virtual bool exists() const = 0;
     virtual const AudioPacketProperties& props() const = 0;

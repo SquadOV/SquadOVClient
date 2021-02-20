@@ -3,6 +3,8 @@
         :value="vod"
         :options="options"
         :match-uuid="taskId"
+        :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-img
@@ -24,6 +26,7 @@ import { Prop } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -42,8 +45,15 @@ export default class AimlabVodPicker extends Vue {
     @Prop({required: true})
     vod!: VodAssociation
 
+    @Prop()
+    timestamp!: Date | undefined | null
+
     get options(): VodAssociation[] {
         return [this.vod]
+    }
+
+    get game(): SquadOvGames {
+        return SquadOvGames.AimLab
     }
 }
 

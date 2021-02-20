@@ -19,7 +19,13 @@ import {
     HearthstoneMatchAccessibleVods,
     WowMatchAccessibleVods,
     LeagueMatchAccessibleVods,
-    TftMatchAccessibleVods
+    TftMatchAccessibleVods,
+    VodMetadata,
+    VodClip,
+    cleanVodClipFromJson,
+    ClipReact,
+    ClipComment,
+    cleanClipCommentFromJson
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -86,6 +92,7 @@ import {
 import { SquadOvGames } from '@client/js/squadov/game'
 import { ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statLibrary'
+import { uploadLocalFileToGcs } from '@client/js/gcs'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -198,18 +205,18 @@ class ApiClient {
        storeSessionCookie(s, userId)
     }
 
-    createWebAxiosConfig() : any {
+    createWebAxiosConfig(useTempIfAvailable: boolean = false) : any {
         let ret : any = {
             baseURL: SQUADOV_API_URL,
         }
 
-        if (!!this._sessionId) {
-            ret.headers = {
-                'x-squadov-session-id': this._sessionId,
-            }
-        } else if (!!this._tempSessionId) {
+        if (!!this._tempSessionId && useTempIfAvailable) {
             ret.headers = {
                 'x-squadov-share-id': this._tempSessionId,
+            }
+        } else if (!!this._sessionId) {
+            ret.headers = {
+                'x-squadov-session-id': this._sessionId,
             }
         }
 
@@ -424,19 +431,19 @@ class ApiClient {
     }
 
     findVodFromMatchUserId(matchUuid : string, userId: number) : Promise<ApiData<VodAssociation>> {
-        return axios.get(`v1/vod/match/${matchUuid}/user/id/${userId}`, this.createWebAxiosConfig()).then((resp : ApiData<VodAssociation>) => {
+        return axios.get(`v1/vod/match/${matchUuid}/user/id/${userId}`, this.createWebAxiosConfig(true)).then((resp : ApiData<VodAssociation>) => {
             cleanVodAssocationData(resp.data)
             return resp
         })
     }
 
     getVodManifest(videoUuid: string) : Promise<ApiData<VodManifest>> {
-        return axios.get(`v1/vod/${videoUuid}`, this.createWebAxiosConfig())
+        return axios.get(`v1/vod/${videoUuid}`, this.createWebAxiosConfig(true))
     }
 
     getVodSegment(url : string) : Promise<ApiData<string>> {
         return axios.get(url, {
-            ...this.createWebAxiosConfig(),
+            ...this.createWebAxiosConfig(true),
         })
     }
 
@@ -458,7 +465,7 @@ class ApiClient {
     }
 
     getAimlabTaskData(uuid : string, userId: number) : Promise<ApiData<AimlabTaskData>> {
-        return axios.get(`v1/aimlab/user/${userId}/match/${uuid}/task`, this.createWebAxiosConfig()).then((resp : ApiData<AimlabTaskData>) => {
+        return axios.get(`v1/aimlab/user/${userId}/match/${uuid}/task`, this.createWebAxiosConfig(true)).then((resp : ApiData<AimlabTaskData>) => {
             cleanAimlabTaskData(resp.data)
             return resp
         })
@@ -486,28 +493,28 @@ class ApiClient {
     }
 
     getValorantMatchDetails(matchUuid : string) : Promise<ApiData<ValorantMatchDetails>> {
-        return axios.get(`v1/valorant/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchDetails>) => {
+        return axios.get(`v1/valorant/match/${matchUuid}`, this.createWebAxiosConfig(true)).then((resp : ApiData<ValorantMatchDetails>) => {
             cleanValorantMatchDetails(resp.data)
             return resp
         })
     }
 
     getValorantMatchPlayerMetadata(matchUuid: string, puuid: string) : Promise<ApiData<ValorantMatchPlayerMatchMetadata>> {
-        return axios.get(`v1/valorant/match/${matchUuid}/metadata/${puuid}`, this.createWebAxiosConfig()).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+        return axios.get(`v1/valorant/match/${matchUuid}/metadata/${puuid}`, this.createWebAxiosConfig(true)).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
             cleanValorantMatchPlayerMatchMetadata(resp.data)
             return resp
         })
     }
 
     getValorantMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<ValorantMatchAccessibleVods>> {
-        return axios.get(`v1/valorant/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+        return axios.get(`v1/valorant/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
     }
 
     getHearthstoneMatchAccessibleVods(matchId: string, userId: number): Promise<ApiData<HearthstoneMatchAccessibleVods>> {
-        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
+        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -559,21 +566,21 @@ class ApiClient {
     }
 
     getHearthstoneDuelRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneDuelRun>> {
-        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneDuelRun>) => {
+        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<HearthstoneDuelRun>) => {
             cleanHearthstoneDuelRunFromJson(resp.data)
             return resp
         })
     }
 
     getHearthstoneArenaRun(collectionUuid: string, userId: number): Promise<ApiData<HearthstoneArenaRun>> {
-        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<HearthstoneArenaRun>) => {
+        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<HearthstoneArenaRun>) => {
             cleanHearthstoneArenaRunFromJson(resp.data)
             return resp
         })
     }
 
     getHearthstoneMatch(matchId: string, userId: number) : Promise<ApiData<HearthstoneMatch>> {
-        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}`, this.createWebAxiosConfig()).then((resp : ApiData<HearthstoneMatch>) => {
+        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}`, this.createWebAxiosConfig(true)).then((resp : ApiData<HearthstoneMatch>) => {
             cleanHearthstoneMatchFromJson(resp.data)
             return resp
         })
@@ -582,7 +589,7 @@ class ApiClient {
     getHearthstoneMatchLogs(matchId: string, userId: number) : Promise<ApiData<HearthstoneMatchLogs>> {
         return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/logs`, {
             responseType: 'arraybuffer',
-            ...this.createWebAxiosConfig()
+            ...this.createWebAxiosConfig(true)
         }).then((resp: ApiData<ArrayBuffer>) => {
             let buf = new Uint8Array(resp.data)
             
@@ -633,17 +640,17 @@ class ApiClient {
     }
 
     getBulkHearthstoneCardMetadata(cards: string[]) : Promise<ApiData<HearthstoneCardMetadata[]>> {
-        return axios.post(`v1/hearthstone/cards`, cards, this.createWebAxiosConfig())
+        return axios.post(`v1/hearthstone/cards`, cards, this.createWebAxiosConfig(true))
     }
 
     getHearthstoneBattlegroundsCardsForTavernLevel(level: number): Promise<ApiData<HearthstoneBattlegroundsCardMetadata[]>> {
-        return axios.get(`v1/hearthstone/cards/battlegrounds/tavern/${level}`, this.createWebAxiosConfig())
+        return axios.get(`v1/hearthstone/cards/battlegrounds/tavern/${level}`, this.createWebAxiosConfig(true))
     }
 
     graphqlRequest(req : string) : Promise<GraphqlApiData<any>> {
         return axios.post('graphql', {
             query: req
-        }, this.createWebAxiosConfig())
+        }, this.createWebAxiosConfig(true))
     }
 
     listRiotValorantAccounts(userId: number): Promise<ApiData<RiotAccountData[]>> {
@@ -672,14 +679,14 @@ class ApiClient {
     }
 
     getTftMatch(matchUuid: string): Promise<ApiData<WrappedTftMatch>> {
-        return axios.get(`v1/tft/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<WrappedTftMatch>) => {
+        return axios.get(`v1/tft/match/${matchUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<WrappedTftMatch>) => {
             cleanWrappedTftMatchFromJson(resp.data)
             return resp
         })
     }
 
     getTftMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<TftMatchAccessibleVods>> {
-        return axios.get(`v1/tft/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<TftMatchAccessibleVods>) => {
+        return axios.get(`v1/tft/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<TftMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -707,14 +714,14 @@ class ApiClient {
     }
 
     getLolMatch(matchUuid: string): Promise<ApiData<FullLolMatch>> {
-        return axios.get(`v1/lol/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<FullLolMatch>) => {
+        return axios.get(`v1/lol/match/${matchUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<FullLolMatch>) => {
             cleanFullLolMatch(resp.data)
             return resp
         })
     }
 
     getLolMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<LeagueMatchAccessibleVods>> {
-        return axios.get(`v1/lol/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
+        return axios.get(`v1/lol/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -739,7 +746,7 @@ class ApiClient {
     }
 
     listWoWCharactersForMatch(matchUuid: string, userId: number): Promise<ApiData<WowCharacter[]>> {
-        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters`, this.createWebAxiosConfig()).then((resp: ApiData<WowCharacter[]>) => {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters`, this.createWebAxiosConfig(true)).then((resp: ApiData<WowCharacter[]>) => {
             resp.data.sort((a: WowCharacter, b: WowCharacter) => {
                 if (a.name < b.name) {
                     return -1
@@ -804,18 +811,18 @@ class ApiClient {
     }
     
     listWoWMatchCharacterAssociations(userId: number, matchUuid: string): Promise<ApiData<WoWCharacterUserAssociation[]>> {
-        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/characters`, this.createWebAxiosConfig())
+        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/characters`, this.createWebAxiosConfig(true))
     }
 
     getWoWMatch(userId: number, matchUuid: string): Promise<ApiData<GenericWowMatchContainer>> {
-        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<GenericWowMatchContainer>) => {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<GenericWowMatchContainer>) => {
             cleanGenericWowMatchContainerFromJson(resp.data)
             return resp
         })
     }
 
     getWoWMatchEvents(userId: number, matchUuid: string): Promise<ApiData<SerializedWowMatchEvents>> {
-        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/events`, this.createWebAxiosConfig()).then((resp: ApiData<SerializedWowMatchEvents>) => {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/events`, this.createWebAxiosConfig(true)).then((resp: ApiData<SerializedWowMatchEvents>) => {
             cleanWowMatchEventsFromJson(resp.data)
             return resp
         })
@@ -823,13 +830,13 @@ class ApiClient {
 
     getWoWMatchStats(userId: number, matchUuid: string, endpoint: string, query: WowStatQueryParam): Promise<ApiData<WowMatchStatContainer>> {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/${endpoint}`, {
-            ...this.createWebAxiosConfig(),
+            ...this.createWebAxiosConfig(true),
             params: query,
         })
     }
 
     getWoWMatchAccessibleVods(userId: number, matchUuid: string): Promise<ApiData<WowMatchAccessibleVods>> {
-        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/vods`, this.createWebAxiosConfig()).then((resp: ApiData<WowMatchAccessibleVods>) => {
+        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<WowMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -897,6 +904,12 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
+    getClipShareUrl(clipUuid: string, fullPath: string): Promise<ApiData<string>> {
+        return axios.post(`v1/clip/${clipUuid}/share`, {
+            fullPath,
+        }, this.createWebAxiosConfig())
+    }
+
     exchangeShareAccessToken(accessTokenId: string): Promise<ApiData<ShareAccessTokenResponse>> {
         return axios.post(`public/share/${accessTokenId}/exchange`, {}, this.createWebAxiosConfig())
     }
@@ -911,6 +924,104 @@ class ApiClient {
 
     deleteVod(vodUuid: string): Promise<ApiData<void>> {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
+    }
+
+    createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {
+        interface ClipResponse {
+            uuid: string
+            uploadPath: string
+        }
+        // First post responds with the clip uuid and upload path.
+        return axios.post(`v1/vod/${parentVodUuid}/clip`, {
+            title,
+            description,
+            game
+        }, this.createWebAxiosConfig()).then(async (resp: ApiData<ClipResponse>) => {
+            // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
+            // doing a resumable upload here but I think the clip should be small enough to just upload it
+            // all in one go.
+            let sessionUri = await uploadLocalFileToGcs(clipPath, resp.data.uploadPath)
+
+            association.videoUuid = resp.data.uuid
+            metadata.videoUuid = resp.data.uuid
+            await this.associateVod(association, metadata, sessionUri)
+            return {
+                data: resp.data.uuid
+            }
+        })
+    }
+
+    associateVod(association: VodAssociation, metadata: VodMetadata, sessionUri: string): Promise<void> {
+        return axios.post(`v1/vod/${association.videoUuid}`, {
+            association,
+            metadata,
+            sessionUri,
+        }, this.createWebAxiosConfig())
+    }
+
+    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number}): Promise<ApiData<HalResponse<VodClip[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get('v1/clip', {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                    matchUuid: params.matchUuid,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<VodClip[]>>) => {
+            resp.data.data.forEach(cleanVodClipFromJson)
+            return resp
+        })
+    }
+
+    getClip(clipUuid: string): Promise<ApiData<VodClip>> {
+        return axios.get(`v1/clip/${clipUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<VodClip>) => {
+            cleanVodClipFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getClipReacts(clipUuid: string): Promise<ApiData<ClipReact[]>> {
+        return axios.get(`v1/clip/${clipUuid}/react`, this.createWebAxiosConfig())
+    }
+
+    reactToClip(clipUuid: string): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}/react`, {}, this.createWebAxiosConfig())
+    }
+
+    removeReactToClip(clipUuid: string): Promise<void> {
+        return axios.delete(`v1/clip/${clipUuid}/react`, this.createWebAxiosConfig())
+    }
+
+    markClipView(clipUuid: string): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}/view`, {}, this.createWebAxiosConfig(true))
+    }
+
+    getClipComments(params : {next : string | null, clipUuid : string , start : number, end : number}): Promise<ApiData<HalResponse<ClipComment[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/clip/${params.clipUuid}/comments`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<ClipComment[]>>) => {
+            resp.data.data.forEach(cleanClipCommentFromJson)
+            return resp
+        })
+    }
+
+    addNewClipComment(clipUuid: string, comment: string): Promise<ApiData<ClipComment>> {
+        return axios.post(`v1/clip/${clipUuid}/comments`, { comment }, this.createWebAxiosConfig()).then((resp: ApiData<ClipComment>) => {
+            cleanClipCommentFromJson(resp.data)
+            return resp
+        })
     }
 }
 

@@ -12,10 +12,10 @@ class FilesystemPiper : public FileOutputPiper {
 public:
     FilesystemPiper(const std::string& destination, PipePtr&& pipe);
     ~FilesystemPiper();
-
+    void flush() override {}
+    
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
-    void flush() override {}
 private:
     std::filesystem::path _outputFile;
     std::ofstream _output;

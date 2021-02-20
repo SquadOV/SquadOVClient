@@ -13,6 +13,7 @@ struct VodAssociation {
     shared::TimePoint startTime;
     shared::TimePoint endTime;
     std::string rawContainerFormat;
+    bool isClip = false;
 
     nlohmann::json toJson() const;
 };

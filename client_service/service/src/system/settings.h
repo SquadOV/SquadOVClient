@@ -8,6 +8,10 @@ namespace service::system {
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
+    std::string outputDevice;
+    double outputVolume;
+    std::string inputDevice;
+    double inputVolume;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

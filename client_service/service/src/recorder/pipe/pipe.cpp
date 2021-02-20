@@ -41,7 +41,7 @@ Pipe::~Pipe() {
 void Pipe::waitForConnect() {
     const auto connected = ConnectNamedPipe(_namedPipe, nullptr);
     if (!connected && GetLastError() != ERROR_PIPE_CONNECTED) {
-        THROW_ERROR("Failed to connect named pipe.");
+        THROW_ERROR("Failed to connect named pipe: " << shared::errors::getWin32ErrorAsString());
     }
 }
 

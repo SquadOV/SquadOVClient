@@ -5,6 +5,7 @@
 
 #include <deque>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <random>
 #include <string>
 #include <thread>
@@ -16,6 +17,16 @@
 #endif
 
 namespace service::recorder::pipe {
+
+struct GCSUploadRequest {
+    std::string task;
+    std::string file;
+    std::string uri;
+
+    static GCSUploadRequest fromJson(const nlohmann::json& json);
+};
+
+std::string uploadToGcs(const GCSUploadRequest& req);
 
 class GCSPacket {
 public:

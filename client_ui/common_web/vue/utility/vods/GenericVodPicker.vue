@@ -25,16 +25,19 @@
 
         <v-tooltip bottom :open-delay="1000">
             <template v-slot:activator="{on, attrs}">
-                <v-progress-circular
-                    indeterminate size="16"
+                <div
                     v-if="!hasFastify"
                     v-on="on"
                     v-bind="attrs"
                 >
-                </v-progress-circular>
+                    <v-progress-circular
+                        indeterminate size="16"
+                    >
+                    </v-progress-circular>
+                </div>
             </template>
 
-            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and some features will be disabled until it is finished processing. Check back soon!
+            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
         </v-tooltip>
 
         <template v-if="!!$store.state.currentUser">
@@ -107,19 +110,19 @@
                         mdi-download
                     </v-icon>
                 </v-btn>
+                
+                <!-- create clip button -->
+                <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
+                    <v-icon>
+                        mdi-content-cut
+                    </v-icon>
+                </v-btn>
             </template>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon>
+            <v-btn color="primary" icon @click="openClipWindowForMatch">
                 <v-icon>
                     mdi-filmstrip-box-multiple
-                </v-icon>
-            </v-btn>
-
-            <!-- create clip button -->
-            <v-btn color="success" icon v-if="hasFastify" @click="openEditingWindow">
-                <v-icon>
-                    mdi-content-cut
                 </v-icon>
             </v-btn>
         </template>
@@ -133,8 +136,11 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
-import { openVodEditingWindow } from '@client/js/vods/editor'
+import { VodEditorContext, openVodEditingWindow } from '@client/js/vods/editor'
 import * as vod from '@client/js/squadov/vod'
+import * as pi from '@client/js/pages'
+import { SquadOvGames } from '@client/js/squadov/game'
+import { openPathInNewWindow } from '@client/js/external'
 
 @Component
 export default class GenericVodPicker extends Vue {
@@ -147,6 +153,12 @@ export default class GenericVodPicker extends Vue {
     @Prop({required: true})
     matchUuid!: string
 
+    @Prop()
+    timestamp!: Date | undefined | null
+
+    @Prop({required: true})
+    game!: SquadOvGames
+
     showHideDeleteConfirm: boolean = false
     loadingDelete: boolean = false
     confirmationText: string = ''
@@ -154,6 +166,23 @@ export default class GenericVodPicker extends Vue {
     manifest: vod.VodManifest | null = null
     track: vod.VodTrack | null = null
     downloadUri: string | null = null
+    context: VodEditorContext | null = null
+
+    @Watch('timestamp')
+    onChangeTimestamp() {
+        if (!this.context || !this.timestamp) {
+            return
+        }
+        this.context.syncTime(this.timestamp)
+    }
+
+    get isClippingEnabled(): boolean {
+///#if DESKTOP
+        return true
+///#else
+        return false
+///#endif
+    }
 
     hideDeleteConfirm() {
         this.showHideDeleteConfirm = false
@@ -231,12 +260,26 @@ export default class GenericVodPicker extends Vue {
         return this.track.segments[0].mimeType !== 'video/mp2t'
     }
 
+    openClipWindowForMatch() {
+        let path = this.$router.resolve({
+            name: pi.ClipLibraryPageId,
+            query: {
+                matchUuid: this.matchUuid
+            }
+        })
+        openPathInNewWindow(path.href)
+    }
+
     openEditingWindow() {
         if (!this.value) {
             return
         }
-        openVodEditingWindow(this.value.videoUuid)
+        this.context = new VodEditorContext(this.value.videoUuid)
+        this.context.startSource(this.value)
+        this.onChangeTimestamp()
+        openVodEditingWindow(this.value.videoUuid, this.game)
     }
+
 
     mounted () {
         this.refreshManifest()

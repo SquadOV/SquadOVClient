@@ -1,0 +1,678 @@
+<template>
+    <div class="d-flex flex-column justify-space-between full-width full-parent-height" v-if="enabled && !!vod">
+        <video-player
+            class="mb-1"
+            id="editor-vod"
+            :vod="vod"
+            :current-time="timestamp"
+            @update:currentTime="updateTimestampFromPlayer"
+            disable-theater
+            fill
+            ref="player"
+            :loop-clip="previewClip"
+            :clip-start="previewClip ? clipStart : undefined"
+            :clip-end="previewClip ? clipEnd : undefined"
+        >
+        </video-player>
+
+        <div class="mb-1 mx-2">
+            <div class="px-2 editor-timeline">
+                <generic-match-timeline
+                    :start="start"
+                    :end="end"
+                    :current="currentTimestamp"
+                    :input-events="events"
+                    :major-tick-every="majorTicksEvery"
+                    :interval-ticks="intervalTicksEvery"
+                    @go-to-timestamp="updateTimestampFromTimeline"
+                    fill
+                >
+                    <template v-slot:tick="{ tick }">
+                        {{ secondsToTimeString(tick) }}
+                    </template>
+                </generic-match-timeline>
+            </div>
+
+            <div class="px-2 editor-timeline mt-1">
+                <generic-match-timeline
+                    :start="start"
+                    :end="end"
+                    :current="currentTimestamp"
+                    :input-events="events"
+                    :major-tick-every="majorTicksEvery"
+                    :interval-ticks="intervalTicksEvery"
+                    :clip-start-handle="clipStart"
+                    @update:clipStartHandle="setClipStart"
+                    :clip-end-handle="clipEnd"
+                    @update:clipEndHandle="setClipEnd"
+                    fill
+                    disable-seeking
+                >
+                    <template v-slot:tick="{ tick }">
+                        {{ secondsToTimeString(tick) }}
+                    </template>
+                </generic-match-timeline>
+            </div>
+        </div>
+
+        <div class="d-flex align-center mb-1 mx-2">
+            <v-checkbox
+                class="mx-1"
+                v-model="syncTimestamp"
+                label="Sync Timestamp"
+                hide-details
+                dense
+            >
+            </v-checkbox>
+
+            <v-checkbox
+                class="mx-1"
+                v-model="enableAudio"
+                label="Enable Audio"
+                hide-details
+                dense
+                v-if="false"
+            >
+            </v-checkbox>
+
+            <v-checkbox
+                class="mx-1"
+                v-model="previewClip"
+                label="Preview Clip"
+                hide-details
+                dense
+            >
+            </v-checkbox>
+
+            <v-text-field
+                class="flex-grow-0"
+                prepend-icon="mdi-timer"
+                :value="currentTimeStr"
+                hide-details
+                dense
+                solo
+                single-line
+                readonly
+            >
+            </v-text-field>
+
+            <v-spacer></v-spacer>
+
+            <v-text-field
+                class="flex-grow-0"
+                label="Start"
+                :value="clipStartStr"
+                @change="changeClipStart"
+                hide-details
+                dense
+                solo
+                single-line
+                :key="`start-${startKey}`"
+            >
+                <template v-slot:append>
+                    <v-btn icon @click="setClipStart(currentTimestamp)" class="import-button">
+                        <v-icon>
+                            mdi-import
+                        </v-icon>
+                    </v-btn>
+                </template>
+            </v-text-field>
+
+            <div class="mx-1">
+                to
+            </div>
+
+            <v-text-field
+                class="flex-grow-0"
+                label="End"
+                :value="clipEndStr"
+                @change="changeClipEnd"
+                hide-details
+                dense
+                solo
+                single-line
+                :key="`end-${endKey}`"
+            >
+                <template v-slot:append>
+                    <v-btn icon @click="setClipEnd(currentTimestamp)" class="import-button">
+                        <v-icon>
+                            mdi-import
+                        </v-icon>
+                    </v-btn>
+                </template>
+            </v-text-field>
+        </div>
+
+        <div class="mb-1 mx-2">
+            <v-btn
+                color="success"
+                block
+                @click="doClip"
+                :disabled="clipDuration == 0"
+            >
+                Clip it!
+            </v-btn>
+        </div>
+
+        <v-dialog
+            :value="showHideClipDialog"
+            persistent
+            max-width="60%"
+        >
+            <v-card :key="clipKey">
+                <v-card-title>
+                    Your New Clip
+                </v-card-title>
+                <v-divider></v-divider>
+            
+                <div id="clip-progress-div" class="d-flex flex-column justify-center align-center" :style="progressStyle">
+                    <div class="text-h6 font-weight-bold mb-2">
+                        Clipping in progress! One moment please...
+                    </div>
+                    <v-progress-circular indeterminate size="64"></v-progress-circular>
+                </div>
+
+                <template v-if="!clipInProgress">
+                    <div class="ma-2">
+                        <video-player
+                            v-if="!!localClipPath"
+                            id="editor-clip-preview"
+                            :vod="undefined"
+                            fill
+                            loop-clip
+                            :override-uri="localClipPath"
+                        >
+                        </video-player>
+
+                        <template v-if="!!clipUuid">
+                            <v-text-field
+                                class="mt-2"
+                                :value="clipShareUrl"
+                                :loading="!clipShareUrl"
+                                :success-messages="shareMessages"
+                                single-line
+                                outlined
+                                dense
+                                readonly
+                                ref="urlInput"
+                            >
+                                <template v-slot:append-outer>
+                                    <v-btn
+                                        icon
+                                        color="success"
+                                        @click="doCopy"
+                                        :disabled="!clipShareUrl"
+                                    >
+                                        <v-icon>
+                                            mdi-content-copy
+                                        </v-icon>
+                                    </v-btn>
+                                </template>
+                            </v-text-field>
+                        </template>
+
+                        <v-form v-model="formValid">
+                            <v-text-field
+                                v-model="clipTitle"
+                                label="Title"
+                                filled
+                                :rules="titleRules"
+                                :readonly="!!clipUuid"
+                            >
+                            </v-text-field>
+
+                            <v-textarea
+                                filled
+                                label="Description"
+                                v-model="clipDescription"
+                                hide-details
+                                :readonly="!!clipUuid"
+                            >
+                            </v-textarea>
+                        </v-form>
+                    </div>
+
+                    <v-card-actions v-if="!clipUuid">
+                        <v-btn
+                            color="error"
+                            @click="cancelClip"
+                        >
+                            Cancel
+                        </v-btn>
+
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            color="success"
+                            :disabled="!formValid"
+                            :loading="saveInProgress"
+                            @click="saveClip"
+                        >
+                            Save
+                        </v-btn>
+                    </v-card-actions>
+
+                    <v-card-actions v-else>
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            color="success"
+                            @click="cancelClip"
+                        >
+                            Finish
+                        </v-btn>
+                    </v-card-actions>
+                </template>
+            </v-card>
+        </v-dialog>
+
+        <v-snackbar
+            v-model="clipError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to create the clip. Please try again (and submit a bug report!).
+        </v-snackbar>
+
+        <v-snackbar
+            v-model="shareError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to generate a URL for sharing the clip.
+        </v-snackbar>
+    </div>
+</template>
+
+<script lang="ts">
+
+import Vue from 'vue'
+import Component from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
+import { VodEditorContext, requestVodClip } from '@client/js/vods/editor'
+import { VodAssociation, VodMetadata } from '@client/js/squadov/vod'
+import { GenericEvent} from '@client/js/event'
+import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
+
+import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
+import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
+
+///#if DESKTOP
+import fs from 'fs'
+///#endif
+import { apiClient, ApiData } from '@client/js/api'
+import { SquadOvGames } from '@client/js/squadov/game'
+import * as pi from '@client/js/pages'
+
+const MAX_CLIP_LENGTH_SECONDS = 45
+
+@Component({
+    components: {
+        VideoPlayer,
+        GenericMatchTimeline
+    }
+})
+export default class VodEditor extends Vue {
+    secondsToTimeString = secondsToTimeString
+
+    @Prop({required: true})
+    videoUuid!: string
+
+    @Prop({type: Number, required: true})
+    game!: SquadOvGames
+
+    context: VodEditorContext | undefined = undefined
+    vod: VodAssociation | null = null
+
+    currentTimestamp: number = 0
+    clipStart: number = 0
+    clipEnd: number = 0
+
+    syncTimestamp: boolean = true
+    enableAudio: boolean = true
+    previewClip: boolean = false
+    initialSync: boolean = false
+
+    startKey: number = 0
+    endKey: number = 0
+
+    clipInProgress: boolean = false
+    showHideClipDialog: boolean = false
+    clipError: boolean = false
+    localClipPath: string | null = null
+    metadata: VodMetadata | null = null
+
+    clipKey: number = 0
+
+    formValid: boolean = false
+    clipTitle: string = ''
+    clipDescription: string = ''
+    saveInProgress: boolean = false
+
+    clipUuid: string | null = null
+    clipShareUrl: string | null = null
+    shareMessages: string[] = []
+    shareError: boolean = false
+
+    $refs!: {
+        player: VideoPlayer
+        urlInput: any
+    }
+
+    get videoDurationSeconds(): number {
+        return this.end - this.start
+    }
+
+    get majorTicksEvery(): number {
+        let ticks = this.videoDurationSeconds / 30.0
+        return Math.round(ticks)
+    }
+
+    get intervalTicksEvery(): number {
+        return Math.round(this.majorTicksEvery / 10.0)
+    }
+
+    doCopy() {
+        let inputEle = this.$refs.urlInput.$el.querySelector('input')
+        inputEle.select()
+        document.execCommand('copy')
+        this.shareMessages = ['Copied URL to clipboard!']
+        setTimeout(() => {
+            this.shareMessages = []
+        }, 5000)
+    }
+
+    enabled(): boolean {
+///#if DESKTOP
+        return true
+///#else
+        return false
+///#endif
+    }
+
+    get progressStyle(): any {
+        if (!!this.clipInProgress) {
+            return {}
+        } else {
+            return {
+                'display': 'none !important'
+            }
+        }
+    }
+
+    get titleRules() : any[] {
+        return [
+            (value : any) => (!!value && value.length > 0) || 'Required.',
+        ]
+    }
+
+    updateTimestampFromTimeline(t: number) {
+        if (!this.vod) {
+            return
+        }
+
+        let dt = new Date(this.vod.startTime.getTime() + t * 1000.0)
+        this.updateTimestampFromContext(dt, true)
+    }
+
+    updateTimestampFromPlayer(dt: Date) {
+        if (!this.vod) {
+            return
+        }
+
+        this.currentTimestamp = (dt.getTime() - this.vod.startTime.getTime()) / 1000.0
+    }
+
+    updateTimestampFromContext(dt: Date, force: boolean = false) {
+        if (this.initialSync && (!this.syncTimestamp && !force)) {
+            return
+        }
+
+        this.updateTimestampFromPlayer(dt)
+
+        if (!this.initialSync) {
+            this.setClipStart(this.currentTimestamp)
+            this.setClipEnd(this.currentTimestamp + MAX_CLIP_LENGTH_SECONDS)
+            this.$refs.player.setPinned(dt)
+            this.initialSync = true
+        }
+
+        if (!!this.vod) {
+            this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime())
+        }
+    }
+
+    get timestamp(): Date {
+        if (!this.vod) {
+            return new Date()
+        }
+        return new Date(this.vod.startTime.getTime() + this.currentTimestamp * 1000.0)
+    }
+
+    resetClip() {
+        this.clipStart = 0
+        this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_SECONDS, this.end)
+    }
+
+    @Watch('videoUuid')
+    refreshContext() {
+        if (!this.enabled) {
+            return
+        }
+        this.context = new VodEditorContext(this.videoUuid)
+        this.context.addTimeSyncListener((e: Date) => {
+            this.updateTimestampFromContext(e)
+        })
+        this.context.requestVodAssociation().then((v: VodAssociation) => {
+            this.vod = v
+            this.resetClip()
+            this.context!.requestTimeSync()
+        }).catch((err: any) => {
+            console.log('Failed to request VOD association: ', err)
+        })
+    }
+    
+    mounted() {
+        this.refreshContext()
+    }
+
+    beforeDestroy() {
+        if (!!this.context) {
+            this.context.close()
+        }
+        this.context = undefined
+        this.cancelClip()
+    }
+
+    get start(): number {
+        return 0
+    }
+
+    get end(): number {
+        if (!this.vod) {
+            return 0
+        }
+        return (this.vod.endTime.getTime() - this.vod.startTime.getTime()) / 1000.0
+    }
+
+    get events(): GenericEvent[] {
+        return []
+    }
+
+    get currentTimeStr(): string {
+        return secondsToTimeString(this.currentTimestamp)
+    }
+
+    get clipStartStr(): string {
+        return secondsToTimeString(this.clipStart)
+    }
+
+    get clipDuration(): number {
+        return this.clipEnd - this.clipStart
+    }
+    
+    changeClipStart(s: string) {
+        this.setClipStart(timeStringToSeconds(s))
+    }
+
+    setClipStart(s: number) {
+        let oldDuration = this.clipDuration
+        this.clipStart = Math.min(Math.max(s, this.start), this.end)
+        if (this.clipDuration < 0) {
+            this.clipEnd = Math.min(this.clipStart + oldDuration, this.end)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
+            this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_SECONDS, this.end)
+        }
+        this.startKey += 1
+    }
+
+    get clipEndStr(): string {
+        return secondsToTimeString(this.clipEnd)
+    }
+
+    changeClipEnd(s: string) {
+        this.setClipEnd(timeStringToSeconds(s))
+    }
+
+    setClipEnd(s: number) {
+        let oldDuration = this.clipDuration
+        this.clipEnd = Math.min(Math.max(s, this.start), this.end)
+        if (this.clipDuration < 0) {
+            this.clipStart = Math.max(this.clipEnd - oldDuration, this.start)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
+            this.clipStart = Math.max(this.clipEnd - MAX_CLIP_LENGTH_SECONDS, this.start)
+        }
+        this.endKey += 1
+    }
+
+    cancelClip() {
+        this.showHideClipDialog = false
+        this.clipInProgress = false
+
+///#if DESKTOP
+        if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
+            fs.unlinkSync(this.localClipPath)
+        }
+///#endif
+
+        this.clipTitle = ''
+        this.clipDescription = ''
+        this.localClipPath = null
+        this.metadata = null
+        this.clipUuid = null
+        this.clipShareUrl = null
+    }
+
+    saveClip() {
+        if (!this.localClipPath || !this.metadata || !this.vod) {
+            return
+        }
+
+        this.saveInProgress = true
+        apiClient.createClip(this.videoUuid, this.localClipPath, {
+            matchUuid: this.vod.matchUuid,
+            userUuid: this.$store.state.currentUser.uuid,
+            videoUuid: '',
+            startTime: new Date(this.vod.startTime.getTime() + this.clipStart * 1000.0),
+            endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
+            rawContainerFormat: 'mp4',
+            isClip: true,
+        }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
+            this.clipUuid = resp.data
+        }).catch((err: any) => {
+            this.clipError = true
+            console.log('Failed to create clip: ', err)
+        }).finally(() => {
+            this.saveInProgress = false
+        })
+    }
+
+    get clipPathTo(): any {
+        return {
+            name: pi.ClipPageId,
+            params: {
+                clipUuid: this.clipUuid
+            }
+        }
+    }
+
+    @Watch('clipUuid')
+    refreshClipShareUrl() {
+        this.clipShareUrl = null
+        if (!this.clipUuid) {
+            return
+        }
+
+        apiClient.getClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<string>) => {
+            this.clipShareUrl = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get share URL for clip: ', err)
+            this.shareError = true
+        })
+    }
+
+    doClip() {
+        if (this.clipInProgress) {
+            return
+        }
+
+        let videoUri = this.$refs.player.videoUri
+        if (!videoUri) {
+            return
+        }
+
+        this.clipInProgress = true
+        this.showHideClipDialog = true
+
+        // Add a second to the end of the video to ensure that we capture that last second completely.
+        requestVodClip(videoUri, this.clipStart, this.clipEnd + 1).then((resp: {
+            path: string,
+            metadata: VodMetadata,
+        }) => {
+            let normalPath = resp.path.replace(/\\/g, '/')
+            this.clipInProgress = false
+            this.clipKey += 1
+            this.localClipPath = `file:///${normalPath}`
+            this.metadata = resp.metadata
+        }).catch((err: any) => {
+            console.log('Failed to clip: ', err)
+            this.clipError = true
+            this.showHideClipDialog = false
+            this.clipInProgress = false
+        })
+    }
+}
+
+</script>
+
+<style scoped>
+
+#editor-vod {
+    height: 75vh;
+    max-height: 75vh;
+}
+
+.editor-timeline {
+    height: 5vh;
+    max-height: 5vh;
+}
+
+#clip-progress-div {
+    height: 500px;
+}
+
+#editor-clip-preview {
+    width: 100%;
+    height: 400px;
+}
+
+>>>.v-input--selection-controls {
+    margin-top: 0px !important;
+    padding-top: 0px !important;
+}
+
+.import-button {
+    transform: rotateZ(90deg);
+}
+
+</style>

@@ -35,7 +35,7 @@ public:
         assert((end - start) == (props().numSamples * props().numChannels));
         size_t bi = 0;
         for (size_t i = start; i < end; ++i) {
-            _buffer[bi++] = view.buffer()[i];
+            _buffer[bi++] = view.buffer()[i] * static_cast<T>(view.volume());
         }
     }
 

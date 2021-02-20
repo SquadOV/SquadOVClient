@@ -1,1 +1,15 @@
 * text eol=lf
+
+*.exe binary
+*.lib binary
+*.dll binary
+*.o binary
+*.obj binary
+
+*.png binary
+*.ico binary
+*.mp4 binary
+*.webm binary
+*.jpg binary
+*.264 binary
+*.pdb binary

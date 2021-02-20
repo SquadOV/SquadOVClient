@@ -2,6 +2,20 @@
     <v-app-bar
         dense
     >
+        <template v-if="useIntegratedAppNav">
+            <v-btn small icon @click="navBack">
+                <v-icon>
+                    mdi-chevron-left
+                </v-icon>
+            </v-btn>
+
+            <v-btn small icon @click="navForward">
+                <v-icon>
+                    mdi-chevron-right
+                </v-icon>
+            </v-btn>
+        </template>
+
         <v-toolbar-title class="mr-4">
             <router-link :to="homeTo">
                 SquadOV 
@@ -74,6 +88,10 @@
                                 Squads
                             </v-badge>
                         </v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item :to="settingsTo" v-if="settingsEnabled">
+                        <v-list-item-title>Settings</v-list-item-title>
                     </v-list-item>
 
                     <v-list-item @click="logout">
@@ -226,6 +244,17 @@ export default class AppNav extends Vue {
                     },
                 ]
             },
+            {
+                name: 'Library',
+                children: [
+                    {
+                        name: 'Clips',
+                        to: {
+                            name: pi.ClipLibraryPageId,
+                        },
+                    },
+                ]
+            }
         ]
     }
 
@@ -259,6 +288,20 @@ export default class AppNav extends Vue {
                 userId: this.$store.state.currentUser!.id
             }
         }
+    }
+
+    get settingsTo(): any {
+        return {
+            name: pi.SettingsPageId,
+        }
+    }
+
+    get settingsEnabled(): boolean {
+/// #if DESKTOP
+        return true
+/// #else  
+        return false
+/// #endif
     }
 
     logout() {
@@ -298,6 +341,22 @@ export default class AppNav extends Vue {
 
     mounted() {
         this.refreshNotifications()
+    }
+
+    get useIntegratedAppNav(): boolean {
+/// #if DESKTOP
+        return true
+/// #else
+        return false
+/// #endif
+    }
+
+    navBack() {
+        this.$router.back()
+    }
+
+    navForward() {
+        this.$router.forward()
     }
 }
 

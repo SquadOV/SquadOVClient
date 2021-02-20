@@ -40,6 +40,10 @@ ZeroMQServerClient::ZeroMQServerClient() {
 
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_SESSION_ID_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_CHANGE_PAUSE_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_VOD_CLIP_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 

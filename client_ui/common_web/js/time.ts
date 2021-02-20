@@ -24,6 +24,21 @@ export function secondsToTimeString(totalSeconds : number) : string {
     }
 }
 
+export function timeStringToSeconds(ts: string): number {
+    let components = ts.split(':')
+    if (components.length == 1) {
+        // Just seconds
+        return parseInt(ts)
+    } else {
+        let totalSeconds: number = 0
+        for (let i = components.length - 1; i >= 0; --i) {
+            let num = parseInt(components[i])
+            totalSeconds += num * Math.pow(60, components.length - 1 - i)
+        }
+        return totalSeconds
+    }
+}
+
 export function millisecondsToTimeString(totalMs : number) : string {
     totalMs = Math.floor(totalMs)
     let ms = totalMs % 1000

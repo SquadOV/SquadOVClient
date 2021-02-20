@@ -37,6 +37,11 @@ std::filesystem::path getSquadOvRecordFolder() {
     return appData / std::filesystem::path("Record");
 }
 
+std::filesystem::path getSquadOvClipFolder() {
+    const auto appData = getSquadOvUserFolder();
+    return appData / std::filesystem::path("Clips");
+}
+
 std::filesystem::path getSquadOvLogFolder() {
     const auto appData = getSquadOvFolder();
     return appData / std::filesystem::path("Logs");

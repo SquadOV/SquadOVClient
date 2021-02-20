@@ -13,14 +13,12 @@ SET(SRCS
     src/recorder/game_recorder.cpp
     src/recorder/video/win32_gdi_recorder.cpp
     src/recorder/video/dxgi_desktop_recorder.cpp
-<<<<<<< HEAD
-=======
     src/recorder/video/windows_graphics_capture.cpp
->>>>>>> release
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
+    src/recorder/audio/device.cpp
     src/recorder/pipe/pipe.cpp
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
@@ -30,6 +28,7 @@ SET(SRCS
     src/system/state.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
+    src/vod/vod_clipper.cpp
 )
 
 SET(HEADERS
@@ -48,10 +47,7 @@ SET(HEADERS
     src/recorder/video/video_recorder.h
     src/recorder/video/win32_gdi_recorder.h
     src/recorder/video/dxgi_desktop_recorder.h
-<<<<<<< HEAD
-=======
     src/recorder/video/windows_graphics_capture.h
->>>>>>> release
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
@@ -61,6 +57,7 @@ SET(HEADERS
     src/recorder/audio/audio_packet_properties.h
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
+    src/recorder/audio/device.h
     src/recorder/pipe/pipe.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
@@ -70,6 +67,7 @@ SET(HEADERS
     src/system/state.h
     src/zeromq/zeromq.h
     src/local/local_data.h
+    src/vod/vod_clipper.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
@@ -118,9 +116,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     )
 
     if(WIN32)
-        set_property(TARGET ${EXE_NAME} PROPERTY
-            VS_PACKAGE_REFERENCES "Microsoft.Windows.CppWinRT_2.0.210211.2"
-        )
+        add_dependencies(${EXE_NAME} libwgc)
 
         file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
         add_custom_command(
@@ -138,6 +134,32 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     endif()
 
 ENDMACRO()
+
+if(WIN32)
+    add_library(
+        libwgc SHARED
+        libwgc/wgc.h
+        libwgc/wgc.cpp
+        src/recorder/image/image.cpp
+        src/recorder/image/image.h
+    )
+
+    target_include_directories(libwgc
+        PUBLIC
+        ${CMAKE_SOURCE_DIR}/client_service/service
+        ${CMAKE_SOURCE_DIR}/client_service/service/src
+        ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/deps/date/include
+        ${CMAKE_SOURCE_DIR}/deps/json/single_include
+        ${CMAKE_SOURCE_DIR}/deps/libpng
+    )
+
+    target_link_libraries(libwgc
+        squadov_shared
+        date-tz
+        png
+    )
+endif()
 
 CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp" "src/squadov_client_service.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.manifest")

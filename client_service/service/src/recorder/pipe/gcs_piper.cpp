@@ -5,8 +5,9 @@
 
 #include <algorithm>
 #include <boost/algorithm/string.hpp>
+#include <filesystem>
 #include <sstream>
-
+namespace fs = std::filesystem;
 namespace service::recorder::pipe {
 
 constexpr size_t GCS_BUFFER_SIZE_BYTES = 8 * 1024 * 1024;
@@ -15,6 +16,33 @@ constexpr int GCS_MAX_RETRIES = 10;
 constexpr int GCS_MAX_BACKOFF_TIME_MS = 32000;
 
 #define LOG_TIME 0
+
+GCSUploadRequest GCSUploadRequest::fromJson(const nlohmann::json& json) {
+    GCSUploadRequest ret;
+    ret.file = json["file"].get<std::string>();
+    ret.task = json["task"].get<std::string>();
+    ret.uri = json["uri"].get<std::string>();
+    return ret;
+}
+
+std::string uploadToGcs(const GCSUploadRequest& req) {
+    // It's a bit of a roundabout way to do it but create a local system pipe to write the file data to
+    // and then just wait for the pipe to finish.
+    auto pipe = std::make_unique<Pipe>(req.task);
+    const auto pipePath = pipe->filePath();
+    std::string inputFname = req.file;
+    
+    const std::string filePrefix = "file:///";
+    const auto it = inputFname.find(filePrefix);
+    if (it != std::string::npos) {
+        inputFname.replace(it, it + filePrefix.size(), "");
+    }
+
+    GCSPiper output(req.uri, std::move(pipe));
+    output.appendFromFile(fs::path(inputFname));
+    output.sendNullBuffer();
+    return output.sessionId();
+}
 
 GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
     FileOutputPiper(std::move(pipe)),

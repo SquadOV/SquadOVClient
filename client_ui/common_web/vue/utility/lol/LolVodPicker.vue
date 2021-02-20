@@ -4,6 +4,8 @@
         @input="selectVod"
         :options="orderedVods"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod, selected}">
             <lol-participant-display
@@ -38,6 +40,7 @@ import { WrappedLolParticipant } from '@client/js/lol/participant'
 import { getActiveUserId } from '@client/js/app'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -58,7 +61,14 @@ export default class LolVodPicker extends Vue {
     @Prop({required: true})
     vod!: VodAssociation | null
 
+    @Prop()
+    timestamp!: Date | undefined | null
+
     availableVods: LeagueMatchAccessibleVods | null = null
+
+    get game(): SquadOvGames {
+        return SquadOvGames.LeagueOfLegends
+    }
 
     get numPovs(): number {
         if (!this.availableVods) {

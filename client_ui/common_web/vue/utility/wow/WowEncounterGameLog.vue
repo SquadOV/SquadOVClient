@@ -34,7 +34,7 @@ import { WowEncounter } from '@client/js/wow/matches'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
-const maxTasksPerRequest : number = 20
+const maxTasksPerRequest : number = 10
 
 @Component({
     components: {
