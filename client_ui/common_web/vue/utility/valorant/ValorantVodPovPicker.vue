@@ -4,6 +4,8 @@
         @input="selectVod"
         :options="orderedVods"
         :match-uuid="matchUuid"
+        :timestamp="timestamp"
+        :game="game"
     >
         <template v-slot:vod="{ivod, selected}">
             <valorant-agent-icon
@@ -31,6 +33,7 @@ import { getActiveUserId } from '@client/js/app'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -58,7 +61,14 @@ export default class ValorantVodPovPicker extends Vue {
     @Prop({required: true})
     match!: ValorantMatchDetailsWrapper | null
 
+    @Prop()
+    timestamp!: Date | undefined | null
+
     availableVods: ValorantMatchAccessibleVods | null = null
+
+    get game(): SquadOvGames {
+        return SquadOvGames.Valorant
+    }
 
     agentForPlayer(uuid: string) : string {
         if (!this.match || !this.availableVods) {

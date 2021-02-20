@@ -74,7 +74,7 @@
             :timeout="5000"
             color="error"
         >
-            Oops! Something went wrong when generating the look, try again later!
+            Oops! Something went wrong when generating the link, try again later!
         </v-snackbar>
     </div>
 </template>

@@ -2,15 +2,22 @@
 import fs from 'fs'
 import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
+import { ipcRenderer } from 'electron'
 /// #endif
 
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
+    outputDevice: string
+    outputVolume: number
+    inputDevice: string
+    inputVolume: number
 }
 
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
+    minimizeToTray: boolean
+    runOnStartup: boolean
 }
 
 function getSettingsFname() : string {
@@ -21,11 +28,29 @@ function getSettingsFname() : string {
 /// #endif
 }
 
-export function saveLocalSettings(s: SquadOvLocalSettings) {
+let inProgress: boolean = false
+let saveTimer: number | undefined = undefined
+export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false) {
 /// #if DESKTOP
-    fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
-        encoding: 'utf-8',
-    })
+    if (inProgress) {
+        return
+    }
+
+    if (saveTimer !== undefined) {
+        window.clearTimeout(saveTimer)
+    }
+
+    saveTimer = window.setTimeout(() => {
+        inProgress = true
+        fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
+            encoding: 'utf-8',
+        })
+    
+        ipcRenderer.invoke('reload-app-settings').finally(() => {
+            inProgress = false
+        })
+        saveTimer = undefined
+    }, immediate ? 500 : 0)
 /// #endif
 }
 
@@ -40,29 +65,49 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         case BaselineLevel.Low:
             record = {
                 resY: 720,
-                fps: 30
+                fps: 30,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
         case BaselineLevel.Medium:
             record = {
                 resY: 720,
-                fps: 60
+                fps: 60,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
         case BaselineLevel.High:
             record = {
                 resY: 1080,
-                fps: 60
+                fps: 60,
+                outputDevice: 'Default Device',
+                outputVolume: 1.0,
+                inputDevice: 'Default Device',
+                inputVolume: 1.0,
             }
     }
 
     return {
-        record
+        record,
+        minimizeToTray: true,
+        runOnStartup: true
     }
 /// #else
     return {
         record: {
             resY: 1080,
             fps: 60,
-        }
+            outputDevice: 'Default Device',
+            outputVolume: 1.0,
+            inputDevice: 'Default Device',
+            inputVolume: 1.0,
+        },
+        minimizeToTray: true,
+        runOnStartup: true
     }
 /// #endif
 }
@@ -72,11 +117,38 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     const settingsFname = getSettingsFname()
     console.log('Loading local settings...', settingsFname)
     if (!fs.existsSync(settingsFname)) {
-        saveLocalSettings(await generateDefaultSettings())
+        saveLocalSettings(await generateDefaultSettings(), true)
     }
 
     let data = fs.readFileSync(settingsFname , 'utf8')
-    return JSON.parse(data)
+    let parsedData = JSON.parse(data)
+
+    if (!parsedData.record.outputDevice) {
+        parsedData.record.outputDevice = 'Default Device'
+    }
+
+    if (parsedData.record.outputVolume === undefined) {
+        parsedData.record.outputVolume = 1.0
+    }
+
+    if (!parsedData.record.inputDevice) {
+        parsedData.record.inputDevice = 'Default Device'
+    }
+
+    if (parsedData.record.inputVolume === undefined) {
+        parsedData.record.inputVolume = 1.0
+    }
+
+    if (parsedData.minimizeToTray === undefined) {
+        parsedData.minimizeToTray = true
+    }
+
+    if (parsedData.runOnStartup === undefined) {
+        parsedData.runOnStartup = true
+    }
+
+    saveLocalSettings(parsedData, true)
+    return parsedData
 /// #else
     return await generateDefaultSettings()
 /// #endif

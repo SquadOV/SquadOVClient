@@ -10,10 +10,7 @@
 #include "api/squadov_api.h"
 #include "recorder/video/dxgi_desktop_recorder.h"
 #include "recorder/video/win32_gdi_recorder.h"
-<<<<<<< HEAD
-=======
 #include "recorder/video/windows_graphics_capture.h"
->>>>>>> release
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "system/win32/hwnd_utils.h"
@@ -70,20 +67,6 @@ GameRecorder::~GameRecorder() {
     }
 }
 
-<<<<<<< HEAD
-void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info) {
-    LOG_INFO("Attempting to create video recorder: " << std::endl
-        << "\tResolution: " << info.width << "x" << info.height << std::endl
-        << "\tInit: " << info.init << std::endl
-        << "\tWindowed: " << info.isWindowed << std::endl);
-
-#ifdef _WIN32
-    if (video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
-        return;
-    }
-
-    if (video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
-=======
 void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
@@ -101,7 +84,6 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
     }
 
     if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
->>>>>>> release
         return;
     }
 #endif
@@ -279,10 +261,9 @@ void GameRecorder::loadCachedInfo() {
             if (!IsIconic(wnd)) {
                 HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
                 RECT windowRes;
-
-                // Using GetWindowRect here instead of GetClientRect just in case the border makes it full screen so in that case we can just
-                // use a full-screen recorder instead? IDK. I was seeing cases where the height was 1 pixel off which is...bizarre.
-                GetWindowRect(wnd, &windowRes);
+                if (!GetClientRect(wnd, &windowRes)) {
+                    LOG_ERROR("Failed to get client rect: " << shared::errors::getWin32ErrorAsString() << std::endl);
+                }
 
                 ret.width = windowRes.right - windowRes.left;
                 ret.height = windowRes.bottom - windowRes.top;
@@ -353,12 +334,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
     _vrecorder->startRecording(_cachedRecordingSettings->fps);
 
-    _aoutRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Output));
+    _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
+    _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume);
     if (_aoutRecorder->exists()) {
         _aoutRecorder->startRecording();
     }
 
-    _ainRecorder.reset(new audio::PortaudioAudioRecorder(audio::EAudioDeviceDirection::Input));
+    _ainRecorder.reset(new audio::PortaudioAudioRecorder());
+    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->inputVolume);
     if (_ainRecorder->exists()) {
         _ainRecorder->startRecording();
     }
@@ -492,8 +475,14 @@ void GameRecorder::stop() {
     }
     _currentId.reset(nullptr);
     if (_outputPiper) {
-        _outputPiper->wait();
-        _outputPiper.reset(nullptr);
+        // Move the output piper to a new thread to wait for it to finish
+        // so we don't get bottlenecked by any user's poor internet speeds.
+        std::thread uploadThread([this](){
+            pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
+            _outputPiper.reset(nullptr);
+            outputPiper->wait();
+        });
+        uploadThread.detach();
     }
     system::getGlobalState()->markGameRecording(_game, false);
 }

@@ -50,7 +50,7 @@ void Image::saveToFile(const std::filesystem::path& path) const {
         _buffer.get(),
         0,
         NULL)) {
-        THROW_ERROR("Failed to write PNG image to file.");
+        throw std::runtime_error("Failed to write PNG image to file.");
     }
 }
 

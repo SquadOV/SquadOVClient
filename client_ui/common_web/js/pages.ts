@@ -39,3 +39,8 @@ export const WaitForVerifyPageId = 'verify'
 export const RsoOauthPageId = 'rso'
 export const InviteResponsePageId = 'inviteResponse'
 export const ShareRedirectPageId = 'share'
+export const VideoEditorPageId = 'videoEdit'
+export const SettingsPageId = 'settings'
+
+export const ClipLibraryPageId = 'clipLibrary'
+export const ClipPageId = 'clip'

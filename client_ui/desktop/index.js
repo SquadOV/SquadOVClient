@@ -20,13 +20,22 @@ let editorWin
 let tray
 let isQuitting = false
 
-if (app.isPackaged) {
-    app.setLoginItemSettings({
-        openAtLogin: true,
-        args: [
-            '--hidden'
-        ]
-    })
+let appSettings = null
+function loadAppSettings() {
+    const fname = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'settings.json')
+    if (fs.existsSync(fname)) {
+        const data = fs.readFileSync(fname)
+        appSettings = JSON.parse(data)
+    }
+
+    if (app.isPackaged) {
+        app.setLoginItemSettings({
+            openAtLogin: appSettings.runOnStartup === true,
+            args: [
+                '--hidden'
+            ]
+        })
+    }
 }
 
 const singleLock = app.requestSingleInstanceLock()
@@ -53,8 +62,12 @@ function start() {
 
     win.on('close', (e) => {
         if (!isQuitting) {
-            e.preventDefault()
-            win.hide()
+            if (!!appSettings.minimizeToTray) {
+                e.preventDefault()
+                win.hide()
+            } else {
+                quit()
+            }
         }
     })
 
@@ -210,11 +223,21 @@ ipcMain.on('request-restart', () => {
     restart()
 })
 
-ipcMain.handle('open-vod-editor', (event, videoUuid) => {
+ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => {
+    let retPath = await zeromqServer.performVodClip(task, source, start, end)
+    return retPath
+})
+
+ipcMain.handle('request-gcs-upload', async (event, {task, file, uri}) => {
+    let retSession = await zeromqServer.performClipUpload(task, file, uri)
+    return retSession
+})
+
+ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
-            width: 1280,
-            height: 720,
+            width: 1600,
+            height: 900,
             webPreferences: {
                 nodeIntegration: true,
                 webSecurity: app.isPackaged,
@@ -233,8 +256,44 @@ ipcMain.handle('open-vod-editor', (event, videoUuid) => {
         })
     }
 
-    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}`)
+    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}`)
     editorWin.show()
+})
+
+ipcMain.on('open-path-window', (event, path) => {
+    let pathWin = new BrowserWindow({
+        width: 1600,
+        height: 900,
+        webPreferences: {
+            nodeIntegration: true,
+            webSecurity: app.isPackaged,
+        },
+        icon: iconPath
+    })
+    if (!app.isPackaged) {
+        pathWin.webContents.toggleDevTools()
+    }
+
+    pathWin.setMenu(null)
+    pathWin.setMenuBarVisibility(false)
+    pathWin.loadURL(`file://${__dirname}/index.html${path}`)
+    pathWin.show()
+})
+
+async function requestOutputDevices() {
+    await zeromqServer.requestAudioOutputOptions()
+}
+
+async function requestInputDevices() {
+    await zeromqServer.requestAudioInputOptions()
+}
+
+ipcMain.on('request-output-devices', async () => {
+    await requestOutputDevices()
+})
+
+ipcMain.on('request-input-devices', async () => {
+    await requestInputDevices()
 })
 
 zeromqServer.on('change-running-games', (games) => {
@@ -243,6 +302,14 @@ zeromqServer.on('change-running-games', (games) => {
 
 zeromqServer.on('change-recording-games', (games) => {
     win.webContents.send('change-recording-games', JSON.parse(games))
+})
+
+zeromqServer.on('respond-output-devices', (r) => {
+    win.webContents.send('respond-output-devices', JSON.parse(r))
+})
+
+zeromqServer.on('respond-input-devices', (r) => {
+    win.webContents.send('respond-input-devices', JSON.parse(r))
 })
 
 totalCloseCount = 0
@@ -381,9 +448,7 @@ function startSessionHeartbeat(onBeat) {
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
 
-        request.on('error', (err) => {
-            log.log('Error in Sesssion Heartbeat: ', err)
-
+        let retrySessionHeartbeat = () => {
             let timeoutMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 15000)
             // We want to retry a few times up until the session is expired
             // to try and get a new session just in case the user's internet
@@ -410,12 +475,19 @@ function startSessionHeartbeat(onBeat) {
                 startSessionHeartbeat(onBeat)
             }, timeoutMs)
             sessionRetryCount += 1
+        }
+
+        request.on('error', (err) => {
+            log.log('Error in Sesssion Heartbeat: ', err)
+            retrySessionHeartbeat()
         })
 
         request.on('response', (resp) => {
-            if (resp.statusCode != 200) {
-                log.log('Sesssion Heartbeat Failure: ', resp.statusCode, resp.statusMessage)
+            if (resp.statusCode == 401) {
+                log.log('Sesssion Heartbeat Unauthorized: ', resp.statusCode, resp.statusMessage)
                 logout()
+            } else if (resp.statusCode != 200) {
+                retrySessionHeartbeat()
             } else {
                 let body = ''
                 resp.on('data', (chunk) => {
@@ -453,8 +525,8 @@ app.on('ready', async () => {
     zeromqServer.run()
 
     win = new BrowserWindow({
-        width: 1280,
-        height: 720,
+        width: 1600,
+        height: 900,
         webPreferences: {
             nodeIntegration: true,
             webSecurity: app.isPackaged
@@ -514,10 +586,18 @@ app.on('ready', async () => {
         if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
             startClientService()
             await backendReady
+            
+            await requestOutputDevices()
+            await requestInputDevices()
         }
     })
 })
 
 app.on('window-all-closed', () => {
     quit()
+})
+
+ipcMain.handle('reload-app-settings', () => {
+    loadAppSettings()
+    return true
 })

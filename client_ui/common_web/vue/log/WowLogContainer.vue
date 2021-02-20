@@ -55,7 +55,7 @@ import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue
 import { shell } from 'electron'
 /// #endif
 
-const maxTasksPerRequest : number = 20
+const maxTasksPerRequest : number = 10
 
 @Component({
     components: {

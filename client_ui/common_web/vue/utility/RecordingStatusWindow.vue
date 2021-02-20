@@ -96,6 +96,80 @@
                     </v-btn>
                 </v-btn-toggle>
             </div>
+
+            <div class="d-flex align-center mt-2">
+                <v-icon small>
+                    mdi-headphones
+                </v-icon>
+                <span class="text-overline font-weight-bold ml-1 mr-4">Output:</span>
+                <div class="audio-select-div">
+                    <v-select
+                        v-model="selectedOutput"
+                        :items="audioOutputItems"
+                        dense
+                        hide-details
+                        single-line
+                        solo
+                    >
+                    </v-select>
+                </div>
+
+                <v-btn icon small @click="refreshAvailableOutputs">
+                    <v-icon>
+                        mdi-refresh
+                    </v-icon>
+                </v-btn>
+            </div>
+
+            <div>
+                <v-slider
+                    v-model="outputVolume"
+                    inverse-label
+                    :label="outputVolumeStr"
+                    :min="0.0"
+                    :max="2.0"
+                    :step="0.01"
+                    hide-details
+                >
+                </v-slider>
+            </div>
+
+            <div class="d-flex align-center mt-2">
+                <v-icon small>
+                    mdi-microphone
+                </v-icon>
+                <span class="text-overline font-weight-bold ml-1 mr-4">Input:</span>
+                <div class="audio-select-div">
+                    <v-select
+                        v-model="selectedInput"
+                        :items="audioInputItems"
+                        dense
+                        hide-details
+                        single-line
+                        solo
+                    >
+                    </v-select>
+                </div>
+
+                <v-btn icon small @click="refreshAvailableInputs">
+                    <v-icon>
+                        mdi-refresh
+                    </v-icon>
+                </v-btn>
+            </div>
+
+            <div>
+                <v-slider
+                    v-model="inputVolume"
+                    inverse-label
+                    :label="inputVolumeStr"
+                    :min="0.0"
+                    :max="2.0"
+                    :step="0.01"
+                    hide-details
+                >
+                </v-slider>
+            </div>
         </div>
     </v-sheet>
 </template>
@@ -106,12 +180,31 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { ipcRenderer } from 'electron'
+import { AudioDeviceListingResponse } from '@client/js/system/audio'
 
 @Component
 export default class RecordingStatusWindow extends Vue {
     expanded: boolean = false
     res: number = 1080
     fps: number = 60
+
+    outputOptions: string[] = []
+    selectedOutput: string = ''
+    defaultOutput: string = ''
+    outputVolume: number = 1.0
+
+    inputOptions: string[] = []
+    selectedInput: string = ''
+    defaultInput: string = ''
+    inputVolume: number = 1.0
+
+    get outputVolumeStr(): string {
+        return `${(this.outputVolume * 100.0).toFixed(0)}%`
+    }
+
+    get inputVolumeStr(): string {
+        return `${(this.inputVolume * 100.0).toFixed(0)}%`
+    }
 
     get gameIconsToShow(): string[] {
         if (this.isRecording) {
@@ -157,6 +250,24 @@ export default class RecordingStatusWindow extends Vue {
         ]
     }
 
+    get audioOutputItems(): any[] {
+        return this.outputOptions.map((ele: string) => {
+            return {
+                text: `${ele}${(ele == this.defaultOutput) ? ' [DEFAULT]' : ''}`,
+                value: ele,
+            }
+        })
+    }
+
+    get audioInputItems(): any[] {
+        return this.inputOptions.map((ele: string) => {
+            return {
+                text: `${ele}${(ele == this.defaultInput) ? ' [DEFAULT]' : ''}`,
+                value: ele,
+            }
+        })
+    }
+
     @Watch('res')
     syncResolution() {
         this.$store.commit('changeRecordSettingRes', this.res)
@@ -183,10 +294,68 @@ export default class RecordingStatusWindow extends Vue {
         }
         this.res = this.$store.state.settings.record.resY
         this.fps = this.$store.state.settings.record.fps
+        this.selectedOutput = this.$store.state.settings.record.outputDevice
+        this.outputVolume = this.$store.state.settings.record.outputVolume
+        this.selectedInput = this.$store.state.settings.record.inputDevice
+        this.inputVolume = this.$store.state.settings.record.inputVolume
+    }
+
+    @Watch('selectedOutput')
+    @Watch('outputVolume')
+    syncOutputDevice() {
+        this.$store.commit('changeOutputDevice', {
+            device: this.selectedOutput,
+            volume: this.outputVolume,
+        })
+    }
+
+
+    @Watch('selectedInput')
+    @Watch('inputVolume')
+    syncInputDevice() {
+        this.$store.commit('changeInputDevice', {
+            device: this.selectedInput,
+            volume: this.inputVolume,
+        })
+    }
+    
+    refreshAvailableOutputs() {
+        ipcRenderer.send('request-output-devices')
+    }
+
+    refreshAvailableInputs() {
+        ipcRenderer.send('request-input-devices')
     }
 
     mounted() {
         this.reloadSettings()
+        this.refreshAvailableOutputs()
+        this.refreshAvailableInputs()
+        ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
+            this.outputOptions = [
+                'Default Device',
+                ...resp.options
+            ]
+
+            if (this.selectedOutput == '') {
+                this.selectedOutput = 'Default Device'
+            }
+
+            this.defaultOutput = resp.default
+        })
+
+        ipcRenderer.on('respond-input-devices', (e: any, resp: AudioDeviceListingResponse) => {
+            this.inputOptions = [
+                'Default Device',
+                ...resp.options
+            ]
+
+            if (this.selectedInput == '') {
+                this.selectedInput = 'Default Device'
+            }
+
+            this.defaultInput = resp.default
+        })
     }
 }
 
@@ -222,6 +391,10 @@ export default class RecordingStatusWindow extends Vue {
     50% {
         background-color: red;
     }
+}
+
+.audio-select-div {
+    max-width: 215px;
 }
 
 </style>
