@@ -133,6 +133,11 @@ void VodClipper::encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st) {
         av_packet_rescale_ts(&packet, cctx->time_base, st->time_base);
         packet.stream_index = st->index;
 
+        if (packet.dts > packet.pts) {
+            LOG_WARNING("Bad packet: DTS > PTS...Recovering" << std::endl);
+            packet.pts = packet.dts;
+        }
+
         if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
             THROW_ERROR("Failed to write to output.");
         }
