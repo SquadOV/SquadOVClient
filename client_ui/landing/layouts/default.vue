@@ -10,7 +10,7 @@
                     <div class="d-flex align-center">
                         <v-img
                             class="mr-4"
-                            src="assets/icon.png"
+                            src="/assets/icon.png"
                             contain
                             width="32px"
                             height="32px"

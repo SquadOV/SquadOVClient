@@ -17,7 +17,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/hearthstone_triple_1.png"
+                            src="/assets/hearthstone_triple_1.jpg"
                             contain
                         >
                         </v-img>
@@ -30,13 +30,13 @@
                     <v-carousel cycle height="600">
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/HearthstoneMatchDetails.png"
+                            src="/assets/HearthstoneMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/HearthstoneBGMatchDetails.png"
+                            src="/assets/HearthstoneBGMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
@@ -72,7 +72,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/HearthstoneMatchHistory.png"
+                            src="/assets/HearthstoneMatchHistory.jpg"
                             contain
                         >
                         </v-img>

@@ -17,7 +17,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/default_triple.png"
+                            src="/assets/default_triple.jpg"
                             contain
                         >
                         </v-img>
@@ -30,25 +30,25 @@
                     <v-carousel cycle height="600">
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/ValorantMatchDetails.png"
+                            src="/assets/ValorantMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/HearthstoneMatchDetails.png"
+                            src="/assets/HearthstoneMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/HearthstoneBGMatchDetails.png"
+                            src="/assets/HearthstoneBGMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/WowMatchDetails_1.png"
+                            src="/assets/WowMatchDetails_1.jpg"
                             contain
                         >
                         </v-carousel-item>
@@ -83,25 +83,25 @@
                     <v-carousel cycle  height="600">
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/ValorantMatchHistory.png"
+                            src="/assets/ValorantMatchHistory.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/AimlabMatchHistory.png"
+                            src="/assets/AimlabMatchHistory.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/HearthstoneMatchHistory.png"
+                            src="/assets/HearthstoneMatchHistory.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/WowMatchHistory.png"
+                            src="/assets/WowMatchHistory.jpg"
                             contain
                         >
                         </v-carousel-item>
@@ -114,13 +114,13 @@
                     <v-carousel cycle  height="600">
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/aimlab_graph.png"
+                            src="/assets/aimlab_graph.jpg"
                             contain
                         >
                         </v-carousel-item>
                         <v-carousel-item
                             class="carousel-image"
-                            src="/assets/WowMatchDetails_2.png"
+                            src="/assets/WowMatchDetails_2.jpg"
                             contain
                         >
                         </v-carousel-item>

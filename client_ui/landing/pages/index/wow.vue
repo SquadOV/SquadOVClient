@@ -17,7 +17,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/wow_triple_1.png"
+                            src="/assets/wow_triple_1.jpg"
                             contain
                         >
                         </v-img>
@@ -31,7 +31,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/WowMatchDetails_1.png"
+                            src="/assets/WowMatchDetails_1.jpg"
                             contain
                         >
                         </v-img>
@@ -66,7 +66,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/WowMatchHistory.png"
+                            src="/assets/WowMatchHistory.jpg"
                             contain
                         >
                         </v-img>
@@ -80,7 +80,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/WowMatchDetails_2.png"
+                            src="/assets/WowMatchDetails_2.jpg"
                             contain
                         >
                         </v-img>

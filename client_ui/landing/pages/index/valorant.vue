@@ -17,7 +17,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/valorant_triple_1.png"
+                            src="/assets/valorant_triple_1.jpg"
                             contain
                         >
                         </v-img>
@@ -31,7 +31,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/ValorantMatchDetails.png"
+                            src="/assets/ValorantMatchDetails.jpg"
                             contain
                         >
                         </v-img>
@@ -66,7 +66,7 @@
                         <v-img
                             class="highlight-image"
                             max-width="80%"
-                            src="/assets/ValorantMatchHistory.png"
+                            src="/assets/ValorantMatchHistory.jpg"
                             contain
                         >
                         </v-img>
