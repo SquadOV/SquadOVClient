@@ -230,9 +230,9 @@ import Vue from 'vue'
 import Component from 'nuxt-class-component'
 
 const availableHeaderVideos : string[] = [
-    '/assets/videos/aimlab.mp4',
-    '/assets/videos/valorant_clip.mp4',
-    '/assets/videos/hearthstone_clip.mp4'
+    '/assets/videos/aimlab_compress.webm',
+    '/assets/videos/hearthstone_compress.webm',
+    '/assets/videos/valorant_compress.webm'
 ]
 
 @Component
@@ -265,7 +265,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.5.3'
+        return 'v0.6.3'
     }
 
     get downloadLink() : string {

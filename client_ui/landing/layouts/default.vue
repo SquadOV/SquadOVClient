@@ -23,6 +23,36 @@
                 </NuxtLink>
             </v-toolbar-title>
 
+            <v-menu bottom offset-y>
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn text v-bind="attrs" v-on="on">
+                        Games
+                        <v-icon small>
+                            mdi-chevron-down
+                        </v-icon> 
+                    </v-btn>
+                </template>
+
+                <v-list dense>
+                    <v-list-item to="/aimlab/">
+                        <v-list-item-title>Aim Lab</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item to="/hearthstone/"> 
+                        <v-list-item-title>Hearthstone</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item to="/valorant/">
+                        <v-list-item-title>Valorant</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item to="/wow/">
+                        <v-list-item-title>World of Warcraft</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
+
+            <v-btn href="https://support.squadov.gg" text>
+                Support
+            </v-btn>
+
             <v-spacer></v-spacer>
 
             <v-btn
