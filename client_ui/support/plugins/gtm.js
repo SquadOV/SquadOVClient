@@ -6,5 +6,5 @@ export default function({ $gtm, route }) {
 
 export function initGtm() {
     console.log('init gtm')
-    global_gtm.init('GTM-MPZ5S58')
+    global_gtm.init('GTM-NMS74ND')
 }

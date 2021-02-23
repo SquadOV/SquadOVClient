@@ -1,3 +1,3 @@
 User-agent: *
 
-Sitemap: https://www.squadov.gg/sitemap.xml
+Sitemap: https://support.squadov.gg/sitemap.xml

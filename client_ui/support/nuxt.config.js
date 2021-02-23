@@ -4,6 +4,7 @@ export default {
         '@nuxtjs/vuetify',
         '@nuxt/typescript-build',
     ],
+    components: true,
     modules: [
         '@nuxtjs/gtm',
         'cookie-universal-nuxt'

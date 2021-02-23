@@ -10,20 +10,27 @@
                     <div class="d-flex align-center">
                         <v-img
                             class="mr-4"
-                            src="assets/icon.png"
+                            src="/assets/icon.png"
                             contain
                             width="32px"
                             height="32px"
                         >
                         </v-img>
 
-                        <span class="mr-1">SquadOV</span>
-                        <span class="text-caption">(Beta)</span>
+                        <span>SquadOV Support</span>
                     </div>
                 </NuxtLink>
             </v-toolbar-title>
 
             <v-spacer></v-spacer>
+
+            <v-btn
+                class="mr-2"
+                color="success"
+                href="https://www.squadov.gg"
+            >
+                Home
+            </v-btn>
 
             <v-btn
                 color="info"
@@ -34,7 +41,7 @@
         </v-app-bar>
         
         <v-main>
-            <v-container fluid class="pa-0">
+            <v-container fluid class="pa-0 full-height">
                 <Nuxt />
             </v-container>
         </v-main>
@@ -89,7 +96,8 @@ export default class DefaultLayout extends Vue {
     get cookieOpts() : any {
         return {
             'path': '/',
-            'maxAge': 60 * 60 * 24 * 7
+            'maxAge': 60 * 60 * 24 * 365,
+            'domain': 'squadov.gg'
         }
     }
 
@@ -131,6 +139,10 @@ export default class DefaultLayout extends Vue {
 #nav-bar a {
     color: inherit;
     text-decoration: none;
+}
+
+.full-height {
+    height: 100%;
 }
 
 </style>

@@ -89,7 +89,8 @@ export default class DefaultLayout extends Vue {
     get cookieOpts() : any {
         return {
             'path': '/',
-            'maxAge': 60 * 60 * 24 * 7
+            'maxAge': 60 * 60 * 24 * 365,
+            'domain': 'squadov.gg',
         }
     }
 
