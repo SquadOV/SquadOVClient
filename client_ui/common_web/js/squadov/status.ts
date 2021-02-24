@@ -198,12 +198,16 @@ export class TrackedUserStatsManager {
     }
 
     refreshCurrentUserStatus() {
-        if (!!!!this._store.state.currentState.recordingGames && this._store.state.currentState.recordingGames.length > 0) {
+///#if DESKTOP
+        if (!!this._store.state.currentState.recordingGames && this._store.state.currentState.recordingGames.length > 0) {
             this.changeUserStatus(SquadOvActivity.Recording, this._store.state.currentState.recordingGames.map(gameShorthandToGame))
         } else if (!!this._store.state.currentState.runningGames && this._store.state.currentState.runningGames.length > 0) {
             this.changeUserStatus(SquadOvActivity.InGame, this._store.state.currentState.runningGames.map(gameShorthandToGame))
         } else {
             this.changeUserStatus(SquadOvActivity.Online, [])
         }
+///#else
+        this.changeUserStatus(SquadOvActivity.Online, [])
+///#endif
     }
 }
