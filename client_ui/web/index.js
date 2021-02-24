@@ -7,10 +7,14 @@ app.set('view engine', 'ejs');
 app.use('/dist', express.static(__dirname + '/dist'))
 app.use('/assets', express.static(__dirname + '/assets'))
 
+app.get('/healthz', function (request, response) {
+    response.sendStatus(200)
+})
+
 app.get('*', function (request, response) {
-  response.render('index')
-});
+    response.render('index')
+})
 
 app.listen(port, () => {
-  console.log(`SquadOVWebApp listening at http://localhost:${port}`)
+    console.log(`SquadOVWebApp listening at http://localhost:${port}`)
 })
