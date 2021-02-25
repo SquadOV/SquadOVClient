@@ -4,73 +4,10 @@
 #ifdef _WIN32
 namespace service::renderer {
 
-D3d11SharedContext::D3d11SharedContext(ID3D11Device* device, ID3D11DeviceContext* context):
-    _device(device),
-    _context(context) {
-}
-
-D3d11SharedContext::~D3d11SharedContext() {
-    if (_context) {
-        _context->Release();
-        _context = nullptr;    
-    }
-
-    if (_device) {
-        _device->Release();
-        _device = nullptr;
-    }
-}
-
-void D3d11SharedContext::execute(ID3D11CommandList* list) {
-    std::lock_guard<std::mutex> guard(_contextMutex);
-    _context->ExecuteCommandList(list, false);
-}
-
-D3d11SharedContext* getSharedD3d11Context() {
-    static D3d11SharedContextPtr ptr = [](){
-        ID3D11Device* device = nullptr;
-        ID3D11DeviceContext* context = nullptr;
-
-        UINT flags = 
-#ifndef NDEBUG
-            D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT
-#else
-            D3D11_CREATE_DEVICE_BGRA_SUPPORT
-#endif
-        ;
-
-        HRESULT hr = D3D11CreateDevice(
-            nullptr,
-            D3D_DRIVER_TYPE_HARDWARE,
-            nullptr,
-            flags,
-            nullptr,
-            0,
-            D3D11_SDK_VERSION,
-            &device,
-            nullptr,
-            &context
-        );
-
-        if (hr != S_OK) {
-            THROW_ERROR("Failed to create D3D11 device: " << hr);
-        }
-
-        auto ctx = std::make_unique<D3d11SharedContext>(device, context);
-        return ctx;
-    }();
-    return ptr.get();
-}
-
-D3d11Renderer::D3d11Renderer() {
-    _shared = getSharedD3d11Context();
-    
+D3d11Renderer::D3d11Renderer(D3d11SharedContext* shared):
+    _shared(shared) {
     // Use a deferred context so multiple renderers can render at the same time.
-    HRESULT hr = _shared->device()->CreateDeferredContext(0, &_context);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create deferred context.");
-    }
-
+    _context = _shared->deferredContext();
     _shader = loadShaderFromDisk(std::filesystem::path("simple.vs.fxc"), std::filesystem::path("simple.ps.fxc"));
     if (!_shader) {
         THROW_ERROR("Failed to load shader.");
@@ -168,23 +105,13 @@ bool D3d11Renderer::renderScene() {
         model->render(_context);
 
         // Setup shader
-        _shader->render(_context);
-
-        if (model->hasTexture()) {
-            _shader->setTexture(_context, 0, model->texture());
-        }
+        _shader->render(_context, model.get());
 
         // Render
         _context->DrawIndexed(model->numIndices(), 0, 0);
     }
 
-    ID3D11CommandList* list = nullptr;
-    HRESULT hr = _context->FinishCommandList(false, &list);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to finish command list.");
-    }
-    _shared->execute(list);
-    list->Release();
+    _shared->execute(_context);
     return true;
 }
 

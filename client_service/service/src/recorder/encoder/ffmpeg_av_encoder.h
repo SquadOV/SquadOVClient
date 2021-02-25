@@ -11,10 +11,13 @@ public:
     ~FfmpegAvEncoder();
 
     const std::string& streamUrl() const override;
-    void initializeVideoStream(size_t fps, size_t width, size_t height) override;
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) override;
     VideoStreamContext getVideoStreamContext() const override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;
+#ifdef _WIN32
+    void addVideoFrame(ID3D11Texture2D* image) override;
+#endif
     service::recorder::image::Image getFrontBuffer() const override;
 
     void initializeAudioStream() override;

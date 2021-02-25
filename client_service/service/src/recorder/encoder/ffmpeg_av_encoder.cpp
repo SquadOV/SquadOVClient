@@ -6,6 +6,9 @@
 #include "shared/log/log.h"
 #include "shared/timer.h"
 #include "shared/filesystem/utility.h"
+#include "recorder/image/d3d_image.h"
+#include "renderer/d3d11_renderer.h"
+#include "recorder/encoder/ffmpeg_video_swap_chain.h"
 
 #include <atomic>
 #include <boost/lockfree/spsc_queue.hpp>
@@ -29,8 +32,8 @@ extern "C" {
 #include <libavutil/opt.h>
 #include <libavutil/samplefmt.h>
 #include <libavutil/mathematics.h>
-#include <libswscale/swscale.h>
 #include <libswresample/swresample.h>
+#include <libavutil/hwcontext_d3d11va.h>
 #include "recorder/encoder/ffmpeg_utils.h"
 }
 
@@ -80,9 +83,13 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(size_t fps, size_t width, size_t height);
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
+#ifdef _WIN32
+    void addVideoFrame(ID3D11Texture2D* image);
+#endif
+
     void getVideoDimensions(size_t& width, size_t& height);
     service::recorder::image::Image getFrontBuffer() const;
 
@@ -96,7 +103,6 @@ public:
     shared::squadov::VodMetadata getMetadata() const;
 private:
     void encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st);
-    void swapBuffers();
 
     AVFrame* createAudioFrame() const;
     bool hasAudioFrameAvailable() const;
@@ -114,13 +120,9 @@ private:
     void flushPacketQueue();
     
     // Video Output
-    SwsContext* _sws = nullptr;
-    SwsContext* _nextSws = nullptr;
-
     AVStream* _vstream = nullptr;
     const AVCodec* _vcodec = nullptr;
     AVCodecContext* _vcodecContext = nullptr;
-    AVFrame* _vframe = nullptr;
     int64_t _vFrameNum = 0;
 
     // Audio Output
@@ -173,11 +175,7 @@ private:
     std::mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
 
-    std::unique_ptr<service::recorder::image::Image> _frontBuffer;
-
-    mutable std::mutex _backMutex;
-    std::unique_ptr<service::recorder::image::Image> _backBuffer;
-    bool _backBufferDirty = false;
+    FfmpegVideoSwapChainPtr _videoSwapChain;
 
     uint64_t _receivedVideoFrames = 0;
     uint64_t _processedVideoFrames = 0;
@@ -263,9 +261,6 @@ FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
 }
 
 FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
-    sws_freeContext(_sws);
-    sws_freeContext(_nextSws);
-    av_frame_free(&_vframe);
     avcodec_free_context(&_vcodecContext);
     av_frame_free(&_aframe);
     av_frame_free(&_aTmpFrame);
@@ -311,17 +306,11 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
 }
 
 void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
-    if (!_vframe) {
-        width = 0;
-        height = 0;
-        return;
-    }
-
-    width = static_cast<size_t>(_vframe->width);
-    height = static_cast<size_t>(_vframe->height);
+    width = _videoSwapChain->frameWidth();
+    height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height) {
+void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -335,6 +324,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     };
 
     bool foundEncoder = false;
+    bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
         try {
             _vcodec = avcodec_find_encoder_by_name(enc.name.c_str());
@@ -349,9 +339,55 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
-            _vcodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && FfmpegGPUVideoSwapChain::isSupported() && useHw;
+            _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = 6000000;
             _vcodecContext->thread_count = 0;
+            
+            if (canUseHwAccel) {
+                AVBufferRef* hwContextRef = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
+                if (!hwContextRef) {
+                    THROW_ERROR("Failed to create HW context.");
+                }
+
+                AVHWDeviceContext* hwContext = reinterpret_cast<AVHWDeviceContext*>(hwContextRef->data);
+                AVD3D11VADeviceContext* d3dContext = reinterpret_cast<AVD3D11VADeviceContext*>(hwContext->hwctx);
+
+                service::renderer::D3d11SharedContext d3d;
+                auto immediate = d3d.immediateContext();
+                d3dContext->device = d3d.device();
+                d3dContext->device_context = immediate.context();
+                d3d.device()->AddRef();
+                immediate.context()->AddRef();
+
+                if (av_hwdevice_ctx_init(hwContextRef) < 0) {
+                    av_buffer_unref(&hwContextRef);
+                    THROW_ERROR("Failed to init hw context.");
+                }
+
+                AVBufferRef* frameContextRef = av_hwframe_ctx_alloc(hwContextRef);
+                if (!frameContextRef) {
+                    av_buffer_unref(&hwContextRef);
+                    THROW_ERROR("Failed to create Frame context.");
+                }
+
+                AVHWFramesContext* frameContext = reinterpret_cast<AVHWFramesContext*>(frameContextRef->data);
+                frameContext->format = _vcodecContext->pix_fmt;
+                frameContext->sw_format = AV_PIX_FMT_YUV420P;
+                frameContext->width = _vcodecContext->width;
+                frameContext->height = _vcodecContext->height;
+                frameContext->initial_pool_size = 1;
+
+                if (av_hwframe_ctx_init(frameContextRef) < 0) {
+                    av_buffer_unref(&hwContextRef);
+                    av_buffer_unref(&frameContextRef);
+                    THROW_ERROR("Failed to init Frame context.");
+                }
+
+                _vcodecContext->hw_device_ctx = hwContextRef;
+                _vcodecContext->hw_frames_ctx = frameContextRef;
+            }
 
             // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.
             _vcodecContext->time_base = AVRational{1, static_cast<int>(fps)};
@@ -400,25 +436,13 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     _vstream->time_base = _vcodecContext->time_base;
     avcodec_parameters_from_context(_vstream->codecpar, _vcodecContext);
 
-    // Preallocate frame for output.
-    _vframe = av_frame_alloc();
-    if (!_vframe) {
-        THROW_ERROR("Failed to allocate video frame");
+    if (canUseHwAccel) {
+        _videoSwapChain.reset(new FfmpegGPUVideoSwapChain);
+    } else {
+        _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
-
-    _vframe->format = _vcodecContext->pix_fmt;
-    _vframe->width = _vcodecContext->width;
-    _vframe->height = _vcodecContext->height;
-    _vframe->pts = 0;
-
-    if (av_frame_get_buffer(_vframe, 0) < 0) {
-        THROW_ERROR("Failed to get frame buffer.");
-    }
-    
-    // BGRA images for the front/back buffer.
-    _frontBuffer.reset(new service::recorder::image::Image());
-    _backBuffer.reset(new service::recorder::image::Image());
-
+    _videoSwapChain->initialize(_vcodecContext);
+    _videoSwapChain->initializeGpuSupport(service::renderer::getSharedD3d11Context());
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
 
@@ -517,34 +541,16 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
 }
 
 void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& frame) {
-    std::unique_lock<std::mutex> guard(_backMutex);
+    _videoSwapChain->receiveCpuFrame(frame);
 
-    if (_backBuffer->width() != frame.width() || _backBuffer->height() != frame.height()) {
-        _backBuffer->initializeImage(frame.width(), frame.height());
-
-        // SWS for scaling the buffer into YUV420p for encoding.
-        if (!!_nextSws) {
-            sws_freeContext(_nextSws);
-        }
-        _nextSws = sws_getContext(
-            static_cast<int>(_backBuffer->width()),
-            static_cast<int>(_backBuffer->height()),
-            AV_PIX_FMT_BGRA,
-            _vframe->width,
-            _vframe->height,
-            AV_PIX_FMT_YUV420P,
-            SWS_BICUBIC,
-            nullptr,
-            nullptr,
-            nullptr);
-        if (!_nextSws) {
-            THROW_ERROR("Failed to create SWS context.");
-        }
+    if (_running) {
+        ++_receivedVideoFrames;
     }
+}
 
-    _backBuffer->copyFrom(frame);
-    _backBufferDirty = true;
-
+void FfmpegAvEncoderImpl::addVideoFrame(ID3D11Texture2D* image) {
+    _videoSwapChain->receiveGpuFrame(image);
+    
     if (_running) {
         ++_receivedVideoFrames;
     }
@@ -618,22 +624,8 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     }
 }
 
-void FfmpegAvEncoderImpl::swapBuffers() {
-    std::unique_lock<std::mutex> guard(_backMutex);
-    if (!_backBufferDirty) {
-        return;
-    }
-    _frontBuffer.swap(_backBuffer);
-    _backBufferDirty = false;
-    std::swap(_sws, _nextSws);
-}
-
 service::recorder::image::Image FfmpegAvEncoderImpl::getFrontBuffer() const {
-    std::unique_lock<std::mutex> guard(_backMutex);
-    service::recorder::image::Image copy;
-    copy.initializeImage(_frontBuffer->width(), _frontBuffer->height());
-    copy.copyFrom(*_frontBuffer);
-    return copy;
+    return _videoSwapChain->cpuCopyFrontBuffer();
 }
 
 void FfmpegAvEncoderImpl::open() {
@@ -652,7 +644,7 @@ void FfmpegAvEncoderImpl::start() {
     std::lock_guard<std::mutex> guard(_startMutex);
 
     if (!_canStart) {
-        LOG_INFO("Abortin start due to existing stop call." << std::endl);
+        LOG_INFO("Aborting start due to existing stop call." << std::endl);
     }
 
     if (!_vstream) {
@@ -697,23 +689,16 @@ void FfmpegAvEncoderImpl::start() {
 #if LOG_FRAME_TIME
             const auto taskNow = std::chrono::high_resolution_clock::now();
 #endif                
-            swapBuffers();
+            _videoSwapChain->swap();
 
-            if (_frontBuffer->isInit()) {
-                const auto* inputBuffer = _frontBuffer->buffer();
-                const int inputBufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
-                sws_scale(_sws, &inputBuffer, inputBufferStride, 0, static_cast<int>(_frontBuffer->height()), _vframe->data, _vframe->linesize);
+            AVFrame* frame = _videoSwapChain->getFrontBufferFrame();
+            if (_videoSwapChain->hasValidFrontBuffer()) {
                 ++_processedVideoFrames;
             }
 
             for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
-                _vframe->pts = _vFrameNum;
-
-                if (av_frame_make_writable(_vframe) < 0) {
-                    THROW_ERROR("Failed to make video frame writeable.");
-                }
-                
-                encode(_vcodecContext, _vframe, _vstream);
+                frame->pts = _vFrameNum;
+                encode(_vcodecContext, frame, _vstream);
             }
         
 #if LOG_FRAME_TIME
@@ -861,8 +846,14 @@ void FfmpegAvEncoder::addVideoFrame(const service::recorder::image::Image& frame
     _impl->addVideoFrame(frame);
 }
 
-void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height) {
-    _impl->initializeVideoStream(fps, width, height);
+#ifdef _WIN32
+void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
+    _impl->addVideoFrame(image);
+}
+#endif
+
+void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) {
+    _impl->initializeVideoStream(fps, width, height, useHw);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {

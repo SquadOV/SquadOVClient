@@ -1,11 +1,18 @@
 #pragma once
 
 #ifdef _WIN32
+#include "renderer/d3d11_model.h"
+
 #include <d3d11.h>
+#include <directxmath.h>
 #include <filesystem>
 #include <memory>
 
 namespace service::renderer {
+
+struct D3d11ShaderConstants {
+    DirectX::XMMATRIX modelXform;
+};
 
 class D3d11Shader {
 public:
@@ -14,12 +21,13 @@ public:
 
     void initialize(ID3D11Device* device);
     void setTexture(ID3D11DeviceContext* context, unsigned int texIndex, ID3D11ShaderResourceView* texture);
-    void render(ID3D11DeviceContext* context);
+    void render(ID3D11DeviceContext* context, D3d11Model* model);
 private:
     ID3D11VertexShader* _vertexShader = nullptr;
     ID3D11PixelShader* _pixelShader = nullptr;
     ID3D11SamplerState* _sampler = nullptr;
     ID3D11InputLayout* _inputLayout = nullptr;
+    ID3D11Buffer* _constants = nullptr;
 
     std::filesystem::path _vertexShaderPath;
     std::filesystem::path _pixelShaderPath;

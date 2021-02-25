@@ -8,6 +8,8 @@ namespace service::system {
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
+    bool useVideoHw = false;
+
     std::string outputDevice;
     double outputVolume;
     std::string inputDevice;

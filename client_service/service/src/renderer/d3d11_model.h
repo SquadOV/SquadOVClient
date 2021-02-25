@@ -25,15 +25,18 @@ public:
 
     void render(ID3D11DeviceContext* context);
     void setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture);
+    void setZRotation(float degrees);
 
     bool hasTexture() const { return _shaderResource; }
     ID3D11ShaderResourceView* texture() const { return _shaderResource; }
 
     unsigned int numIndices() const { return _numIndices; }
+    DirectX::XMMATRIX getModelXform() const { return _modelXform; }
 
 private:
     size_t _numVertices = 0;
     size_t _numIndices = 0;
+    DirectX::XMMATRIX _modelXform;
 
     ID3D11Buffer* _vertexBuffer = nullptr;
     ID3D11Buffer* _indexBuffer = nullptr;
@@ -42,7 +45,6 @@ private:
 
     // We create a duplicate texture of the input to make sure it has the correct bind flags
     // and that the data is fully copied. We do not own _srcTexture.
-    ID3D11Texture2D* _srcTexture = nullptr;
     ID3D11Texture2D* _shaderTexture = nullptr;
     ID3D11ShaderResourceView* _shaderResource = nullptr;
 };

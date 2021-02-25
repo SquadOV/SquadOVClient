@@ -3,14 +3,20 @@
 
 namespace service::recorder::image {
 
-D3dImage::D3dImage():
-    _renderer(new service::renderer::D3d11Renderer) {
+D3dImage::D3dImage(service::renderer::D3d11SharedContext* shared):
+    _shared(shared),
+    _renderer(new service::renderer::D3d11Renderer(shared)) {
 
-    _fullscreenQuad = service::renderer::createFullScreenQuad(_renderer->device());
+    _context = _shared->deferredContext();
+    _fullscreenQuad = service::renderer::createFullScreenQuad(_shared->device());
     _renderer->addModelToScene(_fullscreenQuad);
 }
 
 D3dImage::~D3dImage() {
+    if (_context) {
+        _context->Release();
+        _context = nullptr;
+    }
     releaseTextureIfExists();
     releaseOutputTextureIfExists();
     releaseInputTextureIfExists();
@@ -64,6 +70,8 @@ void D3dImage::initializeImage(size_t width, size_t height) {
     if (!_renderTarget) {
         THROW_ERROR("Failed to create render target.");
     }
+
+    _init = true;
 }
 
 void D3dImage::copyFromCpu(const Image& image) {
@@ -76,22 +84,62 @@ void D3dImage::copyFromCpu(const Image& image) {
     box.bottom = image.height();
     box.front = 0;
     box.back = 1;
-    _renderer->context()->UpdateSubresource(_inputTexture, 0, &box, image.buffer(), image.numBytesPerRow(), 0);
+    _context->UpdateSubresource(_inputTexture, 0, &box, image.buffer(), image.numBytesPerRow(), 0);
 
     copyFromGpu(_inputTexture);
 }
 
-void D3dImage::copyFromGpu(ID3D11Texture2D* image) {
+void D3dImage::copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation) {
     if (!_renderTarget) {
         LOG_WARNING("No render target to render to...ignoring." << std::endl);
         return;
     }
 
-    _fullscreenQuad->setTexture(_renderer->device(), _renderer->context(), image);
-    if (!_renderer->renderSceneToRenderTarget(_renderTarget)) {
-        LOG_ERROR("Failed to render textured quad to render target..." << std::endl);
-        return;
-    }
+    // First check to see if we can just do a regular old copy.
+    // For this to happen we need resolution and format to be the same as well
+    // as the input specified rotation to be identity.
+    D3D11_TEXTURE2D_DESC imageDesc;
+    image->GetDesc(&imageDesc);
+
+    D3D11_TEXTURE2D_DESC textureDesc;
+    _hwTexture->GetDesc(&textureDesc);
+
+    const bool canCopy = 
+        (imageDesc.Width == textureDesc.Width) &&
+        (imageDesc.Height == textureDesc.Height) &&
+        (imageDesc.Format == textureDesc.Format) &&
+        (rotation == DXGI_MODE_ROTATION_IDENTITY || rotation == DXGI_MODE_ROTATION_UNSPECIFIED);
+
+    //if (canCopy) {
+    //    auto immediate = _shared->immediateContext();
+    //    immediate.context()->CopyResource(_hwTexture, image);
+    //} else {
+        _fullscreenQuad->setTexture(_shared->device(), _context, image);
+
+        switch (rotation) {
+        case DXGI_MODE_ROTATION_ROTATE90:
+            _fullscreenQuad->setZRotation(90.f);
+            break;
+        case DXGI_MODE_ROTATION_ROTATE180:
+            _fullscreenQuad->setZRotation(180.f);
+            break;
+        case DXGI_MODE_ROTATION_ROTATE270:
+            _fullscreenQuad->setZRotation(270.f);
+            break;
+        default:
+            _fullscreenQuad->setZRotation(0.f);
+            break;
+        }
+
+        // Need to do a pre-emptive execute here since we a separate deferred context
+        // from the renderer's deferred context to load up the input texture.
+        _shared->execute(_context);
+
+        if (!_renderer->renderSceneToRenderTarget(_renderTarget)) {
+            LOG_ERROR("Failed to render textured quad to render target..." << std::endl);
+            return;
+        }
+    //}
 }
 
 ID3D11Texture2D* D3dImage::createStagingTexture(size_t width, size_t height, bool forCpu) {
@@ -108,7 +156,7 @@ ID3D11Texture2D* D3dImage::createStagingTexture(size_t width, size_t height, boo
     sharedDesc.MiscFlags = 0;
 
     ID3D11Texture2D* texture = nullptr;
-    HRESULT hr = _renderer->device()->CreateTexture2D(&sharedDesc, nullptr, &texture);
+    HRESULT hr = _shared->device()->CreateTexture2D(&sharedDesc, nullptr, &texture);
     if (hr != S_OK) {
         THROW_ERROR("Failed to create staging texture: " << hr);
     }
@@ -164,11 +212,12 @@ void D3dImage::refreshOutputTexture(size_t width, size_t height) {
 Image D3dImage::cpuImage() {
     Image retImage;
     retImage.initializeImage(_width, _height);
-
     refreshOutputTexture(_width, _height);
-    _renderer->context()->CopyResource(_outputTexture, _hwTexture);
 
-    retImage.loadFromD3d11Texture(_renderer->context(), _outputTexture);
+    auto immediate = _shared->immediateContext();
+    immediate.context()->CopyResource(_outputTexture, _hwTexture);
+
+    retImage.loadFromD3d11Texture(immediate.context(), _outputTexture);
     return retImage;
 }
 

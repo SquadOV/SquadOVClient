@@ -7,6 +7,10 @@
 #include "recorder/audio/audio_packet_view.h"
 #include "shared/squadov/vod.h"
 
+#ifdef _WIN32
+#include <d3d11.h>
+#endif
+
 namespace service::recorder::encoder {
 
 using AVSyncClock = std::chrono::high_resolution_clock;
@@ -26,10 +30,14 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(size_t fps, size_t width, size_t height) = 0;
+    virtual void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
     
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
+#ifdef _WIN32
+    virtual void addVideoFrame(ID3D11Texture2D* image) = 0;
+#endif
+
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;
     virtual service::recorder::image::Image getFrontBuffer() const = 0;
 

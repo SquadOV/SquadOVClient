@@ -14,6 +14,10 @@ namespace service::recorder::image {
 // We can just use BGRA images since that'll generalize to the vast majority of situations.
 class Image {
 public:
+    Image() = default;
+    Image(Image&& other);
+    ~Image();
+
     uint8_t* buffer() { return _buffer.get(); }
     const uint8_t* buffer() const { return _buffer.get(); }
     
@@ -40,6 +44,10 @@ private:
     size_t _width = 0;
     size_t _height = 0;
     std::unique_ptr<uint8_t[]> _buffer;
+
+#ifdef _WIN32
+    ID3D11Texture2D* _stagingTexture = nullptr;
+#endif
 };
 
 using ImagePtr = std::unique_ptr<Image>;

@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
@@ -60,7 +61,7 @@ public:
     std::string sessionId() const { return _outputPiper->sessionId(); }
 
     shared::squadov::VodMetadata getMetadata() const;
-
+    void overrideResolution(size_t width, size_t height);
 private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;
@@ -130,6 +131,10 @@ private:
     std::deque<DvrSegment> _dvrSegments;
     void startNewDvrSegment(const std::filesystem::path& dir);
     size_t findDvrSegmentForVodStartTime(const shared::TimePoint& tm) const;
+
+    // Debug Variables if we ever feel like overriding the width and height.
+    std::optional<size_t> _overrideWidth;
+    std::optional<size_t> _overrideHeight;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

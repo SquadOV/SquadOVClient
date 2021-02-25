@@ -13,6 +13,7 @@
 #include "recorder/video/windows_graphics_capture.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "renderer/d3d11_renderer.h"
 #include "system/win32/hwnd_utils.h"
 #include "system/state.h"
 
@@ -75,7 +76,8 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         << "\tFlags: " << flags << std::endl);
 
 #ifdef _WIN32
-    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
+    auto* shared = service::renderer::getSharedD3d11Context();
+    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 
@@ -83,7 +85,7 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         return;
     }
 
-    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 #endif
@@ -293,15 +295,16 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
     const auto aspectRatio = static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
-    const auto desiredHeight = std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY));
-    const auto desiredWidth = static_cast<size_t>(desiredHeight * aspectRatio);
+    const auto desiredHeight = _overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY)));
+    const auto desiredWidth = _overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio));
 
     // Assume that the input recorders have already been created before this point.
     // This is primarily for the audio inputs so we know how many inputs to expect.
     data.encoder->initializeVideoStream(
         _cachedRecordingSettings->fps,
         desiredWidth,
-        desiredHeight
+        desiredHeight,
+        true
     );
 
     data.encoder->initializeAudioStream();
@@ -579,6 +582,11 @@ shared::squadov::VodMetadata GameRecorder::getMetadata() const {
 
         return metadata;
     }
+}
+
+void GameRecorder::overrideResolution(size_t width, size_t height) {
+    _overrideWidth = width;
+    _overrideHeight = height;
 }
 
 }

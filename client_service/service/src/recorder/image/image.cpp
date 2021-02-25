@@ -9,6 +9,26 @@
 
 namespace service::recorder::image {
 
+Image::Image(Image&& other) {
+    _width = other._width;
+    _height = other._height;
+    _buffer = std::move(other._buffer);
+    
+#ifdef _WIN32
+    _stagingTexture = other._stagingTexture;
+    other._stagingTexture = nullptr;
+#endif
+}
+
+Image::~Image() {
+#ifdef _WIN32
+    if (_stagingTexture) {
+        _stagingTexture->Release();
+        _stagingTexture = nullptr;
+    }
+#endif
+}
+
 void Image::initializeImage(size_t width, size_t height) {
     _width = width;
     _height = height;
@@ -56,26 +76,44 @@ void Image::loadFromD3d11TextureWithStaging(ID3D11Device* device, ID3D11DeviceCo
     D3D11_TEXTURE2D_DESC desc;
     texture->GetDesc(&desc);
 
-    D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
-    sharedDesc.Width = desc.Width;
-    sharedDesc.Height = desc.Height;
-    sharedDesc.MipLevels = 1;
-    sharedDesc.ArraySize = 1;
-    sharedDesc.Format = desc.Format;
-    sharedDesc.SampleDesc.Count = 1;
-    sharedDesc.Usage = D3D11_USAGE_STAGING;
-    sharedDesc.BindFlags = 0;
-    sharedDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    sharedDesc.MiscFlags = 0;
+    bool requiresStagingCreation = false;
+    if (_stagingTexture) {
+        D3D11_TEXTURE2D_DESC stagingDesc;
+        _stagingTexture->GetDesc(&stagingDesc);
 
-    ID3D11Texture2D* stagingTexture = nullptr;
-    if (device->CreateTexture2D(&sharedDesc, nullptr, &stagingTexture) != S_OK) {
-        THROW_ERROR("Failed to create staging texture.");
+        requiresStagingCreation = 
+            (desc.Width != stagingDesc.Width) ||
+            (desc.Height != stagingDesc.Height) ||
+            (desc.Format != stagingDesc.Format);
+    } else {
+        requiresStagingCreation = true;
     }
 
-    context->CopyResource(stagingTexture, texture);
-    loadFromD3d11Texture(context, stagingTexture);
-    stagingTexture->Release();
+    if (requiresStagingCreation) {
+        D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
+        sharedDesc.Width = desc.Width;
+        sharedDesc.Height = desc.Height;
+        sharedDesc.MipLevels = 1;
+        sharedDesc.ArraySize = 1;
+        sharedDesc.Format = desc.Format;
+        sharedDesc.SampleDesc.Count = 1;
+        sharedDesc.Usage = D3D11_USAGE_STAGING;
+        sharedDesc.BindFlags = 0;
+        sharedDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+        sharedDesc.MiscFlags = 0;
+
+        if (_stagingTexture) {
+            _stagingTexture->Release();
+            _stagingTexture = nullptr;
+        }
+
+        if (device->CreateTexture2D(&sharedDesc, nullptr, &_stagingTexture) != S_OK) {
+            THROW_ERROR("Failed to create staging texture.");
+        }
+    }
+
+    context->CopyResource(_stagingTexture, texture);
+    loadFromD3d11Texture(context, _stagingTexture);
 }
 
 #endif

@@ -34,6 +34,8 @@ int main(int argc, char** argv) {
         ("duration", po::value<int>()->default_value(30), "Length of the final VOD to record")
         ("delay", po::value<int>()->default_value(25), "Delay between when we start DVR and when we want to start recording.")
         ("offset", po::value<int>()->default_value(15), "How many seconds into the DVR we should use in the output VOD")
+        ("width", po::value<size_t>()->default_value(1920), "width of output")
+        ("height", po::value<size_t>()->default_value(1080), "height of output")
         ("output", po::value<std::string>()->required(), "VOD output file.");
 
     po::variables_map vm;
@@ -74,13 +76,16 @@ int main(int argc, char** argv) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
     const auto mode = vm["mode"].as<std::string>();
+    const auto width = vm["width"].as<size_t>();
+    const auto height = vm["height"].as<size_t>();
+    recorder.overrideResolution(width, height);
 
     std::thread workerThread;
     if (mode == "NORMAL") {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_GDI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop();

@@ -2,12 +2,14 @@
 
 #include "recorder/video/video_recorder.h"
 #include "recorder/encoder/av_encoder.h"
+#include "renderer/d3d11_context.h"
+
 #include <Windows.h>
 
 class WindowsGraphicsCaptureImpl;
 class WindowsGraphicsCaptureItf: public service::recorder::video::VideoRecorder {
 public:
-    WindowsGraphicsCaptureItf(HWND window);
+    WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context);
     ~WindowsGraphicsCaptureItf();
 
     void startRecording(size_t fps) override;
@@ -19,5 +21,5 @@ private:
 };
 
 extern "C" {
-__declspec(dllexport) service::recorder::video::VideoRecorder* __cdecl createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window);
+__declspec(dllexport) service::recorder::video::VideoRecorder* __cdecl createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window, service::renderer::D3d11SharedContext* context);
 }

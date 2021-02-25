@@ -97,6 +97,15 @@ void D3d11Shader::initialize(ID3D11Device* device) {
     if (hr != S_OK) {
         THROW_ERROR("Failed to create sampler state: " << hr);
     }
+
+    D3D11_BUFFER_DESC constantDesc = { 0 };
+    constantDesc.Usage = D3D11_USAGE_DEFAULT;
+    constantDesc.ByteWidth = sizeof(D3d11ShaderConstants);
+    constantDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    hr = device->CreateBuffer(&constantDesc, nullptr, &_constants);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to create constant buffer: " << hr);
+    }
 }
 
 D3d11Shader::~D3d11Shader() {
@@ -119,17 +128,32 @@ D3d11Shader::~D3d11Shader() {
         _inputLayout->Release();
         _inputLayout = nullptr;
     }
+
+    if (_constants) {
+        _constants->Release();
+        _constants = nullptr;
+    }
 }
 
 void D3d11Shader::setTexture(ID3D11DeviceContext* context, unsigned int texIndex, ID3D11ShaderResourceView* texture) {
     context->PSSetShaderResources(texIndex, 1, &texture);
 }
 
-void D3d11Shader::render(ID3D11DeviceContext* context) {
+void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
     context->IASetInputLayout(_inputLayout);
     context->VSSetShader(_vertexShader, nullptr, 0);
     context->PSSetShader(_pixelShader, nullptr, 0);
     context->PSSetSamplers(0, 1, &_sampler);
+
+    if (model->hasTexture()) {
+        setTexture(context, 0, model->texture());
+    }
+
+    D3d11ShaderConstants constants;
+    constants.modelXform = model->getModelXform();
+
+    context->UpdateSubresource(_constants, 0, nullptr, &constants, 0, 0);
+    context->VSSetConstantBuffers(0, 1, &_constants);
 }
 
 }

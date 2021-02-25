@@ -1,6 +1,7 @@
 #pragma once
 
 #include "recorder/video/video_recorder.h"
+#include "renderer/d3d11_context.h"
 
 #ifdef _WIN32
 
@@ -14,7 +15,7 @@ namespace service::recorder::video {
 
 class DxgiDesktopRecorder : public VideoRecorder {
 public:
-    explicit DxgiDesktopRecorder(HWND window);
+    DxgiDesktopRecorder(HWND window, service::renderer::D3d11SharedContext* shared);
     ~DxgiDesktopRecorder();
 
     void startRecording(size_t fps) override;
@@ -25,6 +26,7 @@ private:
     HWND _window;
     bool _recording = false;    
     std::thread _recordingThread;
+    service::renderer::D3d11SharedContext* _shared = nullptr;
 
     void initialize();
     void reacquireDuplicationInterface();
@@ -35,14 +37,13 @@ private:
     std::mutex _encoderMutex;
 
     // DX11 and DXGI related pointers.
-    ID3D11Device* _device = nullptr;
-    ID3D11DeviceContext* _context = nullptr;
     IDXGIOutputDuplication* _dupl = nullptr;
-    ID3D11Texture2D* _deviceTexture = nullptr;
     IDXGIOutput1* _dxgiOutput1 = nullptr;
+
+    DXGI_MODE_ROTATION _rotation;
 };
 
-bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid);
+bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid, service::renderer::D3d11SharedContext* shared);
 
 }
 

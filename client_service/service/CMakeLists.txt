@@ -16,6 +16,7 @@ SET(SRCS
     src/recorder/video/windows_graphics_capture.cpp
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
+    src/recorder/encoder/ffmpeg_video_swap_chain.cpp
     src/recorder/image/image.cpp
     src/recorder/image/d3d_image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
@@ -30,6 +31,7 @@ SET(SRCS
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
+    src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
     src/renderer/d3d11_shader.cpp
@@ -55,6 +57,7 @@ SET(HEADERS
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
+    src/recorder/encoder/ffmpeg_video_swap_chain.h
     src/recorder/image/image.h
     src/recorder/image/d3d_image.h
     src/recorder/audio/audio_recorder.h
@@ -73,6 +76,7 @@ SET(HEADERS
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
+    src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h
     src/renderer/d3d11_shader.h
@@ -159,6 +163,8 @@ if(WIN32)
         libwgc/wgc.cpp
         src/recorder/image/image.cpp
         src/recorder/image/image.h
+        src/renderer/d3d11_context.h
+        src/renderer/d3d11_context.cpp
     )
 
     target_include_directories(libwgc

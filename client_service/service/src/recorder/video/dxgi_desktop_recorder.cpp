@@ -2,6 +2,7 @@
 
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/image/image.h"
+#include "recorder/image/d3d_image.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "system/win32/hwnd_utils.h"
@@ -10,6 +11,7 @@
 
 #define LOG_FRAME_TIME 0
 #ifdef _WIN32
+#include <VersionHelpers.h>
 
 using namespace std::chrono_literals;
 
@@ -17,27 +19,9 @@ namespace service::recorder::video {
 
 using TickClock = std::chrono::high_resolution_clock;
 
-DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window):
-    _window(window) {
-
-    // Initialize DirectX 11 and get pointers to various DXGI interfaces so that
-    // we can get access to the desktop duplication API.
-    HRESULT hr = D3D11CreateDevice(
-        nullptr,
-        D3D_DRIVER_TYPE_HARDWARE,
-        nullptr,
-        D3D11_CREATE_DEVICE_SINGLETHREADED | D3D11_CREATE_DEVICE_BGRA_SUPPORT,
-        nullptr,
-        0,
-        D3D11_SDK_VERSION,
-        &_device,
-        nullptr,
-        &_context
-    );
-
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create D3D11 device.");
-    }
+DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, service::renderer::D3d11SharedContext* shared):
+    _window(window),
+    _shared(shared) {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
     initialize();
@@ -57,26 +41,11 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
         _dxgiOutput1->Release();
         _dxgiOutput1 = nullptr;
     }
-
-    if (!!_deviceTexture) {
-        _deviceTexture->Release();
-        _deviceTexture = nullptr;
-    }
-
-    if (!!_context) {
-        _context->Release();
-        _context = nullptr;
-    }
-
-    if (!!_device) {
-        _device->Release();
-        _device = nullptr;
-    }
 }
 
 void DxgiDesktopRecorder::initialize() {
     IDXGIDevice* dxgiDevice = nullptr;
-    HRESULT hr = _device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    HRESULT hr = _shared->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIDevice.");
     }
@@ -123,6 +92,7 @@ void DxgiDesktopRecorder::initialize() {
     if (hr != S_OK || !dxgiOutput) {
         THROW_ERROR("Failed to get IDXGIOutput.");
     }
+    _rotation = outputDesc.Rotation;
 
     hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&_dxgiOutput1);
     if (hr != S_OK) {
@@ -138,18 +108,13 @@ void DxgiDesktopRecorder::initialize() {
     sharedDesc.ArraySize = 1;
     sharedDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     sharedDesc.SampleDesc.Count = 1;
-    sharedDesc.Usage = D3D11_USAGE_STAGING;
+    sharedDesc.Usage = D3D11_USAGE_DEFAULT;
     sharedDesc.BindFlags = 0;
-    sharedDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    sharedDesc.CPUAccessFlags = 0;
     sharedDesc.MiscFlags = 0;
 
     _width = static_cast<size_t>(sharedDesc.Width);
     _height = static_cast<size_t>(sharedDesc.Height);
-
-    hr = _device->CreateTexture2D(&sharedDesc, nullptr, &_deviceTexture);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create device texture: " << hr);
-    }
 
     dxgiOutput->Release();
 }
@@ -160,7 +125,7 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
         _dupl = nullptr;        
     }
 
-    HRESULT hr = _dxgiOutput1->DuplicateOutput(_device, &_dupl);
+    HRESULT hr = _dxgiOutput1->DuplicateOutput(_shared->device(), &_dupl);
     if (hr != S_OK) {
         THROW_ERROR("Failed to duplicate output.");
     }
@@ -176,7 +141,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
     _recording = true;
     _recordingThread = std::thread([this, nsPerFrame](){ 
-        service::recorder::image::Image frame;
+        service::recorder::image::D3dImage frame(_shared);
         frame.initializeImage(_width, _height);
 
         while (_recording) {
@@ -247,37 +212,15 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                     continue;
                 }
 
-                // TODO: More efficient copy using information about which parts of the image
-                // are dirty/moved?
-                _context->CopyResource(_deviceTexture, tex);
+                frame.copyFromGpu(tex, _rotation);
                 tex->Release();
-
-                // Read from the texture onto the CPU and then copy it into our image buffer
-                // to send to the encoder.
-                D3D11_MAPPED_SUBRESOURCE mappedData;
-                hr = _context->Map(_deviceTexture, 0, D3D11_MAP_READ, 0, &mappedData);
-                if (hr != S_OK) {
-                    LOG_INFO("DXGI FAILED TO MAP TEXTURE: " << hr << std::endl);
-                    continue;
-                }
-
-                const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
-                uint8_t* dst = frame.buffer();
-
-                for (size_t r = 0; r < _height; ++r) {
-                    assert(frame.numBytesPerRow() <= mappedData.RowPitch);
-                    std::memcpy(dst, src, frame.numBytesPerRow());
-                    src += mappedData.RowPitch;
-                    dst += frame.numBytesPerRow();
-                }
-                _context->Unmap(_deviceTexture, 0);
             }
 
             const auto sendToEncoderTm = TickClock::now();
             {
                 std::lock_guard<std::mutex> guard(_encoderMutex);
                 if (_activeEncoder) {
-                    _activeEncoder->addVideoFrame(frame);
+                    _activeEncoder->addVideoFrame(frame.rawTexture());
                 }
             }
 
@@ -310,7 +253,12 @@ void DxgiDesktopRecorder::stopRecording() {
     }
 }
 
-bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
+bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid, service::renderer::D3d11SharedContext* shared) {
+    if (!IsWindows8OrGreater()) {
+        LOG_INFO("Reject DXGI due to < Windows 8." << std::endl);
+        return false;
+    }
+
     if (info.isWindowed) {
         LOG_INFO("Rejecting DXGI due to windowed mode." << std::endl);
         return false;
@@ -323,7 +271,7 @@ bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindo
     }
 
     try {
-        output.reset(new DxgiDesktopRecorder(wnd));
+        output.reset(new DxgiDesktopRecorder(wnd, shared));
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to enable Dxgi Desktop Recording: " << ex.what() << std::endl);
         return false;

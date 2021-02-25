@@ -1,3 +1,6 @@
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include "renderer/d3d11_model.h"
 #include "shared/errors/error.h"
 
@@ -44,6 +47,8 @@ D3d11Model::D3d11Model(
             THROW_ERROR("Failed to create index buffer.");
         }
     }
+
+    _modelXform = XMMatrixIdentity();
 }
 
 D3d11Model::~D3d11Model() {
@@ -82,35 +87,51 @@ void D3d11Model::freeShaderResource() {
 }
 
 void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture) {
-    if (texture == _srcTexture) {
-        return;
-    }
-    freeShaderResource();
-    _srcTexture = texture;
-
+    bool needRecreate = false;
     D3D11_TEXTURE2D_DESC textureDesc;
-    _srcTexture->GetDesc(&textureDesc);
-    textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-    textureDesc.Usage = D3D11_USAGE_DEFAULT;
-    textureDesc.MiscFlags = 0;
-    textureDesc.CPUAccessFlags = 0;
+    texture->GetDesc(&textureDesc);
 
-    HRESULT hr = device->CreateTexture2D(&textureDesc, nullptr, &_shaderTexture);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create shader texture.");
+    if (_shaderTexture) {
+        D3D11_TEXTURE2D_DESC shaderDesc;
+        _shaderTexture->GetDesc(&shaderDesc);
+
+        needRecreate = 
+            (textureDesc.Width != shaderDesc.Width) ||
+            (textureDesc.Height != shaderDesc.Height) ||
+            (textureDesc.Format != shaderDesc.Format);
+    } else {
+        needRecreate = true;
     }
-    context->CopyResource(_shaderTexture, _srcTexture);
 
-    D3D11_SHADER_RESOURCE_VIEW_DESC desc;
-    desc.Format = textureDesc.Format;
-    desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-    desc.Texture2D.MostDetailedMip = 0;
-    desc.Texture2D.MipLevels = 1;
+    if (needRecreate) {
+        freeShaderResource();
 
-    hr = device->CreateShaderResourceView(_shaderTexture, &desc, &_shaderResource);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create shader resource view.");
+        textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        textureDesc.Usage = D3D11_USAGE_DEFAULT;
+        textureDesc.MiscFlags = 0;
+        textureDesc.CPUAccessFlags = 0;
+
+        HRESULT hr = device->CreateTexture2D(&textureDesc, nullptr, &_shaderTexture);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create shader texture.");
+        }
+
+        D3D11_SHADER_RESOURCE_VIEW_DESC desc;
+        desc.Format = textureDesc.Format;
+        desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+        desc.Texture2D.MostDetailedMip = 0;
+        desc.Texture2D.MipLevels = 1;
+
+        hr = device->CreateShaderResourceView(_shaderTexture, &desc, &_shaderResource);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create shader resource view.");
+        }
     }
+    context->CopyResource(_shaderTexture, texture);
+}
+
+void D3d11Model::setZRotation(float degrees) {
+    _modelXform = XMMatrixRotationZ(degrees * M_PI / 180.f);
 }
 
 D3d11ModelPtr createFullScreenQuad(ID3D11Device* device) {

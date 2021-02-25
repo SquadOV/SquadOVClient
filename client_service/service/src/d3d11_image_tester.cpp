@@ -31,16 +31,18 @@ int main(int argc, char** argv) {
     const auto width = vm["width"].as<unsigned int>();
     const auto height = vm["height"].as<unsigned int>();
 
-    service::recorder::image::D3dImage outputImage;
-    outputImage.initializeImage(width, height);
+    service::renderer::D3d11SharedContext shared;
+
+    service::recorder::image::D3dImage outputImage(&shared);
 
     // Setup D3D11 device/context for use in the GPU pipeline.
-    service::renderer::D3d11SharedContext* context = service::renderer::getSharedD3d11Context();
     ID3D11Texture2D* copyTexture = nullptr;
 
     if (mode == "CPU") {
+        outputImage.initializeImage(width, height);
         outputImage.copyFromCpu(image);
     } else {
+        outputImage.initializeImage(height, width);
         // Manually convert the image to a direct3D 11 texture.
         D3D11_SUBRESOURCE_DATA resource;
         resource.pSysMem = image.buffer();
@@ -59,12 +61,12 @@ int main(int argc, char** argv) {
         copyDesc.CPUAccessFlags = 0;
         copyDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
-        if (context->device()->CreateTexture2D(&copyDesc, &resource, &copyTexture) != S_OK) {
+        if (shared.device()->CreateTexture2D(&copyDesc, &resource, &copyTexture) != S_OK) {
             LOG_ERROR("Failed to create copy texture."<< std::endl);
             return 1;
         }
 
-        outputImage.copyFromGpu(copyTexture);
+        outputImage.copyFromGpu(copyTexture, DXGI_MODE_ROTATION_ROTATE90);
     }
 
     outputImage.cpuImage().saveToFile(outputPath);
