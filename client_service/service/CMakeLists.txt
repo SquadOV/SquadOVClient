@@ -35,6 +35,7 @@ SET(SRCS
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
     src/renderer/d3d11_shader.cpp
+    src/renderer/d3d11_video_processor.cpp
 )
 
 SET(HEADERS
@@ -80,6 +81,7 @@ SET(HEADERS
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h
     src/renderer/d3d11_shader.h
+    src/renderer/d3d11_video_processor.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)

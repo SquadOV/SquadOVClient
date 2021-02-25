@@ -14,6 +14,7 @@
 
 #include "recorder/image/image.h"
 
+#include <atomic>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -38,8 +39,7 @@ private:
     service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
     std::mutex _encoderMutex;
 
-    std::mutex _startStopMutex;
-    bool _running = false;
+    std::atomic_bool _running = false;
 
     // D3D stuff
     winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice _rtDevice = nullptr;
@@ -108,21 +108,23 @@ WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::ren
 }
 
 void WindowsGraphicsCaptureImpl::stopRecording() {
-    std::lock_guard<std::mutex> guard(_startStopMutex);
     _running = true;
     _frameArrived.revoke();
     _session.Close();
     _framePool.Close();
     _framePool = nullptr;
     _session = nullptr;
-    _item = nullptr;   
+    _item = nullptr;
+
+    // Need this to make sure we don't destroy the object with an active encoder mutex.
+    std::lock_guard<std::mutex> guard(_encoderMutex);
+    _activeEncoder = nullptr;
 }
 
 void WindowsGraphicsCaptureImpl::onFrameArrived(
     const winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool& sender,
     const winrt::Windows::Foundation::IInspectable& args) {
 
-    std::lock_guard<std::mutex> guard(_startStopMutex);
     if (!_running) {
         return;
     }
@@ -158,7 +160,6 @@ void WindowsGraphicsCaptureImpl::setActiveEncoder(service::recorder::encoder::Av
 }
 
 void WindowsGraphicsCaptureImpl::startRecording(size_t fps) {
-    std::lock_guard<std::mutex> guard(_startStopMutex);
     _running = true;
     _session.StartCapture();
 }

@@ -358,6 +358,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
                 auto immediate = d3d.immediateContext();
                 d3dContext->device = d3d.device();
                 d3dContext->device_context = immediate.context();
+
+                // This is needed to pass the ownership to ffmpeg.
                 d3d.device()->AddRef();
                 immediate.context()->AddRef();
 
@@ -373,11 +375,16 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
                 }
 
                 AVHWFramesContext* frameContext = reinterpret_cast<AVHWFramesContext*>(frameContextRef->data);
+                AVD3D11VAFramesContext* d3dFrameContext = reinterpret_cast<AVD3D11VAFramesContext*>(frameContext->hwctx);
+
                 frameContext->format = _vcodecContext->pix_fmt;
-                frameContext->sw_format = AV_PIX_FMT_YUV420P;
+                frameContext->sw_format = AV_PIX_FMT_NV12;
                 frameContext->width = _vcodecContext->width;
                 frameContext->height = _vcodecContext->height;
                 frameContext->initial_pool_size = 1;
+
+                d3dFrameContext->BindFlags = D3D11_BIND_RENDER_TARGET;
+                d3dFrameContext->MiscFlags = D3D11_RESOURCE_MISC_SHARED;
 
                 if (av_hwframe_ctx_init(frameContextRef) < 0) {
                     av_buffer_unref(&hwContextRef);
@@ -441,8 +448,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     } else {
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
-    _videoSwapChain->initialize(_vcodecContext);
     _videoSwapChain->initializeGpuSupport(service::renderer::getSharedD3d11Context());
+    _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
 

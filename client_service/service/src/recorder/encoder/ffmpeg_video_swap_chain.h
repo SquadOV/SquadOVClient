@@ -3,6 +3,7 @@
 #include "recorder/image/image.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
+#include "renderer/d3d11_video_processor.h"
 
 #include <memory>
 #include <mutex>
@@ -24,7 +25,7 @@ class FfmpegVideoSwapChain {
 public:
     virtual ~FfmpegVideoSwapChain() {}
 
-    virtual void initialize(AVCodecContext* context) = 0;
+    virtual void initialize(AVCodecContext* context, AVBufferRef* hwFrameCtx) = 0;
     void initializeGpuSupport(service::renderer::D3d11SharedContext* shared) { _shared = shared; }
     virtual AVFrame* getFrontBufferFrame() = 0;
     virtual service::recorder::image::Image cpuCopyFrontBuffer() const = 0;
@@ -49,7 +50,7 @@ class FfmpegCPUVideoSwapChain: public FfmpegVideoSwapChain {
 public:
     ~FfmpegCPUVideoSwapChain();
 
-    void initialize(AVCodecContext* context) override;
+    void initialize(AVCodecContext* context, AVBufferRef* hwFrameCtx) override;
 
     AVFrame* getFrontBufferFrame() override;
     service::recorder::image::Image cpuCopyFrontBuffer() const override;
@@ -65,6 +66,7 @@ public:
 #endif
 private:
     AVFrame* _frame = nullptr;
+    mutable std::mutex _frontMutex;
     service::recorder::image::ImagePtr _frontBuffer;
     SwsContext* _frontSws = nullptr;
 
@@ -78,8 +80,9 @@ private:
 class FfmpegGPUVideoSwapChain: public FfmpegVideoSwapChain {
 public:
     static bool isSupported();
+    ~FfmpegGPUVideoSwapChain();
     
-    void initialize(AVCodecContext* context) override;
+    void initialize(AVCodecContext* context, AVBufferRef* hwFrameCtx) override;
     AVFrame* getFrontBufferFrame() override;
     service::recorder::image::Image cpuCopyFrontBuffer() const override;
     bool hasValidFrontBuffer() const override;
@@ -92,6 +95,18 @@ public:
 #ifdef _WIN32
     void receiveGpuFrame(ID3D11Texture2D* frame) override;
 #endif
+
+private:
+    AVFrame* _frame = nullptr;
+    mutable std::mutex _frontMutex;
+    service::recorder::image::D3dImagePtr _frontBuffer;
+
+    mutable std::mutex _backMutex;
+    service::recorder::image::D3dImagePtr _backBuffer;
+    bool _backBufferDirty = false;
+
+    void reinitBackBuffer(size_t width, size_t height);
+    service::renderer::D3d11VideoProcessorPtr _processor;
 };
 
 }

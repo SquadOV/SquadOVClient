@@ -4,6 +4,7 @@
 
 #include <Windows.h>
 #include <d3d11.h>
+#include <memory>
 #include "recorder/image/image.h"
 #include "renderer/d3d11_renderer.h"
 
@@ -49,6 +50,8 @@ private:
     void refreshOutputTexture(size_t width, size_t height);
     ID3D11Texture2D* _outputTexture = nullptr;
 };
+
+using D3dImagePtr = std::unique_ptr<D3dImage>;
 
 }
 #endif

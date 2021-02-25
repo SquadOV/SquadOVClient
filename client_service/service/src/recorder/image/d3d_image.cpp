@@ -110,10 +110,10 @@ void D3dImage::copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation) 
         (imageDesc.Format == textureDesc.Format) &&
         (rotation == DXGI_MODE_ROTATION_IDENTITY || rotation == DXGI_MODE_ROTATION_UNSPECIFIED);
 
-    //if (canCopy) {
-    //    auto immediate = _shared->immediateContext();
-    //    immediate.context()->CopyResource(_hwTexture, image);
-    //} else {
+    if (canCopy) {
+        auto immediate = _shared->immediateContext();
+        immediate.context()->CopyResource(_hwTexture, image);
+    } else {
         _fullscreenQuad->setTexture(_shared->device(), _context, image);
 
         switch (rotation) {
@@ -131,7 +131,7 @@ void D3dImage::copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation) 
             break;
         }
 
-        // Need to do a pre-emptive execute here since we a separate deferred context
+        // Need to do a pre-emptive execute here since we use a separate deferred context
         // from the renderer's deferred context to load up the input texture.
         _shared->execute(_context);
 
@@ -139,7 +139,7 @@ void D3dImage::copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation) 
             LOG_ERROR("Failed to render textured quad to render target..." << std::endl);
             return;
         }
-    //}
+    }
 }
 
 ID3D11Texture2D* D3dImage::createStagingTexture(size_t width, size_t height, bool forCpu) {
