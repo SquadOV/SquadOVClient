@@ -17,6 +17,7 @@ SET(SRCS
     src/recorder/encoder/ffmpeg_av_encoder.cpp
     src/recorder/encoder/ffmpeg_utils.c
     src/recorder/image/image.cpp
+    src/recorder/image/d3d_image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
     src/recorder/audio/device.cpp
     src/recorder/pipe/pipe.cpp
@@ -29,6 +30,9 @@ SET(SRCS
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
+    src/renderer/d3d11_model.cpp
+    src/renderer/d3d11_renderer.cpp
+    src/renderer/d3d11_shader.cpp
 )
 
 SET(HEADERS
@@ -52,6 +56,7 @@ SET(HEADERS
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
     src/recorder/image/image.h
+    src/recorder/image/d3d_image.h
     src/recorder/audio/audio_recorder.h
     src/recorder/audio/audio_packet_view.h
     src/recorder/audio/audio_packet_properties.h
@@ -68,6 +73,9 @@ SET(HEADERS
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
+    src/renderer/d3d11_model.h
+    src/renderer/d3d11_renderer.h
+    src/renderer/d3d11_shader.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
@@ -123,7 +131,16 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             TARGET ${EXE_NAME}
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:${EXE_NAME}>
-            COMMENT "Copying DLLs..."
+            COMMENT "Copying DLLs...\n"
+        )
+
+        file(GLOB HLSL_SHADERS "${CMAKE_SOURCE_DIR}/client_service/service/src/renderer/shaders/*.fxc")
+        add_custom_command(
+            TARGET ${EXE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${EXE_NAME}>/shaders
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${HLSL_SHADERS} $<TARGET_FILE_DIR:${EXE_NAME}>/shaders
+            COMMENT "Copying Shaders...\n"
         )
 
         target_link_libraries(${EXE_NAME}
@@ -158,6 +175,7 @@ if(WIN32)
         squadov_shared
         date-tz
         png
+        dbghelp
     )
 endif()
 
@@ -165,3 +183,4 @@ CREATE_SERVICE_EXECUTABLE(squadov_client_service "src/service.cpp" "src/squadov_
 CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_clipper.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")

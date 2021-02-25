@@ -1,0 +1,69 @@
+#pragma once
+
+#ifdef _WIN32
+
+#include <Windows.h>
+#include <d3d11.h>
+#include <mutex>
+#include <memory>
+#include <vector>
+#include "renderer/d3d11_model.h"
+#include "renderer/d3d11_shader.h"
+
+namespace service::renderer {
+
+class D3d11SharedContext {
+public:
+    D3d11SharedContext(ID3D11Device* device, ID3D11DeviceContext* context);
+    ~D3d11SharedContext();
+
+    ID3D11Device* device() const { return _device; }
+    ID3D11DeviceContext* context() const { return _context; }
+
+    void execute(ID3D11CommandList* list);
+private:
+    ID3D11Device* _device = nullptr;
+    ID3D11DeviceContext* _context = nullptr;
+    std::mutex _contextMutex;
+};
+
+using D3d11SharedContextPtr = std::unique_ptr<D3d11SharedContext>;
+D3d11SharedContext* getSharedD3d11Context();
+
+class D3d11Renderer {
+public:
+    D3d11Renderer();
+    ~D3d11Renderer();
+
+    void initializeRenderer(size_t width, size_t height);
+    void addModelToScene(const D3d11ModelPtr& model);
+
+    ID3D11Device* device() const { return _shared->device(); }
+    ID3D11DeviceContext* context() const { return _shared->context(); }
+
+    ID3D11Texture2D* createTexture2D(const D3D11_TEXTURE2D_DESC& desc);
+    ID3D11RenderTargetView* createRenderTarget(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC& desc);
+
+    bool renderSceneToRenderTarget(ID3D11RenderTargetView* target);
+
+private:
+    bool renderScene();
+
+    D3d11SharedContext* _shared = nullptr;
+    ID3D11DeviceContext* _context = nullptr;
+    D3D11_VIEWPORT _viewport;
+
+    void refreshRasterizerState();
+    ID3D11RasterizerState* _state = nullptr;
+    std::mutex _renderMutex;
+
+    // Scene
+    std::vector<D3d11ModelPtr> _models;
+    D3d11ShaderPtr _shader;
+};
+
+using D3d11RendererPtr = std::unique_ptr<D3d11Renderer>;
+
+}
+
+#endif

@@ -81,6 +81,7 @@ public:
 
     const std::string& streamUrl() const { return _streamUrl; }
     void initializeVideoStream(size_t fps, size_t width, size_t height);
+    VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
     void getVideoDimensions(size_t& width, size_t& height);
     service::recorder::image::Image getFrontBuffer() const;
@@ -103,6 +104,7 @@ private:
     std::string _streamUrl;
 
     // AV Output
+    VideoStreamContext _videoStreamContext = VideoStreamContext::CPU;
     AVOutputFormat* _avformat = nullptr;
     AVFormatContext* _avcontext = nullptr;
     std::mutex _encodeMutex;
@@ -321,16 +323,21 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
 
 void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
-    const std::string encodersToUse[] = {
-        "h264_amf",
-        "h264_nvenc",
-        "libopenh264"
+    struct EncoderChoice {
+        std::string name;
+        VideoStreamContext ctx;
+    };
+
+    const EncoderChoice encodersToUse[] = {
+        {"h264_amf", VideoStreamContext::GPU },
+        {"h264_nvenc", VideoStreamContext::GPU },
+        {"libopenh264", VideoStreamContext::CPU }
     };
 
     bool foundEncoder = false;
     for (const auto& enc : encodersToUse) {
         try {
-            _vcodec = avcodec_find_encoder_by_name(enc.c_str());
+            _vcodec = avcodec_find_encoder_by_name(enc.name.c_str());
             if (!_vcodec) {
                 THROW_ERROR("Failed to find the video codec.");
             }
@@ -373,7 +380,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             av_dict_free(&options);
 
             foundEncoder = true;
-            LOG_INFO("FFmpeg Found Encoder: " << enc << std::endl);
+            _videoStreamContext = enc.ctx;
+            LOG_INFO("FFmpeg Found Encoder: " << enc.name << std::endl);
             break;
         } catch (...) {
             avcodec_free_context(&_vcodecContext);
@@ -855,6 +863,10 @@ void FfmpegAvEncoder::addVideoFrame(const service::recorder::image::Image& frame
 
 void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height) {
     _impl->initializeVideoStream(fps, width, height);
+}
+
+VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
+    return _impl->getVideoStreamContext();
 }
 
 service::recorder::image::Image FfmpegAvEncoder::getFrontBuffer() const {

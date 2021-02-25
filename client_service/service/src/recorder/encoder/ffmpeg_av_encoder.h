@@ -12,6 +12,7 @@ public:
 
     const std::string& streamUrl() const override;
     void initializeVideoStream(size_t fps, size_t width, size_t height) override;
+    VideoStreamContext getVideoStreamContext() const override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;
     service::recorder::image::Image getFrontBuffer() const override;

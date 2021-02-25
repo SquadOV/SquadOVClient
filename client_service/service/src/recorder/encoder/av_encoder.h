@@ -16,12 +16,19 @@ struct AudioStreamProperties {
     service::recorder::audio::AudioPacketProperties props;
 };
 
+enum class VideoStreamContext {
+    CPU,
+    GPU
+};
+
 class AvEncoder {
 public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
     virtual void initializeVideoStream(size_t fps, size_t width, size_t height) = 0;
+    virtual VideoStreamContext getVideoStreamContext() const = 0;
+    
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;
     virtual service::recorder::image::Image getFrontBuffer() const = 0;

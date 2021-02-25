@@ -2,6 +2,8 @@
 
 #include "shared/filesystem/utility.h"
 #include <codecvt>
+#include <fstream>
+#include <iterator>
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 
@@ -72,6 +74,18 @@ void pruneFilesystemPaths(std::vector<std::filesystem::path>& paths, int maxKeep
             fs::remove(paths[i]);
         }
     }
+}
+
+void readBinaryData(std::vector<char>& data, const std::filesystem::path& from) {
+    std::ifstream stream(from, std::ios_base::binary);
+    stream.unsetf(std::ios::skipws);
+
+    stream.seekg(0, std::ios::end);
+    const std::streampos fileEnd = stream.tellg();
+    stream.seekg(0, std::ios::beg);
+
+    data.reserve(fileEnd);
+    data.insert(data.begin(), std::istream_iterator<char>(stream), std::istream_iterator<char>());
 }
 
 }

@@ -4,6 +4,10 @@
 #include <filesystem>
 #include <memory>
 
+#ifdef _WIN32
+#include <d3d11.h>
+#endif
+
 namespace service::recorder::image {
 
 // General representation of an BGRA image that we'd want to use in our videos.
@@ -22,7 +26,13 @@ public:
     void initializeImage(size_t width, size_t height);
     void copyFrom(const Image& img);
     void saveToFile(const std::filesystem::path& path) const;
+    void loadFromFile(const std::filesystem::path& path);
     bool isInit() const { return _width > 0 && _height > 0; }
+
+#ifdef _WIN32
+    void loadFromD3d11Texture(ID3D11DeviceContext* context, ID3D11Texture2D* texture);
+    void loadFromD3d11TextureWithStaging(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture);
+#endif
 
     void fillAlpha(uint8_t v);
 
