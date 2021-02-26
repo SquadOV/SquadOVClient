@@ -199,15 +199,13 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
 
             const auto postAcquireTm = TickClock::now();
-
+            
             if (!reuseOldFrame) {
                 // I'm not sure why it returns a ID3D11Texture2D but that's what
                 // Microsoft's DXGI desktop duplication example does.
                 // See: https://github.com/microsoft/Windows-classic-samples/blob/1d363ff4bd17d8e20415b92e2ee989d615cc0d91/Samples/DXGIDesktopDuplication/cpp/DuplicationManager.cpp
                 ID3D11Texture2D* tex = nullptr;
                 hr = desktopResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&tex);
-                desktopResource->Release();
-                desktopResource = nullptr;
                 if (hr != S_OK) {
                     LOG_INFO("DXGI FAILED TO QUERY INTERFACE: " << hr << std::endl);
                     continue;
@@ -221,6 +219,11 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                 tex->Release();
             }
 
+            if (desktopResource) {
+                desktopResource->Release();
+                desktopResource = nullptr;
+            }
+
             const auto sendToEncoderTm = TickClock::now();
             {
                 std::lock_guard<std::mutex> guard(_encoderMutex);
@@ -230,7 +233,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             }
 
             const auto postEncoderTm = TickClock::now();
-
+            
 #if LOG_FRAME_TIME
             const auto timeToAcquireNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postAcquireTm - startFrameTm).count();
             const auto copyNs = std::chrono::duration_cast<std::chrono::nanoseconds>(sendToEncoderTm - postAcquireTm).count();
