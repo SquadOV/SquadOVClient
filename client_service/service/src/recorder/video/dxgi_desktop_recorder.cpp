@@ -134,8 +134,15 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
     _recording = true;
     _recordingThread = std::thread([this, nsPerFrame](){ 
-        service::recorder::image::D3dImage frame(_shared);
-        frame.initializeImage(_width, _height);
+        // We need two frames here because DirectX really doesn't like it when we try to copy
+        // the desktop texture from one device to another. So we stage it on another texture
+        // we have more control over and then copy it over to the output frame that we send to the encoder.
+        service::recorder::image::D3dImage stagingFrame(&_self);
+        stagingFrame.initializeImage(_width, _height, true);
+
+        service::recorder::image::D3dImage outputFrame(_shared);
+        outputFrame.initializeImage(_width, _height);
+
         int count = 0;
 
         while (_recording) {
@@ -206,8 +213,10 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                     continue;
                 }
 
-                service::renderer::SharedD3d11TextureHandle handle(_shared, tex, false);
-                frame.copyFromGpu(handle.texture(), _rotation);
+                stagingFrame.copyFromGpu(tex, _rotation);
+
+                service::renderer::SharedD3d11TextureHandle handle(_shared, stagingFrame.rawTexture(), false);
+                outputFrame.copyFromGpu(handle.texture());
 
                 tex->Release();
             }
@@ -216,7 +225,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             {
                 std::lock_guard<std::mutex> guard(_encoderMutex);
                 if (_activeEncoder) {
-                    _activeEncoder->addVideoFrame(frame.rawTexture());
+                    _activeEncoder->addVideoFrame(outputFrame.rawTexture());
                 }
             }
 

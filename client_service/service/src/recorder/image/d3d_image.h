@@ -16,7 +16,7 @@ public:
     ~D3dImage();
 
     bool isInit() const { return _init; };
-    void initializeImage(size_t width, size_t height);
+    void initializeImage(size_t width, size_t height, bool shared = false);
     void copyFromCpu(const Image& image);
     void copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation = DXGI_MODE_ROTATION_IDENTITY);
 

@@ -394,6 +394,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
                 _vcodecContext->hw_device_ctx = hwContextRef;
                 _vcodecContext->hw_frames_ctx = frameContextRef;
+                _vcodecContext->colorspace = AVCOL_SPC_BT709;
             }
 
             // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.

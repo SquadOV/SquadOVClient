@@ -34,7 +34,7 @@ void D3dImage::releaseTextureIfExists() {
     }
 }
 
-void D3dImage::initializeImage(size_t width, size_t height) {
+void D3dImage::initializeImage(size_t width, size_t height, bool shared) {
     releaseTextureIfExists();
 
     _width = width;
@@ -51,7 +51,7 @@ void D3dImage::initializeImage(size_t width, size_t height) {
     sharedDesc.Usage = D3D11_USAGE_DEFAULT;
     sharedDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
     sharedDesc.CPUAccessFlags = 0;
-    sharedDesc.MiscFlags = 0;
+    sharedDesc.MiscFlags = shared ? D3D11_RESOURCE_MISC_SHARED : 0;
 
     _hwTexture = _renderer->createTexture2D(sharedDesc);
     if (!_hwTexture) {

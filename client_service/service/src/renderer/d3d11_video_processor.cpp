@@ -136,6 +136,19 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
         if (hr != S_OK) {
             THROW_ERROR("Failed to create video processor.");
         }
+
+        if (_outputCsp != AVCOL_SPC_UNSPECIFIED) {
+            if (_outputCsp == AVCOL_SPC_BT709) {
+                auto immediate = _shared->immediateContext();
+
+                D3D11_VIDEO_PROCESSOR_COLOR_SPACE csp = { 0 };
+                csp.YCbCr_Matrix = 1;
+
+                _vcontext->VideoProcessorSetOutputColorSpace(_processor, &csp);
+            } else {
+                THROW_ERROR("Invalid YUV colorspace.");
+            }
+        }
     }
 
     // Try to reuse video processor outputs as much as possible.

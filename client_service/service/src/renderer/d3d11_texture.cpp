@@ -83,6 +83,8 @@ SharedD3d11TextureHandle::~SharedD3d11TextureHandle() {
         CloseHandle(_frameHandle);
         _frameHandle = nullptr;
     }
+
+    
 }
 
 }

@@ -3,6 +3,10 @@
 #include <memory>
 #include <unordered_map>
 
+extern "C" {
+#include <libavutil/pixfmt.h>
+}
+
 #ifdef _WIN32
 #include "renderer/d3d11_context.h"
 
@@ -15,6 +19,7 @@ public:
 
     bool isSupported(size_t width, size_t height) const;
     void process(ID3D11Texture2D* input, ID3D11Texture2D* output);
+    void setFfmpegColorspace(AVColorSpace csp) { _outputCsp = csp; }
 private:
     D3d11SharedContext* _shared = nullptr;
 
@@ -32,6 +37,9 @@ private:
 
     void freeOutputViews();
     std::unordered_map<ID3D11Texture2D*, ID3D11VideoProcessorOutputView*> _outputViews;
+
+    // Desired color space info
+    AVColorSpace _outputCsp = AVCOL_SPC_UNSPECIFIED;
 };
 
 using D3d11VideoProcessorPtr = std::unique_ptr<D3d11VideoProcessor>;

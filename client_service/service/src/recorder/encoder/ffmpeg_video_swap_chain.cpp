@@ -178,8 +178,9 @@ void FfmpegGPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef* h
         THROW_ERROR("Failed to allocate video frame.");
     }
     
+    _frame->colorspace = context->colorspace;
     _frame->hw_frames_ctx = hwFrameCtx;
-    _frame->format = context->pix_fmt;
+    _frame->format = context->sw_pix_fmt;
     _frame->width = context->width;
     _frame->height = context->height;
     _frame->pts = 0;
@@ -193,6 +194,7 @@ void FfmpegGPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef* h
     }
 
     _processor = std::make_unique<service::renderer::D3d11VideoProcessor>(_shared);
+    _processor->setFfmpegColorspace(_frame->colorspace);
     _frontBuffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
     _backBuffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
 }
@@ -209,6 +211,10 @@ AVFrame* FfmpegGPUVideoSwapChain::getFrontBufferFrame() {
 
         service::renderer::SharedD3d11TextureHandle handle(_shared, frameTexture, true);
         _processor->process(_frontBuffer->rawTexture(), handle.texture());
+
+        // According to MSDN, after we make changes to a shared texture we need to do a flush.
+        auto immediate = _shared->immediateContext();
+        immediate.context()->Flush();
     }
 
     return _frame;
@@ -235,7 +241,6 @@ bool FfmpegGPUVideoSwapChain::hasValidFrontBuffer() const {
 }
 
 bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height) {
-    return false;
     if (!IsWindows8OrGreater()) {
         return false;
     }

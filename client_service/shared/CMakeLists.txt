@@ -37,6 +37,7 @@ SET(HEADERS
     shared/squadov/user.h
     shared/hearthstone/hearthstone_ratings.h
     shared/errors/error.h
+    shared/math.h
 )
 
 add_library(squadov_shared

@@ -16,6 +16,7 @@
 #include "renderer/d3d11_renderer.h"
 #include "system/win32/hwnd_utils.h"
 #include "system/state.h"
+#include "shared/math.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -303,8 +304,8 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
     const auto aspectRatio = static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
-    const auto desiredHeight = _overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY)));
-    const auto desiredWidth = _overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio));
+    const auto desiredHeight = shared::math::forceEven(_overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY))));
+    const auto desiredWidth = shared::math::forceEven(_overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio)));
 
     // Assume that the input recorders have already been created before this point.
     // This is primarily for the audio inputs so we know how many inputs to expect.
