@@ -30,7 +30,7 @@ bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWi
         return false;
     }
 
-    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
+    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
     if (!wnd) {
         LOG_INFO("Rejecting Windows Graphics Capture due to inability to find window." << std::endl);
         return false;

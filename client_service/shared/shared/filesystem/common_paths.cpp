@@ -3,6 +3,10 @@
 #include "shared/errors/error.h"
 #include "shared/env.h"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
 namespace fs = std::filesystem;
 using namespace std::string_literals;
 
@@ -67,6 +71,21 @@ std::filesystem::path getAimlabAppDataFolder() {
 
 std::filesystem::path getHearthstoneAppDataFolder() {
     return getLocalAppDataPath() / fs::path("Blizzard") / fs::path("Hearthstone");
+}
+
+std::filesystem::path getCurrentExeFolder() {
+#ifdef _WIN32
+    static std::filesystem::path path = [](){
+        char path[MAX_PATH];
+        DWORD pathLength = GetModuleFileNameA(NULL, path, MAX_PATH);
+        if (!pathLength) {
+            THROW_ERROR("Failed to get EXE path.");
+        }
+        std::string str(path, pathLength);
+        return std::filesystem::path(str).parent_path();
+    }();
+    return path;
+#endif
 }
 
 }

@@ -24,14 +24,18 @@ D3d11ImmediateContextGuard::~D3d11ImmediateContextGuard() {
     }
 }
 
-D3d11SharedContext::D3d11SharedContext() {
-    UINT flags = 
+D3d11SharedContext::D3d11SharedContext(size_t flags) {
+    UINT deviceFlags = 
 #ifndef NDEBUG
         D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #else
         D3D11_CREATE_DEVICE_BGRA_SUPPORT
 #endif
     ;
+
+    if (flags & CONTEXT_FLAG_USE_ST) {
+        deviceFlags |= D3D11_CREATE_DEVICE_SINGLETHREADED;
+    }
 
     std::vector<D3D_FEATURE_LEVEL> features = {
         D3D_FEATURE_LEVEL_11_0,
@@ -42,7 +46,7 @@ D3d11SharedContext::D3d11SharedContext() {
         D3D_FEATURE_LEVEL_9_1,
     };
 
-    if (IsWindows8OrGreater()) {
+    if (IsWindows8OrGreater() && (flags & CONTEXT_FLAG_USE_D3D11_1)) {
         features.push_back(D3D_FEATURE_LEVEL_11_1);
     }
 
@@ -50,7 +54,7 @@ D3d11SharedContext::D3d11SharedContext() {
         nullptr,
         D3D_DRIVER_TYPE_HARDWARE,
         nullptr,
-        flags,
+        deviceFlags,
         features.data(),
         features.size(),
         D3D11_SDK_VERSION,

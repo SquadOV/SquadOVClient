@@ -13,6 +13,8 @@
 #include <winrt/Windows.Graphics.DirectX.h>
 
 #include "recorder/image/image.h"
+#include "recorder/image/d3d_image.h"
+#include "renderer/d3d11_texture.h"
 
 #include <atomic>
 #include <iostream>
@@ -44,6 +46,8 @@ private:
     // D3D stuff
     winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice _rtDevice = nullptr;
     service::renderer::D3d11SharedContext* _shared = nullptr;
+    service::renderer::D3d11SharedContext _self;
+    service::recorder::image::D3dImage _frame;
 
     // Windows Graphics Capture Stuff
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem _item{ nullptr };
@@ -73,7 +77,8 @@ using TickClock = std::chrono::high_resolution_clock;
 
 WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* shared):
     _window(window),
-    _shared(shared) {
+    _shared(shared),
+    _frame(shared) {
     
     // For debugging print ouf the window name that we're recording from.
     char windowTitle[1024];
@@ -85,7 +90,7 @@ WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::ren
     winrt::com_ptr<::IInspectable> rtDevice;
 
     IDXGIDevice* dxgiDevice = nullptr;
-    HRESULT hr = _shared->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    HRESULT hr = _self.device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIDevice.");
     }
@@ -105,6 +110,7 @@ WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::ren
     _framePool = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(_rtDevice, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, _lastSize);
     _frameArrived = _framePool.FrameArrived(winrt::auto_revoke, { this, &WindowsGraphicsCaptureImpl::onFrameArrived });
     _session = _framePool.CreateCaptureSession(_item);
+    _frame.initializeImage(_lastSize.Width, _lastSize.Height);
 }
 
 void WindowsGraphicsCaptureImpl::stopRecording() {
@@ -135,6 +141,7 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
 
     if (changedSize) {
         _lastSize = frameContentSize;
+        _frame.initializeImage(_lastSize.Width, _lastSize.Height);
     }
 
     auto rtSurface = frame.Surface();
@@ -144,8 +151,11 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
 
     {
         std::lock_guard<std::mutex> guard(_encoderMutex);
+        service::renderer::SharedD3d11TextureHandle handle(_shared, frameSurface.get(), false);
+        _frame.copyFromGpu(handle.texture(), DXGI_MODE_ROTATION_IDENTITY);
+        
         if (_activeEncoder) {
-            _activeEncoder->addVideoFrame(frameSurface.get());
+            _activeEncoder->addVideoFrame(_frame.rawTexture());
         }
     }
 

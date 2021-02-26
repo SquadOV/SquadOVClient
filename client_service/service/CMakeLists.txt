@@ -167,8 +167,18 @@ if(WIN32)
         libwgc/wgc.cpp
         src/recorder/image/image.cpp
         src/recorder/image/image.h
+        src/recorder/image/d3d_image.cpp
+        src/recorder/image/d3d_image.h
         src/renderer/d3d11_context.h
         src/renderer/d3d11_context.cpp
+        src/renderer/d3d11_texture.h
+        src/renderer/d3d11_texture.cpp
+        src/renderer/d3d11_renderer.h
+        src/renderer/d3d11_renderer.cpp
+        src/renderer/d3d11_model.h
+        src/renderer/d3d11_model.cpp
+        src/renderer/d3d11_shader.h
+        src/renderer/d3d11_shader.cpp
     )
 
     target_include_directories(libwgc

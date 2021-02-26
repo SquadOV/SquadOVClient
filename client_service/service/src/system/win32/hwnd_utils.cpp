@@ -4,7 +4,9 @@
 
 #include <thread>
 #include <iostream>
+#include <VersionHelpers.h>
 #include "shared/log/log.h"
+#include "shared/errors/error.h"
 
 namespace service::system::win32 {
 namespace {
@@ -42,7 +44,14 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     auto delay = std::chrono::milliseconds(0);
     const auto step = std::chrono::milliseconds(1000);
 
-    while (delay < maxDelayMs) {
+    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
+    HANDLE pHandle = OpenProcess(access, FALSE, pid);
+    if (!pHandle) {
+        THROW_WIN32_ERROR("Failed to open process for window finding.");
+        return NULL;
+    }
+
+    while (delay < maxDelayMs || maxDelayMs.count() == 0) {
         EnumWindows(enumWindowCallback, (LPARAM)&window);
         if (window.found) {
             char windowTitle[1024];
@@ -53,6 +62,17 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
 
         std::this_thread::sleep_for(step);
         delay += step;
+
+        // If the process stopped then we need to stop looking for its window.
+        DWORD exitCode = 0;
+        auto success = GetExitCodeProcess(pHandle, &exitCode);
+        if (!success) {
+            LOG_WARNING("Failed to obtain exit code - assuming process stopped." << std::endl);
+            break;
+        } else if (exitCode != STILL_ACTIVE) {
+            LOG_WARNING("Received a non-STILL_ACTIVE exit code - assuming process stopped." << std::endl);
+            break;
+        }
     }
     
     return NULL;

@@ -5,12 +5,13 @@
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
 #include "shared/filesystem/utility.h"
+#include "shared/filesystem/common_paths.h"
 
 namespace fs = std::filesystem;
 namespace service::renderer {
 
 D3d11ShaderPtr loadShaderFromDisk(const fs::path& vertexShader, const fs::path& pixelShader) {
-    const fs::path shaderBasePath(shared::getEnvW(L"SQUADOV_SHADERS"));
+    const fs::path shaderBasePath = shared::filesystem::getCurrentExeFolder() / fs::path("shaders");
     if (!fs::exists(shaderBasePath)) {
         LOG_WARNING("Shader path doesn't exist: " << shaderBasePath << std::endl);
         return nullptr;

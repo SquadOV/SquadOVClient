@@ -246,41 +246,49 @@ void GameRecorder::loadCachedInfo() {
         return;
     }
 
-    if (_cachedRecordingSettings || _cachedWindowInfo) {
-        return;
+    if (!_cachedRecordingSettings) {
+        LOG_INFO("Load cache info: Settings" << std::endl);
+        // Just in case the user changed it in the UI already, just sync up via the file.
+        service::system::getCurrentSettings()->reloadSettingsFromFile();
+        _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
     }
 
-    LOG_INFO("Load cache info: Settings" << std::endl);
-    // Just in case the user changed it in the UI already, just sync up via the file.
-    service::system::getCurrentSettings()->reloadSettingsFromFile();
-    _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
+    if (!_cachedWindowInfo) {
+        LOG_INFO("Load cache info: Window Information" << std::endl);
+        std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
+            video::VideoWindowInfo ret;
+            HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
+            if (wnd) {
+                while (true) {
+                    if (!IsIconic(wnd)) {
+                        HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
+                        RECT windowRes;
+                        if (!GetClientRect(wnd, &windowRes)) {
+                            LOG_ERROR("Failed to get client rect: " << shared::errors::getWin32ErrorAsString() << std::endl);
+                            break;
+                        }
 
-    LOG_INFO("Load cache info: Window Information" << std::endl);
-    std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
-        video::VideoWindowInfo ret;
-        HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(120000));
-        while (true) {
-            if (!IsIconic(wnd)) {
-                HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
-                RECT windowRes;
-                if (!GetClientRect(wnd, &windowRes)) {
-                    LOG_ERROR("Failed to get client rect: " << shared::errors::getWin32ErrorAsString() << std::endl);
+                        ret.width = windowRes.right - windowRes.left;
+                        ret.height = windowRes.bottom - windowRes.top;
+                        ret.init = true;
+                        ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor, 4);
+                        break;
+                    }
+                    std::this_thread::sleep_for(100ms);
                 }
-
-                ret.width = windowRes.right - windowRes.left;
-                ret.height = windowRes.bottom - windowRes.top;
-                ret.init = true;
-                ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor, 4);
-                break;
             }
-            std::this_thread::sleep_for(100ms);
-        }
-        return ret;
-    });
-    _cachedWindowInfo = std::make_unique<video::VideoWindowInfo>(fut.get());
+
+            if (!ret.init) {
+                LOG_WARNING("Failed to find window (final).");
+            }
+
+            return ret;
+        });
+        _cachedWindowInfo = std::make_unique<video::VideoWindowInfo>(fut.get());
+    }
     LOG_INFO("Finish loading cache info." << std::endl);
 
-    if (!_cachedRecordingSettings || !_cachedWindowInfo) {
+    if (!_cachedRecordingSettings || !_cachedWindowInfo || !_cachedWindowInfo->init) {
         THROW_ERROR("Failed to create cached info objects.");
     }
 }

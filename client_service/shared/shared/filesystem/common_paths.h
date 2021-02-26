@@ -23,4 +23,6 @@ std::filesystem::path getAimlabAppDataFolder();
 
 std::filesystem::path getHearthstoneAppDataFolder();
 
+std::filesystem::path getCurrentExeFolder();
+
 }

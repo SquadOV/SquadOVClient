@@ -235,6 +235,7 @@ bool FfmpegGPUVideoSwapChain::hasValidFrontBuffer() const {
 }
 
 bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height) {
+    return false;
     if (!IsWindows8OrGreater()) {
         return false;
     }

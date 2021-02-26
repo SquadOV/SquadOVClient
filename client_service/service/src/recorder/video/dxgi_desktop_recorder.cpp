@@ -105,21 +105,9 @@ void DxgiDesktopRecorder::initialize() {
     }
 
     reacquireDuplicationInterface();
-    
-    D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
-    sharedDesc.Width = outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left;
-    sharedDesc.Height = outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top;
-    sharedDesc.MipLevels = 1;
-    sharedDesc.ArraySize = 1;
-    sharedDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-    sharedDesc.SampleDesc.Count = 1;
-    sharedDesc.Usage = D3D11_USAGE_DEFAULT;
-    sharedDesc.BindFlags = 0;
-    sharedDesc.CPUAccessFlags = 0;
-    sharedDesc.MiscFlags = 0;
 
-    _width = static_cast<size_t>(sharedDesc.Width);
-    _height = static_cast<size_t>(sharedDesc.Height);
+    _width = static_cast<size_t>(outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left);
+    _height = static_cast<size_t>(outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top);
 
     dxgiOutput->Release();
 }
@@ -220,6 +208,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
                 service::renderer::SharedD3d11TextureHandle handle(_shared, tex, false);
                 frame.copyFromGpu(handle.texture(), _rotation);
+
                 tex->Release();
             }
 
@@ -272,7 +261,7 @@ bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindo
         return false;
     }
 
-    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(120000));
+    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
     if (!wnd) {
         LOG_INFO("Rejecting DXGI due to inability to find window." << std::endl);
         return false;
