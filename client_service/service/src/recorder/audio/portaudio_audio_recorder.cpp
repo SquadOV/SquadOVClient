@@ -76,6 +76,12 @@ AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirecti
             Pa_GetDefaultInputDevice() :
             Pa_GetDefaultOutputDevice();
 
+    if (dir == EAudioDeviceDirection::Input) {
+        LOG_INFO("Listing Input Audio Devices..." << std::endl);
+    } else {
+        LOG_INFO("Listing Output Audio Devices..." << std::endl);
+    }
+
     for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount() ; ++i) {
         const PaDeviceInfo* ldi = Pa_GetDeviceInfo(i);
         const std::string ldiName(ldi->name);
@@ -84,11 +90,15 @@ AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirecti
         }
 
         const PaHostApiInfo* hostInfo = Pa_GetHostApiInfo(ldi->hostApi);
-        if (hostInfo->type != paWASAPI) {
+        if ((dir == EAudioDeviceDirection::Output && ldi->maxOutputChannels == 0) || (dir == EAudioDeviceDirection::Input && ldi->maxInputChannels == 0)) {
             continue;
         }
 
-        if ((dir == EAudioDeviceDirection::Output && ldi->maxOutputChannels == 0) || (dir == EAudioDeviceDirection::Input && ldi->maxInputChannels == 0)) {
+        LOG_INFO("FOUND AUDIO DEVICE: " << ldiName << " " << hostInfo->name << " " << (i == defaultDevice) << std::endl
+            << "\tCHANNELS: " << ldi->maxInputChannels << " " << ldi->maxOutputChannels << std::endl
+            << "\tSAMPLE RATE:" << ldi->defaultSampleRate << std::endl);
+
+        if (hostInfo->type != paWASAPI) {
             continue;
         }
 
@@ -136,11 +146,13 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
     }
 
     // Use the default device as fallback.
+    bool usingDefault = false;
     if (selectedDevice == paNoDevice) {
         selectedDevice =
             (dir == EAudioDeviceDirection::Input) ?
                 Pa_GetDefaultInputDevice() :
                 Pa_GetDefaultOutputDevice();
+        usingDefault = true;
     }
 
     // If we still have no device then just don't record from this input.
@@ -192,9 +204,25 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
     _props.numChannels = _streamParams.channelCount;
     _props.numSamples = 0;
     _props.samplingRate = _sampleRate;
-
-    _exists = true;
-    _volume = volume;
+    
+    LOG_INFO("Open recording device: " << di->name << " (" << _streamParams.device << "/" << Pa_GetDeviceCount() << ")" << std::endl
+        << "\tChannels: " << _streamParams.channelCount << std::endl
+        << "\tSample Rate: " << _sampleRate << std::endl
+        << "\tLatency: " << _streamParams.suggestedLatency << std::endl
+    );
+    const auto err = Pa_OpenStream(&_stream, &_streamParams, nullptr, static_cast<double>(_sampleRate), paFramesPerBufferUnspecified, paNoFlag , gPortaudioCallback, (void*)this);
+    if (err != paNoError) {
+        LOG_ERROR("Failed to open port audio stream: " << err);
+        if (!usingDefault) {
+            LOG_WARNING("Falling back to default device." << std::endl);
+            loadDevice(dir, "", volume);
+        } else {
+            LOG_WARNING("No audio devices to fall back to...ignoring this audio stream." << std::endl);
+        }
+    } else {
+        _exists = true;
+        _volume = volume;
+    }
 }
 
 int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags) {
@@ -239,19 +267,6 @@ void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, 
 }
 
 void PortaudioAudioRecorderImpl::startRecording() {  
-    const PaDeviceInfo* di = Pa_GetDeviceInfo(_streamParams.device);
-    if (!di) {
-        THROW_ERROR("Failed to get device info: " << _streamParams.device << "/" << Pa_GetDeviceCount() << std::endl);
-    }
-    LOG_INFO("Start recording device: " << di->name << " (" << _streamParams.device << "/" << Pa_GetDeviceCount() << ")" << std::endl);
-
-    {
-        const auto err = Pa_OpenStream(&_stream, &_streamParams, nullptr, static_cast<double>(_sampleRate), paFramesPerBufferUnspecified, paNoFlag , gPortaudioCallback, (void*)this);
-        if (err != paNoError) {
-            THROW_ERROR("Failed to open port audio stream: " << err);
-        }
-    }
-
     _startTime = Pa_GetStreamTime(_stream);
     _syncStartTime = service::recorder::encoder::AVSyncClock::now();
 

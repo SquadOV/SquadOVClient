@@ -72,10 +72,15 @@
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
-                            <v-icon small>
-                                mdi-headphones
-                            </v-icon>
-                            <span class="text-overline font-weight-bold ml-1 mr-4">Output:</span>
+                            <div>
+                                <v-icon small>
+                                    mdi-headphones
+                                </v-icon>
+                            </div>
+
+                            <div>
+                                <span class="text-overline font-weight-bold ml-1 mr-4">Output:</span>
+                            </div>
                             <div class="audio-select-div">
                                 <v-select
                                     :value="selectedOutput"
@@ -333,3 +338,11 @@ export default class RecordingSettingsItem extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+.audio-select-div {
+    min-width: 0;
+}
+
+</style>
