@@ -11,6 +11,12 @@ D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::mut
     _context->AddRef();
 }
 
+D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(D3d11ImmediateContextGuard&& o):
+    _guard(std::move(o._guard)),
+    _context(o._context) {
+    o._context = nullptr;
+}
+
 D3d11ImmediateContextGuard::~D3d11ImmediateContextGuard() {
     if (_context) {
         _context->Release();
@@ -56,6 +62,12 @@ D3d11SharedContext::D3d11SharedContext() {
     if (hr != S_OK) {
         THROW_ERROR("Failed to create D3D11 device: " << hr);
     }
+
+    hr = _device->QueryInterface(__uuidof(ID3D11Device1), (void**)&_device1);
+    if (hr != S_OK) {
+        LOG_WARNING("No ID3D11Device1 available - Windows 7?" << std::endl);
+        _device1 = nullptr;
+    }
 }
 
 D3d11SharedContext::~D3d11SharedContext() {
@@ -67,6 +79,11 @@ D3d11SharedContext::~D3d11SharedContext() {
     if (_device) {
         _device->Release();
         _device = nullptr;
+    }
+
+    if (_device1) {
+        _device1->Release();
+        _device1 = nullptr;
     }
 }
 

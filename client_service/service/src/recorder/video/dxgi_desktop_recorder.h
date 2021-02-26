@@ -27,6 +27,7 @@ private:
     bool _recording = false;    
     std::thread _recordingThread;
     service::renderer::D3d11SharedContext* _shared = nullptr;
+    service::renderer::D3d11SharedContext _self;
 
     void initialize();
     void reacquireDuplicationInterface();

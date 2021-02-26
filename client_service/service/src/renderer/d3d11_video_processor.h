@@ -13,6 +13,7 @@ public:
     explicit D3d11VideoProcessor(D3d11SharedContext* shared);
     ~D3d11VideoProcessor();
 
+    bool isSupported(size_t width, size_t height) const;
     void process(ID3D11Texture2D* input, ID3D11Texture2D* output);
 private:
     D3d11SharedContext* _shared = nullptr;

@@ -1,6 +1,7 @@
 #include "recorder/encoder/ffmpeg_video_swap_chain.h"
 
 #include "shared/errors/error.h"
+#include "renderer/d3d11_texture.h"
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -206,39 +207,8 @@ AVFrame* FfmpegGPUVideoSwapChain::getFrontBufferFrame() {
         // we aren't competing with ffmpeg for the context.
         auto* frameTexture = reinterpret_cast<ID3D11Texture2D*>(_frame->data[0]);
 
-        IDXGIResource* frameResource = nullptr;
-        HRESULT hr = frameTexture->QueryInterface(__uuidof(IDXGIResource), (void**)&frameResource);
-        if (hr != S_OK) {
-            THROW_ERROR("Failed to get frame DXGI resource.");
-        }
-
-        HANDLE frameHandle = nullptr;
-        hr = frameResource->GetSharedHandle(&frameHandle);
-        if (hr != S_OK) {
-            frameResource->Release();
-            THROW_ERROR("Failed to get frame shared handle.");
-        }
-
-        ID3D11Resource* sResource = nullptr;
-        hr = _shared->device()->OpenSharedResource(frameHandle, __uuidof(ID3D11Resource), (void**)&sResource);
-        if (hr != S_OK) {
-            frameResource->Release();
-            THROW_ERROR("Failed to open shared resource.");
-        }
-
-        ID3D11Texture2D* sTexture = nullptr;
-        hr = sResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&sTexture);
-        if (hr != S_OK) {
-            frameResource->Release();
-            sResource->Release();
-            THROW_ERROR("Failed to get texture 2D from shared resource.");
-        }
-
-        _processor->process(_frontBuffer->rawTexture(), sTexture);
-        
-        frameResource->Release();
-        sResource->Release();
-        sTexture->Release();
+        service::renderer::SharedD3d11TextureHandle handle(_shared, frameTexture, true);
+        _processor->process(_frontBuffer->rawTexture(), handle.texture());
     }
 
     return _frame;
@@ -264,8 +234,15 @@ bool FfmpegGPUVideoSwapChain::hasValidFrontBuffer() const {
     return _frontBuffer->isInit();
 }
 
-bool FfmpegGPUVideoSwapChain::isSupported() {
-    return IsWindows8OrGreater();
+bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height) {
+    if (!IsWindows8OrGreater()) {
+        return false;
+    }
+
+    // Create a temporary processor and do a check to make sure the device we're on supports
+    // everything we'd expect.
+    service::renderer::D3d11VideoProcessor processor(shared);
+    return processor.isSupported(width, height);
 }
 
 size_t FfmpegGPUVideoSwapChain::frameWidth() const {

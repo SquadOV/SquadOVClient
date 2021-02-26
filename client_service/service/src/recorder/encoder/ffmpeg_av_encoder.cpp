@@ -340,7 +340,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
 
-            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && FfmpegGPUVideoSwapChain::isSupported() && useHw;
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && FfmpegGPUVideoSwapChain::isSupported(service::renderer::getSharedD3d11Context(), width, height) && useHw;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = 6000000;
             _vcodecContext->thread_count = 0;
@@ -444,8 +444,10 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     avcodec_parameters_from_context(_vstream->codecpar, _vcodecContext);
 
     if (canUseHwAccel) {
+        LOG_INFO("Using FFmpeg GPU Video Swap Chain" << std::endl);
         _videoSwapChain.reset(new FfmpegGPUVideoSwapChain);
     } else {
+        LOG_INFO("Using FFmpeg CPU Video Swap Chain" << std::endl);
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
     _videoSwapChain->initializeGpuSupport(service::renderer::getSharedD3d11Context());

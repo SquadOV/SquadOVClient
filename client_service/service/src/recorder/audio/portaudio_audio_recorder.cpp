@@ -239,11 +239,6 @@ void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, 
 }
 
 void PortaudioAudioRecorderImpl::startRecording() {  
-#ifdef _WIN32
-    // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
-    CoInitializeEx(NULL, COINIT_MULTITHREADED);
-#endif
-
     const PaDeviceInfo* di = Pa_GetDeviceInfo(_streamParams.device);
     if (!di) {
         THROW_ERROR("Failed to get device info: " << _streamParams.device << "/" << Pa_GetDeviceCount() << std::endl);

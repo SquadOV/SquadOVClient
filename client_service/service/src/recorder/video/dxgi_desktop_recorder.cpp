@@ -3,6 +3,7 @@
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/image/image.h"
 #include "recorder/image/d3d_image.h"
+#include "renderer/d3d11_texture.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "system/win32/hwnd_utils.h"
@@ -21,6 +22,10 @@ using TickClock = std::chrono::high_resolution_clock;
 
 DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, service::renderer::D3d11SharedContext* shared):
     _window(window),
+    // Note that there's two D3d11SharedContext objects here.
+    // I found that putting the desktop duplication on the shared context that we use for rendering
+    // and the like will completely freeze the pipeline. So instead, everything on the desktop duplication
+    // API will use the _self context instead.
     _shared(shared) {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
@@ -45,7 +50,7 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
 
 void DxgiDesktopRecorder::initialize() {
     IDXGIDevice* dxgiDevice = nullptr;
-    HRESULT hr = _shared->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    HRESULT hr = _self.device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIDevice.");
     }
@@ -125,7 +130,7 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
         _dupl = nullptr;        
     }
 
-    HRESULT hr = _dxgiOutput1->DuplicateOutput(_shared->device(), &_dupl);
+    HRESULT hr = _dxgiOutput1->DuplicateOutput(_self.device(), &_dupl);
     if (hr != S_OK) {
         THROW_ERROR("Failed to duplicate output.");
     }
@@ -143,6 +148,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
     _recordingThread = std::thread([this, nsPerFrame](){ 
         service::recorder::image::D3dImage frame(_shared);
         frame.initializeImage(_width, _height);
+        int count = 0;
 
         while (_recording) {
             IDXGIResource* desktopResource = nullptr;
@@ -165,7 +171,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             const auto result = _dupl->ReleaseFrame();
             if (result == DXGI_ERROR_ACCESS_LOST) {
                 reacquireDuplicationInterface();
-                // Don't need to continue here since we only start to use _dupl after the
+                // Don't need to error out here since we only start to use _dupl after the
                 // call to ReleaseFrame.
             }
 
@@ -212,7 +218,8 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                     continue;
                 }
 
-                frame.copyFromGpu(tex, _rotation);
+                service::renderer::SharedD3d11TextureHandle handle(_shared, tex, false);
+                frame.copyFromGpu(handle.texture(), _rotation);
                 tex->Release();
             }
 
@@ -229,7 +236,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 #if LOG_FRAME_TIME
             const auto timeToAcquireNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postAcquireTm - startFrameTm).count();
             const auto copyNs = std::chrono::duration_cast<std::chrono::nanoseconds>(sendToEncoderTm - postAcquireTm).count();
-            const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postMapTm - sendToEncoderTm).count();
+            const auto encodeNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - sendToEncoderTm).count();
 
             LOG_INFO("Frame Time - DXGI:" << (timeToAcquireNs + copyNs + encodeNs) * 1.0e-6 << " [" << frameInfo.AccumulatedFrames << " frames]" << std::endl
                 << "\tAcquire:" << timeToAcquireNs * 1.0e-6 << std::endl
@@ -241,6 +248,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             if (elapsedNs < nsPerFrame) {
                 std::this_thread::sleep_for(nsPerFrame - elapsedNs);
             }
+            ++count;
         }
     });
 }

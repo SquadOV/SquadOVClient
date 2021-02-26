@@ -92,6 +92,11 @@ void wowTest(const std::string& log, const std::string& vod, const std::string& 
 }
 
 int main(int argc, char** argv) {
+#ifdef _WIN32
+    // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+#endif
+
     po::options_description desc("Options");
     desc.add_options()
         ("mode", po::value<std::string>()->default_value(""), "Client mode.")

@@ -79,7 +79,7 @@ private:
 
 class FfmpegGPUVideoSwapChain: public FfmpegVideoSwapChain {
 public:
-    static bool isSupported();
+    static bool isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height);
     ~FfmpegGPUVideoSwapChain();
     
     void initialize(AVCodecContext* context, AVBufferRef* hwFrameCtx) override;

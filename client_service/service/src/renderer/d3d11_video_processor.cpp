@@ -35,6 +35,45 @@ D3d11VideoProcessor::~D3d11VideoProcessor() {
     }
 }
 
+bool D3d11VideoProcessor::isSupported(size_t width, size_t height) const {
+    // Technically we probably need to separate out the input/output resolutions here
+    // but here's to hoping that this is good enough for detecting support.
+    D3D11_VIDEO_PROCESSOR_CONTENT_DESC desc;
+    desc.InputFrameFormat = D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE;
+    desc.InputFrameRate = { 1, 1 };
+    desc.InputWidth = width;
+    desc.InputHeight = height;
+    desc.OutputFrameRate = { 1, 1 };
+    desc.OutputWidth = width;
+    desc.OutputHeight = height;
+    desc.Usage = D3D11_VIDEO_USAGE_PLAYBACK_NORMAL;
+
+    ID3D11VideoProcessorEnumerator* penum = nullptr;
+    HRESULT hr = _vdevice->CreateVideoProcessorEnumerator(&desc, &penum);
+    if (hr != S_OK) {
+        return false;
+    }
+
+    UINT outputFlags = D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT_OUTPUT;
+    hr = penum->CheckVideoProcessorFormat(DXGI_FORMAT_NV12, &outputFlags);
+    if (hr != S_OK) {
+        LOG_WARNING("No support for input NV12." << std::endl);
+        penum->Release();
+        return false;
+    }
+
+    UINT inputFlags = D3D11_VIDEO_PROCESSOR_FORMAT_SUPPORT_INPUT;
+    hr = penum->CheckVideoProcessorFormat(DXGI_FORMAT_B8G8R8A8_UNORM, &inputFlags);
+    if (hr != S_OK) {
+        LOG_WARNING("No support for input BGRA." << std::endl);
+        penum->Release();
+        return false;
+    }
+
+    penum->Release();
+    return true;
+}
+
 void D3d11VideoProcessor::freeProcessorIfExists() {
     if (_processorEnum) {
         _processorEnum->Release();
@@ -135,6 +174,7 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
     inputStream.Enable = true;
     inputStream.pInputSurface = inputView;
 
+    auto immediate = _shared->immediateContext();
     hr = _vcontext->VideoProcessorBlt(_processor, outputView, 0, 1, &inputStream);
     if (hr != S_OK) {
         inputView->Release();

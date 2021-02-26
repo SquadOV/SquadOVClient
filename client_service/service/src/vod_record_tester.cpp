@@ -27,6 +27,11 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 }
 
 int main(int argc, char** argv) {
+#ifdef _WIN32
+    // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+#endif
+
     po::options_description desc("Options");
     desc.add_options()
         ("process", po::value<std::string>()->required(), "Process to record.")
@@ -85,7 +90,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop();
