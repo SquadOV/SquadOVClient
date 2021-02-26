@@ -50,6 +50,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeUseVideoHw(state: RootState, b: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useVideoHw = b
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
 /// #if DESKTOP
             if (!state.settings) {

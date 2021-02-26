@@ -3,6 +3,17 @@
         <v-tabs class="full-parent-height" vertical>
             <v-tab>
                 <v-icon left>
+                    mdi-video-image
+                </v-icon>
+                Recording
+            </v-tab>
+
+            <v-tab-item>
+                <recording-settings-item></recording-settings-item>
+            </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
                     mdi-cog
                 </v-icon>
                 System
@@ -35,8 +46,13 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import RecordingSettingsItem from '@client/vue/utility/squadov/settings/RecordingSettingsItem.vue'
 
-@Component
+@Component({
+    components: {
+        RecordingSettingsItem
+    }
+})
 export default class AppSettingsPage extends Vue {
 
     get runOnStartup(): boolean {

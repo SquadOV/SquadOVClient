@@ -8,6 +8,7 @@ import { ipcRenderer } from 'electron'
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
+    useVideoHw: boolean
     outputDevice: string
     outputVolume: number
     inputDevice: string
@@ -66,6 +67,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 30,
+                useVideoHw: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -75,6 +77,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 60,
+                useVideoHw: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -84,6 +87,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 1080,
                 fps: 60,
+                useVideoHw: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -101,6 +105,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         record: {
             resY: 1080,
             fps: 60,
+            useVideoHw: true,
             outputDevice: 'Default Device',
             outputVolume: 1.0,
             inputDevice: 'Default Device',
@@ -145,6 +150,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.runOnStartup === undefined) {
         parsedData.runOnStartup = true
+    }
+
+    if (parsedData.record.useVideoHw === undefined) {
+        parsedData.record.useVideoHw = true
     }
 
     saveLocalSettings(parsedData, true)
