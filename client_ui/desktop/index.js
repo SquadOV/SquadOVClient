@@ -379,9 +379,11 @@ function startAutoupdater() {
         // the initial start-up workflow. In this case we need to indicate
         // to the user that an update is available and have them restart.
         autoUpdater.checkForUpdates().then((resp) => {
-            console.log('SquadOV Found Update to Version: ', resp.updateInfo.version)
-            win.webContents.send('main-update-downloaded', resp.updateInfo.version)
-            })
+            console.log(`SquadOV Found Update to Version  ${resp.updateInfo.version} vs ${app.getVersion()}`)
+            if (resp.updateInfo.version != app.getVersion()) {
+                win.webContents.send('main-update-downloaded', resp.updateInfo.version)
+            }
+        })
     }, 1 * 60 * 1000)
 
     let updateWindow = new BrowserWindow({
