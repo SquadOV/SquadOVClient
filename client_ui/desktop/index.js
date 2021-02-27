@@ -374,16 +374,15 @@ function startAutoupdater() {
     autoUpdater.logger = log
     autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
 
-    // This event is for when an update is available and we're past
-    // the initial start-up workflow. In this case we need to indicate
-    // to the user that an update is available and have them restart.
-    autoUpdater.on('update-available', (info) => {
-        win.webContents.send('main-update-downloaded', info.version)
-    })
-
     setInterval(() => {
-        autoUpdater.checkForUpdates()
-    }, 5 * 60 * 1000)
+        // This event is for when an update is available and we're past
+        // the initial start-up workflow. In this case we need to indicate
+        // to the user that an update is available and have them restart.
+        autoUpdater.checkForUpdates().then((resp) => {
+            console.log('SquadOV Found Update to Version: ', resp.updateInfo.version)
+            win.webContents.send('main-update-downloaded', resp.updateInfo.version)
+            })
+    }, 1 * 60 * 1000)
 
     let updateWindow = new BrowserWindow({
         width: 300,

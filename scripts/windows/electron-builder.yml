@@ -51,5 +51,6 @@ extraResources:
     filter:
       - "*.dll"
       - "squadov_client_service.exe"
+      - "shaders/*"
   - from: "config/${env.GCP_PROJECT}.json"
     to: "config/config.json"
