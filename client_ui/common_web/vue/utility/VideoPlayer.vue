@@ -299,90 +299,110 @@ export default class VideoPlayer extends Vue {
         }
 
         this.player.on('keydown', (e: KeyboardEvent) => {
-            if (!this.player) {
-                return
-            }
-
-            let cmp = e.key.toLowerCase()
-            let handled = false
-            if (cmp == ' ' || cmp == 'k') {
-                // Play/Pause
-                if (this.player.paused()) {
-                    this.player.play()
-                } else {
-                    this.player.pause()
-                }
-                handled = true
-            } else if (cmp == 'f') {
-                // Full-Screen
-                if (this.player.isFullscreen()) {
-                    this.player.exitFullscreen()
-                } else {
-                    this.player.requestFullscreen()
-                }
-                handled = true
-            } else if (cmp == 'arrowleft') {
-                // Jump back 5 seconds
-                this.goToTimeMs(this.player.currentTime() * 1000 - 5000)
-                handled = true
-            } else if (cmp == 'arrowright') {
-                // Jump forward 5 seconds
-                this.goToTimeMs(this.player.currentTime() * 1000 + 5000)
-                handled = true
-            } else if (cmp == 'j') {
-                // Jump back 10 seconds
-                this.goToTimeMs(this.player.currentTime() * 1000 - 10000)
-                handled = true
-            } else if (cmp == 'l') {
-                // Jump forward 10 seconds
-                this.goToTimeMs(this.player.currentTime() * 1000 + 10000)
-                handled = true
-            } else if (cmp == 'arrowup') {
-                // Volume up
-                this.player.volume(Math.min(Math.max(this.player.volume() + 0.05, 0.0), 1.0))
-                handled = true
-            } else if (cmp == 'arrowdown') {
-                // Volume down
-                this.player.volume(Math.min(Math.max(this.player.volume() - 0.05, 0.0), 1.0))
-                handled = true
-            } else if (cmp == 'm') {
-                // Mute/un-mute
-                if (this.player.muted()) {
-                    this.player.muted(false)
-                } else {
-                    this.player.muted(true)
-                }
-                handled = true
-            } else if (!isNaN(parseInt(cmp))) {
-                // Jump to % in video
-                let percent = parseInt(cmp) / 10.0
-                this.goToPercentage(percent)
-                handled = true
-            } else if (cmp == 'home') {
-                // Go to beginning
-                this.goToPercentage(0.0)
-                handled = true
-            } else if (cmp == 'end') {
-                // Go to near end
-                this.goToPercentage(0.99)
-                handled = true
-            } else if (cmp == 'i') {
-                //@ts-ignore
-                if (this.player.isInPictureInPicture()) {
-                    //@ts-ignore
-                    this.player.exitPictureInPicture()
-                } else {
-                    //@ts-ignore
-                    this.player.requestPictureInPicture()
-                }
-            } else if (cmp == 't') {
-                this.$emit('toggle-theater-mode')
-            }
-
-            if (handled) {
-                e.preventDefault()
-            }
+            this.handleKeypress(e)
         })
+
+        let cbar = this.player.getChild('controlBar')
+        if (!!cbar) {
+            for (let ctrl of cbar.children()) {
+                ctrl.on('keydown', (e: KeyboardEvent) => {
+                    if (e.key != 'Enter') {
+                        // We only want to use the enter key do stuff (toggle the element).
+                        // Everything else should just be handled by the player.
+                        e.preventDefault()
+
+                        this.handleKeypress(e)
+                    }
+                })
+            }
+        }
+    }
+
+    handleKeypress(e: KeyboardEvent) {
+        if (!this.player) {
+            return
+        }
+
+        let cmp = e.key.toLowerCase()
+        let handled = false
+        if (cmp == ' ' || cmp == 'k') {
+            // Play/Pause
+            if (this.player.paused()) {
+                this.player.play()
+            } else {
+                this.player.pause()
+            }
+            handled = true
+        } else if (cmp == 'f') {
+            // Full-Screen
+            if (this.player.isFullscreen()) {
+                this.player.exitFullscreen()
+            } else {
+                this.player.requestFullscreen()
+            }
+            handled = true
+        } else if (cmp == 'arrowleft') {
+            // Jump back 5 seconds
+            this.goToTimeMs(this.player.currentTime() * 1000 - 5000)
+            handled = true
+        } else if (cmp == 'arrowright') {
+            // Jump forward 5 seconds
+            this.goToTimeMs(this.player.currentTime() * 1000 + 5000)
+            handled = true
+        } else if (cmp == 'j') {
+            // Jump back 10 seconds
+            this.goToTimeMs(this.player.currentTime() * 1000 - 10000)
+            handled = true
+        } else if (cmp == 'l') {
+            // Jump forward 10 seconds
+            this.goToTimeMs(this.player.currentTime() * 1000 + 10000)
+            handled = true
+        } else if (cmp == 'arrowup') {
+            // Volume up
+            this.player.volume(Math.min(Math.max(this.player.volume() + 0.05, 0.0), 1.0))
+            handled = true
+        } else if (cmp == 'arrowdown') {
+            // Volume down
+            this.player.volume(Math.min(Math.max(this.player.volume() - 0.05, 0.0), 1.0))
+            handled = true
+        } else if (cmp == 'm') {
+            // Mute/un-mute
+            if (this.player.muted()) {
+                this.player.muted(false)
+            } else {
+                this.player.muted(true)
+            }
+            handled = true
+        } else if (!isNaN(parseInt(cmp))) {
+            // Jump to % in video
+            let percent = parseInt(cmp) / 10.0
+            this.goToPercentage(percent)
+            handled = true
+        } else if (cmp == 'home') {
+            // Go to beginning
+            this.goToPercentage(0.0)
+            handled = true
+        } else if (cmp == 'end') {
+            // Go to near end
+            this.goToPercentage(0.99)
+            handled = true
+        } else if (cmp == 'i') {
+            //@ts-ignore
+            if (this.player.isInPictureInPicture()) {
+                //@ts-ignore
+                this.player.exitPictureInPicture()
+            } else {
+                //@ts-ignore
+                this.player.requestPictureInPicture()
+            }
+        } else if (cmp == 't') {
+            this.$emit('toggle-theater-mode')
+        }
+
+        if (handled) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
     }
 
     mounted() {
