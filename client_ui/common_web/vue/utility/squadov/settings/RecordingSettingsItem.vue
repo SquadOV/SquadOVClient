@@ -11,7 +11,7 @@
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
                             <span class="text-overline font-weight-bold mr-4">Quality:</span>
-                            <v-btn-toggle :value="resY" @input="changeResY" mandatory rounded dense>
+                            <v-btn-toggle :value="resY" @change="changeResY" mandatory rounded dense>
                                 <v-btn
                                     v-for="res in resolutionItems"
                                     :key="`res-${res}`"
@@ -26,7 +26,7 @@
                     <v-col cols-sm="12" cols-md="3">
                         <div class="d-flex align-center">
                             <span class="text-overline font-weight-bold mr-4">FPS:</span>
-                            <v-btn-toggle :value="fps" @input="changeFps" mandatory rounded dense>
+                            <v-btn-toggle :value="fps" @change="changeFps" mandatory rounded dense>
                                 <v-btn
                                     v-for="fps in fpsItems"
                                     :key="`fps-${fps}`"
