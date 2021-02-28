@@ -10,7 +10,7 @@
 
 #include <iostream>
 
-#define LOG_FRAME_TIME 0
+#define LOG_FRAME_TIME 1
 #ifdef _WIN32
 #include <VersionHelpers.h>
 
@@ -26,7 +26,8 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, service::renderer::D3d11Sh
     // I found that putting the desktop duplication on the shared context that we use for rendering
     // and the like will completely freeze the pipeline. So instead, everything on the desktop duplication
     // API will use the _self context instead.
-    _shared(shared) {
+    _shared(shared),
+    _self() {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
     initialize();
@@ -137,14 +138,12 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
         // We need two frames here because DirectX really doesn't like it when we try to copy
         // the desktop texture from one device to another. So we stage it on another texture
         // we have more control over and then copy it over to the output frame that we send to the encoder.
-        service::recorder::image::D3dImage stagingFrame(&_self);
-        stagingFrame.initializeImage(_width, _height, true);
-
         service::recorder::image::D3dImage outputFrame(_shared);
-        outputFrame.initializeImage(_width, _height);
+        outputFrame.initializeImage(_width, _height, true);
 
-        int count = 0;
-
+        int64_t count = 0;
+        int64_t numReused = 0;
+        int64_t numTooLong = 0;
         while (_recording) {
             IDXGIResource* desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
@@ -173,6 +172,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             HRESULT hr = _dupl->AcquireNextFrame(10, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 reuseOldFrame = true;
+                ++numReused;
             } else {
                 if (hr == DXGI_ERROR_ACCESS_LOST) {
                     LOG_INFO("DXGI Access Lost." << std::endl);
@@ -211,11 +211,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                     continue;
                 }
 
-                stagingFrame.copyFromGpu(tex, _rotation);
-
-                service::renderer::SharedD3d11TextureHandle handle(_shared, stagingFrame.rawTexture(), false);
-                outputFrame.copyFromGpu(handle.texture());
-
+                outputFrame.copyFromSharedGpu(&_self, tex, _rotation);
                 tex->Release();
             }
 
@@ -248,9 +244,13 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             const auto elapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - startFrameTm);
             if (elapsedNs < nsPerFrame) {
                 std::this_thread::sleep_for(nsPerFrame - elapsedNs);
+            } else if (elapsedNs > nsPerFrame) {
+                ++numTooLong;
             }
             ++count;
         }
+
+        LOG_INFO("DXGI Stats :: Count: " << count << " Reused: " << numReused << " Too Long: " << numTooLong << std::endl);
     });
 }
 

@@ -31,7 +31,7 @@ SharedD3d11TextureHandle::SharedD3d11TextureHandle(D3d11SharedContext* destConte
             THROW_ERROR("ID3D11Device1 interface not available.");
         }
 
-        hr = destContext->device1()->OpenSharedResource1(_frameHandle, __uuidof(ID3D11Resource), (void**)&_sResource);
+        hr = destContext->device1()->OpenSharedResource1(_frameHandle, __uuidof(ID3D11Texture2D), (void**)&_sTexture);
         if (hr != S_OK) {
             THROW_ERROR("Failed to open shared resource (NT).");
         }
@@ -46,15 +46,10 @@ SharedD3d11TextureHandle::SharedD3d11TextureHandle(D3d11SharedContext* destConte
             THROW_ERROR("Failed to get frame shared handle.");
         }
 
-        hr = destContext->device()->OpenSharedResource(_frameHandle, __uuidof(ID3D11Resource), (void**)&_sResource);
+        hr = destContext->device()->OpenSharedResource(_frameHandle, __uuidof(ID3D11Texture2D), (void**)&_sTexture);
         if (hr != S_OK) {
             THROW_ERROR("Failed to open shared resource.");
         }
-    }
-
-    hr = _sResource->QueryInterface(__uuidof(ID3D11Texture2D), (void**)&_sTexture);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to get texture 2D from shared resource.");
     }
 }
 
@@ -68,12 +63,7 @@ SharedD3d11TextureHandle::~SharedD3d11TextureHandle() {
         _frameResource1->Release();
         _frameResource1 = nullptr;
     }
-
-    if (_sResource) {
-        _sResource->Release();
-        _sResource = nullptr;
-    }
-
+    
     if (_sTexture) {
         _sTexture->Release();
         _sTexture = nullptr;

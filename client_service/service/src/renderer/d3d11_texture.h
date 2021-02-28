@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include "renderer/d3d11_context.h"
 #include <dxgi1_2.h>
+#include <memory>
 
 namespace service::renderer {
 
@@ -18,9 +19,10 @@ private:
     HANDLE _frameHandle = nullptr;
     IDXGIResource1* _frameResource1 = nullptr;
     IDXGIResource* _frameResource = nullptr;
-    ID3D11Resource* _sResource = nullptr;
     ID3D11Texture2D* _sTexture = nullptr;
 };
+
+using SharedD3d11TextureHandlePtr = std::unique_ptr<SharedD3d11TextureHandle>;
 
 }
 #endif
