@@ -53,6 +53,10 @@
                 Support
             </v-btn>
 
+            <v-btn href="https://blog.squadov.gg" text>
+                Blog
+            </v-btn>
+
             <v-spacer></v-spacer>
 
             <v-btn
