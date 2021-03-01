@@ -265,11 +265,15 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.6.3'
+        return 'v0.6.5'
     }
 
     get downloadLink() : string {
-        return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe'
+        if (!!this.$route.query.ref) {
+            return `${this.$config.apiUrl}/public/landing/download?ref=${this.$route.query.ref}`
+        } else {
+            return `${this.$config.apiUrl}/public/landing/download`
+        }
     }
 
     currentVideo: number = 0
@@ -292,6 +296,10 @@ export default class Index extends Vue {
                 this.fadeOutVideo()
             }
         })
+
+        if (!!this.$route.query.ref) {
+            this.$axios.$get(`${this.$config.apiUrl}/public/landing/visit?ref=${this.$route.query.ref}`)
+        }
     }
 
     fadeInVideo() {

@@ -6,6 +6,7 @@ export default {
     ],
     modules: [
         '@nuxtjs/gtm',
+        '@nuxtjs/axios',
         'cookie-universal-nuxt'
     ],
     plugins: [
@@ -36,4 +37,7 @@ export default {
     generate: {
         dir: 'docs'
     },
+    publicRuntimeConfig: {
+        apiUrl: process.env.SQUADOV_API_URL || 'https://api.squadov.gg'
+    }
 }
