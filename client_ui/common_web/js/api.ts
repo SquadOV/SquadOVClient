@@ -1023,6 +1023,10 @@ class ApiClient {
             return resp
         })
     }
+
+    myReferralLink(): Promise<ApiData<string>> {
+        return axios.get('v1/users/me/referral', this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

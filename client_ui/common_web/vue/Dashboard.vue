@@ -98,8 +98,15 @@
 
                         <div class="d-flex justify-center long-text text-subtitle-1" v-else>Nobody's here just yet. Invite your friends!</div>
 
+                        <div class="mt-2">
+                            <div class="text-overline">
+                                Invite your friends to SquadOV!
+                            </div>
+                            <referral-link></referral-link>
+                        </div>
+
                         <!-- Recent recorded play time -->
-                        <total-recorded-playtime-widget class="mt-4"></total-recorded-playtime-widget>
+                        <total-recorded-playtime-widget class="mt-2"></total-recorded-playtime-widget>
                     </v-col>
 
                     <v-col cols="6">
@@ -135,6 +142,7 @@ import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateC
 import UserActivityDisplay from '@client/vue/utility/squadov/UserActivityDisplay.vue'
 import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecordedPlaytimeWidget.vue'
 import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
+import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
 
 @Component({
     components: {
@@ -146,6 +154,7 @@ import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
         UserActivityDisplay,
         TotalRecordedPlaytimeWidget,
         RecentRecordedMatches,
+        ReferralLink,
     }
 })
 export default class Dashboard extends Vue {
