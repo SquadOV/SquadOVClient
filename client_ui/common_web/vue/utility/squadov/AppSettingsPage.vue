@@ -1,16 +1,18 @@
 <template>
     <v-container class="full-parent-height" fluid>
         <v-tabs class="full-parent-height" vertical>
-            <v-tab>
-                <v-icon left>
-                    mdi-video-image
-                </v-icon>
-                Recording
-            </v-tab>
+            <template v-if="useRecordingSettings">
+                <v-tab>
+                    <v-icon left>
+                        mdi-video-image
+                    </v-icon>
+                    Recording
+                </v-tab>
 
-            <v-tab-item>
-                <recording-settings-item></recording-settings-item>
-            </v-tab-item>
+                <v-tab-item>
+                    <recording-settings-item></recording-settings-item>
+                </v-tab-item>
+            </template>
 
             <v-tab>
                 <v-icon left>
@@ -54,6 +56,14 @@ import RecordingSettingsItem from '@client/vue/utility/squadov/settings/Recordin
     }
 })
 export default class AppSettingsPage extends Vue {
+    
+    get useRecordingSettings(): boolean{
+///#if DESKTOP
+        return true
+///#else
+        return false
+///#endif
+    }
 
     get runOnStartup(): boolean {
         return this.$store.state.settings.runOnStartup

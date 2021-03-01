@@ -167,7 +167,10 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+
+///#if DESKTOP
 import { ipcRenderer } from 'electron'
+///#endif 
 import { AudioDeviceListingResponse } from '@client/js/system/audio'
 
 @Component({
@@ -191,7 +194,9 @@ export default class RecordingSettingsItem extends Vue {
     }
 
     refreshAvailableOutputs() {
+///#if DESKTOP
         ipcRenderer.send('request-output-devices')
+///#endif
     }
 
     inputOptions: string[] = []
@@ -206,7 +211,9 @@ export default class RecordingSettingsItem extends Vue {
     }
 
     refreshAvailableInputs() {
+///#if DESKTOP
         ipcRenderer.send('request-input-devices')
+///#endif
     }
 
     get selectedOutput(): string {
@@ -306,6 +313,7 @@ export default class RecordingSettingsItem extends Vue {
     }
 
     mounted() {
+///#if DESKTOP        
         this.refreshAvailableOutputs()
         this.refreshAvailableInputs()
 
@@ -334,6 +342,7 @@ export default class RecordingSettingsItem extends Vue {
 
             this.defaultInput = resp.default
         })
+///#endif
     }
 }
 

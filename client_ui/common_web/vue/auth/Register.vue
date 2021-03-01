@@ -63,6 +63,14 @@
         </v-row>
 
         <v-snackbar
+            v-model="showHideDuplicateError"
+            :timeout="5000"
+            color="error"
+        >
+            An account with that username or email already exists. Usernames and emails are case-insensitive!
+        </v-snackbar>
+
+        <v-snackbar
             v-model="showHideGenericError"
             :timeout="5000"
             color="error"
@@ -92,6 +100,7 @@ export default class Register extends Vue {
 
     formValid: boolean = false
     inProgress: boolean = false
+    showHideDuplicateError: boolean = false
     showHideGenericError : boolean = false
 
     email : string = ''
@@ -154,7 +163,11 @@ export default class Register extends Vue {
             })
         }).catch((err : any) => {
             console.log('Failed to register')
-            this.showHideGenericError = true
+            if (!!err.response?.data.duplicateFlag) {
+                this.showHideDuplicateError = true
+            } else {
+                this.showHideGenericError = true
+            }
         }).finally(() => {
             this.inProgress = false
         })
