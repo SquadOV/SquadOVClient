@@ -5,6 +5,7 @@
         :elapsed-time="elapsedTime"
         :mini="mini"
         :fill="fill"
+        :disable-link="disableLink"
     >
         <div class="text-h6">
             {{ challengeName }}
@@ -50,6 +51,9 @@ export default class WowKeystoneSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableLink!: boolean
 
     get challengeName(): string {
         return this.challenge.challengeName.replace(/"/g, '')

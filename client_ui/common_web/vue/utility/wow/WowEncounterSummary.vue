@@ -5,6 +5,7 @@
         :elapsed-time="elapsedTime"
         :mini="mini"
         :fill="fill"
+        :disable-link="disableLink"
     >
         <template v-slot="{ instanceName }">
             <div class="text-h6">
@@ -49,6 +50,9 @@ export default class WowEncounterSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableLink!: boolean
 
     difficultyData: WowDifficultyData | null = null
     instanceData: WowInstanceData | null = null

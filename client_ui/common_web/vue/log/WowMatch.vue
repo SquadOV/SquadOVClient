@@ -7,6 +7,7 @@
                         :challenge="currentMatch.challenge"
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
+                        disable-link
                     >
                     </wow-keystone-summary>
 
@@ -14,6 +15,7 @@
                         :encounter="currentMatch.encounter"
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
+                        disable-link
                     >
                     </wow-encounter-summary>
 
@@ -21,6 +23,7 @@
                         :arena="currentMatch.arena"
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
+                        disable-link
                     >
                     </wow-arena-summary>
 

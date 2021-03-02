@@ -842,6 +842,10 @@ class ApiClient {
         })
     }
 
+    getWoWCharacterArmoryLink(name: string): Promise<ApiData<string[]>> {
+        return axios.get(`v1/wow/characters/${name}/armory`, this.createWebAxiosConfig(true))
+    }
+
     submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {
         let form = new FormData()
         form.append('title', title)

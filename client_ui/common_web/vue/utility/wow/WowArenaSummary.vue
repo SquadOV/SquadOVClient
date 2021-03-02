@@ -7,6 +7,7 @@
         :fill="fill"
         use-teams
         :friendly-team="friendlyTeam"
+        :disable-link="disableLink"
     >
         <template v-slot="{ instanceName }">
             <div class="text-h6">
@@ -58,6 +59,9 @@ export default class WowArenaSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableLink!: boolean
 
     get friendlyTeam(): number {
         if (this.arena.winningTeamId === null) {

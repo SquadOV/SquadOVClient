@@ -1,6 +1,6 @@
 <template>
     <div>
-        <router-link :to="to">
+        <router-link :to="to" :disabled="disabled">
             <v-sheet
                 :class="`d-flex align-center match-summary pa-2 ${fill ? 'full-parent-height' : ''}`"
                 rounded
@@ -24,28 +24,7 @@
                     <v-col cols="5" v-if="!!relevantCharacters && !mini" align-self="center">
                         <div class="d-flex align-center flex-wrap">
                             <template v-for="(char, idx) in relevantCharacters">
-                                <v-tooltip
-                                    offset-x right
-                                    :key="`tooltip-${idx}`"
-                                >
-                                    <template v-slot:activator="{on, attrs}">
-                                        <div
-                                            v-bind="attrs"
-                                            v-on="on"
-                                            :class="`ma-1 ${(char.team === friendlyTeam) ? 'friendly-char' : 'enemy-char'}`"
-                                        >
-                                            <wow-class-spec-icon
-                                                :spec-id="char.specId"
-                                            >
-                                            </wow-class-spec-icon>    
-                                        </div>
-                                    </template>
-
-                                    <wow-character-display
-                                        :character="char"
-                                    >
-                                    </wow-character-display>    
-                                </v-tooltip>
+                                <wow-character-icon :char="char" :friendly-team="friendlyTeam" armory-link :key="`icon-${idx}`"></wow-character-icon>
 
                                 <span
                                     v-if="useTeams && idx < relevantCharacters.length - 1 && relevantCharacters[idx].team != relevantCharacters[idx+1].team"
@@ -103,13 +82,13 @@ import { standardFormatTime } from '@client/js/time'
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import WowExpansionIcon from '@client/vue/utility/wow/WowExpansionIcon.vue'
+import WowCharacterIcon from '@client/vue/utility/wow/WowCharacterIcon.vue'
 import axios from 'axios'
 import * as pi from '@client/js/pages'
 
 @Component({
     components: {
-        WowClassSpecIcon,
-        WowCharacterDisplay,
+        WowCharacterIcon,
         WowExpansionIcon
     }
 })
@@ -134,6 +113,9 @@ export default class WowGenericMatchSummary extends Vue {
 
     @Prop({default: 0})
     friendlyTeam!: number
+
+    @Prop({type: Boolean, default: false})
+    disableLink!: boolean
 
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
@@ -163,11 +145,11 @@ export default class WowGenericMatchSummary extends Vue {
         return style
     }
 
-    get to() : any {
-        if (this.$route.name === pi.WowMatchPageId) {
-            return {}
-        }
+    get disabled(): boolean {
+        return this.$route.name === pi.WowMatchPageId || this.disableLink
+    }
 
+    get to() : any {
         return {
             name: pi.WowMatchPageId,
             params: {
@@ -227,14 +209,6 @@ export default class WowGenericMatchSummary extends Vue {
 .match-summary {
     width: 100%;
     position: relative;
-}
-
-.friendly-char {
-    border: 2px solid rgb(76, 175, 80) !important;
-}
-
-.enemy-char {
-    border: 2px solid rgb(255, 82, 82) !important;
 }
 
 </style>
