@@ -12,7 +12,7 @@
             <div
                 v-for="(vod, idx) in options"
                 :key="idx"
-                @click="$emit('input', arguments[0])"
+                @click="$emit('input', vod)"
                 class="vod-select-div"
             >
                 <slot
