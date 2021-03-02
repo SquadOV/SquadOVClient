@@ -110,7 +110,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
 
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
-        _recorder->stop();
+        _recorder->stop({});
         try {
             service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
         } catch (std::exception& ex) {
@@ -151,16 +151,13 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
     // a copy in our own database.
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
-        const auto metadata = _recorder->getMetadata();
-        const auto sessionId = _recorder->sessionId();
-        const auto vodStartTime = _recorder->vodStartTime();
 
         // It might take a few tries to grab the data from the SQLite database.
         // I'm assuming it's because Aim Lab will write exclusively to the database
         // and if we try to read from the databse during time it'll fail.
         bool success = false;
+        shared::aimlab::TaskData lastData;
         for (auto i = 0; i < 10; ++i) {
-            shared::aimlab::TaskData lastData;
             try {
                 lastData = _aimlab->getLatestTaskData();
                 LOG_INFO("Pulled Data [" << lastData.taskName << " " << lastData.mode << "] - " << lastData.score << std::endl);
@@ -180,30 +177,25 @@ void AimlabProcessHandlerInstance::onAimlabTaskFinish(const shared::TimePoint& e
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 continue;
             }
-
-            try {
-                const auto matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
-                service::local::getLocalData()->markAimlabBackfillTime(lastData.createDate);
-
-                shared::squadov::VodAssociation association;
-                association.matchUuid = matchUuid;
-                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-                association.videoUuid = vodId.videoUuid;
-                association.startTime = vodStartTime;
-                association.endTime = eventTime;
-                association.rawContainerFormat = "mpegts";
-                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
-                success = true;
-            } catch (std::exception& ex) {
-                LOG_WARNING("Failed to upload Aim lab task or associate Aim Lab VOD: " << ex.what() << std::endl);
-            }
             break;
+        }
+
+        service::recorder::GameRecordEnd end;
+        try {
+            end.matchUuid = service::api::getGlobalApi()->uploadAimlabTask(lastData);
+            service::local::getLocalData()->markAimlabBackfillTime(lastData.createDate);
+            success = true;
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to upload Aim lab task or associate Aim Lab VOD: " << ex.what() << std::endl);
         }
 
         // It's fine if the recording is a little longer due to the SQLite waiting time...
         // I'd rather grab the data soon as possible as stop() will do some waiting for the IO flush.
-        _recorder->stop();
-        if (!success) {
+        end.endTime = eventTime;
+        if (success) {
+            _recorder->stop(std::make_optional(std::move(end)));
+        } else {
+            _recorder->stop({});
             // Failed to pull data - hopefully we never get here but just remove the video.
             try {
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);

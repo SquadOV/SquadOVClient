@@ -203,7 +203,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
             } catch (std::exception& ex) {
                 LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
             }
-            _recorder->stop();
+            _recorder->stop({});
         }
         _inGame = false;
         _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
@@ -311,31 +311,10 @@ void HearthstoneProcessHandlerInstance::onGameDisconnect(const shared::TimePoint
     const auto isRecording = _recorder->isRecording();
 
     if (isRecording) {
-        const auto vodId = _recorder->currentId();
-        const auto metadata = _recorder->getMetadata();
-        const auto sessionId = _recorder->sessionId();
-        const auto vodStartTime = _recorder->vodStartTime();
-        _recorder->stop();
-        // Need this check here just in case for whatever reason we connected to a game but never
-        // actually caught the "game start" event.
-        try {
-            try {
-                shared::squadov::VodAssociation association;
-                association.matchUuid = _matchUuid;
-                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-                association.videoUuid = vodId.videoUuid;
-                association.startTime = vodStartTime;
-                association.endTime = eventTime;
-                association.rawContainerFormat = "mpegts";
-                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
-            } catch (const std::exception& ex) {
-                LOG_WARNING("Failed to associate Hearthstone VOD: " << ex.what() << std::endl);
-                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
-            }
-        } catch (std::exception& ex) {
-            // This should only be catching delete VOD exceptions which are fine.
-            LOG_WARNING("Failed to delete VOD: " << ex.what() << std::endl);
-        }
+        service::recorder::GameRecordEnd end;
+        end.matchUuid = _matchUuid;
+        end.endTime = eventTime;
+        _recorder->stop(end);
     }
 }
 

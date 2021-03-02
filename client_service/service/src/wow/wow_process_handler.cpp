@@ -153,7 +153,7 @@ void WoWProcessHandlerInstance::cleanup() {
     _logWatcher->moveLogToBackup();
 
     LOG_INFO("Ending DVR session..." << std::endl);
-    _recorder->stop();
+    _recorder->stop({});
 
     LOG_INFO("Finish WoW cleanup..." << std::endl);
 }
@@ -427,35 +427,25 @@ void WoWProcessHandlerInstance::genericMatchEnd(const shared::TimePoint& tm) {
 
     LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - MATCH " << _currentMatchUuid << " :: LOG " << _combatLogId << std::endl);
     const auto isRecording = _recorder->isRecording();
-    if (isRecording && !_currentMatchUuid.empty()) {
+    if (isRecording) {
         const auto vodId = _recorder->currentId();
         const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
         const auto vodStartTime = _recorder->vodStartTime();
 
         if (!_process.empty()) {
-            _recorder->stop();
+            if (!_currentMatchUuid.empty()) {
+                service::recorder::GameRecordEnd end;
+                end.matchUuid = _currentMatchUuid;
+                end.endTime = tm;
+                _recorder->stop(end);
+            } else {
+                _recorder->stop({});
+            }
+
             _recorder->startDvrSession(getWowRecordingFlags());
         } else {
             _recorder->stopFromSource(tm);
-        }
-
-        try {
-            try {
-                shared::squadov::VodAssociation association;
-                association.matchUuid = _currentMatchUuid;
-                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-                association.videoUuid = vodId.videoUuid;
-                association.startTime = vodStartTime;
-                association.endTime = tm;
-                association.rawContainerFormat = "mpegts";
-                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
-            } catch (const std::exception& ex) {
-                LOG_WARNING("Failed to associate WoW VOD: " << ex.what() << std::endl);
-                service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
-            }
-        } catch (const std::exception& ex) {
-            LOG_WARNING("Failed to delete WoW VOD: " << ex.what() << "\t" << vodId.videoUuid << std::endl);
         }
     }
     _currentMatchUuid = "";

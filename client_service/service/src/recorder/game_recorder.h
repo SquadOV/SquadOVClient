@@ -25,6 +25,11 @@ struct VodIdentifier {
     std::string videoUuid;
 };
 
+struct GameRecordEnd {
+    std::string matchUuid;
+    shared::TimePoint endTime;
+};
+
 enum class RecordingMode {
     DVR,
     Normal
@@ -46,7 +51,7 @@ public:
 
     void startDvrSession(int flags = FLAG_ALL_RECORDING);
     void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_ALL_RECORDING);
-    void stop();
+    void stop(std::optional<GameRecordEnd> end);
     void stopInputs();
     std::string stopDvrSession();
     void cleanDvrSession(const std::string& id);

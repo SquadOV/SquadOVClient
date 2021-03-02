@@ -93,7 +93,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
     // and just pretend that the old match never happened.
     if (!!_currentMatch && _currentMatch->matchId() == state->matchId) {
         service::recorder::VodIdentifier id = _recorder->currentId();
-        _recorder->stop();
+        _recorder->stop({});
         _currentMatch.reset(nullptr);
         try {
             service::api::getGlobalApi()->deleteVod(id.videoUuid);
@@ -130,6 +130,8 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
     // match details if the user just leaves the game.
     // Don't try to to check the the state's match map matches at this point since it'll probably
     // be back at the main menu before we get this event (as expected).
+    std::optional<service::recorder::GameRecordEnd> end = std::nullopt;
+
     if (_currentMatch->matchId() == state->matchId && state->stagedMatchEnd) {
         _currentMatch->finishMatch(eventTime);
 
@@ -148,14 +150,10 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
             
             // Associate the match with the video so that we know which video to load later
             // AND so we know which videos to not delete in our cleanup phase.
-            shared::squadov::VodAssociation association;
-            association.matchUuid = matchUuid;
-            association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-            association.videoUuid = vodId.videoUuid;
-            association.startTime = vodStartTime;
-            association.endTime = _currentMatch->endTime();
-            association.rawContainerFormat = "mpegts";
-            service::api::getGlobalApi()->associateVod(association, _recorder->getMetadata(), sessionId);
+            end = std::make_optional(service::recorder::GameRecordEnd{
+                matchUuid,
+                _currentMatch->endTime()
+            });
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to upload valorant match: " << ex.what() << std::endl);
             // Any errors should result in the VOD being deleted.
@@ -167,7 +165,9 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
         }
     }
 
-    _recorder->stop();
+    if (_recorder->isRecording()) {
+        _recorder->stop(end);
+    }
 
     // Reset the current match. If the check above fails, then this is the only thing that
     // happens which is fine since we don't care about the game anymore since something weird happened.

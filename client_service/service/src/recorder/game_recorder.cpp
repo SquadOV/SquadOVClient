@@ -65,7 +65,7 @@ GameRecorder::GameRecorder(
 
 GameRecorder::~GameRecorder() {
     if (isRecording()) {
-        stop();
+        stop({});
     }
 }
 
@@ -474,7 +474,12 @@ void GameRecorder::stopInputs() {
     }
 }
 
-void GameRecorder::stop() {
+void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+    const auto vodId = currentId();
+    const auto metadata = getMetadata();
+    const auto sessionId = this->sessionId();
+    const auto vodStartTime = this->vodStartTime();
+    
     stopInputs();
     if (_dvrEncoder.hasEncoder()) {
         const auto session = stopDvrSession();
@@ -489,10 +494,29 @@ void GameRecorder::stop() {
     if (_outputPiper) {
         // Move the output piper to a new thread to wait for it to finish
         // so we don't get bottlenecked by any user's poor internet speeds.
-        std::thread uploadThread([this](){
+        // We only do VOD association when the upload ends so we don't tell the
+        // server to associate a VOD that doesn't actually exist.
+        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end](){
             pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
             _outputPiper.reset(nullptr);
             outputPiper->wait();
+
+            if (end.has_value()) {
+                shared::squadov::VodAssociation association;
+                association.matchUuid = end.value().matchUuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
+                association.videoUuid = vodId.videoUuid;
+                association.startTime = vodStartTime;
+                association.endTime = end.value().endTime;
+                association.rawContainerFormat = "mpegts";
+
+                try {
+                    service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
+                    service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+                }
+            }
         });
         uploadThread.detach();
     }

@@ -120,11 +120,8 @@ void LeagueProcessHandlerInstance::onGameEnd() {
 
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
-        const auto sessionId = _recorder->sessionId();
-        const auto metadata = _recorder->getMetadata();
-        const auto vodStartTime = _recorder->vodStartTime();
-        _recorder->stop();
-
+    
+        std::optional<service::recorder::GameRecordEnd> end = std::nullopt;
         if (!_currentMatchUuid.empty() && _ownsAccount) {
             try {
                 if (_actualGame == shared::EGame::TFT) {
@@ -132,15 +129,10 @@ void LeagueProcessHandlerInstance::onGameEnd() {
                 } else {
                     service::api::getGlobalApi()->finishLeagueOfLegendsMatch(_currentMatchUuid);
                 }
-
-                shared::squadov::VodAssociation association;
-                association.matchUuid = _currentMatchUuid;
-                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
-                association.videoUuid = vodId.videoUuid;
-                association.startTime = vodStartTime;
-                association.endTime = shared::nowUtc();
-                association.rawContainerFormat = "mpegts";
-                service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+                end = std::make_optional(service::recorder::GameRecordEnd{
+                    _currentMatchUuid,
+                    shared::nowUtc()
+                });
             }  catch (std::exception& ex) {
                 LOG_WARNING("Failed to upload LoL/TFT match: " << ex.what() << std::endl);
                 try {
@@ -150,6 +142,8 @@ void LeagueProcessHandlerInstance::onGameEnd() {
                 }
             }
         }
+
+        _recorder->stop(end);
     }
     
     _currentMatchUuid.clear();
