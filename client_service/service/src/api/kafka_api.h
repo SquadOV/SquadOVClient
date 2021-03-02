@@ -12,6 +12,7 @@ struct KafkaInfo {
     std::string servers;
     std::string key;
     std::string secret;
+    std::string wowTopic;
 };
 
 class KafkaApi {
@@ -26,6 +27,9 @@ private:
     std::unique_ptr<RdKafka::Producer> _producer;
     std::thread _producerThread;
     bool _running = true;
+
+    // Topics
+    std::string _wowTopic;
 };
 using KafkaApiPtr = std::unique_ptr<KafkaApi>;
 

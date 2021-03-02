@@ -7,7 +7,6 @@ namespace service::api {
 namespace {
 
 constexpr int MAX_KAFKA_RETRY = 10;
-const std::string WOW_COMBAT_LOG_TOPIC("wow_combat_logs_2");
 
 }
 
@@ -53,6 +52,8 @@ void KafkaApi::initialize() {
         return;
     }
 
+    _wowTopic = info.wowTopic;
+
     // This thread is needed to call poll() at frequent intervals so that the
     // application callbacks get called.
     _producerThread = std::thread([this](){
@@ -71,7 +72,7 @@ KafkaApi::~KafkaApi() {
 
 void KafkaApi::uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const {
     const auto logJson = log.toJson().dump();
-    genericKafkaProduce(log.timestamp, WOW_COMBAT_LOG_TOPIC, logJson, &combatLogUuid);
+    genericKafkaProduce(log.timestamp, _wowTopic, logJson, &combatLogUuid);
 }
 
 void KafkaApi::genericKafkaProduce(const shared::TimePoint& tm, const std::string& topic, const std::string& message, const std::string* key) const {
