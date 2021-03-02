@@ -19,11 +19,20 @@
 
         <div
             class="d-flex align-center py-1"
+            v-for="mnt in allMaintenance"
+            :key="mnt.id"
+        >
+            <span class="mx-2" :style="maintenanceStyle(mnt)"></span>
+            <span class="text-caption">MAINTENANCE: {{ mnt.name }} ({{ maintenanceStatus(mnt) }}) </span>
+        </div>
+
+        <div
+            class="d-flex align-center py-1"
             v-for="incident in incidents"
             :key="incident.id"
         >
             <span class="mx-2" :style="incidentStyle(incident)"></span>
-            <span class="text-caption">{{ incident.name }} ({{ incidentStatus(incident) }}) </span>
+            <span class="text-caption">INCIDENT: {{ incident.name }} ({{ incidentStatus(incident) }}) </span>
         </div>
     </div>
 </template>
@@ -47,28 +56,46 @@ interface Incident {
     started_at: Date
 }
 
+interface Maintenance {
+    id: string
+    name: string
+    scheduled_for: Date
+    scheduled_until: Date
+    status: string
+}
+
 @Component
 export default class StatusDisplay extends Vue {
     indicator: string = 'none'
     incidents: Incident[] = []
+    upcomingMaintenance: Maintenance[] = []
+    activeMaintenance: Maintenance[] = []
     itvl: number = 0
+
+    get allMaintenance(): Maintenance[] {
+        return [...this.activeMaintenance, ...this.upcomingMaintenance]
+    }
 
     goToStatusPage() {
         openUrlInBrowser('https://squadov.statuspage.io')
     }
 
     get hasStatus(): boolean {
-        return this.indicator != 'none'
+        return (this.indicator != 'none' && this.incidents.length > 0) || this.upcomingMaintenance.length > 0 || this.activeMaintenance.length > 0
     }
 
     get statusStyle(): any {
         let statusColor: color.Color
-        if (this.indicator == 'none') {
-            statusColor = color.getStatusOkColor()
+        if (this.activeMaintenance.length > 0) {
+            statusColor = color.getStatusMaintenanceColor()
         } else if (this.indicator == 'minor') {
             statusColor = color.getStatusMinorColor()
         } else if (this.indicator == 'major') {
             statusColor = color.getStatusMajorColor()
+        } else if (this.upcomingMaintenance.length > 0) {
+            statusColor = color.getStatusMaintenanceColor()
+        } else if (this.indicator == 'none') {
+            statusColor = color.getStatusOkColor()
         } else {
             statusColor = color.getStatusCriticalColor()
         }
@@ -84,28 +111,39 @@ export default class StatusDisplay extends Vue {
     }
 
     get statusText(): string {
-        if (this.indicator == 'none') {
-            return 'No Problems'
+        if (this.activeMaintenance.length > 0) {
+            return 'Active Maintenance'
         } else if (this.indicator == 'minor') {
             return 'Minor Service Issue'
         } else if (this.indicator == 'major') {
             return 'Major Service Issue'
         } else if (this.indicator == 'critical') {
             return 'Critical Service Issue'
+        } else if (this.upcomingMaintenance.length > 0) {
+            return 'Upcoming Maintenance'
+        } else if (this.indicator == 'none') {
+            return 'No Problems'
+        } 
+        return 'Unknown Status'
+    }
+
+    maintenanceStatus(i: Maintenance): string {
+        if (i.status == 'in_progress' || i.status == 'verifying') {
+            return 'In Progress'
+        } else if (i.status == 'scheduled') {
+            return 'Scheduled'
         }
         return 'Unknown Status'
     }
 
-    incidentStyle(i: Incident): any {
+    maintenanceStyle(i: Incident): any {
         let statusColor: color.Color
-        if (i.status == 'resolved' || i.status == 'postmortem') {
-            statusColor = color.getStatusOkColor()
-        } else if (i.status == 'monitoring') {
-            statusColor = color.getStatusMinorColor()
-        } else if (i.status == 'identified') {
-            statusColor = color.getStatusMajorColor()
-        } else {
+        if (i.status == 'in_progress' || i.status == 'verifying') {
             statusColor = color.getStatusCriticalColor()
+        } else if (i.status == 'scheduled') {
+            statusColor = color.getStatusOkColor()
+        } else {
+            statusColor = color.getStatusMaintenanceColor()
         }
 
         return {
@@ -129,6 +167,28 @@ export default class StatusDisplay extends Vue {
             return 'Investigating'
         }
         return 'Unknown Status'
+    }
+
+    incidentStyle(i: Maintenance): any {
+        let statusColor: color.Color
+        if (i.status == 'resolved' || i.status == 'postmortem') {
+            statusColor = color.getStatusOkColor()
+        } else if (i.status == 'monitoring') {
+            statusColor = color.getStatusMinorColor()
+        } else if (i.status == 'identified') {
+            statusColor = color.getStatusMajorColor()
+        } else {
+            statusColor = color.getStatusCriticalColor()
+        }
+
+        return {
+            height: '16px',
+            width: '16px',
+            border: '2px solid black',
+            'border-radius': '50%',
+            display: 'inline-block',
+            'background-color': color.colorToCssString(statusColor),
+        }
     }
 
     get sp() {
@@ -166,6 +226,22 @@ export default class StatusDisplay extends Vue {
                 // every time we tick and not only when the status changes.
                 this.onIndicatorChange()
             }
+        })
+
+        //@ts-ignore
+        this.sp.scheduled_maintenances({
+            filter: 'upcoming',
+            success: (data: any) => {
+                this.upcomingMaintenance = data.scheduled_maintenances
+            } 
+        })
+
+        //@ts-ignore
+        this.sp.scheduled_maintenances({
+            filter: 'active',
+            success: (data: any) => {
+                this.activeMaintenance = data.scheduled_maintenances
+            } 
         })
     }
 

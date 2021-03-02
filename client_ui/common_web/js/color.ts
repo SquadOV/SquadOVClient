@@ -43,6 +43,14 @@ export function getGenericBottomPlaceColor(): Color {
     return getGenericLossColor()
 }
 
+export function getStatusMaintenanceColor(): Color {
+    return {
+        r: 135,
+        g: 206,
+        b: 250
+    }
+}
+
 export function getStatusOkColor(): Color {
     return {
         r: 76,
