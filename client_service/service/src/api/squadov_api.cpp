@@ -44,6 +44,7 @@ KafkaInfo SquadovApi::getKafkaInfo() const {
     ret.servers = parsedJson["servers"].get<std::string>();
     ret.key = parsedJson["key"].get<std::string>();
     ret.secret = parsedJson["secret"].get<std::string>();
+    ret.wowTopic = parsedJson["wowTopic"].get<std::string>();
     return ret;
 }
 
