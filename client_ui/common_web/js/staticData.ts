@@ -43,6 +43,10 @@ class StaticDataClient {
         return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/difficulty/${diffId}/data.json`
     }
 
+    getWowSpellDataUrl(spellId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/spells/${spellId}/data.json`
+    }
+
     getTftLittleLegendIcon(id: string): string {
         return `${STATIC_CONTENT_BASE_URL}/tft/companions/${id}/portrait.png`
     }

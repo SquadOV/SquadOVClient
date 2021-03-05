@@ -125,6 +125,7 @@ import {
     dateRangeIntersects,
     dateClamp
 } from '@client/js/time'
+import { wowCache } from '@client/js/wow/staticCache'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
@@ -170,6 +171,7 @@ export default class WowTimeline extends Vue {
     selectedTab: number = 0
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
     pendingEndpoints: Set<string> = new Set()
+    spellIdNames: {[id: number]: string} = {}
 
     // Graph settings
     showSettings: boolean = false
@@ -306,16 +308,36 @@ export default class WowTimeline extends Vue {
             }
 
             if (this.showBloodlust && !!this.events) {
+                // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
+                // Send pass is to add the spells to the visualization.
+                // In between the two passes, we need to make a call to grab the spell names.
+                let auraSpellIds: Set<number> = new Set()
                 for (let aura of this.events.auras) {
                     if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
                         continue
                     }
 
                     if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
+                        auraSpellIds.add(aura.spellId)
+                    }
+                }
+
+                wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
+                    for (let [key, value] of resp) {
+                        Vue.set(this.spellIdNames, key, value)
+                    }
+                })
+
+                for (let aura of this.events.auras) {
+                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
+                    if (aura.spellId in this.spellIdNames) {
                         data.addXMarkArea({
                             start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
                             end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
-                            name: aura.spellName
+                            name: this.spellIdNames[aura.spellId]!
                         })
                     }
                 }

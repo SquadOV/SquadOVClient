@@ -475,6 +475,10 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+    if (!isRecording()) {
+        return;
+    }
+
     const auto vodId = currentId();
     const auto metadata = getMetadata();
     const auto sessionId = this->sessionId();
@@ -540,13 +544,18 @@ VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath
     return *_currentId;
 }
 
-void GameRecorder::stopFromSource(const shared::TimePoint& end) {
+void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameRecordEnd& end) {
+    const auto vodId = currentId();
+    const auto metadata = getMetadata();
+    const auto sessionId = this->sessionId();
+    const auto vodStartTime = this->vodStartTime();
+
     // We don't really expect this code to run in production so just do some janky
     // FFmpeg binary call here. YOLOOO.
     const auto ffmpegBinary = std::filesystem::path(shared::getEnv("FFMPEG_BINARY_PATH", ""));
     if (fs::exists(ffmpegBinary)) {
         const auto startMs = std::chrono::duration_cast<std::chrono::milliseconds>(_manualVodRecordStart - _manualVodTimeStart).count();
-        const auto toMs = std::chrono::duration_cast<std::chrono::milliseconds>(end - _manualVodTimeStart).count();
+        const auto toMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTm - _manualVodTimeStart).count();
 
         std::ostringstream ffmpegCommand;
         ffmpegCommand << "\"\"" << ffmpegBinary.string() << "\""
@@ -570,6 +579,21 @@ void GameRecorder::stopFromSource(const shared::TimePoint& end) {
     _currentId.reset(nullptr);
     _outputPiper->wait();
     _outputPiper.reset(nullptr);
+
+    shared::squadov::VodAssociation association;
+    association.matchUuid = end.matchUuid;
+    association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
+    association.videoUuid = vodId.videoUuid;
+    association.startTime = vodStartTime;
+    association.endTime = end.endTime;
+    association.rawContainerFormat = "mpegts";
+
+    try {
+        service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
+        service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+    }
 }
 
 std::unique_ptr<VodIdentifier> GameRecorder::createNewVodIdentifier() const {

@@ -57,7 +57,7 @@ public:
     void cleanDvrSession(const std::string& id);
 
     VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);
-    void stopFromSource(const shared::TimePoint& end);
+    void stopFromSource(const shared::TimePoint& endTm, const GameRecordEnd& end);
     void setFileOutputFromUri(const std::string& videoUuid, const std::string& uri);
 
     bool isRecording() const { return !!_encoder.encoder || std::filesystem::exists(_manualVodPath); }
