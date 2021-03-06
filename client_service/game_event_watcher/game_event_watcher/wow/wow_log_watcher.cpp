@@ -4,8 +4,6 @@
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
-#define DEBUG_TIMING 0
-
 using namespace std::literals::string_literals;
 namespace fs = std::filesystem;
 namespace game_event_watcher {
@@ -164,10 +162,6 @@ void WoWLogWatcher::wait() {
 
 void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
-#if DEBUG_TIMING
-        shared::Timer timer("Parse WoW Combat Log Line");
-#endif
-
         RawWoWCombatLog log;
         log.logLine = _logLine++;
         if (!parseRawCombatLogLine(ln, log, _logPath)) {
@@ -175,9 +169,6 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             continue;
         }
 
-#if DEBUG_TIMING
-        timer.tick("Raw Combat Log");
-#endif
 
         bool parsed = false;
 
@@ -189,10 +180,6 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
-#if DEBUG_TIMING
-        timer.tick("Raw Combat Log State");
-#endif
-
         if (!parsed) {
             WoWEncounterStart encounter;
             if (parseEncounterStart(log, encounter)) {
@@ -201,22 +188,6 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
-#if DEBUG_TIMING
-        timer.tick("Encounter Start");
-#endif
-
-        if (!parsed) {
-            WoWEncounterEnd encounter;
-            if (parseEncounterEnd(log, encounter)) {
-                notify(static_cast<int>(EWoWLogEvents::EncounterEnd), log.timestamp, (void*)&encounter);
-                parsed = true;
-            }
-        }
-
-#if DEBUG_TIMING
-        timer.tick("Encounter End");
-#endif
-
         if (!parsed) {
             WoWChallengeModeStart challenge;
             if (parseChallengeModeStart(log, challenge)) {
@@ -224,23 +195,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 parsed = true;
             }
         }
-
-#if DEBUG_TIMING
-        timer.tick("Challenge Start");
-#endif
-
-        if (!parsed) {
-            WoWChallengeModeEnd challenge;
-            if (parseChallengeModeEnd(log, challenge)) {
-                notify(static_cast<int>(EWoWLogEvents::ChallengeModeEnd), log.timestamp, (void*)&challenge);
-                parsed = true;
-            }
-        }
-
-#if DEBUG_TIMING
-        timer.tick("Challenge End");
-#endif
-        
+ 
         if (!parsed) {
             WoWArenaStart arena;
             if (parseArenaStart(log, arena)) {
@@ -248,22 +203,6 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
                 parsed = true;
             }
         }
-
-#if DEBUG_TIMING
-        timer.tick("Arena Start");
-#endif
-
-        if (!parsed) {
-            WoWArenaEnd arena;
-            if (parseArenaEnd(log, arena)) {
-                notify(static_cast<int>(EWoWLogEvents::ArenaEnd), log.timestamp, (void*)&arena);
-                parsed = true;
-            }
-        }
-
-#if DEBUG_TIMING
-        timer.tick("Arena End");
-#endif
 
         if (!parsed) {
             if (parseZoneChange(log)) {
@@ -281,20 +220,35 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             }
         }
 
-#if DEBUG_TIMING
-        timer.tick("Combatant Info");
-#endif
-
-        // We use this flag to determine whether or not we MUST send this log line to the server since it's
-        // presumably important.
-        log.parsed = parsed;
-
         // Every log line needs to get passed to the CombatLogLine event
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
 
-#if DEBUG_TIMING
-        timer.tick("Generic Combat Log Line");
-#endif
+        // We need to send the "X_END" events after we send the combat log line as the log line only gets 
+        // sent if a match is active. Thus if we end the match, no log line will be sent and we want to send
+        // the X_END events.
+        if (!parsed) {
+            WoWEncounterEnd encounter;
+            if (parseEncounterEnd(log, encounter)) {
+                notify(static_cast<int>(EWoWLogEvents::EncounterEnd), log.timestamp, (void*)&encounter);
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            WoWChallengeModeEnd challenge;
+            if (parseChallengeModeEnd(log, challenge)) {
+                notify(static_cast<int>(EWoWLogEvents::ChallengeModeEnd), log.timestamp, (void*)&challenge);
+                parsed = true;
+            }
+        }
+
+        if (!parsed) {
+            WoWArenaEnd arena;
+            if (parseArenaEnd(log, arena)) {
+                notify(static_cast<int>(EWoWLogEvents::ArenaEnd), log.timestamp, (void*)&arena);
+                parsed = true;
+            }
+        }
     }
 }
 

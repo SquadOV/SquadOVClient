@@ -138,16 +138,6 @@ void WoWProcessHandlerInstance::waitForLogWatcher() {
 }
 
 void WoWProcessHandlerInstance::cleanup() {
-    // Tell the server that the combat log is finished.
-    // We need to do this so that the log backup will get written out to block storage.
-    const game_event_watcher::RawWoWCombatLog endLog = {
-        shared::nowUtc(),
-        { "SQUADOV_END_COMBAT_LOG" },
-        -1
-    };
-    LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
-    onCombatLogLine(endLog.timestamp, (void*)&endLog);
-
     // Move the current combat log to backup so that it doesn't get too big.
     // This assumes that this is being called on WoW process stop so this should be safe to do.
     LOG_INFO("Moving log to backup..." << std::endl);
@@ -165,10 +155,6 @@ bool WoWProcessHandlerInstance::hasValidCombatLog() const {
 
 void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, const void* data) {
     if (service::system::getGlobalState()->isPaused()) {
-        return;
-    }
-
-    if (hasValidCombatLog()) {
         return;
     }
 
@@ -453,6 +439,17 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
             _recorder->stopFromSource(tm, end);
         }
     }
+
+    // Tell the server that the combat log is finished. I don't think this is *technically*
+    // needed but a nice marker to have to force a flush out of events.
+    const game_event_watcher::RawWoWCombatLog endLog = {
+        shared::nowUtc(),
+        { "SQUADOV_END_COMBAT_LOG" },
+        -1
+    };
+    LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
+    onCombatLogLine(endLog.timestamp, (void*)&endLog);
+
     _currentMatchViewUuid = "";
 }
 
