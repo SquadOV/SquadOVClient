@@ -63,10 +63,8 @@ export default class WowCharacterIcon extends Vue {
 
         // Use the api client to get the proper URL to redirect to as the server will know how to map
         // the character GUID to an armory link.
-        apiClient.getWoWCharacterArmoryLink(this.char.name).then((resp: ApiData<string[]>) => {
-            for (let url of resp.data) {
-                openUrlInBrowser(url)
-            }
+        apiClient.getWoWCharacterArmoryLink(this.char.name, this.char.guid).then((resp: ApiData<string>) => {
+            openUrlInBrowser(resp.data)
         }).catch((err: any) => {
             console.log('Failed to get WoW character armory link: ', err)
         })
