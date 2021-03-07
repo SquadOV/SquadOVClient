@@ -15,9 +15,9 @@ extern "C" {
 namespace po = boost::program_options;
 using namespace process_watcher;
 void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
-    //if (level > av_log_get_level()) {
-    //    return;
-    //}
+    if (level > av_log_get_level()) {
+        return;
+    }
 
     char buffer[2048];
     vsprintf(buffer, fmt, v1);

@@ -190,6 +190,8 @@ private:
     // 4) stop: block on thread join (won't finish until running is false)
     mutable std::mutex _startMutex;
     bool _canStart = true;
+
+    bool _doPostVideoFlush = true;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -400,6 +402,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
                 // Not sure why but this having this option > 0 causes issues using the AMD AMF encoder.
                 if (enc.name == "h264_amf") {
                     _vcodecContext->max_b_frames = 0;
+                    _doPostVideoFlush = false;
                 }
             }
 
@@ -805,8 +808,11 @@ void FfmpegAvEncoderImpl::stop() {
         << std::endl);
     }
 
-    // Flush packets from encoder.
-    encode(_vcodecContext, nullptr, _vstream);
+    // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
+    // because something is wrong there......
+    if (_doPostVideoFlush) {
+        encode(_vcodecContext, nullptr, _vstream);
+    }
 
     if (!!_acodecContext) {
         encode(_acodecContext, nullptr, _astream);
