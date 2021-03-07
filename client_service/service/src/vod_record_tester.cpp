@@ -15,9 +15,9 @@ extern "C" {
 namespace po = boost::program_options;
 using namespace process_watcher;
 void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
-    if (level > av_log_get_level()) {
-        return;
-    }
+    //if (level > av_log_get_level()) {
+    //    return;
+    //}
 
     char buffer[2048];
     vsprintf(buffer, fmt, v1);
@@ -90,10 +90,10 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
-            recorder.stop();
+            recorder.stop({});
         });
     } else if (mode == "DVR") {
         const auto duration = vm["duration"].as<int>();
@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
             recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
-            recorder.stop();
+            recorder.stop({});
         });
     }
 

@@ -84,7 +84,6 @@
     "marked": "^1.2.7",
     "node-forge": "^0.10.0",
     "protobufjs": "^6.10.2",
-    "sqlite3": "^5.0.0",
     "subscriptions-transport-ws": "^0.9.18",
     "tough-cookie": "^4.0.0",
     "utf8": "^3.0.0",

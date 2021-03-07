@@ -318,7 +318,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     };
 
     const EncoderChoice encodersToUse[] = {
-        {"h264_amf", VideoStreamContext::CPU },
+        {"h264_amf", VideoStreamContext::GPU },
         {"h264_nvenc", VideoStreamContext::GPU },
         {"libopenh264", VideoStreamContext::CPU }
     };
@@ -344,6 +344,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = 6000000;
             _vcodecContext->thread_count = 0;
+            _vcodecContext->max_b_frames = 1;
             
             if (canUseHwAccel) {
                 AVBufferRef* hwContextRef = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
@@ -395,6 +396,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
                 _vcodecContext->hw_device_ctx = hwContextRef;
                 _vcodecContext->hw_frames_ctx = frameContextRef;
                 _vcodecContext->colorspace = AVCOL_SPC_BT709;
+
+                // Not sure why but this having this option > 0 causes issues using the AMD AMF encoder.
+                if (enc.name == "h264_amf") {
+                    _vcodecContext->max_b_frames = 0;
+                }
             }
 
             // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.
@@ -404,7 +410,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
             // if the GOP size is too small.
             _vcodecContext->gop_size = static_cast<int>(fps * 5);
-            _vcodecContext->max_b_frames = 1;
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
                 _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
