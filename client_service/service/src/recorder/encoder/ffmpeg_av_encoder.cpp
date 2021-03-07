@@ -326,6 +326,10 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
         {"libopenh264", VideoStreamContext::CPU }
     };
 
+    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+    const auto canUseGpu = FfmpegGPUVideoSwapChain::isSupported(d3d, width, height);
+    auto immediate = d3d->immediateContext();
+
     bool foundEncoder = false;
     bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
@@ -343,7 +347,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
 
-            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && FfmpegGPUVideoSwapChain::isSupported(service::renderer::getSharedD3d11Context(), width, height) && useHw;
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && useHw;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = 6000000;
             _vcodecContext->thread_count = 0;
@@ -357,15 +361,13 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
                 AVHWDeviceContext* hwContext = reinterpret_cast<AVHWDeviceContext*>(hwContextRef->data);
                 AVD3D11VADeviceContext* d3dContext = reinterpret_cast<AVD3D11VADeviceContext*>(hwContext->hwctx);
-
-                service::renderer::D3d11SharedContext d3d;
-                auto immediate = d3d.immediateContext();
-                d3dContext->device = d3d.device();
+                
+                d3dContext->device = d3d->device();
                 d3dContext->device_context = immediate.context();
 
-                // This is needed to pass the ownership to ffmpeg.
-                d3d.device()->AddRef();
-                immediate.context()->AddRef();
+                // This is needed to share the ownership to ffmpeg.
+                d3dContext->device->AddRef();
+                d3dContext->device_context->AddRef();
 
                 if (av_hwdevice_ctx_init(hwContextRef) < 0) {
                     av_buffer_unref(&hwContextRef);
@@ -460,7 +462,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
         LOG_INFO("Using FFmpeg CPU Video Swap Chain" << std::endl);
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
-    _videoSwapChain->initializeGpuSupport(service::renderer::getSharedD3d11Context());
+    _videoSwapChain->initializeGpuSupport(d3d);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
@@ -715,9 +717,14 @@ void FfmpegAvEncoderImpl::start() {
                 ++_processedVideoFrames;
             }
 
-            for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
-                frame->pts = _vFrameNum;
-                encode(_vcodecContext, frame, _vstream);
+            {
+                service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+                auto immediate = d3d->immediateContext();
+                
+                for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
+                    frame->pts = _vFrameNum;
+                    encode(_vcodecContext, frame, _vstream);
+                }
             }
         
 #if LOG_FRAME_TIME

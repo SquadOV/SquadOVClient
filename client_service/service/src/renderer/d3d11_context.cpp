@@ -5,7 +5,7 @@
 #include <VersionHelpers.h>
 namespace service::renderer {
 
-D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::mutex>&& guard, ID3D11DeviceContext* context):
+D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::recursive_mutex>&& guard, ID3D11DeviceContext* context):
     _guard(std::move(guard)),
     _context(context) {
     _context->AddRef();
@@ -92,7 +92,7 @@ D3d11SharedContext::~D3d11SharedContext() {
 }
 
 D3d11ImmediateContextGuard D3d11SharedContext::immediateContext() {
-    std::unique_lock<std::mutex> lock(_contextMutex);
+    std::unique_lock<std::recursive_mutex> lock(_contextMutex);
     return D3d11ImmediateContextGuard{std::move(lock), _context};
 }
 

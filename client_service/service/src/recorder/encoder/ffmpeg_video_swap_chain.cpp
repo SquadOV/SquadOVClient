@@ -204,17 +204,9 @@ AVFrame* FfmpegGPUVideoSwapChain::getFrontBufferFrame() {
 
     if (_frontBuffer->isInit()) {
         // Copy from the front buffer to the frame's texture using D3D11's video processing capabilities
-        // to ensure that we're able to convert to NV12 properly. Note that we have to obtain a shared
-        // handle to the frame's texture since we let ffmpeg create its own D3d11DeviceContext to make sure
-        // we aren't competing with ffmpeg for the context.
+        // to ensure that we're able to convert to NV12 properly.
         auto* frameTexture = reinterpret_cast<ID3D11Texture2D*>(_frame->data[0]);
-
-        service::renderer::SharedD3d11TextureHandle handle(_shared, frameTexture, true);
-        _processor->process(_frontBuffer->rawTexture(), handle.texture());
-
-        // According to MSDN, after we make changes to a shared texture we need to do a flush.
-        auto immediate = _shared->immediateContext();
-        immediate.context()->Flush();
+        _processor->process(_frontBuffer->rawTexture(), frameTexture);
     }
 
     return _frame;

@@ -23,10 +23,10 @@ public:
     ID3D11DeviceContext* context() const { return _context; }
 
 protected:
-    D3d11ImmediateContextGuard(std::unique_lock<std::mutex>&& guard, ID3D11DeviceContext* context);
+    D3d11ImmediateContextGuard(std::unique_lock<std::recursive_mutex>&& guard, ID3D11DeviceContext* context);
 
 private:
-    std::unique_lock<std::mutex> _guard;
+    std::unique_lock<std::recursive_mutex> _guard;
     ID3D11DeviceContext* _context;
 };
 
@@ -48,7 +48,7 @@ private:
     ID3D11Device* _device = nullptr;
     ID3D11Device1* _device1 = nullptr;
     ID3D11DeviceContext* _context = nullptr;
-    std::mutex _contextMutex;
+    std::recursive_mutex _contextMutex;
 };
 
 using D3d11SharedContextPtr = std::unique_ptr<D3d11SharedContext>;
