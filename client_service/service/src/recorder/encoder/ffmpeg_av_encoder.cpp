@@ -320,8 +320,9 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     };
 
     const EncoderChoice encodersToUse[] = {
-        {"h264_amf", VideoStreamContext::GPU },
+        {"h264_mf", VideoStreamContext::CPU },
         {"h264_nvenc", VideoStreamContext::GPU },
+        {"h264_amf", VideoStreamContext::GPU },
         {"libopenh264", VideoStreamContext::CPU }
     };
 
