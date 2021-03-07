@@ -350,17 +350,11 @@ std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWC
     return parsedJson.get<std::string>();
 }
 
-std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWChallengeModeStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
-    nlohmann::json combatantArray = nlohmann::json::array();
-    for (const auto& c : combatants) {
-        combatantArray.push_back(c.toJson());
-    }
-
+std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const game_event_watcher::WoWCombatLogState& cl) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "combatants", combatantArray },
         { "data", encounter.toJson() },
-        { "combatLogUuid", combatLogUuid }
+        { "cl", cl.toJson() }
     };
 
     std::ostringstream path;
@@ -376,10 +370,16 @@ std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timesta
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter) {
+std::string SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "data", encounter.toJson() }
+        { "data", encounter.toJson() },
+        { "combatants", combatantArray }
     };
 
     std::ostringstream path;
@@ -389,19 +389,16 @@ void SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, const sha
     if (result->status != 200) {
         THROW_ERROR("Failed to create finish WoW challenge: " << result->status);
     }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
-std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWEncounterStart& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
-    nlohmann::json combatantArray = nlohmann::json::array();
-    for (const auto& c : combatants) {
-        combatantArray.push_back(c.toJson());
-    }
-
+std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const game_event_watcher::WoWCombatLogState& cl) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "combatants", combatantArray },
         { "data", encounter.toJson() },
-        { "combatLogUuid", combatLogUuid }
+        { "cl", cl.toJson() }
     };
 
     std::ostringstream path;
@@ -417,10 +414,16 @@ std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timesta
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter) {
+std::string SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "data", encounter.toJson() }
+        { "data", encounter.toJson() },
+        { "combatants", combatantArray }
     };
 
     std::ostringstream path;
@@ -430,19 +433,16 @@ void SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, const sha
     if (result->status != 200) {
         THROW_ERROR("Failed to finish WoW encounter: " << result->status);
     }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
-std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const std::string& combatLogUuid, const game_event_watcher::WoWArenaStart& arena, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
-    nlohmann::json combatantArray = nlohmann::json::array();
-    for (const auto& c : combatants) {
-        combatantArray.push_back(c.toJson());
-    }
-
+std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "combatants", combatantArray },
         { "data", arena.toJson() },
-        { "combatLogUuid", combatLogUuid }
+        { "cl", cl.toJson() }
     };
 
     std::ostringstream path;
@@ -458,10 +458,16 @@ std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, 
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaEnd& arena) {
+std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaEnd& arena, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
-        { "data", arena.toJson() }
+        { "data", arena.toJson() },
+        { "combatants", combatantArray }
     };
 
     std::ostringstream path;
@@ -471,6 +477,9 @@ void SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const shared:
     if (result->status != 200) {
         THROW_ERROR("Failed to finish WoW arena: " << result->status);
     }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {

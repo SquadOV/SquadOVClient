@@ -42,7 +42,6 @@ struct RawWoWCombatLog {
     shared::TimePoint timestamp;
     std::vector<std::string> log;
     int64_t logLine;
-    bool parsed = false;
 
     nlohmann::json toJson() const;
 };

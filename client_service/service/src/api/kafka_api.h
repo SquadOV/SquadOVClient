@@ -21,7 +21,7 @@ public:
     ~KafkaApi();
 
     // WoW
-    void uploadWoWCombatLogLine(const std::string& combatLogUuid, const game_event_watcher::RawWoWCombatLog& log) const;
+    void uploadWoWCombatLogLine(const std::string& matchViewUuid, const game_event_watcher::RawWoWCombatLog& log) const;
 private:
     void genericKafkaProduce(const shared::TimePoint& tm, const std::string& topic, const std::string& message, const std::string* key = nullptr) const;
     std::unique_ptr<RdKafka::Producer> _producer;

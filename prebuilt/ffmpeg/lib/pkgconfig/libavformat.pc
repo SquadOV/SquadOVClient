@@ -5,9 +5,9 @@ includedir=../../prebuilt/ffmpeg/include
 
 Name: libavformat
 Description: FFmpeg container format library
-Version: 58.45.100
+Version: 58.71.100
 Requires: 
-Requires.private: libavcodec >= 58.91.100, libswresample >= 3.7.100, libavutil >= 56.51.100
+Requires.private: libavcodec >= 58.129.100, libswresample >= 3.8.100, libavutil >= 56.67.100
 Conflicts:
 Libs: -L${libdir}  -lavformat 
 Libs.private: secur32.lib ws2_32.lib
