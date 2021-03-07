@@ -1,1 +1,0 @@
-cmd='C:/Users/Michael Bao/Documents/Git/SquadOVClient/deps/ffmpeg/configure;--prefix="C:/Users/Michael Bao/Documents/Git/SquadOVClient/build/ffmpeg";--enable-shared;--disable-doc;--enable-libopus;--enable-libopenh264;--env="PKG_CONFIG_PATH=C:/Users/Michael Bao/Documents/Git/SquadOVClient/build/openh264/lib/pkgconfig"'
