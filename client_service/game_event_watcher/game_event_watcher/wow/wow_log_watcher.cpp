@@ -175,7 +175,7 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         if (!parsed) {
             WoWCombatLogState state;
             if (parseCombatLogStart(log, state)) {
-                notify(static_cast<int>(EWoWLogEvents::CombatLogStart), log.timestamp, (void*)&state);
+                notify(static_cast<int>(EWoWLogEvents::CombatLogStart), log.timestamp, (void*)&state, false);
                 parsed = true;
             }
         }
