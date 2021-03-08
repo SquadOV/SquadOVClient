@@ -15,7 +15,7 @@
                 <h2>Free automatic VOD recording, match history, and stat analysis to help you improve.</h2>
 
                 <div class="mt-4">
-                    <v-btn class="download-button" color="success" :href="downloadLink">
+                    <v-btn class="download-button" color="success" @click="onDownload" :href="downloadLink">
                         <div class="d-flex">
                             <v-icon class="mr-4">
                                 mdi-microsoft-windows
@@ -269,10 +269,14 @@ export default class Index extends Vue {
     }
 
     get downloadLink() : string {
+        return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe' 
+    }
+
+    onDownload() {
         if (!!this.$route.query.ref) {
-            return `${this.$config.apiUrl}/public/landing/download?ref=${this.$route.query.ref}`
+            this.$axios.$get(`${this.$config.apiUrl}/public/landing/download?ref=${this.$route.query.ref}`)
         } else {
-            return `${this.$config.apiUrl}/public/landing/download`
+            this.$axios.$get(`${this.$config.apiUrl}/public/landing/download`)
         }
     }
 
