@@ -265,7 +265,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.6.10'
+        return 'v0.7.0'
     }
 
     get downloadLink() : string {
