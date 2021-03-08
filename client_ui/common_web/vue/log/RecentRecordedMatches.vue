@@ -4,6 +4,14 @@
             <template v-if="!loading && recentMatches.length > 0">
                 <div class="d-flex text-h6 align-center">
                     Recent Games
+
+                    <v-spacer></v-spacer>
+
+                    <v-btn icon @click="refreshData">
+                        <v-icon>
+                            mdi-refresh
+                        </v-icon>
+                    </v-btn>
                 </div>
                 <v-divider class="my-2"></v-divider>
 
