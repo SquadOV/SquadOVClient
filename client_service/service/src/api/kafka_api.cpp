@@ -71,8 +71,10 @@ KafkaApi::~KafkaApi() {
 }
 
 void KafkaApi::uploadWoWCombatLogLine(const std::string& matchViewUuid, const game_event_watcher::RawWoWCombatLog& log) const {
-    const auto logJson = log.toJson().dump();
-    genericKafkaProduce(log.timestamp, _wowTopic, logJson, &matchViewUuid);
+    auto logJson = log.toJson();
+    logJson["version"] = 2;
+
+    genericKafkaProduce(log.timestamp, _wowTopic, logJson.dump(), &matchViewUuid);
 }
 
 void KafkaApi::genericKafkaProduce(const shared::TimePoint& tm, const std::string& topic, const std::string& message, const std::string* key) const {
