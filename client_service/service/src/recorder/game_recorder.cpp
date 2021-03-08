@@ -259,6 +259,7 @@ void GameRecorder::loadCachedInfo() {
         std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
             video::VideoWindowInfo ret;
             HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
+            LOG_INFO("...Found Window! Detecting monitor and resolution..." << std::endl);
             if (wnd) {
                 while (true) {
                     if (!IsIconic(wnd)) {
