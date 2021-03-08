@@ -15,7 +15,7 @@
                 <h2>Free automatic VOD recording, match history, and stat analysis to help you improve.</h2>
 
                 <div class="mt-4">
-                    <v-btn class="download-button" color="success" @click="onDownload" :href="downloadLink">
+                    <v-btn class="download-button" color="success" @click="onDownload" :href="downloadLink" target="_blank">
                         <div class="d-flex">
                             <v-icon class="mr-4">
                                 mdi-microsoft-windows
@@ -185,7 +185,7 @@
                     </div>
 
                     <div class="mt-4">
-                        <v-btn class="download-button" color="success" :href="downloadLink">
+                        <v-btn class="download-button" color="success"  @click="onDownload" :href="downloadLink" target="_blank">
                             <div class="d-flex">
                                 <v-icon class="mr-4">
                                     mdi-microsoft-windows
@@ -265,7 +265,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.6.5'
+        return 'v0.6.10'
     }
 
     get downloadLink() : string {
