@@ -39,6 +39,7 @@ struct OutputStreamContainer {
     
     bool firstFrame = false;
     int64_t startPts = 0;
+    int64_t lastDts = AV_NOPTS_VALUE;
 
     ~OutputStreamContainer();
 };
@@ -57,7 +58,7 @@ private:
 
     void openInputOutputCodecPairs();
     std::unordered_map<int, std::pair<InputStreamContainerPtr, OutputStreamContainerPtr>> _streamPairs;
-    void encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st);
+    void encode(OutputStreamContainer* container, AVFrame* frame);
 
     // Output
     AVOutputFormat* _outputFormat = nullptr;
@@ -115,29 +116,36 @@ VodClipper::~VodClipper() {
     }
 }
 
-void VodClipper::encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st) {
-    auto ret = avcodec_send_frame(cctx, frame);
+void VodClipper::encode(OutputStreamContainer* container, AVFrame* frame) {
+    auto ret = avcodec_send_frame(container->codecContext, frame);
     if (ret < 0) {
         THROW_ERROR("Failed to send frame: " << ret);
     }
 
     while (true) {
         AVPacket packet = { 0 };
-        const auto ret = avcodec_receive_packet(cctx, &packet);
+        const auto ret = avcodec_receive_packet(container->codecContext, &packet);
         if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
             break;
         } else if (ret < 0) {
             THROW_ERROR("Failed to receive encoded packet.");
         }
 
-        av_packet_rescale_ts(&packet, cctx->time_base, st->time_base);
-        packet.stream_index = st->index;
+        av_packet_rescale_ts(&packet, container->codecContext->time_base, container->stream->time_base);
+        packet.stream_index = container->stream->index;
+
+        const auto maxDts = container->lastDts + !(_outputFormat->flags & AVFMT_TS_NONSTRICT);
+        if (container->lastDts != AV_NOPTS_VALUE && packet.dts < maxDts) {
+            LOG_WARNING("Bad packet: non-monotonically increasing DTS...Recovering" << std::endl);
+            packet.dts = maxDts;
+        }
 
         if (packet.dts > packet.pts) {
             LOG_WARNING("Bad packet: DTS > PTS...Recovering" << std::endl);
             packet.pts = packet.dts;
         }
 
+        container->lastDts = packet.dts;
         if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
             THROW_ERROR("Failed to write to output.");
         }
@@ -281,9 +289,9 @@ shared::squadov::VodMetadata VodClipper::run() {
                 }
 
                 frame->pts = av_rescale_q(frame->best_effort_timestamp - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->codecContext->time_base);
-
+                
                 if (streamType == AVMEDIA_TYPE_VIDEO) {
-                    encode(outputContainer->codecContext, frame, outputContainer->stream);
+                    encode(outputContainer, frame);
                 } else {
                     const auto numConverted = swr_convert(
                         outputContainer->swr,
@@ -325,7 +333,7 @@ shared::squadov::VodMetadata VodClipper::run() {
 
                         outputAudioFrame->pts = audioPts;
                         audioPts += frameSize;
-                        encode(outputContainer->codecContext, outputAudioFrame, outputContainer->stream);
+                        encode(outputContainer, outputAudioFrame);
                     }
                 }
             }
@@ -339,7 +347,7 @@ shared::squadov::VodMetadata VodClipper::run() {
     av_frame_free(&frame);
 
     for (const auto& kvp: _streamPairs) {
-        encode(kvp.second.second->codecContext, nullptr, kvp.second.second->stream);
+        encode(kvp.second.second.get(), nullptr);
     }
 
     const auto ret = av_write_trailer(_outputContext);
