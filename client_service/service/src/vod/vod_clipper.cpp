@@ -449,11 +449,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->width = icontainer.codecContext->width;
                 container->codecContext->height = icontainer.codecContext->height;
                 container->codecContext->sample_aspect_ratio = icontainer.codecContext->sample_aspect_ratio;
-                if (codec->pix_fmts) {
-                    container->codecContext->pix_fmt = codec->pix_fmts[0];
-                } else {
-                    container->codecContext->pix_fmt = icontainer.codecContext->pix_fmt;
-                }
+                container->codecContext->pix_fmt = icontainer.codecContext->pix_fmt;
                 container->codecContext->time_base = av_inv_q(icontainer.codecContext->framerate);
                 container->codecContext->bit_rate = icontainer.codecContext->bit_rate;
                 container->codecContext->gop_size = container->codecContext->time_base.den * 5;
