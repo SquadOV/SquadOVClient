@@ -18,7 +18,16 @@
 
         <v-toolbar-title class="mr-4">
             <router-link :to="homeTo">
-                SquadOV 
+                <div class="d-flex align-center">
+                    <v-img
+                        class="mr-1"
+                        width="32px"
+                        :src="$root.generateAssetUri('assets/icon.png')"
+                        contain
+                    >
+                    </v-img>
+                    SquadOV 
+                </div>
             </router-link>
         </v-toolbar-title>
 
