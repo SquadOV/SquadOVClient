@@ -489,6 +489,12 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+    stopInputs();
+    if (_dvrEncoder.hasEncoder()) {
+        const auto session = stopDvrSession();
+        cleanDvrSession(session);
+    }
+
     if (!isRecording()) {
         return;
     }
@@ -498,11 +504,6 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
     const auto sessionId = this->sessionId();
     const auto vodStartTime = this->vodStartTime();
     
-    stopInputs();
-    if (_dvrEncoder.hasEncoder()) {
-        const auto session = stopDvrSession();
-        cleanDvrSession(session);
-    }
     clearCachedInfo();
     if (_encoder.hasEncoder()) {
         _encoder.encoder->stop();

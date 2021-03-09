@@ -1,6 +1,8 @@
 #include "game_event_watcher/wow/wow_log_watcher.h"
 #include "shared/filesystem/utility.h"
 #include "shared/timer.h"
+#include "shared/errors/error.h"
+#include "shared/version.h"
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
@@ -143,17 +145,87 @@ WoWLogWatcher::WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeTh
 
 }
 
-void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
-    const auto combatLogPath = exePath.parent_path() / fs::path("Logs") / fs::path("WoWCombatLog.txt");
-    loadFromPath(combatLogPath);
+WoWLogWatcher::~WoWLogWatcher() {
+    _running = false;
 }
 
-void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop) {
+void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
+    const auto combatLogFolder = exePath.parent_path() / fs::path("Logs");
+
+    // At this point we either want WoWCombatLog.txt or the new timestamped version.
+    // Detect this by reading properties off the EXE.
+    DWORD unk1 = 0;
+    const auto fileInfoSize = GetFileVersionInfoSizeExW(0, exePath.native().c_str(), &unk1);
+
+    std::vector<char> buffer(fileInfoSize);
+    if (!GetFileVersionInfoExW(0, exePath.native().c_str(), 0, fileInfoSize, (void*)buffer.data())) {
+        THROW_ERROR("Failed to get WoW EXE info: " << shared::errors::getWin32ErrorAsString());
+    }
+
+    char* infBuffer = nullptr;
+    unsigned int infSize = 0;
+    if (!VerQueryValueA((void*)buffer.data(), "\\StringFileInfo\\000004B0\\FileVersion", (void**)&infBuffer, &infSize)) {
+        THROW_ERROR("Failed to query exe info.");
+    }
+
+    std::string versionString(infBuffer, infSize);
+    const auto currentVersion = shared::parseVersionInfo(versionString);
+    const auto thresholdVersion = shared::parseVersionInfo("9.0.5");
+
+    if (currentVersion < thresholdVersion) {
+        LOG_INFO("...Legacy combat log detected." << std::endl);
+        // Older WoW - load WoWCombatLog.txt.
+        const auto combatLogPath = combatLogFolder / fs::path("WoWCombatLog.txt");
+        loadFromPath(combatLogPath, true, true);
+    } else {
+        LOG_INFO("...Timestamped combat log detected." << std::endl);
+        // Newer WoW - file will be of the form WoWCombatLog-DATE-TIME.txt.
+        std::thread t([this, combatLogFolder](){
+            std::filesystem::path logFile;
+            bool found = false;
+            while (_running) {
+                // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
+                // continue on in the while loop all at once.
+                try {
+                    if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold())) {
+                        logFile = shared::filesystem::getNewestFileInFolder(combatLogFolder, [](const fs::path& path){
+                            if (path.extension() != ".txt") {
+                                return false;
+                            }
+
+                            if (path.filename().native().find(L"WoWCombatLog-"s) != 0) {
+                                return false;
+                            } 
+
+                            return true;
+                        });
+                    } else {
+                        found = (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold());
+                        break;
+                    }
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Exception when detecting WoW combat log: " << ex.what() << std::endl);
+                    continue;
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            }
+
+            if (fs::exists(logFile) && _running && found) {
+                loadFromPath(logFile, true, false);
+            } else {
+                LOG_WARNING("Failed to find WoW combat log file." << std::endl);
+            }
+        });
+        t.detach();
+    }
+}
+
+void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop, bool legacy) {
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
     _logPath = combatLogPath;
     using std::placeholders::_1;
 
-    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks(), false, loop);
+    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks() && !legacy, false, loop);
     _watcher->disableBatching();
 }
 
@@ -258,6 +330,8 @@ void WoWLogWatcher::moveLogToBackup() {
         return;
     }
 
+    // Set this to false just in case we were waiting on a log file.
+    _running = false;
     // Force destruction fo the log watcher to release any handles we might have on this log file.
     _watcher.reset(nullptr);
 
@@ -267,13 +341,10 @@ void WoWLogWatcher::moveLogToBackup() {
     auto dirIter = fs::directory_iterator(_logPath.parent_path());
     std::vector<fs::path> logPaths(fs::begin(dirIter), fs::end(dirIter));
 
-    // Only manage the files that start with WoWCombatLog. We can just check that the
-    // filename in the directory contains the stem of the given log path for this check
-    // as the stem of _logPath will be WoWCombatLog. This helps us avoid having to
-    // hardcode the "WoWCombatLog" string just in case it changes in the future.
+    // Only manage the files that start with WoWCombatLog.
     logPaths.erase(
         std::remove_if(logPaths.begin(), logPaths.end(), [this](const fs::path& pth){
-            return pth.filename().native().find(_logPath.stem().native()) == std::filesystem::path::string_type::npos;
+            return pth.filename().native().find(L"WoWCombatLog") == std::filesystem::path::string_type::npos;
         }),
         logPaths.end()
     );

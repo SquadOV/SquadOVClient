@@ -108,8 +108,9 @@ struct WoWCombatantInfo {
 class WoWLogWatcher : public BaseLogWatcher {
 public:
     WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);
+    ~WoWLogWatcher();
     void loadFromExecutable(const std::filesystem::path& exePath);
-    void loadFromPath(const std::filesystem::path& logPath, bool loop = true);
+    void loadFromPath(const std::filesystem::path& logPath, bool loop = true, bool legacy = false);
     void moveLogToBackup();
 
     void wait();
@@ -119,6 +120,7 @@ private:
     std::filesystem::path _logPath;
     LogWatcherPtr _watcher;
     int64_t _logLine = 0;
+    bool _running = true;
 };
 
 using WoWLogWatcherPtr = std::unique_ptr<WoWLogWatcher>;

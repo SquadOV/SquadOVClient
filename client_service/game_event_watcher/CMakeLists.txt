@@ -37,5 +37,6 @@ target_include_directories(squadov_game_event_watcher
 target_link_libraries(squadov_game_event_watcher
     squadov_shared
     tinyxml2
+    version
     ${Boost_LIBRARIES}
 )

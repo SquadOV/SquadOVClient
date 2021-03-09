@@ -15,6 +15,7 @@ SET(SRCS
     shared/squadov/vod.cpp
     shared/hearthstone/hearthstone_ratings.cpp
     shared/errors/error.cpp
+    shared/version.cpp
 )
 
 SET(HEADERS
@@ -38,6 +39,7 @@ SET(HEADERS
     shared/hearthstone/hearthstone_ratings.h
     shared/errors/error.h
     shared/math.h
+    shared/version.h
 )
 
 add_library(squadov_shared
