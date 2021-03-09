@@ -265,6 +265,9 @@ FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
 }
 
 FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
+    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+    auto immediate = d3d->immediateContext();
+
     avcodec_free_context(&_vcodecContext);
     av_frame_free(&_aframe);
     av_frame_free(&_aTmpFrame);
@@ -823,7 +826,7 @@ void FfmpegAvEncoderImpl::stop() {
     if (_doPostVideoFlush) {
         service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
         auto immediate = d3d->immediateContext();
-        
+
         encode(_vcodecContext, nullptr, _vstream);
     }
 
