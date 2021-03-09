@@ -23,7 +23,7 @@
         ],
         "baseUrl": ".",
         "paths": {
-            "@client/*": ["./*"]
+            "@client/*": ["./ui/*"]
         }
 	},
     "include": [

@@ -6,11 +6,11 @@ const ejs = require('ejs')
 app.set('view engine', 'ejs')
 app.get('/robots.txt', function (req, res) {
     res.type('text/plain');
-    res.send("User-agent: *\nDisallow: /");
-});
+    res.send("User-agent: *\nDisallow: /")
+})
 
-app.use('/dist', express.static(__dirname + '/dist'))
-app.use('/assets', express.static(__dirname + '/assets'))
+app.use('/dist', express.static(path.join(__dirname, 'dist')))
+app.use('/assets', express.static(path.join(__dirname, 'assets')))
 app.get('/healthz', function (request, response) {
     response.sendStatus(200)
 })
