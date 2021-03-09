@@ -242,7 +242,6 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
             continue;
         }
 
-
         bool parsed = false;
 
         if (!parsed) {
