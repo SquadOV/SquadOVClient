@@ -59,6 +59,7 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
         for (const auto& [key, value] : response.headers) {
             if (key == "Location") {
                 _sessionUri = value;
+                LOG_INFO("Obtained GCS Session URI: " << _sessionUri << std::endl);
                 break;
             }
         }
@@ -66,10 +67,14 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
     });
     _httpClient->setHeaderKeyValue("x-goog-resumable", "start");
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
+    _httpClient->setTimeout(60);
+
     const auto ret = _httpClient->post(destination, nlohmann::json());
     if (ret->status != 201) { 
         THROW_ERROR("Failed to POST to GCS signed URL: " << ret->status << "\t" << ret->body << std::endl);
     }
+
+    _httpClient->clearTimeout();
     _httpClient->removeHeaderKey("x-goog-resumable");
     _httpClient->clearResponseInterceptors();
     _gcsThread = std::thread(std::bind(&GCSPiper::tickGcsThread, this));

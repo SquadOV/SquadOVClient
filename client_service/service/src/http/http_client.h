@@ -8,6 +8,7 @@
 #include <shared_mutex>
 #include <unordered_map>
 #include <vector>
+#include <optional>
 #include <nlohmann/json.hpp>
 
 struct curl_slist;
@@ -45,6 +46,9 @@ public:
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
     void clearResponseInterceptors() { _responseInterceptors.clear(); }
 
+    void setTimeout(long v) { _timeoutSeconds = v; }
+    void clearTimeout() { _timeoutSeconds = {}; }
+
     HttpResponsePtr get(const std::string& path) const;
     HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false) const;
     HttpResponsePtr put(const std::string& path, const char* buffer, size_t numBytes) const;
@@ -63,6 +67,8 @@ private:
     // Unix time
     mutable shared::TimePoint _lastRequestTime;
     mutable std::shared_mutex _rateLimitMutex;
+    // Timeout
+    std::optional<long> _timeoutSeconds;
 
     std::string _baseUri;
 

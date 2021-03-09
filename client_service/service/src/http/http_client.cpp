@@ -37,6 +37,9 @@ class HttpRequest {
 public:
     HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned, bool quiet);
     ~HttpRequest();
+
+    void setTimeout(long timeoutSeconds);
+
     HttpResponsePtr execute();
 
     void doDelete();
@@ -105,6 +108,14 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
     if (allowSelfSigned) {
         curl_easy_setopt(_curl, CURLOPT_SSL_VERIFYPEER, 0);
     }
+
+    // Time in seconds CURL will try to connect to the server for.
+    curl_easy_setopt(_curl, CURLOPT_CONNECTTIMEOUT, 60L);
+}
+
+void HttpRequest::setTimeout(long timeoutSeconds) {
+    // Number of seconds CURL will wait for the transfer to complete.
+    curl_easy_setopt(_curl, CURLOPT_TIMEOUT, timeoutSeconds);
 }
 
 HttpRequest::~HttpRequest() {
@@ -254,6 +265,10 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
         // map isn't blocked by how long the request takes to run.
         std::shared_lock<std::shared_mutex> guard(_headerMutex);
         req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned, _quiet));
+    }
+
+    if (_timeoutSeconds.has_value()) {
+        req->setTimeout(_timeoutSeconds.value());
     }
 
     if (!!cb) {

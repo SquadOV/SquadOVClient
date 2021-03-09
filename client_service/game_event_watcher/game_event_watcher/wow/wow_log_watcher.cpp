@@ -152,7 +152,9 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
     _logPath = combatLogPath;
     using std::placeholders::_1;
-    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks(), false, loop);
+
+    // Immediately go to the end of the file - this is especially needed if the user has an existing WoW combat log which may be huge.
+    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks(), true, loop);
     _watcher->disableBatching();
 }
 

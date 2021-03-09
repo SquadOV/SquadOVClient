@@ -374,6 +374,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     initializeFileOutputPiper();
 
     if (!areInputStreamsInitialized()) {
+        LOG_INFO("Initialize input streams..." << std::endl);
         std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
         if (!successFut.get()) {
             LOG_WARNING("Failed to start game recording." << std::endl);
@@ -383,6 +384,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         }
     }
 
+    LOG_INFO("Creating encoder..." << std::endl);
     _encoder = createEncoder(_outputPiper->filePath());
 
     // So there's two scenarios we can encounter here: 1) a DVR session is active AND we want to use it
@@ -395,19 +397,24 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     // Note that we must pause the input recorder processing beforing switching the inputs to use the new encoder.
     // Otherwise the first frames may be of what's currently recording instead of what's recorded in the DVR.
     if (useDvr) {
+        LOG_INFO("Handing off DVR image to main encoder..." << std::endl);
         if (_dvrEncoder.hasEncoder()) {
             const auto frontBuffer = _dvrEncoder.encoder->getFrontBuffer();
             _encoder.encoder->addVideoFrame(frontBuffer);
         }
         _outputPiper->pauseProcessingFromPipe(true);
     }
+    
     // Needs to be after the pause or else we'll wait indefinitely for the pause lock when asking for a pause
     // as it'll wait on the named pipe.
+    LOG_INFO("Start output piper..." << std::endl);
     _outputPiper->start();
 
+    LOG_INFO("Switch to new active encoder..." << std::endl);
     switchToNewActiveEncoder(_encoder);
 
     if (useDvr) {
+        LOG_INFO("Stop DVR session..." << std::endl);
         // We can stop this DVR session at this point. It'll be up to the caller to re-start another DVR
         // session when/if this recording ends.
         const auto sessionId = stopDvrSession();
