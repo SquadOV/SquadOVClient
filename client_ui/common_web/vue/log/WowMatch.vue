@@ -286,7 +286,7 @@ export default class WowMatch extends Vue {
     @Watch('matchUuid')
     refreshCharacterAssociations() {
         this.characterAssociations = []
-        apiClient.listWoWMatchCharacterAssociations(getActiveUserId(), this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
+        apiClient.listWoWMatchCharacterAssociations(this.userId, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
             this.characterAssociations = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW character associations: ', err)
