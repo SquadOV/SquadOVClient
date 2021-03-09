@@ -200,7 +200,7 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
                             return true;
                         });
                     } else {
-                        found = (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold());
+                        found = (shared::filesystem::timeOfLastFileWrite(logFile) >= timeThreshold());
                         break;
                     }
                 } catch (std::exception& ex) {
