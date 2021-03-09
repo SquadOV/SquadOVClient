@@ -260,6 +260,8 @@ FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
     if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, nullptr) < 0) {
         THROW_ERROR("Failed to allocate AV context.");
     }
+
+    LOG_INFO("Using FFmpeg AV Encoder: " << streamUrl << std::endl);
 }
 
 FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
@@ -819,6 +821,9 @@ void FfmpegAvEncoderImpl::stop() {
     // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
     // because something is wrong there......
     if (_doPostVideoFlush) {
+        service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+        auto immediate = d3d->immediateContext();
+        
         encode(_vcodecContext, nullptr, _vstream);
     }
 

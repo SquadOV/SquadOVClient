@@ -302,6 +302,7 @@ void GameRecorder::clearCachedInfo() {
 
 GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
     EncoderDatum data;
+    LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
     const auto aspectRatio = static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
@@ -310,6 +311,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
 
     // Assume that the input recorders have already been created before this point.
     // This is primarily for the audio inputs so we know how many inputs to expect.
+    LOG_INFO("Initialize video stream..." << std::endl);
     data.encoder->initializeVideoStream(
         _cachedRecordingSettings->fps,
         desiredWidth,
@@ -317,17 +319,21 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
         _cachedRecordingSettings->useVideoHw
     );
 
+    LOG_INFO("Initialize audio stream..." << std::endl);
     data.encoder->initializeAudioStream();
     if (_aoutRecorder && _aoutRecorder->exists()) {
+        LOG_INFO("Adding audio output..." << std::endl);
         const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder->props());
         data.audioEncoderIndex[audio::EAudioDeviceDirection::Output] = encoderIndex;
     }
 
     if (_ainRecorder && _ainRecorder->exists()) {
+        LOG_INFO("Adding audio input..." << std::endl);
         const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder->props());
         data.audioEncoderIndex[audio::EAudioDeviceDirection::Input] = encoderIndex;
     }
 
+    LOG_INFO("Open encoder..." << std::endl);
     data.encoder->open();
     return data;
 }
