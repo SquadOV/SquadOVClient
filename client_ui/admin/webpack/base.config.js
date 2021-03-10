@@ -6,10 +6,9 @@ const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const cssLoaders = [
-    'style-loader',
-    //{
-    //    loader: MiniCssExtractPlugin.loader
-    //},
+    {
+        loader: MiniCssExtractPlugin.loader
+    },
     'css-loader'
 ]
 
@@ -59,23 +58,67 @@ module.exports = (env, argv, subfolder) => {
                     exclude: /node_modules/,
                 },
                 {
+                    test: /\.js$/,
+                    use: babelLoader,
+                    exclude: /node_modules/,
+                },
+                {
+                    test: /\.vue$/,
+                    use: [
+                        {
+                            loader: 'vue-loader',
+                            options: {
+                                optimizeSSR: false
+                            }
+                        },
+                    ],
+                    exclude: /node_modules/,
+                },
+                {
+                    test: /\.css$/,
+                    use: cssLoaders
+                },
+                {
                     test: /\.scss$/,
                     use: [
                         ...cssLoaders,
-                        'sass-loader',
+                        {
+                            loader: 'sass-loader',
+                            options: { 
+                                sassOptions: {
+                                    indentedSyntax: false
+                                }
+                            }
+                        }
                     ]
+                },
+                {
+                    test: /\.sass$/,
+                    use: [
+                        ...cssLoaders,
+                        {
+                            loader: 'sass-loader',
+                            options: { 
+                                sassOptions: {
+                                    indentedSyntax: true
+                                }
+                            }
+                        }
+                    ]
+                },
+                {
+                    test: /\.(ttf|eot|svg|woff|woff2|png)?$/,
+                    use: 'url-loader',
                 },
             ]
         },
         plugins: [
-            /*
             new VueLoaderPlugin(),
             new VuetifyLoaderPlugin(),
             new MiniCssExtractPlugin({
                 filename: `${baseFilename}.css`,
                 chunkFilename: `${chunkBaseFilename}.css`
             }),
-            */
             new ForkTsCheckerWebpackPlugin({
                 typescript: {
                     extensions: {

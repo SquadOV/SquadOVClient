@@ -1,5 +1,6 @@
-import '@client/sass/app.scss'
-/*
+import 'regenerator-runtime/runtime.js';
+import '@mdi/font/css/materialdesignicons.css' 
+
 import Vue from 'vue'
 import Vuetify, {
     VApp,
@@ -13,6 +14,26 @@ Vue.use(VueRouter)
 Vue.use(Vuex)
 
 import App from '@client/vue/App.vue'
+import AppNav from '@client/vue/AppNav.vue'
+
+const MetricActiveUsers = () => import('@client/vue/metrics/MetricActiveUsers.vue')
+const MetricChurn = () => import('@client/vue/metrics/MetricChurn.vue')
+
+const baseRoutes : any[] = [
+    {
+        path: '/metrics/active-users',
+        component: MetricActiveUsers,
+    },
+    {
+        path: '/metrics/churn',
+        component: MetricChurn,
+    }
+]
+
+const router = new VueRouter({
+    mode :'history',
+    routes: baseRoutes,
+})
 
 new Vue({
     el: '#app',
@@ -20,6 +41,7 @@ new Vue({
         VApp,
         VMain,
         App,
+        AppNav
     },
     vuetify: new Vuetify({
         theme: {
@@ -28,6 +50,5 @@ new Vue({
     }),
     methods: {
     },
+    router,
 }).$mount('#app')
-*/
-console.log('hello world!')

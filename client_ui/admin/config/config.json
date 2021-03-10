@@ -1,0 +1,10 @@
+{
+    "oauth" : {
+        "tenantId": "942c8e61-f64a-e9dc-03ec-ee5eca47da10",
+        "clientId": "768132bd-7f76-4297-9e28-07e0722c6c4c",
+        "clientSecret": "2tz1zjyUzsGKXNjY__F7Jd5B4unBWTurYIez1g1l2Sw",
+        "faUrl": "http://localhost:9011"
+    },
+    "url": "http://localhost:3000",
+    "secure": false
+}

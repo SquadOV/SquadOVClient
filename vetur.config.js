@@ -11,7 +11,9 @@ module.exports = {
     // support monorepos
     projects: [
       './client_ui/common_web',
-      './client_ui/landing'
+      './client_ui/landing',
+      './client_ui/support',
+      './client_ui/admin'
     ]
   }
   
