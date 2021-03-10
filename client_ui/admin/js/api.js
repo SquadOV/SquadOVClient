@@ -191,12 +191,211 @@ class ApiServer {
         return ret
     }
 
+    async getReferralUsersMetric(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.referral_visits AS rd
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rd.code
+                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NOT NULL
+            ), 0) AS "visits",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.referral_downloads AS rd
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rd.code
+                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NOT NULL
+            ), 0) AS "downloads"
+        FROM series AS s
+            `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Visits': parseInt(r.visits),
+                    'Downloads': parseInt(r.downloads),
+                },
+                sub: ['Visits', 'Downloads']
+            }
+        })
+    }
+
+    async getReferralUsersBreakdown() {
+        const query = `
+        SELECT
+            rc.code AS "code",
+            u.username AS "description",
+            v.value AS "visits",
+            d.value AS "downloads"
+        FROM squadov.referral_codes AS rc
+        INNER JOIN squadov.users AS u
+            ON u.id = rc.user_id
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value"
+            FROM squadov.referral_visits AS rd
+            WHERE rd.code = rc.id
+        ) AS v
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value" 
+            FROM squadov.referral_downloads AS rd
+            WHERE rd.code = rc.id
+        ) AS d
+        WHERE rc.user_id IS NOT NULL
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+        )
+
+        return rows.map((r) => {
+            return {
+                code: r.code,
+                description: r.description,
+                visits: parseInt(r.visits),
+                downloads: parseInt(r.downloads)
+            }
+        })
+    }
+
+    async getReferralCampaignsMetric(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.referral_visits AS rd
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rd.code
+                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NULL
+            ), 0) AS "visits",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.referral_downloads AS rd
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rd.code
+                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NULL
+            ), 0) AS "downloads"
+        FROM series AS s
+            `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Visits': parseInt(r.visits),
+                    'Downloads': parseInt(r.downloads),
+                },
+                sub: ['Visits', 'Downloads']
+            }
+        })
+    }
+
+    async getReferralCampaignsBreakdown() {
+        const query = `
+        SELECT
+            rc.code AS "code",
+            rc.description AS "description",
+            v.value AS "visits",
+            d.value AS "downloads"
+        FROM squadov.referral_codes AS rc
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value"
+            FROM squadov.referral_visits AS rd
+            WHERE rd.code = rc.id
+        ) AS v
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value"
+            FROM squadov.referral_downloads AS rd
+            WHERE rd.code = rc.id
+        ) AS d
+        WHERE rc.user_id IS NULL
+        `
+
+        const { rows } = await this.pool.query(
+            query
+        )
+
+        return rows.map((r) => {
+            return {
+                code: r.code,
+                description: r.description,
+                visits: parseInt(r.visits),
+                downloads: parseInt(r.downloads)
+            }
+        })
+    }
+
     async getMetrics(metric, interval, start, end) {
         switch (metric) {
             case 0:
                 return await this.getActiveUsers(interval, start, end)
             case 1:
                 return await this.getChurn(interval, start, end)
+            case 2:
+                return await this.getReferralUsersMetric(interval, start, end)
+            case 3:
+                return await this.getReferralCampaignsMetric(interval, start, end)
+        }
+    }
+
+    async getReferralBreakdown(referral) {
+        switch (referral) {
+            case 0:
+                return await this.getReferralCampaignsBreakdown()
+            case 1:
+                return await this.getReferralUsersBreakdown()
         }
     }
 }

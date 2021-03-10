@@ -53,6 +53,20 @@ export default class AppNav extends Vue {
                     to: '/metrics/churn',
                 },
             ]
+        },
+        {
+            text: 'Referrals',
+            open: true,
+            children: [
+                {
+                    text: 'Campaigns',
+                    to: '/referrals/campaigns'
+                },
+                {
+                    text: 'Users',
+                    to: '/referrals/users'
+                },
+            ]
         }
     ]
 }

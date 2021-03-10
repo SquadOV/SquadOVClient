@@ -1,6 +1,8 @@
 export enum Metrics {
     ActiveUsers,
-    Churn
+    Churn,
+    ReferralUsers,
+    ReferralCampaigns,
 }
 
 export interface MetricDatum {

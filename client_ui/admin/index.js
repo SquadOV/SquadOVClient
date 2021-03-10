@@ -78,6 +78,12 @@ apiRouter.get('/metrics/:metric', async function(request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/referrals/:referral', async function(request, response) {
+    referral = parseInt(request.params.referral)
+    data = await apiServer.getReferralBreakdown(referral)
+    response.status(200).json(data)
+})
+
 app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
     // No auth cookie? Go to login page otherwise grant access to the SPA.

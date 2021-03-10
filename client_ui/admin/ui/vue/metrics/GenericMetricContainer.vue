@@ -28,7 +28,7 @@
                 </v-col>
 
                 <v-col cols="6">
-                    <div ref="graphDiv" style="width: 100%; height: calc(100vh - 120px);"></div>
+                    <div ref="graphDiv" style="width: 100%; height: calc(100vh - 144px);"></div>
                 </v-col>
             </v-row>
         </template>

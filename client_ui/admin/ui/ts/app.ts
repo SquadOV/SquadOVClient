@@ -18,6 +18,8 @@ import AppNav from '@client/vue/AppNav.vue'
 
 const MetricActiveUsers = () => import('@client/vue/metrics/MetricActiveUsers.vue')
 const MetricChurn = () => import('@client/vue/metrics/MetricChurn.vue')
+const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
+const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
 
 const baseRoutes : any[] = [
     {
@@ -27,6 +29,14 @@ const baseRoutes : any[] = [
     {
         path: '/metrics/churn',
         component: MetricChurn,
+    },
+    {
+        path: '/referrals/users',
+        component: ReferralUsers,
+    },
+    {
+        path: '/referrals/campaigns',
+        component: ReferralCampaigns,
     }
 ]
 
