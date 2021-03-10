@@ -171,9 +171,6 @@ export default class GenericMetricContainer extends Vue {
                 trigger: 'axis',
             },
             series: sub.map((s: string) => {
-                console.log(s, this.data!.map((e: MetricDatum) => {
-                        return [e.tm, e.data[s]]
-                    }))
                 return {
                     data: this.data!.map((e: MetricDatum) => {
                         return [format(e.tm, 'MM/dd/yyyy'), e.data[s]]
