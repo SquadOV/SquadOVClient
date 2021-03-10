@@ -7,11 +7,14 @@ const fs = require('fs')
 const bent = require('bent')
 const formurlencoded = require('form-urlencoded').default
 const auth = require('./js/auth')
+const api = require('./js/api')
 const cookieParser = require('cookie-parser')
 
 let configFile = process.argv[2]
 let config =  fs.readFileSync(configFile , 'utf8')
 let parsedConfig = JSON.parse(config)
+
+let apiServer = new api.ApiServer(parsedConfig)
 
 app.set('view engine', 'ejs')
 app.use(cookieParser())
@@ -56,6 +59,26 @@ app.get('/oauth', async function(request, response) {
     })
 })
 
+let apiRouter = express.Router()
+apiRouter.use(async function (request, response, next) {
+    if (await auth.verifyAuthCookie(parsedConfig, request)) {        
+        next()
+    } else {
+        response.sendStatus(403)
+    }
+})
+
+apiRouter.get('/metrics/:metric', async function(request, response) {
+    metric = parseInt(request.params.metric)
+    interval = parseInt(request.query.interval)
+    start = new Date(parseInt(request.query.start))
+    end = new Date(parseInt(request.query.end))
+
+    data = await apiServer.getMetrics(metric, interval, start, end)
+    response.status(200).json(data)
+})
+
+app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
     // No auth cookie? Go to login page otherwise grant access to the SPA.
     if (await auth.verifyAuthCookie(parsedConfig, request)) {
@@ -64,6 +87,7 @@ app.get('*', async function (request, response) {
         response.redirect(`${parsedConfig.url}/login`)
     }
 })
+
 
 app.listen(port, () => {
     console.log(`SquadOV Admin listening at http://localhost:${port}`)

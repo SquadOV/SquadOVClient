@@ -6,5 +6,12 @@
         "faUrl": "http://localhost:9011"
     },
     "url": "http://localhost:3000",
-    "secure": false
+    "secure": false,
+    "database": {
+        "username": "postgres",
+        "password": "password",
+        "host": "127.0.0.1",
+        "db": "squadov",
+        "port": 5432
+    }
 }

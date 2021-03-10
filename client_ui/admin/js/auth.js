@@ -1,7 +1,6 @@
 const bent = require('bent')
 
 exports.storeAuthCookie = function(config, accessToken, response) {
-    console.log('store auth cookie: ', accessToken)
     response.cookie('squadOvAdminJwt', accessToken, {
         secure: config.secure,
         httpOnly: true,
