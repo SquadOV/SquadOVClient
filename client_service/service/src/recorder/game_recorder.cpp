@@ -375,15 +375,16 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
 
     LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << std::endl);
 
+    _currentId = createNewVodIdentifier();
     try {
         initializeFileOutputPiper();
     } catch (std::exception& ex) {
+        _currentId.reset(nullptr);
         LOG_ERROR("Failed to initialize output piper...ignoring start recording command: " << ex.what() << std::endl);
         return;
     }
     
     loadCachedInfo();
-    _currentId = createNewVodIdentifier();
 
     if (!areInputStreamsInitialized()) {
         LOG_INFO("Initialize input streams..." << std::endl);
@@ -497,6 +498,7 @@ void GameRecorder::stopInputs() {
 void GameRecorder::stop(std::optional<GameRecordEnd> end) {
     LOG_INFO("Stop Game Recording...Clearing VOD ID" << std::endl);
     const auto vodId = _currentId ? currentId() : VodIdentifier{};
+    const auto metadata = getMetadata();
     _currentId.reset(nullptr);
 
     LOG_INFO("Stop Inputs..." << std::endl);
@@ -513,7 +515,6 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
         return;
     }
 
-    const auto metadata = getMetadata();
     const auto sessionId = this->sessionId();
     const auto vodStartTime = this->vodStartTime();
     
@@ -655,7 +656,7 @@ shared::squadov::VodMetadata GameRecorder::getMetadata() const {
     } else {
         shared::squadov::VodMetadata metadata;
         metadata.id = "source";
-        metadata.videoUuid = _currentId->videoUuid;
+        metadata.videoUuid = _currentId ? _currentId->videoUuid : "";
         
         // TODO: Need to read in data from the file to get this information properly
         // instead of just randomly hard-coded numbers.

@@ -105,6 +105,11 @@ struct WoWCombatantInfo {
     nlohmann::json toJson() const;
 };
 
+struct WoWZoneChange {
+    std::string zoneName;
+    int instanceId;
+};
+
 class WoWLogWatcher : public BaseLogWatcher {
 public:
     WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);

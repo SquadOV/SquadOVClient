@@ -132,8 +132,14 @@ bool parseCombatantInfo(const RawWoWCombatLog& log, WoWCombatantInfo& info) {
     return true;
 }
 
-bool parseZoneChange(const RawWoWCombatLog& log) {
-    return log.log[0] == "ZONE_CHANGE";
+bool parseZoneChange(const RawWoWCombatLog& log, WoWZoneChange& zone) {
+    if (log.log[0] != "ZONE_CHANGE") {
+        return false;
+    }
+
+    zone.instanceId = std::stoi(log.log[1]);
+    zone.zoneName = log.log[2];
+    return true;
 }
 
 constexpr auto maxLogsToKeep = 10;
@@ -277,8 +283,9 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         }
 
         if (!parsed) {
-            if (parseZoneChange(log)) {
-                notify(static_cast<int>(EWoWLogEvents::ZoneChange), log.timestamp, nullptr);
+            WoWZoneChange zone;
+            if (parseZoneChange(log, zone)) {
+                notify(static_cast<int>(EWoWLogEvents::ZoneChange), log.timestamp, (void*)&zone);
             }
         }
 

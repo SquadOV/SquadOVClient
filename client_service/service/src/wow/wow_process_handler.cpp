@@ -5,7 +5,9 @@
 #include "shared/time.h"
 #include "recorder/game_recorder.h"
 #include "system/state.h"
+#include "http/http_client.h"
 #include <VersionHelpers.h>
+#include <unordered_map>
 
 namespace service::wow {
 namespace {
@@ -89,6 +91,9 @@ private:
     //
     std::filesystem::path _manualVodPath;
     shared::TimePoint _manualVodStartTime;
+
+    // Set of known zones and whether zoning there should quality as a map change.
+    std::unordered_map<int, bool> _instanceIdIsMatchEnd;
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -316,13 +321,40 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
 }
 
 void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const void* data) {
-    bool isMatchEnd = hasValidCombatLog() && (inArena() || inChallenge());
+    bool isMatchEnd = hasValidCombatLog() && (inArena() || inChallenge() || inEncounter());
 
-    if (!isMatchEnd) {
+    if (!isMatchEnd || !data) {
         return;
     }
 
-    LOG_INFO("Using Zone Change as Match End." << std::endl);
+    const auto zoneData = *reinterpret_cast<const game_event_watcher::WoWZoneChange*>(data);
+
+    // We need to check that we're zoning out of the instance to qualify this as a match ender. Note that we 
+    // assume that we only have instances/arenas on the server - maybe we should check instance type one day.
+    if (_instanceIdIsMatchEnd.find(zoneData.instanceId) == _instanceIdIsMatchEnd.end()) {
+        try {
+            std::ostringstream path;
+            path << "/wow/9.0.2/instances/" << zoneData.instanceId << "/data.json";
+
+            service::http::HttpClient client("https://us-central1.content.squadov.gg");
+            client.setTimeout(30);
+
+            auto resp = client.get(path.str());
+            _instanceIdIsMatchEnd[zoneData.instanceId] = (resp->status != 200);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to send HTTP request to check zone info: " << ex.what() << std::endl);
+            _instanceIdIsMatchEnd[zoneData.instanceId] = true;
+        }
+    }
+
+    const auto isMatchEnder = _instanceIdIsMatchEnd[zoneData.instanceId];
+    LOG_INFO("Using Zone Change as Match End: " << isMatchEnder << std::endl);
+
+    if (!isMatchEnder) {
+        return;
+    }
+
+    LOG_INFO("...Ending match." << std::endl);
     if (inArena()) {
         game_event_watcher::WoWArenaEnd end;
         end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
