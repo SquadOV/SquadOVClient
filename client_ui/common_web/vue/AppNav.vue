@@ -280,6 +280,12 @@ export default class AppNav extends Vue {
                         link: true,
                     },
                     {
+                        name: 'Setup Wizard',
+                        to: {
+                            name: pi.SetupWizardPageId
+                        }
+                    },
+                    {
                         name: 'Discord',
                         to: 'https://discord.gg/jVyfv9ZHHV',
                         link: true,

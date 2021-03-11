@@ -2,6 +2,7 @@ export const DashboardPageId = 'dashboard'
 export const UserProfilePageId = 'profile'
 export const UserSquadsPageId = 'squads'
 export const SingleSquadPageId = 'singleSquad'
+export const SetupWizardPageId = 'setupWizard'
 
 export const LogPageId = 'logs'
 export const ValorantLogPageId = 'valorantLogs'

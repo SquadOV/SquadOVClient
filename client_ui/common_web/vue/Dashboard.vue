@@ -270,6 +270,7 @@ export default class Dashboard extends Vue {
     }
 
     mounted() {
+        this.redirectToSetupWizardOnFirstTime()
         this.refreshSquads()
     }
 
@@ -277,6 +278,17 @@ export default class Dashboard extends Vue {
         this.preselectedSquad = squadName
         this.showHideCreateSquad = false
         this.refreshSquads()
+    }
+
+    redirectToSetupWizardOnFirstTime() {
+///#if DESKTOP
+        // This will re-direct the user to the setup wizard the first time they start up SquadOV.
+        if (!this.$store.state.settings.setupWizardRun) {
+            this.$router.push({
+                name: pi.SetupWizardPageId
+            })
+        }
+///#endif
     }
 
     get manageSquadTo(): any {

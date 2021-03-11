@@ -87,6 +87,7 @@ const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPag
 
 const ClipLibrary = () => import('@client/vue/utility/vods/ClipLibrary.vue')
 const ClipView = () => import('@client/vue/utility/vods/ClipView.vue')
+const SetupWizard = () => import('@client/vue/SetupWizard.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -183,6 +184,11 @@ const baseRoutes : any[] = [
                 props: (route: any) => ({
                     squadId: parseInt(route.params.squadId)
                 })
+            },
+            {
+                path: 'setupwizard',
+                name: pi.SetupWizardPageId,
+                component: SetupWizard,
             },
             { 
                 path: 'logs/:userId',

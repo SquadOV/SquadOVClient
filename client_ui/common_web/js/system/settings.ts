@@ -19,6 +19,7 @@ export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
     minimizeToTray: boolean
     runOnStartup: boolean
+    setupWizardRun: boolean
 }
 
 function getSettingsFname() : string {
@@ -41,7 +42,7 @@ export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = 
         window.clearTimeout(saveTimer)
     }
 
-    saveTimer = window.setTimeout(() => {
+    let fn = () => {
         inProgress = true
         fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
             encoding: 'utf-8',
@@ -51,7 +52,13 @@ export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = 
             inProgress = false
         })
         saveTimer = undefined
-    }, immediate ? 500 : 0)
+    }
+
+    if (!immediate) {
+        saveTimer = window.setTimeout(fn, 500)
+    } else {
+        fn()
+    }
 /// #endif
 }
 
@@ -98,7 +105,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
     return {
         record,
         minimizeToTray: true,
-        runOnStartup: true
+        runOnStartup: true,
+        setupWizardRun: false
     }
 /// #else
     return {
@@ -112,7 +120,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             inputVolume: 1.0,
         },
         minimizeToTray: true,
-        runOnStartup: true
+        runOnStartup: true,
+        setupWizardRun: false
     }
 /// #endif
 }
@@ -154,6 +163,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVideoHw === undefined) {
         parsedData.record.useVideoHw = true
+    }
+
+    if (parsedData.setupWizardRun === undefined) {
+        parsedData.setupWizardRun = false
     }
 
     saveLocalSettings(parsedData, true)
