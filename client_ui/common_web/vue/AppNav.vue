@@ -44,9 +44,15 @@
 
                 <v-list dense>
                     <template v-for="c in m.children">
-                        <v-list-item :key="c.name" :to="c.to" v-if="!c.disabled">
-                            <v-list-item-title>{{ c.name }}</v-list-item-title>
-                        </v-list-item>
+                        <template v-if="!c.disabled">
+                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
+                                <v-list-item-title>{{ c.name }}</v-list-item-title>
+                            </v-list-item>
+
+                            <v-list-item :key="c.name" @click="goToLink(c.to)" v-else>
+                                <v-list-item-title>{{ c.name }}</v-list-item-title>
+                            </v-list-item>
+                        </template>
                     </template>
                 </v-list>
             </v-menu>
@@ -126,6 +132,7 @@ import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { apiClient, ApiData } from '@client/js/api'
 import { clearSessionCookie } from '@client/js/session'
+import { openUrlInBrowser } from '@client/js/external'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -263,6 +270,21 @@ export default class AppNav extends Vue {
                         },
                     },
                 ]
+            },
+            {
+                name: 'Support',
+                children: [
+                    {
+                        name: 'Website',
+                        to: 'https://support.squadov.gg',
+                        link: true,
+                    },
+                    {
+                        name: 'Discord',
+                        to: 'https://discord.gg/jVyfv9ZHHV',
+                        link: true,
+                    },
+                ]
             }
         ]
     }
@@ -366,6 +388,10 @@ export default class AppNav extends Vue {
 
     navForward() {
         this.$router.forward()
+    }
+
+    goToLink(url: string) {
+        openUrlInBrowser(url)
     }
 }
 
