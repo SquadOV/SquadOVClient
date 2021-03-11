@@ -375,9 +375,15 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
 
     LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << std::endl);
 
+    try {
+        initializeFileOutputPiper();
+    } catch (std::exception& ex) {
+        LOG_ERROR("Failed to initialize output piper...ignoring start recording command: " << ex.what() << std::endl);
+        return;
+    }
+    
     loadCachedInfo();
     _currentId = createNewVodIdentifier();
-    initializeFileOutputPiper();
 
     if (!areInputStreamsInitialized()) {
         LOG_INFO("Initialize input streams..." << std::endl);
@@ -489,27 +495,29 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+    const auto vodId = _currentId ? currentId() : VodIdentifier{};
+    _currentId.reset(nullptr);
+
     stopInputs();
     if (_dvrEncoder.hasEncoder()) {
         const auto session = stopDvrSession();
         cleanDvrSession(session);
     }
 
+    clearCachedInfo();
     if (!isRecording()) {
         return;
     }
 
-    const auto vodId = currentId();
     const auto metadata = getMetadata();
     const auto sessionId = this->sessionId();
     const auto vodStartTime = this->vodStartTime();
     
-    clearCachedInfo();
     if (_encoder.hasEncoder()) {
         _encoder.encoder->stop();
         _encoder = {};
     }
-    _currentId.reset(nullptr);
+
     if (_outputPiper) {
         // Move the output piper to a new thread to wait for it to finish
         // so we don't get bottlenecked by any user's poor internet speeds.
