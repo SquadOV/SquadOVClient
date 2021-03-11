@@ -1,5 +1,5 @@
 <template>
-    <div class="status-window" v-if="hasStatus">
+    <div class="status-window" v-if="hasDisplayStatus">
         <div class="d-flex align-center status-header">
             <span class="mx-2" :style="statusStyle"></span>
             <span class="text-h6">{{ statusText }}</span>
@@ -81,7 +81,11 @@ export default class StatusDisplay extends Vue {
     }
 
     get hasStatus(): boolean {
-        return (this.indicator != 'none' && this.incidents.length > 0) || this.upcomingMaintenance.length > 0 || this.activeMaintenance.length > 0
+        return (this.indicator != 'none')
+    }
+
+    get hasDisplayStatus(): boolean {
+        return this.incidents.length > 0 || this.upcomingMaintenance.length > 0 || this.activeMaintenance.length > 0
     }
 
     get statusStyle(): any {
