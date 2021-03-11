@@ -495,15 +495,19 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+    LOG_INFO("Stop Game Recording...Clearing VOD ID" << std::endl);
     const auto vodId = _currentId ? currentId() : VodIdentifier{};
     _currentId.reset(nullptr);
 
+    LOG_INFO("Stop Inputs..." << std::endl);
     stopInputs();
     if (_dvrEncoder.hasEncoder()) {
+        LOG_INFO("Stop DVR session..." << std::endl);
         const auto session = stopDvrSession();
         cleanDvrSession(session);
     }
 
+    LOG_INFO("Clear Cached Info..." << std::endl);
     clearCachedInfo();
     if (!isRecording()) {
         return;
@@ -514,11 +518,13 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
     const auto vodStartTime = this->vodStartTime();
     
     if (_encoder.hasEncoder()) {
+        LOG_INFO("Stop primary encoder..." << std::endl);
         _encoder.encoder->stop();
         _encoder = {};
     }
 
     if (_outputPiper) {
+        LOG_INFO("Stop output piper..." << std::endl);
         // Move the output piper to a new thread to wait for it to finish
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the
