@@ -126,6 +126,7 @@ private:
     LogWatcherPtr _watcher;
     int64_t _logLine = 0;
     bool _running = true;
+    shared::TimePoint _lastLogTime = shared::zeroTime();
 };
 
 using WoWLogWatcherPtr = std::unique_ptr<WoWLogWatcher>;

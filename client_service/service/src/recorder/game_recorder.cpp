@@ -515,7 +515,6 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
         return;
     }
 
-    const auto sessionId = this->sessionId();
     const auto vodStartTime = this->vodStartTime();
     
     if (_encoder.hasEncoder()) {
@@ -526,6 +525,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
 
     if (_outputPiper) {
         LOG_INFO("Stop output piper..." << std::endl);
+        const auto sessionId = this->sessionId();
         // Move the output piper to a new thread to wait for it to finish
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the

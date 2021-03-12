@@ -189,11 +189,12 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
         std::thread t([this, combatLogFolder](){
             std::filesystem::path logFile;
             bool found = false;
+            // This loop needs to constantly run until WoW exits to catch each subsequent WoW combat log.
             while (_running) {
                 // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
                 // continue on in the while loop all at once.
                 try {
-                    if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold())) {
+                    if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold()) || (shared::filesystem::timeOfLastFileWrite(logFile) < _lastLogTime)) {
                         logFile = shared::filesystem::getNewestFileInFolder(combatLogFolder, [](const fs::path& path){
                             if (path.extension() != ".txt") {
                                 return false;
@@ -201,13 +202,18 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
 
                             if (path.filename().native().find(L"WoWCombatLog-"s) != 0) {
                                 return false;
-                            } 
+                            }
 
                             return true;
                         });
                     } else {
-                        found = (shared::filesystem::timeOfLastFileWrite(logFile) >= timeThreshold());
-                        break;
+                        const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(logFile);
+                        found = ((lastWriteTime >= timeThreshold()) && (lastWriteTime >= _lastLogTime));
+                        if (found && _running) {
+                            _lastLogTime = lastWriteTime;
+                            found = false;
+                            loadFromPath(logFile, true, false);
+                        }
                     }
                 } catch (std::exception& ex) {
                     LOG_WARNING("Exception when detecting WoW combat log: " << ex.what() << std::endl);
@@ -215,18 +221,16 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
                 }
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
-
-            if (fs::exists(logFile) && _running && found) {
-                loadFromPath(logFile, true, false);
-            } else {
-                LOG_WARNING("Failed to find WoW combat log file." << std::endl);
-            }
         });
         t.detach();
     }
 }
 
 void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop, bool legacy) {
+    if (_logPath == combatLogPath) {
+        return;
+    }
+
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
     _logPath = combatLogPath;
     using std::placeholders::_1;
