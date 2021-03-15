@@ -41,7 +41,8 @@ import {
 } from '@client/js/squadov/squad'
 import {
     SquadOvHeartbeatResponse,
-    cleanSquadOvHeartbeatResponse
+    cleanSquadOvHeartbeatResponse,
+    SquadOVUserHandle,
 } from '@client/js/squadov/user'
 import {
     RiotSummoner
@@ -88,6 +89,7 @@ import { TotalRecordedPlaytime } from '@client/js/squadov/playtime'
 import {
     RecentMatch,
     cleanRecentMatchFromJson,
+    RecentMatchFilters,
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { ShareAccessTokenResponse } from '@client/js/squadov/share'
@@ -351,6 +353,15 @@ class ApiClient {
         return axios.get(`v1/squad/${squadId}/membership`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
             resp.data.forEach(cleanSquadMembershipFromJson)
             return resp
+        })
+    }
+
+    getMySquadMates(squads: number[] | undefined): Promise<ApiData<SquadOVUserHandle[]>> {
+        return axios.get(`v1/users/me/squadmates`, {
+            params: {
+                squads
+            },
+            ...this.createWebAxiosConfig()
         })
     }
 
@@ -886,7 +897,7 @@ class ApiClient {
         })
     }
 
-    listMyRecentMatches(params : {next : string | null, start : number, end : number}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
+    listMyRecentMatches(params : {next : string | null, start : number, end : number, filters : RecentMatchFilters}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/users/me/recent`, {
@@ -894,6 +905,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 

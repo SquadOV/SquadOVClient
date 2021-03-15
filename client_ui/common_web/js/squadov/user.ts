@@ -9,6 +9,11 @@ export interface SquadOVUser {
     uuid: string
 }
 
+export interface SquadOVUserHandle {
+    id: number
+    username: string
+}
+
 export interface SquadOvHeartbeatResponse {
     sessionId: string
     expiration: Date

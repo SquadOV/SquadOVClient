@@ -28,6 +28,24 @@ export interface RecentMatch {
     wowArena?: WowArena
 }
 
+export interface RecentMatchFilters {
+    games: SquadOvGames[] | undefined
+    squads: number[] | undefined
+    users: number[] | undefined
+    timeStart: number | undefined
+    timeEnd: number | undefined
+}
+
+export function createEmptyRecentMatchFilters(): RecentMatchFilters {
+    return {
+        games: undefined,
+        squads: undefined,
+        users: undefined,
+        timeStart: undefined,
+        timeEnd: undefined,
+    }
+}
+
 export function checkRecentMatchValidity(r: RecentMatch): boolean {
     switch (r.base.game) {
         case SquadOvGames.AimLab:

@@ -62,3 +62,10 @@ html {
     flex-direction: column;
     height: 100%;
 }
+
+.v-input--dense.v-text-field--outlined .v-chip {
+    height: 24px;
+    margin-top: 5px;
+    padding-left: 9px;
+    padding-right: 9px;
+}

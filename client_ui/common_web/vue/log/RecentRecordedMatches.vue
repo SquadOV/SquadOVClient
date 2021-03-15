@@ -1,57 +1,60 @@
 <template>
-    <loading-container :is-loading="!recentMatches">
-        <template v-slot:default="{ loading }">
-            <template v-if="!loading && recentMatches.length > 0">
-                <div class="d-flex text-h6 align-center">
-                    Recent Games
+    <div>
+        <div class="d-flex text-h6 align-center">
+            Recent Games
 
-                    <v-spacer></v-spacer>
+            <v-spacer></v-spacer>
 
-                    <v-btn icon @click="refreshData">
-                        <v-icon>
-                            mdi-refresh
-                        </v-icon>
-                    </v-btn>
-                </div>
-                <v-divider class="my-2"></v-divider>
+            <v-btn icon @click="refreshData">
+                <v-icon>
+                    mdi-refresh
+                </v-icon>
+            </v-btn>
+        </div>
+        <v-divider class="my-2"></v-divider>
+        <recent-match-filters-ui v-model="filters"></recent-match-filters-ui>
+        
+        <loading-container :is-loading="!recentMatches">
+            <template v-slot:default="{ loading }">
+                <template v-if="!loading && recentMatches.length > 0">
+                    <template v-for="(group, gidx) in groupedMatches">
+                        <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
+                            <v-divider class="mr-4"></v-divider>
 
-                <template v-for="(group, gidx) in groupedMatches">
-                    <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
-                        <v-divider class="mr-4"></v-divider>
-
-                        <div class="text-caption">
-                            Played {{ group.days }}
+                            <div class="text-caption">
+                                Played {{ group.days }}
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="full-width" :key="`group-matches-${gidx}`">
-                        <recent-match-display
-                            class="mb-4 full-width"
-                            v-for="(match, idx) in group.matches"
-                            :key="idx"
-                            :match="match"
-                        >
-                        </recent-match-display>
-                    </div>
+                        <div class="full-width" :key="`group-matches-${gidx}`">
+                            <recent-match-display
+                                class="mb-4 full-width"
+                                v-for="(match, idx) in group.matches"
+                                :key="idx"
+                                :match="match"
+                            >
+                            </recent-match-display>
+                        </div>
+                    </template>
+
+                    <v-btn
+                        v-if="hasNext"
+                        color="primary"
+                        block
+                        @click="loadMoreMatches"  
+                    >
+                        Load More
+                    </v-btn>
                 </template>
 
-                <v-btn
-                    v-if="hasNext"
-                    color="primary"
-                    block
-                    @click="loadMoreMatches"  
-                >
-                    Load More
-                </v-btn>
-            </template>
-
-            <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
-                <div class="text-h6">
-                    No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!
+                <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
+                    <div class="text-h6">
+                        No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!
+                    </div>
                 </div>
-            </div>
-        </template>
-    </loading-container>
+            </template>
+        </loading-container>
+    </div>
 </template>
 
 <script lang="ts">
@@ -60,11 +63,13 @@ const maxTasksPerRequest : number = 10
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { RecentMatch, checkRecentMatchValidity } from '@client/js/squadov/recentMatch'
+import { Watch } from 'vue-property-decorator'
+import { RecentMatch, checkRecentMatchValidity, RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { numDaysAgo, numDaysAgoToString } from '@client/js/time'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import RecentMatchDisplay from '@client/vue/utility/RecentMatchDisplay.vue'
+import RecentMatchFiltersUi from '@client/vue/utility/RecentMatchFiltersUi.vue'
 
 interface GroupedMatch {
     days: string
@@ -75,12 +80,14 @@ interface GroupedMatch {
     components: {
         LoadingContainer,
         RecentMatchDisplay,
+        RecentMatchFiltersUi,
     }
 })
 export default class RecentRecordedMatches extends Vue {
     recentMatches: RecentMatch[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
+    filters: RecentMatchFilters = createEmptyRecentMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -119,6 +126,7 @@ export default class RecentRecordedMatches extends Vue {
         return ret
     }
 
+    @Watch('filters', { deep: true })
     refreshData() {
         this.recentMatches = null
         this.nextLink = null
@@ -131,6 +139,7 @@ export default class RecentRecordedMatches extends Vue {
             next: this.nextLink,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
             if (!this.recentMatches) {
                 this.recentMatches = resp.data.data
