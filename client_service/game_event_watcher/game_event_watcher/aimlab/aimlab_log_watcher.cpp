@@ -77,7 +77,7 @@ bool operator==(const AimlabLogState& a, const AimlabLogState& b) {
 }
 
 bool AimlabLogState::isInTask() const {
-    return inTask && !taskName.empty() && !taskMode.empty() && !taskMap.empty() && !gameVersion.empty();
+    return inTask;
 }
 
 AimlabLogWatcher::AimlabLogWatcher(const shared::TimePoint& timeThreshold):
@@ -90,7 +90,8 @@ AimlabLogWatcher::AimlabLogWatcher(const shared::TimePoint& timeThreshold):
     LOG_INFO("AIM LAB Game Log: " << _logPath << std::endl);
 
     using std::placeholders::_1;
-    _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), this->timeThreshold(), true);
+    _watcher = std::make_unique<LogWatcher>(_logPath, std::bind(&AimlabLogWatcher::onGameLogChange, this, _1), this->timeThreshold(), true, true);
+    _watcher->disableBatching();
 }
 
 void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
@@ -133,7 +134,7 @@ void AimlabLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         notify(static_cast<int>(EAimlabLogEvents::RestartTask), shared::nowUtc(), (void*)&_state);
     } else if (_state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::StartTask), shared::nowUtc(), (void*)&_state);
-    } else {
+    } else if (previousState.isInTask() && !_state.isInTask()) {
         notify(static_cast<int>(EAimlabLogEvents::FinishTask), shared::nowUtc(), (void*)&previousState);
     }
 }

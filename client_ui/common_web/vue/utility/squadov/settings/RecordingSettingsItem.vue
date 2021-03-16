@@ -44,7 +44,7 @@
                             :input-value="useVideoHw"
                             @change="changeUseVideoHw"
                             hide-details
-                            label="Use GPU Encoder"
+                            label="Use GPU Pipeline"
                         >
                             <template v-slot:append>
                                 <v-tooltip bottom max-width="450px">
@@ -65,7 +65,7 @@
                             :input-value="useHwEncoder"
                             @change="changeUseHwEncoder"
                             hide-details
-                            label="Use GPU Pipeline"
+                            label="Use GPU Encoder"
                         >
                             <template v-slot:append>
                                 <v-tooltip bottom max-width="450px">
