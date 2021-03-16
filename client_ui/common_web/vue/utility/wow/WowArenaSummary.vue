@@ -10,7 +10,7 @@
         :disable-link="disableLink"
     >
         <template v-slot="{ instanceName }">
-            <div class="text-h6">
+            <div class="text-subtitle-1 font-weight-bold">
                 {{ instanceName }} ({{ arena.type }})
             </div>
 

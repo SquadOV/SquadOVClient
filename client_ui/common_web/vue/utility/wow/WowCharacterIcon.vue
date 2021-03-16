@@ -11,6 +11,7 @@
                 >
                     <wow-class-spec-icon
                         :spec-id="char.specId"
+                        :width-height="widthHeight"
                     >
                     </wow-class-spec-icon>    
                 </div>
@@ -52,6 +53,9 @@ export default class WowCharacterIcon extends Vue {
 
     @Prop({default: 0})
     friendlyTeam!: number
+
+    @Prop({type: Number, default: 32})
+    widthHeight!: number
 
     goToArmoryLink(e: MouseEvent) {
         if (!this.armoryLink) {

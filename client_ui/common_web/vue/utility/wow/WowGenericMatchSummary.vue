@@ -6,13 +6,11 @@
                 rounded
                 :style="style"
             >
-                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
-                    <v-col :cols="mini ? 4 : 2" align-self="center">
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`" style="overflow: auto;">
+                    <v-col :cols="mini ? 5 : 2" align-self="center">
                         <slot v-bind="{ instanceName }"></slot>
-                    </v-col>
 
-                    <v-col :cols="mini ? 5 : 3" align-self="center">
-                        <div class="text-h6">
+                        <div class="text-subtitle-1">
                             {{ timestamp }}
                         </div>
 
@@ -21,23 +19,38 @@
                         </div>
                     </v-col>
 
-                    <v-col cols="5" v-if="!!relevantCharacters && !mini" align-self="center">
+                    <v-col :cols="mini ?  7 : 8" v-if="!!relevantCharacters" align-self="center">
                         <div class="d-flex align-center flex-wrap">
-                            <template v-for="(char, idx) in relevantCharacters">
-                                <wow-character-icon :char="char" :friendly-team="friendlyTeam" armory-link :key="`icon-${idx}`"></wow-character-icon>
+                            <wow-character-icon
+                                v-for="(char, idx) in friendlyCharacters"
+                                :char="char"
+                                :friendly-team="friendlyTeam"
+                                armory-link
+                                :key="`friendly-icon-${idx}`"
+                                :width-height="mini ? 24 : 32"
+                            >
+                            </wow-character-icon>
 
-                                <span
-                                    v-if="useTeams && idx < relevantCharacters.length - 1 && relevantCharacters[idx].team != relevantCharacters[idx+1].team"
-                                    :key="`vs-${idx}`"
-                                    class="mx-1 text-overline"
-                                >
-                                    VS
-                                </span>
-                            </template>
+                            <div
+                                v-if="enemyCharacters.length > 0"
+                                class="mx-1 text-overline"
+                            >
+                                VS
+                            </div>
+
+                            <wow-character-icon
+                                v-for="(char, idx) in enemyCharacters"
+                                :char="char"
+                                :friendly-team="friendlyTeam"
+                                armory-link
+                                :key="`enemy-icon-${idx}`"
+                                :width-height="mini ? 24 : 32"
+                            >
+                            </wow-character-icon>
                         </div>
                     </v-col>
 
-                    <v-col :cols="mini ? 3 : 2" align-self="center">
+                    <v-col :cols="2" v-if="!mini" align-self="center">
                         <div class="d-flex align-center">
                             <wow-expansion-icon v-if="!!instanceData"
                                 class="mr-4"
@@ -46,7 +59,7 @@
                             >
                             </wow-expansion-icon>
 
-                            <div class="text-overline" v-if="!mini">
+                            <div class="text-overline">
                                 {{ match.build }}
                             </div>
                         </div>
@@ -120,6 +133,24 @@ export default class WowGenericMatchSummary extends Vue {
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
     instanceData: WowInstanceData | null = null
+
+    get friendlyCharacters(): WowCharacter[] {
+        if (!this.relevantCharacters) {
+            return []
+        }
+        return this.relevantCharacters.filter((c: WowCharacter) => {
+            return c.team == this.friendlyTeam
+        })
+    }
+
+    get enemyCharacters(): WowCharacter[] {
+        if (!this.relevantCharacters) {
+            return []
+        }
+        return this.relevantCharacters.filter((c: WowCharacter) => {
+            return c.team != this.friendlyTeam
+        })
+    }
 
     get hasVod() : boolean {
         return !!this.vod

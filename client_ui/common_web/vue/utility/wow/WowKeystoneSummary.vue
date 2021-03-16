@@ -7,7 +7,7 @@
         :fill="fill"
         :disable-link="disableLink"
     >
-        <div class="text-h6">
+        <div class="text-subtitle-1 font-weight-bold">
             {{ challengeName }}
         </div>
 
