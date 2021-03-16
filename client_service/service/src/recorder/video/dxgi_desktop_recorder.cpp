@@ -7,6 +7,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "system/win32/hwnd_utils.h"
+#include "system/settings.h"
 
 #include <iostream>
 
@@ -135,11 +136,15 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
     _recording = true;
     _recordingThread = std::thread([this, nsPerFrame](){ 
-        // We need two frames here because DirectX really doesn't like it when we try to copy
-        // the desktop texture from one device to another. So we stage it on another texture
-        // we have more control over and then copy it over to the output frame that we send to the encoder.
-        service::recorder::image::D3dImage outputFrame(_shared);
-        outputFrame.initializeImage(_width, _height, true);
+        // We create a GPU image and a CPU image and let the user to change which one they'd rather use to send output to.
+        service::recorder::image::D3dImage hwFrame(_shared);
+        hwFrame.initializeImage(_width, _height, true);
+
+        service::recorder::image::Image cpuFrame;
+        cpuFrame.initializeImage(_width, _height);
+
+        service::system::getCurrentSettings()->reloadSettingsFromFile();
+        const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw;
 
         int64_t count = 0;
         int64_t numReused = 0;
@@ -211,7 +216,12 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                     continue;
                 }
 
-                outputFrame.copyFromSharedGpu(&_self, tex, _rotation);
+                if (useHwFrame) {
+                    hwFrame.copyFromSharedGpu(&_self, tex, _rotation);
+                } else {
+                    auto immediate = _self.immediateContext();
+                    cpuFrame.loadFromD3d11TextureWithStaging(_self.device(), immediate.context(), tex);
+                }
                 tex->Release();
             }
 
@@ -224,7 +234,11 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
             {
                 std::lock_guard<std::mutex> guard(_encoderMutex);
                 if (_activeEncoder) {
-                    _activeEncoder->addVideoFrame(outputFrame.rawTexture());
+                    if (useHwFrame) {
+                        _activeEncoder->addVideoFrame(hwFrame.rawTexture());
+                    } else {
+                        _activeEncoder->addVideoFrame(cpuFrame);
+                    }
                 }
             }
 

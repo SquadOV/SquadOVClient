@@ -83,7 +83,7 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw);
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
 #ifdef _WIN32
@@ -317,18 +317,19 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) {
+void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
         VideoStreamContext ctx;
+        bool isGpuEncoder;
     };
 
     const EncoderChoice encodersToUse[] = {
-        {"h264_nvenc", VideoStreamContext::GPU },
-        {"h264_amf", VideoStreamContext::CPU },
-        {"h264_mf", VideoStreamContext::CPU },
-        {"libopenh264", VideoStreamContext::CPU }
+        {"h264_nvenc", VideoStreamContext::GPU, true },
+        {"h264_amf", VideoStreamContext::CPU, true },
+        {"h264_mf", VideoStreamContext::CPU, false },
+        {"libopenh264", VideoStreamContext::CPU, false }
     };
 
     service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
@@ -339,6 +340,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
         try {
+            if (enc.isGpuEncoder && !useGpuEncoder) {
+                LOG_INFO("Skipping " << enc.name << " since user has disabled GPU encoding." << std::endl);
+                continue;
+            }
+
             _vcodec = avcodec_find_encoder_by_name(enc.name.c_str());
             if (!_vcodec) {
                 THROW_ERROR("Failed to find the video codec.");
@@ -352,7 +358,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
 
-            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && useHw;
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && useHwPipeline;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = 6000000;
             _vcodecContext->thread_count = 0;
@@ -889,8 +895,8 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) {
-    _impl->initializeVideoStream(fps, width, height, useHw);
+void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) {
+    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {

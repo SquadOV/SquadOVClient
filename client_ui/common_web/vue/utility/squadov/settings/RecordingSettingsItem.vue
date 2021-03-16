@@ -39,28 +39,46 @@
                     </v-col>
 
                     <v-col cols-sm="12" cols-md="3" v-if="!mini">
-                        <div class="d-flex align-center">
-                            <v-checkbox
-                                class="ma-0"
-                                :input-value="useVideoHw"
-                                @change="changeUseVideoHw"
-                                hide-details
-                                label="Use HW Acceleration"
-                            >
-                                <template v-slot:append>
-                                    <v-tooltip bottom max-width="450px">
-                                        <template v-slot:activator="{on, attrs}">
-                                            <v-icon v-on="on" v-bind="attrs">
-                                                mdi-help-circle
-                                            </v-icon>
-                                        </template>
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="useVideoHw"
+                            @change="changeUseVideoHw"
+                            hide-details
+                            label="Use GPU Encoder"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
 
-                                        Whether to use more of your GPU in the VOD recording process.
-                                        This feature is not supported on Windows 7.
-                                    </v-tooltip>
-                                </template>
-                            </v-checkbox>
-                        </div>
+                                    Whether to use more of your GPU in the process of feeding captured images to the video encoder.
+                                    This feature is not supported on Windows 7.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="useHwEncoder"
+                            @change="changeUseHwEncoder"
+                            hide-details
+                            label="Use GPU Pipeline"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to use GPU-specific hardware encoders (NVIDIA and AMD) to create the final video.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
                     </v-col>
                 </v-row>
 
@@ -306,6 +324,14 @@ export default class RecordingSettingsItem extends Vue {
 
     changeUseVideoHw(val: boolean) {
         this.$store.commit('changeUseVideoHw', val)
+    }
+
+    get useHwEncoder(): boolean {
+        return this.$store.state.settings.record.useHwEncoder
+    }
+
+    changeUseHwEncoder(val: boolean) {
+        this.$store.commit('changeUseHwEncoder', val)
     }
 
     get hasSettings(): boolean {

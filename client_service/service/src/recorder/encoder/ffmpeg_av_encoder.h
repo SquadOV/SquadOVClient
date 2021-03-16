@@ -11,7 +11,7 @@ public:
     ~FfmpegAvEncoder();
 
     const std::string& streamUrl() const override;
-    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHw) override;
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) override;
     VideoStreamContext getVideoStreamContext() const override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;

@@ -9,7 +9,7 @@
 class WindowsGraphicsCaptureImpl;
 class WindowsGraphicsCaptureItf: public service::recorder::video::VideoRecorder {
 public:
-    WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context);
+    WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame);
     ~WindowsGraphicsCaptureItf();
 
     void startRecording(size_t fps) override;
@@ -21,5 +21,5 @@ private:
 };
 
 extern "C" {
-__declspec(dllexport) service::recorder::video::VideoRecorder* __cdecl createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window, service::renderer::D3d11SharedContext* context);
+__declspec(dllexport) service::recorder::video::VideoRecorder* __cdecl createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame);
 }

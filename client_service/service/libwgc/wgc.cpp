@@ -30,7 +30,7 @@
 
 class WindowsGraphicsCaptureImpl {
 public:
-    WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* context);
+    WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame);
 
     void startRecording(size_t fps);
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder);
@@ -42,12 +42,14 @@ private:
     std::mutex _encoderMutex;
 
     std::atomic_bool _running = false;
+    bool _useGpuFrame = false;
 
     // D3D stuff
     winrt::Windows::Graphics::DirectX::Direct3D11::IDirect3DDevice _rtDevice = nullptr;
     service::renderer::D3d11SharedContext* _shared = nullptr;
     service::renderer::D3d11SharedContext _self;
-    service::recorder::image::D3dImage _frame;
+    service::recorder::image::D3dImage _gpuFrame;
+    service::recorder::image::Image _cpuFrame;
 
     // Windows Graphics Capture Stuff
     winrt::Windows::Graphics::Capture::GraphicsCaptureItem _item{ nullptr };
@@ -75,10 +77,11 @@ struct __declspec(uuid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1"))
 
 using TickClock = std::chrono::high_resolution_clock;
 
-WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* shared):
+WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* shared, bool useGpuFrame):
     _window(window),
+    _useGpuFrame(useGpuFrame),
     _shared(shared),
-    _frame(shared) {
+    _gpuFrame(shared) {
     
     // For debugging print ouf the window name that we're recording from.
     char windowTitle[1024];
@@ -110,7 +113,8 @@ WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::ren
     _framePool = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(_rtDevice, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, _lastSize);
     _frameArrived = _framePool.FrameArrived(winrt::auto_revoke, { this, &WindowsGraphicsCaptureImpl::onFrameArrived });
     _session = _framePool.CreateCaptureSession(_item);
-    _frame.initializeImage(_lastSize.Width, _lastSize.Height);
+    _gpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
+    _cpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
 }
 
 void WindowsGraphicsCaptureImpl::stopRecording() {
@@ -141,7 +145,8 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
 
     if (changedSize) {
         _lastSize = frameContentSize;
-        _frame.initializeImage(_lastSize.Width, _lastSize.Height);
+        _gpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
+        _cpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
     }
 
     auto rtSurface = frame.Surface();
@@ -151,11 +156,15 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
 
     {
         std::lock_guard<std::mutex> guard(_encoderMutex);
-        service::renderer::SharedD3d11TextureHandle handle(_shared, frameSurface.get(), false);
-        _frame.copyFromGpu(handle.texture(), DXGI_MODE_ROTATION_IDENTITY);
-        
         if (_activeEncoder) {
-            _activeEncoder->addVideoFrame(_frame.rawTexture());
+            if (_useGpuFrame) {
+                service::renderer::SharedD3d11TextureHandle handle(_shared, frameSurface.get(), false);
+                _gpuFrame.copyFromGpu(handle.texture(), DXGI_MODE_ROTATION_IDENTITY);
+                _activeEncoder->addVideoFrame(_gpuFrame.rawTexture());
+            } else {
+                auto immediate = _shared->immediateContext();
+                _cpuFrame.loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frameSurface.get());
+            }
         }
     }
 
@@ -174,8 +183,8 @@ void WindowsGraphicsCaptureImpl::startRecording(size_t fps) {
     _session.StartCapture();
 }
 
-WindowsGraphicsCaptureItf::WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context) {
-    _impl = std::make_unique<WindowsGraphicsCaptureImpl>(window, context);
+WindowsGraphicsCaptureItf::WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame) {
+    _impl = std::make_unique<WindowsGraphicsCaptureImpl>(window, context, useGpuFrame);
 }
 
 WindowsGraphicsCaptureItf::~WindowsGraphicsCaptureItf() {
@@ -194,10 +203,10 @@ void WindowsGraphicsCaptureItf::stopRecording() {
     _impl->stopRecording();
 }
 
-service::recorder::video::VideoRecorder* createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window, service::renderer::D3d11SharedContext* context) {
+service::recorder::video::VideoRecorder* createWindowsGraphicsCaptureInterface(const service::recorder::video::VideoWindowInfo& info, HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame) {
     if (!winrt::Windows::Graphics::Capture::GraphicsCaptureSession::IsSupported()) {
         return nullptr;
     }
 
-    return new WindowsGraphicsCaptureItf(window, context);
+    return new WindowsGraphicsCaptureItf(window, context, useGpuFrame);
 }

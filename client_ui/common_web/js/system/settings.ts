@@ -9,6 +9,7 @@ export interface SquadOvRecordingSettings {
     resY: number
     fps: number
     useVideoHw: boolean
+    useHwEncoder: boolean
     outputDevice: string
     outputVolume: number
     inputDevice: string
@@ -75,6 +76,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 720,
                 fps: 30,
                 useVideoHw: true,
+                useHwEncoder: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -85,6 +87,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 720,
                 fps: 60,
                 useVideoHw: true,
+                useHwEncoder: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -95,6 +98,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 1080,
                 fps: 60,
                 useVideoHw: true,
+                useHwEncoder: true,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -114,6 +118,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             resY: 1080,
             fps: 60,
             useVideoHw: true,
+            useHwEncoder: true,
             outputDevice: 'Default Device',
             outputVolume: 1.0,
             inputDevice: 'Default Device',
@@ -163,6 +168,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVideoHw === undefined) {
         parsedData.record.useVideoHw = true
+    }
+
+    if (parsedData.record.useHwEncoder === undefined) {
+        parsedData.record.useHwEncoder = true
     }
 
     if (parsedData.setupWizardRun === undefined) {

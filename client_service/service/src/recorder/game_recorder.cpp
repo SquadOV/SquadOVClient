@@ -316,7 +316,8 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
         _cachedRecordingSettings->fps,
         desiredWidth,
         desiredHeight,
-        _cachedRecordingSettings->useVideoHw
+        _cachedRecordingSettings->useVideoHw,
+        _cachedRecordingSettings->useHwEncoder
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);

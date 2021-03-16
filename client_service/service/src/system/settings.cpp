@@ -14,6 +14,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.resY = obj["resY"].get<int32_t>();
     settings.fps = obj["fps"].get<int32_t>();
     settings.useVideoHw = obj.value("useVideoHw", true);
+    settings.useHwEncoder = obj.value("useHwEncoder", true);
     settings.outputDevice = obj["outputDevice"].get<std::string>();
     settings.outputVolume = obj["outputVolume"].get<double>();
     settings.inputDevice = obj["inputDevice"].get<std::string>();

@@ -3,12 +3,13 @@
 #include "recorder/video/windows_graphics_capture.h"
 #include "shared/log/log.h"
 #include "system/win32/hwnd_utils.h"
+#include "system/settings.h"
 #include <VersionHelpers.h>
 
 namespace service::recorder::video {
 namespace {
 
-typedef service::recorder::video::VideoRecorder* (__cdecl *WGCPROC)(const service::recorder::video::VideoWindowInfo&, HWND, service::renderer::D3d11SharedContext*);
+typedef service::recorder::video::VideoRecorder* (__cdecl *WGCPROC)(const service::recorder::video::VideoWindowInfo&, HWND, service::renderer::D3d11SharedContext*, bool);
 
 WGCPROC getLoaderFunc() {
     static HINSTANCE lib = LoadLibrary(TEXT("libwgc.dll"));
@@ -42,7 +43,10 @@ bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWi
         return false;
     }
 
-    auto* ptr = (proc)(info, wnd, shared);
+    service::system::getCurrentSettings()->reloadSettingsFromFile();
+    const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw;
+
+    auto* ptr = (proc)(info, wnd, shared, useHwFrame);
     if (!ptr) {
         LOG_INFO("Rejecting WGC: Failed to create interface." << std::endl);
         return false;
