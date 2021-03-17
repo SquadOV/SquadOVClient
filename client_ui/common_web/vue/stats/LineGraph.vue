@@ -279,7 +279,7 @@ export default class LineGraph extends Vue {
                 sampling: 'average',
                 showSymbol: series.showSymbol,
                 symbol: series.showSymbol ? series._symbol : 'line',
-                symbolSize: 8,
+                symbolSize: 12,
                 width: 4,
                 xAxisIndex: groupSeriesAxis.get(group)!.get(series._type)!,
                 yAxisIndex: groupToGrid.get(group)!,
@@ -347,7 +347,6 @@ export default class LineGraph extends Vue {
             if (series.hasStyle) {
                 opts.lineStyle = series.echartsLineStyle
                 opts.itemStyle = series.echartsItemStyle
-                console.log(opts.lineStyle, opts.itemStyle)
             }
 
             return opts

@@ -95,6 +95,7 @@
                                 :unified-events="filteredEvents"
                                 :match-characters="matchCharacters"
                                 :current-time="vodTime"
+                                :friendly-team="friendlyTeam"
                                 @go-to-time="goToVodTime"
                             >
                             </wow-timeline>

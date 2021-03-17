@@ -252,6 +252,9 @@ export default class WowTimeline extends Vue {
     @Prop({required: true})
     unifiedEvents!: UnifiedWowEventContainer[]
 
+    @Prop({default: 0})
+    friendlyTeam!: number
+
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
     pendingEndpoints: Set<string> = new Set()
     spellIdNames: {[id: number]: string} = {}
@@ -271,6 +274,24 @@ export default class WowTimeline extends Vue {
     showTime: boolean = true
     showAuras: boolean = false
     showSpells: boolean = false
+
+    get friendlyCharacters(): WowCharacter[] {
+        if (!this.matchCharacters) {
+            return []
+        }
+        return this.matchCharacters.filter((c: WowCharacter) => {
+            return c.team == this.friendlyTeam
+        })
+    }
+
+    get enemyCharacters(): WowCharacter[] {
+        if (!this.matchCharacters) {
+            return []
+        }
+        return this.matchCharacters.filter((c: WowCharacter) => {
+            return c.team != this.friendlyTeam
+        })
+    }
 
     handleClick(evt: {gridIndex: number, pts: number[]}) {
         // Relative to startTime because we're the way the graph is setup, the time along
@@ -373,125 +394,226 @@ export default class WowTimeline extends Vue {
             color: colorToCssString(colors.getDrpsColor())
         })
 
+        let endpointToSymbol: Map<string, string> = new Map()
+        endpointToSymbol.set(DPS_ENDPOINT, 'circle')
+        endpointToSymbol.set(HPS_ENDPOINT, 'triangle')
+        endpointToSymbol.set(DRPS_ENDPOINT, 'diamond')
+
+        let addTimeToSeries = (data: StatXYSeriesData) => {
+             if (!!this.currentTime && this.showTime) {
+                data.addXMarkLine({
+                    x: this.convertTmToX(this.currentTime),
+                    name: '',
+                    symbol: 'none',
+                    colorOverride: colorToCssString(colors.getSelfColor()),
+                })
+            }
+        }
+
+        let addEventsToSeries = (data: StatXYSeriesData, filterGuid: string | undefined) => {
+            if (this.showEvents) {
+                for (let e of this.unifiedEvents) {
+                    if (!!e.death && (!filterGuid || e.death.guid == filterGuid)) {
+                        let guid = e.death.guid
+                        let playerName = this.guidToName.has(guid) ?
+                            this.guidToName.get(guid)! :
+                            guid
+                        data.addXMarkLine({
+                            x: this.convertTmToX(e.tm),
+                            name: `${playerName} - Death`,
+                            symbol: `image://assets/wow/stats/skull.png`,
+                            colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                        })
+                    } else if (!!e.resurrect && (!filterGuid || e.resurrect.guid == filterGuid)) {
+                        let guid = e.resurrect.guid
+                        let playerName = this.guidToName.has(guid) ?
+                            this.guidToName.get(guid)! :
+                            guid
+                        data.addXMarkLine({
+                            x: this.convertTmToX(e.tm),
+                            name: `${playerName} - Resurrect`,
+                            symbol: `image://assets/wow/stats/res.png`,
+                            colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                        })
+                    }
+                }
+            }
+        }
+
+        let addBloodlustToSeries = (data: StatXYSeriesData) => {
+            if (this.showBloodlust && !!this.events) {
+                // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
+                // Send pass is to add the spells to the visualization.
+                // In between the two passes, we need to make a call to grab the spell names.
+                let auraSpellIds: Set<number> = new Set()
+                for (let aura of this.events.auras) {
+                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
+                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
+                        auraSpellIds.add(aura.spellId)
+                    }
+                }
+
+                wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
+                    for (let [key, value] of resp) {
+                        Vue.set(this.spellIdNames, key, value)
+                    }
+                })
+
+                for (let aura of this.events.auras) {
+                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
+                    if (aura.spellId in this.spellIdNames) {
+                        data.addXMarkArea({
+                            start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
+                            end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
+                            name: this.spellIdNames[aura.spellId]!
+                        })
+                    }
+                }
+            }
+        }
+
         for (let e of this.endpoints) {
             if (!(e in this.cachedStats)) {
                 continue
             }
 
-            for (let [guid, stats] of Object.entries(this.cachedStats[e])) {
-                let playerName = this.guidToName.has(guid) ?
-                    this.guidToName.get(guid)! :
-                    guid
-                let name = `${playerName}'s ${endpointToStatName(e)}`
-                let group = playerName
+            if (this.aggregateStats && !this.separateGraphs) {
+                let fn = (c: WowCharacter[], friendly: boolean, hasTwoTeam: boolean) : StatXYSeriesData => {
+                    let data = new StatXYSeriesData(
+                        [],
+                        [],
+                        'value',
+                        'elapsedSeconds',
+                        `${friendly ? 'Your Team' : 'Enemy Team'} - ${endpointToStatName(e)}`
+                    )
 
-                let x = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.tm)
-                let y = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.value)
+                    let xy: Map<number, number> = new Map()
+                    let allowedGuids: Set<string> = new Set(c.map((c: WowCharacter) => c.guid))
 
-                let paddedX: number[] = []
-                let paddedY: number[] = []
-
-                for (let ex of this.expectedXRange) {
-                    if (x.length > 0 && y.length > 0) {
-                        if (Math.abs(ex - x[0]) < 1e-3) {
-                            paddedX.push(x.shift()!)
-                            paddedY.push(y.shift()!)
-                        } else {
-                            paddedX.push(ex)
-                            paddedY.push(0.0)    
+                    for (let [guid, stats] of Object.entries(this.cachedStats[e])) {
+                        if (!allowedGuids.has(guid)) {
+                            continue
                         }
-                    } else {
-                        paddedX.push(ex)
-                        paddedY.push(0.0)
-                    }
-                }
 
-                let data = new StatXYSeriesData(
-                    paddedX.map((ele: number) => {
+                        let x = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.tm)
+                        let y = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.value)
+
+                        for (let i = 0; i < x.length; ++i) {
+                            if (xy.has(x[i])) {
+                                xy.set(x[i], y[i] + xy.get(x[i])!)
+                            } else {
+                                xy.set(x[i], y[i])
+                            }
+                        }
+                    }
+
+                    let paddedX = this.expectedXRange
+                    let paddedY = this.expectedXRange.map((x: number) => {
+                        if (xy.has(x)) {
+                            return xy.get(x)!
+                        } else {
+                            return 0
+                        }
+                    })
+                    
+                    data.setXY(paddedX.map((ele: number) => {
                         // Need to account for the offset between the current encounter
                         // and the start of the match.
                         return ele + (this.encounterStartTime.getTime() - this.startTime.getTime()) / 1000.0
-                    }),
-                    paddedY,
-                    'value',
-                    'elapsedSeconds',
-                    name
-                )
-                data.setGroup(group)
-                data.setSymbol(guidToSymbol.get(guid))
+                    }), paddedY)
 
-                if (this.separateGraphs) {
-                    data.setStyle(endpointToLineStyle.get(e))
-                } else {
-                    data.setStyle(guidToLineStyle.get(guid))
-                }
-
-                if (e === markerEndpoint && !!this.currentTime && this.showTime) {
-                    data.addXMarkLine({
-                        x: this.convertTmToX(this.currentTime),
-                        name: '',
-                        symbol: 'none',
-                        colorOverride: colorToCssString(colors.getSelfColor()),
-                    })
-                }
-
-                if (e === markerEndpoint && this.showEvents) {
-                    for (let e of this.unifiedEvents) {
-                        if (!!e.death && e.death.guid == guid) {
-                            data.addXMarkLine({
-                                x: this.convertTmToX(e.tm),
-                                name: `${playerName} - Death`,
-                                symbol: `image://assets/wow/stats/skull.png`,
-                                colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                    if (!hasTwoTeam) {
+                        data.setStyle(endpointToLineStyle.get(e))
+                    } else {
+                        data.setSymbol(endpointToSymbol.get(e))
+                        if (friendly) {
+                            data.setStyle({
+                                color: colorToCssString(colors.getSuccessColor())
                             })
-                        } else if (!!e.resurrect && e.resurrect.guid == guid) {
-                            data.addXMarkLine({
-                                x: this.convertTmToX(e.tm),
-                                name: `${playerName} - Resurrect`,
-                                symbol: `image://assets/wow/stats/res.png`,
-                                colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                        } else {
+                            data.setStyle({
+                                color: colorToCssString(colors.getFailureColor())
                             })
                         }
                     }
+
+                    return data
                 }
 
-                if (e === markerEndpoint && this.showBloodlust && !!this.events) {
-                    // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
-                    // Send pass is to add the spells to the visualization.
-                    // In between the two passes, we need to make a call to grab the spell names.
-                    let auraSpellIds: Set<number> = new Set()
-                    for (let aura of this.events.auras) {
-                        if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
-                            continue
-                        }
+                const hasTwoTeam = this.enemyCharacters.length > 0
 
-                        if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
-                            auraSpellIds.add(aura.spellId)
+                let friendlyData = fn(this.friendlyCharacters, true, hasTwoTeam)
+                addTimeToSeries(friendlyData)
+                addEventsToSeries(friendlyData, undefined)
+                addBloodlustToSeries(friendlyData)
+
+                series.push(friendlyData)
+                if (hasTwoTeam) {
+                    series.push(fn(this.enemyCharacters, false, hasTwoTeam))
+                }
+            } else {
+                for (let [guid, stats] of Object.entries(this.cachedStats[e])) {
+                    let playerName = this.guidToName.has(guid) ?
+                        this.guidToName.get(guid)! :
+                        guid
+                    let name = `${playerName}'s ${endpointToStatName(e)}`
+                    let group = playerName
+
+                    let x = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.tm)
+                    let y = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.value)
+
+                    let paddedX: number[] = []
+                    let paddedY: number[] = []
+
+                    for (let ex of this.expectedXRange) {
+                        if (x.length > 0 && y.length > 0) {
+                            if (Math.abs(ex - x[0]) < 1e-3) {
+                                paddedX.push(x.shift()!)
+                                paddedY.push(y.shift()!)
+                            } else {
+                                paddedX.push(ex)
+                                paddedY.push(0.0)    
+                            }
+                        } else {
+                            paddedX.push(ex)
+                            paddedY.push(0.0)
                         }
                     }
 
-                    wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
-                        for (let [key, value] of resp) {
-                            Vue.set(this.spellIdNames, key, value)
-                        }
-                    })
+                    let data = new StatXYSeriesData(
+                        paddedX.map((ele: number) => {
+                            // Need to account for the offset between the current encounter
+                            // and the start of the match.
+                            return ele + (this.encounterStartTime.getTime() - this.startTime.getTime()) / 1000.0
+                        }),
+                        paddedY,
+                        'value',
+                        'elapsedSeconds',
+                        name
+                    )
+                    data.setGroup(group)
+                    data.setSymbol(guidToSymbol.get(guid))
 
-                    for (let aura of this.events.auras) {
-                        if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
-                            continue
-                        }
-
-                        if (aura.spellId in this.spellIdNames) {
-                            data.addXMarkArea({
-                                start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
-                                end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
-                                name: this.spellIdNames[aura.spellId]!
-                            })
-                        }
+                    if (this.separateGraphs) {
+                        data.setStyle(endpointToLineStyle.get(e))
+                    } else {
+                        data.setStyle(guidToLineStyle.get(guid))
                     }
-                }
 
-                series.push(data)
+                    if (e === markerEndpoint) {
+                        addTimeToSeries(data)
+                        addEventsToSeries(data, guid)
+                        addBloodlustToSeries(data)
+                    }
+
+                    series.push(data)
+                }
             }
         }
 

@@ -88,6 +88,11 @@ export class StatXYSeriesData {
         this._symbol = symbol
     }
 
+    setXY(x: any[], y: any[]) {
+        this._x = x
+        this._y = y
+    }
+
     get showSymbol(): boolean {
         return !!this._symbol
     }
