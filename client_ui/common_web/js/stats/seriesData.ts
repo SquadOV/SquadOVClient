@@ -14,15 +14,59 @@ export interface XAreaMarker {
     name: string
 }
 
+export interface BorderStyle {
+    width: number
+    color: string
+}
+
+export interface LineStyle {
+    type?: string | undefined
+    color?: string | undefined
+    border?: BorderStyle | undefined
+}
+
 export class StatXYSeriesData {
     _x : any[]
     _y : any[]
     _type : string
     _subtype: string
     _name : string
+    _group: string
+
+    _style: LineStyle | undefined = undefined
+    _symbol: string | undefined = undefined
 
     _xLines: XLineMarker[]
     _xAreas: XAreaMarker[]
+
+    get hasStyle(): boolean {
+        return !!this._style
+    }
+
+    get echartsLineStyle(): any {
+        let style: any = { }
+        if (!!this._style?.type) {
+            style.type = this._style.type
+        }
+
+        if (!!this._style?.color) {
+            style.color = this._style.color
+        }
+        return style
+    }
+
+    get echartsItemStyle(): any {
+        let style: any = { }
+        if (!!this._style?.color) {
+            style.color = this._style.color
+        }
+
+        if (!!this._style?.border) {
+            style.borderColor = this._style.border.color
+            style.borderWidth = this._style.border.width
+        }
+        return style
+    }
 
     compatibleWith(other: StatXYSeriesData): boolean {
         return this._type === other._type && this._subtype === other._subtype
@@ -36,6 +80,18 @@ export class StatXYSeriesData {
         this._xAreas.push(mk)
     }
 
+    setStyle(style: LineStyle | undefined) {
+        this._style = style
+    }
+
+    setSymbol(symbol: string | undefined) {
+        this._symbol = symbol
+    }
+
+    get showSymbol(): boolean {
+        return !!this._symbol
+    }
+
     constructor(x : any[], y : any[], type : string, subtype: string, name : string) {
         if (x.length != y.length) {
             console.log('Error in series data: X-Y length mismatch.')
@@ -47,6 +103,11 @@ export class StatXYSeriesData {
         this._name = name
         this._xLines = []
         this._xAreas = []
+        this._group = 'Default'
+    }
+
+    setGroup(g: string) {
+        this._group = g
     }
     
     xFormatter(data: any): string {

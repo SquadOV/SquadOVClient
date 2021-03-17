@@ -1,15 +1,7 @@
 <template>
     <div class="full-width">
         <div class="d-flex align-center">
-            <v-tabs v-model="selectedTab">
-                <v-tab
-                    v-for="(d, idx) in data"
-                    :key="`tab-${idx}`"
-                >
-                    {{ d.title }}
-                </v-tab>
-            </v-tabs>
-            
+            <v-spacer></v-spacer>      
             <v-dialog
                 v-model="showSettings"
                 max-width="60%"
@@ -31,42 +23,117 @@
                     </v-card-title>
                     <v-divider></v-divider>
 
-                    <div class="d-flex flex-wrap justify-space-around">
-                        <v-checkbox
-                            class="mx-2"
-                            v-model="separateGraphs"
-                            label="Separate Graphs"
-                            dense
-                            hide-details
-                        >
-                        </v-checkbox>
+                    <div class="pa-4">
+                        <div class="text-overline">
+                            Grouping
+                        </div>
+                        <v-divider></v-divider>
+                        <div class="d-flex flex-wrap justify-space-around">
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="separateGraphs"
+                                label="Separate Graphs"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
 
-                        <v-checkbox
-                            class="mx-2"
-                            v-model="showTime"
-                            label="Show Time"
-                            dense
-                            hide-details
-                        >
-                        </v-checkbox>
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="aggregateStats"
+                                label="Aggregate"
+                                dense
+                                hide-details
+                                :readonly="separateGraphs"
+                            >
+                            </v-checkbox>
+                        </div>
 
-                        <v-checkbox
-                            class="mx-2"
-                            v-model="showEvents"
-                            label="Show Events"
-                            dense
-                            hide-details
-                        >
-                        </v-checkbox>
+                        <div class="text-overline">
+                            Stats
+                        </div>
+                        <v-divider></v-divider>
+                        <div class="d-flex flex-wrap justify-space-around">
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showDps"
+                                label="Damage Done"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
 
-                        <v-checkbox
-                            class="mx-2"
-                            v-model="showBloodlust"
-                            label="Show Bloodlust"
-                            dense
-                            hide-details
-                        >
-                        </v-checkbox>
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showHps"
+                                label="Heals"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showDrps"
+                                label="Damage Received"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
+                        </div>
+
+                        <div class="text-overline">
+                            Markers
+                        </div>
+                        <v-divider></v-divider>
+                        <div class="d-flex flex-wrap justify-space-around">
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showTime"
+                                label="Show Time"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showEvents"
+                                label="Show Events"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showBloodlust"
+                                label="Show Bloodlust"
+                                dense
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showAuras"
+                                label="Show Auras"
+                                dense
+                                hide-details
+                                :readonly="!separateGraphs"
+                            >
+                            </v-checkbox>
+
+                            <v-checkbox
+                                class="mx-2"
+                                v-model="showSpells"
+                                label="Show Spells"
+                                dense
+                                hide-details
+                                :readonly="!separateGraphs"
+                            >
+                            </v-checkbox>
+                        </div>
                     </div>
 
                     <v-card-actions>
@@ -114,12 +181,13 @@ import {
     WowMatchStatContainer
 } from '@client/js/wow/stats'
 import {
-    WowCharacter
+    WowCharacter,
+    specIdToClassId,
 } from '@client/js/wow/character'
 import * as wowc from '@client/js/wow/constants'
 import * as colors from '@client/js/wow/colors'
 import { colorToCssString } from '@client/js/color'
-import { StatXYSeriesData } from '@client/js/stats/seriesData'
+import { StatXYSeriesData, LineStyle } from '@client/js/stats/seriesData'
 import { apiClient, ApiData } from '@client/js/api'
 import {
     dateRangeIntersects,
@@ -131,6 +199,22 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 const STAT_SECOND_STEP = 5.0
 const BASE_GRAPH_HEIGHT = 650
+
+const DPS_ENDPOINT = 'dps'
+const DRPS_ENDPOINT = 'drps'
+const HPS_ENDPOINT = 'hps'
+
+function endpointToStatName(endpoint: string): string {
+    if (endpoint == DPS_ENDPOINT) {
+        return 'Damage Dealt'
+    } else if (endpoint == DRPS_ENDPOINT) {
+        return 'Damage Received'
+    } else if (endpoint == HPS_ENDPOINT) {
+        return 'Heals'
+    } else {
+        return 'Unknown'
+    }
+}
 
 @Component({
     components: {
@@ -168,32 +252,25 @@ export default class WowTimeline extends Vue {
     @Prop({required: true})
     unifiedEvents!: UnifiedWowEventContainer[]
 
-    selectedTab: number = 0
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
     pendingEndpoints: Set<string> = new Set()
     spellIdNames: {[id: number]: string} = {}
 
     // Graph settings
     showSettings: boolean = false
+    
     separateGraphs: boolean = true
+    aggregateStats: boolean = false
+
+    showDps: boolean = true
+    showHps: boolean = true
+    showDrps: boolean = true
+
     showEvents: boolean = true
     showBloodlust: boolean = true
     showTime: boolean = true
-
-    data: any[] = [
-        {
-            title: 'Damage Done',
-            endpoint: 'dps'
-        },
-        {
-            title: 'Heals',
-            endpoint: 'hps'
-        },
-        {
-            title: 'Damage Received',
-            endpoint: 'drps'
-        },
-    ]
+    showAuras: boolean = false
+    showSpells: boolean = false
 
     handleClick(evt: {gridIndex: number, pts: number[]}) {
         // Relative to startTime because we're the way the graph is setup, the time along
@@ -212,19 +289,8 @@ export default class WowTimeline extends Vue {
         return ret
     }
 
-    get activeEndpoint(): string {
-        return this.data[this.selectedTab].endpoint
-    }
-
     get isLoading(): boolean {
-        return !(this.activeEndpoint in this.cachedStats)
-    }
-
-    get activeStatContainer(): WowMatchStatContainer {
-        if (!(this.activeEndpoint in this.cachedStats)) {
-            return {}
-        }
-        return this.cachedStats[this.activeEndpoint]
+        return this.pendingEndpoints.size > 0
     }
 
     convertTmToX(tm: Date) : number {
@@ -239,111 +305,194 @@ export default class WowTimeline extends Vue {
         return this.convertTmToX(this.encounterEndTime)
     }
 
+    get endpoints(): string[] {
+        let endpoints: string[] = []
+        if (this.showDps) {
+            endpoints.push(DPS_ENDPOINT)
+        }
+
+        if (this.showDrps) {
+            endpoints.push(DRPS_ENDPOINT)
+        }
+
+        if (this.showHps) {
+            endpoints.push(HPS_ENDPOINT)
+        }
+        return endpoints
+    }
+
+    get uniqueGroups(): string[] {
+        let groups: Set<string> = new Set()
+        for (let e of this.endpoints) {
+            if (!(e in this.cachedStats)) {
+                continue
+            }
+
+            for (let [guid, _stats] of Object.entries(this.cachedStats[e])) {
+                let name = this.guidToName.has(guid) ?
+                    this.guidToName.get(guid)! :
+                    guid
+                groups.add(name)
+            }
+        }
+
+        return Array.from(groups)
+    }
+
     get activeSeriesData(): StatXYSeriesData[] {
         let series: StatXYSeriesData[] = []
 
-        for (let [guid, stats] of Object.entries(this.activeStatContainer)) {
-            let name = this.guidToName.has(guid) ?
-                this.guidToName.get(guid)! :
-                guid
+        let markerEndpoint = this.showDps ? DPS_ENDPOINT :
+            this.showDrps ? DRPS_ENDPOINT :
+            this.showHps ? HPS_ENDPOINT : ''
 
-            let x = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.tm)
-            let y = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.value)
+        const validSymbols = ['circle', 'rect', 'triangle', 'diamond', 'pin', 'arrow']
+        let guidToSymbol: Map<string, string> = new Map()
+        let guidToLineStyle: Map<string, LineStyle> = new Map()
+        let specIdCount: Map<number, number> = new Map()
 
-            let paddedX: number[] = []
-            let paddedY: number[] = []
+        for (let c of this.matchCharacters) {
+            let classId = specIdToClassId(c.specId)
+            let dupSpecCount = specIdCount.has(classId) ? specIdCount.get(classId)! : 0
+            let style = {
+                color: colorToCssString(colors.specIdToColor(c.specId)),
+            }
+            guidToSymbol.set(c.guid, validSymbols[dupSpecCount % validSymbols.length])
+            specIdCount.set(classId, dupSpecCount + 1)
+            guidToLineStyle.set(c.guid, style)
+        }
 
-            for (let ex of this.expectedXRange) {
-                if (x.length > 0 && y.length > 0) {
-                    if (Math.abs(ex - x[0]) < 1e-3) {
-                        paddedX.push(x.shift()!)
-                        paddedY.push(y.shift()!)
+        let endpointToLineStyle: Map<string, LineStyle> = new Map()
+        endpointToLineStyle.set(DPS_ENDPOINT, {
+            color: colorToCssString(colors.getDpsColor())
+        })
+        endpointToLineStyle.set(HPS_ENDPOINT, {
+            color: colorToCssString(colors.getHpsColor())
+        })
+        endpointToLineStyle.set(DRPS_ENDPOINT, {
+            color: colorToCssString(colors.getDrpsColor())
+        })
+
+        for (let e of this.endpoints) {
+            if (!(e in this.cachedStats)) {
+                continue
+            }
+
+            for (let [guid, stats] of Object.entries(this.cachedStats[e])) {
+                let playerName = this.guidToName.has(guid) ?
+                    this.guidToName.get(guid)! :
+                    guid
+                let name = `${playerName}'s ${endpointToStatName(e)}`
+                let group = playerName
+
+                let x = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.tm)
+                let y = (<WowStatDatum[]>stats).map((ele: WowStatDatum) => ele.value)
+
+                let paddedX: number[] = []
+                let paddedY: number[] = []
+
+                for (let ex of this.expectedXRange) {
+                    if (x.length > 0 && y.length > 0) {
+                        if (Math.abs(ex - x[0]) < 1e-3) {
+                            paddedX.push(x.shift()!)
+                            paddedY.push(y.shift()!)
+                        } else {
+                            paddedX.push(ex)
+                            paddedY.push(0.0)    
+                        }
                     } else {
                         paddedX.push(ex)
-                        paddedY.push(0.0)    
+                        paddedY.push(0.0)
                     }
+                }
+
+                let data = new StatXYSeriesData(
+                    paddedX.map((ele: number) => {
+                        // Need to account for the offset between the current encounter
+                        // and the start of the match.
+                        return ele + (this.encounterStartTime.getTime() - this.startTime.getTime()) / 1000.0
+                    }),
+                    paddedY,
+                    'value',
+                    'elapsedSeconds',
+                    name
+                )
+                data.setGroup(group)
+                data.setSymbol(guidToSymbol.get(guid))
+
+                if (this.separateGraphs) {
+                    data.setStyle(endpointToLineStyle.get(e))
                 } else {
-                    paddedX.push(ex)
-                    paddedY.push(0.0)
+                    data.setStyle(guidToLineStyle.get(guid))
                 }
-            }
 
-            let data = new StatXYSeriesData(
-                paddedX.map((ele: number) => {
-                    // Need to account for the offset between the current encounter
-                    // and the start of the match.
-                    return ele + (this.encounterStartTime.getTime() - this.startTime.getTime()) / 1000.0
-                }),
-                paddedY,
-                'value',
-                'elapsedSeconds',
-                name
-            )
-
-            if (!!this.currentTime && this.showTime) {
-                data.addXMarkLine({
-                    x: this.convertTmToX(this.currentTime),
-                    name: '',
-                    symbol: 'none',
-                    colorOverride: colorToCssString(colors.getSelfColor()),
-                })
-            }
-
-            if (this.showEvents) {
-                for (let e of this.unifiedEvents) {
-                    if (!!e.death && e.death.guid == guid) {
-                        data.addXMarkLine({
-                            x: this.convertTmToX(e.tm),
-                            name: `Death`,
-                            symbol: `image://assets/wow/stats/skull.png`
-                        })
-                    } else if (!!e.resurrect && e.resurrect.guid == guid) {
-                        data.addXMarkLine({
-                            x: this.convertTmToX(e.tm),
-                            name: `Resurrect`,
-                            symbol: `image://assets/wow/stats/res.png`
-                        })
-                    }
+                if (e === markerEndpoint && !!this.currentTime && this.showTime) {
+                    data.addXMarkLine({
+                        x: this.convertTmToX(this.currentTime),
+                        name: '',
+                        symbol: 'none',
+                        colorOverride: colorToCssString(colors.getSelfColor()),
+                    })
                 }
-            }
 
-            if (this.showBloodlust && !!this.events) {
-                // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
-                // Send pass is to add the spells to the visualization.
-                // In between the two passes, we need to make a call to grab the spell names.
-                let auraSpellIds: Set<number> = new Set()
-                for (let aura of this.events.auras) {
-                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
-                        continue
-                    }
-
-                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
-                        auraSpellIds.add(aura.spellId)
+                if (e === markerEndpoint && this.showEvents) {
+                    for (let e of this.unifiedEvents) {
+                        if (!!e.death && e.death.guid == guid) {
+                            data.addXMarkLine({
+                                x: this.convertTmToX(e.tm),
+                                name: `${playerName} - Death`,
+                                symbol: `image://assets/wow/stats/skull.png`,
+                                colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                            })
+                        } else if (!!e.resurrect && e.resurrect.guid == guid) {
+                            data.addXMarkLine({
+                                x: this.convertTmToX(e.tm),
+                                name: `${playerName} - Resurrect`,
+                                symbol: `image://assets/wow/stats/res.png`,
+                                colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                            })
+                        }
                     }
                 }
 
-                wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
-                    for (let [key, value] of resp) {
-                        Vue.set(this.spellIdNames, key, value)
-                    }
-                })
+                if (e === markerEndpoint && this.showBloodlust && !!this.events) {
+                    // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
+                    // Send pass is to add the spells to the visualization.
+                    // In between the two passes, we need to make a call to grab the spell names.
+                    let auraSpellIds: Set<number> = new Set()
+                    for (let aura of this.events.auras) {
+                        if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                            continue
+                        }
 
-                for (let aura of this.events.auras) {
-                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
-                        continue
+                        if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
+                            auraSpellIds.add(aura.spellId)
+                        }
                     }
 
-                    if (aura.spellId in this.spellIdNames) {
-                        data.addXMarkArea({
-                            start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
-                            end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
-                            name: this.spellIdNames[aura.spellId]!
-                        })
+                    wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
+                        for (let [key, value] of resp) {
+                            Vue.set(this.spellIdNames, key, value)
+                        }
+                    })
+
+                    for (let aura of this.events.auras) {
+                        if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                            continue
+                        }
+
+                        if (aura.spellId in this.spellIdNames) {
+                            data.addXMarkArea({
+                                start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
+                                end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
+                                name: this.spellIdNames[aura.spellId]!
+                            })
+                        }
                     }
                 }
-            }
 
-            series.push(data)
+                series.push(data)
+            }
         }
 
         series.sort((a: StatXYSeriesData, b: StatXYSeriesData) => {
@@ -355,13 +504,12 @@ export default class WowTimeline extends Vue {
                 return 0
             }
         })
-
         return series
     }
 
     get timelineStyle(): any {
         let height = this.separateGraphs ? 
-            Math.max(250 * this.activeSeriesData.length, BASE_GRAPH_HEIGHT) :
+            Math.max(250 * this.uniqueGroups.length, BASE_GRAPH_HEIGHT) :
             BASE_GRAPH_HEIGHT
 
         return {
@@ -377,26 +525,32 @@ export default class WowTimeline extends Vue {
         return mapping
     }
 
+    get guidToSpecId(): Map<string, number> {
+        let mapping = new Map<string, number>()
+        for (let m of this.matchCharacters) {
+            mapping.set(m.guid, m.specId)
+        }
+        return mapping
+    }
+
     @Watch('encounterStartTime')
     @Watch('encounterEndTime')
     forceRefreshData() {
-        Vue.delete(this.cachedStats, this.activeEndpoint)
+        this.cachedStats = {}
         this.refreshData()
     }
 
-    @Watch('selectedTab')
-    refreshData() {
-        if (this.activeEndpoint in this.cachedStats) {
+    refreshDataEndpoint(endpoint: string) {
+        if (endpoint in this.cachedStats) {
             return
         }
 
-        if (this.pendingEndpoints.has(this.activeEndpoint)) {
+        if (this.pendingEndpoints.has(endpoint)) {
             return
         }
 
-        this.pendingEndpoints.add(this.activeEndpoint)
+        this.pendingEndpoints.add(endpoint)
 
-        let endpoint = this.activeEndpoint
         apiClient.getWoWMatchStats(this.userId, this.matchUuid, endpoint, {
             psStepSeconds: STAT_SECOND_STEP,
             start: this.encounterStartTime.getTime(),
@@ -408,6 +562,30 @@ export default class WowTimeline extends Vue {
         }).finally(() => {
             this.pendingEndpoints.delete(endpoint)
         })
+    }
+
+    refreshDataDps() {
+        if (this.showDps) {
+            this.refreshDataEndpoint(DPS_ENDPOINT)
+        }
+    }
+    
+    refreshDataDamageReceived() {
+        if (this.showDrps) {
+            this.refreshDataEndpoint(DRPS_ENDPOINT)
+        }
+    }
+
+    refreshDataHeals() {
+        if (this.showHps) {
+            this.refreshDataEndpoint(HPS_ENDPOINT)
+        }
+    }
+
+    refreshData() {
+        this.refreshDataDps()
+        this.refreshDataDamageReceived()
+        this.refreshDataHeals()
     }
 
     mounted() {

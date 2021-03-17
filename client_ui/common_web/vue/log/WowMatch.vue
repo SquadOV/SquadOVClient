@@ -79,19 +79,34 @@
                 </v-row>
 
                 <v-row>
-                    <wow-timeline
-                        :user-id="userId"
-                        :match-uuid="matchUuid"
-                        :start-time="startTime"
-                        :encounter-start-time="encounterStartTime"
-                        :encounter-end-time="encounterEndTime"
-                        :events="events"
-                        :unified-events="filteredEvents"
-                        :match-characters="matchCharacters"
-                        :current-time="vodTime"
-                        @go-to-time="goToVodTime"
-                    >
-                    </wow-timeline>
+                    <v-tabs>
+                        <v-tab>
+                            Timeline
+                        </v-tab>
+
+                        <v-tab-item>
+                            <wow-timeline
+                                :user-id="userId"
+                                :match-uuid="matchUuid"
+                                :start-time="startTime"
+                                :encounter-start-time="encounterStartTime"
+                                :encounter-end-time="encounterEndTime"
+                                :events="events"
+                                :unified-events="filteredEvents"
+                                :match-characters="matchCharacters"
+                                :current-time="vodTime"
+                                @go-to-time="goToVodTime"
+                            >
+                            </wow-timeline>
+                        </v-tab-item>
+
+                        <v-tab>
+                            Spell Analysis
+                        </v-tab>
+
+                        <v-tab-item>
+                        </v-tab-item>
+                    </v-tabs>
                 </v-row>
             </v-container>
         </template>

@@ -23,3 +23,115 @@ export function getSelfColor() : Color {
         b: 0,
     }
 }
+
+export function getDpsColor(): Color {
+    return getSelfColor()
+}
+
+export function getHpsColor(): Color {
+    return getSuccessColor()
+}
+
+export function getDrpsColor(): Color {
+    return getFailureColor()
+}
+
+import {
+    specIdToClassId,
+    MAGE_CLASS_ID,
+    PALLY_CLASS_ID,
+    WARRIOR_CLASS_ID,
+    DRUID_CLASS_ID,
+    DK_CLASS_ID,
+    HUNTER_CLASS_ID,
+    PRIEST_CLASS_ID,
+    ROGUE_CLASS_ID,
+    SHAMAN_CLASS_ID,
+    WARLOCK_CLASS_ID,
+    MONK_CLASS_ID,
+    DH_CLASS_ID
+} from '@client/js/wow/character'
+
+export function classIdToColor(cls: number): Color {
+    switch (cls) {
+        case WARRIOR_CLASS_ID:
+            return {
+                r: 198,
+                g: 155,
+                b: 109
+            }
+        case PALLY_CLASS_ID:
+            return {
+                r: 244,
+                g: 140,
+                b: 186
+            }
+        case HUNTER_CLASS_ID:
+            return {
+                r: 170,
+                g: 211,
+                b: 114
+            }
+        case ROGUE_CLASS_ID:
+            return {
+                r: 255,
+                g: 244,
+                b: 104
+            }
+        case PRIEST_CLASS_ID:
+            return {
+                r: 255,
+                g: 255,
+                b: 255
+            }
+        case DK_CLASS_ID:
+            return {
+                r: 196,
+                g: 30,
+                b: 58
+            }
+        case SHAMAN_CLASS_ID:
+            return {
+                r: 0,
+                g: 112,
+                b: 221
+            }
+        case MAGE_CLASS_ID:
+            return {
+                r: 63,
+                g: 199,
+                b: 235
+            }
+        case WARLOCK_CLASS_ID:
+            return {
+                r: 135,
+                g: 136,
+                b: 238
+            }
+        case MONK_CLASS_ID:
+            return {
+                r: 0,
+                g: 255,
+                b: 152
+            }
+        case DRUID_CLASS_ID:
+            return {
+                r: 255,
+                g: 124,
+                b: 10
+            }
+        case DH_CLASS_ID:
+            return {
+                r: 163,
+                g: 48,
+                b: 201
+            }
+        default:
+            return getSelfColor()
+    }
+}
+
+export function specIdToColor(specId: number): Color {
+    const classId = specIdToClassId(specId)
+    return classIdToColor(classId)
+}

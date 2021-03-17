@@ -87,15 +87,37 @@ export default class LineGraph extends Vue {
             }
         }
 
+        let groupSet: Set<string> = new Set()
+        if (this.separateGraphs) {
+            // If we separate graphs then we create a new 'group' for each specified grouping.
+            this.validSeriesData.map((e: StatXYSeriesData) => e._group).forEach((g: string) => {
+                groupSet.add(g)
+            })
+        } else {
+            groupSet.add('Default')
+        }
+
+        let groupArr = Array.from(groupSet)
+        let groupToGrid: Map<string, number> = new Map()
+        groupArr.forEach((g: string, idx: number) => {
+            groupToGrid.set(g, idx)
+        })
+
         // Create a new x-axis for each new type of X-axis as determined by the series's type.
         // The series type determines what the "type" of the X-axis is, we assume that the Y axis is always
         // a numerical value for now.
         // TODO: Allow users to prevent the merging of axis?
-        let seriesToAxis: Map<string, number> = new Map<string, number>()
+        let groupSeriesAxis: Map<string, Map<string, number>> = new Map()
         let xAxis : any[] = []
         for (let i = 0; i < this.validSeriesData.length; ++i) {
             let type = this.validSeriesData[i]._type
-            if (seriesToAxis.has(type) && !this.separateGraphs) {
+            let group = this.separateGraphs ? this.validSeriesData[i]._group : 'Default'
+            if (!groupSeriesAxis.has(group)) {
+                groupSeriesAxis.set(group, new Map())
+            }
+
+            let series = groupSeriesAxis.get(group)!
+            if (series.has(type)) {
                 continue
             }
 
@@ -118,7 +140,7 @@ export default class LineGraph extends Vue {
                     }
                 },
                 inverse: this.validSeriesData[i].reversed,
-                gridIndex: this.separateGraphs ? i : 0,
+                gridIndex: groupToGrid.get(group)!,
                 position: 'top',
             }
 
@@ -131,11 +153,11 @@ export default class LineGraph extends Vue {
             }
 
             xAxis.push(x)
-            seriesToAxis.set(type, xAxis.length - 1)
+            series.set(type, xAxis.length - 1)
         }
 
         let yAxis: any[] = []
-        for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
+        for (let i = 0; i < groupArr.length; ++i) {
             let axis: any = {
                 type: 'value',
                 nameTextStyle: {
@@ -156,7 +178,7 @@ export default class LineGraph extends Vue {
             }
 
             if (this.separateGraphs) {
-                axis['name'] = this.validSeriesData[i]._name
+                axis['name'] = groupArr[i]
                 axis['nameLocation'] = 'center'
                 axis['nameRotate'] = 90
                 axis['nameGap'] = 50
@@ -171,10 +193,10 @@ export default class LineGraph extends Vue {
         const gridHeightMarginPx = 40
         const gridTopReservedPx = 100
         const gridBottomReservedPx = 20
-        const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - (this.separateGraphs ? Math.max(this.validSeriesData.length - 1, 0) * gridHeightMarginPx : 0)
-        const gridHeight = this.separateGraphs ? gridUsableHeightPx / this.validSeriesData.length : gridUsableHeightPx
+        const gridUsableHeightPx = parentHeight - gridTopReservedPx - gridBottomReservedPx - (this.separateGraphs ? Math.max(groupArr.length - 1, 0) * gridHeightMarginPx : 0)
+        const gridHeight = this.separateGraphs ? gridUsableHeightPx / groupArr.length : gridUsableHeightPx
 
-        for (let i = 0; i < ( this.separateGraphs ? this.validSeriesData.length : 1); ++i) {
+        for (let i = 0; i < groupArr.length; ++i) {
             grids.push({
                 show: false,
                 left: 100,
@@ -242,80 +264,94 @@ export default class LineGraph extends Vue {
             }]
         }
 
-        options.series = this.validSeriesData.map((series : StatXYSeriesData, seriesIdx: number) => ({
-            data: series._x.map((x : number, idx : number) => {
-                return [x, series._y[idx]]
-            }),
-            name: series._name,
-            type: 'line',
-            clip: false,
-            smooth: true,
-            //smoothMonotone: 'x',
-            sampling: 'average',
-            showSymbol: false,
-            width: 4,
-            xAxisIndex: this.separateGraphs ? seriesIdx : seriesToAxis.get(series._type)!,
-            yAxisIndex: this.separateGraphs ? seriesIdx : 0,
-            markLine: {
-                label: {
-                    show: true,
-                    position: 'insideEndTop',
-                    fontSize: 16,
-                    formatter: (p: any) => {
-                        return p.name
-                    }
-                },
-                lineStyle: {
-                    type: 'solid',
-                    width: 3,
-                },
-                symbol: ['none', 'none'],
-                data: series._xLines.map((ele: XLineMarker) => {
-                    return  [
-                        {
-                            xAxis: ele.x,
-                            yAxis: 'min',
-                            name: ele.name,
-                            lineStyle: {
-                                color: ele.colorOverride
+        options.series = this.validSeriesData.map((series : StatXYSeriesData, seriesIdx: number) => {
+            let group = this.separateGraphs ? series._group : 'Default'
+            const grid = grids[groupToGrid.get(group)!]
+            let opts: any = {
+                data: series._x.map((x : number, idx : number) => {
+                    return [x, series._y[idx]]
+                }),
+                name: series._name,
+                type: 'line',
+                clip: true,
+                smooth: true,
+                //smoothMonotone: 'x',
+                sampling: 'average',
+                showSymbol: series.showSymbol,
+                symbol: series.showSymbol ? series._symbol : 'line',
+                symbolSize: 8,
+                width: 4,
+                xAxisIndex: groupSeriesAxis.get(group)!.get(series._type)!,
+                yAxisIndex: groupToGrid.get(group)!,
+                markLine: {
+                    label: {
+                        show: true,
+                        position: 'insideEndTop',
+                        fontSize: 16,
+                        formatter: (p: any) => {
+                            return p.name
+                        }
+                    },
+                    lineStyle: {
+                        type: 'solid',
+                        width: 3,
+                    },
+                    symbol: ['none', 'none'],
+                    data: series._xLines.map((ele: XLineMarker) => {
+                        return  [
+                            {
+                                xAxis: ele.x,
+                                y: grid.top + grid.height,
+                                name: ele.name,
+                                lineStyle: {
+                                    color: ele.colorOverride
+                                }
+                            },
+                            {
+                                xAxis: ele.x,
+                                y: grid.top,
+                                symbol: ele.symbol,
+                                symbolSize: 24,
                             }
-                        },
-                        {
-                            xAxis: ele.x,
-                            yAxis: 'max',
-                            symbol: ele.symbol,
-                            symbolSize: 24,
-                        }
-                    ]
-                })
-            },
-            markArea: {
-                label: {
-                    show: true,
-                    position: 'inside',
-                    fontSize: 16,
-                    formatter: (p: any) => {
-                        return p.name
-                    }
+                        ]
+                    })
                 },
-                itemStyle: {
-                    color: 'rgba(255, 204, 203, 0.3)'
-                },
-                data: series._xAreas.map((ele: XAreaMarker) => {
-                    return [
-                        {
-                            xAxis: ele.start,
-                            yAxis: 'min',
-                            name: ele.name,
-                        },
-                        {
-                            xAxis: ele.end,
-                            yAxis: 'max',
+                markArea: {
+                    label: {
+                        show: true,
+                        position: 'inside',
+                        fontSize: 16,
+                        formatter: (p: any) => {
+                            return p.name
                         }
-                    ]
-                })
+                    },
+                    itemStyle: {
+                        color: 'rgba(255, 204, 203, 0.3)'
+                    },
+                    data: series._xAreas.map((ele: XAreaMarker) => {
+                        return [
+                            {
+                                xAxis: ele.start,
+                                y: grid.top + grid.height,
+                                name: ele.name,
+                            },
+                            {
+                                xAxis: ele.end,
+                                y: grid.top,
+                            }
+                        ]
+                    })
+                },
             }
-        }))
+
+            if (series.hasStyle) {
+                opts.lineStyle = series.echartsLineStyle
+                opts.itemStyle = series.echartsItemStyle
+                console.log(opts.lineStyle, opts.itemStyle)
+            }
+
+            return opts
+        })
 
         this.graph.setOption(options)
     }
