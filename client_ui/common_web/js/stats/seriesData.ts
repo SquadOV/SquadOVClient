@@ -32,6 +32,8 @@ export class StatXYSeriesData {
     _subtype: string
     _name : string
     _group: string
+    _groupIcon: string | undefined = undefined
+    _groupColor: string | undefined = undefined
 
     _style: LineStyle | undefined = undefined
     _symbol: string | undefined = undefined
@@ -113,6 +115,11 @@ export class StatXYSeriesData {
 
     setGroup(g: string) {
         this._group = g
+    }
+
+    setGroupStyle(color: string, icon: string) {
+        this._groupColor = color
+        this._groupIcon = icon
     }
     
     xFormatter(data: any): string {

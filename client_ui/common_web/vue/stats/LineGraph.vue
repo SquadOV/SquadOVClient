@@ -88,10 +88,20 @@ export default class LineGraph extends Vue {
         }
 
         let groupSet: Set<string> = new Set()
+        let groupColor: Map<string, string> = new Map()
+        let groupIcon: Map<string, string> = new Map()
         if (this.separateGraphs) {
             // If we separate graphs then we create a new 'group' for each specified grouping.
-            this.validSeriesData.map((e: StatXYSeriesData) => e._group).forEach((g: string) => {
-                groupSet.add(g)
+            this.validSeriesData.forEach((g: StatXYSeriesData) => {
+                groupSet.add(g._group)
+
+                if (!!g._groupIcon) {
+                    groupIcon.set(g._group, g._groupIcon)
+                }
+
+                if (!!g._groupColor) {
+                    groupColor.set(g._group, g._groupColor)
+                }
             })
         } else {
             groupSet.add('Default')
@@ -161,7 +171,10 @@ export default class LineGraph extends Vue {
             let axis: any = {
                 type: 'value',
                 nameTextStyle: {
-                    color: '#FFFFFF'
+                    rich: {
+                        v: {},
+                        icon: {},
+                    }
                 },
                 axisLine: {
                     lineStyle: {
@@ -178,10 +191,31 @@ export default class LineGraph extends Vue {
             }
 
             if (this.separateGraphs) {
-                axis['name'] = groupArr[i]
+                axis['name'] = `{icon|}{spacer|}{v|${groupArr[i]}}`
                 axis['nameLocation'] = 'center'
                 axis['nameRotate'] = 90
                 axis['nameGap'] = 50
+            }
+
+            if (groupColor.has(groupArr[i])) {
+                axis.nameTextStyle.rich.v.color = groupColor.get(groupArr[i])!
+            } else {
+                axis.nameTextStyle.rich.v.color = '#FFFFFF'
+            }
+
+            if (groupIcon.has(groupArr[i])) {
+                axis.nameTextStyle.rich.icon = {
+                    backgroundColor: {
+                        image: groupIcon.get(groupArr[i])!,
+                    },
+                    width: 24,
+                    height: 24,
+                }
+
+                axis.nameTextStyle.rich.spacer = {
+                    width: 4,
+                    height: 24,
+                }
             }
 
             yAxis.push(axis)

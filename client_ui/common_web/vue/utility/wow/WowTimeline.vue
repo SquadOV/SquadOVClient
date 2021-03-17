@@ -194,6 +194,7 @@ import {
     dateClamp
 } from '@client/js/time'
 import { wowCache } from '@client/js/wow/staticCache'
+import { staticClient } from '@client/js/staticData'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
@@ -598,6 +599,10 @@ export default class WowTimeline extends Vue {
                         name
                     )
                     data.setGroup(group)
+                    data.setGroupStyle(
+                        colorToCssString(this.guidToTeam.get(guid) === this.friendlyTeam ? colors.getSuccessColor() : colors.getFailureColor()),
+                        staticClient.getWowSpecsIconUrl(this.guidToSpecId.get(guid)!)
+                    )
                     data.setSymbol(guidToSymbol.get(guid))
 
                     if (this.separateGraphs) {
@@ -651,6 +656,14 @@ export default class WowTimeline extends Vue {
         let mapping = new Map<string, number>()
         for (let m of this.matchCharacters) {
             mapping.set(m.guid, m.specId)
+        }
+        return mapping
+    }
+
+    get guidToTeam(): Map<string, number> {
+        let mapping = new Map<string, number>()
+        for (let m of this.matchCharacters) {
+            mapping.set(m.guid, m.team)
         }
         return mapping
     }
