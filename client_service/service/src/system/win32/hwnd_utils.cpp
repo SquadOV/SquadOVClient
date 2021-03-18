@@ -70,7 +70,7 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
             LOG_WARNING("Failed to obtain exit code - assuming process stopped." << std::endl);
             break;
         } else if (exitCode != STILL_ACTIVE) {
-            LOG_WARNING("Received a non-STILL_ACTIVE exit code - assuming process stopped." << std::endl);
+            LOG_WARNING("Received a non-STILL_ACTIVE exit code - assuming process stopped with exit code :: " << exitCode << std::endl);
             break;
         }
     }

@@ -254,7 +254,7 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
     }
 
-    if (!_cachedWindowInfo) {
+    if (!_cachedWindowInfo || !_cachedWindowInfo->init) {
         LOG_INFO("Load cache info: Window Information" << std::endl);
         std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
             video::VideoWindowInfo ret;
