@@ -6,17 +6,19 @@ generateUpdatesFilesForAllChannels: true
 directories:
   app: "."
   output: "package/${os}/${arch}/${version}"
-  buildResources: "assets"
+  buildResources: "nsis"
 
 win:
   target: "nsis"
-  icon: "assets/icon.ico"
+  icon: "nsis/icon.ico"
   publish: 
     - provider: generic
       url: https://us-central1.content.squadov.gg/builds
 
 nsis:
   differentialPackage : false
+  oneClick: true
+  include: nsis/installer.nsh
 
 files:
   - from: "dist"
