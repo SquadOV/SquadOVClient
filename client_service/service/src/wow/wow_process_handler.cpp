@@ -261,15 +261,6 @@ void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, 
     const auto end = *reinterpret_cast<const game_event_watcher::WoWChallengeModeEnd*>(data);
     LOG_INFO("WoW Challenge End [" <<  shared::timeToStr(tm) << "]: " << end  << std::endl);
 
-    // For some reason WoW still spit out an extra CHALLENGE_MODE_END and this extra line can sometimes
-    // occur after the original CHALLENGE_MODE_START. We need to prevent this from actually impacting the
-    // recording. From what I can tell, this CHALLENGE_MODE_END will have the same instance ID but everything
-    // else will be 0.
-    if (end.instanceId == _currentChallenge.instanceId && !end.success && end.timeMs == 0 && end.keystoneLevel == 0) {
-        LOG_INFO("...Invalid challenge mode end detected. Ignoring." << std::endl);
-        return;
-    }
-
     std::string matchUuid;
     if (!_currentMatchViewUuid.empty()) {
         try {
