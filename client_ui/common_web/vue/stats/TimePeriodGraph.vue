@@ -32,12 +32,15 @@ export default class TimePeriodGraph extends Vue {
     @Prop()
     forcedMaxX!: number
 
+    @Prop({default: 60})
+    maxSpan!: number
+
     @Prop({ default: 48 })
     layerHeight!: number
 
     resizeTimeout: number | null = null
     zoomStart: number = 0
-    zoomEnd: number = 100
+    zoomEnd: number = 0
 
     get validData() : StatTimePeriodData[] {
         return <StatTimePeriodData[]>this.data.filter((ele : StatTimePeriodData | null) => !!ele)
@@ -91,8 +94,9 @@ export default class TimePeriodGraph extends Vue {
                 type: 'slider',
                 show: true,
                 top: 30,
-                start: this.zoomStart,
-                end: this.zoomEnd,
+                startValue: this.zoomStart,
+                endValue: this.zoomEnd,
+                maxValueSpan: this.maxSpan,
                 xAxisIndex: generateArrayRange(0, groupArr.length),
                 textStyle: {
                     color: '#FFFFFF'
@@ -284,6 +288,8 @@ export default class TimePeriodGraph extends Vue {
 
     mounted() {
         this.graph = echarts.init(this.$refs.graphDiv, null, { renderer: 'canvas' })
+        this.zoomStart = 0
+        this.zoomEnd = this.zoomStart + this.maxSpan
 
         let zr = this.graph.getZr()
         zr.on('click', (params: any) => {
@@ -300,8 +306,8 @@ export default class TimePeriodGraph extends Vue {
         })
 
         this.graph.on('datazoom', (params: any) => {
-            this.zoomStart = params.start
-            this.zoomEnd = params.end
+            this.zoomStart = params.startValue
+            this.zoomEnd = params.endValue
         })
 
         Vue.nextTick(() => {
