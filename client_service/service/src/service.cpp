@@ -22,8 +22,10 @@
 #include <boost/stacktrace.hpp>
 #include <chrono>
 #include <cstdio>
+#include <cstdlib>
 #include <curl/curl.h>
 #include <date/tz.h>
+#include <exception>
 #include <filesystem>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -48,15 +50,27 @@ process_watcher::ProcessWatcher watcher;
 #ifdef _WIN32
 
 LONG handleTopLevelExceptions(EXCEPTION_POINTERS* ex) {
+    LOG_ERROR("Executing unhandled exception hanlder..." << std::endl);
     const auto dumpLoc = shared::log::generateMinidump(ex);
     LOG_ERROR(
-        "SquadOV Fatal Error [Code: " << ex->ExceptionRecord->ExceptionCode << "] @ " << dumpLoc << std::endl
+        "SquadOV Fatal Error [Code: " << ex->ExceptionRecord->ExceptionCode << "] @" << dumpLoc << std::endl
             << boost::stacktrace::stacktrace() << std::endl
     );
+    LOG_FLUSH();
     return EXCEPTION_CONTINUE_SEARCH;
 }
 
 #endif
+
+void onSquadovExit() {
+    LOG_INFO("SquadOV Exiting...Good Bye!" << std::endl);
+    LOG_FLUSH();
+}
+
+void onSquadovTerminate() {
+    LOG_ERROR("SquadOV Termination Detected" << std::endl);
+    LOG_FLUSH();
+}
 
 void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     if (level > av_log_get_level()) {
@@ -96,6 +110,7 @@ int main(int argc, char** argv) {
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
+
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
 
     po::options_description desc("Options");
@@ -118,6 +133,9 @@ int main(int argc, char** argv) {
 #ifdef _WIN32
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif
+    std::atexit(onSquadovExit);
+    std::at_quick_exit(onSquadovExit);
+    std::set_terminate(onSquadovTerminate);
 
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         THROW_ERROR("Failed to initialize CURL.");

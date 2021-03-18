@@ -102,6 +102,8 @@ public:
         return *this;
     }
 
+    void flush();
+
 private:
     std::string currentTimeLog() const;
     bool canLogPass(const LogItem& t) const;
@@ -126,3 +128,4 @@ std::filesystem::path generateMinidump(EXCEPTION_POINTERS* ex);
 #define LOG_INFO(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Info << x).finish();
 #define LOG_WARNING(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Warning << x).finish();
 #define LOG_ERROR(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Error << x).finish();
+#define LOG_FLUSH() shared::log::getGlobalLogger().flush();

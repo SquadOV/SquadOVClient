@@ -53,26 +53,30 @@ Log::Log(const std::string& fname) {
     _queueThread = std::thread(std::bind(&Log::queueWorker, this));
 }
 
+void Log::flush() {
+    std::unique_lock<std::mutex> lock(_queueMutex);
+    if (!_queueCv.wait_for(lock, std::chrono::milliseconds(100), [this](){ return !_queue.empty(); })) {
+        return;
+    }
+
+    while (!_queue.empty()) {
+        const auto& item = _queue.front();
+        
+        if (canLogPass(item)) {
+            std::ostringstream str;
+            str << "[" << item.currentLogLevel() << "]"
+                << "[" << currentTimeLog() << "] ";
+            _outLog << str.str() << item.data() << std::flush;
+            std::cout << str.str() << item.data() << std::flush;
+        }
+
+        _queue.pop_front();
+    }
+}
+
 void Log::queueWorker() {
     while (_running) {
-        std::unique_lock<std::mutex> lock(_queueMutex);
-        if (!_queueCv.wait_for(lock, std::chrono::milliseconds(100), [this](){ return !_queue.empty(); })) {
-            continue;
-        }
-
-        while (!_queue.empty()) {
-            const auto& item = _queue.front();
-            
-            if (canLogPass(item)) {
-                std::ostringstream str;
-                str << "[" << item.currentLogLevel() << "]"
-                    << "[" << currentTimeLog() << "] ";
-                _outLog << str.str() << item.data() << std::flush;
-                std::cout << str.str() << item.data() << std::flush;
-            }
-
-            _queue.pop_front();
-        }
+        flush();
     }
 }
 
