@@ -351,11 +351,6 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
     const auto isMatchEnder = _instanceIdIsMatchEnd[zoneData.instanceId];
     LOG_INFO("Using Zone Change as Match End: " << isMatchEnder << std::endl);
 
-    if (!isMatchEnder) {
-        return;
-    }
-
-    LOG_INFO("...Ending match." << std::endl);
     if (inArena()) {
         game_event_watcher::WoWArenaEnd end;
         end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
@@ -363,7 +358,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
         end.newRatings[0] = 0;
         end.newRatings[1] = 0;
         onArenaEnd(tm, &end);
-    } else if (inChallenge()) {
+    } else if (inChallenge() && isMatchEnder) {
         game_event_watcher::WoWChallengeModeEnd end;
         end.instanceId = _currentChallenge.instanceId;
         end.keystoneLevel = _currentChallenge.keystoneLevel;
