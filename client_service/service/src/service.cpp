@@ -136,7 +136,7 @@ int main(int argc, char** argv) {
     std::atexit(onSquadovExit);
     std::at_quick_exit(onSquadovExit);
     std::set_terminate(onSquadovTerminate);
-
+    
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         THROW_ERROR("Failed to initialize CURL.");
     }
