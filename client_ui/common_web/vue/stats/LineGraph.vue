@@ -7,10 +7,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
-import { StatXYSeriesData, XLineMarker, XAreaMarker } from '@client/js/stats/seriesData'
+import { StatXYSeriesData } from '@client/js/stats/seriesData'
+import { XLineMarker, XAreaMarker } from '@client/js/stats/graphData'
 import { generateArrayRange } from '@client/js/array'
 import * as echarts from 'echarts/lib/echarts.js'
 import 'echarts/lib/chart/line'
+import 'echarts/lib/chart/custom'
 import 'echarts/lib/component/axisPointer'
 import 'echarts/lib/component/dataZoom'
 import 'echarts/lib/component/grid'
@@ -44,6 +46,9 @@ export default class LineGraph extends Vue {
 
     @Prop({type: Boolean, default: false})
     diffGraph!: boolean
+
+    @Prop({type: String, default: 'seconds'})
+    unit!: string
 
     zoomStart: number = 0
     zoomEnd: number = 100
@@ -270,7 +275,7 @@ export default class LineGraph extends Vue {
             },
             dataZoom: dataZooms,
             tooltip: {
-                trigger: 'axis',
+                trigger: 'item',
             }
         }
 
@@ -313,7 +318,7 @@ export default class LineGraph extends Vue {
                 sampling: 'average',
                 showSymbol: series.showSymbol,
                 symbol: series.showSymbol ? series._symbol : 'line',
-                symbolSize: 12,
+                symbolSize: 6,
                 width: 4,
                 xAxisIndex: groupSeriesAxis.get(group)!.get(series._type)!,
                 yAxisIndex: groupToGrid.get(group)!,
@@ -376,16 +381,36 @@ export default class LineGraph extends Vue {
                         ]
                     })
                 },
+                tooltip: {
+                    formatter: (params: any) => {
+                        return `${params.marker} ${params.seriesName}: ${params.value[1]}@${params.value[0]} ${this.unit}`
+                    }
+                }
             }
 
             if (series.hasStyle) {
                 opts.lineStyle = series.echartsLineStyle
                 opts.itemStyle = series.echartsItemStyle
             }
-
             return opts
         })
 
+        this.validSeriesData.forEach((series : StatXYSeriesData) => {
+            let group = this.separateGraphs ? series._group : 'Default'
+            const grid = grids[groupToGrid.get(group)!]
+            
+            for (let o of series._overlayPeriods) {
+                let s = o.constructEchartsSeries(24, grid.top, this.unit)
+                s.itemStyle = {
+                    opacity: 0.7
+                }
+                s.zlevel = 1
+                s.xAxisIndex = groupSeriesAxis.get(group)!.get(series._type)!
+                s.yAxisIndex = groupToGrid.get(group)!
+                options.series.push(s)
+            }
+        })
+        
         this.graph.setOption(options)
     }
 

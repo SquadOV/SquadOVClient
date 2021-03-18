@@ -135,3 +135,66 @@ export function specIdToColor(specId: number): Color {
     const classId = specIdToClassId(specId)
     return classIdToColor(classId)
 }
+
+const WOW_SCHOOL_NONE = 0x0
+const WOW_SCHOOL_PHYSICAL = 0x01
+const WOW_SCHOOL_HOLY = 0x02
+const WOW_SCHOOL_FIRE = 0x04
+const WOW_SCHOOL_NATURE = 0x08
+const WOW_SCHOOL_FROST = 0x10
+const WOW_SCHOOL_SHADOW = 0x20
+const WOW_SCHOOL_ARCANE = 0x40
+
+export function spellSchoolToColor(school: number): Color {
+    switch (school) {
+        case WOW_SCHOOL_PHYSICAL:
+            return {
+                r: 255,
+                g: 255,
+                b: 0
+            }
+        case WOW_SCHOOL_HOLY:
+            return {
+                r: 255,
+                g: 229,
+                b: 127
+            }
+        case WOW_SCHOOL_FIRE:
+            return {
+                r: 255,
+                g: 127,
+                b: 0
+            }
+        case WOW_SCHOOL_NATURE:
+            return {
+                r: 76,
+                g: 255,
+                b: 76
+            }
+        case WOW_SCHOOL_FROST:
+            return {
+                r: 127,
+                g: 255,
+                b: 255,
+            }
+        case WOW_SCHOOL_SHADOW:
+            return {
+                r: 127,
+                g: 127,
+                b: 255,
+            }
+        case WOW_SCHOOL_ARCANE:
+            return {
+                r: 255,
+                g: 127,
+                b: 255,
+            }
+        case WOW_SCHOOL_NONE:
+        default:
+            return {
+                r: 255,
+                g: 255,
+                b: 255
+            }
+    }
+}

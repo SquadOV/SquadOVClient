@@ -1,19 +1,18 @@
 <template>
     <div class="full-width">
         <div class="d-flex align-center">
-            <v-spacer></v-spacer>      
             <v-dialog
                 v-model="showSettings"
                 max-width="60%"
             >
                 <template v-slot:activator="{on}">
                     <v-btn
+                        class="my-1"
                         v-on="on"
-                        icon
+                        block
+                        color="primary"
                     >
-                        <v-icon>
-                            mdi-cog
-                        </v-icon>
+                        Settings
                     </v-btn>
                 </template>
                 
@@ -44,7 +43,7 @@
                                 label="Aggregate"
                                 dense
                                 hide-details
-                                :readonly="separateGraphs"
+                                :disabled="separateGraphs"
                             >
                             </v-checkbox>
                         </div>
@@ -117,20 +116,20 @@
                             <v-checkbox
                                 class="mx-2"
                                 v-model="showAuras"
-                                label="Show Auras"
+                                label="Show Important Auras"
                                 dense
                                 hide-details
-                                :readonly="!separateGraphs"
+                                :disabled="!separateGraphs"
                             >
                             </v-checkbox>
 
                             <v-checkbox
                                 class="mx-2"
                                 v-model="showSpells"
-                                label="Show Spells"
+                                label="Show Important Spells"
                                 dense
                                 hide-details
-                                :readonly="!separateGraphs"
+                                :disabled="!separateGraphs"
                             >
                             </v-checkbox>
                         </div>
@@ -153,6 +152,7 @@
             <template v-slot:default="{ loading }">
                 <div class="full-width" :style="timelineStyle" v-if="!loading">
                     <line-graph
+                        ref="graph"
                         :series-data="activeSeriesData"
                         :separate-graphs="separateGraphs"
                         :forced-min-x="encounterMinX"
@@ -173,7 +173,8 @@ import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import {
     UnifiedWowEventContainer,
-    SerializedWowMatchEvents
+    SerializedWowMatchEvents,
+    isWowAuraBuff
 } from '@client/js/wow/events'
 import {
     WowStatQueryParam,
@@ -195,6 +196,7 @@ import {
 } from '@client/js/time'
 import { wowCache } from '@client/js/wow/staticCache'
 import { staticClient } from '@client/js/staticData'
+import { StatTimePeriodData, StatTimePeriodTrackData, StatTimePeriodSection } from '@client/js/stats/periodData'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
@@ -255,6 +257,10 @@ export default class WowTimeline extends Vue {
 
     @Prop({default: 0})
     friendlyTeam!: number
+
+    $refs!: {
+        graph: LineGraph
+    }
 
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
     pendingEndpoints: Set<string> = new Set()
@@ -400,6 +406,24 @@ export default class WowTimeline extends Vue {
         endpointToSymbol.set(HPS_ENDPOINT, 'triangle')
         endpointToSymbol.set(DRPS_ENDPOINT, 'diamond')
 
+        // Make a request to cache all relevant spell and aura IDs.
+        let spellIdsToCache: Set<number> = new Set()
+        if (!!this.events) {
+            for (let aura of this.events.auras) {
+                spellIdsToCache.add(aura.spellId)
+            }
+
+            for (let sc of this.events.spellCasts) {
+                spellIdsToCache.add(sc.spellId)
+            }
+        }
+
+        wowCache.bulkGetSpellNames(Array.from(spellIdsToCache)).then((resp: Map<number, string>) => {
+            for (let [key, value] of resp) {
+                Vue.set(this.spellIdNames, key, value)
+            }
+        })
+
         let addTimeToSeries = (data: StatXYSeriesData) => {
              if (!!this.currentTime && this.showTime) {
                 data.addXMarkLine({
@@ -441,34 +465,18 @@ export default class WowTimeline extends Vue {
             }
         }
 
-        let addBloodlustToSeries = (data: StatXYSeriesData) => {
+        let addBloodlustToSeries = (data: StatXYSeriesData, guid: string | undefined) => {
             if (this.showBloodlust && !!this.events) {
-                // Two pass event here - first pass is to find all the bloodlust aura spell IDs.
-                // Send pass is to add the spells to the visualization.
-                // In between the two passes, we need to make a call to grab the spell names.
-                let auraSpellIds: Set<number> = new Set()
                 for (let aura of this.events.auras) {
                     if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
                         continue
                     }
 
-                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId)) {
-                        auraSpellIds.add(aura.spellId)
-                    }
-                }
-
-                wowCache.bulkGetSpellNames(Array.from(auraSpellIds)).then((resp: Map<number, string>) => {
-                    for (let [key, value] of resp) {
-                        Vue.set(this.spellIdNames, key, value)
-                    }
-                })
-
-                for (let aura of this.events.auras) {
-                    if (!dateRangeIntersects(aura.appliedTm, aura.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                    if (!!guid && guid !== aura.targetGuid) {
                         continue
                     }
 
-                    if (aura.spellId in this.spellIdNames) {
+                    if (wowc.BLOODLUST_SPELL_IDS.has(aura.spellId) && aura.spellId in this.spellIdNames) {
                         data.addXMarkArea({
                             start: this.convertTmToX(dateClamp(aura.appliedTm, this.encounterStartTime, this.encounterEndTime)),
                             end: this.convertTmToX(dateClamp(aura.removedTm, this.encounterStartTime, this.encounterEndTime)),
@@ -476,6 +484,81 @@ export default class WowTimeline extends Vue {
                         })
                     }
                 }
+            }
+        }
+
+        let addAurasAndSpellsToSeries = (data: StatXYSeriesData, guid: string) => {
+            if (!this.events || !this.separateGraphs) {
+                return
+            }
+
+            let playerName = this.guidToName.has(guid) ?
+                this.guidToName.get(guid)! :
+                guid
+
+            let periodData = new StatTimePeriodData(playerName)
+            if (this.showSpells) {
+                let track = new StatTimePeriodTrackData('Spells')
+
+                for (let e of this.events.spellCasts) {
+                    if (e.sourceGuid !== guid || !e.success || !wowc.WOW_IMPORTANT_SPELL_IDS.has(e.spellId)) {
+                        continue
+                    }
+
+                    if (!dateRangeIntersects(e.instant ? e.castFinish : e.castStart!, e.castFinish, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
+                    let start = this.convertTmToX(dateClamp(e.instant ? e.castFinish : e.castStart!, this.encounterStartTime, this.encounterEndTime))
+                    let end = this.convertTmToX(dateClamp(e.castFinish, this.encounterStartTime, this.encounterEndTime))
+
+                    if (e.spellId in this.spellIdNames) {
+                        let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
+                        section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+                        section.setColor(colorToCssString(colors.spellSchoolToColor(e.spellSchool)))
+                        track.addSection(section)
+                    }
+                }
+
+                periodData.addTrack(track)
+            }
+
+            if (this.showAuras) {
+                let track = new StatTimePeriodTrackData('Auras')
+
+                for (let e of this.events.auras) {
+                    if (e.targetGuid !== guid || !wowc.WOW_IMPORTANT_SPELL_IDS.has(e.spellId)) {
+                        continue
+                    }
+
+                    if (!dateRangeIntersects(e.appliedTm, e.removedTm, this.encounterStartTime, this.encounterEndTime)) {
+                        continue
+                    }
+
+                    let start = this.convertTmToX(dateClamp(e.appliedTm, this.encounterStartTime, this.encounterEndTime))
+                    let end = this.convertTmToX(dateClamp(e.removedTm, this.encounterStartTime, this.encounterEndTime))
+
+                    if (e.spellId in this.spellIdNames) {
+                        let section =  new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
+                        section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+
+                        if (isWowAuraBuff(e.auraType)) {
+                            section.setColor(colorToCssString(colors.getSuccessColor()))
+                            section.setPreferredLayer(0)
+                        } else {
+                            section.setColor(colorToCssString(colors.getFailureColor()))
+                            section.setPreferredLayer(1)
+                        }
+
+                        track.addSection(section)
+                    }
+                }
+
+                periodData.addTrack(track)
+            }
+
+            if (periodData._tracks.length > 0) {
+                data.addOverlayPeriod(periodData)
             }
         }
 
@@ -552,7 +635,7 @@ export default class WowTimeline extends Vue {
                 let friendlyData = fn(this.friendlyCharacters, true, hasTwoTeam)
                 addTimeToSeries(friendlyData)
                 addEventsToSeries(friendlyData, undefined)
-                addBloodlustToSeries(friendlyData)
+                addBloodlustToSeries(friendlyData, undefined)
 
                 series.push(friendlyData)
                 if (hasTwoTeam) {
@@ -614,7 +697,8 @@ export default class WowTimeline extends Vue {
                     if (e === markerEndpoint) {
                         addTimeToSeries(data)
                         addEventsToSeries(data, guid)
-                        addBloodlustToSeries(data)
+                        addBloodlustToSeries(data, guid)
+                        addAurasAndSpellsToSeries(data, guid)
                     }
 
                     series.push(data)
@@ -725,6 +809,10 @@ export default class WowTimeline extends Vue {
 
     mounted() {
         this.refreshData()
+    }
+
+    redraw() {
+        this.$refs.graph.graphResize()   
     }
 }
 

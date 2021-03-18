@@ -925,6 +925,11 @@
     global-agent "^2.0.2"
     global-tunnel-ng "^2.7.1"
 
+"@flatten-js/interval-tree@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.yarnpkg.com/@flatten-js/interval-tree/-/interval-tree-1.0.13.tgz#68e862f3f997d215e9a857c8b061af201ed9bf07"
+  integrity sha512-5thHHdUZIRdPdEPx6G9tY6mHFMGoXsq9/ivemRszDcEkERXqlZAv+7NozaFbAUOvKXxyWoccSnLyjK0c5UWJeQ==
+
 "@fortawesome/fontawesome-free@^5.14.0":
   version "5.15.1"
   resolved "https://registry.yarnpkg.com/@fortawesome/fontawesome-free/-/fontawesome-free-5.15.1.tgz#ccfef6ddbe59f8fe8f694783e1d3eb88902dc5eb"

@@ -1,18 +1,5 @@
-import { secondsToTimeString } from '@client/js/time'
-import format from 'date-fns/format'
-
-export interface XLineMarker {
-    x: any
-    name: string
-    symbol: string
-    colorOverride?: string
-}
-
-export interface XAreaMarker {
-    start: any,
-    end: any,
-    name: string
-}
+import { StatTimePeriodData } from '@client/js/stats/periodData'
+import { BaseGraphData } from '@client/js/stats/graphData'
 
 export interface BorderStyle {
     width: number
@@ -25,21 +12,14 @@ export interface LineStyle {
     border?: BorderStyle | undefined
 }
 
-export class StatXYSeriesData {
+export class StatXYSeriesData extends BaseGraphData {
     _x : any[]
     _y : any[]
-    _type : string
-    _subtype: string
-    _name : string
-    _group: string
-    _groupIcon: string | undefined = undefined
-    _groupColor: string | undefined = undefined
 
     _style: LineStyle | undefined = undefined
     _symbol: string | undefined = undefined
 
-    _xLines: XLineMarker[]
-    _xAreas: XAreaMarker[]
+    _overlayPeriods: StatTimePeriodData[] = []
 
     get hasStyle(): boolean {
         return !!this._style
@@ -71,15 +51,18 @@ export class StatXYSeriesData {
     }
 
     compatibleWith(other: StatXYSeriesData): boolean {
-        return this._type === other._type && this._subtype === other._subtype
-    }
+        let base = this._type === other._type && this._subtype === other._subtype && this._overlayPeriods.length === other._overlayPeriods.length
+        if (!base) {
+            return false
+        }
 
-    addXMarkLine(ln: XLineMarker) {
-        this._xLines.push(ln)
-    }
+        for (let i = 0; i < this._overlayPeriods.length; ++i) {
+            if (this._overlayPeriods[i]._tracks.length != other._overlayPeriods[i]._tracks.length) {
+                return false
+            }
+        }
 
-    addXMarkArea(mk: XAreaMarker) {
-        this._xAreas.push(mk)
+        return true
     }
 
     setStyle(style: LineStyle | undefined) {
@@ -95,51 +78,23 @@ export class StatXYSeriesData {
         this._y = y
     }
 
+    addOverlayPeriod(p: StatTimePeriodData) {
+        this._overlayPeriods.push(p)
+    }
+
     get showSymbol(): boolean {
         return !!this._symbol
     }
 
     constructor(x : any[], y : any[], type : string, subtype: string, name : string) {
+        super(type, subtype, name)
         if (x.length != y.length) {
             console.log('Error in series data: X-Y length mismatch.')
         }
         this._x = x
         this._y = y
-        this._type = type
-        this._subtype = subtype
-        this._name = name
         this._xLines = []
         this._xAreas = []
-        this._group = 'Default'
-    }
-
-    setGroup(g: string) {
-        this._group = g
-    }
-
-    setGroupStyle(color: string, icon: string) {
-        this._groupColor = color
-        this._groupIcon = icon
-    }
-    
-    xFormatter(data: any): string {
-        if (this._type == 'time') {
-            if (this._subtype == 'date') {
-                return format(data, 'MMMM do uuuu')
-            } else if (this._subtype == 'time') {
-                return format(data, 'h:mm a')
-            } else {
-                return format(data, 'MMMM do uuuu, h:mm a')
-            }
-        } else if (this._type == 'value') {
-            if (this._subtype == 'elapsedSeconds') {
-                return secondsToTimeString(data)
-            } else {
-                return data
-            }
-        } else {
-            return data
-        }
     }
 
     get reversed() : boolean {

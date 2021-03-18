@@ -4,8 +4,16 @@ export interface Color {
     b : number
 }
 
+export interface ColorA extends Color {
+    a : number
+}
+
 export function colorToCssString(c: Color): string {
     return `rgb(${c.r}, ${c.g}, ${c.b})`
+}
+
+export function colorAToCssString(c: ColorA): string {
+    return `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`
 }
 
 export function getGenericWinColor(): Color {

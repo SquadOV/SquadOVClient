@@ -60,6 +60,7 @@
     "webpack-merge": "^5.2.0"
   },
   "dependencies": {
+    "@flatten-js/interval-tree": "^1.0.13",
     "@fortawesome/fontawesome-free": "^5.14.0",
     "@types/tough-cookie": "^4.0.0",
     "@videojs/http-streaming": "^2.2.3",

@@ -22,13 +22,15 @@ export function cleanWowResurrectionFromJson(e: WowResurrection): WowResurrectio
     return e
 }
 
+export interface WowAuraType {
+    type: string
+}
+
 export interface WowAura {
     targetGuid: string
     targetName: string
     spellId: number
-    auraType: {
-        type: string
-    }
+    auraType: WowAuraType
     appliedTm: Date
     removedTm: Date
 }
@@ -51,11 +53,54 @@ export function cleanWowEncounterFromJson(e: WowEncounter): WowEncounter {
     return e
 }
 
+export interface WowSpellCast {
+    sourceGuid: string
+    sourceName: string
+    sourceFlags: number
+    targetGuid: string | null
+    targetName: string | null
+    targetFlags: number | null
+    castStart: Date | null
+    castFinish: Date
+    spellId: number
+    spellSchool: number
+    success: boolean
+    instant: boolean
+}
+
+export function cleanWowSpellCastFromJson(c: WowSpellCast): WowSpellCast {
+    if (!!c.castStart) {
+        c.castStart = new Date(c.castStart)
+    }
+    c.castFinish = new Date(c.castFinish)
+    return c
+}
+
+export interface WowAuraBreak {
+    sourceGuid: string
+    sourceName: string
+    sourceFlags: number
+    targetGuid: string
+    targetName: string
+    targetFlags: number
+    auraId: number
+    auraType: WowAuraType
+    spellId: number | null
+    tm: Date
+}
+
+export function cleanWowAuraBreakFromJson(b: WowAuraBreak): WowAuraBreak {
+    b.tm = new Date(b.tm)
+    return b
+}
+
 export interface SerializedWowMatchEvents {
     deaths: WowDeath[]
     auras: WowAura[]
     encounters: WowEncounter[]
     resurrections: WowResurrection[]
+    auraBreaks: WowAuraBreak[]
+    spellCasts: WowSpellCast[]
 }
 
 export function cleanWowMatchEventsFromJson(e: SerializedWowMatchEvents) : SerializedWowMatchEvents {
@@ -63,6 +108,8 @@ export function cleanWowMatchEventsFromJson(e: SerializedWowMatchEvents) : Seria
     e.auras.forEach(cleanWowAuraFromJson)
     e.encounters.forEach(cleanWowEncounterFromJson)
     e.resurrections.forEach(cleanWowResurrectionFromJson)
+    e.auraBreaks.forEach(cleanWowAuraBreakFromJson)
+    e.spellCasts.forEach(cleanWowSpellCastFromJson)
     return e
 }
 
@@ -70,4 +117,8 @@ export interface UnifiedWowEventContainer {
     tm: Date,
     death?: WowDeath
     resurrect?: WowResurrection
+}
+
+export function isWowAuraBuff(a : WowAuraType): boolean {
+    return (a.type.toLowerCase() === 'buff')
 }

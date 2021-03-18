@@ -79,13 +79,14 @@
                 </v-row>
 
                 <v-row>
-                    <v-tabs>
+                    <v-tabs v-model="selectedTab">
                         <v-tab>
                             Timeline
                         </v-tab>
 
                         <v-tab-item>
                             <wow-timeline
+                                ref="timeline"
                                 :user-id="userId"
                                 :match-uuid="matchUuid"
                                 :start-time="startTime"
@@ -102,10 +103,23 @@
                         </v-tab-item>
 
                         <v-tab>
-                            Spell Analysis
+                            Spells/Auras
                         </v-tab>
 
                         <v-tab-item>
+                            <wow-spell-analysis
+                                ref="spells"
+                                :start-time="startTime"
+                                :encounter-start-time="encounterStartTime"
+                                :encounter-end-time="encounterEndTime"
+                                :events="events"
+                                :unified-events="filteredEvents"
+                                :match-characters="matchCharacters"
+                                :current-time="vodTime"
+                                :friendly-team="friendlyTeam"
+                                @go-to-time="goToVodTime"
+                            >
+                            </wow-spell-analysis>
                         </v-tab-item>
                     </v-tabs>
                 </v-row>
@@ -139,6 +153,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
 import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
 
 @Component({
     components: {
@@ -151,6 +166,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
         WowTimeline,
         WowVodPovPicker,
         MatchShareButton,
+        WowSpellAnalysis,
     }
 })
 export default class WowMatch extends Vue {
@@ -164,6 +180,8 @@ export default class WowMatch extends Vue {
 
     $refs!: {
         player: VideoPlayer
+        timeline: WowTimeline,
+        spells: WowSpellAnalysis
     }
     
     matchCharacters: WowCharacter[] = []
@@ -175,11 +193,28 @@ export default class WowMatch extends Vue {
     events: SerializedWowMatchEvents | null = null
     filteredEvents: UnifiedWowEventContainer[] = []
 
+    selectedTab: number = 0
     vod: VodAssociation | null = null
     vodTime: Date | null = null
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
     vodReady: boolean = false
+
+    @Watch('selectedTab')
+    refreshTab() {
+        switch (this.selectedTab) {
+            case 0:
+                if (!!this.$refs.timeline) {
+                    this.$refs.timeline.redraw()
+                }
+                break
+            case 1:
+                if (!!this.$refs.spells) {
+                    this.$refs.spells.redraw()
+                }
+                break
+        }
+    }
 
     get friendlyTeam(): number {
         let winningTeamId = this.currentMatch?.arena?.winningTeamId
