@@ -106,17 +106,7 @@
                         <ol class="mt-4">
                             <li>
                                 You have an automatic combat logger addon installed.
-                                Which one you install and use depends on the content you wish to record.
-                                Only have <b>one</b> of these enabled at any given time.
-                                <ul>
-                                    <li>
-                                        For raids and keystones, install <a href="#" @click="gotoAutolog">AutoLog</a> or <a href="#" @click="gotoLoggerHead">LoggerHead</a>.
-                                    </li>
-
-                                    <li>
-                                        For arena, install <a href="#" @click="gotoArenaCombatLogger">Arena Combat Logger</a>.
-                                    </li>
-                                </ul>
+                                We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
                             </li>
                             <li>
                                 In your World of Warcraft settings menu, enable the <b>Advanced Combat Logging</b> option under the "System" and "Network" submenus.
@@ -319,18 +309,8 @@ export default class SetupWizard extends Vue {
         openUrlInBrowser('https://support.squadov.gg/user-manual/games/valorant#account')
     }
 
-    gotoAutolog() {
-        const url = 'https://www.curseforge.com/wow/addons/autolog'
-        openUrlInBrowser(url)
-    }
-
-    gotoLoggerHead() {
-        const url = 'https://www.curseforge.com/wow/addons/loggerhead'
-        openUrlInBrowser(url)
-    }
-
-    gotoArenaCombatLogger() {
-        const url = 'https://www.curseforge.com/wow/addons/arena-combat-logger'
+    goToScl() {
+        const url = 'https://www.curseforge.com/wow/addons/simplecombatlogger'
         openUrlInBrowser(url)
     }
 

@@ -26,8 +26,8 @@
                         <h2 class="text-center">
                             <span v-if="isLocalUser">
                                 Run SquadOV while running a dungeon or raid in WoW and SquadOV will automatically detect your characters.
-                                Be sure to be running an auto-combat log enabler such as <a href="#" @click="gotoAutolog">AutoLog</a> or <a href="#" @click="gotoLoggerHead">LoggerHead</a>.
-                                If you're doing arena runs, use <a href="#" @click="gotoArenaCombatLogger">Arena Combat Logger</a> instead.
+                                Be sure to be running an auto-combat log enabler.
+                                We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
                             </span>
 
                             <span v-else>
@@ -49,11 +49,8 @@ import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, ApiData } from '@client/js/api'
 import { WowCharacter } from '@client/js/wow/character'
+import { openUrlInBrowser } from '@client/js/external'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
-
-/// #if DESKTOP
-import { shell } from 'electron'
-/// #endif
 
 const maxTasksPerRequest : number = 10
 
@@ -80,32 +77,10 @@ export default class WowLogContainer extends Vue {
     get hasSelectedCharacter() : boolean {
         return !!this.selectedCharacter
     }
-
-    gotoAutolog() {
-        const url = 'https://www.curseforge.com/wow/addons/autolog'
-/// #if DESKTOP
-        shell.openExternal(url)
-/// #else
-        window.open(url, '_blank')
-/// #endif
-    }
-
-    gotoLoggerHead() {
-        const url = 'https://www.curseforge.com/wow/addons/loggerhead'
-/// #if DESKTOP
-        shell.openExternal(url)
-/// #else
-        window.open(url, '_blank')
-/// #endif
-    }
-
-    gotoArenaCombatLogger() {
-        const url = 'https://www.curseforge.com/wow/addons/arena-combat-logger'
-/// #if DESKTOP
-        shell.openExternal(url)
-/// #else
-        window.open(url, '_blank')
-/// #endif
+    
+    goToScl() {
+        const url = 'https://www.curseforge.com/wow/addons/simplecombatlogger'
+        openUrlInBrowser(url)
     }
 
     @Watch('selectedCharacter')

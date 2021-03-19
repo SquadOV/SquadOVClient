@@ -8,10 +8,7 @@
                 <h2 id="combatlog">Combat Logs</h2>
 
                 Before Raid Encounters, M+, or Arenas can be recorded in SquadOV, we need to make sure our combat logs are recording properly.
-                We recommend you use the assistance of a combat log addon.
-                For Arena, we recommend you use <a href="https://www.curseforge.com/wow/addons/arena-combat-logger">Arena Combat Logger</a>.
-                For PvE content, we recommend you use <a href="https://www.curseforge.com/wow/addons/autolog">AutoLog</a>.
-                Having multiple enabled combat logs will often cause no logs to be generated so be sure to only have one addon enabled at a given time (1).
+                We recommend you use the assistance of a combat logging addon such as the <a href="https://www.curseforge.com/wow/addons/simplecombatlogger">Simple Combat Logger</a>.
 
                 <GenericImage
                     class="my-4"
