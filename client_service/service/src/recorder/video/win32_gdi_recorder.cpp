@@ -41,11 +41,9 @@ void Win32GdiRecorderInstance::setActiveEncoder(service::recorder::encoder::AvEn
     _activeEncoder = encoder;
 }
 
-void Win32GdiRecorderInstance::startRecording(size_t fps) {
-    const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
-    
+void Win32GdiRecorderInstance::startRecording() {
     _recording = true;
-    _recordingThread = std::thread([this, nsPerFrame](){ 
+    _recordingThread = std::thread([this](){ 
         HDC hdcWindow = GetDC(_window);
         HDC hdcMem = CreateCompatibleDC(hdcWindow);
         HBITMAP hbm = nullptr;
@@ -78,7 +76,7 @@ void Win32GdiRecorderInstance::startRecording(size_t fps) {
 
             // Means we're probably minimized.
             if (IsIconic(_window) || width == 0 || height == 0) {
-                std::this_thread::sleep_for(nsPerFrame);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }
 
@@ -140,10 +138,6 @@ void Win32GdiRecorderInstance::startRecording(size_t fps) {
 #if LOG_FRAME_TIME
             LOG_INFO("Frame Time - GDI:" << gdiElapsed * 1.0e-6 << " + Queue Encode:" << (numMs - gdiElapsed) * 1.0e-6  << std::endl);
 #endif
-
-            if (numNs < nsPerFrame) {
-                std::this_thread::sleep_for(nsPerFrame - numNs);
-            }
         }
 
         DeleteObject(hbm);

@@ -14,7 +14,7 @@ class Win32GdiRecorderInstance : public VideoRecorder {
 public:
     explicit Win32GdiRecorderInstance(HWND window);
 
-    void startRecording(size_t fps) override;
+    void startRecording() override;
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) override;
     void stopRecording() override;
     

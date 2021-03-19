@@ -32,7 +32,7 @@ class WindowsGraphicsCaptureImpl {
 public:
     WindowsGraphicsCaptureImpl(HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame);
 
-    void startRecording(size_t fps);
+    void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder);
     void stopRecording();
     
@@ -178,7 +178,7 @@ void WindowsGraphicsCaptureImpl::setActiveEncoder(service::recorder::encoder::Av
     _activeEncoder = encoder;
 }
 
-void WindowsGraphicsCaptureImpl::startRecording(size_t fps) {
+void WindowsGraphicsCaptureImpl::startRecording() {
     _running = true;
     _session.StartCapture();
 }
@@ -191,8 +191,8 @@ WindowsGraphicsCaptureItf::~WindowsGraphicsCaptureItf() {
 
 }
 
-void WindowsGraphicsCaptureItf::startRecording(size_t fps) {
-    _impl->startRecording(fps);
+void WindowsGraphicsCaptureItf::startRecording() {
+    _impl->startRecording();
 }
 
 void WindowsGraphicsCaptureItf::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {

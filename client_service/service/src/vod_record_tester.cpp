@@ -3,6 +3,7 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <codecvt>
+#include <condition_variable>
 #include <portaudio.h>
 extern "C" {
 #include <libavutil/log.h>
@@ -119,9 +120,59 @@ int main(int argc, char** argv) {
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({});
         });
+    } else if (mode == "DVRRACE") {
+        std::mutex mutex;
+        std::condition_variable cv;
+        bool trigger = false;
+
+        std::mutex mutex2;
+        std::condition_variable cv2;
+        bool trigger2 = false;
+
+        recorder.startDvrSession(service::recorder::FLAG_ALL_RECORDING, false);
+
+        std::thread t1 = std::thread([&mutex, &cv, &trigger, &mutex2, &cv2, &trigger2, &recorder](){
+            std::unique_lock<std::mutex> lk(mutex);
+            cv.wait(lk, [&trigger]{return trigger;});
+
+            {
+                std::lock_guard<std::mutex> lk(mutex2);
+                trigger2 = true;
+            }
+            cv2.notify_all();
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::DVR);
+        });
+
+        std::thread t2 = std::thread([&mutex, &cv, &trigger, &mutex2, &cv2, &trigger2, &recorder](){
+            std::unique_lock<std::mutex> lk(mutex2);
+            cv2.wait(lk, [&trigger2]{return trigger2;});
+            
+            recorder.startNewDvrSegment();
+            recorder.startNewDvrSegment();
+        });
+
+        const auto duration = vm["duration"].as<int>();
+        std::this_thread::sleep_for(std::chrono::seconds(duration));
+        {
+            std::lock_guard<std::mutex> lk(mutex);
+            trigger = true;
+        }
+        cv.notify_all();
+
+        if (t1.joinable()) {
+            t1.join();
+        }
+
+        if (t2.joinable()) {
+            t2.join();
+        }
+
+        recorder.stop({});
     }
 
-    workerThread.join();
+    if (workerThread.joinable()) {
+        workerThread.join();
+    }
     std::cout << "Output VOD to: " << outputFname << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(10));
     Pa_Terminate();

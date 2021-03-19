@@ -119,11 +119,14 @@ private:
     std::thread _packetThread;
     void flushPacketQueue();
     
+    AVSyncClock::time_point _syncStartTime;
     // Video Output
     AVStream* _vstream = nullptr;
     const AVCodec* _vcodec = nullptr;
     AVCodecContext* _vcodecContext = nullptr;
     int64_t _vFrameNum = 0;
+    long long numVideoFramesToEncode();
+    void videoSwapAndEncode();
 
     // Audio Output
     const AVCodec* _acodec = nullptr;
@@ -170,9 +173,8 @@ private:
     std::vector<AudioStreamDataPtr> _astreams;
 
     // Front and back buffering to support constant frame rate videos.
-    std::thread _videoEncodingThread;
     bool _running = false;
-    std::mutex _runningMutex;
+    std::shared_mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
 
     FfmpegVideoSwapChainPtr _videoSwapChain;
@@ -573,22 +575,84 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
 }
 
 void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& frame) {
+    std::shared_lock<std::shared_mutex> guard(_runningMutex);
+    if (!_running) {
+        return;
+    }
+    
+    if (!numVideoFramesToEncode()) {
+        return;
+    }
+
     _videoSwapChain->receiveCpuFrame(frame);
 
     if (_running) {
         ++_receivedVideoFrames;
     }
+
+    videoSwapAndEncode();
 }
 
 void FfmpegAvEncoderImpl::addVideoFrame(ID3D11Texture2D* image) {
+    std::shared_lock<std::shared_mutex> guard(_runningMutex);
+    if (!_running) {
+        return;
+    }
+
+    if (!numVideoFramesToEncode()) {
+        return;
+    }
+
     _videoSwapChain->receiveGpuFrame(image);
     
     if (_running) {
         ++_receivedVideoFrames;
     }
+
+    videoSwapAndEncode();
+}
+
+long long FfmpegAvEncoderImpl::numVideoFramesToEncode() {
+    // This gets called every time we receive a video frame. In the case where the frame is too early
+    // to be considered the next frame, we just do nothing (encode 0 frames). In the case where too much
+    // time has elapsed, then it's possible that we want to encode *multiple* frames. In that case
+    // we use the same incoming frame multiple times and just have duplicate frames in the output.
+    const auto refFrameTime = _syncStartTime + std::chrono::nanoseconds(_nsPerFrame * _vFrameNum);
+    const auto now = AVSyncClock::now();
+
+    if (now < refFrameTime) {
+        return 0;
+    } else {
+        const auto elapsedFrames = std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count() / _nsPerFrame.count();
+        return elapsedFrames;
+    }
+}
+
+void FfmpegAvEncoderImpl::videoSwapAndEncode() {
+    // Get this number again just in case it took us awhile to receive the frame.
+    const auto numFramesToEncode = numVideoFramesToEncode();
+    const auto desiredFrameNum = _vFrameNum + numFramesToEncode;
+
+    _videoSwapChain->swap();
+
+    AVFrame* frame = _videoSwapChain->getFrontBufferFrame();
+    if (_videoSwapChain->hasValidFrontBuffer()) {
+        ++_processedVideoFrames;
+    }
+
+    {
+        service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+        auto immediate = d3d->immediateContext();
+        
+        for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
+            frame->pts = _vFrameNum;
+            encode(_vcodecContext, frame, _vstream);
+        }
+    }
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
+    std::shared_lock<std::shared_mutex> guard(_runningMutex);
     if (!_running) {
         return;
     }
@@ -684,7 +748,7 @@ void FfmpegAvEncoderImpl::start() {
     }
 
     // Use this time to sync the audio and video. This time is when our video and audio should start.
-    const auto start = AVSyncClock::now();
+    _syncStartTime = AVSyncClock::now();
 
     // Start a thread to send frames and packets to the underlying encoder.
     // Some encoders (e.g. H264_NVENC) don't play nicely with variable framerate
@@ -696,57 +760,9 @@ void FfmpegAvEncoderImpl::start() {
     // the encoder thread will swap the front and back buffer and send the new
     // front buffer to the ffmpeg encoder to write out to the file.
     {
-        std::lock_guard<std::mutex> guard(_runningMutex);
+        std::lock_guard<std::shared_mutex> guard(_runningMutex);
         _running = true;
     }
-
-    _videoEncodingThread = std::thread([this, start](){
-        while (_running) {
-            const auto refFrameTime = start + std::chrono::nanoseconds(_nsPerFrame * _vFrameNum);
-            const auto now = AVSyncClock::now();
-
-            // If "now" is before the refFrameTime then we want to wait until
-            // refFrameTime and write a single frame. If we're running behind schedule
-            // then we'll have to write multiple frames at a single time to try and
-            // make up the difference.
-            auto desiredFrameNum = _vFrameNum;
-            if (now < refFrameTime) {
-                desiredFrameNum++;
-                std::this_thread::sleep_until(refFrameTime);
-            } else {
-                const auto elapsedFrames = std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count() / _nsPerFrame.count();
-                desiredFrameNum += std::max(elapsedFrames, long long(1));
-            }
-
-#if LOG_FRAME_TIME
-            const auto taskNow = std::chrono::high_resolution_clock::now();
-#endif                
-            _videoSwapChain->swap();
-
-            AVFrame* frame = _videoSwapChain->getFrontBufferFrame();
-            if (_videoSwapChain->hasValidFrontBuffer()) {
-                ++_processedVideoFrames;
-            }
-
-            {
-                service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
-                auto immediate = d3d->immediateContext();
-                
-                for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
-                    frame->pts = _vFrameNum;
-                    encode(_vcodecContext, frame, _vstream);
-                }
-            }
-        
-#if LOG_FRAME_TIME
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("FFMPEG Encode: " << numMs << "ms [SKIP:" << skipFrame << "]" << std::endl);
-#endif
-        }
-
-        LOG_INFO("Finish encoding thread." << std::endl);
-    });
 
     // The packet thread is responsible for actually writing the encoded packets to the file.
     _packetThread = std::thread([this](){
@@ -799,16 +815,11 @@ void FfmpegAvEncoderImpl::stop() {
     }
 
     {
-        std::lock_guard<std::mutex> guard(_runningMutex);
+        std::lock_guard<std::shared_mutex> guard(_runningMutex);
         _running = false;
     }
 
-    LOG_INFO("Waiting for video encoding/IO threads to finish [" << _running << "]..." << std::endl);
-    if (_videoEncodingThread.joinable()) {
-        LOG_INFO("\tJoining video encoding thread..." << std::endl);
-        _videoEncodingThread.join();
-    }
-
+    LOG_INFO("Waiting for IO thread to finish [" << _running << "]..." << std::endl);
     if (_packetThread.joinable()) {
         LOG_INFO("\tJoining packet thread..." << std::endl);
         _packetThread.join();

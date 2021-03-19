@@ -12,7 +12,7 @@ public:
     WindowsGraphicsCaptureItf(HWND window, service::renderer::D3d11SharedContext* context, bool useGpuFrame);
     ~WindowsGraphicsCaptureItf();
 
-    void startRecording(size_t fps) override;
+    void startRecording() override;
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) override;
     void stopRecording() override;
 

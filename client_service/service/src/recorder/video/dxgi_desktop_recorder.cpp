@@ -131,11 +131,9 @@ void DxgiDesktopRecorder::setActiveEncoder(service::recorder::encoder::AvEncoder
     _activeEncoder = encoder;
 }
 
-void DxgiDesktopRecorder::startRecording(size_t fps) {
-    const auto nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
-
+void DxgiDesktopRecorder::startRecording() {
     _recording = true;
-    _recordingThread = std::thread([this, nsPerFrame](){ 
+    _recordingThread = std::thread([this](){ 
         // We create a GPU image and a CPU image and let the user to change which one they'd rather use to send output to.
         service::recorder::image::D3dImage hwFrame(_shared);
         hwFrame.initializeImage(_width, _height, true);
@@ -148,7 +146,6 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 
         int64_t count = 0;
         int64_t numReused = 0;
-        int64_t numTooLong = 0;
         while (_recording) {
             IDXGIResource* desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
@@ -197,7 +194,7 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
                 if (desktopResource) {
                     desktopResource->Release();
                 }
-                std::this_thread::sleep_for(nsPerFrame);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 continue;
             }
 
@@ -256,15 +253,10 @@ void DxgiDesktopRecorder::startRecording(size_t fps) {
 #endif
 
             const auto elapsedNs = std::chrono::duration_cast<std::chrono::nanoseconds>(postEncoderTm - startFrameTm);
-            if (elapsedNs < nsPerFrame) {
-                std::this_thread::sleep_for(nsPerFrame - elapsedNs);
-            } else if (elapsedNs > nsPerFrame) {
-                ++numTooLong;
-            }
             ++count;
         }
 
-        LOG_INFO("DXGI Stats :: Count: " << count << " Reused: " << numReused << " Too Long: " << numTooLong << std::endl);
+        LOG_INFO("DXGI Stats :: Count: " << count << " Reused: " << numReused << std::endl);
     });
 }
 

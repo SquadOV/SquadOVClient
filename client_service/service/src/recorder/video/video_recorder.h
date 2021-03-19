@@ -18,7 +18,7 @@ struct VideoWindowInfo {
 class VideoRecorder {
 public:
     virtual ~VideoRecorder() {}
-    virtual void startRecording(size_t fps) = 0;
+    virtual void startRecording() = 0;
     virtual void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) = 0;
     virtual void stopRecording() = 0;
 protected:

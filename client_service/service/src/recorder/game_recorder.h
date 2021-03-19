@@ -49,7 +49,8 @@ public:
     );
     ~GameRecorder();
 
-    void startDvrSession(int flags = FLAG_ALL_RECORDING);
+    void startDvrSession(int flags = FLAG_ALL_RECORDING, bool autoTick = true);
+    void startNewDvrSegment();
     void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_ALL_RECORDING);
     void stop(std::optional<GameRecordEnd> end);
     void stopInputs();

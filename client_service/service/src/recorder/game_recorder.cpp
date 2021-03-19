@@ -112,9 +112,19 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     data.encoder->start();
 }
 
+void GameRecorder::startNewDvrSegment() {
+    if (!_dvrRunning) {
+        return;
+    }
+
+    const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
+    startNewDvrSegment(dir);
+}
+
 void GameRecorder::startNewDvrSegment(const fs::path& dir) {
     std::ostringstream segmentFname;
     segmentFname << "segment_" << _dvrId++ << ".ts";
+    LOG_INFO("Create New DVR Segment: " << segmentFname.str() << std::endl);
 
     // At the given interval, create a new DVR segment.
     DvrSegment segment;
@@ -124,14 +134,6 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
 
     // Create a new DVR encoder. This encoder is responsible for outputting the video to the specified location on disk.
     EncoderDatum data = createEncoder(shared::filesystem::pathUtf8(segment.outputPath));
-
-    // If we had an old encoder we want to transfer the old front buffer to be the new back buffer in the new encoder.
-    // This way we remove the possibility of starting the new video with a green frame. This needs to happen before the
-    // video encoding thread starts in switchToNewActiveEncoder.
-    if (_dvrEncoder.hasEncoder()) {
-        const auto frontBuffer = _dvrEncoder.encoder->getFrontBuffer();
-        data.encoder->addVideoFrame(frontBuffer);
-    }
 
     // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
     // We want this order to ensure that there's minimal loss of data between the two video files.
@@ -151,9 +153,11 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
         _dvrSegments.front().cleanup();
         _dvrSegments.pop_front();
     }
+
+    LOG_INFO("...Finishing creating DVR segment :: " << segmentFname.str() << std::endl);
 }
 
-void GameRecorder::startDvrSession(int flags) {
+void GameRecorder::startDvrSession(int flags, bool autoTick) {
     if (_encoder.hasEncoder()) {
         LOG_WARNING("Can not start DVR session while a VOD encoder is active." << std::endl);
         return;
@@ -183,10 +187,10 @@ void GameRecorder::startDvrSession(int flags) {
     }
     startNewDvrSegment(dir);
 
-    _dvrThread = std::thread([this, threshold, step, dir](){
+    _dvrThread = std::thread([this, threshold, step, dir, autoTick](){
         auto timeSinceLastDvrSegment = std::chrono::milliseconds(0);
         while (_dvrRunning) {
-            if (timeSinceLastDvrSegment >= threshold) {
+            if (autoTick && timeSinceLastDvrSegment >= threshold) {
                 timeSinceLastDvrSegment = std::chrono::milliseconds(0);
                 startNewDvrSegment(dir);
             }
@@ -352,7 +356,7 @@ bool GameRecorder::initializeInputStreams(int flags) {
         _streamsInit = false;
         return false;
     }
-    _vrecorder->startRecording(_cachedRecordingSettings->fps);
+    _vrecorder->startRecording();
 
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
     _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume);
@@ -411,11 +415,6 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     // Note that we must pause the input recorder processing beforing switching the inputs to use the new encoder.
     // Otherwise the first frames may be of what's currently recording instead of what's recorded in the DVR.
     if (useDvr) {
-        LOG_INFO("Handing off DVR image to main encoder..." << std::endl);
-        if (_dvrEncoder.hasEncoder()) {
-            const auto frontBuffer = _dvrEncoder.encoder->getFrontBuffer();
-            _encoder.encoder->addVideoFrame(frontBuffer);
-        }
         _outputPiper->pauseProcessingFromPipe(true);
     }
     
