@@ -41,7 +41,8 @@
                         v-if="hasNext"
                         color="primary"
                         block
-                        @click="loadMoreMatches"  
+                        @click="loadMoreMatches"
+                        :loading="loading"
                     >
                         Load More
                     </v-btn>
@@ -88,6 +89,7 @@ export default class RecentRecordedMatches extends Vue {
     lastIndex: number = 0
     nextLink: string | null = null
     filters: RecentMatchFilters = createEmptyRecentMatchFilters()
+    loading: boolean = false
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -135,6 +137,7 @@ export default class RecentRecordedMatches extends Vue {
     }
 
     loadMoreMatches() {
+        this.loading = true
         apiClient.listMyRecentMatches({
             next: this.nextLink,
             start: this.lastIndex,
@@ -154,6 +157,8 @@ export default class RecentRecordedMatches extends Vue {
             }
         }).catch((err : any) => {
             console.log('Failed to list recent SquadOV matches: ' + err);
+        }).finally(() => {
+            this.loading = false
         })
     }
 
