@@ -153,6 +153,9 @@ WoWLogWatcher::WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeTh
 
 WoWLogWatcher::~WoWLogWatcher() {
     _running = false;
+    if (_timestampLogThread.joinable()) {
+        _timestampLogThread.join();
+    }
 }
 
 void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
@@ -186,7 +189,7 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
     } else {
         LOG_INFO("...Timestamped combat log detected." << std::endl);
         // Newer WoW - file will be of the form WoWCombatLog-DATE-TIME.txt.
-        std::thread t([this, combatLogFolder](){
+        _timestampLogThread = std::thread([this, combatLogFolder](){
             std::filesystem::path logFile;
             bool found = false;
             // This loop needs to constantly run until WoW exits to catch each subsequent WoW combat log.
@@ -222,7 +225,6 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
         });
-        t.detach();
     }
 }
 
@@ -342,6 +344,12 @@ void WoWLogWatcher::moveLogToBackup() {
 
     // Set this to false just in case we were waiting on a log file.
     _running = false;
+
+    // Ensure that we don't mistake a backup file for an actual new combat log.
+    if (_timestampLogThread.joinable()) {
+        _timestampLogThread.join();
+    }
+
     // Force destruction fo the log watcher to release any handles we might have on this log file.
     _watcher.reset(nullptr);
 

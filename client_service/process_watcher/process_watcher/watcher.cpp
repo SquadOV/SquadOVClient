@@ -27,7 +27,6 @@ void ProcessWatcher::start() {
     _watchThread = std::thread([this](){
         using namespace std::chrono_literals;
 
-        std::unordered_map<shared::EGame, bool> allLastCheckState;
         while (_running) {
             // Get a sorted list of running processes from the OS.
             std::vector<process::Process> processes;
@@ -42,20 +41,27 @@ void ProcessWatcher::start() {
             for (const auto& kvp : _gameToWatcher) {
                 const auto detector = games::createDetectorForGame(kvp.first);
 
-                // Check to see if the game is running (OS-dependent).
-                const bool lastCheckedState = allLastCheckState[kvp.first];
                 size_t processIndex = 0;
                 const bool isRunning = detector->checkIsRunning(processes, &processIndex);
                 
+                const auto& watchedProcess = kvp.second->currentProcess();
                 // Check to see if the running state is the different from the last checked state
-                // to fire off the appropriate event.
-                if (isRunning != lastCheckedState) {
-                    if (isRunning) {
-                        kvp.second->onProcessStarts(processes[processIndex]);
-                    } else {
-                        kvp.second->onProcessStops();
+                // to fire off the appropriate event. 
+                if (isRunning) {
+                    // If we're running, we want to see if the PID changed which would indicate a state change.
+                    // If we previously didn't have a PID for the EXE, then that means this process just started (fresh).
+                    // If we previously did have a PID for the EXE, then that means the user restarted the app really quickly
+                    // and we need to restart the game's watcher as well.
+                    const auto& newProcess = processes[processIndex];
+                    if (newProcess.pid() != watchedProcess.pid()) {
+                        if (!watchedProcess.empty()) {
+                            kvp.second->onProcessStops();
+                        }
+                        kvp.second->publicOnProcessStarts(newProcess);
                     }
-                    allLastCheckState[kvp.first] = isRunning;
+                } else if (!watchedProcess.empty()) {
+                    // If we're no longer running then we need to stop the watcher if it's watching something.
+                    kvp.second->onProcessStops();
                 }
             }
 
