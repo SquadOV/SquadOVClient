@@ -36,6 +36,8 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { NewsIndex } from '@client/js/squadov/news'
 import { ApiData } from '@client/js/api'
 import { standardFormatTime } from '@client/js/time'
+import { openUrlInBrowser } from '@client/js/external'
+
 import axios from 'axios'
 import marked from 'marked'
 import DOMPurify from 'dompurify'
@@ -51,11 +53,39 @@ export default class SingleNewsDisplay extends Vue {
     news!: NewsIndex | null
     markdownText: string | null = null
 
+    forceLinksToOpenInBrowser() {
+/// #if DESKTOP
+        this.$el.querySelectorAll('a').forEach((e: HTMLAnchorElement) => {
+            if (e.target != '_blank') {
+                return
+            }
+            e.addEventListener('click', (e: MouseEvent) => {
+                if (!!e.target) {
+                    //@ts-ignore
+                    openUrlInBrowser(e.target.href)
+                }
+                e.preventDefault()
+            })
+        })
+/// #endif
+    }
+
     get newsHtml(): string {
         if (!this.markdownText) {
             return ''
         }
-        return DOMPurify.sanitize(marked(this.markdownText))
+
+        const renderer = new marked.Renderer()
+        const linkRenderer = renderer.link
+        renderer.link = (href: string, title: string, text: string) => {
+            const html = linkRenderer.call(renderer, href, title, text);
+            return html.replace(/<a /, '<a target="_blank" ');
+        }
+
+        Vue.nextTick(() => {
+            this.forceLinksToOpenInBrowser()
+        })
+        return DOMPurify.sanitize(marked(this.markdownText, { renderer  }), { ADD_ATTR: ['target'] })
     }
 
     get newsTime(): string {
