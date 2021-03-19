@@ -219,6 +219,10 @@ export default class VideoPlayer extends Vue {
 
     // This should only happen once. Manifest updates should be handled by the media source.
     toggleHasVideo() {
+        if (!!this.player) {
+            return
+        }
+
         this.player = videojs(this.$refs.video, {
             controls: true,
             autoplay: false,
