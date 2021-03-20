@@ -810,6 +810,92 @@ class ApiServer {
         })
     }
 
+    async getViralCoefficient() {
+        let data = (await this.pool.query(
+            `
+            SELECT (
+                SELECT COUNT(1)
+                FROM squadov.users
+            ) AS "users",
+            (
+                SELECT COUNT(1)
+                FROM squadov.squad_membership_invites
+            ) AS "sentInvites",
+            (
+                SELECT COUNT(1)
+                FROM squadov.squad_membership_invites
+                WHERE response_time IS NOT NULL
+                    AND joined
+            ) AS "acceptedInvites",
+            (
+                SELECT COUNT(1)
+                FROM squadov.referral_codes AS rc
+                INNER JOIN squadov.referral_visits AS rv
+                    ON rv.code = rc.id
+                WHERE rc.user_id IS NOT NULL
+            ) AS "referralVisits",
+            (
+                SELECT COUNT(1)
+                FROM squadov.referral_codes AS rc
+                INNER JOIN squadov.referral_downloads AS rv
+                    ON rv.code = rc.id
+                WHERE rc.user_id IS NOT NULL
+            ) AS "referralDownloads"
+            `            
+        )).rows[0]
+
+        let totalUsers = parseInt(data.users)
+        let sentInvites = parseInt(data.sentInvites)
+        let acceptedInvites = parseInt(data.acceptedInvites)
+        let referralVisits = parseInt(data.referralVisits)
+        let referralDownloads = parseInt(data.referralDownloads)
+
+        let invitesPerUser = (sentInvites + referralVisits) / totalUsers
+        let conversionRate = (acceptedInvites + referralDownloads) / (sentInvites + referralVisits)
+        return invitesPerUser * conversionRate
+    }
+    
+    async getKpiUsers() {
+        return parseInt( (await this.pool.query(
+            `
+            SELECT COUNT(1) AS "kpi"
+            FROM squadov.users
+            `            
+        )).rows[0].kpi)
+    }
+
+    async getKpiVods() {
+        return parseInt( (await this.pool.query(
+            `
+            SELECT COUNT(1) AS "kpi"
+            FROM squadov.vods
+            WHERE match_uuid IS NOT NULL
+            `            
+        )).rows[0].kpi)
+    }
+
+    async getKpiMatches() {
+        return parseInt( (await this.pool.query(
+            `
+            SELECT COUNT(1) AS "kpi"
+            FROM squadov.matches
+            `            
+        )).rows[0].kpi)
+    }
+
+    async getKpi(kpi) {
+        switch (kpi) {
+            case 0:
+                return await this.getViralCoefficient()
+            case 1:
+                return await this.getKpiUsers()
+            case 2:
+                return await this.getKpiVods()
+            case 3:
+                return await this.getKpiMatches()
+        }
+    }
+
     async getMetrics(metric, interval, start, end) {
         switch (metric) {
             case 0:

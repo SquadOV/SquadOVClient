@@ -22,6 +22,7 @@
     "ejs": "~3.1.5",
     "express": "~4.17.1",
     "form-urlencoded": "^4.2.1",
+    "millify": "^3.5.0",
     "pg": "^8.5.1"
   },
   "devDependencies": {

@@ -31,8 +31,13 @@ const MetricVods = () => import('@client/vue/metrics/MetricVods.vue')
 const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
 const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
 const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
+const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
 
 const baseRoutes : any[] = [
+    {
+        path: '/',
+        component: KpiDashboard,
+    },
     {
         path: '/metrics/active-users',
         component: MetricActiveUsers,

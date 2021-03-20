@@ -41,6 +41,10 @@ import NavBarItem from '@client/vue/NavBarItem.vue'
 export default class AppNav extends Vue {
     navItems: any[] = [
         {
+            text: 'KPI Dashboard',
+            to: '/'
+        }
+        {
             text: 'Metrics',
             open: true,
             children: [
