@@ -47,7 +47,19 @@ class ApiServer {
                     FROM squadov.vods AS v
                     WHERE v.start_time IS NOT NULL AND v.user_uuid IS NOT NULL
                         AND v.start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
-                ), 0) AS "vod"
+                ), 0) AS "vod",
+                COALESCE((
+                    SELECT COUNT(DISTINCT v.user_uuid)
+                    FROM squadov.vods AS v
+                    INNER JOIN squadov.users AS u
+                        ON u.uuid = v.user_uuid
+                    LEFT JOIN squadov.daily_active_endpoint AS dae
+                        ON dae.user_id = u.id
+                            AND dae.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    WHERE v.start_time IS NOT NULL AND v.user_uuid IS NOT NULL
+                        AND v.start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                        AND dae.user_id IS NULL
+                ), 0) AS "passive"
             FROM series AS s
             `
 
@@ -63,8 +75,9 @@ class ApiServer {
                     'Session': parseInt(r.session),
                     'Endpoint': parseInt(r.endpoint),
                     'VOD': parseInt(r.vod),
+                    'Passive': parseInt(r.passive),
                 },
-                sub: ['Session', 'Endpoint', 'VOD']
+                sub: ['Session', 'Endpoint', 'VOD', 'Passive']
             }
         })
     }
@@ -377,6 +390,426 @@ class ApiServer {
         })
     }
 
+    async getAimLabGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.aimlab_tasks AS m
+                WHERE m.create_date BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getHearthstoneGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.hearthstone_matches AS m
+                WHERE m.match_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getLolGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.lol_matches AS m
+                WHERE m.game_start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getTftGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.tft_matches AS m
+                WHERE m.game_start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getValorantGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.valorant_matches AS m
+                WHERE m.server_start_time_utc BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getWowGames(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.wow_match_view AS m
+                WHERE m.end_tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "games"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Games': parseInt(r.games),
+                },
+                sub: ['Games']
+            }
+        })
+    }
+
+    async getSquadInvites(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.squad_membership_invites AS m
+                WHERE m.invite_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "sent",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.squad_membership_invites AS m
+                WHERE m.response_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND m.joined
+            ), 0) AS "accepted",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.squad_membership_invites AS m
+                WHERE m.response_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND NOT m.joined
+            ), 0) AS "rejected"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Sent': parseInt(r.sent),
+                    'Accepted': parseInt(r.accepted),
+                    'Rejected': parseInt(r.rejected),
+                },
+                sub: ['Sent', 'Accepted', 'Rejected']
+            }
+        })
+    }
+
+    async getSquads(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.squads AS m
+                WHERE m.creation_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    AND NOT m.is_default
+            ), 0) AS "squads"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Squads': parseInt(r.squads),
+                },
+                sub: ['Squads']
+            }
+        })
+    }
+
+    async getVods(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.vods AS m
+                WHERE m.end_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ), 0) AS "squads"
+        FROM series AS s
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'VODs': parseInt(r.squads),
+                },
+                sub: ['VODs']
+            }
+        })
+    }
+
     async getMetrics(metric, interval, start, end) {
         switch (metric) {
             case 0:
@@ -387,6 +820,28 @@ class ApiServer {
                 return await this.getReferralUsersMetric(interval, start, end)
             case 3:
                 return await this.getReferralCampaignsMetric(interval, start, end)
+            case 4: // Aim Lab
+                return await this.getAimLabGames(interval, start, end)
+            case 5: // Hearthstone
+                return await this.getHearthstoneGames(interval, start, end)
+            case 6: // LoL
+                return await this.getLolGames(interval, start, end)
+            case 7: // TFT
+                return await this.getTftGames(interval, start, end)
+            case 8: // Valorant
+                return await this.getValorantGames(interval, start, end)
+            case 9: // WoW
+                return await this.getWowGames(interval, start, end)
+            case 10: // Registrations
+                return await this.getNewlyRegisteredUsers(interval, start, end)
+            case 11: // Squad Invites
+                return await this.getSquadInvites(interval, start, end)
+            case 12: // Squads
+                return await this.getSquads(interval, start, end)
+            case 13: // VODs
+                return await this.getVods(interval, start, end)
+            case 14: // Lost Users
+                return await this.getLostUsers(interval, start, end)
         }
     }
 

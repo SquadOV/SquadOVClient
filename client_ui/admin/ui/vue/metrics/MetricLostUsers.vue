@@ -1,6 +1,6 @@
 <template>
     <generic-metric-container
-        title="Installed Churn"
+        title="Lost Users"
         :metric="metric"
     >
     </generic-metric-container>
@@ -18,9 +18,9 @@ import { Metrics } from '@client/ts/metrics'
         GenericMetricContainer,
     }
 })
-export default class MetricChurn extends Vue {
+export default class MetricLostUsers extends Vue {
     get metric(): Metrics {
-        return Metrics.Churn
+        return Metrics.LostUsers
     }
 }
 

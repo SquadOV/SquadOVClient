@@ -1,6 +1,6 @@
 <template>
     <generic-metric-container
-        title="Installed Churn"
+        title="WoW Matches"
         :metric="metric"
     >
     </generic-metric-container>
@@ -18,9 +18,9 @@ import { Metrics } from '@client/ts/metrics'
         GenericMetricContainer,
     }
 })
-export default class MetricChurn extends Vue {
+export default class MetricGameWow extends Vue {
     get metric(): Metrics {
-        return Metrics.Churn
+        return Metrics.GameWow
     }
 }
 

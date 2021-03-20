@@ -49,8 +49,58 @@ export default class AppNav extends Vue {
                     to: '/metrics/active-users',
                 },
                 {
-                    text: 'Churn',
+                    text: 'Lost Users',
+                    to: '/metrics/lost-users',
+                },
+                {
+                    text: 'Installed Churn',
                     to: '/metrics/churn',
+                },
+                {
+                    text: 'Registrations',
+                    to: '/metrics/registrations',
+                },
+                {
+                    text: 'Squads',
+                    to: '/metrics/squads',
+                },
+                {
+                    text: 'Squad Invites',
+                    to: '/metrics/squadinvs',
+                },
+                {
+                    text: 'Games',
+                    open: true,
+                    children: [
+                        {
+                            text: 'Aim Lab',
+                            to: '/metrics/games/aimlab'
+                        },
+                        {
+                            text: 'Hearthstone',
+                            to: '/metrics/games/hs'
+                        },
+                        {
+                            text: 'League of Legends',
+                            to: '/metrics/games/lol'
+                        },
+                        {
+                            text: 'Teamfight Tactics',
+                            to: '/metrics/games/tft'
+                        },
+                        {
+                            text: 'Valorant',
+                            to: '/metrics/games/val'
+                        },
+                        {
+                            text: 'World of Warcraft',
+                            to: '/metrics/games/wow'
+                        },
+                    ]
+                },
+                {
+                    text: 'VODs',
+                    to: '/metrics/vods',
                 },
             ]
         },

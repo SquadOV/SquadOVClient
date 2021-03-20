@@ -3,6 +3,17 @@ export enum Metrics {
     Churn,
     ReferralUsers,
     ReferralCampaigns,
+    GameAimLab,
+    GameHearthstone,
+    GameLol,
+    GameTft,
+    GameValorant,
+    GameWow,
+    Registrations,
+    SquadInvites,
+    Squads,
+    Vods,
+    LostUsers,
 }
 
 export interface MetricDatum {
