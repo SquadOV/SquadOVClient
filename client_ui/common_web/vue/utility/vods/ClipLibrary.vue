@@ -5,6 +5,16 @@
                 Clip Library
             </div>
 
+            <v-btn
+                class="ml-2"
+                icon
+                @click="refreshClips"
+            >
+                <v-icon>
+                    mdi-refresh
+                </v-icon>
+            </v-btn>
+
             <v-spacer></v-spacer>
 
             <template v-if="!inSelectMode">
