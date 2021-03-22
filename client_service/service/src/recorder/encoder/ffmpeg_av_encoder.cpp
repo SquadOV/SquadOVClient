@@ -176,6 +176,7 @@ private:
     bool _running = false;
     std::shared_mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
+    size_t _fps = 0;
 
     FfmpegVideoSwapChainPtr _videoSwapChain;
 
@@ -477,6 +478,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     }
     _videoSwapChain->initializeGpuSupport(d3d);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
+    _fps = fps;
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
 
@@ -631,6 +633,9 @@ long long FfmpegAvEncoderImpl::numVideoFramesToEncode() {
 void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     // Get this number again just in case it took us awhile to receive the frame.
     const auto numFramesToEncode = numVideoFramesToEncode();
+    if (numFramesToEncode >= _fps) {
+        LOG_WARNING("Encoding > 1 minute worth of frames at a single time: " << numFramesToEncode << std::endl);
+    }
     const auto desiredFrameNum = _vFrameNum + numFramesToEncode;
 
     _videoSwapChain->swap();
@@ -737,6 +742,7 @@ void FfmpegAvEncoderImpl::open() {
 }
 
 void FfmpegAvEncoderImpl::start() {
+    LOG_INFO("Request FFmpeg encoder start." << std::endl);
     std::lock_guard<std::mutex> guard(_startMutex);
 
     if (!_canStart) {
@@ -746,9 +752,6 @@ void FfmpegAvEncoderImpl::start() {
     if (!_vstream) {
         return;
     }
-
-    // Use this time to sync the audio and video. This time is when our video and audio should start.
-    _syncStartTime = AVSyncClock::now();
 
     // Start a thread to send frames and packets to the underlying encoder.
     // Some encoders (e.g. H264_NVENC) don't play nicely with variable framerate
@@ -761,8 +764,15 @@ void FfmpegAvEncoderImpl::start() {
     // front buffer to the ffmpeg encoder to write out to the file.
     {
         std::lock_guard<std::shared_mutex> guard(_runningMutex);
+        if (_running) {
+            LOG_INFO("...Ignoring 2nd start call on FFmpeg encoder." << std::endl);
+            return;
+        }
         _running = true;
     }
+
+    // Use this time to sync the audio and video. This time is when our video and audio should start.
+    _syncStartTime = AVSyncClock::now();
 
     // The packet thread is responsible for actually writing the encoded packets to the file.
     _packetThread = std::thread([this](){
@@ -777,6 +787,8 @@ void FfmpegAvEncoderImpl::start() {
 
         LOG_INFO("Finish packet thread." << std::endl);
     });
+
+    LOG_INFO("Finish start FFmpeg encoder." << std::endl);
 }
 
 void FfmpegAvEncoderImpl::flushPacketQueue() {

@@ -95,20 +95,26 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
 }
 
 void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
+    LOG_INFO("Switch inputs to point to new encoder..." << std::endl);
     if (!data.hasEncoder()) {
+        LOG_INFO("...No encoder?" << std::endl);
         return;
     }
 
+    LOG_INFO("\tSet video recorder encoder..." << std::endl);
     _vrecorder->setActiveEncoder(data.encoder.get());
 
     if (_ainRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input) != data.audioEncoderIndex.end()) {
+        LOG_INFO("\tSet audio input encoder..." << std::endl);
         _ainRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Input));
     }
 
     if (_aoutRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output) != data.audioEncoderIndex.end()) {
+        LOG_INFO("\tSet audio output encoder..." << std::endl);
         _aoutRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Output));
     }
 
+    LOG_INFO("...Start new active encoder." << std::endl);
     data.encoder->start();
 }
 
@@ -137,6 +143,7 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
 
     // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
     // We want this order to ensure that there's minimal loss of data between the two video files.
+    LOG_INFO("\tSwitch inputs to new segment encoder..." << std::endl);
     switchToNewActiveEncoder(data);
 
     if (_dvrEncoder.hasEncoder()) {
@@ -443,7 +450,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         // in the new encoder.
         std::chrono::milliseconds totalBackFillTime(0);
         const auto startIndex = findDvrSegmentForVodStartTime(start);
-        LOG_INFO("Choosing backfill index: " << startIndex << " out of " << _dvrSegments.size() << std::endl);
+        LOG_INFO("Choosing backfill index: " << startIndex + 1 << " out of " << _dvrSegments.size() << std::endl);
         for (auto i = startIndex; i < _dvrSegments.size(); ++i) {
             LOG_INFO("\tUse Backfill Video from [" << i << "]: " << shared::timeToStr(_dvrSegments[i].startTime) << " to " << shared::timeToStr(_dvrSegments[i].endTime) << std::endl);
             // We can directly append to the output pipe because of the fact that we're using MPEG-TS which is file-level concat-able.
@@ -460,6 +467,12 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         }
         LOG_INFO("Finish DVR backfill." << std::endl);
         cleanDvrSession(sessionId);
+
+        // This is a bit of a hack. For some reason sometimes the previous call to
+        // switchToNewActiveEncoder will cause the DVR segment's switchToNewActiveEncoder
+        // to become unstuck...which would then cause the segment's active encoder to be the
+        // new "active encoder" while the actual active encoder is no longer receiving data.
+        switchToNewActiveEncoder(_encoder);
     } else {
         _vodStartTime = shared::nowUtc();
     }
