@@ -978,7 +978,7 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number}): Promise<ApiData<HalResponse<VodClip[]>>> {
+    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number, filters : RecentMatchFilters}): Promise<ApiData<HalResponse<VodClip[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get('v1/clip', {
@@ -987,6 +987,7 @@ class ApiClient {
                     start: params.start!,
                     end: params.end!,
                     matchUuid: params.matchUuid,
+                    ...params.filters,
                 }
             })
 
@@ -994,6 +995,12 @@ class ApiClient {
             resp.data.data.forEach(cleanVodClipFromJson)
             return resp
         })
+    }
+
+    deleteClips(clips: string[]): Promise<void> {
+        return axios.post(`v1/clip/bulkDelete`, {
+            vods: clips,
+        }, this.createWebAxiosConfig())
     }
 
     getClip(clipUuid: string): Promise<ApiData<VodClip>> {
