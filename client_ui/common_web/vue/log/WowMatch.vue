@@ -160,6 +160,7 @@ import WowTimeline from '@client/vue/utility/wow/WowTimeline.vue'
 import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
     components: {
@@ -173,6 +174,7 @@ import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
         WowVodPovPicker,
         MatchShareButton,
         WowSpellAnalysis,
+        MatchFavoriteButton
     }
 })
 export default class WowMatch extends Vue {

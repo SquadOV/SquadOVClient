@@ -147,6 +147,7 @@ import ValorantFullMatchScoreboard from '@client/vue/utility/valorant/ValorantFu
 import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchPlayerCard.vue'
 import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
     components: {
@@ -160,6 +161,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
         ValorantMatchPlayerCard,
         ValorantVodPovPicker,
         MatchShareButton,
+        MatchFavoriteButton,
     }
 })
 export default class ValorantMatch extends Vue {

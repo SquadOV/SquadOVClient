@@ -162,6 +162,7 @@ import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineContainer.vue'
 import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
     components: {
@@ -176,6 +177,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
         LolVodPicker,
         GenericMatchTimeline,
         MatchShareButton,
+        MatchFavoriteButton,
     }
 })
 export default class LolMatch extends Vue {

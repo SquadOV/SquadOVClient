@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="d-flex text-h6 align-center">
-            Recent VODs
+            {{ title }}
 
             <v-btn icon @click="refreshData">
                 <v-icon>
@@ -94,7 +94,11 @@
             </template>
         </div>
         <v-divider class="my-2"></v-divider>
-        <recent-match-filters-ui v-model="filters"></recent-match-filters-ui>
+        <recent-match-filters-ui
+            v-model="filters"
+            :disable-squads="isUserLocked"
+            :disable-users="isUserLocked"
+        ></recent-match-filters-ui>
         
         <v-list-item-group v-model="selected" multiple>
             <loading-container :is-loading="!recentMatches">
@@ -147,9 +151,7 @@
                     </template>
 
                     <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
-                        <div class="text-h6">
-                            No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!
-                        </div>
+                        <div class="text-h6">No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!</div>
                     </div>
                 </template>
             </loading-container>
@@ -171,7 +173,7 @@ const maxTasksPerRequest : number = 10
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { RecentMatch, checkRecentMatchValidity, RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { numDaysAgo, numDaysAgoToString } from '@client/js/time'
@@ -192,6 +194,18 @@ interface GroupedMatch {
     }
 })
 export default class RecentRecordedMatches extends Vue {
+    @Prop({default: 'Recent VODs'})
+    title!: string
+
+    @Prop()
+    userId!: number | undefined
+
+    @Prop({type: Boolean, default: false})
+    onlyFavorite!: boolean
+
+    @Prop({type: Boolean, default: false})
+    onlyWatchlist!: boolean
+
     recentMatches: RecentMatch[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
@@ -203,6 +217,10 @@ export default class RecentRecordedMatches extends Vue {
     deleteInProgress: boolean = false
     showHideDelete: boolean = false
     showHideDeleteError: boolean = false
+
+    get isUserLocked(): boolean {
+        return this.userId !== undefined
+    }
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -274,7 +292,19 @@ export default class RecentRecordedMatches extends Vue {
         this.selected = []
     }
 
-    @Watch('filters', { deep: true })
+    get finalFilters(): RecentMatchFilters {
+        let filters: RecentMatchFilters = JSON.parse(JSON.stringify(this.filters))
+
+        if (this.userId !== undefined) {
+            filters.users = [this.userId]
+        }
+
+        filters.onlyFavorite = this.onlyFavorite
+        filters.onlyWatchlist = this.onlyWatchlist
+        return filters
+    }
+
+    @Watch('finalFilters', { deep: true })
     refreshData() {
         this.recentMatches = null
         this.nextLink = null
@@ -289,7 +319,7 @@ export default class RecentRecordedMatches extends Vue {
             next: this.nextLink,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
-            filters: this.filters,
+            filters: this.finalFilters,
         }).then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
             if (!this.recentMatches) {
                 this.recentMatches = resp.data.data

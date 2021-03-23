@@ -76,6 +76,7 @@ import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
 import TftScoreboard from '@client/vue/utility/tft/TftScoreboard.vue'
 import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
     components: {
@@ -85,6 +86,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
         TftScoreboard,
         TftVodPicker,
         MatchShareButton,
+        MatchFavoriteButton,
     }
 })
 export default class TftMatch extends Vue {

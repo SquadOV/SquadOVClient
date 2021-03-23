@@ -186,21 +186,23 @@ import HearthstoneCurrentDeckState from '@client/vue/utility/hearthstone/Hearths
 import HearthstoneVodPovPicker from '@client/vue/utility/hearthstone/HearthstoneVodPovPicker.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
-  components: {
-    LoadingContainer,
-    HearthstoneMatchHeaderDisplay,
-    HearthstoneTurnEventsDisplay,
-    HearthstoneTurnTimelineDisplay,
-    HearthstoneBattlegroundsTurnTimelineDisplay,
-    HearthstoneMatchDeckDisplay,
-    HearthstoneBattlegroundTavernSummary,
-    HearthstoneCurrentDeckState,
-    HearthstoneVodPovPicker,
-    VideoPlayer,
-    MatchShareButton,
-  }
+    components: {
+        LoadingContainer,
+        HearthstoneMatchHeaderDisplay,
+        HearthstoneTurnEventsDisplay,
+        HearthstoneTurnTimelineDisplay,
+        HearthstoneBattlegroundsTurnTimelineDisplay,
+        HearthstoneMatchDeckDisplay,
+        HearthstoneBattlegroundTavernSummary,
+        HearthstoneCurrentDeckState,
+        HearthstoneVodPovPicker,
+        VideoPlayer,
+        MatchShareButton,
+        MatchFavoriteButton
+    }
 })
 export default class HearthstoneMatch extends Vue {
     SquadOvGames: any = SquadOvGames
