@@ -13,6 +13,8 @@ export interface BaseRecentMatch {
     vod: VodManifest
     username: string
     userId: number
+    favoriteReason: string | null
+    isWatchlist: boolean
 }
 
 export interface RecentMatch {
@@ -26,6 +28,11 @@ export interface RecentMatch {
     wowChallenge?: WowChallenge
     wowEncounter?: WowEncounter
     wowArena?: WowArena
+}
+
+export interface MatchFavoriteResponse {
+    favorite: boolean
+    reason: string | null
 }
 
 export interface RecentMatchFilters {

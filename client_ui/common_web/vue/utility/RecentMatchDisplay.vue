@@ -16,6 +16,27 @@
             <div class="text-center text-caption">
                 {{ match.base.username }} played...
             </div>
+
+            <v-spacer></v-spacer>
+
+            <v-icon v-if="match.base.isWatchlist">
+                mdi-playlist-check
+            </v-icon>
+
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <v-icon
+                        v-if="!!match.base.favoriteReason"
+                        v-bind="attrs"
+                        v-on="on"
+                        color="warning"
+                    >
+                        mdi-star
+                    </v-icon>
+                </template>
+
+                {{ match.base.favoriteReason }}
+            </v-tooltip>
         </div>
 
         <div

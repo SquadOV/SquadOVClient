@@ -21,6 +21,13 @@ export interface VodClip {
     views: number
     reacts: number
     comments: number
+    favoriteReason: string | null
+    isWatchlist: boolean
+}
+
+export interface VodFavoriteResponse {
+    favorite: boolean
+    reason: string | null
 }
 
 export interface ClipReact {

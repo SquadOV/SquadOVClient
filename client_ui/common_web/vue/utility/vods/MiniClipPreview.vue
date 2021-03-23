@@ -11,6 +11,21 @@
                 </div>
 
                 <div class="d-flex align-center">
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{on, attrs}">
+                            <v-icon
+                                v-if="!!clip.favoriteReason"
+                                v-bind="attrs"
+                                v-on="on"
+                                color="warning"
+                                small
+                            >
+                                mdi-star
+                            </v-icon>
+                        </template>
+
+                        {{ clip.favoriteReason }}
+                    </v-tooltip>
                     <v-img
                         class="mr-1"
                         width="16px"
@@ -25,6 +40,9 @@
 
                     <v-spacer></v-spacer>
                     <div class="text-body-2">{{ clipTime }}</div>
+                    <v-icon small v-if="clip.isWatchlist">
+                        mdi-playlist-check
+                    </v-icon>
                 </div>
 
                 <div class="d-flex align-center">

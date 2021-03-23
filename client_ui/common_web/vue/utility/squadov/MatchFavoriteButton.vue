@@ -39,20 +39,28 @@
             </v-card>
         </v-dialog>
 
-        <v-btn
-            icon
-            :loading="loading"
-            @click="startFavoriteFlow"
-            color="warning"
-        >   
-            <v-icon v-if="isFavorite">
-                mdi-star
-            </v-icon>
+        <v-tooltip bottom :disabled="!isFavorite">
+            <template v-slot:activator="{on, attrs}">
+                <v-btn
+                    v-bind="attrs"
+                    v-on="on"
+                    icon
+                    :loading="loading"
+                    @click="startFavoriteFlow"
+                    color="warning"
+                >   
+                    <v-icon v-if="isFavorite">
+                        mdi-star
+                    </v-icon>
 
-            <v-icon v-else>
-                mdi-star-outline
-            </v-icon>
-        </v-btn>
+                    <v-icon v-else>
+                        mdi-star-outline
+                    </v-icon>
+                </v-btn>
+            </template>
+
+            {{ reason }}
+        </v-tooltip>
 
         <v-snackbar
             v-model="showHideError"
@@ -71,6 +79,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
+import { MatchFavoriteResponse } from '@client/js/squadov/recentMatch'
 
 @Component
 export default class MatchFavoriteButton extends Vue {
@@ -116,8 +125,9 @@ export default class MatchFavoriteButton extends Vue {
     @Watch('matchUuid')
     resyncStatus() {
         this.loading = true
-        apiClient.isMatchFavorite(this.matchUuid).then((resp: ApiData<boolean>) => {
-            this.isFavorite = resp.data
+        apiClient.isMatchFavorite(this.matchUuid).then((resp: ApiData<MatchFavoriteResponse>) => {
+            this.isFavorite = resp.data.favorite
+            this.reason = !!resp.data.reason ? resp.data.reason : ''
         }).catch((err: any) => {
             console.log('Failed to check if match is favorite: ', err)
         }).finally(() => {

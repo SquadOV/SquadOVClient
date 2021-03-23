@@ -25,7 +25,8 @@ import {
     cleanVodClipFromJson,
     ClipReact,
     ClipComment,
-    cleanClipCommentFromJson
+    cleanClipCommentFromJson,
+    VodFavoriteResponse
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -90,6 +91,7 @@ import {
     RecentMatch,
     cleanRecentMatchFromJson,
     RecentMatchFilters,
+    MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { ShareAccessTokenResponse } from '@client/js/squadov/share'
@@ -1060,7 +1062,7 @@ class ApiClient {
         return axios.get('v1/users/me/referral', this.createWebAxiosConfig())
     }
 
-    isMatchFavorite(matchUuid: string): Promise<ApiData<boolean>> {
+    isMatchFavorite(matchUuid: string): Promise<ApiData<MatchFavoriteResponse>> {
         return axios.get(`v1/match/${matchUuid}/favorite`, this.createWebAxiosConfig())
     }
 
@@ -1074,7 +1076,7 @@ class ApiClient {
         return axios.delete(`v1/match/${matchUuid}/favorite`, this.createWebAxiosConfig())
     }
 
-    isVodFavorite(videoUuid: string): Promise<ApiData<boolean>> {
+    isVodFavorite(videoUuid: string): Promise<ApiData<VodFavoriteResponse>> {
         return axios.get(`v1/vod/${videoUuid}/list/favorite`, this.createWebAxiosConfig())
     }
 
