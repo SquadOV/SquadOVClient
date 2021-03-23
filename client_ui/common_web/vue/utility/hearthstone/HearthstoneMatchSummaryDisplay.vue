@@ -1,6 +1,6 @@
 <template>
     <div>
-        <router-link :to="to">
+        <router-link :to="to" :event="disableClick ? '' : 'click'">
             <v-sheet
                 :class="`task-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
@@ -144,6 +144,9 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
     @Prop({type: Boolean, default: false})
     mini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableClick!: boolean
 
     vod: VodAssociation | null = null
     currentMatch: HearthstoneMatch | null = null

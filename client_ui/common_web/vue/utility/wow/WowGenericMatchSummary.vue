@@ -1,6 +1,6 @@
 <template>
     <div>
-        <router-link :to="to" :disabled="disabled">
+        <router-link :to="to" :disabled="disabled" :event="disableLink ? '' : 'click'">
             <v-sheet
                 :class="`d-flex align-center match-summary pa-2 ${fill ? 'full-parent-height' : ''}`"
                 rounded

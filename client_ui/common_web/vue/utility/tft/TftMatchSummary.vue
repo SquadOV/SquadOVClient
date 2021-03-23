@@ -1,6 +1,6 @@
 <template>
     <div>
-        <router-link :to="gameTo">
+        <router-link :to="gameTo" :event="disableClick ? '' : 'click'">
             <v-sheet
                 :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
                 rounded
@@ -110,6 +110,9 @@ export default class TftMatchSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     fill!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableClick!: boolean
 
     get gameTo(): any {
         return {

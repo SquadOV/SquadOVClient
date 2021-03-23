@@ -997,6 +997,12 @@ class ApiClient {
         })
     }
 
+    deleteVods(uuid: string[]): Promise<void> {
+        return axios.post(`v1/vod/bulkDelete`, {
+            vods: uuid,
+        }, this.createWebAxiosConfig())
+    }
+
     deleteClips(clips: string[]): Promise<void> {
         return axios.post(`v1/clip/bulkDelete`, {
             vods: clips,

@@ -36,6 +36,7 @@
                 :task="match.aimlabTask"
                 :user-id="match.base.userId"
                 fill
+                :disable-click="disableClick"
             >
             </aimlab-task-summary-display>
 
@@ -46,6 +47,7 @@
                 :user-id="match.base.userId"
                 mini
                 fill
+                :disable-click="disableClick"
             >
             </lol-match-summary>
 
@@ -57,6 +59,7 @@
                 :puuid="match.tftMatch.puuid"
                 mini
                 fill
+                :disable-click="disableClick"
             >
             </tft-match-summary>
 
@@ -68,6 +71,7 @@
                 :account="match.valorantMatch.puuid"
                 fill
                 mini
+                :disable-click="disableClick"
             >
             </valorant-player-match-summary-display>
 
@@ -78,6 +82,7 @@
                 :user-id="match.base.userId"
                 mini
                 fill
+                :disable-link="disableClick"
             >
             </wow-keystone-summary>
 
@@ -88,6 +93,7 @@
                 :user-id="match.base.userId"
                 mini
                 fill
+                :disable-link="disableClick"
             >
             </wow-encounter-summary>
 
@@ -98,6 +104,7 @@
                 :user-id="match.base.userId"
                 mini
                 fill
+                :disable-link="disableClick"
             >
             </wow-arena-summary>
 
@@ -108,6 +115,7 @@
                 :user-id="match.base.userId"
                 mini
                 fill
+                :disable-click="disableClick"
             >
             </hearthstone-match-summary-display>
         </div>
@@ -150,6 +158,9 @@ export default class RecentMatchDisplay extends Vue {
 
     @Prop({required: true})
     match!: RecentMatch
+
+    @Prop({type: Boolean, default: false})
+    disableClick!: boolean
 
     $refs!: {
         player: VideoPreviewPlayer

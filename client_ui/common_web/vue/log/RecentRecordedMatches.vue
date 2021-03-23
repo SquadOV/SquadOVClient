@@ -1,60 +1,167 @@
 <template>
     <div>
         <div class="d-flex text-h6 align-center">
-            Recent Games
-
-            <v-spacer></v-spacer>
+            Recent VODs
 
             <v-btn icon @click="refreshData">
                 <v-icon>
                     mdi-refresh
                 </v-icon>
             </v-btn>
+
+            <v-spacer></v-spacer>
+
+            <template v-if="!inSelectMode">
+                <v-btn
+                    color="primary"
+                    @click="inSelectMode = true"
+                >
+                    Select
+                </v-btn>
+            </template>
+
+            <template v-else>
+                <v-dialog persistent v-model="showHideDelete" max-width="60%">
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn
+                            icon
+                            color="error"
+                            :disabled="selected.length === 0"
+                            v-on="on"
+                            v-bind="attrs"
+                        >
+                            <v-icon>
+                                mdi-delete
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    <v-card>
+                        <v-card-title>
+                            Are you sure?
+                        </v-card-title>
+
+                        <v-card-text>
+                            Are you sure you want to delete {{ selected.length }} VODs?
+                            This action can not be undone.
+                        </v-card-text>
+
+                        <v-card-actions>
+                            <v-btn
+                                color="error"
+                                @click="showHideDelete = false"
+                            >
+                                Cancel
+                            </v-btn>
+
+                            <v-spacer></v-spacer>
+
+                            <v-btn
+                                color="success"
+                                @click="deleteSelectedVods"
+                                :loading="deleteInProgress"
+                            >
+                                Delete
+                            </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
+
+                <v-btn
+                    @click="toggleSelected"
+                    outlined
+                    class="ml-2"
+                >
+                    <v-checkbox
+                        :input-value="allSelected"
+                        readonly
+                    >
+                    </v-checkbox>
+
+                    {{ selected.length }} Selected
+                </v-btn>
+
+                <v-btn
+                    class="ml-2"
+                    icon
+                    @click="closeSelect"
+                    color="warning"
+                >
+                    <v-icon>
+                        mdi-close
+                    </v-icon>
+                </v-btn>
+            </template>
         </div>
         <v-divider class="my-2"></v-divider>
         <recent-match-filters-ui v-model="filters"></recent-match-filters-ui>
         
-        <loading-container :is-loading="!recentMatches">
-            <template v-slot:default="{ loading }">
-                <template v-if="!loading && recentMatches.length > 0">
-                    <template v-for="(group, gidx) in groupedMatches">
-                        <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
-                            <v-divider class="mr-4"></v-divider>
+        <v-list-item-group v-model="selected" multiple>
+            <loading-container :is-loading="!recentMatches">
+                <template v-slot:default="{ loading }">
+                    <template v-if="!loading && recentMatches.length > 0">
+                        <template v-for="(group, gidx) in groupedMatches">
+                            <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
+                                <v-divider class="mr-4"></v-divider>
 
-                            <div class="text-caption">
-                                Played {{ group.days }}
+                                <div class="text-caption">
+                                    Played {{ group.days }}
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="full-width" :key="`group-matches-${gidx}`">
-                            <recent-match-display
-                                class="mb-4 full-width"
-                                v-for="(match, idx) in group.matches"
-                                :key="idx"
-                                :match="match"
-                            >
-                            </recent-match-display>
-                        </div>
+                            <div class="full-width" :key="`group-matches-${gidx}`">
+                                <v-list-item
+                                    class="pa-0"
+                                    v-for="(match, idx) in group.matches"
+                                    :key="idx"
+                                    :value="match.base.vod.videoTracks[0].metadata.videoUuid"
+                                >
+                                    <template v-slot="{active}">
+                                        <div class="d-flex align-center full-width">
+                                            <v-list-item-action v-if="inSelectMode">
+                                                <v-checkbox :input-value="active"></v-checkbox>
+                                            </v-list-item-action>
+
+                                            <recent-match-display
+                                                class="mb-4 full-width"
+                                                :match="match"
+                                                :disable-click="inSelectMode"
+                                            >
+                                            </recent-match-display>
+                                        </div>
+                                    </template>
+                                    
+                                </v-list-item>
+                            </div>
+                        </template>
+
+                        <v-btn
+                            v-if="hasNext"
+                            color="primary"
+                            block
+                            @click="loadMoreMatches"
+                            :loading="loading"
+                        >
+                            Load More
+                        </v-btn>
                     </template>
 
-                    <v-btn
-                        v-if="hasNext"
-                        color="primary"
-                        block
-                        @click="loadMoreMatches"
-                        :loading="loading"
-                    >
-                        Load More
-                    </v-btn>
-                </template>
-
-                <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
-                    <div class="text-h6">
-                        No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!
+                    <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
+                        <div class="text-h6">
+                            No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!
+                        </div>
                     </div>
-                </div>
-            </template>
-        </loading-container>
+                </template>
+            </loading-container>
+        </v-list-item-group>
+
+        <v-snackbar
+            v-model="showHideDeleteError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to delete VODs. Please try again.
+        </v-snackbar>
     </div>
 </template>
 
@@ -90,6 +197,12 @@ export default class RecentRecordedMatches extends Vue {
     nextLink: string | null = null
     filters: RecentMatchFilters = createEmptyRecentMatchFilters()
     loading: boolean = false
+
+    inSelectMode: boolean = false
+    selected: string[] = []
+    deleteInProgress: boolean = false
+    showHideDelete: boolean = false
+    showHideDeleteError: boolean = false
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -128,6 +241,25 @@ export default class RecentRecordedMatches extends Vue {
         return ret
     }
 
+    get allSelected(): boolean {
+        return this.recentMatches?.length === this.selected.length
+    }
+
+    toggleSelected() {
+        if (this.allSelected) {
+            this.selected = []
+        } else if (!!this.recentMatches) {
+            this.selected = this.recentMatches.map((ele: RecentMatch) => ele.base.vod.videoTracks[0].metadata.videoUuid)
+        } else {
+            this.selected = []
+        }
+    }
+
+    closeSelect() {
+        this.inSelectMode = false
+        this.selected = []
+    }
+
     @Watch('filters', { deep: true })
     refreshData() {
         this.recentMatches = null
@@ -159,6 +291,23 @@ export default class RecentRecordedMatches extends Vue {
             console.log('Failed to list recent SquadOV matches: ' + err);
         }).finally(() => {
             this.loading = false
+        })
+    }
+
+    deleteSelectedVods() {
+        if (this.selected.length === 0) {
+            return
+        }
+
+        this.deleteInProgress = true
+        apiClient.deleteVods(this.selected).then(() => {
+            this.refreshData()
+            this.showHideDelete = false
+        }).catch((err: any) => {
+            console.log('Failed to delete VODs: ', err)
+            this.showHideDeleteError = true
+        }).finally(() => {
+            this.deleteInProgress = false
         })
     }
 
