@@ -208,6 +208,20 @@ export default class RecentRecordedMatches extends Vue {
         return !!this.nextLink
     }
 
+    get selectableMatches(): RecentMatch[] {
+        return this.filteredMatches.filter((ele: RecentMatch) => {
+            return ele.base.userId === this.$store.state.currentUser.id
+        })
+    }
+
+    get displayMatches(): RecentMatch[] {
+        if (this.inSelectMode) {
+            return this.selectableClips
+        } else {
+            return this.filteredMatches
+        }
+    }
+
     get filteredMatches() : RecentMatch[] {
         if (!this.recentMatches) {
             return []
@@ -220,7 +234,7 @@ export default class RecentRecordedMatches extends Vue {
 
     get groupedMatches(): GroupedMatch[] {
         let grouped: Map<number, RecentMatch[]> = new Map()
-        this.filteredMatches.forEach((ele: RecentMatch) => {
+        this.displayMatches.forEach((ele: RecentMatch) => {
             let days = numDaysAgo(ele.base.tm)
             if (!grouped.has(days)) {
                 grouped.set(days, [])
@@ -265,6 +279,7 @@ export default class RecentRecordedMatches extends Vue {
         this.recentMatches = null
         this.nextLink = null
         this.lastIndex = 0
+        this.selected = []
         this.loadMoreMatches()
     }
 
