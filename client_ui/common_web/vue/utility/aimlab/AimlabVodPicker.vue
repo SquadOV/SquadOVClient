@@ -5,6 +5,7 @@
         :match-uuid="taskId"
         :timestamp="timestamp"
         :game="game"
+        :disable-favorite="disableFavorite"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-img
@@ -47,6 +48,9 @@ export default class AimlabVodPicker extends Vue {
 
     @Prop()
     timestamp!: Date | undefined | null
+
+    @Prop({type: Boolean, default: false})
+    disableFavorite!: boolean
 
     get options(): VodAssociation[] {
         return [this.vod]

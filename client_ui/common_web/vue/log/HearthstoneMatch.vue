@@ -14,6 +14,11 @@
                     >
                     </hearthstone-match-header-display>
 
+                    <match-favorite-button
+                        :match-uuid="matchId"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="matchId"
                         :game="SquadOvGames.Hearthstone"
@@ -43,6 +48,7 @@
                             :vod.sync="vod"
                             :ref-user-id="userId"
                             :timestamp="vodTime"
+                            disable-favorite
                         >
                         </hearthstone-vod-pov-picker>
                     </v-col>

@@ -41,6 +41,7 @@
                         :task-name="data.taskName"
                         :vod="vod"
                         :timestamp="vodTime"
+                        disable-favorite
                     >
                     </aimlab-vod-picker>
                 </template>

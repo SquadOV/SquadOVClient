@@ -34,6 +34,8 @@ export interface RecentMatchFilters {
     users: number[] | undefined
     timeStart: number | undefined
     timeEnd: number | undefined
+    onlyFavorite: boolean
+    onlyWatchlist: boolean
 }
 
 export function createEmptyRecentMatchFilters(): RecentMatchFilters {
@@ -43,6 +45,8 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
         users: undefined,
         timeStart: undefined,
         timeEnd: undefined,
+        onlyFavorite: false,
+        onlyWatchlist: false,
     }
 }
 

@@ -2,7 +2,7 @@
     <div class="full-width pa-4">
         <div class="d-flex align-center">
             <div class="text-h6 font-weight-bold">
-                Clip Library
+                {{ title }}
             </div>
 
             <v-btn
@@ -100,7 +100,11 @@
             </template>
         </div>
         <v-divider class="my-2"></v-divider>
-        <recent-match-filters-ui v-model="filters"></recent-match-filters-ui>
+        <recent-match-filters-ui
+            v-model="filters"
+            :disable-squads="isUserLocked"
+            :disable-users="isUserLocked"
+        ></recent-match-filters-ui>
 
         <loading-container :is-loading="!clips">
             <template v-slot:default="{ loading }">
@@ -176,8 +180,20 @@ const maxClipsPerRequest: number = 20
     }
 })
 export default class ClipLibrary extends Vue {
+    @Prop({default: 'Clip Library'})
+    title!: string
+
     @Prop()
     matchUuid!: string | undefined
+
+    @Prop()
+    userId!: number | undefined
+
+    @Prop({type: Boolean, default: false})
+    onlyFavorite!: boolean
+
+    @Prop({type: Boolean, default: false})
+    onlyWatchlist!: boolean
 
     clips: VodClip[] | null = null
     lastIndex: number = 0
@@ -190,6 +206,10 @@ export default class ClipLibrary extends Vue {
     deleteInProgress: boolean = false
     showHideDelete: boolean = false
     showHideDeleteError: boolean = false
+
+    get isUserLocked(): boolean {
+        return this.userId !== undefined
+    }
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -250,7 +270,19 @@ export default class ClipLibrary extends Vue {
         this.selected = []
     }
 
-    @Watch('filters', { deep: true })
+    get finalFilters(): RecentMatchFilters {
+        let filters: RecentMatchFilters = JSON.parse(JSON.stringify(this.filters))
+
+        if (this.userId !== undefined) {
+            filters.users = [this.userId]
+        }
+
+        filters.onlyFavorite = this.onlyFavorite
+        filters.onlyWatchlist = this.onlyWatchlist
+        return filters
+    }
+
+    @Watch('finalFilters', { deep: true })
     @Watch('matchUuid')
     refreshClips() {
         this.clips = null
@@ -270,7 +302,7 @@ export default class ClipLibrary extends Vue {
             matchUuid: this.matchUuid,
             start: this.lastIndex,
             end: this.lastIndex + maxClipsPerRequest,
-            filters: this.filters,
+            filters: this.finalFilters,
         }).then((resp : ApiData<HalResponse<VodClip[]>>) => {
             if (!this.clips) {
                 this.clips = resp.data.data

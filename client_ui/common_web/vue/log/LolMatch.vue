@@ -11,6 +11,11 @@
                     >
                     </lol-match-summary>
 
+                    <match-favorite-button
+                        :match-uuid="matchUuid"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.LeagueOfLegends"
@@ -39,6 +44,7 @@
                             :match="currentMatch.match"
                             :current-participant-id="currentParticipantId"
                             :timestamp="vodTime"
+                            disable-favorite
                         >
                         </lol-vod-picker>
                     </v-col>

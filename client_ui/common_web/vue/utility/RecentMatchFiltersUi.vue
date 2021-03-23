@@ -33,18 +33,19 @@
                 <game-filter-ui
                     v-model="internalValue.games"
                     @input="syncToValue"
-                    class="mr-1"
                 ></game-filter-ui>
                 <squad-filter-ui
+                    v-if="!disableSquads"
                     v-model="internalValue.squads"
                     @input="syncToValue"
-                    class="mr-1"
+                    class="ml-1"
                 ></squad-filter-ui>
                 <user-filter-ui
+                    v-if="!disableUsers"
                     v-model="internalValue.users"
                     :squads="internalValue.squads"
                     @input="syncToValue"
-                    class="mr-1"
+                    class="ml-1"
                 ></user-filter-ui>
                 
             </div>
@@ -82,6 +83,12 @@ import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilt
 export default class RecentMatchFiltersUi extends Vue {
     @Prop({required: true})
     value!: RecentMatchFilters
+
+    @Prop({type: Boolean, default: false})
+    disableSquads!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableUsers!: boolean
 
     internalValue: RecentMatchFilters = createEmptyRecentMatchFilters()
     showFilters: boolean = false

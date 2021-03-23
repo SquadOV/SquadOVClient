@@ -65,6 +65,10 @@
                 </v-tab>
 
                 <v-tab-item>
+                    <user-match-favorites
+                        :user-id="userId"
+                    >
+                    </user-match-favorites>
                 </v-tab-item>
 
                 <v-tab>
@@ -72,6 +76,10 @@
                 </v-tab>
 
                 <v-tab-item>
+                    <user-match-watchlist
+                        :user-id="userId"
+                    >
+                    </user-match-watchlist>
                 </v-tab-item>
             </v-tabs>
         </v-tab-item>
@@ -87,6 +95,10 @@
                 </v-tab>
 
                 <v-tab-item>
+                    <user-clip-favorites
+                        :user-id="userId"
+                    >
+                    </user-clip-favorites>
                 </v-tab-item>
 
                 <v-tab>
@@ -94,6 +106,10 @@
                 </v-tab>
 
                 <v-tab-item>
+                    <user-clip-watchlist
+                        :user-id="userId"
+                    >
+                    </user-clip-watchlist>
                 </v-tab-item>
             </v-tabs>
         </v-tab-item>
@@ -108,10 +124,18 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { SquadOVUser, getSquadOVUser } from '@client/js/squadov/user'
 import { ApiData } from '@client/js/api' 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import UserMatchFavorites from '@client/vue/profile/UserMatchFavorites.vue'
+import UserMatchWatchlist from '@client/vue/profile/UserMatchWatchlist.vue'
+import UserClipFavorites from '@client/vue/profile/UserClipFavorites.vue'
+import UserClipWatchlist from '@client/vue/profile/UserClipWatchlist.vue'
 
 @Component({
     components: {
-        LoadingContainer
+        LoadingContainer,
+        UserMatchFavorites,
+        UserMatchWatchlist,
+        UserClipFavorites,
+        UserClipWatchlist,
     }
 })
 export default class UserProfile extends Vue {

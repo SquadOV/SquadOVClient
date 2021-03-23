@@ -6,6 +6,7 @@
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
+        :disable-favorite="disableFavorite"
     >
         <template v-slot:vod="{ivod, selected}">
             <lol-participant-display
@@ -63,6 +64,9 @@ export default class LolVodPicker extends Vue {
 
     @Prop()
     timestamp!: Date | undefined | null
+
+    @Prop({type: Boolean, default: false})
+    disableFavorite!: boolean
 
     availableVods: LeagueMatchAccessibleVods | null = null
 

@@ -6,6 +6,7 @@
         :match-uuid="matchId"
         :timestamp="timestamp"
         :game="game"
+        :disable-favorite="disableFavorite"
     >
         <template v-slot:vod="{ivod, selected}">
             <hearthstone-hero-display
@@ -49,6 +50,9 @@ export default class HearthstoneVodPovPicker extends Vue {
 
     @Prop()
     timestamp!: Date | undefined | null
+
+    @Prop({type: Boolean, default: false})
+    disableFavorite!: boolean
 
     availableVods: HearthstoneMatchAccessibleVods | null = null
 

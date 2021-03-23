@@ -125,6 +125,21 @@
                     mdi-filmstrip-box-multiple
                 </v-icon>
             </v-btn>
+
+            <!-- favorite -->
+            <vod-favorite-button
+                v-if="!!value && !disableFavorite"
+                :vod-uuid="value.videoUuid"
+            >
+            </vod-favorite-button>
+
+            <!-- watch list -->
+            <vod-watchlist-button
+                v-if="!!value"
+                :vod-uuid="value.videoUuid"
+            >
+            </vod-watchlist-button>
+
         </template>
     </div>
 </template>
@@ -141,8 +156,15 @@ import * as vod from '@client/js/squadov/vod'
 import * as pi from '@client/js/pages'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { openPathInNewWindow } from '@client/js/external'
+import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
+import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 
-@Component
+@Component({
+    components: {
+        VodFavoriteButton,
+        VodWatchlistButton,
+    }
+})
 export default class GenericVodPicker extends Vue {
     @Prop({required: true})
     value!: VodAssociation | null
@@ -158,6 +180,9 @@ export default class GenericVodPicker extends Vue {
 
     @Prop({required: true})
     game!: SquadOvGames
+
+    @Prop({type: Boolean, default: false})
+    disableFavorite!: boolean
 
     showHideDeleteConfirm: boolean = false
     loadingDelete: boolean = false

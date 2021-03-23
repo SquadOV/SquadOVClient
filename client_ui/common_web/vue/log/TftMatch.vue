@@ -11,6 +11,11 @@
                     >
                     </tft-match-summary>
 
+                    <match-favorite-button
+                        :match-uuid="matchUuid"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.TeamfightTactics"
@@ -35,6 +40,7 @@
                         :vod.sync="vod"
                         :match="currentMatch"
                         :timestamp="vodTime"
+                        disable-favorite
                     >
                     </tft-vod-picker>
                 </v-row>

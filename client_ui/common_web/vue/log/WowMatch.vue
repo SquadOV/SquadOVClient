@@ -27,6 +27,11 @@
                     >
                     </wow-arena-summary>
 
+                    <match-favorite-button
+                        :match-uuid="matchUuid"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.WorldOfWarcraft"
@@ -55,6 +60,7 @@
                             :match-characters ="matchCharacters"
                             :character-associations="characterAssociations"
                             :timestamp="vodTime"
+                            disable-favorite
                         >
                         </wow-vod-pov-picker>
                     </v-col>

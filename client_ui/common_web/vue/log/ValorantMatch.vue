@@ -10,6 +10,11 @@
                     >
                     </valorant-match-header-summary>
 
+                    <match-favorite-button
+                        :match-uuid="matchUuid"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Valorant"
@@ -39,6 +44,7 @@
                             :match="matchWrapper"
                             :ref-puuid="puuid"
                             :timestamp="vodTime"
+                            disable-favorite
                         >
                         </valorant-vod-pov-picker>
                     </v-col>

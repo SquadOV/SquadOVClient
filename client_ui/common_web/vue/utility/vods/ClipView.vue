@@ -52,6 +52,20 @@
                             </template>
                         </div>
 
+                        <template v-if="isUser">
+                            <vod-favorite-button
+                                class="mr-1"
+                                :vod-uuid="clipUuid"
+                            >
+                            </vod-favorite-button>
+
+                            <vod-watchlist-button
+                                :vod-uuid="clipUuid"
+                                class="mr-1"
+                            >
+                            </vod-watchlist-button>
+                        </template>
+
                         <clip-share-button
                             :clip-uuid="clipUuid"
                             v-if="isOwner"
@@ -189,6 +203,8 @@ import * as pi from '@client/js/pages'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ClipShareButton from '@client/vue/utility/vods/ClipShareButton.vue'
+import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
+import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 
 const maxCommentsPerRequest = 20
 
@@ -196,7 +212,9 @@ const maxCommentsPerRequest = 20
     components: {
         VideoPlayer,
         LoadingContainer,
-        ClipShareButton
+        ClipShareButton,
+        VodFavoriteButton,
+        VodWatchlistButton
     }
 })
 export default class ClipView extends Vue {

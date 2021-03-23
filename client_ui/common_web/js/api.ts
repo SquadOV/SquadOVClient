@@ -1073,6 +1073,32 @@ class ApiClient {
     removeMatchFavorite(matchUuid: string): Promise<void> {
         return axios.delete(`v1/match/${matchUuid}/favorite`, this.createWebAxiosConfig())
     }
+
+    isVodFavorite(videoUuid: string): Promise<ApiData<boolean>> {
+        return axios.get(`v1/vod/${videoUuid}/list/favorite`, this.createWebAxiosConfig())
+    }
+
+    addVodFavorite(videoUuid: string, reason: string): Promise<void> {
+        return axios.post(`v1/vod/${videoUuid}/list/favorite`, {
+            reason,
+        }, this.createWebAxiosConfig())
+    }
+
+    removeVodFavorite(videoUuid: string): Promise<void> {
+        return axios.delete(`v1/vod/${videoUuid}/list/favorite`, this.createWebAxiosConfig())
+    }
+
+    isVodWatchlist(videoUuid: string): Promise<ApiData<boolean>> {
+        return axios.get(`v1/vod/${videoUuid}/list/watch`, this.createWebAxiosConfig())
+    }
+
+    addVodWatchlist(videoUuid: string): Promise<void> {
+        return axios.post(`v1/vod/${videoUuid}/list/watch`, {}, this.createWebAxiosConfig())
+    }
+
+    removeVodWatchlist(videoUuid: string): Promise<void> {
+        return axios.delete(`v1/vod/${videoUuid}/list/watch`, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

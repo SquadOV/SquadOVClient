@@ -6,6 +6,7 @@
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
+        :disable-favorite="disableFavorite"
     >
         <template v-slot:vod="{ivod, selected}">
             <valorant-agent-icon
@@ -63,6 +64,9 @@ export default class ValorantVodPovPicker extends Vue {
 
     @Prop()
     timestamp!: Date | undefined | null
+
+    @Prop({type: Boolean, default: false})
+    disableFavorite!: boolean
 
     availableVods: ValorantMatchAccessibleVods | null = null
 
