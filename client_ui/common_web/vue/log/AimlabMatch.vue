@@ -11,6 +11,11 @@
                     >
                     </aimlab-task-summary-display>
 
+                    <match-favorite-button
+                        :match-uuid="taskId"
+                    >
+                    </match-favorite-button>
+
                     <match-share-button
                         :match-uuid="taskId"
                         :game="SquadOvGames.AimLab"
@@ -66,6 +71,7 @@ import AimlabVodPicker from '@client/vue/utility/aimlab/AimlabVodPicker.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
+import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
 @Component({
     components: {
@@ -75,6 +81,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
         LoadingContainer,
         VideoPlayer,
         MatchShareButton,
+        MatchFavoriteButton
     }
 })
 export default class AimlabMatch extends Vue {

@@ -1059,6 +1059,20 @@ class ApiClient {
     myReferralLink(): Promise<ApiData<string>> {
         return axios.get('v1/users/me/referral', this.createWebAxiosConfig())
     }
+
+    isMatchFavorite(matchUuid: string): Promise<ApiData<boolean>> {
+        return axios.get(`v1/match/${matchUuid}/favorite`, this.createWebAxiosConfig())
+    }
+
+    addMatchFavorite(matchUuid: string, reason: string): Promise<void> {
+        return axios.post(`v1/match/${matchUuid}/favorite`, {
+            reason,
+        }, this.createWebAxiosConfig())
+    }
+
+    removeMatchFavorite(matchUuid: string): Promise<void> {
+        return axios.delete(`v1/match/${matchUuid}/favorite`, this.createWebAxiosConfig())
+    }
 }
 
 export let apiClient = new ApiClient()

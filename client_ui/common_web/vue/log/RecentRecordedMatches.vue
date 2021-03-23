@@ -216,7 +216,7 @@ export default class RecentRecordedMatches extends Vue {
 
     get displayMatches(): RecentMatch[] {
         if (this.inSelectMode) {
-            return this.selectableClips
+            return this.selectableMatches
         } else {
             return this.filteredMatches
         }
