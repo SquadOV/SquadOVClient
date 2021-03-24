@@ -299,13 +299,13 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
             THROW_ERROR("Failed to receive video packet.");
         }
 
-        // Force a duration here - not sure why this is necessary but if we don't set this
-        // here then the duration of the video will be one frame short. I think that's
-        // causing some audio/video drfit. PEPE HANDS.
-        packet.duration = 1;
-
         av_packet_rescale_ts(&packet, cctx->time_base, st->time_base);
         packet.stream_index = st->index;
+
+        if (packet.dts > packet.pts) {
+            // Possible if there's a jump in the pts.
+            packet.pts = packet.dts;
+        }
 
         {
             std::lock_guard<std::mutex> guard(_encodeMutex);
@@ -645,15 +645,14 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
         ++_processedVideoFrames;
     }
 
-    {
-        service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
-        auto immediate = d3d->immediateContext();
-        
-        for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
-            frame->pts = _vFrameNum;
-            encode(_vcodecContext, frame, _vstream);
-        }
-    }
+
+    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
+    auto immediate = d3d->immediateContext();
+
+    frame->pts = desiredFrameNum;
+    frame->pkt_duration = numFramesToEncode;
+    _vFrameNum = desiredFrameNum;
+    encode(_vcodecContext, frame, _vstream);
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
@@ -719,6 +718,7 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
             }
 
             _aframe->pts = _aFrameNum;
+            _aframe->pkt_duration = 1;
             _aFrameNum += frameSize;
             encode(_acodecContext, _aframe, _astream);
         }
