@@ -145,9 +145,6 @@ void WoWProcessHandlerInstance::waitForLogWatcher() {
 void WoWProcessHandlerInstance::cleanup() {
     // Move the current combat log to backup so that it doesn't get too big.
     // This assumes that this is being called on WoW process stop so this should be safe to do.
-    LOG_INFO("Moving log to backup..." << std::endl);
-    _logWatcher->moveLogToBackup();
-
     LOG_INFO("Ending DVR session..." << std::endl);
     _recorder->stop({});
 
