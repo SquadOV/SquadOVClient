@@ -33,6 +33,7 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :ready.sync="vodReady"
                             :current-time.sync="vodTime"
+                            :enable-draw="enableDraw"
                         >
                         </video-player>
 
@@ -45,6 +46,7 @@
                             :ref-puuid="puuid"
                             :timestamp="vodTime"
                             disable-favorite
+                            :enable-draw.sync="enableDraw"
                         >
                         </valorant-vod-pov-picker>
                     </v-col>
@@ -193,6 +195,7 @@ export default class ValorantMatch extends Vue {
     theaterMode: boolean = false
     vodReady: boolean = false
     vodTime: Date | null = null
+    enableDraw: boolean = false
     
     get matchWrapper() : ValorantMatchDetailsWrapper | null {
         if (!this.currentMatch) {

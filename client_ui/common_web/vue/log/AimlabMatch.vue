@@ -31,6 +31,7 @@
                         id="task-vod"
                         disable-theater
                         :current-time.sync="vodTime"
+                        :enable-draw="enableDraw"
                     >
                     </video-player>
 
@@ -42,6 +43,7 @@
                         :vod="vod"
                         :timestamp="vodTime"
                         disable-favorite
+                        :enable-draw.sync="enableDraw"
                     >
                     </aimlab-vod-picker>
                 </template>
@@ -98,6 +100,7 @@ export default class AimlabMatch extends Vue {
     vod : VodAssociation | null = null
     data : AimlabTaskData | null = null
     vodTime: Date | null = null
+    enableDraw: boolean = false
 
     @Watch('taskId')
     refreshTask() {

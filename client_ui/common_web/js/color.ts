@@ -16,6 +16,33 @@ export function colorAToCssString(c: ColorA): string {
     return `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`
 }
 
+export function getRedColor(): ColorA {
+    return {
+        r: 255,
+        g: 0,
+        b: 0,
+        a: 1.0
+    }
+}
+
+export function getWhiteColor(): ColorA {
+    return {
+        r: 255,
+        g: 255,
+        b: 255,
+        a: 1.0
+    }
+}
+
+export function getBlackColor(): ColorA {
+    return {
+        r: 0,
+        g: 0,
+        b: 0,
+        a: 1.0
+    }
+}
+
 export function getGenericWinColor(): Color {
     // '#4CAF50' 
     return {

@@ -40,6 +40,7 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :ready.sync="vodReady"
                             :current-time.sync="vodTime"
+                            :enable-draw="enableDraw"
                         >
                         </video-player>
 
@@ -49,6 +50,7 @@
                             :ref-user-id="userId"
                             :timestamp="vodTime"
                             disable-favorite
+                            :enable-draw.sync="enableDraw"
                         >
                         </hearthstone-vod-pov-picker>
                     </v-col>
@@ -223,6 +225,7 @@ export default class HearthstoneMatch extends Vue {
     currentPlayerHeight : number = 0
     vod: VodAssociation | null = null
     vodTime: Date | null = null
+    enableDraw: boolean = false
 
     // Match Info
     currentMatch: RawHearthstoneMatch | null = null

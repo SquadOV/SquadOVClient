@@ -35,6 +35,7 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :current-time.sync="vodTime"
                             :ready.sync="vodReady"
+                            :enable-draw="enableDraw"
                         >
                         </video-player>
 
@@ -45,6 +46,7 @@
                             :current-participant-id="currentParticipantId"
                             :timestamp="vodTime"
                             disable-favorite
+                            :enable-draw.sync="enableDraw"
                         >
                         </lol-vod-picker>
                     </v-col>
@@ -193,6 +195,7 @@ export default class LolMatch extends Vue {
     currentMatch: FullLolMatch | null = null
     vod: VodAssociation | null = null
     displayEvents: LolMatchEvent[] = []
+    enableDraw: boolean = false
 
     $refs!: {
         player: VideoPlayer

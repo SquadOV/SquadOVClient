@@ -6,6 +6,12 @@
         <v-row class="empty-container" justify="center" align="center" v-else>
             <span class="text-h4">No VOD Available.</span>
         </v-row>
+
+        <video-draw-overlay
+            v-if="enableDraw"
+            ref="overlay"
+        >
+        </video-draw-overlay>
     </div>
 </template>
 
@@ -19,14 +25,22 @@ import * as vod from '@client/js/squadov/vod'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 import { Parser as M3u8Parser } from 'm3u8-parser'
+import VideoDrawOverlay from '@client/vue/utility/VideoDrawOverlay.vue'
 
-@Component
+@Component({
+    components: {
+        VideoDrawOverlay
+    }
+})
 export default class VideoPlayer extends Vue {
     @Prop({required: true})
     vod! : vod.VodAssociation | null | undefined
     
     @Prop()
     overrideUri!: string | undefined
+
+    @Prop({type: Boolean, default: false})
+    enableDraw!: boolean
 
     // Our custom manifest file format that lists all the available options
     // for video quality as well as the urls to get that particular
@@ -65,6 +79,7 @@ export default class VideoPlayer extends Vue {
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
+        overlay: VideoDrawOverlay
     }
     hasMadeProgress: boolean = false
 
@@ -320,6 +335,18 @@ export default class VideoPlayer extends Vue {
                 })
             }
         }
+    }
+
+    @Watch('player')
+    @Watch('enableDraw')
+    refreshDrawDiv() {
+        Vue.nextTick(() => {
+            if (!this.player || !this.enableDraw) {
+                return
+            }
+            let newParent = this.player.el()
+            newParent.appendChild(this.$refs.overlay.$el)
+        })
     }
 
     handleKeypress(e: KeyboardEvent) {

@@ -119,6 +119,13 @@
                 </v-btn>
             </template>
 
+            <!-- drawing button -->
+            <v-btn color="pink accent-2" icon @click="toggleDrawing" :input-value="enableDraw">
+                <v-icon>
+                    mdi-palette
+                </v-icon>
+            </v-btn>
+
             <!-- clip library button -->
             <v-btn color="primary" icon @click="openClipWindowForMatch">
                 <v-icon>
@@ -183,6 +190,9 @@ export default class GenericVodPicker extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableFavorite!: boolean
+
+    @Prop({type: Boolean, default: false})
+    enableDraw!: boolean
 
     showHideDeleteConfirm: boolean = false
     loadingDelete: boolean = false
@@ -305,6 +315,9 @@ export default class GenericVodPicker extends Vue {
         openVodEditingWindow(this.value.videoUuid, this.game)
     }
 
+    toggleDrawing() {
+        this.$emit('update:enableDraw', !this.enableDraw)
+    }
 
     mounted () {
         this.refreshManifest()

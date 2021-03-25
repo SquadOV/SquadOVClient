@@ -7,6 +7,8 @@
         :timestamp="timestamp"
         :game="game"
         :disable-favorite="disableFavorite"
+        :enable-draw="enableDraw"
+        @update:enableDraw="$emit('update:enableDraw', arguments[0])"
     >
         <template v-slot:vod="{ivod, selected}">
             <v-tooltip offset-x right>
@@ -79,6 +81,9 @@ export default class WowVodPovPicker extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableFavorite!: boolean
+
+    @Prop({type: Boolean, default: false})
+    enableDraw!: boolean
 
     allAccessibleVods: WowMatchAccessibleVods | null = null
 

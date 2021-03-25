@@ -7,6 +7,8 @@
         :timestamp="timestamp"
         :game="game"
         :disable-favorite="disableFavorite"
+        :enable-draw="enableDraw"
+        @update:enableDraw="$emit('update:enableDraw', arguments[0])"
     >
         <template v-slot:vod="{ivod, selected}">
             <valorant-agent-icon
@@ -67,6 +69,9 @@ export default class ValorantVodPovPicker extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableFavorite!: boolean
+
+    @Prop({type: Boolean, default: false})
+    enableDraw!: boolean
 
     availableVods: ValorantMatchAccessibleVods | null = null
 

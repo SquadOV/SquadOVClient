@@ -50,6 +50,7 @@
                             @toggle-theater-mode="theaterMode = !theaterMode"
                             :current-time.sync="vodTime"
                             :ready.sync="vodReady"
+                            :enable-draw="enableDraw"
                         >
                         </video-player>
 
@@ -61,6 +62,7 @@
                             :character-associations="characterAssociations"
                             :timestamp="vodTime"
                             disable-favorite
+                            :enable-draw.sync="enableDraw"
                         >
                         </wow-vod-pov-picker>
                     </v-col>
@@ -207,6 +209,7 @@ export default class WowMatch extends Vue {
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
     vodReady: boolean = false
+    enableDraw: boolean = false
 
     @Watch('selectedTab')
     refreshTab() {
