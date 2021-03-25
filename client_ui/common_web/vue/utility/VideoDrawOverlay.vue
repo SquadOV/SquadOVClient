@@ -249,6 +249,12 @@
                         >
                         </brush-tool-options>
 
+                        <shape-tool-options
+                            v-else-if="selectedTool == 2"
+                            :tool="shapeTool"
+                        >
+                        </shape-tool-options>
+
                         <line-tool-options
                             v-else-if="selectedTool == 3"
                             :tool="lineTool"
@@ -390,6 +396,8 @@ import { LineTool } from '@client/js/draw/tools/line'
 import LineToolOptions from '@client/vue/utility/draw/LineToolOptions.vue'
 import { TextTool } from '@client/js/draw/tools/text'
 import TextToolOptions from '@client/vue/utility/draw/TextToolOptions.vue'
+import { MultiShapeTool } from '@client/js/draw/tools/shapes/shape'
+import ShapeToolOptions from '@client/vue/utility/draw/ShapeToolOptions.vue'
 import FontFaceObserver from 'fontfaceobserver'
 
 @Component({
@@ -398,7 +406,8 @@ import FontFaceObserver from 'fontfaceobserver'
         SelectToolOptions,
         BrushToolOptions,
         LineToolOptions,
-        TextToolOptions
+        TextToolOptions,
+        ShapeToolOptions
     }
 })
 export default class VideoDrawOverlay extends Vue {
@@ -422,6 +431,7 @@ export default class VideoDrawOverlay extends Vue {
     brushTool: BrushTool = new BrushTool()
     lineTool: LineTool = new LineTool()
     textTool: TextTool = new TextTool()
+    shapeTool: MultiShapeTool = new MultiShapeTool()
 
     draw: DrawCanvas | null = null
     $refs!: {
@@ -513,6 +523,8 @@ export default class VideoDrawOverlay extends Vue {
                 return this.selectTool
             case 1:
                 return this.brushTool
+            case 2:
+                return this.shapeTool
             case 3:
                 return this.lineTool
             case 4:

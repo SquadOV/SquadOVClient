@@ -12,7 +12,7 @@ export class BrushTool extends BaseDrawTool {
 
     setWidth(v: number) {
         this._width = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     onActive(c: fabric.Canvas) {
@@ -20,7 +20,7 @@ export class BrushTool extends BaseDrawTool {
         if (!this._brush) {
             // @ts-ignore
             this._brush = new fabric.PencilBrush(c)
-            this.reloadSettings()
+            this.refreshSettings()
         }
 
         c.freeDrawingBrush = this._brush
@@ -31,18 +31,11 @@ export class BrushTool extends BaseDrawTool {
         c.isDrawingMode = false
     }
 
-    reloadSettings() {
+    refreshSettings() {
         if (!this._brush) {
             return
         }
         this._brush.width = this._width
-        this.refreshColors()
-    }
-
-    refreshColors() {
-        if (!this._brush) {
-            return
-        }
         this._brush.color = colorAToCssString(this._fillColor)
     }
 }

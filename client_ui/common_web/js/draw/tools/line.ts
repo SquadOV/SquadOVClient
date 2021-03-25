@@ -12,7 +12,7 @@ export class LineTool extends BaseDrawTool {
 
     setWidth(v: number) {
         this._width = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     onActive(c: fabric.Canvas) {
@@ -30,7 +30,7 @@ export class LineTool extends BaseDrawTool {
         }
 
         let xy = this._canvas.getPointer(e.e)
-        // Don't use the reloadSettings function here as that'll cause
+        // Don't use the refreshSettings function here as that'll cause
         // two events to be added into the history list.
         this._activeLine = new fabric.Line([xy.x, xy.y, xy.x, xy.y], {
             selectable: false,
@@ -59,7 +59,7 @@ export class LineTool extends BaseDrawTool {
         this._activeLine = null
     }
 
-    reloadSettings() {
+    refreshSettings() {
         if (!this._activeLine) {
             return
         }
@@ -67,9 +67,5 @@ export class LineTool extends BaseDrawTool {
         this._activeLine.fill = colorAToCssString(this._fillColor)
         this._activeLine.stroke = colorAToCssString(this._fillColor)
         this._activeLine.strokeWidth = this.width
-    }
-
-    refreshColors() {
-        this.reloadSettings()
     }
 }

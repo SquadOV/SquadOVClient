@@ -17,7 +17,7 @@ export class TextTool extends BaseDrawTool {
 
     set fontFamily(v: string) {
         this._fontFamily = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     get fontSize(): number {
@@ -26,7 +26,7 @@ export class TextTool extends BaseDrawTool {
 
     set fontSize(v: number) {
         this._fontSize = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     get bold(): boolean {
@@ -35,7 +35,7 @@ export class TextTool extends BaseDrawTool {
 
     set bold(v: boolean) {
         this._bold = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     get italic(): boolean {
@@ -44,7 +44,7 @@ export class TextTool extends BaseDrawTool {
 
     set italic(v: boolean) {
         this._italic = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     get underline(): boolean {
@@ -53,7 +53,7 @@ export class TextTool extends BaseDrawTool {
 
     set underline(v: boolean) {
         this._underline = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     get align(): string {
@@ -62,7 +62,7 @@ export class TextTool extends BaseDrawTool {
 
     set align(v: string) {
         this._align = v
-        this.reloadSettings()
+        this.refreshSettings()
     }
 
     onActive(c: fabric.Canvas) {
@@ -109,7 +109,7 @@ export class TextTool extends BaseDrawTool {
         this._activeText = (!!obj && obj.get('type') === 'textbox') ? <fabric.Textbox>obj : null
 
         if (!this._activeText) {
-            // Don't use the reloadSettings function here as that'll cause
+            // Don't use the reloadSrefreshSettingsettings function here as that'll cause
             // two events to be added into the history list.
             this._activeText = new fabric.Textbox('Made with SquadOV!', {
                 top: xy.y,
@@ -134,7 +134,7 @@ export class TextTool extends BaseDrawTool {
         }
     }
 
-    reloadSettings() {
+    refreshSettings() {
         if (!this._activeText) {
             return
         }
@@ -143,9 +143,5 @@ export class TextTool extends BaseDrawTool {
         if (!!this._canvas) {
             this._canvas.requestRenderAll()
         }
-    }
-
-    refreshColors() {
-        this.reloadSettings()
     }
 }

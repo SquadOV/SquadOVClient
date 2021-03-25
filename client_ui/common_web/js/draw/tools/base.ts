@@ -6,6 +6,7 @@ export class BaseDrawTool {
     _outlineColor: ColorA = getWhiteColor()
     _textColor: ColorA = getWhiteColor()
     _canvas: fabric.Canvas | null = null
+    _borderWidth: number = 2
 
     _mouseDown: (e: fabric.IEvent) => void
     _mouseMove: (e: fabric.IEvent) => void
@@ -34,22 +35,31 @@ export class BaseDrawTool {
         this._canvas = null
     }
 
+    get borderWidth(): number {
+        return this._borderWidth
+    }
+
+    set borderWidth(v: number) {
+        this._borderWidth = v
+        this.refreshSettings()
+    }
+
     setFillColor(c: ColorA) {
         this._fillColor = c
-        this.refreshColors()
+        this.refreshSettings()
     }
 
     setOutlineColor(c: ColorA) {
         this._outlineColor = c
-        this.refreshColors()
+        this.refreshSettings()
     }
 
     setTextColor(c: ColorA) {
         this._textColor = c
-        this.refreshColors()
+        this.refreshSettings()
     }
 
-    refreshColors() {
+    refreshSettings() {
     }
 
     onMouseDown(e: fabric.IEvent) {
