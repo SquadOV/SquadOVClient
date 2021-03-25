@@ -42,7 +42,6 @@ export class DrawActionHistory {
     }
 
     appendDefaultHistory() {
-        console.log('append history')
         let action = new BaseDrawAction(this.savedState, this.state)
         this.appendAction(action)
     }

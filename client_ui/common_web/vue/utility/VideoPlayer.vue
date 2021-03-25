@@ -354,6 +354,10 @@ export default class VideoPlayer extends Vue {
             return
         }
 
+        if (e.ctrlKey || e.altKey) {
+            return
+        }
+
         let cmp = e.key.toLowerCase()
         let handled = false
         if (cmp == ' ' || cmp == 'k') {

@@ -1,5 +1,6 @@
 <template>
     <div
+        ref="top"
         class="overlay"
         @mousemove="onMouseMove"
         @mouseup="onMouseUp"
@@ -25,18 +26,26 @@
             </template>
 
             <div class="d-flex justify-center" v-if="!mini">
-                <v-btn
-                    icon
-                    @click="visible = !visible"
-                >
-                    <v-icon v-if="visible">
-                        mdi-eye-off
-                    </v-icon>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn
+                            v-on="on"
+                            v-bind="attrs"
+                            icon
+                            @click="visible = !visible"
+                        >
+                            <v-icon v-if="visible">
+                                mdi-eye-off
+                            </v-icon>
 
-                    <v-icon v-else>
-                        mdi-eye
-                    </v-icon>
-                </v-btn>
+                            <v-icon v-else>
+                                mdi-eye
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    Toggle Visibility (V)
+                </v-tooltip>
             </div>
 
             <div @mousedown="startToolboxMove(arguments[0], false)" :style="toolDivStyle">
@@ -60,7 +69,7 @@
                                 </v-btn>
                             </template>
 
-                            Select
+                            Select (Ctrl + 1)
                         </v-tooltip>
 
                         <v-tooltip right v-if="!mini || selectedTool == 1">
@@ -78,7 +87,7 @@
                                 </v-btn>
                             </template>
 
-                            Brush
+                            Brush (Ctrl + 2)
                         </v-tooltip>
                     </div>
 
@@ -98,7 +107,7 @@
                                 </v-btn>
                             </template>
 
-                            Shapes
+                            Shapes (Ctrl + 3)
                         </v-tooltip>
 
                         <v-tooltip right v-if="!mini || selectedTool == 3">
@@ -116,7 +125,7 @@
                                 </v-btn>
                             </template>
 
-                            Line
+                            Line (Ctrl + 4)
                         </v-tooltip>
                     </div>
 
@@ -136,7 +145,7 @@
                                 </v-btn>
                             </template>
 
-                            Text
+                            Text (Ctrl + 5)
                         </v-tooltip>
 
                         <v-tooltip right v-if="!mini || selectedTool == 5">
@@ -154,7 +163,7 @@
                                 </v-btn>
                             </template>
 
-                            Blur
+                            Blur (Ctrl + 6)
                         </v-tooltip>
                     </div>
                 </v-btn-toggle>
@@ -175,7 +184,7 @@
                             </v-btn>
                         </template>
 
-                        Undo
+                        Undo (Ctrl + Z)
                     </v-tooltip>
 
                     <v-tooltip right>
@@ -193,7 +202,7 @@
                             </v-btn>
                         </template>
 
-                        Redo
+                        Redo (Ctrl + Y)
                     </v-tooltip>
                 </div>
 
@@ -213,7 +222,7 @@
                             </v-btn>
                         </template>
 
-                        Delete
+                        Delete (Del)
                     </v-tooltip>
 
                     <v-tooltip right>
@@ -437,10 +446,13 @@ export default class VideoDrawOverlay extends Vue {
 
     draw: DrawCanvas | null = null
     $refs!: {
+        top: HTMLElement,
         canvasDiv: HTMLElement,
         canvas: HTMLCanvasElement,
         blur: HTMLElement,
     }
+
+    keydownHandler: any = null
 
     get canvasStyle(): any {
         if (this.visible) {
@@ -578,6 +590,46 @@ export default class VideoDrawOverlay extends Vue {
         Promise.all(promises)
     }
 
+    toggleTool(tool: number) {
+        if (this.selectedTool === tool) {
+            this.selectedTool = null
+        } else {
+            this.selectedTool = tool
+        }
+    }
+
+    handleKeypress(e: KeyboardEvent) {
+        let cmp = e.key.toLowerCase()
+        let handled = false
+
+        if (e.ctrlKey && cmp == '1') {
+            this.toggleTool(0)
+        } else if (e.ctrlKey && cmp == '2') {
+            this.toggleTool(1)
+        } else if (e.ctrlKey && cmp == '3') {
+            this.toggleTool(2)
+        } else if (e.ctrlKey && cmp == '4') {
+            this.toggleTool(3)
+        } else if (e.ctrlKey && cmp == '5') {
+            this.toggleTool(4)
+        } else if (e.ctrlKey && cmp == '6') {
+            this.toggleTool(5)
+        } else if (e.ctrlKey && cmp == 'z') {
+            this.undo()
+        } else if (e.ctrlKey && cmp == 'y') {
+            this.redo()
+        } else if (cmp == 'v') {
+            this.visible = !this.visible
+        } else if (cmp == 'delete') {
+            this.deleteObject()
+        }
+
+        if (handled) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
+
     mounted() {
         this.draw = new DrawCanvas(this.$refs.canvas, this.$refs.blur)
         this.loadFonts()
@@ -586,6 +638,10 @@ export default class VideoDrawOverlay extends Vue {
         this.syncToolColors()
 
         window.addEventListener('resize', this.overlayResize)
+
+        this.keydownHandler = this.handleKeypress.bind(this)
+        window.addEventListener('keydown', this.keydownHandler)
+
         Vue.nextTick(() => {
             this.overlayResize()
         })
@@ -593,6 +649,7 @@ export default class VideoDrawOverlay extends Vue {
 
     beforeDestroy() {
         window.removeEventListener('resize', this.overlayResize)
+        window.removeEventListener('keydown', this.keydownHandler)
     }
 
     get overlayStyle(): any {
