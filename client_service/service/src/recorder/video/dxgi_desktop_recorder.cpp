@@ -171,7 +171,7 @@ void DxgiDesktopRecorder::startRecording() {
                 // call to ReleaseFrame.
             }
 
-            HRESULT hr = _dupl->AcquireNextFrame(10, &frameInfo, &desktopResource);
+            HRESULT hr = _dupl->AcquireNextFrame(100, &frameInfo, &desktopResource);
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 reuseOldFrame = true;
                 ++numReused;
