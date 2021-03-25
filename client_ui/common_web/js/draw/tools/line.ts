@@ -1,6 +1,7 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { fabric } from 'fabric'
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class LineTool extends BaseDrawTool {
     _activeLine: fabric.Line | null = null
@@ -15,13 +16,13 @@ export class LineTool extends BaseDrawTool {
         this.refreshSettings()
     }
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         console.log('Activating Line Tool')
-        super.onActive(c)
+        super.onActive(c, blur)
     }
 
-    onInactive(c: fabric.Canvas) {
-        super.onInactive(c)
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
     }
 
     onMouseDown(e: fabric.IEvent) {
@@ -38,7 +39,7 @@ export class LineTool extends BaseDrawTool {
             stroke: colorAToCssString(this._fillColor),
             strokeWidth: this.width
         })
-        this._canvas.add(this._activeLine)
+        this.addObjectToCanvas(this._activeLine)
     }
     
     onMouseMove(e: fabric.IEvent) {
@@ -56,6 +57,9 @@ export class LineTool extends BaseDrawTool {
     }
 
     onMouseUp(e: fabric.IEvent) {
+        if (!!this._activeLine) {
+            this._history?.appendDefaultHistory()
+        }
         this._activeLine = null
     }
 

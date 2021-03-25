@@ -1,17 +1,18 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { fabric } from 'fabric'
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class CircleShapeTool extends BaseDrawTool {
     _activeCircle: fabric.Circle | null = null
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         console.log('Activating Circle Tool')
-        super.onActive(c)
+        super.onActive(c, blur)
     }
 
-    onInactive(c: fabric.Canvas) {
-        super.onInactive(c)
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
     }
 
     get props(): any {
@@ -37,7 +38,7 @@ export class CircleShapeTool extends BaseDrawTool {
             radius: 0,
             ...this.props,
         })
-        this._canvas.add(this._activeCircle)
+        this.addObjectToCanvas(this._activeCircle)
     }
     
     onMouseMove(e: fabric.IEvent) {
@@ -63,6 +64,9 @@ export class CircleShapeTool extends BaseDrawTool {
     }
 
     onMouseUp(e: fabric.IEvent) {
+        if (!!this._activeCircle) {
+            this._history?.appendDefaultHistory()
+        }
         this._activeCircle = null
     }
 

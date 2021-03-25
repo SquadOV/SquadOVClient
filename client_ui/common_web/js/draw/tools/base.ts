@@ -1,11 +1,15 @@
 import { ColorA, getWhiteColor } from '@client/js/color';
 import { fabric } from 'fabric'
+import { BlurDrawContainer } from '@client/js/draw/blur'
+import { DrawActionHistory } from '@client/js/draw/actions/history'
 
 export class BaseDrawTool {
     _fillColor: ColorA = getWhiteColor()
     _outlineColor: ColorA = getWhiteColor()
     _textColor: ColorA = getWhiteColor()
     _canvas: fabric.Canvas | null = null
+    _blur: BlurDrawContainer | null = null
+    _history: DrawActionHistory | null = null
     _borderWidth: number = 2
 
     _mouseDown: (e: fabric.IEvent) => void
@@ -18,14 +22,19 @@ export class BaseDrawTool {
         this._mouseMove = this.onMouseMove.bind(this)
     }
 
-    onActive(c: fabric.Canvas) {
+    setHistory(h: DrawActionHistory) {
+        this._history = h
+    }
+
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         this._canvas = c
         this._canvas.on('mouse:down', this._mouseDown)
         this._canvas.on('mouse:up', this._mouseUp)
         this._canvas.on('mouse:move', this._mouseMove)
+        this._blur = blur
     }
 
-    onInactive(c: fabric.Canvas) {
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
         if (!this._canvas) {
             return
         }
@@ -33,6 +42,14 @@ export class BaseDrawTool {
         this._canvas.off('mouse:up', this._mouseUp)
         this._canvas.off('mouse:move', this._mouseMove)
         this._canvas = null
+        this._blur = null
+    }
+
+    addObjectToCanvas(o: fabric.Object) {
+        if (!this._canvas) {
+            return
+        }
+        this._canvas.add(o)
     }
 
     get borderWidth(): number {

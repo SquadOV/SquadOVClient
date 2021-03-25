@@ -1,6 +1,7 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { fabric } from 'fabric'
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class TextTool extends BaseDrawTool {
     _activeText: fabric.Textbox | null = null
@@ -65,9 +66,9 @@ export class TextTool extends BaseDrawTool {
         this.refreshSettings()
     }
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         console.log('Activating Text Tool')
-        super.onActive(c)
+        super.onActive(c, blur)
 
         if (!!this._canvas) {
             for (let obj of this._canvas.getObjects()) {
@@ -78,7 +79,7 @@ export class TextTool extends BaseDrawTool {
         }
     }
 
-    onInactive(c: fabric.Canvas) {
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
         if (!!this._canvas) {
             for (let obj of this._canvas.getObjects()) {
                 if (obj.get('type') === 'textbox') {
@@ -87,7 +88,7 @@ export class TextTool extends BaseDrawTool {
             }
         }
 
-        super.onInactive(c)
+        super.onInactive(c, blur)
 
         if (!!this._activeText && !!this._canvas) {
             this._canvas.discardActiveObject()
@@ -117,6 +118,7 @@ export class TextTool extends BaseDrawTool {
                 ...this.styleObject
             })
             this._canvas.add(this._activeText)
+            this._history?.appendDefaultHistory()
         }
 
         this._canvas.setActiveObject(this._activeText)

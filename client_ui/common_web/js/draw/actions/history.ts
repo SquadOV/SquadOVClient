@@ -1,18 +1,19 @@
 import { fabric } from 'fabric'
 import { BaseDrawAction } from './base'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class DrawActionHistory {
     _canvas: fabric.Canvas
-    _blurParent: HTMLElement
+    _blur: BlurDrawContainer
 
     _currentState: any = {}
     _actions: BaseDrawAction[]
     _actionPtr: number = -1
 
-    constructor(canvas: fabric.Canvas, blurParent: HTMLElement) {
+    constructor(canvas: fabric.Canvas, blur: BlurDrawContainer) {
         this._canvas = canvas
         this._currentState = this.state
-        this._blurParent = blurParent
+        this._blur = blur
         this._actions = []
     }
 
@@ -34,7 +35,16 @@ export class DrawActionHistory {
     }
 
     get state(): any {
-        return this._canvas.toDatalessJSON()
+        return this._canvas.toDatalessJSON([
+            'blurId',
+            'blurAmount',
+        ])
+    }
+
+    appendDefaultHistory() {
+        console.log('append history')
+        let action = new BaseDrawAction(this.savedState, this.state)
+        this.appendAction(action)
     }
 
     appendAction(a: BaseDrawAction) {
@@ -55,7 +65,7 @@ export class DrawActionHistory {
             return
         }
 
-        this.currentAction.undo(this._canvas, this._blurParent)
+        this.currentAction.undo(this._canvas, this._blur)
         this._actionPtr -= 1
     }
 
@@ -65,6 +75,6 @@ export class DrawActionHistory {
         }
 
         this._actionPtr += 1
-        this.currentAction.redo(this._canvas, this._blurParent)
+        this.currentAction.redo(this._canvas, this._blur)
     }
 }

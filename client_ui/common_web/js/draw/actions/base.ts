@@ -1,3 +1,5 @@
+import { BlurDrawContainer } from '@client/js/draw/blur'
+
 export class BaseDrawAction {
     _pre: any
     _post: any
@@ -7,11 +9,13 @@ export class BaseDrawAction {
         this._post = post
     }
 
-    undo(canvas: fabric.Canvas, blurParent: HTMLElement) {
+    undo(canvas: fabric.Canvas, blurParent: BlurDrawContainer) {
         canvas.loadFromJSON(this._pre, () => {})
+        blurParent.resyncAll()
     }
 
-    redo(canvas: fabric.Canvas, blurParent: HTMLElement) {
+    redo(canvas: fabric.Canvas, blurParent: BlurDrawContainer) {
         canvas.loadFromJSON(this._post, () => {})
+        blurParent.resyncAll()
     }
 }

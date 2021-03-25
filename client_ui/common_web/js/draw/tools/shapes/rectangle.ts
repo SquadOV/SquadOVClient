@@ -1,17 +1,18 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { fabric } from 'fabric'
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class RectangleShapeTool extends BaseDrawTool {
     _activeRectangle: fabric.Rect | null = null
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         console.log('Activating Rectangle Tool')
-        super.onActive(c)
+        super.onActive(c, blur)
     }
 
-    onInactive(c: fabric.Canvas) {
-        super.onInactive(c)
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
     }
 
     get props(): any {
@@ -38,7 +39,7 @@ export class RectangleShapeTool extends BaseDrawTool {
             height: 0,
             ...this.props,
         })
-        this._canvas.add(this._activeRectangle)
+        this.addObjectToCanvas(this._activeRectangle)
     }
     
     onMouseMove(e: fabric.IEvent) {
@@ -61,6 +62,9 @@ export class RectangleShapeTool extends BaseDrawTool {
     }
 
     onMouseUp(e: fabric.IEvent) {
+        if (!!this._activeRectangle) {
+            this._history?.appendDefaultHistory()
+        }
         this._activeRectangle = null
     }
 

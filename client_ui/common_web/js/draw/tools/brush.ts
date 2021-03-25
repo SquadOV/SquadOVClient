@@ -1,6 +1,7 @@
 import { fabric } from 'fabric'
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class BrushTool extends BaseDrawTool {
     _brush: fabric.PencilBrush | null = null
@@ -15,7 +16,8 @@ export class BrushTool extends BaseDrawTool {
         this.refreshSettings()
     }
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onActive(c, blur)
         console.log('Activating Brush Tool')
         if (!this._brush) {
             // @ts-ignore
@@ -27,7 +29,8 @@ export class BrushTool extends BaseDrawTool {
         c.isDrawingMode = true
     }
 
-    onInactive(c: fabric.Canvas) {
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
         c.isDrawingMode = false
     }
 

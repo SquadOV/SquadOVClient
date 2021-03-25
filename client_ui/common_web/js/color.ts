@@ -16,6 +16,15 @@ export function colorAToCssString(c: ColorA): string {
     return `rgba(${c.r}, ${c.g}, ${c.b}, ${c.a})`
 }
 
+export function getTransparentColor(): ColorA{ 
+    return {
+        r: 255,
+        g: 255,
+        b: 255,
+        a: 0.0,
+    }
+}
+
 export function getRedColor(): ColorA {
     return {
         r: 255,

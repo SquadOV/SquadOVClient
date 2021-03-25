@@ -1,17 +1,18 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
 import { fabric } from 'fabric'
 import { colorAToCssString } from '@client/js/color'
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class EllipseShapeTool extends BaseDrawTool {
     _activeEllipse: fabric.Ellipse | null = null
 
-    onActive(c: fabric.Canvas) {
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
         console.log('Activating Ellipse Tool')
-        super.onActive(c)
+        super.onActive(c, blur)
     }
 
-    onInactive(c: fabric.Canvas) {
-        super.onInactive(c)
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
     }
 
     get props(): any {
@@ -38,7 +39,7 @@ export class EllipseShapeTool extends BaseDrawTool {
             ry: 0,
             ...this.props,
         })
-        this._canvas.add(this._activeEllipse)
+        this.addObjectToCanvas(this._activeEllipse)
     }
     
     onMouseMove(e: fabric.IEvent) {
@@ -64,6 +65,9 @@ export class EllipseShapeTool extends BaseDrawTool {
     }
 
     onMouseUp(e: fabric.IEvent) {
+        if (!!this._activeEllipse) {
+            this._history?.appendDefaultHistory()
+        }
         this._activeEllipse = null
     }
 

@@ -1,8 +1,9 @@
 import { BaseDrawTool } from "@client/js/draw/tools/base"
+import { BlurDrawContainer } from '@client/js/draw/blur'
 
 export class SelectTool extends BaseDrawTool {
-    onActive(c: fabric.Canvas) {
-        super.onActive(c)
+    onActive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onActive(c, blur)
         console.log('Activating Select Tool')
         c.selection = true
         for (let o of c.getObjects()) {
@@ -10,8 +11,8 @@ export class SelectTool extends BaseDrawTool {
         }
     }
 
-    onInactive(c: fabric.Canvas) {
-        super.onInactive(c)
+    onInactive(c: fabric.Canvas, blur: BlurDrawContainer) {
+        super.onInactive(c, blur)
         c.selection = false
         c.discardActiveObject()
         for (let o of c.getObjects()) {

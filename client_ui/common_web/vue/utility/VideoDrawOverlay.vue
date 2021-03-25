@@ -398,6 +398,7 @@ import { TextTool } from '@client/js/draw/tools/text'
 import TextToolOptions from '@client/vue/utility/draw/TextToolOptions.vue'
 import { MultiShapeTool } from '@client/js/draw/tools/shapes/shape'
 import ShapeToolOptions from '@client/vue/utility/draw/ShapeToolOptions.vue'
+import { BlurTool } from '@client/js/draw/tools/blur'
 import FontFaceObserver from 'fontfaceobserver'
 
 @Component({
@@ -432,6 +433,7 @@ export default class VideoDrawOverlay extends Vue {
     lineTool: LineTool = new LineTool()
     textTool: TextTool = new TextTool()
     shapeTool: MultiShapeTool = new MultiShapeTool()
+    blurTool: BlurTool = new BlurTool()
 
     draw: DrawCanvas | null = null
     $refs!: {
@@ -529,6 +531,8 @@ export default class VideoDrawOverlay extends Vue {
                 return this.lineTool
             case 4:
                 return this.textTool
+            case 5:
+                return this.blurTool
         }
         return null
     }
