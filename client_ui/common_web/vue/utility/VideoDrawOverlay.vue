@@ -275,6 +275,12 @@
                             :tool="textTool"
                         >
                         </text-tool-options>
+
+                        <blur-tool-options
+                            v-else-if="selectedTool == 5"
+                            :tool="blurTool"
+                        >
+                        </blur-tool-options>
                     </div>
 
                     <v-btn
@@ -408,6 +414,7 @@ import TextToolOptions from '@client/vue/utility/draw/TextToolOptions.vue'
 import { MultiShapeTool } from '@client/js/draw/tools/shapes/shape'
 import ShapeToolOptions from '@client/vue/utility/draw/ShapeToolOptions.vue'
 import { BlurTool } from '@client/js/draw/tools/blur'
+import BlurToolOptions from '@client/vue/utility/draw/BlurToolOptions.vue'
 import FontFaceObserver from 'fontfaceobserver'
 
 @Component({
@@ -417,7 +424,8 @@ import FontFaceObserver from 'fontfaceobserver'
         BrushToolOptions,
         LineToolOptions,
         TextToolOptions,
-        ShapeToolOptions
+        ShapeToolOptions,
+        BlurToolOptions,
     }
 })
 export default class VideoDrawOverlay extends Vue {
