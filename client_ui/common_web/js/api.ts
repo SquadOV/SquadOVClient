@@ -150,6 +150,7 @@ interface ChangeForgottenPasswordInput {
 }
 
 import { storeSessionCookie, getSessionId } from '@client/js/session'
+import { WowDeathRecap } from './wow/deaths'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -860,6 +861,15 @@ class ApiClient {
             characterName: name,
             characterGuid: guid,
         }, this.createWebAxiosConfig(true))
+    }
+    
+    getWowDeathRecap(userId: number, matchUuid: string, eventId: number, seconds: number): Promise<ApiData<WowDeathRecap>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/death/${eventId}`, {
+            params: {
+                seconds,
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
     submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {

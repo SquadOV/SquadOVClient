@@ -8,7 +8,8 @@ export function standardFormatTime(dt : Date | null) : string {
 }
 
 export function secondsToTimeString(totalSeconds : number) : string {
-    totalSeconds = Math.floor(totalSeconds)
+    let negFlag = (totalSeconds < 0) ? '-' : ''
+    totalSeconds = Math.abs(Math.floor(totalSeconds))
     let seconds = totalSeconds % 60
     let minutes = Math.floor(totalSeconds / 60) % 60
     let hours = Math.floor(totalSeconds / 3600)
@@ -18,9 +19,9 @@ export function secondsToTimeString(totalSeconds : number) : string {
     let hoursStr = `${hours}`.padStart(2, '0')
 
     if (hours > 0) {
-        return `${hoursStr}:${minutesStr}:${secondsStr}`
+        return `${negFlag}${hoursStr}:${minutesStr}:${secondsStr}`
     } else {
-        return `${minutesStr}:${secondsStr}`
+        return `${negFlag}${minutesStr}:${secondsStr}`
     }
 }
 
@@ -40,7 +41,9 @@ export function timeStringToSeconds(ts: string): number {
 }
 
 export function millisecondsToTimeString(totalMs : number) : string {
-    totalMs = Math.floor(totalMs)
+    let negFlag = (totalMs < 0) ? '-' : ''
+
+    totalMs = Math.abs(Math.floor(totalMs))
     let ms = totalMs % 1000
     let seconds = Math.floor(totalMs / 1000) % 60
     let minutes = Math.floor(totalMs / 60000) % 60
@@ -52,9 +55,9 @@ export function millisecondsToTimeString(totalMs : number) : string {
     let hoursStr = `${hours}`.padStart(2, '0')
 
     if (hours > 0) {
-        return `${hoursStr}:${minutesStr}:${secondsStr}.${msStr}`
+        return `${negFlag}${hoursStr}:${minutesStr}:${secondsStr}.${msStr}`
     } else {
-        return `${minutesStr}:${secondsStr}.${msStr}`
+        return `${negFlag}${minutesStr}:${secondsStr}.${msStr}`
     }
 }
 

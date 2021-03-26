@@ -129,6 +129,30 @@
                             >
                             </wow-spell-analysis>
                         </v-tab-item>
+
+                        <v-tab>
+                            Players
+                        </v-tab>
+
+                        <v-tab-item>
+                        </v-tab-item>
+
+                        <v-tab>
+                            Deaths
+                        </v-tab>
+
+                        <v-tab-item>
+                            <wow-death-recap-analysis
+                                :match-uuid="matchUuid"
+                                :user-id="userId"
+                                :match-characters="matchCharacters"
+                                :unified-events="filteredEvents"
+                                :start-time="startTime"
+                                :has-vod="!!vod && vodReady"
+                                @go-to-time="goToVodTime"
+                            >
+                            </wow-death-recap-analysis>
+                        </v-tab-item>
                     </v-tabs>
                 </v-row>
             </v-container>
@@ -163,6 +187,7 @@ import WowVodPovPicker from '@client/vue/utility/wow/WowVodPovPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis.vue'
 
 @Component({
     components: {
@@ -176,7 +201,8 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         WowVodPovPicker,
         MatchShareButton,
         WowSpellAnalysis,
-        MatchFavoriteButton
+        MatchFavoriteButton,
+        WowDeathRecapAnalysis,
     }
 })
 export default class WowMatch extends Vue {

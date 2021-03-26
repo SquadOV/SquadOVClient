@@ -1,10 +1,14 @@
-export interface WowUserTarget {
+export interface WowBaseEvent {
+    eventId: number
+}
+
+export interface WowUserTarget extends WowBaseEvent {
     guid: string
     name: string
     flags: number
 }
 
-export interface WowDeath  extends WowUserTarget{
+export interface WowDeath extends WowUserTarget{
     tm: Date
 }
 
