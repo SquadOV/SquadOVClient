@@ -135,6 +135,13 @@
                         </v-tab>
 
                         <v-tab-item>
+                            <wow-players-analysis
+                                :match-uuid="matchUuid"
+                                :user-id="userId"
+                                :match-characters="matchCharacters"
+                                :friendly-team="friendlyTeam"
+                            >
+                            </wow-players-analysis>
                         </v-tab-item>
 
                         <v-tab>
@@ -149,6 +156,7 @@
                                 :unified-events="filteredEvents"
                                 :start-time="startTime"
                                 :has-vod="!!vod && vodReady"
+                                :friendly-team="friendlyTeam"
                                 @go-to-time="goToVodTime"
                             >
                             </wow-death-recap-analysis>
@@ -188,6 +196,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis.vue'
+import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
 
 @Component({
     components: {
@@ -203,6 +212,7 @@ import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis
         WowSpellAnalysis,
         MatchFavoriteButton,
         WowDeathRecapAnalysis,
+        WowPlayersAnalysis
     }
 })
 export default class WowMatch extends Vue {

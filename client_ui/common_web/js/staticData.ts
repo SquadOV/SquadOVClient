@@ -51,6 +51,34 @@ class StaticDataClient {
         return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/spells/${spellId}/icon.png`
     }
 
+    getWowItemDataUrl(itemId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/items/${itemId}/data.json`
+    }
+
+    getWowItemIconUrl(itemId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/items/${itemId}/icon.png`
+    }
+
+    getWowCovenantDataUrl(id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/covenants/${id}/data.json`
+    }
+
+    getWowSoulbindDataUrl(id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/soulbinds/${id}/data.json`
+    }
+
+    getWowConduitDataUrl(id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/conduits/${id}/data.json`
+    }
+
+    getWowTalentDataUrl(id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/talents/${id}/data.json`
+    }
+
+    getWowTalentIconUrl(id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/talents/${id}/icon.png`
+    }
+
     getTftLittleLegendIcon(id: string): string {
         return `${STATIC_CONTENT_BASE_URL}/tft/companions/${id}/portrait.png`
     }

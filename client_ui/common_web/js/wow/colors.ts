@@ -198,3 +198,68 @@ export function spellSchoolToColor(school: number): Color {
             }
     }
 }
+
+const WOW_QUALITY_POOR = 0
+const WOW_QUALITY_COMMON = 1
+const WOW_QUALITY_UNCOMMON = 2
+const WOW_QUALITY_RARE = 3
+const WOW_QUALITY_EPIC = 4
+const WOW_QUALITY_LEGENDARY = 5
+const WOW_QUALITY_ARTIFCAT = 6
+const WOW_QUALITY_HEIRLOOM = 7
+const WOW_QUALITY_TOKEN = 8
+
+export function wowItemQualityToColor(quality: number): Color {
+    switch (quality) {
+        case WOW_QUALITY_POOR:
+            return {
+                r: 157,
+                g: 157,
+                b: 157,
+            }
+        case WOW_QUALITY_UNCOMMON:
+            return {
+                r: 30,
+                g: 255,
+                b: 0,
+            }
+        case WOW_QUALITY_RARE:
+            return {
+                r: 0,
+                g: 112,
+                b: 221,
+            }
+        case WOW_QUALITY_EPIC:
+            return {
+                r: 163,
+                g: 53,
+                b: 238,
+            }
+        case WOW_QUALITY_LEGENDARY:
+            return {
+                r: 255,
+                g: 128,
+                b: 0,
+            }
+        case WOW_QUALITY_ARTIFCAT:
+        case WOW_QUALITY_HEIRLOOM:
+            return {
+                r: 230,
+                g: 204,
+                b: 128,
+            }
+        case WOW_QUALITY_TOKEN:
+            return {
+                r: 0,
+                g: 204,
+                b: 255,
+            }
+        case WOW_QUALITY_COMMON:
+        default:
+            return {
+                r: 255,
+                g: 255,
+                b: 255,
+            }
+    }
+}

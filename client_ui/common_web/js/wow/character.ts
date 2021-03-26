@@ -4,6 +4,83 @@ export interface WowCharacter {
     ilvl: number
     specId: number
     team: number
+    rating: number
+}
+
+export interface WowItem {
+    itemId: number
+    ilvl: number
+}
+
+export function wowItemSlotToName(slot: number): string {
+    switch (slot) {
+        case 0:
+            return 'Unequippable'
+        case 1:
+            return 'Head'
+        case 2:
+            return 'Neck'
+        case 3:
+            return 'Shoulder'
+        case 4:
+            return 'Shirt'
+        case 5: 
+        case 20:
+            return 'Chest'
+        case 6:
+            return 'Waist'
+        case 7:
+            return 'Legs'
+        case 8:
+            return 'Feet'
+        case 9:
+            return 'Wrist'
+        case 10:
+            return 'Hands'
+        case 11:
+            return 'Finger'
+        case 12:
+            return 'Trinket'
+        case 13:
+            return 'One-Hand'
+        case 14:
+        case 22:
+        case 23:
+            return 'Off Hand'
+        case 15:
+        case 26:
+            return 'Ranged'
+        case 16:
+            return 'Back'
+        case 17:
+            return 'Two-Hand'
+        case 18:
+            return 'Bag'
+        case 19:
+            return 'Tabard'
+        case 21:
+            return 'Main Hand'
+        case 24:
+            return 'Ammo'
+        case 25:
+            return 'Thrown'
+    }
+    return 'Unknown Slot'
+}
+
+export interface WowCovenant {
+    covenantId: number
+    soulbindId: number
+    soulbindTraits: number[]
+    conduits: WowItem[]
+}
+
+export interface WowFullCharacter {
+    items: WowItem[]
+    covenant: WowCovenant | null
+    talents: number[]
+    pvpTalents: number[]
+    rating: number
 }
 
 export interface WowClassSpecData {

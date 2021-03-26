@@ -52,7 +52,7 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 import * as root from '@client/js/proto.js'
 import { squadov } from '@client/js/proto'
 import { longNumberToNumber } from '@client/js/long'
-import { WowCharacter, WoWCharacterUserAssociation } from '@client/js/wow/character'
+import { WowCharacter, WoWCharacterUserAssociation, WowFullCharacter } from '@client/js/wow/character'
 import {
     WowEncounter,
     cleanWowEncounterFromJson,
@@ -870,6 +870,10 @@ class ApiClient {
             },
             ...this.createWebAxiosConfig()
         })
+    }
+
+    getWowFullCharacter(userId: number, matchUuid: string, guid: string): Promise<ApiData<WowFullCharacter>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters/${guid}`, this.createWebAxiosConfig())
     }
 
     submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {
