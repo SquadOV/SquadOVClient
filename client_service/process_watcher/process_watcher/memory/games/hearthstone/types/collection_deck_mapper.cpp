@@ -13,6 +13,7 @@ const std::string COLLECTION_DECK_HERO_PREMIUM_FIELD_NAME("HeroPremium");
 const std::string COLLECTION_DECK_TYPE_FIELD_NAME("Type");
 const std::string COLLECTION_DECK_CREATE_DATE_FIELD_NAME("CreateDate");
 const std::string COLLECTION_DECK_IS_WILD_FIELD_NAME("m_isWild");
+const std::string COLLECTION_DECK_FORMAT_TYPE_FIELD_NAME("<FormatType>k__BackingField");
 const std::string COLLECTION_DECK_SLOTS_FIELD_NAME("m_slots");
 
 }
@@ -85,8 +86,8 @@ uint64_t CollectionDeckMapper::createDate() const {
 }
 
 bool CollectionDeckMapper::isWild() const {
-    const auto value = _object->get(COLLECTION_DECK_IS_WILD_FIELD_NAME);
-    return value.get<uint8_t>();
+    const auto value = _object->get(COLLECTION_DECK_FORMAT_TYPE_FIELD_NAME);
+    return static_cast<FormatType>(value.get<int32_t>()) == FormatType::Wild;
 }
 
 std::vector<CollectionDeckSlotMapperSPtr> CollectionDeckMapper::slots() const {

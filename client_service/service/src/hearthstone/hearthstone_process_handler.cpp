@@ -245,6 +245,11 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         );
     } catch (const std::exception& ex) {
         LOG_WARNING("Failed to create Hearthstone match: " << ex.what() << std::endl);
+        _inGame = false;
+        _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
+        if (_recorder->isRecording()) {
+            _recorder->stop({});
+        }
         return;
     }
 

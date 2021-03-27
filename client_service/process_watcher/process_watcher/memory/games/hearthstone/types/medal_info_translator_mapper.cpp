@@ -1,10 +1,10 @@
 #include "process_watcher/memory/games/hearthstone/types/medal_info_translator_mapper.h"
+#include "process_watcher/memory/mono/types/map_mapper.h"
 
 namespace process_watcher::memory::games::hearthstone::types {
 namespace {
 
 const std::string CURRENT_MEDAL_FIELD_NAME = "m_currMedalInfo";
-const std::string CURRENT_WILD_MEDAL_FIELD_NAME = "m_currWildMedalInfo";
 
 }
 
@@ -13,30 +13,28 @@ MedalInfoTranslatorMapper::MedalInfoTranslatorMapper(const process_watcher::memo
 
 }
 
-TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentMedalInfo() const {
-    if (!_object) {
-        return nullptr;
-    }
-    const auto value = _object->get(CURRENT_MEDAL_FIELD_NAME);
-    if (value.isNull()) {
-        return nullptr;
-    }
-    return std::make_shared<TranslatedMedalInfoMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
+TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentStandardMedalInfo() const {
+    const auto mapping = currentMedalInfo();
+    return mapping.at(static_cast<int>(FormatType::Standard));
 }
 
 TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentWildMedalInfo() const {
-    if (!_object) {
-        return nullptr;
-    }
-    const auto value = _object->get(CURRENT_WILD_MEDAL_FIELD_NAME);
+    const auto mapping = currentMedalInfo();
+    return mapping.at(static_cast<int>(FormatType::Wild));
+}
+
+std::unordered_map<int32_t, TranslatedMedalInfoMapperSPtr> MedalInfoTranslatorMapper::currentMedalInfo() const {
+    const auto value = _object->get(CURRENT_MEDAL_FIELD_NAME);
     if (value.isNull()) {
-        return nullptr;
+        return {};
     }
-    return std::make_shared<TranslatedMedalInfoMapper>(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
+
+    const process_watcher::memory::mono::types::MapMapper<int32_t, TranslatedMedalInfoMapperSPtr> mapper(value.get<process_watcher::memory::mono::MonoObjectMapperSPtr>());
+    return mapper.values();
 }
 
 nlohmann::json MedalInfoTranslatorMapper::toJson() const {
-    const auto standard = currentMedalInfo();
+    const auto standard = currentStandardMedalInfo();
     const auto wild = currentWildMedalInfo();
 
     if (!standard) {
@@ -54,7 +52,7 @@ nlohmann::json MedalInfoTranslatorMapper::toJson() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const MedalInfoTranslatorMapper& map) {
-    const auto standard = map.currentMedalInfo();
+    const auto standard = map.currentStandardMedalInfo();
     const auto wild = map.currentWildMedalInfo();
 
     os << "{Standard: ";

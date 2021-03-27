@@ -23,6 +23,13 @@ enum class DeckType {
     Hidden = 1000
 };
 
+enum class FormatType {
+    Unknown = 0,
+    Wild = 1,
+    Standard = 2,
+    Classic = 3
+};
+
 std::string deckTypeToString(DeckType typ);
 
 
