@@ -30,7 +30,7 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) = 0;
+    virtual void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
     
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;

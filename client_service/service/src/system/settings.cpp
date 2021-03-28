@@ -19,6 +19,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.outputVolume = obj["outputVolume"].get<double>();
     settings.inputDevice = obj["inputDevice"].get<std::string>();
     settings.inputVolume = obj["inputVolume"].get<double>();
+    settings.useVfr = obj.value("useVfr", false);
     return settings;
 }
 

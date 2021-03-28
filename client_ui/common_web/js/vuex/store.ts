@@ -68,6 +68,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeUseVfr(state: RootState, b: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useVfr = b
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
 /// #if DESKTOP
             if (!state.settings) {

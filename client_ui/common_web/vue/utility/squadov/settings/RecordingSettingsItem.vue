@@ -79,6 +79,27 @@
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
+
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="useVfr"
+                            @change="changeUseVfr"
+                            hide-details
+                            label="Use Variable Framerate"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to allow the creation of a video file with variable frame rate.
+                                    This may help your videos be smoother if your computer is unable to handle the load of recording at your specified resolution and FPS.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
                     </v-col>
                 </v-row>
 
@@ -332,6 +353,14 @@ export default class RecordingSettingsItem extends Vue {
 
     changeUseHwEncoder(val: boolean) {
         this.$store.commit('changeUseHwEncoder', val)
+    }
+
+    get useVfr(): boolean {
+        return this.$store.state.settings.record.useVfr
+    }
+
+    changeUseVfr(val: boolean) {
+        this.$store.commit('changeUseVfr', val)
     }
 
     get hasSettings(): boolean {

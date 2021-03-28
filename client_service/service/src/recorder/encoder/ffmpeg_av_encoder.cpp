@@ -83,7 +83,7 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder);
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
 #ifdef _WIN32
@@ -177,6 +177,7 @@ private:
     std::shared_mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
     size_t _fps = 0;
+    bool _useVfr = false;
 
     FfmpegVideoSwapChainPtr _videoSwapChain;
 
@@ -320,7 +321,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) {
+void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -479,6 +480,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     _videoSwapChain->initializeGpuSupport(d3d);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = fps;
+    _useVfr = useVfr;
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
 
@@ -635,7 +637,14 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     const auto numFramesToEncode = numVideoFramesToEncode();
     if (numFramesToEncode >= _fps) {
         LOG_WARNING("Encoding > 1 minute worth of frames at a single time: " << numFramesToEncode << std::endl);
+    } else if (!numFramesToEncode) {
+        LOG_WARNING("Attempting to encode 0 frames...ignoring." << std::endl);
+        return;
     }
+
+    // This is 1 greater than the actual pts to send to FFmpeg.
+    // I.e. when we're at frame 0 and we want to encode 1 frame,
+    // start at frame 0 and not at frame 1.
     const auto desiredFrameNum = _vFrameNum + numFramesToEncode;
 
     _videoSwapChain->swap();
@@ -643,16 +652,22 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     AVFrame* frame = _videoSwapChain->getFrontBufferFrame();
     if (_videoSwapChain->hasValidFrontBuffer()) {
         ++_processedVideoFrames;
+    } else {
+        LOG_WARNING("Invalid front buffer...ignoring." << std::endl);
+        return;
     }
 
+    if (_useVfr) {
+        _vFrameNum = desiredFrameNum - 1;
+    }
 
     service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
     auto immediate = d3d->immediateContext();
 
-    frame->pts = desiredFrameNum;
-    frame->pkt_duration = numFramesToEncode;
-    _vFrameNum = desiredFrameNum;
-    encode(_vcodecContext, frame, _vstream);
+    for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
+        frame->pts = _vFrameNum;
+        encode(_vcodecContext, frame, _vstream);
+    }
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
@@ -718,7 +733,6 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
             }
 
             _aframe->pts = _aFrameNum;
-            _aframe->pkt_duration = 1;
             _aFrameNum += frameSize;
             encode(_acodecContext, _aframe, _astream);
         }
@@ -918,8 +932,8 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder) {
-    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder);
+void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr) {
+    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder, useVfr);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
