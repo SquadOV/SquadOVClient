@@ -121,7 +121,7 @@ export default class WowDeathRecapAnalysis extends Vue {
     spellIdNames: {[id: number]: string} = {}
 
     goToEvent(e: WowDeathRecapEvent) {
-        let tm = this.startTime.getTime() + e.diffMs
+        let tm = e.tm.getTime() + e.diffMs
         this.$emit('go-to-time', new Date(tm))
     }
 

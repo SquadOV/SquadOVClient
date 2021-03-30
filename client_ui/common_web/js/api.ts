@@ -150,7 +150,7 @@ interface ChangeForgottenPasswordInput {
 }
 
 import { storeSessionCookie, getSessionId } from '@client/js/session'
-import { WowDeathRecap } from './wow/deaths'
+import { WowDeathRecap, cleanWowDeathRecapFromJson } from './wow/deaths'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -869,6 +869,9 @@ class ApiClient {
                 seconds,
             },
             ...this.createWebAxiosConfig()
+        }).then((resp: ApiData<WowDeathRecap>) => {
+            cleanWowDeathRecapFromJson(resp.data)
+            return resp
         })
     }
 
