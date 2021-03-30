@@ -346,6 +346,7 @@ export default class VideoPlayer extends Vue {
             }
             let newParent = this.player.el()
             newParent.appendChild(this.$refs.overlay.$el)
+            this.player.pause()
         })
     }
 
