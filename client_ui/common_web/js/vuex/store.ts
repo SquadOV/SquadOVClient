@@ -135,6 +135,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        setMinimizeOnClose(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.minimizeOnClose = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         setSetupWizardRun(state: RootState, v: boolean) {
 /// #if DESKTOP
             if (!state.settings) {

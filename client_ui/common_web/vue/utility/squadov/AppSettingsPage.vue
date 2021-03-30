@@ -39,6 +39,15 @@
                     label="Minimize SquadOV to system tray"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="minimizeOnClose"
+                    @change="changeMinimizeOnClose"
+                    dense
+                    hide-details
+                    label="Minimize SquadOV on close"
+                >
+                </v-checkbox>
             </v-tab-item>
         </v-tabs>
     </v-container>
@@ -79,6 +88,14 @@ export default class AppSettingsPage extends Vue {
 
     changeMinimizeToTray(v: boolean) {
         this.$store.commit('setMinimizeToSystemTray', v)
+    }
+
+    get minimizeOnClose() : boolean {
+        return this.$store.state.settings.minimizeOnClose
+    }
+
+    changeMinimizeOnClose(v: boolean) {
+        this.$store.commit('setMinimizeOnClose', v)
     }
 }
 

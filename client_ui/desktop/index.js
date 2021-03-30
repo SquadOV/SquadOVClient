@@ -60,11 +60,18 @@ if (!singleLock) {
 function start() {
     win.loadFile('index.html')
 
+    win.on('minimize', (e) => {
+        if (!!appSettings.minimizeToTray) {
+            e.preventDefault()
+            win.hide()
+        }
+    })
+
     win.on('close', (e) => {
         if (!isQuitting) {
-            if (!!appSettings.minimizeToTray) {
+            if (!!appSettings.minimizeOnClose) {
                 e.preventDefault()
-                win.hide()
+                win.minimize()
             } else {
                 quit()
             }

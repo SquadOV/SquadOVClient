@@ -1,5 +1,6 @@
 #include "system/settings.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/errors/error.h"
 #include <fstream>
 
 namespace service::system {
@@ -34,9 +35,13 @@ Settings::Settings() {
 }
 
 void Settings::reloadSettingsFromFile() {
-    std::ifstream ifs(shared::filesystem::getSquadOvUserSettingsFile());
-    const auto obj = nlohmann::json::parse(ifs);
-    _settings = LocalSettings::fromJson(obj);
+    try {
+        std::ifstream ifs(shared::filesystem::getSquadOvUserSettingsFile());
+        const auto obj = nlohmann::json::parse(ifs);
+        _settings = LocalSettings::fromJson(obj);
+    } catch (std::exception& ex) {
+        THROW_ERROR("Failed to read settings: " << ex.what() << std::endl);
+    }
 }
 
 }

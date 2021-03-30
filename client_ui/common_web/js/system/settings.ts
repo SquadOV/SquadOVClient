@@ -20,6 +20,7 @@ export interface SquadOvRecordingSettings {
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
     minimizeToTray: boolean
+    minimizeOnClose: boolean
     runOnStartup: boolean
     setupWizardRun: boolean
 }
@@ -113,6 +114,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
     return {
         record,
         minimizeToTray: true,
+        minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false
     }
@@ -130,6 +132,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             inputVolume: 1.0,
         },
         minimizeToTray: true,
+        minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false
     }
@@ -145,7 +148,15 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     }
 
     let data = fs.readFileSync(settingsFname , 'utf8')
-    let parsedData = JSON.parse(data)
+    
+    let parsedData
+    try {
+        parsedData = JSON.parse(data)
+    } catch (e) {
+        console.log('Failed to load local settings: ', e)
+        fs.unlinkSync(settingsFname)
+        return loadLocalSettings()
+    }
 
     if (!parsedData.record.outputDevice) {
         parsedData.record.outputDevice = 'Default Device'
@@ -165,6 +176,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.minimizeToTray === undefined) {
         parsedData.minimizeToTray = true
+    }
+
+    if (parsedData.minimizeOnClose === undefined) {
+        parsedData.minimizeOnClose = true
     }
 
     if (parsedData.runOnStartup === undefined) {
