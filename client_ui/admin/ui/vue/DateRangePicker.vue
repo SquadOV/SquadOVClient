@@ -20,7 +20,7 @@
             
             <v-date-picker
                 :value="startDateIso"
-                @input="$emit('update:startDate', new Date(arguments[0]))"
+                @input="updateDate(arguments[0], true)"
             >
             </v-date-picker>
         </v-menu>
@@ -49,7 +49,7 @@
             
             <v-date-picker
                 :value="endDateIso"
-                @input="$emit('update:endDate', new Date(arguments[0]))"
+                @input="updateDate(arguments[0], false)"
             >
             </v-date-picker>
         </v-menu>
@@ -75,8 +75,20 @@ export default class DateRangePicker extends Vue {
     endDate!: Date
     showEndSelector: boolean = false
 
+    updateDate(dd: string, isStart: boolean) {
+        let tokens = dd.split('-')
+        let newDate = new Date()
+        newDate.setUTCFullYear(parseInt(tokens[0]), parseInt(tokens[1])-1, parseInt(tokens[2]))
+        newDate.setUTCHours(0, 0, 0, 0)
+        if (isStart) {
+            this.$emit('update:startDate', newDate)
+        } else {
+            this.$emit('update:endDate', newDate)
+        }
+    }
+
     get startDateStr(): string {
-        return format(this.startDate, 'MM/dd/yyyy')
+        return `${this.startDate.getUTCMonth()+1}/${this.startDate.getUTCDate()}/${this.startDate.getUTCFullYear()}`
     }
 
     get startDateIso(): string {
@@ -84,7 +96,7 @@ export default class DateRangePicker extends Vue {
     }
 
     get endDateStr(): string {
-        return format(this.endDate, 'MM/dd/yyyy')
+        return `${this.endDate.getUTCMonth()+1}/${this.endDate.getUTCDate()}/${this.endDate.getUTCFullYear()}`
     }
 
     get endDateIso(): string {

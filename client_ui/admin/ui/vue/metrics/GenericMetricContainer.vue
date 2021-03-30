@@ -127,7 +127,7 @@ export default class GenericMetricContainer extends Vue {
         }
 
         return this.data.map((ele: MetricDatum) => ({
-            tm: format(ele.tm, 'MM/dd/yyyy'),
+            tm: `${ele.tm.getUTCMonth()+1}/${ele.tm.getUTCDate()}/${ele.tm.getUTCFullYear()}`,
             ...ele.data,
         }))
     }
