@@ -1,4 +1,10 @@
 {
+	"Astra": {
+        "GrenadeAbility": "Gravity Well",
+        "Ability1": "Nova Pulse",
+        "Ability2": "Nebula",
+        "Ultimate": "Cosmic Divide"
+    },
     "Breach": {
         "GrenadeAbility": "Aftershock",
         "Ability1": "Flashpoint",
