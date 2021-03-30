@@ -3,6 +3,8 @@ export interface WowDeathRecapEvent {
     diffMs: number
     diffHp: number
     spellId: number | null
+    sourceGuid: string | null
+    sourceName: string | null
 }
 
 export interface WowDeathRecap {

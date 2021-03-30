@@ -27,48 +27,67 @@
                 <template v-slot:default="{item}">
                     <v-list-item
                         dense
-                        class="justify-center"
                     >
                         <v-list-item-content class="death-content">
-                            <div class="text-subtitle-2 font-weight-bold">
-                                {{ secondsToTimeString(item.diffMs / 1000.0) }}
-                            </div>
-                        </v-list-item-content>
-
-                        <v-list-item-content class="death-content mx-8">
-                            <div class="d-flex align-center justify-center">
-                                <div :class="`text-subtitle-2 font-weight-bold ${(item.diffHp > 0) ? 'heal-text': 'damage-text'}`">
-                                    {{ item.diffHp }}
-                                </div>
-
-                                <v-img
-                                    class="mx-2"
-                                    width="32"
-                                    height="32"
-                                    max-width="32"
-                                    max-height="32"
-                                    contain
-                                    :src="$root.generateAssetUri(spellIdIcon(sanitizeSpellId(item.spellId)))"
-                                >
-                                </v-img>
-
+                            <div class="d-flex align-center">
                                 <div class="text-subtitle-2 font-weight-bold">
-                                    {{ spellIdNames[sanitizeSpellId(item.spellId)] }}
+                                    Source: 
+                                </div>
+
+                                <template v-if="!!item.sourceGuid && characterGuidMapping.has(item.sourceGuid)">
+                                    <wow-character-display
+                                        :character="characterGuidMapping.get(item.sourceGuid)"
+                                    >
+                                    </wow-character-display>
+                                </template>
+
+                                <div class="text-subtitle-2" v-else>
+                                    {{ item.sourceName }}
                                 </div>
                             </div>
                         </v-list-item-content>
+                        <div class="d-flex flex-grow-1 justify-center">
+                            <v-list-item-content class="death-content">
+                                <div class="text-subtitle-2 font-weight-bold">
+                                    {{ secondsToTimeString(item.diffMs / 1000.0) }}
+                                </div>
+                            </v-list-item-content>
 
-                        <v-list-item-action>
-                            <v-btn
-                                outlined
-                                fab
-                                small
-                                color="white"
-                                @click="goToEvent(item)"
-                            >
-                                <v-icon>mdi-play</v-icon>
-                            </v-btn>
-                        </v-list-item-action>
+                            <v-list-item-content class="death-content mx-8">
+                                <div class="d-flex align-center justify-center">
+                                    <div :class="`text-subtitle-2 font-weight-bold ${(item.diffHp > 0) ? 'heal-text': 'damage-text'}`">
+                                        {{ item.diffHp }}
+                                    </div>
+
+                                    <v-img
+                                        class="mx-2"
+                                        width="32"
+                                        height="32"
+                                        max-width="32"
+                                        max-height="32"
+                                        contain
+                                        :src="$root.generateAssetUri(spellIdIcon(sanitizeSpellId(item.spellId)))"
+                                    >
+                                    </v-img>
+
+                                    <div class="text-subtitle-2 font-weight-bold">
+                                        {{ spellIdNames[sanitizeSpellId(item.spellId)] }}
+                                    </div>
+                                </div>
+                            </v-list-item-content>
+
+                            <v-list-item-action>
+                                <v-btn
+                                    outlined
+                                    fab
+                                    small
+                                    color="white"
+                                    @click="goToEvent(item)"
+                                >
+                                    <v-icon>mdi-play</v-icon>
+                                </v-btn>
+                            </v-list-item-action>
+                        </div>
                     </v-list-item>
                 </template>
             </v-virtual-scroll>
@@ -112,6 +131,9 @@ export default class WowDeathRecapAnalysis extends Vue {
     character!: WowCharacter
 
     @Prop({required: true})
+    matchCharacters!: WowCharacter[]
+
+    @Prop({required: true})
     death!: WowDeath
 
     @Prop({required: true})    
@@ -119,6 +141,14 @@ export default class WowDeathRecapAnalysis extends Vue {
 
     recap: WowDeathRecap | null = null
     spellIdNames: {[id: number]: string} = {}
+
+    get characterGuidMapping(): Map<string, WowCharacter> {
+        let ret = new Map()
+        for (let c of this.matchCharacters) {
+            ret.set(c.guid, c)
+        }
+        return ret
+    }
 
     goToEvent(e: WowDeathRecapEvent) {
         let tm = e.tm.getTime() + e.diffMs

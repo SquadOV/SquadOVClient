@@ -30,6 +30,7 @@
                     :match-uuid="matchUuid"
                     :user-id="userId"
                     :character="packet.char"
+                    :match-characters="matchCharacters"
                     :death="packet.death"
                     :start-time="startTime"
                     @go-to-time="$emit('go-to-time', arguments[0])"
