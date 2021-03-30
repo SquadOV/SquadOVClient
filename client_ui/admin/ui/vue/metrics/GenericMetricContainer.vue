@@ -44,7 +44,6 @@ import { Interval } from '@client/ts/interval'
 import { Metrics, MetricDatum, getMetricData } from '@client/ts/metrics'
 import DateRangePicker from '@client/vue/DateRangePicker.vue'
 import TimeIntervalSelect from '@client/vue/TimeIntervalSelect.vue'
-import format from 'date-fns/format'
 
 import * as echarts from 'echarts/lib/echarts.js'
 import 'echarts/lib/chart/line'
@@ -173,7 +172,7 @@ export default class GenericMetricContainer extends Vue {
             series: sub.map((s: string) => {
                 return {
                     data: this.data!.map((e: MetricDatum) => {
-                        return [format(e.tm, 'MM/dd/yyyy'), e.data[s]]
+                        return [`${e.tm.getUTCMonth()+1}/${e.tm.getUTCDate()}/${e.tm.getUTCFullYear()}`, e.data[s]]
                     }),
                     name: s,
                     type: 'line',

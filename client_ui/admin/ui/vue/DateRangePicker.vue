@@ -63,7 +63,6 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import format from 'date-fns/format'
 
 @Component
 export default class DateRangePicker extends Vue {
