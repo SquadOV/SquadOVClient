@@ -18,15 +18,15 @@
             </slot>
         </div>
 
-        <div class="clip-div" v-if="hasClipHandles" :style="clipBarStyle">
+        <div class="clip-div" v-if="hasClipHandles" :style="clipBarStyle" @mousedown="startMove" @mouseup="endMove">
             <div
                 class="clip-start-div"
-                @mousedown="moveStart = true"
+                @mousedown.stop="moveStart = true"
                 @mouseup="moveStart = false"
             ></div>
             <div
                 class="clip-end-div"
-                @mousedown="moveEnd = true"
+                @mousedown.stop="moveEnd = true"
                 @mouseup="moveEnd = false"
             ></div>
         </div>
@@ -134,6 +134,8 @@ export default class GenericMatchTimeline extends Vue {
 
     moveStart: boolean = false
     moveEnd: boolean = false
+    diffStart: number = 0
+    diffEnd: number = 0
 
     tooltipX: number = 0
     tooltipY: number = 0
@@ -150,7 +152,21 @@ export default class GenericMatchTimeline extends Vue {
         return {
             'width': `calc(${clipEndPercentage - clipStartPercentage}%)`,
             'left': `calc(${clipStartPercentage}%)`,
+            'cursor': 'pointer',
         }
+    }
+
+    startMove(e: MouseEvent) {
+        let currentTime = this.computeTimeFromMouseEvent(e)
+        this.diffStart = this.clipStartHandle - currentTime
+        this.diffEnd = this.clipEndHandle - currentTime
+        this.moveStart = true
+        this.moveEnd = true
+    }
+
+    endMove() {
+        this.moveStart = false
+        this.moveEnd = false
     }
 
     clearMouseMoveHandlers() {
@@ -211,12 +227,26 @@ export default class GenericMatchTimeline extends Vue {
         }
         this.lastMouseMove = now
 
+        let currentTime = this.computeTimeFromMouseEvent(e)
+        let moveBoth = this.moveStart && this.moveEnd
+        
+        let newStart: number
+        let newEnd: number
+
+        if (moveBoth) {
+            newStart = currentTime + this.diffStart
+            newEnd = currentTime + this.diffEnd
+        } else {
+            newStart = currentTime
+            newEnd = currentTime
+        }
+
         if (this.moveStart) {
-            this.$emit('update:clipStartHandle', this.computeTimeFromMouseEvent(e))
+            this.$emit('update:clipStartHandle', newStart)
         }
 
         if (this.moveEnd) {
-            this.$emit('update:clipEndHandle', this.computeTimeFromMouseEvent(e))
+            this.$emit('update:clipEndHandle', newEnd)
         }
 
         if (this.seeking && !this.moveStart && !this.moveEnd) {
