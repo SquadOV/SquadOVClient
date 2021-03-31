@@ -88,6 +88,7 @@ const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPag
 const ClipLibrary = () => import('@client/vue/utility/vods/ClipLibrary.vue')
 const ClipView = () => import('@client/vue/utility/vods/ClipView.vue')
 const SetupWizard = () => import('@client/vue/SetupWizard.vue')
+const Player = () => import('@client/vue/Player.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -115,6 +116,15 @@ const baseRoutes : any[] = [
         props: (route: any) => ({
             videoUuid: route.params.videoUuid,
             game: parseInt(route.query.game),
+        })
+    },
+    {
+        path: '/player/:vodUuid',
+        name: pi.PlayerPageId,
+        component: Player,
+        props: (route: any) => ({
+            vodUuid: route.params.vodUuid,
+            share: route.query.share,
         })
     },
     {
@@ -538,7 +548,7 @@ const baseRoutes : any[] = [
                 props: (route: any) => ({
                     clipUuid: route.params.clipUuid
                 })
-            }
+            },
         ]
     }
 ]
@@ -568,7 +578,7 @@ router.beforeEach((to : any, from : any, next : any) => {
     }
 
     // Allow OAuth requests, squad invite responses, and shared pages to always go through regardless of whether the user is signed in or not.
-    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId || to.name === pi.VerifyEmailPageId) {
+    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId || to.name === pi.VerifyEmailPageId || to.name === pi.PlayerPageId) {
         next()
         return
     }

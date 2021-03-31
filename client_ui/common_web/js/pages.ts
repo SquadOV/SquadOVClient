@@ -45,3 +45,4 @@ export const SettingsPageId = 'settings'
 
 export const ClipLibraryPageId = 'clipLibrary'
 export const ClipPageId = 'clip'
+export const PlayerPageId = 'player'

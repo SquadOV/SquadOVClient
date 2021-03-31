@@ -451,6 +451,13 @@ class ApiClient {
         })
     }
 
+    findVodFromVideoUuid(videoUuid: string) : Promise<ApiData<VodAssociation>> {
+        return axios.get(`v1/vod/${videoUuid}/assoc`, this.createWebAxiosConfig(true)).then((resp : ApiData<VodAssociation>) => {
+            cleanVodAssocationData(resp.data)
+            return resp
+        })
+    }
+
     getVodManifest(videoUuid: string) : Promise<ApiData<VodManifest>> {
         return axios.get(`v1/vod/${videoUuid}`, this.createWebAxiosConfig(true))
     }
