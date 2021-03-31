@@ -253,11 +253,6 @@ void GameRecorder::cleanDvrSession(const std::string& id) {
 }
 
 void GameRecorder::loadCachedInfo() {
-    if (_process.empty()) {
-        LOG_ERROR("Failed to load cached info from empty process." << std::endl);
-        return;
-    }
-
     if (!_cachedRecordingSettings) {
         LOG_INFO("Load cache info: Settings" << std::endl);
         // Just in case the user changed it in the UI already, just sync up via the file.
@@ -265,7 +260,7 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
     }
 
-    if (!_cachedWindowInfo || !_cachedWindowInfo->init) {
+    if (!_process.empty() && (!_cachedWindowInfo || !_cachedWindowInfo->init)) {
         LOG_INFO("Load cache info: Window Information" << std::endl);
         std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
             video::VideoWindowInfo ret;
@@ -301,7 +296,7 @@ void GameRecorder::loadCachedInfo() {
     }
     LOG_INFO("Finish loading cache info." << std::endl);
 
-    if (!_cachedRecordingSettings || !_cachedWindowInfo || !_cachedWindowInfo->init) {
+    if (!_cachedRecordingSettings || (!_process.empty() && (!_cachedWindowInfo || !_cachedWindowInfo->init))) {
         THROW_ERROR("Failed to create cached info objects.");
     }
 }
@@ -577,6 +572,7 @@ VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath
     }
 
     _currentId = createNewVodIdentifier();
+    loadCachedInfo();
     initializeFileOutputPiper();
     _outputPiper->start();
 

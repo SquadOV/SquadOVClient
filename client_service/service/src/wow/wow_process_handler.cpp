@@ -188,6 +188,10 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
 }
 
 void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, const void* data) {
+    if (inChallenge() && _combatants.empty()) {
+        _expectingCombatants = true;
+    }
+
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }

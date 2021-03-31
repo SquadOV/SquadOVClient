@@ -147,7 +147,6 @@ HttpResponsePtr HttpRequest::execute() {
     } else {
         resp->body = std::string(_errBuffer);
     }
-
     
     return resp;
 }
