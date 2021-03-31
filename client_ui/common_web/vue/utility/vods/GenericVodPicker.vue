@@ -23,22 +23,28 @@
             </div>
         </div>
 
-        <v-tooltip bottom :open-delay="1000">
-            <template v-slot:activator="{on, attrs}">
-                <div
-                    v-if="!hasFastify"
-                    v-on="on"
-                    v-bind="attrs"
-                >
-                    <v-progress-circular
-                        indeterminate size="16"
-                    >
-                    </v-progress-circular>
-                </div>
-            </template>
+        <div class="d-flex align-center">
+            <div class="text-subtitle-2 font-weight-bold">
+                VOD Processing...
+            </div>
 
-            This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
-        </v-tooltip>
+            <v-tooltip bottom :open-delay="100">
+                <template v-slot:activator="{on, attrs}">
+                    <div
+                        v-if="!hasFastify"
+                        v-on="on"
+                        v-bind="attrs"
+                    >
+                        <v-progress-circular
+                            indeterminate size="16"
+                        >
+                        </v-progress-circular>
+                    </div>
+                </template>
+
+                This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
+            </v-tooltip>
+        </div>
 
         <template v-if="!!$store.state.currentUser">
             <v-divider vertical class="mx-2"></v-divider>
