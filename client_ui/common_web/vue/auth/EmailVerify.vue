@@ -55,6 +55,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 import { apiClient, ApiData, CheckVerificationOutput } from '@client/js/api'
 import * as pi from '@client/js/pages'
 
@@ -64,6 +65,9 @@ import { ipcRenderer } from 'electron'
 
 @Component
 export default class EmailVerify extends Vue {
+    @Prop({default: true})
+    ipc!: boolean
+
     showHideSent: boolean = false
     showHideError: boolean = false
     errorMessage: string = ''
@@ -84,8 +88,14 @@ export default class EmailVerify extends Vue {
     checkVerification() {
         apiClient.checkVerification().then((resp : ApiData<CheckVerificationOutput>) => {
             if (!!resp.data.verified) {
-/// #if DESKTOP                
-                ipcRenderer.send('finish-login')
+/// #if DESKTOP
+                if (this.ipc) {
+                    ipcRenderer.send('finish-login')
+                } else {
+                    this.$router.replace({
+                        name: pi.DashboardPageId,
+                    })    
+                }
 /// #else
                 this.$router.replace({
                     name: pi.DashboardPageId,
