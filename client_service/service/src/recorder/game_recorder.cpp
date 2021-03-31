@@ -389,6 +389,8 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << std::endl);
 
     _currentId = createNewVodIdentifier();
+    loadCachedInfo();
+
     try {
         initializeFileOutputPiper();
     } catch (std::exception& ex) {
@@ -396,8 +398,6 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         LOG_ERROR("Failed to initialize output piper...ignoring start recording command: " << ex.what() << std::endl);
         return;
     }
-    
-    loadCachedInfo();
 
     if (!areInputStreamsInitialized()) {
         LOG_INFO("Initialize input streams..." << std::endl);
@@ -660,6 +660,7 @@ void GameRecorder::initializeFileOutputPiper() {
 
 void GameRecorder::setFileOutputFromUri(const std::string& videoUuid, const std::string& uri) {
     _outputPiper = pipe::createFileOutputPiper(videoUuid, uri);
+    _outputPiper->setMaxUploadSpeed(_cachedRecordingSettings->maxUploadSpeed);
 }
 
 shared::squadov::VodMetadata GameRecorder::getMetadata() const {

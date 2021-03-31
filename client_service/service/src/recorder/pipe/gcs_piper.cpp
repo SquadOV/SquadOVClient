@@ -89,6 +89,12 @@ GCSPiper::~GCSPiper() {
     flush();
 }
 
+void GCSPiper::setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {
+    if (bytesPerSec.has_value()) {
+        _httpClient->setMaxUploadBytesPerSec(bytesPerSec.value());
+    }
+}
+
 void GCSPiper::copyDataIntoInternalBuffer(std::vector<char>& buffer) {
     std::unique_lock<std::mutex> guard(_gcsMutex);
     if (_gcsBuffer.size() >= 0) {

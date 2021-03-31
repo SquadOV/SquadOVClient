@@ -47,6 +47,7 @@ public:
     ~GCSPiper();
 
     std::string sessionId() const override { return _sessionUri; }
+    void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
 
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;

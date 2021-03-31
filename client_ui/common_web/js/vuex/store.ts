@@ -153,6 +153,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        setMaxUploadSpeed(state: RootState, v: number | null) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.maxUploadSpeed = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         markValidSession(state: RootState, v: boolean) {
             state.hasValidSession = v
         },

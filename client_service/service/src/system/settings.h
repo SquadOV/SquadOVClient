@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 namespace service::system {
 
@@ -16,6 +17,8 @@ struct RecordingSettings {
     double outputVolume;
     std::string inputDevice;
     double inputVolume;
+
+    std::optional<size_t> maxUploadSpeed;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

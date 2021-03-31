@@ -195,6 +195,57 @@
                         </div>
                     </v-col>
                 </v-row>
+
+                <template v-if="!mini">
+                    <div class="d-flex align-center mt-4">
+                        <span class="text-overline mr-4">Network</span>
+                        <v-divider></v-divider>
+                    </div>
+
+                    <v-row>
+                        <v-col cols="12">
+                            <div class="d-flex align-center">
+                                <v-icon small>
+                                    mdi-upload
+                                </v-icon>
+                                <v-checkbox
+                                    class="ma-0"
+                                    :input-value="maxUploadSpeed !== null"
+                                    @change="toggleUseMaxUploadSpeed"
+                                    hide-details
+                                    label="Limit Upload Speed"
+                                >
+                                    <template v-slot:append>
+                                        <v-tooltip bottom max-width="450px">
+                                            <template v-slot:activator="{on, attrs}">
+                                                <v-icon v-on="on" v-bind="attrs">
+                                                    mdi-help-circle
+                                                </v-icon>
+                                            </template>
+
+                                            Whether to limit the upload speed when uploading VODs to our servers.
+                                        </v-tooltip>
+                                    </template>
+                                </v-checkbox>
+
+                                <v-text-field
+                                    :disabled="maxUploadSpeed === null"
+                                    :value="maxUploadSpeed"
+                                    @change="changeMaxUploadSpeed(parseInt(arguments[0]))"
+                                    type="number"
+                                    class="ml-8 flex-grow-0"
+                                    solo
+                                    single-line
+                                    hide-details
+                                >
+                                    <template v-slot:append>
+                                        KB/s
+                                    </template>
+                                </v-text-field>
+                            </div>
+                        </v-col>
+                    </v-row>
+                </template>
             </v-container>
         </template>
     </loading-container>
@@ -361,6 +412,31 @@ export default class RecordingSettingsItem extends Vue {
 
     changeUseVfr(val: boolean) {
         this.$store.commit('changeUseVfr', val)
+    }
+
+    get maxUploadSpeed(): number | null {
+        let val = this.$store.state.settings.record.maxUploadSpeed
+        if (val !== null) {
+            val /= 1024
+        }
+        return val
+    }
+
+    toggleUseMaxUploadSpeed(v: boolean) {
+        if (v) {
+            this.changeMaxUploadSpeed(1000)
+        } else {
+            this.changeMaxUploadSpeed(null)
+        }
+    }
+
+    changeMaxUploadSpeed(val: number | null) {
+        if (val !== null) {
+            // KB/s to Bytes/s
+            this.$store.commit('setMaxUploadSpeed', val * 1024)
+        } else {
+            this.$store.commit('setMaxUploadSpeed', null)
+        }
     }
 
     get hasSettings(): boolean {

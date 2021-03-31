@@ -21,6 +21,12 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.inputDevice = obj["inputDevice"].get<std::string>();
     settings.inputVolume = obj["inputVolume"].get<double>();
     settings.useVfr = obj.value("useVfr", false);
+
+    if (obj.count("maxUploadSpeed") != 0 && !obj["maxUploadSpeed"].is_null()) {
+        settings.maxUploadSpeed = obj["maxUploadSpeed"].get<size_t>();
+    } else {
+        settings.maxUploadSpeed = {};
+    }
     return settings;
 }
 

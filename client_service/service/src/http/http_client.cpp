@@ -39,6 +39,7 @@ public:
     ~HttpRequest();
 
     void setTimeout(long timeoutSeconds);
+    void setUploadSpeed(size_t bytesPerSec);
 
     HttpResponsePtr execute();
 
@@ -116,6 +117,10 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
 void HttpRequest::setTimeout(long timeoutSeconds) {
     // Number of seconds CURL will wait for the transfer to complete.
     curl_easy_setopt(_curl, CURLOPT_TIMEOUT, timeoutSeconds);
+}
+
+void HttpRequest::setUploadSpeed(size_t bytesPerSec) {
+    curl_easy_setopt(_curl, CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(bytesPerSec));
 }
 
 HttpRequest::~HttpRequest() {
@@ -269,6 +274,10 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
 
     if (_timeoutSeconds.has_value()) {
         req->setTimeout(_timeoutSeconds.value());
+    }
+
+    if (_maxUploadSpeed.has_value()) {
+        req->setUploadSpeed(_maxUploadSpeed.value());
     }
 
     if (!!cb) {

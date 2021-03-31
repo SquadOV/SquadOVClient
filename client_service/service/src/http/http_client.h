@@ -39,6 +39,7 @@ public:
     void setBearerAuthToken(const std::string& token);
     void setHeaderKeyValue(const std::string& key, const std::string& value);
     void removeHeaderKey(const std::string& key);
+    void setMaxUploadBytesPerSec(size_t v) { _maxUploadSpeed = v; }
 
     void enableSelfSigned() { _allowSelfSigned = true; }
     void quiet() { _quiet = true; }
@@ -64,6 +65,7 @@ private:
     bool _allowSelfSigned = false;
     // Rate limiting
     double _secondsPerTask = 0.0;
+    std::optional<size_t> _maxUploadSpeed;
     // Unix time
     mutable shared::TimePoint _lastRequestTime;
     mutable std::shared_mutex _rateLimitMutex;

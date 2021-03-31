@@ -15,6 +15,7 @@ export interface SquadOvRecordingSettings {
     outputVolume: number
     inputDevice: string
     inputVolume: number
+    maxUploadSpeed: number | null
 }
 
 export interface SquadOvLocalSettings {
@@ -84,6 +85,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                maxUploadSpeed: null,
             }
         case BaselineLevel.Medium:
             record = {
@@ -96,6 +98,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                maxUploadSpeed: null,
             }
         case BaselineLevel.High:
             record = {
@@ -108,6 +111,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                maxUploadSpeed: null,
             }
     }
 
@@ -130,6 +134,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             outputVolume: 1.0,
             inputDevice: 'Default Device',
             inputVolume: 1.0,
+            maxUploadSpeed: null,
         },
         minimizeToTray: true,
         minimizeOnClose: true,
@@ -200,6 +205,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVfr === undefined) {
         parsedData.record.useVfr = false
+    }
+
+    if (parsedData.record.maxUploadSpeed === undefined) {
+        parsedData.record.maxUploadSpeed = null
     }
 
     saveLocalSettings(parsedData, true)
