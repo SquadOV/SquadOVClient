@@ -5,6 +5,13 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
         <%- include('../dist/css') -%>
+
+        <% if (hasOEmbed) { %>
+        <link rel="alternate" type="application/json+oembed"
+            href="<%- apiUrl -%>/oembed?url=<%- oembedUrl -%>&format=json"
+            title="SquadOV oEmbed Profile" />
+        <% } %>
+        <link rel="icon" href="/assets/icon.ico" type="image/x-icon" />
         <title>SquadOV</title>
     </head>
     <body>

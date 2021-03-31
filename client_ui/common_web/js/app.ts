@@ -8,10 +8,12 @@ import Vuetify, {
 } from 'vuetify/lib'
 import VueRouter from 'vue-router'
 import Vuex from 'vuex'
+import VueMeta from 'vue-meta'
 
 Vue.use(Vuetify)
 Vue.use(VueRouter)
 Vue.use(Vuex)
+Vue.use(VueMeta)
 
 import App from '@client/vue/App.vue'
 

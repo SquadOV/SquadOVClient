@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash -
 RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /squadov
+RUN mkdir -p /squadov/config
 
 WORKDIR /squadov
 COPY --from=builder /squadov/web/assets ./assets
@@ -49,4 +50,5 @@ COPY --from=builder /squadov/web/dist ./dist
 COPY --from=builder /squadov/web/views ./views
 COPY --from=builder /squadov/web/node_modules ./node_modules
 COPY --from=builder /squadov/web/index.js .
+COPY web/config/squadov.json /squadov/config/config.json
 ENTRYPOINT ["node" , "index.js"]
