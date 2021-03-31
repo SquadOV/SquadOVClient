@@ -86,6 +86,8 @@ import path from 'path'
 import process from 'process'
 import glob from 'glob'
 
+const MAX_DUMPS_TO_SEND = 5
+
 @Component
 export default class BugReporter extends Vue {
     formValid: boolean = false
@@ -116,10 +118,27 @@ export default class BugReporter extends Vue {
         try {
             let appDataFolder = process.env.APPDATA!
             let logDir = path.join(appDataFolder, 'SquadOV' + (!!process.env.SQUADOV_APPDATA_SUFFIX ? process.env.SQUADOV_APPDATA_SUFFIX : ''))    
-            let logFiles = glob.sync(`${logDir}/**/*.{log,dmp}`)
+            let logFiles = glob.sync(`${logDir}/**/*.log`)
             for (let f of logFiles) {
                 let data = fs.readFileSync(f)
                 let zipFname = path.relative(logDir, f).replace('\\', '/')
+                logZip.addFile(zipFname, data)
+            }
+
+            let dmpFiles = glob.sync(`${logDir}/**/*.dmp`).map((x: string) => {
+                return {
+                    fname: x,
+                    tm: fs.statSync(x).mtime
+                }
+            })
+            
+            dmpFiles.sort((a: any, b: any) => {
+                return b.tm.getTime() - a.tm.getTime()
+            })
+
+            for (let i = 0; i < Math.min(MAX_DUMPS_TO_SEND, dmpFiles.length); ++i) {
+                let data = fs.readFileSync(dmpFiles[i].fname)
+                let zipFname = path.relative(logDir, dmpFiles[i].fname).replace('\\', '/')
                 logZip.addFile(zipFname, data)
             }
         } catch(e) {
