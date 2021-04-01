@@ -10,7 +10,11 @@ cmake -S . -B build -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --target squadov_client_service
 cmake --build build --config Release --target advanced_crash_dump_enabler
 
-Set-Location -Path .\client_ui\common_web
+Set-Location -Path .\build\bin\Release
+Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","squadov_client_service.exe" -Wait -NoNewWindow
+Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","advanced_crash_dump_enabler.exe" -Wait -NoNewWindow
+
+Set-Location -Path ..\..\..\client_ui\common_web
 yarn install --check-files
 Remove-Item .\dist\production -Recurse
 yarn run webpack --config ./webpack/$GCP_PROJECT.config.js --env.target=electron-renderer
