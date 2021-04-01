@@ -99,13 +99,26 @@ void D3d11Shader::initialize(ID3D11Device* device) {
         THROW_ERROR("Failed to create sampler state: " << hr);
     }
 
-    D3D11_BUFFER_DESC constantDesc = { 0 };
-    constantDesc.Usage = D3D11_USAGE_DEFAULT;
-    constantDesc.ByteWidth = sizeof(D3d11ShaderConstants);
-    constantDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-    hr = device->CreateBuffer(&constantDesc, nullptr, &_constants);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to create constant buffer: " << hr);
+    {
+        D3D11_BUFFER_DESC constantDesc = { 0 };
+        constantDesc.Usage = D3D11_USAGE_DEFAULT;
+        constantDesc.ByteWidth = sizeof(D3d11VSShaderConstants);
+        constantDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        hr = device->CreateBuffer(&constantDesc, nullptr, &_vsConstants);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create vertex constant buffer: " << hr);
+        }
+    }
+    
+    {
+        D3D11_BUFFER_DESC constantDesc = { 0 };
+        constantDesc.Usage = D3D11_USAGE_DEFAULT;
+        constantDesc.ByteWidth = sizeof(D3d11PSShaderConstants);
+        constantDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+        hr = device->CreateBuffer(&constantDesc, nullptr, &_psConstants);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create pixel constant buffer: " << hr);
+        }
     }
 }
 
@@ -130,9 +143,14 @@ D3d11Shader::~D3d11Shader() {
         _inputLayout = nullptr;
     }
 
-    if (_constants) {
-        _constants->Release();
-        _constants = nullptr;
+    if (_vsConstants) {
+        _vsConstants->Release();
+        _vsConstants = nullptr;
+    }
+
+    if (_psConstants) {
+        _psConstants->Release();
+        _psConstants = nullptr;
     }
 }
 
@@ -146,15 +164,21 @@ void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
     context->PSSetShader(_pixelShader, nullptr, 0);
     context->PSSetSamplers(0, 1, &_sampler);
 
+    D3d11VSShaderConstants vsConstants;
+    vsConstants.modelXform = model->getModelXform();
+    context->UpdateSubresource(_vsConstants, 0, nullptr, &vsConstants, 0, 0);
+    context->VSSetConstantBuffers(0, 1, &_vsConstants);
+
+    D3d11PSShaderConstants psConstants;
+    psConstants.mode = 0;
+
     if (model->hasTexture()) {
         setTexture(context, 0, model->texture());
+        model->getTextureDims(psConstants.inWidth, psConstants.inHeight);
     }
 
-    D3d11ShaderConstants constants;
-    constants.modelXform = model->getModelXform();
-
-    context->UpdateSubresource(_constants, 0, nullptr, &constants, 0, 0);
-    context->VSSetConstantBuffers(0, 1, &_constants);
+    context->UpdateSubresource(_psConstants, 0, nullptr, &psConstants, 0, 0);
+    context->PSSetConstantBuffers(0, 1, &_psConstants);
 }
 
 }

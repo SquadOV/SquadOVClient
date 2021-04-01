@@ -86,6 +86,17 @@ void D3d11Model::freeShaderResource() {
     }
 }
 
+void D3d11Model::getTextureDims(float& width, float& height) {
+    if (!_shaderTexture) {
+        return;
+    }
+
+    D3D11_TEXTURE2D_DESC shaderDesc;
+    _shaderTexture->GetDesc(&shaderDesc);
+    width = static_cast<float>(shaderDesc.Width);
+    height = static_cast<float>(shaderDesc.Height);
+}
+
 void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture) {
     bool needRecreate = false;
     D3D11_TEXTURE2D_DESC textureDesc;

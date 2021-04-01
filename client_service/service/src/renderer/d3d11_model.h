@@ -25,6 +25,8 @@ public:
 
     void render(ID3D11DeviceContext* context);
     void setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture);
+    void getTextureDims(float& width, float& height);
+
     void setZRotation(float degrees);
 
     bool hasTexture() const { return _shaderResource; }

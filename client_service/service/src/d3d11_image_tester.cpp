@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         outputImage.initializeImage(width, height);
         outputImage.copyFromCpu(image);
     } else {
-        outputImage.initializeImage(height, width);
+        outputImage.initializeImage(width, height);
         // Manually convert the image to a direct3D 11 texture.
         D3D11_SUBRESOURCE_DATA resource;
         resource.pSysMem = image.buffer();
@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
             return 1;
         }
 
-        outputImage.copyFromGpu(copyTexture, DXGI_MODE_ROTATION_ROTATE90);
+        outputImage.copyFromGpu(copyTexture, DXGI_MODE_ROTATION_IDENTITY);
     }
 
     outputImage.cpuImage().saveToFile(outputPath);

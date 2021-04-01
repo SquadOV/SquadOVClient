@@ -10,8 +10,15 @@
 
 namespace service::renderer {
 
-struct D3d11ShaderConstants {
+struct D3d11VSShaderConstants {
     DirectX::XMMATRIX modelXform;
+};
+
+struct D3d11PSShaderConstants {
+    float inWidth;
+    float inHeight;
+    unsigned int mode;
+    float padding;
 };
 
 class D3d11Shader {
@@ -27,7 +34,9 @@ private:
     ID3D11PixelShader* _pixelShader = nullptr;
     ID3D11SamplerState* _sampler = nullptr;
     ID3D11InputLayout* _inputLayout = nullptr;
-    ID3D11Buffer* _constants = nullptr;
+
+    ID3D11Buffer* _vsConstants = nullptr;
+    ID3D11Buffer* _psConstants = nullptr;
 
     std::filesystem::path _vertexShaderPath;
     std::filesystem::path _pixelShaderPath;
