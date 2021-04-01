@@ -236,6 +236,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
         ratings.duelsCasualRating = _monoMapper->getDuelsCasualRating();
         ratings.duelsHeroicRating = _monoMapper->getDuelsHeroicRating();
 
+        LOG_INFO("Creating Hearthstone Match." << std::endl);
         _matchUuid = service::api::getGlobalApi()->createHearthstoneMatch(
             _currentGame,
             deck,

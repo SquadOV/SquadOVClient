@@ -15,12 +15,22 @@ MedalInfoTranslatorMapper::MedalInfoTranslatorMapper(const process_watcher::memo
 
 TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentStandardMedalInfo() const {
     const auto mapping = currentMedalInfo();
-    return mapping.at(static_cast<int>(FormatType::Standard));
+    auto it = mapping.find(static_cast<int>(FormatType::Standard));
+    if (it == mapping.end()) {
+        return nullptr;
+    } else {
+        return it->second;
+    }
 }
 
 TranslatedMedalInfoMapperSPtr MedalInfoTranslatorMapper::currentWildMedalInfo() const {
     const auto mapping = currentMedalInfo();
-    return mapping.at(static_cast<int>(FormatType::Wild));
+    auto it = mapping.find(static_cast<int>(FormatType::Wild));
+    if (it == mapping.end()) {
+        return nullptr;
+    } else {
+        return it->second;
+    }
 }
 
 std::unordered_map<int32_t, TranslatedMedalInfoMapperSPtr> MedalInfoTranslatorMapper::currentMedalInfo() const {
