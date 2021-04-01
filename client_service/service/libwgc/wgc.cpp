@@ -162,8 +162,10 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
                 _gpuFrame.copyFromGpu(handle.texture(), DXGI_MODE_ROTATION_IDENTITY);
                 _activeEncoder->addVideoFrame(_gpuFrame.rawTexture());
             } else {
+                service::renderer::SharedD3d11TextureHandle handle(_shared, frameSurface.get(), false);
                 auto immediate = _shared->immediateContext();
-                _cpuFrame.loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frameSurface.get());
+                _cpuFrame.loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), handle.texture());
+                _activeEncoder->addVideoFrame(_cpuFrame);
             }
         }
     }

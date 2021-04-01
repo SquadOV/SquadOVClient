@@ -68,6 +68,7 @@ public:
 
     shared::squadov::VodMetadata getMetadata() const;
     void overrideResolution(size_t width, size_t height);
+    void loadCachedInfo();
 private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;
@@ -104,7 +105,6 @@ private:
     // and the final video to stay the same so cache the results here.
     std::unique_ptr<video::VideoWindowInfo> _cachedWindowInfo;
     std::unique_ptr<service::system::RecordingSettings> _cachedRecordingSettings;
-    void loadCachedInfo();
     void clearCachedInfo();
 
     // Manual Video File Controls
