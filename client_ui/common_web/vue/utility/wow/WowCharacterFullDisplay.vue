@@ -7,6 +7,7 @@
 
             <wow-character-display
                 :character="character"
+                :patch="patch"
             >
             </wow-character-display>
 
@@ -79,6 +80,7 @@
                                     v-for="(id, idx) in fullChar.talents"
                                     :spell-id="id"
                                     :key="`class-talent-${idx}`"
+                                    :patch="patch"
                                 >
                                 </wow-spell-icon>
                             </div>
@@ -90,6 +92,7 @@
                                     v-for="(id, idx) in fullChar.pvpTalents"
                                     :spell-id="id"
                                     :key="`pvp-talent-${idx}`"
+                                    :patch="patch"
                                 >
                                 </wow-spell-icon>
                             </div>
@@ -97,6 +100,7 @@
                             <div class="mt-2" v-if="!!fullChar.covenant">
                                 <wow-covenant-display
                                     :covenant="fullChar.covenant"
+                                    :patch="patch"
                                 >
                                 </wow-covenant-display>
                             </div>
@@ -110,6 +114,7 @@
 
                             <wow-character-items-display
                                 :items="fullChar.items"
+                                :patch="patch"
                             >
                             </wow-character-items-display>
                         </v-col>
@@ -157,6 +162,9 @@ export default class WowCharacterFullDisplay extends Vue {
     @Prop({required: true})
     character!: WowCharacter
 
+    @Prop({required: true})
+    patch!: string
+
     fullChar: WowFullCharacter | null = null
     armoryProgress: boolean = false
 
@@ -186,11 +194,11 @@ export default class WowCharacterFullDisplay extends Vue {
             console.log('Failed to get full WoW character info: ', err)
         })
 
-        this.specIcon = staticClient.getWowSpecsIconUrl(this.character.specId)
-        wowCache.getClassSpec(this.character.specId).then((data: WowClassSpecStatic) => {
+        this.specIcon = staticClient.getWowSpecsIconUrl(this.patch, this.character.specId)
+        wowCache.getCache(this.patch).getClassSpec(this.character.specId).then((data: WowClassSpecStatic) => {
             this.specName = data.name
-            this.classIcon = staticClient.getWowClassIconUrl(data.class)
-            wowCache.getClass(data.class).then((classData: WowClassStatic) => {
+            this.classIcon = staticClient.getWowClassIconUrl(this.patch, data.class)
+            wowCache.getCache(this.patch).getClass(data.class).then((classData: WowClassStatic) => {
                 this.className = classData.name
             })
         }).catch((err: any) => {

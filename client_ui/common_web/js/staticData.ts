@@ -1,5 +1,17 @@
 const STATIC_CONTENT_BASE_URL = 'https://us-central1.content.squadov.gg'
-const WOW_PATCH = '9.0.2'
+const SUPPORTED_WOW_PATCHES = new Set([
+    '9.0.2',
+    '9.0.5'
+])
+const LATEST_WOW_PATCH = '9.0.5'
+
+export function getSupportedWowPatch(p: string): string {
+    if (SUPPORTED_WOW_PATCHES.has(p)) {
+        return p
+    } else {
+        return LATEST_WOW_PATCH
+    }
+}
 
 class StaticDataClient {
 
@@ -15,68 +27,68 @@ class StaticDataClient {
         return `${STATIC_CONTENT_BASE_URL}/hearthstone/Cards/${cardId}/portrait.png`
     }
 
-    getWowClassIconUrl(classId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/class/${classId}/icon.png`
+    getWowClassIconUrl(wowPatch: string, classId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/class/${classId}/icon.png`
     }
 
-    getWowClassDataUrl(classId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/class/${classId}/data.json`
+    getWowClassDataUrl(wowPatch: string, classId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/class/${classId}/data.json`
     }
 
-    getWowSpecsDataUrl(specId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/specs/${specId}/data.json`
+    getWowSpecsDataUrl(wowPatch: string, specId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/specs/${specId}/data.json`
     }
 
-    getWowSpecsIconUrl(specId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/specs/${specId}/icon.png`
+    getWowSpecsIconUrl(wowPatch: string, specId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/specs/${specId}/icon.png`
     }
 
-    getWowInstanceBackgroundUrl(instanceId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/instances/${instanceId}/background.png`
+    getWowInstanceBackgroundUrl(wowPatch: string, instanceId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/instances/${instanceId}/background.png`
     }
 
-    getWowInstanceDataUrl(instanceId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/instances/${instanceId}/data.json`
+    getWowInstanceDataUrl(wowPatch: string, instanceId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/instances/${instanceId}/data.json`
     }
 
-    getWowDifficultyDataUrl(diffId: number | string): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/difficulty/${diffId}/data.json`
+    getWowDifficultyDataUrl(wowPatch: string, diffId: number | string): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/difficulty/${diffId}/data.json`
     }
 
-    getWowSpellDataUrl(spellId: number) : string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/spells/${spellId}/data.json`
+    getWowSpellDataUrl(wowPatch: string, spellId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/spells/${spellId}/data.json`
     }
 
-    getWowSpellIconUrl(spellId: number) : string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/spells/${spellId}/icon.png`
+    getWowSpellIconUrl(wowPatch: string, spellId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/spells/${spellId}/icon.png`
     }
 
-    getWowItemDataUrl(itemId: number) : string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/items/${itemId}/data.json`
+    getWowItemDataUrl(wowPatch: string, itemId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/items/${itemId}/data.json`
     }
 
-    getWowItemIconUrl(itemId: number) : string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/items/${itemId}/icon.png`
+    getWowItemIconUrl(wowPatch: string, itemId: number) : string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/items/${itemId}/icon.png`
     }
 
-    getWowCovenantDataUrl(id: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/covenants/${id}/data.json`
+    getWowCovenantDataUrl(wowPatch: string, id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/covenants/${id}/data.json`
     }
 
-    getWowSoulbindDataUrl(id: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/soulbinds/${id}/data.json`
+    getWowSoulbindDataUrl(wowPatch: string, id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/soulbinds/${id}/data.json`
     }
 
-    getWowConduitDataUrl(id: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/conduits/${id}/data.json`
+    getWowConduitDataUrl(wowPatch: string, id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/conduits/${id}/data.json`
     }
 
-    getWowTalentDataUrl(id: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/talents/${id}/data.json`
+    getWowTalentDataUrl(wowPatch: string, id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/talents/${id}/data.json`
     }
 
-    getWowTalentIconUrl(id: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/${WOW_PATCH}/talents/${id}/icon.png`
+    getWowTalentIconUrl(wowPatch: string, id: number): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/talents/${id}/icon.png`
     }
 
     getTftLittleLegendIcon(id: string): string {

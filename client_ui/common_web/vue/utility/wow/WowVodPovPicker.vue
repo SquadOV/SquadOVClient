@@ -21,6 +21,7 @@
                         <wow-class-spec-icon
                             :spec-id="charForUuid(ivod.userUuid).specId"
                             :class="(!!selected && selected.videoUuid === ivod.videoUuid) ? 'selected-char' : 'unselected-char'"
+                            :patch="patch"
                         >
                         </wow-class-spec-icon>    
                     </div>
@@ -28,6 +29,7 @@
 
                 <wow-character-display
                     :character="charForUuid(ivod.userUuid)"
+                    :patch="patch"
                 >
                 </wow-character-display>    
             </v-tooltip>
@@ -75,6 +77,9 @@ export default class WowVodPovPicker extends Vue {
 
     @Prop({required: true})
     characterAssociations!: WoWCharacterUserAssociation[]
+
+    @Prop({required: true})
+    patch!: string
 
     @Prop()
     timestamp!: Date | undefined | null

@@ -4,6 +4,7 @@
             <v-tab :key="`tab-${idx}`" :style="charStyle(char)">
                 <wow-character-display
                     :character="char"
+                    :patch="patch"
                 >
                 </wow-character-display>
             </v-tab>
@@ -13,6 +14,7 @@
                     :character="char"
                     :match-uuid="matchUuid"
                     :user-id="userId"
+                    :patch="patch"
                 >
                 </wow-character-full-display>
             </v-tab-item>
@@ -48,6 +50,9 @@ export default class WowPlayersAnalysis extends Vue {
 
     @Prop({default: 0})
     friendlyTeam!: number
+
+    @Prop({required: true})
+    patch!: string
 
     charStyle(char: WowCharacter): any {
         return {

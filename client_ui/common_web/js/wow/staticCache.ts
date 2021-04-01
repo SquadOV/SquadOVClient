@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { staticClient } from '@client/js/staticData'
+import { staticClient, getSupportedWowPatch } from '@client/js/staticData'
 import { ApiData } from '@client/js/api'
 
 interface WowBasicStatic {
@@ -50,8 +50,10 @@ class WowStaticCache {
     _soulbinds: Map<number, string>
     _conduits: Map<number, number>
     _talents: Map<number, WowTalentStatic>
+    _patch: string
 
-    constructor() {
+    constructor(patch: string) {
+        this._patch = patch
         this._spellNames = new Map()
         this._items = new Map()
         this._specs = new Map()
@@ -67,7 +69,7 @@ class WowStaticCache {
             return this._covenants.get(covenantId)!
         }
         
-        let data: ApiData<WowBasicStatic> = await axios.get(staticClient.getWowCovenantDataUrl(covenantId))
+        let data: ApiData<WowBasicStatic> = await axios.get(staticClient.getWowCovenantDataUrl(this._patch, covenantId))
         this._covenants.set(covenantId, data.data.name)
         return data.data.name
     }
@@ -77,7 +79,7 @@ class WowStaticCache {
             return this._soulbinds.get(soulbindId)!
         }
         
-        let data: ApiData<WowBasicStatic> = await axios.get(staticClient.getWowSoulbindDataUrl(soulbindId))
+        let data: ApiData<WowBasicStatic> = await axios.get(staticClient.getWowSoulbindDataUrl(this._patch, soulbindId))
         this._soulbinds.set(soulbindId, data.data.name)
         return data.data.name
     }
@@ -87,7 +89,7 @@ class WowStaticCache {
             return this._conduits.get(conduitId)!
         }
         
-        let data: ApiData<WowConduitStatic> = await axios.get(staticClient.getWowConduitDataUrl(conduitId))
+        let data: ApiData<WowConduitStatic> = await axios.get(staticClient.getWowConduitDataUrl(this._patch, conduitId))
         this._conduits.set(conduitId, data.data.itemId)
         return data.data.itemId
     }
@@ -97,7 +99,7 @@ class WowStaticCache {
             return this._talents.get(talentId)!
         }
 
-        let data: ApiData<WowTalentStatic> = await axios.get(staticClient.getWowTalentDataUrl(talentId))
+        let data: ApiData<WowTalentStatic> = await axios.get(staticClient.getWowTalentDataUrl(this._patch, talentId))
         this._talents.set(talentId, data.data)
         return data.data
     }
@@ -107,7 +109,7 @@ class WowStaticCache {
             return this._specs.get(specId)!
         }
 
-        let data: ApiData<WowClassSpecStatic> = await axios.get(staticClient.getWowSpecsDataUrl(specId))
+        let data: ApiData<WowClassSpecStatic> = await axios.get(staticClient.getWowSpecsDataUrl(this._patch, specId))
         this._specs.set(specId, data.data)
         return data.data
     }
@@ -117,7 +119,7 @@ class WowStaticCache {
             return this._classes.get(classId)!
         }
 
-        let data: ApiData<WowClassStatic> = await axios.get(staticClient.getWowClassDataUrl(classId))
+        let data: ApiData<WowClassStatic> = await axios.get(staticClient.getWowClassDataUrl(this._patch, classId))
         this._classes.set(classId, data.data)
         return data.data
     }
@@ -127,12 +129,15 @@ class WowStaticCache {
 
         let newIds = spellIds.filter((id: number) => !this._spellNames.has(id))
         if (newIds.length > 0) {
-            let data: ApiData<WowBasicStatic>[] = await Promise.all(newIds.map((id: number) => {
-                return axios.get(staticClient.getWowSpellDataUrl(id))
+            let data: PromiseSettledResult<ApiData<WowBasicStatic>>[] = await Promise.allSettled(newIds.map((id: number) => {
+                return axios.get(staticClient.getWowSpellDataUrl(this._patch, id))
             }))
 
             for (let d of data) {
-                this._spellNames.set(parseInt(d.data.id), d.data.name)
+                if (d.status === 'rejected') {
+                    continue
+                }
+                this._spellNames.set(parseInt(d.value.data.id), d.value.data.name)
             }
         }
 
@@ -147,12 +152,15 @@ class WowStaticCache {
 
         let newIds = itemIds.filter((id: number) => !this._items.has(id) && id !== 0)
         if (newIds.length > 0) {
-            let data: ApiData<WowItemStatic>[] = await Promise.all(newIds.map((id: number) => {
-                return axios.get(staticClient.getWowItemDataUrl(id))
+            let data: PromiseSettledResult<ApiData<WowItemStatic>>[] = await Promise.allSettled(newIds.map((id: number) => {
+                return axios.get(staticClient.getWowItemDataUrl(this._patch, id))
             }))
 
             for (let d of data) {
-                this._items.set(d.data.id, d.data)
+                if (d.status === 'rejected') {
+                    continue
+                }
+                this._items.set(d.value.data.id, d.value.data)
             }
         }
 
@@ -163,4 +171,17 @@ class WowStaticCache {
     }
 }
 
-export let wowCache = new WowStaticCache()
+class WowPatchStaticCache {
+    _patch: Map<string, WowStaticCache> = new Map()
+
+    getCache(v: string) {
+        let patch = getSupportedWowPatch(v)
+        if (!this._patch.has(patch)) {
+            this._patch.set(patch, new WowStaticCache(patch))
+        }
+
+        return this._patch.get(patch)!
+    }
+}
+
+export let wowCache = new WowPatchStaticCache()

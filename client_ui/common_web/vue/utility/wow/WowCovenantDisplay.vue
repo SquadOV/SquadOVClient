@@ -12,6 +12,7 @@
                 v-for="(tid, idx) in covenant.soulbindTraits"
                 :talent-id="tid"
                 :key="`talent-${idx}`"
+                :patch="patch"
                 hide-if-socket
             >
             </wow-talent-icon>
@@ -25,6 +26,7 @@
                 :conduit-id="c.itemId"
                 :ilvl="c.ilvl"
                 :key="`conduit-${idx}`"
+                :patch="patch"
             >
             </wow-conduit-icon>
         </div>
@@ -51,18 +53,21 @@ export default class WowCovenantDisplay extends Vue {
     @Prop({required: true})
     covenant!: WowCovenant
 
+    @Prop({required: true})
+    patch!: string
+
     covenantName: string = ''
     soulbindName: string = ''
 
     @Watch('convenant')
     refreshCovenantData() {
-        wowCache.getCovenant(this.covenant.covenantId).then((resp: string) => {
+        wowCache.getCache(this.patch).getCovenant(this.covenant.covenantId).then((resp: string) => {
             this.covenantName = resp
         }).catch((err: any) => {
             console.log('Failed to get covenant: ', err)
         })
 
-        wowCache.getSoulbind(this.covenant.soulbindId).then((resp: string) => {
+        wowCache.getCache(this.patch).getSoulbind(this.covenant.soulbindId).then((resp: string) => {
             this.soulbindName = resp
         }).catch((err: any) => {
             console.log('Failed to get covenant: ', err)

@@ -35,7 +35,7 @@
                                                     <v-checkbox :input-value="active"></v-checkbox>
                                                 </v-list-item-action>
 
-                                                <wow-character-display :character="c">
+                                                <wow-character-display :character="c" :patch="patch">
                                                 </wow-character-display>
                                             </template>
                                         </v-list-item>
@@ -212,6 +212,9 @@ export default class WowSpellAnalysis extends Vue {
     @Prop({default: 0})
     friendlyTeam!: number
 
+    @Prop({required: true})
+    patch!: string
+
     spellIdNames: {[id: number]: string} = {}
 
     showGuids: string[] = []
@@ -246,7 +249,7 @@ export default class WowSpellAnalysis extends Vue {
                 spellIdsToCache.add(aura.spellId)
             }
 
-            wowCache.bulkGetSpellNames(Array.from(spellIdsToCache)).then((resp: Map<number, string>) => {
+            wowCache.getCache(this.patch).bulkGetSpellNames(Array.from(spellIdsToCache)).then((resp: Map<number, string>) => {
                 for (let [key, value] of resp) {
                     Vue.set(this.spellIdNames, key, value)
                 }
@@ -282,7 +285,7 @@ export default class WowSpellAnalysis extends Vue {
 
                         if (e.spellId in this.spellIdNames) {
                             let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
-                            section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+                            section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
                             section.setColor(colorAToCssString({
                                 a: e.success ? 255 : 127,
                                 ...colors.spellSchoolToColor(e.spellSchool)
@@ -327,7 +330,7 @@ export default class WowSpellAnalysis extends Vue {
 
                         if (e.spellId in this.spellIdNames) {
                             let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
-                            section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+                            section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
                             if (isWowAuraBuff(e.auraType)) {
                                 section.setColor(colorToCssString(colors.getSuccessColor()))
                                 section.setPreferredLayer(0)
@@ -348,7 +351,7 @@ export default class WowSpellAnalysis extends Vue {
                 d.setGroup(c.name)
                 d.setGroupStyle(
                     colorToCssString(c.team === this.friendlyTeam ? colors.getSuccessColor() : colors.getFailureColor()),
-                    staticClient.getWowSpecsIconUrl(c.specId)
+                    staticClient.getWowSpecsIconUrl(this.patch, c.specId)
                 )
 
                 if (!!this.currentTime && this.showTime) {

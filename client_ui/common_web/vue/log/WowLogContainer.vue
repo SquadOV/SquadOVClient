@@ -8,6 +8,7 @@
                             <wow-character-chooser
                                 v-model="selectedCharacter"
                                 :characters="allCharacters"
+                                patch=""
                                 class="mr-4"
                             >
                             </wow-character-chooser>

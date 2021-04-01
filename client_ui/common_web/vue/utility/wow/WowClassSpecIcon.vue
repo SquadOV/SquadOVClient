@@ -23,8 +23,11 @@ export default class WowClassSpecIcon extends Vue {
     @Prop({type: Number, default: 32})
     widthHeight!: number
 
+    @Prop({required: true})
+    patch!: string
+
     get iconUrl(): string {
-        return staticClient.getWowSpecsIconUrl(this.specId)
+        return staticClient.getWowSpecsIconUrl(this.patch, this.specId)
     }
 }
 

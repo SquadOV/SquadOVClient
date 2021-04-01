@@ -52,11 +52,14 @@ export default class WowSingleItemDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     tooltipMode!: boolean
 
+    @Prop({required: true})
+    patch!: string
+
     data: { [item: number] : WowItemStatic | undefined} = {}
 
     @Watch('item')
     refreshCache() {
-        wowCache.bulkGetItems([this.item.itemId]).then((resp: Map<number, WowItemStatic>) => {
+        wowCache.getCache(this.patch).bulkGetItems([this.item.itemId]).then((resp: Map<number, WowItemStatic>) => {
             for (let [key, value] of resp) {
                 Vue.set(this.data, key, value)
             }

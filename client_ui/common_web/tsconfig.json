@@ -12,7 +12,9 @@
             "es5",
             "es2018",
             "es2018.promise",
-            "es2019"
+            "es2019",
+            "es2020",
+            "es2020.promise"
         ],
         "downlevelIteration": true,
         "allowSyntheticDefaultImports": true,

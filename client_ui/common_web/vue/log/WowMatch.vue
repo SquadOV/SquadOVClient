@@ -63,6 +63,7 @@
                             :timestamp="vodTime"
                             disable-favorite
                             :enable-draw.sync="enableDraw"
+                            :patch="patch"
                         >
                         </wow-vod-pov-picker>
                     </v-col>
@@ -105,6 +106,7 @@
                                 :match-characters="matchCharacters"
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
+                                :patch="patch"
                                 @go-to-time="goToVodTime"
                             >
                             </wow-timeline>
@@ -125,6 +127,7 @@
                                 :match-characters="matchCharacters"
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
+                                :patch="patch"
                                 @go-to-time="goToVodTime"
                             >
                             </wow-spell-analysis>
@@ -140,6 +143,7 @@
                                 :user-id="userId"
                                 :match-characters="matchCharacters"
                                 :friendly-team="friendlyTeam"
+                                :patch="patch"
                             >
                             </wow-players-analysis>
                         </v-tab-item>
@@ -157,6 +161,7 @@
                                 :start-time="startTime"
                                 :has-vod="!!vod && vodReady"
                                 :friendly-team="friendlyTeam"
+                                :patch="patch"
                                 @go-to-time="goToVodTime"
                             >
                             </wow-death-recap-analysis>
@@ -246,6 +251,21 @@ export default class WowMatch extends Vue {
     currentPlayerHeight : number = 0
     vodReady: boolean = false
     enableDraw: boolean = false
+
+    get patch(): string {
+        if (!this.currentMatch) {
+            return ''
+        }
+
+        let ret = this.currentMatch?.encounter?.build ||
+            this.currentMatch?.challenge?.build ||
+            this.currentMatch?.arena?.build
+
+        if (!ret) {
+            return ''
+        }
+        return ret
+    }
 
     @Watch('selectedTab')
     refreshTab() {

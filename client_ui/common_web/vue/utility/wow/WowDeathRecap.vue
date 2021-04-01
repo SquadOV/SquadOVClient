@@ -10,6 +10,7 @@
                     class="mx-2 flex-grow-0 flex-shrink-1"
                     :character="character"
                     style="flex-basis: auto;"
+                    :patch="patch"
                 >
                 </wow-character-display>
 
@@ -37,6 +38,7 @@
                                 <template v-if="!!item.sourceGuid && characterGuidMapping.has(item.sourceGuid)">
                                     <wow-character-display
                                         :character="characterGuidMapping.get(item.sourceGuid)"
+                                        :patch="patch"
                                     >
                                     </wow-character-display>
                                 </template>
@@ -139,6 +141,9 @@ export default class WowDeathRecapAnalysis extends Vue {
     @Prop({required: true})    
     startTime!: Date
 
+    @Prop({required: true})
+    patch!: string
+
     recap: WowDeathRecap | null = null
     spellIdNames: {[id: number]: string} = {}
 
@@ -164,7 +169,7 @@ export default class WowDeathRecapAnalysis extends Vue {
     }
 
     spellIdIcon(id: number): string {
-        return staticClient.getWowSpellIconUrl(id)
+        return staticClient.getWowSpellIconUrl(this.patch, id)
     }
 
     @Watch('matchUuid')
@@ -178,7 +183,7 @@ export default class WowDeathRecapAnalysis extends Vue {
                 uniqueSpellIds.add(this.sanitizeSpellId(e.spellId))
             }
 
-            wowCache.bulkGetSpellNames(Array.from(uniqueSpellIds)).then((resp: Map<number, string>) => {
+            wowCache.getCache(this.patch).bulkGetSpellNames(Array.from(uniqueSpellIds)).then((resp: Map<number, string>) => {
                 for (let [key, value] of resp) {
                     Vue.set(this.spellIdNames, key, value)
                 }

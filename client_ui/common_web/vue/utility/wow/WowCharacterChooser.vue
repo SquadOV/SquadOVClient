@@ -10,6 +10,7 @@
         <template v-slot:selection="{item}">
             <wow-character-display
                 :character="item"
+                :patch="patch"
             >
             </wow-character-display>
         </template>
@@ -17,6 +18,7 @@
         <template v-slot:item="{item}">
             <wow-character-display
                 :character="item"
+                :patch="patch"
             >
             </wow-character-display>
         </template>
@@ -42,6 +44,9 @@ export default class WowCharacterChooser extends Vue {
 
     @Prop({required: true})
     value!: WowCharacter | null | undefined
+
+    @Prop({required: true})
+    patch!: string
 
     get items(): any[] {
         return this.characters

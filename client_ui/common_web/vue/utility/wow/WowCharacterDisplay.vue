@@ -6,6 +6,7 @@
         <v-list-item-content class="content mr-4">
             <wow-class-spec-icon
                 :spec-id="character.specId"
+                :patch="patch"
             >
             </wow-class-spec-icon>
         </v-list-item-content>
@@ -38,6 +39,9 @@ import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 export default class WowCharacterDisplay extends Vue {
     @Prop({required: true})
     character!: WowCharacter
+
+    @Prop({required: true})
+    patch!: string
 
     get name(): string {
         return this.character.name.split('-')[0]

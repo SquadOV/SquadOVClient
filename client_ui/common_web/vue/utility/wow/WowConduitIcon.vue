@@ -4,6 +4,7 @@
         :width-height="widthHeight"
         :item="item"
         tooltip-mode
+        :patch="patch"
     >
     </wow-single-item-display>
 </template>
@@ -33,10 +34,13 @@ export default class WowConduitIcon extends Vue {
     @Prop({type: Number, default: 32})
     widthHeight!: number
 
+    @Prop({required: true})
+    patch!: string
+
     baseItemId: number | null = null
 
     get src(): string {
-        return staticClient.getWowSpellIconUrl(this.conduitId)
+        return staticClient.getWowSpellIconUrl(this.patch, this.conduitId)
     }
 
     get item(): WowItem {
@@ -48,7 +52,7 @@ export default class WowConduitIcon extends Vue {
 
     @Watch('conduitId')
     refreshItem() {
-        wowCache.getConduitItem(this.conduitId).then((resp: number) => {
+        wowCache.getCache(this.patch).getConduitItem(this.conduitId).then((resp: number) => {
             this.baseItemId = resp
         }).catch((err: any) => {
             console.log('Failed to get conduit: ', err)

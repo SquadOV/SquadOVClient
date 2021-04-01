@@ -258,6 +258,9 @@ export default class WowTimeline extends Vue {
     @Prop({default: 0})
     friendlyTeam!: number
 
+    @Prop({required: true})
+    patch!: string
+
     $refs!: {
         graph: LineGraph
     }
@@ -418,7 +421,7 @@ export default class WowTimeline extends Vue {
             }
         }
 
-        wowCache.bulkGetSpellNames(Array.from(spellIdsToCache)).then((resp: Map<number, string>) => {
+        wowCache.getCache(this.patch).bulkGetSpellNames(Array.from(spellIdsToCache)).then((resp: Map<number, string>) => {
             for (let [key, value] of resp) {
                 Vue.set(this.spellIdNames, key, value)
             }
@@ -514,7 +517,7 @@ export default class WowTimeline extends Vue {
 
                     if (e.spellId in this.spellIdNames) {
                         let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
-                        section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+                        section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
                         section.setColor(colorToCssString(colors.spellSchoolToColor(e.spellSchool)))
                         track.addSection(section)
                     }
@@ -540,7 +543,7 @@ export default class WowTimeline extends Vue {
 
                     if (e.spellId in this.spellIdNames) {
                         let section =  new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
-                        section.setIcon(staticClient.getWowSpellIconUrl(e.spellId))
+                        section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
 
                         if (isWowAuraBuff(e.auraType)) {
                             section.setColor(colorToCssString(colors.getSuccessColor()))
@@ -684,7 +687,7 @@ export default class WowTimeline extends Vue {
                     data.setGroup(group)
                     data.setGroupStyle(
                         colorToCssString(this.guidToTeam.get(guid) === this.friendlyTeam ? colors.getSuccessColor() : colors.getFailureColor()),
-                        staticClient.getWowSpecsIconUrl(this.guidToSpecId.get(guid)!)
+                        staticClient.getWowSpecsIconUrl(this.patch, this.guidToSpecId.get(guid)!)
                     )
                     data.setSymbol(guidToSymbol.get(guid))
 

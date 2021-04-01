@@ -20,6 +20,7 @@
                 <wow-single-item-display
                     class="mx-2"
                     :item="item"
+                    :patch="patch"
                 >
                 </wow-single-item-display>
 
@@ -55,11 +56,14 @@ export default class WowCharacterItemsDisplay extends Vue {
     @Prop({type: Array, required: true})
     items!: WowItem[]
 
+    @Prop({required: true})
+    patch!: string
+
     data: { [item: number] : WowItemStatic | undefined} = {}
 
     @Watch('items')
     refreshCache() {
-        wowCache.bulkGetItems(this.items.map((ele: WowItem) => ele.itemId)).then((resp: Map<number, WowItemStatic>) => {
+        wowCache.getCache(this.patch).bulkGetItems(this.items.map((ele: WowItem) => ele.itemId)).then((resp: Map<number, WowItemStatic>) => {
             for (let [key, value] of resp) {
                 Vue.set(this.data, key, value)
             }

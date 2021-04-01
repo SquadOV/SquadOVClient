@@ -39,10 +39,13 @@ export default class WowTalentIcon extends Vue {
     @Prop({type: Boolean, default: false})
     hideIfSocket!: boolean
 
+    @Prop({required: true})
+    patch!: string
+
     talent: WowTalentStatic | null = null
 
     get src(): string {
-        return staticClient.getWowTalentIconUrl(this.talentId)
+        return staticClient.getWowTalentIconUrl(this.patch, this.talentId)
     }
 
     get name(): string {
@@ -61,7 +64,7 @@ export default class WowTalentIcon extends Vue {
 
     @Watch('talentId')
     refreshTalent() {
-        wowCache.getTalent(this.talentId).then((resp: WowTalentStatic) => {
+        wowCache.getCache(this.patch).getTalent(this.talentId).then((resp: WowTalentStatic) => {
             this.talent = resp
         }).catch((err: any) => {
             console.log('Failed to get talent: ', err)

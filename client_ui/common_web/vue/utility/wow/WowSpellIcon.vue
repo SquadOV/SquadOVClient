@@ -36,15 +36,18 @@ export default class WowSpellIcon extends Vue {
     @Prop({type: Number, default: 32})
     widthHeight!: number
 
+    @Prop({required: true})
+    patch!: string
+
     spellName: string = ''
 
     get src(): string {
-        return staticClient.getWowSpellIconUrl(this.spellId)
+        return staticClient.getWowSpellIconUrl(this.patch, this.spellId)
     }
 
     @Watch('spellId')
     refreshName() {
-        wowCache.bulkGetSpellNames([this.spellId]).then((resp: Map<number, string>) => {
+        wowCache.getCache(this.patch).bulkGetSpellNames([this.spellId]).then((resp: Map<number, string>) => {
             this.spellName = resp.get(this.spellId)!
         }).catch((err: any) => {
             console.log('Failed to get spell name: ', err)

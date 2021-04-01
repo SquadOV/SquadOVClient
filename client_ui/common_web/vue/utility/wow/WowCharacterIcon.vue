@@ -12,6 +12,7 @@
                     <wow-class-spec-icon
                         :spec-id="char.specId"
                         :width-height="widthHeight"
+                        :patch="patch"
                     >
                     </wow-class-spec-icon>    
                 </div>
@@ -19,6 +20,7 @@
 
             <wow-character-display
                 :character="char"
+                :patch="patch"
             >
             </wow-character-display>    
         </v-tooltip>
@@ -56,6 +58,9 @@ export default class WowCharacterIcon extends Vue {
 
     @Prop({type: Number, default: 32})
     widthHeight!: number
+
+    @Prop({required: true})
+    patch!: string
 
     goToArmoryLink(e: MouseEvent) {
         if (!this.armoryLink) {

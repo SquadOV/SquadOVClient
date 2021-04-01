@@ -28,6 +28,7 @@
                                 armory-link
                                 :key="`friendly-icon-${idx}`"
                                 :width-height="mini ? 24 : 32"
+                                :patch="match.build"
                             >
                             </wow-character-icon>
 
@@ -45,6 +46,7 @@
                                 armory-link
                                 :key="`enemy-icon-${idx}`"
                                 :width-height="mini ? 24 : 32"
+                                :patch="match.build"
                             >
                             </wow-character-icon>
                         </div>
@@ -172,7 +174,7 @@ export default class WowGenericMatchSummary extends Vue {
             'background-size': this.mini ? 'auto 150%' : '50% auto',
         }
 
-        style['background-image'] = `linear-gradient(to right, #1E1E1E 0 10%, transparent), url(${staticClient.getWowInstanceBackgroundUrl(this.match.instanceId)})`
+        style['background-image'] = `linear-gradient(to right, #1E1E1E 0 10%, transparent), url(${staticClient.getWowInstanceBackgroundUrl(this.match.build, this.match.instanceId)})`
         return style
     }
 
@@ -218,7 +220,7 @@ export default class WowGenericMatchSummary extends Vue {
 
     @Watch('match')
     refreshInstanceData() {
-        let url = staticClient.getWowInstanceDataUrl(this.match.instanceId)
+        let url = staticClient.getWowInstanceDataUrl(this.match.build, this.match.instanceId)
         axios.get(url).then((resp: ApiData<WowInstanceData>) => {
             this.instanceData = resp.data
         }).catch((err: any) => {

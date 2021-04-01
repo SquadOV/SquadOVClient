@@ -9,6 +9,7 @@
 
                     <wow-character-display
                         :character="packet.char"
+                        :patch="patch"
                     >
                     </wow-character-display>
 
@@ -33,6 +34,7 @@
                     :match-characters="matchCharacters"
                     :death="packet.death"
                     :start-time="startTime"
+                    :patch="patch"
                     @go-to-time="$emit('go-to-time', arguments[0])"
                 >
                 </wow-death-recap>
@@ -86,6 +88,9 @@ export default class WowDeathRecapAnalysis extends Vue {
 
     @Prop({default: 0})
     friendlyTeam!: number
+
+    @Prop({required: true})
+    patch!: string
 
     eventTimeToStr(tm : Date): string {
         let secs = (tm.getTime() - this.startTime.getTime()) / 1000
