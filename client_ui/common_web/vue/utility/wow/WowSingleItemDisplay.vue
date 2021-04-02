@@ -11,7 +11,7 @@
                     :max-width="widthHeight"
                     :max-height="widthHeight"
                     contain
-                    :src="staticClient.getWowItemIconUrl(item.itemId)"
+                    :src="staticClient.getWowItemIconUrl(patch, item.itemId)"
                     :style="itemImageStyling(data[item.itemId])"
                 >
                 </v-img>
