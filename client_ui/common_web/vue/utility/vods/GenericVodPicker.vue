@@ -24,7 +24,7 @@
         </div>
 
         <div class="d-flex align-center">
-            <div class="text-subtitle-2 font-weight-bold">
+            <div v-if="!hasFastify" class="text-subtitle-2 font-weight-bold">
                 VOD Processing...
             </div>
 
