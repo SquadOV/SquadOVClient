@@ -657,12 +657,19 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
         return;
     }
 
+    bool forceFrame0 = false;
     if (_useVfr) {
+        forceFrame0 = (_vFrameNum == 0 && desiredFrameNum > 1);
         _vFrameNum = desiredFrameNum - 1;
     }
 
     service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
     auto immediate = d3d->immediateContext();
+
+    if (forceFrame0) {
+        frame->pts = 0;
+        encode(_vcodecContext, frame, _vstream);
+    }
 
     for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
         frame->pts = _vFrameNum;
