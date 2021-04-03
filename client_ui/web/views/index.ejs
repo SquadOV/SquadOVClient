@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html prefix="og: https://ogp.me/ns#">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,9 +8,44 @@
 
         <% if (hasOEmbed) { %>
         <link rel="alternate" type="application/json+oembed"
-            href="<%- apiUrl -%>/oembed?url=<%- oembedUrl -%>&format=json"
+            href="<%- oembedUrl -%>"
             title="SquadOV oEmbed Profile" />
         <% } %>
+
+        <% if (hasTwitterCard) { %>
+        <meta name="twitter:card" content="<%- twitterCard -%>" />
+        <meta name="twitter:site" content="@SquadOV" />
+        <meta name="twitter:title" content="<%- metaTitle -%>" />
+        <% if (metaHasVideo) { %>
+        <meta name="twitter:player" content="<%- metaPlayer -%>" />
+        <meta name="twitter:player:width" content="<%- metaVideoWidth -%>" />
+        <meta name="twitter:player:height" content="<%- metaVideoHeight -%>" />
+        <% } %>
+
+        <% if (metaHasThumbnail) { %>
+        <meta name="twitter:image" content="<%- metaThumbnail -%>" />
+        <% } %>
+        <% } %>
+
+        <% if (hasOpenGraph) { %>
+        <meta property="og:title" content="<%- metaTitle -%>" />
+        <meta property="og:type" content="<%- ogType -%>" />
+        <meta property="og:url" content="<%- selfUrl -%>" />
+        <% if (metaHasThumbnail) { %>
+        <meta property="og:image" content="<%- metaThumbnail -%>" />
+        <meta property="og:image:width" content="<%- metaThumbnailWidth -%>" />
+        <meta property="og:image:height" content="<%- metaThumbnailHeight -%>" />
+        <% } %>
+        <meta property="og:site_name" content="SquadOV - Better VODs, Better Match Details." />
+        <% if (metaHasVideo) { %>
+        <meta property="og:video" content="<%- metaVideo -%>" />
+        <meta property="og:video:secure_url" content="<%- metaVideo -%>" />
+        <meta property="og:video:type" content="<%- metaVideoType -%>" />
+        <meta property="og:video:width" content="<%- metaVideoWidth -%>" />
+        <meta property="og:video:height" content="<%- metaVideoHeight -%>" />
+        <% } %>
+        <% } %>
+
         <link rel="icon" href="/assets/icon.ico" type="image/x-icon" />
         <title>SquadOV</title>
     </head>
