@@ -10,7 +10,7 @@ export interface SquadOvRecordingSettings {
     fps: number
     useVideoHw: boolean
     useHwEncoder: boolean
-    useVfr: boolean
+    useVfr2: boolean
     outputDevice: string
     outputVolume: number
     inputDevice: string
@@ -80,7 +80,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 30,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr: false,
+                useVfr2: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -93,7 +93,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 60,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr: false,
+                useVfr2: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -106,7 +106,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 60,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr: false,
+                useVfr2: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
@@ -129,7 +129,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             fps: 60,
             useVideoHw: true,
             useHwEncoder: true,
-            useVfr: false,
+            useVfr2: false,
             outputDevice: 'Default Device',
             outputVolume: 1.0,
             inputDevice: 'Default Device',
@@ -203,8 +203,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.setupWizardRun = false
     }
 
-    if (parsedData.record.useVfr === undefined) {
-        parsedData.record.useVfr = false
+    if (parsedData.record.useVfr2 === undefined) {
+        parsedData.record.useVfr2 = true
     }
 
     if (parsedData.record.maxUploadSpeed === undefined) {

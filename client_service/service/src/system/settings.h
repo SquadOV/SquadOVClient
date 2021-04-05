@@ -11,7 +11,7 @@ struct RecordingSettings {
     int32_t fps = 0;
     bool useVideoHw = false;
     bool useHwEncoder = false;
-    bool useVfr = false;
+    bool useVfr2 = false;
 
     std::string outputDevice;
     double outputVolume;
