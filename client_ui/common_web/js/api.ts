@@ -875,7 +875,7 @@ class ApiClient {
             params: {
                 seconds,
             },
-            ...this.createWebAxiosConfig()
+            ...this.createWebAxiosConfig(true)
         }).then((resp: ApiData<WowDeathRecap>) => {
             cleanWowDeathRecapFromJson(resp.data)
             return resp
@@ -883,7 +883,7 @@ class ApiClient {
     }
 
     getWowFullCharacter(userId: number, matchUuid: string, guid: string): Promise<ApiData<WowFullCharacter>> {
-        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters/${guid}`, this.createWebAxiosConfig())
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters/${guid}`, this.createWebAxiosConfig(true))
     }
 
     submitBugReport(title: string, description: string, logs: Blob) : Promise<void> {
