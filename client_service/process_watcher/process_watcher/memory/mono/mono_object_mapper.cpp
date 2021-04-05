@@ -25,25 +25,34 @@ MonoObjectMapper::MonoObjectMapper(MonoImageMapper* image, const process_watcher
 }
 
 DynamicMonoType MonoObjectMapper::get(const std::string& fieldName) const {
-    const auto& field = this->field(fieldName);
-    return field.get(this, _vtable ? _vtable->domainId() : 0);
+    const auto* field = this->field(fieldName);
+    if (!field) {
+        return DynamicMonoType{};
+    }
+    return field->get(this, _vtable ? _vtable->domainId() : 0);
 }
 
 DynamicMonoType MonoObjectMapper::superGet(const std::string& parentName, const std::string& fieldName) const {
-    const auto& field = superfield(parentName, fieldName);
-    return field.get(this, _vtable ? _vtable->domainId() : 0);
+    const auto* field = superfield(parentName, fieldName);
+    if (!field) {
+        return DynamicMonoType{};
+    }
+    return field->get(this, _vtable ? _vtable->domainId() : 0);
 }
 
 const class MonoTypeMapper* MonoObjectMapper::fieldType(const std::string& fieldName) const {
-    const auto& field = _klass->field(fieldName);
-    return field.type();
+    const auto* field = _klass->field(fieldName);
+    if (!field) {
+        return nullptr;
+    }
+    return field->type();
 }
 
-const class MonoClassFieldMapper& MonoObjectMapper::field(const std::string& fieldName) const {
+const class MonoClassFieldMapper* MonoObjectMapper::field(const std::string& fieldName) const {
     return _klass->field(fieldName);
 }
 
-const class MonoClassFieldMapper& MonoObjectMapper::superfield(const std::string& parentName, const std::string& fieldName) const {
+const class MonoClassFieldMapper* MonoObjectMapper::superfield(const std::string& parentName, const std::string& fieldName) const {
     const auto* klass = _klass->superClass(parentName);
     return klass->field(fieldName);
 }

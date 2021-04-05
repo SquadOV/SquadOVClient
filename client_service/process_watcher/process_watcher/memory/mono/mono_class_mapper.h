@@ -149,7 +149,7 @@ public:
     void loadInner();
 
     const MonoClassMapper* elementClass() const { return _elementClass; }
-    const MonoClassFieldMapper& field(const std::string& nm) const { return *_fields.at(nm); }
+    const MonoClassFieldMapper* field(const std::string& nm) const;
     const uintptr_t ptr() const { return _ptr; }
 
     const std::string& name() const { return _name; }

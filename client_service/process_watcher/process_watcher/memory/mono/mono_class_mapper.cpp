@@ -138,6 +138,16 @@ std::string MonoClassMapper::fullName() const {
     return nm.str();
 }
 
+const MonoClassFieldMapper* MonoClassMapper::field(const std::string& nm) const {
+    const auto it = _fields.find(nm);
+    if (it == _fields.end()) {
+        LOG_WARNING("Failed to find field: " << nm << " on klass " << fullName() << std::endl);
+        return nullptr;
+    } else {
+        return it->second.get();
+    }
+}
+
 const MonoVTableMapper* MonoClassMapper::loadVTable(int32_t domainId) {
     auto it = _domainVtables.find(domainId);
     if (it != _domainVtables.end()) {

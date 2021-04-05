@@ -12,8 +12,11 @@ const std::string GAMEOVER_FIELD_NAME = "m_gameOver";
 
 GameStateMapperSPtr GameStateMapper::singleton(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(GAME_STATE_CLASS_NAME);
-    const auto& field = cls->field(SINGLETON_FIELD_NAME);
-    const auto value = field.getStatic(domainId);
+    const auto* field = cls->field(SINGLETON_FIELD_NAME);
+    if (!field) {
+        return nullptr;
+    }
+    const auto value = field->getStatic(domainId);
     if (value.isNull()) {
         return nullptr;
     }

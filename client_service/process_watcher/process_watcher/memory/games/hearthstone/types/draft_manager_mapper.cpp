@@ -17,6 +17,9 @@ const process_watcher::memory::mono::MonoClassMapper* DraftManagerMapper::klass(
 
 CollectionDeckMapperSPtr DraftManagerMapper::getDraftDeck() const {
     const auto field = _object->get(DRAFTDECK_FIELD_NAME);
+    if (field.isNull()) {
+        return nullptr;
+    }
     const auto object = field.get<mono::MonoObjectMapperSPtr>();
     return std::make_shared<CollectionDeckMapper>(object);
 }

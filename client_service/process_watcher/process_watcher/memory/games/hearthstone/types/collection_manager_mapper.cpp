@@ -14,8 +14,11 @@ const std::string COLLECTION_MANAGER_CURRENT_PVPDR_DECK_ID_FIELD("m_currentPVPDR
 }
 CollectionManagerMapperSPtr CollectionManagerMapper::singleton(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
     const auto* cls = image.loadClassFromFullName(COLLECTION_MANAGER_FULLNAME);
-    const auto& field = cls->field(COLLECTION_MANAGER_SINGLETON_FIELD);
-    const auto value = field.getStatic(domainId);
+    const auto* field = cls->field(COLLECTION_MANAGER_SINGLETON_FIELD);
+    if (!field) {
+        return nullptr;
+    }
+    const auto value = field->getStatic(domainId);
     if (value.isNull()) {
         return nullptr;
     }

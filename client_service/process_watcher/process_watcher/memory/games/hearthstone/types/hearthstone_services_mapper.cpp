@@ -34,8 +34,11 @@ DynamicServiceLocatorMapperPtr HearthstoneServicesMapper::getDynamicServices(con
     if (!cls) {
         return nullptr;
     }
-    const auto& field = cls->field(DYNAMIC_SERVICES_FIELD_NAME);
-    const auto value = field.getStatic(domainId);
+    const auto* field = cls->field(DYNAMIC_SERVICES_FIELD_NAME);
+    if (!field) {
+        return nullptr;
+    }
+    const auto value = field->getStatic(domainId);
     if (value.isNull()) {
         return nullptr;
     }
@@ -47,8 +50,11 @@ ServiceLocatorMapperPtr HearthstoneServicesMapper::getServices(const process_wat
     if (!cls) {
         return nullptr;
     }
-    const auto& field = cls->field(SERVICES_FIELD_NAME);
-    const auto value = field.getStatic(domainId);
+    const auto* field = cls->field(SERVICES_FIELD_NAME);
+    if (!field) {
+        return nullptr;
+    }
+    const auto value = field->getStatic(domainId);
     if (value.isNull()) {
         return nullptr;
     }
