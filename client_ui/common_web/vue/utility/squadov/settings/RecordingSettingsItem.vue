@@ -4,8 +4,8 @@
             <v-container fluid>
                 <div class="d-flex align-center" v-if="!mini">
                     <span class="text-overline mr-4">Video</span>
-                    <v-divider></v-divider>
                 </div>
+                <v-divider v-if="!mini"></v-divider>
 
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
@@ -105,8 +105,8 @@
 
                 <div class="d-flex align-center mt-4" v-if="!mini">
                     <span class="text-overline mr-4">Audio</span>
-                    <v-divider></v-divider>
                 </div>
+                <v-divider v-if="!mini"></v-divider>
 
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
@@ -199,8 +199,8 @@
                 <template v-if="!mini">
                     <div class="d-flex align-center mt-4">
                         <span class="text-overline mr-4">Network</span>
-                        <v-divider></v-divider>
                     </div>
+                    <v-divider></v-divider>
 
                     <v-row>
                         <v-col cols="12">
@@ -245,6 +245,126 @@
                             </div>
                         </v-col>
                     </v-row>
+                </template>
+
+                <template v-if="!mini && showLocalRecordingSettings">
+                    <div class="d-flex align-center mt-4">
+                        <span class="text-overline mr-4">Local Storage</span>
+                        <v-spacer></v-spacer>
+
+                        <v-tooltip bottom max-width="450px">
+                            <template v-slot:activator="{on, attrs}">
+                                <v-icon v-on="on" v-bind="attrs">
+                                    mdi-help-circle
+                                </v-icon>
+                            </template>
+
+                            Local storage is used when you have local recording enabled and when downloading match VODs to your computer.
+                        </v-tooltip>
+                    </div>
+                    <v-divider></v-divider>
+
+                    <v-text-field
+                        :value="localRecordingLocation"
+                        solo
+                        hide-details
+                        readonly
+                    >
+                        <template v-slot:prepend>
+                            <div>
+                                Disk Location: 
+                            </div>
+                        </template>
+                        
+                        <template v-slot:append>
+                            <div class="d-flex align-center">
+                                <v-btn icon @click="onRequestChangeRecordingLocation">
+                                    <v-icon>
+                                        mdi-folder-open
+                                    </v-icon>
+                                </v-btn>
+
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Location on disk to store your recorded VODs.
+                                </v-tooltip>
+                            </div>
+                        </template>
+                    </v-text-field>
+
+                    <div class="d-flex align-center">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="useLocalRecording"
+                            @change="syncLocalRecording(arguments[0], localRecordingLocation, maxLocalRecordingSizeGb)"
+                            hide-details
+                            label="Enable Local Recording"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to disable automatic uploading of recorded VODs to SquadOV.
+                                    Enabling this will cause your match to only be accessible via the game logs menu and your VODs will not be viewable by anyone else until you upload them.
+                                    <b>This is not recommended.</b>
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+
+                        <v-text-field
+                            :value="maxLocalRecordingSizeGb"
+                            @change="syncLocalRecording(useLocalRecording, localRecordingLocation, parseFloat(arguments[0]))"
+                            type="number"
+                            solo
+                            hide-details
+                            class="ml-8"
+                        >
+                            <template v-slot:prepend>
+                                <div>
+                                    Max Disk Usage: 
+                                </div>
+                            </template>
+                            <template v-slot:append>
+                                <div class="d-flex align-center">
+                                    <div>GB</div>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        How much space to use for all locally recorded and downloaded VODs.
+                                        SquadOV will automatically delete older VODs (determined by when the VOD was recorded or downloaded) when going above this limit. 
+                                    </v-tooltip>
+                                </div>
+                            </template>
+                        </v-text-field>
+
+                        <div style="width: 300px;">
+                            <v-progress-linear
+                                :color="diskSpaceUsageColor"
+                                :value="localDiskSpaceRecordUsageGb / maxLocalRecordingSizeGb * 100"
+                                striped
+                                rounded
+                                height="24"
+                            >
+                            </v-progress-linear>
+                        </div>
+
+                        <div class="ml-4">
+                            {{ localDiskSpaceRecordUsageGb.toFixed(2) }} / {{ maxLocalRecordingSizeGb.toFixed(2) }} GB
+                        </div>
+                    </div>
                 </template>
             </v-container>
         </template>
@@ -441,6 +561,41 @@ export default class RecordingSettingsItem extends Vue {
 
     get hasSettings(): boolean {
         return !!this.$store.state.settings
+    }
+
+
+    get showLocalRecordingSettings(): boolean {
+///#if DESKTOP
+        return true
+///#else
+        return false
+///#endif
+    }
+
+    onRequestChangeRecordingLocation() {
+///#if DESKTOP
+///#endif
+    }
+
+    get useLocalRecording(): boolean {
+        return this.$store.state.settings.record.useLocalRecording
+    }
+
+    get localRecordingLocation(): string {
+        return this.$store.state.settings.record.localRecordingLocation
+    }
+
+    localDiskSpaceRecordUsageGb: number = 0
+    get maxLocalRecordingSizeGb(): number {
+        return this.$store.state.settings.record.maxLocalRecordingSizeGb
+    }
+
+    get diskSpaceUsageColor(): string {
+        return 'success'
+    }
+
+    syncLocalRecording(use: boolean, loc: string, limit: number | null) {
+        this.$store.commit('changeLocalRecording', {use, loc, limit})
     }
 
     mounted() {

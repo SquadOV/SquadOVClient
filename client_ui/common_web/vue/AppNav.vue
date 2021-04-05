@@ -68,7 +68,7 @@
         </v-btn>
 
         <template v-if="isLoggedIn">
-            <v-menu bottom offset-y>
+            <v-menu bottom offset-y class="mr-4">
                 <template v-slot:activator="{on, attrs}">
                     <v-btn text v-bind="attrs" v-on="on">
                         <v-badge
@@ -105,15 +105,19 @@
                         </v-list-item-title>
                     </v-list-item>
 
-                    <v-list-item :to="settingsTo" v-if="settingsEnabled">
-                        <v-list-item-title>Settings</v-list-item-title>
-                    </v-list-item>
-
                     <v-list-item @click="logout">
                         <v-list-item-title>Logout</v-list-item-title>
                     </v-list-item>
                 </v-list>
             </v-menu>
+
+            <v-toolbar-title>
+                <v-btn icon :to="settingsTo" v-if="settingsEnabled">
+                    <v-icon>
+                        mdi-cog
+                    </v-icon>
+                </v-btn>
+            </v-toolbar-title>
         </template>
 
         <template v-else>

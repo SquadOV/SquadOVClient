@@ -77,6 +77,17 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeLocalRecording(state: RootState, params: {use: boolean, loc: string, limit: number}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useLocalRecording = params.use
+            state.settings.record.localRecordingLocation = params.loc
+            state.settings.record.maxLocalRecordingSizeGb = params.limit
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
 /// #if DESKTOP
             if (!state.settings) {

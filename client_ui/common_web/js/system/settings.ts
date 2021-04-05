@@ -16,6 +16,9 @@ export interface SquadOvRecordingSettings {
     inputDevice: string
     inputVolume: number
     maxUploadSpeed: number | null
+    useLocalRecording: boolean
+    localRecordingLocation: string
+    maxLocalRecordingSizeGb: number
 }
 
 export interface SquadOvLocalSettings {
@@ -29,6 +32,14 @@ export interface SquadOvLocalSettings {
 function getSettingsFname() : string {
 /// #if DESKTOP
     return path.join(process.env.SQUADOV_USER_APP_FOLDER!, 'settings.json')
+/// #else
+    return ''
+/// #endif
+}
+
+function getDefaultRecordingLocation(): string {
+/// #if DESKTOP
+    return path.join(process.env.SQUADOV_USER_APP_FOLDER!, 'Local')
 /// #else
     return ''
 /// #endif
@@ -86,6 +97,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
                 maxUploadSpeed: null,
+                useLocalRecording: false,
+                localRecordingLocation: getDefaultRecordingLocation(),
+                maxLocalRecordingSizeGb: 100,
             }
         case BaselineLevel.Medium:
             record = {
@@ -99,6 +113,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
                 maxUploadSpeed: null,
+                useLocalRecording: false,
+                localRecordingLocation: getDefaultRecordingLocation(),
+                maxLocalRecordingSizeGb: 100,
             }
         case BaselineLevel.High:
             record = {
@@ -112,6 +129,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
                 maxUploadSpeed: null,
+                useLocalRecording: false,
+                localRecordingLocation: getDefaultRecordingLocation(),
+                maxLocalRecordingSizeGb: 100,
             }
     }
 
@@ -135,6 +155,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             inputDevice: 'Default Device',
             inputVolume: 1.0,
             maxUploadSpeed: null,
+            useLocalRecording: false,
+            localRecordingLocation: getDefaultRecordingLocation(),
+            maxLocalRecordingSizeGb: 100,
         },
         minimizeToTray: true,
         minimizeOnClose: true,
@@ -209,6 +232,18 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.maxUploadSpeed === undefined) {
         parsedData.record.maxUploadSpeed = null
+    }
+    
+    if (parsedData.record.useLocalRecording === undefined) {
+        parsedData.record.useLocalRecording = false
+    }
+
+    if (parsedData.record.localRecordingLocation === undefined) {
+        parsedData.record.localRecordingLocation = getDefaultRecordingLocation()
+    }
+
+    if (parsedData.record.maxLocalRecordingSizeGb === undefined) {
+        parsedData.record.maxLocalRecordingSizeGb = 100
     }
 
     saveLocalSettings(parsedData, true)
