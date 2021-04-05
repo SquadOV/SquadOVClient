@@ -7,6 +7,7 @@ SET(SRCS
     shared/strings/strings.cpp
     shared/filesystem/common_paths.cpp
     shared/filesystem/utility.cpp
+    shared/filesystem/local_record.cpp
     shared/log/log.cpp
     shared/sqlite/sqlite.cpp
     shared/aimlab/aimlab.cpp
@@ -29,6 +30,7 @@ SET(HEADERS
     shared/strings/strings.h
     shared/filesystem/common_paths.h
     shared/filesystem/utility.h
+    shared/filesystem/local_record.h
     shared/log/log.h
     shared/sqlite/sqlite.h
     shared/aimlab/aimlab.h

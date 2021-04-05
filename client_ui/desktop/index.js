@@ -609,3 +609,45 @@ ipcMain.handle('reload-app-settings', () => {
     loadAppSettings()
     return true
 })
+
+ipcMain.handle('request-folder-size', async (event, folder) => {
+    try {
+        return {
+            success: true,
+            data: await zeromqServer.requestFolderSize(folder)
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
+    }
+})
+
+ipcMain.handle('change-recording-folder', async (event, {from, to}) => {
+    try {
+        return {
+            success: true,
+            data: await zeromqServer.changeRecordingFolder(from, to)
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
+    }
+})
+
+ipcMain.handle('cleanup-recording-folder', async (event, {loc, limit}) => {
+    try {
+        return {
+            success: true,
+            data: await zeromqServer.cleanupRecordingFolder(loc, limit)
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
+    }
+})

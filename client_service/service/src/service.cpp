@@ -1,12 +1,15 @@
 #include "process_watcher/watcher.h"
 #include "shared/games.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/filesystem/utility.h"
+#include "shared/filesystem/local_record.h"
 #include "aimlab/aimlab_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
 #include "league/league_process_handler.h"
 #include "system/state.h"
+#include "system/ipc.h"
 #include "zeromq/zeromq.h"
 #include "shared/env.h"
 #include "shared/errors/error.h"
@@ -279,6 +282,77 @@ int main(int argc, char** argv) {
             zeroMqServerClient.sendMessage(
                 service::zeromq::ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC,
                 retData.dump()
+            );
+        });
+        t.detach();
+    });
+
+    LOG_INFO("Add local recording handlers..." << std::endl);
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_FOLDER_SIZE_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE FOLDER SIZE REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);
+
+            service::system::GenericIpcResponse<double> resp;
+            resp.task = request.task;
+            try {
+                resp.data = static_cast<double>(shared::filesystem::getFolderSizeBytes(fs::path(request.data))) / 1024.0 / 1024.0 / 1024.0;
+                resp.success = true;
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to compute folder size: " << ex.what() << std::endl);
+                resp.success = false;
+            }
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_FOLDER_SIZE_TOPIC,
+                resp.toJson().dump()
+            );
+        });
+        t.detach();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE CHANGE RECORDING FOLDER: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<shared::filesystem::ChangeLocalRecordRequest>::fromJson(json);
+
+            service::system::GenericIpcResponse<void> resp;
+            resp.task = request.task;
+            try {
+                resp.success = shared::filesystem::changeLocalRecordLocation(fs::path(request.data.from), fs::path(request.data.to));
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to change local recording folder: " << ex.what() << std::endl);
+                resp.success = false;
+            }
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_CHANGE_RECORDING_FOLDER_TOPIC,
+                resp.toJson().dump()
+            );
+        });
+        t.detach();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE CLEANUP RECORDING FOLDER: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<shared::filesystem::CleanupLocalRecordRequest>::fromJson(json);
+
+            service::system::GenericIpcResponse<void> resp;
+            resp.task = request.task;
+            try {
+                resp.success = shared::filesystem::cleanupLocalRecordLocation(fs::path(request.data.loc), request.data.limit);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to cleanup local recording folder: " << ex.what() << std::endl);
+                resp.success = false;
+            }
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_CLEANUP_RECORDING_FOLDER_TOPIC,
+                resp.toJson().dump()
             );
         });
         t.detach();

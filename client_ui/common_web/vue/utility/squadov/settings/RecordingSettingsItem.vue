@@ -278,7 +278,7 @@
                         
                         <template v-slot:append>
                             <div class="d-flex align-center">
-                                <v-btn icon @click="onRequestChangeRecordingLocation">
+                                <v-btn icon @click="onRequestChangeRecordingLocation" :loading="changeLocalRecordingProgress">
                                     <v-icon>
                                         mdi-folder-open
                                     </v-icon>
@@ -304,6 +304,7 @@
                             @change="syncLocalRecording(arguments[0], localRecordingLocation, maxLocalRecordingSizeGb)"
                             hide-details
                             label="Enable Local Recording"
+                            :disabled="changeLocalRecordingProgress"
                         >
                             <template v-slot:append>
                                 <v-tooltip bottom max-width="450px">
@@ -327,6 +328,7 @@
                             solo
                             hide-details
                             class="ml-8"
+                            :disabled="changeLocalRecordingProgress"
                         >
                             <template v-slot:prepend>
                                 <div>
@@ -366,6 +368,14 @@
                         </div>
                     </div>
                 </template>
+
+                <v-snackbar
+                    v-model="localRecordChangeFail"
+                    :timeout="5000"
+                    color="error"
+                >
+                    Something went wrong changin a local recording setting, please try again!
+                </v-snackbar>
             </v-container>
         </template>
     </loading-container>
@@ -375,13 +385,14 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
 ///#endif 
 import { AudioDeviceListingResponse } from '@client/js/system/audio'
+import { changeLocalRecordingSettings, computeFileFolderSizeGb } from '@client/js/system/settings'
 
 @Component({
     components: {
@@ -586,22 +597,54 @@ export default class RecordingSettingsItem extends Vue {
     }
 
     localDiskSpaceRecordUsageGb: number = 0
+    localRecordChangeFail: boolean = false
+
+    @Watch('localRecordingLocation')
+    refreshLocalDiskSpaceRecordUsage() {
+        computeFileFolderSizeGb(this.localRecordingLocation).then((resp: number) => {
+            this.localDiskSpaceRecordUsageGb = resp
+        }).catch((err: any) => {
+            console.log('Failed to get local disk space record usage: ', err)
+        })
+    }
+
     get maxLocalRecordingSizeGb(): number {
         return this.$store.state.settings.record.maxLocalRecordingSizeGb
     }
 
     get diskSpaceUsageColor(): string {
-        return 'success'
+        let percent = this.localDiskSpaceRecordUsageGb / this.maxLocalRecordingSizeGb
+        if (percent < 0.5) {
+            return 'success'
+        } else if (percent < 0.9) {
+            return 'warning'
+        } else {
+            return 'error'
+        }
     }
 
-    syncLocalRecording(use: boolean, loc: string, limit: number | null) {
-        this.$store.commit('changeLocalRecording', {use, loc, limit})
+    changeLocalRecordingProgress: boolean = false
+    syncLocalRecording(use: boolean, loc: string, limit: number) {
+        if (this.changeLocalRecordingProgress) {
+            return
+        }
+        this.changeLocalRecordingProgress = true
+        changeLocalRecordingSettings(this.$store.state.settings.record, use, loc, limit).then(() => {
+            this.$store.commit('changeLocalRecording', {use, loc, limit})
+            this.refreshLocalDiskSpaceRecordUsage()
+        }).catch((err: any) => {
+            console.log('Failed to change local recording settings: ', err)
+            this.localRecordChangeFail = true
+        }).finally(() => {
+            this.changeLocalRecordingProgress = false
+        })
     }
 
     mounted() {
 ///#if DESKTOP        
         this.refreshAvailableOutputs()
         this.refreshAvailableInputs()
+        this.refreshLocalDiskSpaceRecordUsage()
 
         ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
             this.outputOptions = [

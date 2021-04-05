@@ -88,4 +88,16 @@ void readBinaryData(std::vector<char>& data, const std::filesystem::path& from) 
     data.insert(data.begin(), std::istream_iterator<char>(stream), std::istream_iterator<char>());
 }
 
+size_t getFolderSizeBytes(const std::filesystem::path& path) {
+    if (!fs::exists(path)) {
+        return 0;
+    }
+
+    size_t bytes = 0;
+    for (const auto& entry : fs::recursive_directory_iterator(path)) {
+        bytes += fs::file_size(entry);
+    }
+    return bytes;
+}
+
 }

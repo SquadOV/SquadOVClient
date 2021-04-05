@@ -22,6 +22,12 @@ const std::string ZEROMQ_REQUEST_VOD_CLIP_TOPIC = "request-vod-clip";
 const std::string ZEROMQ_RESPOND_VOD_CLIP_TOPIC = "respond-vod-clip";
 const std::string ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC = "request-gcs-upload";
 const std::string ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC = "respond-gcs-upload";
+const std::string ZEROMQ_REQUEST_FOLDER_SIZE_TOPIC = "request-folder-size";
+const std::string ZEROMQ_RESPOND_FOLDER_SIZE_TOPIC = "respond-folder-size";
+const std::string ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC = "request-change-recording-folder";
+const std::string ZEROMQ_RESPOND_CHANGE_RECORDING_FOLDER_TOPIC = "respond-change-recording-folder";
+const std::string ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC = "request-cleanup-recording-folder";
+const std::string ZEROMQ_RESPOND_CLEANUP_RECORDING_FOLDER_TOPIC = "respond-cleanup-recording-folder";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

@@ -1,6 +1,7 @@
 const {app} = require('electron')
 const zmq = require('zeromq')
 const log = require('./log.js')
+const { v4: uuidv4 } = require('uuid');
 // Use the ZeroMQServer for communication with the backend service.
 // Note that we create both a subscriber and a publisher here because
 // the backend may receive updates that it needs to communicate with the
@@ -146,6 +147,78 @@ class ZeroMQServerClient {
             })
             
             await this._pub.send(['request-gcs-upload', JSON.stringify({task, file, uri})])
+        })
+    }
+
+    requestFolderSize(folder) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-folder-size', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-folder-size', handlerId)
+                    if (parsedResp.success) {
+                        resolve(parsedResp.data)
+                    } else {
+                        reject('Failure in request folder size.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-folder-size', JSON.stringify({
+                task,
+                data: folder,
+            })])
+        })
+    }
+
+    changeRecordingFolder(from, to) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-change-recording-folder', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-change-recording-folder', handlerId)
+                    if (parsedResp.success) {
+                        resolve()
+                    } else {
+                        reject('Failure in request change recording folder.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-change-recording-folder', JSON.stringify({
+                task,
+                data: {
+                    from,
+                    to,
+                },
+            })])
+        })
+    }
+
+    cleanupRecordingFolder(loc, limit) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-cleanup-recording-folder', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-cleanup-recording-folder', handlerId)
+                    if (parsedResp.success) {
+                        resolve()
+                    } else {
+                        reject('Failure in request cleanup recording folder.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-cleanup-recording-folder', JSON.stringify({
+                task,
+                data: {
+                    loc,
+                    limit,
+                }
+            })])
         })
     }
 

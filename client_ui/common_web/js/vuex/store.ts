@@ -82,6 +82,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
+            
             state.settings.record.useLocalRecording = params.use
             state.settings.record.localRecordingLocation = params.loc
             state.settings.record.maxLocalRecordingSizeGb = params.limit

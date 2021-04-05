@@ -3,6 +3,7 @@ import fs from 'fs'
 import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
+import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
 export interface SquadOvRecordingSettings {
@@ -19,6 +20,83 @@ export interface SquadOvRecordingSettings {
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
+}
+
+export function computeFileFolderSizeGb(folder: string): Promise<number> {
+    return new Promise((resolve, reject) => {
+///#if DESKTOP
+        ipcRenderer.invoke('request-folder-size', folder).then((val: IpcResponse<number>) => {
+            if (val.success) {
+                resolve(val.data)
+            } else {
+                reject('failure')
+            }
+        }).catch((err: any) => {
+            reject(err)
+        })
+///#else
+        resolve(0)
+///#endif
+    })
+}
+
+function changeLocalRecordingLocation(from: string, to: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+///#if DESKTOP
+        if (!fs.existsSync(from)) {
+            resolve()
+            return
+        }
+
+        ipcRenderer.invoke('change-recording-folder', {from, to}).then((val: IpcResponse<void>) => {
+            if (val.success) {
+                resolve()
+            } else {
+                reject('failure')
+            }
+        }).catch((err: any) => {
+            reject(err)
+        })
+///#else
+        resolve()
+///#endif
+    })
+}
+
+function requestLocalRecordingCleanup(loc: string, limit: number): Promise<void> {
+    return new Promise((resolve, reject) => {
+///#if DESKTOP
+        if (!fs.existsSync(loc)) {
+            resolve()
+            return
+        }
+
+        ipcRenderer.invoke('cleanup-recording-folder', {loc, limit}).then((val: IpcResponse<void>) => {
+            if (val.success) {
+                resolve()
+            } else {
+                reject('failure')
+            }
+        }).catch((err: any) => {
+            reject(err)
+        })
+///#else
+        resolve()
+///#endif
+    })
+}
+
+export async function changeLocalRecordingSettings(record: SquadOvRecordingSettings, use: boolean, loc: string, limit: number) {
+    const oldLoc = record.localRecordingLocation
+    const oldLimit = record.maxLocalRecordingSizeGb
+    
+    if (oldLoc != loc) {
+        await changeLocalRecordingLocation(oldLoc, loc)
+    }
+
+    if (oldLimit > limit) {
+        await requestLocalRecordingCleanup(loc, limit)
+    }    
 }
 
 export interface SquadOvLocalSettings {

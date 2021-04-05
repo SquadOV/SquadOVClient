@@ -75,6 +75,7 @@ SET(HEADERS
     src/system/win32/hwnd_utils.h
     src/system/settings.h
     src/system/state.h
+    src/system/ipc.h
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
