@@ -5,7 +5,7 @@
 #include "shared/time.h"
 #include "recorder/game_recorder.h"
 #include "system/state.h"
-#include "http/http_client.h"
+#include "shared/http/http_client.h"
 #include <VersionHelpers.h>
 #include <unordered_map>
 
@@ -338,7 +338,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
             std::ostringstream path;
             path << "/wow/9.0.5/instances/" << zoneData.instanceId << "/data.json";
 
-            service::http::HttpClient client("https://us-central1.content.squadov.gg");
+            shared::http::HttpClient client("https://us-central1.content.squadov.gg");
             client.setTimeout(30);
 
             auto resp = client.get(path.str());

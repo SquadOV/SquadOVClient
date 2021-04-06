@@ -9,7 +9,7 @@ namespace service::api {
 LeagueIngameApi::LeagueIngameApi() {
     std::ostringstream host;
     host << "https://127.0.0.1:2999";
-    _client = std::make_unique<http::HttpClient>(host.str());
+    _client = std::make_unique<shared::http::HttpClient>(host.str());
     _client->enableSelfSigned();
     _client->quiet();
 }

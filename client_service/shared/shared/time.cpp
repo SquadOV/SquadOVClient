@@ -37,12 +37,20 @@ int64_t timeToUnixMs(const TimePoint& tm) {
     return std::chrono::duration_cast<std::chrono::milliseconds>(tm.time_since_epoch()).count();
 }
 
+TimePoint unixMsToTime(int64_t tm) {
+    return shared::TimePoint(std::chrono::milliseconds(tm));
+}
+
 std::string timeToStr(const TimePoint& tm) {
     return date::format("%F %H:%M:%S", tm);
 }
 
 std::string timeToIso(const TimePoint& tm) {
     return date::format("%FT%TZ", tm);
+}
+
+TimePoint isoStrToTime(const std::string& dt) {
+    return strToTime(dt, "%FT%TZ");
 }
 
 std::string fnameTimeToStr(const TimePoint& tm) {

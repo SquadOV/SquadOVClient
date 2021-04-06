@@ -20,6 +20,10 @@ struct RecordingSettings {
 
     std::optional<size_t> maxUploadSpeed;
 
+    bool useLocalRecording;
+    std::string localRecordingLocation;
+    double maxLocalRecordingSizeGb;
+
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };
 

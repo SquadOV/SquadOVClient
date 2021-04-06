@@ -1,7 +1,7 @@
 #pragma once
 
 #include "recorder/pipe/file_output_piper.h"
-#include "http/http_client.h"
+#include "shared/http/http_client.h"
 
 #include <deque>
 #include <mutex>
@@ -64,7 +64,7 @@ private:
     std::string _sessionUri;
     size_t _uploadedBytes = 0;
 
-    service::http::HttpClientPtr _httpClient;
+    shared::http::HttpClientPtr _httpClient;
     std::mutex _gcsMutex;
     std::deque<GCSPacket> _gcsBuffer;
     std::thread _gcsThread;

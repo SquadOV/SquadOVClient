@@ -20,6 +20,7 @@
 #include "vod/vod_clipper.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/gcs_piper.h"
+#include "system/settings.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -354,6 +355,61 @@ int main(int argc, char** argv) {
                 service::zeromq::ZEROMQ_RESPOND_CLEANUP_RECORDING_FOLDER_TOPIC,
                 resp.toJson().dump()
             );
+        });
+        t.detach();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE VOD DOWNLOAD REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);
+            const auto settings = service::system::getCurrentSettings();
+            bool success = false;
+
+            try {
+                const auto vodAssoc = service::api::getGlobalApi()->getVod(request.data);
+
+                shared::filesystem::LocalRecordingIndexEntry entry;
+                entry.uuid = request.data;
+                entry.filename = "video" + vodAssoc.extension();
+                entry.startTm = vodAssoc.startTime;
+                entry.endTm = vodAssoc.endTime;
+                entry.cacheTm = shared::nowUtc();
+                entry.diskBytes = 0;
+
+                shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(service::api::getGlobalApi()->getVodUri(request.data), entry, [&zeroMqServerClient, request](size_t dl, size_t total){
+                    zeroMqServerClient.sendMessage(
+                        service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
+                        nlohmann::json{{
+                            {"task", request.task},
+                            {"download", dl},
+                            {"total", total},
+                            {"done", false}
+                        }}.dump()
+                    );
+                });
+
+                zeroMqServerClient.sendMessage(
+                    service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
+                    nlohmann::json{{
+                        {"task", request.task},
+                        {"sucess", true},
+                        {"done", true}
+                    }}.dump()
+                );
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to download VOD: " << ex.what() << std::endl);
+                zeroMqServerClient.sendMessage(
+                    service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
+                    nlohmann::json{{
+                        {"task", request.task},
+                        {"sucess", false},
+                        {"done", true}
+                    }}.dump()
+                );
+            }
         });
         t.detach();
     });

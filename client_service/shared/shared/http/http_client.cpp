@@ -1,18 +1,21 @@
-#include "http/http_client.h"
+#include "shared/http/http_client.h"
 
 #include "shared/constants.h"
 #include "shared/log/log.h"
+#include "shared/filesystem/utility.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <curl/curl.h>
+#include <optional>
 #include <iostream>
 #include <sstream>
 #include <thread>
 
-namespace service::http {
+namespace fs = std::filesystem;
+namespace shared::http {
 namespace {
 
 constexpr size_t MAX_RAW_JSON_POST_BYTES_SIZE = 1 * 1024 * 1024;
@@ -40,6 +43,7 @@ public:
 
     void setTimeout(long timeoutSeconds);
     void setUploadSpeed(size_t bytesPerSec);
+    void addProgressCallbacks(const DownloadProgressFn& fn) { _downloadProgressCallbacks.push_back(fn); }
 
     HttpResponsePtr execute();
 
@@ -47,6 +51,8 @@ public:
     void doPost(const nlohmann::json& body, bool forceGzip);
     void doPut(const char* buffer, size_t numBytes);
 
+    void progressCallback(double dltotal, double dlnow);
+    void outputToFile(const fs::path& output) { _outputFile = output; }
 private:
     void setJsonBody(const nlohmann::json& body, bool forceGzip);
     void setRawBuffer(const char* buffer, size_t size);
@@ -55,6 +61,8 @@ private:
     CurlRawBuffer _buffer;
     curl_slist* _headers = nullptr;
     char _errBuffer[CURL_ERROR_SIZE];
+    std::vector<DownloadProgressFn> _downloadProgressCallbacks;
+    std::optional<fs::path> _outputFile;
 };
 
 size_t curlReadCallback(char* buffer, size_t size, size_t nitems, void* userdata) {
@@ -69,6 +77,12 @@ size_t curlReadCallback(char* buffer, size_t size, size_t nitems, void* userdata
 size_t curlStringStreamCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
     std::ostringstream& buffer = *reinterpret_cast<std::ostringstream*>(userdata);
     buffer << std::string(ptr, nmemb);
+    return nmemb;
+}
+
+size_t curlOutputFileCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
+    std::ofstream& buffer = *reinterpret_cast<std::ofstream*>(userdata);
+    buffer.write(ptr, nmemb);
     return nmemb;
 }
 
@@ -88,6 +102,12 @@ size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userda
     const std::string value = boost::algorithm::trim_copy(std::string(header.substr(splitIt + 2)));
     resp->headers[key] = value;
     return total;
+}
+
+int curlProgressCallback(void* clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+    HttpRequest* req = reinterpret_cast<HttpRequest*>(clientp);
+    req->progressCallback(dltotal, dlnow);
+    return CURL_PROGRESSFUNC_CONTINUE;
 }
 
 HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned, bool quiet) {
@@ -123,6 +143,12 @@ void HttpRequest::setUploadSpeed(size_t bytesPerSec) {
     curl_easy_setopt(_curl, CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(bytesPerSec));
 }
 
+void HttpRequest::progressCallback(double dltotal, double dlnow) {
+    for (const auto& cb : _downloadProgressCallbacks) {
+        cb(static_cast<size_t>(dlnow), static_cast<size_t>(dltotal));
+    }
+}
+
 HttpRequest::~HttpRequest() {
     curl_easy_cleanup(_curl);
     curl_slist_free_all(_headers);
@@ -132,10 +158,20 @@ HttpResponsePtr HttpRequest::execute() {
     auto resp = std::make_unique<HttpResponse>();
 
     std::ostringstream buffer;
-    curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, curlStringStreamCallback);
+    std::ofstream ofile;
+
+    if (_outputFile.has_value()) {
+        ofile.open(shared::filesystem::pathUtf8(_outputFile.value()), std::ios_base::out | std::ios_base::binary | std::ios_base::trunc);
+        curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &ofile);
+        curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, curlOutputFileCallback);
+    } else {
+        curl_easy_setopt(_curl, CURLOPT_WRITEDATA, &buffer);
+        curl_easy_setopt(_curl, CURLOPT_WRITEFUNCTION, curlStringStreamCallback);
+    }
     curl_easy_setopt(_curl, CURLOPT_HEADERDATA, resp.get());
     curl_easy_setopt(_curl, CURLOPT_HEADERFUNCTION, curlHeaderCallback);
+    curl_easy_setopt(_curl, CURLOPT_PROGRESSDATA, this);
+    curl_easy_setopt(_curl, CURLOPT_PROGRESSFUNCTION, curlProgressCallback);
 
     _errBuffer[0] = 0;
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errBuffer);
@@ -146,6 +182,10 @@ HttpResponsePtr HttpRequest::execute() {
         resp->body = buffer.str();
     } else {
         resp->body = std::string(_errBuffer);
+    }
+
+    if (ofile.is_open()) {
+        ofile.close();
     }
     
     return resp;
@@ -235,6 +275,12 @@ void HttpClient::removeHeaderKey(const std::string& key) {
     _headers.erase(key);
 }
 
+HttpResponsePtr HttpClient::download(const std::string& path, const std::filesystem::path& output) const {
+    return sendRequest(path, [&output](HttpRequest& req){
+        req.outputToFile(output);
+    });
+}
+
 HttpResponsePtr HttpClient::get(const std::string& path) const {
     return sendRequest(path, nullptr);
 }
@@ -277,6 +323,10 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
 
     if (_maxUploadSpeed.has_value()) {
         req->setUploadSpeed(_maxUploadSpeed.value());
+    }
+
+    for (const auto& cb: _downloadProgressCallbacks) {
+        req->addProgressCallbacks(cb);
     }
 
     if (!!cb) {

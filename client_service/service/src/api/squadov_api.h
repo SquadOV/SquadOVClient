@@ -1,6 +1,6 @@
 #pragma once
 
-#include "http/http_client.h"
+#include "shared/http/http_client.h"
 #include "shared/riot/riot.h"
 #include "shared/squadov/session.h"
 #include "shared/squadov/vod.h"
@@ -91,11 +91,13 @@ public:
     std::string createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const;
     void deleteVod(const std::string& videoUuid) const;
+    shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
+    std::string getVodUri(const std::string& videoUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;
 
-    std::unique_ptr<http::HttpClient> _webClient;
+    std::unique_ptr<shared::http::HttpClient> _webClient;
 
     // I'm not a big fan of leaving this here...
     shared::squadov::SquadOVSessionStorage _session;

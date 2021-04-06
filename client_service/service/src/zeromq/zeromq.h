@@ -28,6 +28,8 @@ const std::string ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC = "request-change
 const std::string ZEROMQ_RESPOND_CHANGE_RECORDING_FOLDER_TOPIC = "respond-change-recording-folder";
 const std::string ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC = "request-cleanup-recording-folder";
 const std::string ZEROMQ_RESPOND_CLEANUP_RECORDING_FOLDER_TOPIC = "respond-cleanup-recording-folder";
+const std::string ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC = "request-vod-download";
+const std::string ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC = "vod-download-progress";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

@@ -2,6 +2,7 @@
 
 #include "shared/time.h"
 
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <string>
@@ -13,7 +14,7 @@
 
 struct curl_slist;
 
-namespace service::http {
+namespace shared::http {
 
 using Headers = std::unordered_map<std::string, std::string>;
 struct HttpResponse {
@@ -26,6 +27,7 @@ using HttpResponsePtr = std::unique_ptr<HttpResponse>;
 
 // Returns true if the next interceptor should still be run.
 using ResponseInterceptor = std::function<bool(HttpResponse&)>;
+using DownloadProgressFn = std::function<void(size_t, size_t)>;
 
 class HttpRequest;
 class HttpClient {
@@ -47,9 +49,12 @@ public:
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
     void clearResponseInterceptors() { _responseInterceptors.clear(); }
 
+    void addDownloadProgressFn(const DownloadProgressFn& fn) { _downloadProgressCallbacks.push_back(fn); }
+
     void setTimeout(long v) { _timeoutSeconds = v; }
     void clearTimeout() { _timeoutSeconds = {}; }
 
+    HttpResponsePtr download(const std::string& path, const std::filesystem::path& output) const;
     HttpResponsePtr get(const std::string& path) const;
     HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false) const;
     HttpResponsePtr put(const std::string& path, const char* buffer, size_t numBytes) const;
@@ -79,6 +84,7 @@ private:
 
     // Intercepts. Let users modify the response/request as necessary.
     std::vector<ResponseInterceptor> _responseInterceptors;
+    std::vector<DownloadProgressFn> _downloadProgressCallbacks;
 };
 
 using HttpClientPtr = std::unique_ptr<HttpClient>;

@@ -19,7 +19,7 @@ SquadovApi::SquadovApi() {
     {
         std::ostringstream host;
         host << shared::getEnv("API_SQUADOV_URL", "http://127.0.0.1:8080");
-        _webClient = std::make_unique<http::HttpClient>(host.str());
+        _webClient = std::make_unique<shared::http::HttpClient>(host.str());
 
         // Some backfill tasks might get pretty heavy so put in a rate limit here.
         // For reference, this is 5 requests per second -- which will translate to about 500 aimlab tasks synced per second
@@ -334,6 +334,35 @@ void SquadovApi::deleteVod(const std::string& videoUuid) const {
         THROW_ERROR("Failed to delete VOD: " << result->status);
         return;
     }
+}
+
+shared::squadov::VodAssociation SquadovApi::getVod(const std::string& videoUuid) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << videoUuid << "/assoc";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get VOD: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return shared::squadov::VodAssociation::fromJson(parsedJson);
+}
+
+std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << videoUuid << "/source/fastify.mp4";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get VOD URI: " << result->status);
+        return {};
+    }
+
+    return result->body;
 }
 
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {

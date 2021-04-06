@@ -1,6 +1,6 @@
 #pragma once
 
-#include "http/http_client.h"
+#include "shared/http/http_client.h"
 #include "game_event_watcher/logs/base_log_watcher.h"
 
 #include <memory>
@@ -36,7 +36,7 @@ public:
     std::vector<LeagueGameEventData> getEventData() const;
 
 private:
-    std::unique_ptr<http::HttpClient> _client;
+    std::unique_ptr<shared::http::HttpClient> _client;
 };
 using LeagueIngameApiPtr = std::shared_ptr<LeagueIngameApi>;
 

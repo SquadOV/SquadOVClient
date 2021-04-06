@@ -47,6 +47,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_FOLDER_SIZE_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 

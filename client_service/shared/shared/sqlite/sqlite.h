@@ -37,6 +37,11 @@ public:
     }
 
     template<>
+    void bindParameter(int i, const int64_t& param) {
+        sqlite3_bind_int64(_stmt, i, param);
+    }
+
+    template<>
     void bindParameter(int i, const std::string& param) {
         sqlite3_bind_text(_stmt, i, param.c_str(), -1, SQLITE_TRANSIENT);
     }

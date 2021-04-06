@@ -51,11 +51,11 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
     // Create a common HTTP client to use for the upload requests.
     // I don't think we technically need to use the *same* client but
     // no reason not to save ourselves from reallocating it.
-    _httpClient = std::make_unique<service::http::HttpClient>("");
+    _httpClient = std::make_unique<shared::http::HttpClient>("");
 
     // The signed URL should return a header with the "Location" key.
     // This is the URL we'll use for all future upload requests.
-    _httpClient->addResponseInterceptor([this](service::http::HttpResponse& response){
+    _httpClient->addResponseInterceptor([this](shared::http::HttpResponse& response){
         for (const auto& [key, value] : response.headers) {
             if (key == "Location") {
                 _sessionUri = value;
@@ -206,7 +206,7 @@ size_t GCSPiper::sendDataFromBufferToGcs(const char* buffer, size_t numBytes, bo
     _httpClient->setHeaderKeyValue("Content-Range", range.str());
 
     std::string retRange;
-    _httpClient->addResponseInterceptor([&retRange](service::http::HttpResponse& response){
+    _httpClient->addResponseInterceptor([&retRange](shared::http::HttpResponse& response){
         for (const auto& [key, value] : response.headers) {
             if (key == "Range") {
                 retRange = value.substr(value.find("bytes=") + 6);

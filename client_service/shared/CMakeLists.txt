@@ -17,6 +17,7 @@ SET(SRCS
     shared/hearthstone/hearthstone_ratings.cpp
     shared/errors/error.cpp
     shared/version.cpp
+    shared/http/http_client.cpp
 )
 
 SET(HEADERS
@@ -42,6 +43,7 @@ SET(HEADERS
     shared/errors/error.h
     shared/math.h
     shared/version.h
+    shared/http/http_client.h
 )
 
 add_library(squadov_shared
@@ -56,5 +58,6 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/deps/date/include
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
     ${CMAKE_SOURCE_DIR}/deps/json/single_include
+    ${CMAKE_SOURCE_DIR}/deps/curl/include
     ${Boost_INCLUDE_DIRS}
 )

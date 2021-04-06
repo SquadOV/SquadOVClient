@@ -27,6 +27,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     } else {
         settings.maxUploadSpeed = {};
     }
+
+    settings.useLocalRecording = obj.value("useLocalRecording", false);
+    settings.localRecordingLocation = obj["localRecordingLocation"].get<std::string>();
+    settings.maxLocalRecordingSizeGb = obj["maxLocalRecordingSizeGb"].get<double>();
     return settings;
 }
 
