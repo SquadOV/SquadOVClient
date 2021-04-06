@@ -13,6 +13,8 @@ public:
     FilesystemPiper(const std::string& destination, PipePtr&& pipe);
     ~FilesystemPiper();
     void flush() override {}
+
+    std::optional<std::filesystem::path> localFile() const override { return _outputFile; }
     
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;

@@ -23,15 +23,14 @@
             </div>
         </div>
 
-        <div class="d-flex align-center">
-            <div v-if="!hasFastify" class="text-subtitle-2 font-weight-bold">
+        <div class="d-flex align-center" v-if="!hasFastify && !hasLocal">
+            <div class="text-subtitle-2 font-weight-bold">
                 VOD Processing...
             </div>
 
             <v-tooltip bottom :open-delay="100">
                 <template v-slot:activator="{on, attrs}">
                     <div
-                        v-if="!hasFastify"
                         v-on="on"
                         v-bind="attrs"
                     >
@@ -49,7 +48,7 @@
         <template v-if="!!$store.state.currentUser">
             <v-divider vertical class="mx-2"></v-divider>
 
-            <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && hasFastify">
+            <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
                 <!-- delete VOD button -->
                 <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
                     <template v-slot:activator="{on, attrs}">
@@ -58,7 +57,7 @@
                             icon
                             v-on="on"
                             v-bind="attrs"
-                            :loading="loadingDelete"
+                            :loading="loadingDelete || loadingLocalDelete"
                         >
                             <v-icon>
                                 mdi-delete
@@ -75,6 +74,7 @@
                         <v-card-text class="mt-4">
                             <div>
                                 Are you sure you wish to delete your VOD? You and your squadmates will no longer be able to watch this match from your point of view.
+                                This will delete the VOD from SquadOV's servers as well as from your local machine (if applicable).
                             </div>
 
                             <div class="mt-4">
@@ -111,19 +111,19 @@
                 </v-dialog>
 
                 <!-- download VOD button -->
-                <v-btn color="warning icon" icon v-if="!!localVodLocation" @click="openLocalDownload" :loading="checkingForLocal">
+                <v-btn color="warning icon" icon v-if="hasLocal" @click="openLocalDownload" :loading="checkingForLocal">
                     <v-icon>
                         mdi-folder-open
                     </v-icon>
                 </v-btn>
 
-                <v-btn color="warning" icon v-else-if="!!downloadUri && useSimpleDownload" :href="downloadUri" :loading="checkingForLocal">
+                <v-btn color="warning" icon v-else-if="!!downloadUri && useSimpleDownload && hasFastify" :href="downloadUri" :loading="checkingForLocal">
                     <v-icon>
                         mdi-download
                     </v-icon>
                 </v-btn>
 
-                <v-btn color="warning" icon v-else-if="!useSimpleDownload" @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal">
+                <v-btn color="warning" icon v-else-if="!useSimpleDownload && hasFastify" @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal">
                     <v-icon>
                         mdi-download
                     </v-icon>
@@ -149,7 +149,7 @@
             </v-btn>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon @click="openClipWindowForMatch">
+            <v-btn color="primary" icon @click="openClipWindowForMatch" v-if="hasFastify">
                 <v-icon>
                     mdi-filmstrip-box-multiple
                 </v-icon>
@@ -157,14 +157,14 @@
 
             <!-- favorite -->
             <vod-favorite-button
-                v-if="!!value && !disableFavorite"
+                v-if="!!value && !disableFavorite && hasFastify"
                 :vod-uuid="value.videoUuid"
             >
             </vod-favorite-button>
 
             <!-- watch list -->
             <vod-watchlist-button
-                v-if="!!value"
+                v-if="!!value && hasFastify"
                 :vod-uuid="value.videoUuid"
             >
             </vod-watchlist-button>
@@ -176,7 +176,7 @@
             :timeout="5000"
             color="error"
         >
-            Failed to download the VOD, please try again later.
+            Failed to download/delete the VOD, please try again later.
         </v-snackbar>
     </div>
 </template>
@@ -196,6 +196,7 @@ import { openPathInNewWindow } from '@client/js/external'
 import { DownloadProgress } from '@client/js/system/download'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
+import { VodRemoteControlContext } from '@client/js/vods/remote'
 
 /// #if DESKTOP
 import { shell, ipcRenderer } from 'electron'
@@ -232,6 +233,7 @@ export default class GenericVodPicker extends Vue {
 
     showHideDeleteConfirm: boolean = false
     loadingDelete: boolean = false
+    loadingLocalDelete: boolean = false
     confirmationText: string = ''
 
     manifest: vod.VodManifest | null = null
@@ -239,6 +241,7 @@ export default class GenericVodPicker extends Vue {
     downloadUri: string | null = null
     context: VodEditorContext | null = null
     localVodLocation: string | null = null
+    rcContext: VodRemoteControlContext | null = null
 
     @Watch('timestamp')
     onChangeTimestamp() {
@@ -246,6 +249,15 @@ export default class GenericVodPicker extends Vue {
             return
         }
         this.context.syncTime(this.timestamp)
+    }
+
+    @Watch('value')
+    refreshRcContext() {
+        if (!this.value) {
+            return
+        }
+
+        this.rcContext = new VodRemoteControlContext(this.value.videoUuid)
     }
 
     get isClippingEnabled(): boolean {
@@ -267,14 +279,43 @@ export default class GenericVodPicker extends Vue {
         }
 
         this.loadingDelete = true
+        this.loadingLocalDelete = this.hasLocal
+
         apiClient.deleteVod(this.value.videoUuid).then(() => {
-            this.hideDeleteConfirm()
-            this.$router.go(0)
+            if (!this.loadingLocalDelete) {
+                this.hideDeleteConfirm()
+                this.$router.go(0)
+            }
         }).catch((err: any) => {
             console.log('Failed to delete VOD: ', err)
+            this.downloadError = true
         }).finally(() => {
             this.loadingDelete = false
         })
+
+///#if DESKTOP
+        if (this.hasLocal && !!this.rcContext) {
+            // Need a delay to give us time to release the file handle on the client side by destorying the player.
+            this.rcContext.stopAndDestroy()
+            setTimeout(() => {
+                ipcRenderer.invoke('delete-vod-local', this.value!.videoUuid).then((resp: IpcResponse<void>) => {
+                    if (resp.success) {
+                        if (!this.loadingDelete) {
+                            this.hideDeleteConfirm()
+                            this.$router.go(0)
+                        }
+                    } else {
+                        this.downloadError = true
+                    }
+                }).catch((err: any) => {
+                    console.log('Failed to delete local VOD: ', err)
+                    this.downloadError = true
+                }).finally(() => {
+                    this.loadingLocalDelete = false
+                })
+            }, 1000)
+        }
+///#endif
     }
 
     @Watch('value')
@@ -395,6 +436,10 @@ export default class GenericVodPicker extends Vue {
         return (this.track!.segments[0].mimeType === 'video/mp2t') ? 'vod.ts' : 'vod.mp4'
     }
 
+    get hasLocal(): boolean {
+        return !!this.localVodLocation
+    }
+
     get hasFastify(): boolean {
         if (!this.track) {
             return false
@@ -429,6 +474,7 @@ export default class GenericVodPicker extends Vue {
     mounted () {
         this.refreshManifest()
         this.recheckForLocalFile()
+        this.refreshRcContext()
     }
 }
 

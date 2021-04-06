@@ -1,5 +1,6 @@
 #include "shared/filesystem/local_record.h"
 #include "shared/filesystem/utility.h"
+#include "shared/filesystem/common_paths.h"
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
 #include "shared/sqlite/sqlite.h"
@@ -154,6 +155,14 @@ bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
     }
 }
 
+void LocalRecordingIndexDb::removeLocalEntry(const std::string& uuid) {
+    auto entry = getEntryForUuid(uuid);
+    if (!entry.has_value()) {
+        return;
+    }
+    cleanupLocalEntry(entry.value());
+}
+
 void LocalRecordingIndexDb::cleanupLocalEntry(const LocalRecordingIndexEntry& entry) const {
     const auto folder = getEntryPath(entry).parent_path();
     if (fs::exists(folder)) {
@@ -175,7 +184,7 @@ void LocalRecordingIndexDb::cleanupLocalEntry(const LocalRecordingIndexEntry& en
 }
 
 void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn) {
-    const auto dlPath = fs::temp_directory_path() / fs::path(entry.uuid) / fs::path(entry.filename);
+    const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.uuid) / fs::path(entry.filename);
     fs::create_directories(dlPath.parent_path());
 
     shared::http::HttpClient client(uri);

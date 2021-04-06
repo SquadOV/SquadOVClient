@@ -54,6 +54,7 @@ extraResources:
       - "*.dll"
       - "squadov_client_service.exe"
       - "advanced_crash_dump_enabler.exe"
+      - "ffmpeg.exe"
       - "shaders/*"
   - from: "config/${env.GCP_PROJECT}.json"
     to: "config/config.json"

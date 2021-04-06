@@ -245,6 +245,24 @@ class ZeroMQServerClient {
         })
     }
 
+    deleteLocalVod(uuid) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-delete-local-vod', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-delete-local-vod', handlerId)
+                    resolve(parsedResp.success)
+                }
+            })
+            
+            await this._pub.send(['request-delete-local-vod', JSON.stringify({
+                task,
+                data: uuid
+            })])
+        })
+    }
+
     async close() {
         if (this._started) {
             try {

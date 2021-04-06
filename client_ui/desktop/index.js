@@ -670,6 +670,20 @@ ipcMain.handle('check-vod-local', async (event, uuid) => {
     }
 })
 
+ipcMain.handle('delete-vod-local', async (event, uuid) => {
+    try {
+        return {
+            success: await zeromqServer.deleteLocalVod(uuid),
+            data: null,
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
+    }
+})
+
 zeromqServer.on('vod-download-progress', (resp) => {
     let parsedResp = JSON.parse(resp)
     if (!!win) {

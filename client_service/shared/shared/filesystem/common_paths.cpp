@@ -88,4 +88,8 @@ std::filesystem::path getCurrentExeFolder() {
 #endif
 }
 
+std::filesystem::path getSquadOvTempFolder() {
+    return fs::temp_directory_path() / fs::path("SquadOV");
+}
+
 }

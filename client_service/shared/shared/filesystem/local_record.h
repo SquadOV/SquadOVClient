@@ -42,6 +42,7 @@ public:
 
     void addLocalEntryFromUri(const std::string& uri, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn);
     void addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry);
+    void removeLocalEntry(const std::string& uuid);
 
     std::vector<LocalRecordingIndexEntry> getAllLocalEntries() const;
     std::optional<LocalRecordingIndexEntry> getOldestLocalEntry() const;

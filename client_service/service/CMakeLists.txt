@@ -30,6 +30,7 @@ SET(SRCS
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
+    src/vod/process.cpp
     src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
@@ -77,6 +78,7 @@ SET(HEADERS
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
+    src/vod/process.h
     src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h
@@ -139,6 +141,14 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_DLLS} $<TARGET_FILE_DIR:${EXE_NAME}>
             COMMENT "Copying DLLs...\n"
+        )
+
+        SET(PREBUILT_EXES "${CMAKE_SOURCE_DIR}/prebuilt/ffmpeg/bin/ffmpeg.exe")
+        add_custom_command(
+            TARGET ${EXE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${PREBUILT_EXES} $<TARGET_FILE_DIR:${EXE_NAME}>
+            COMMENT "Copying EXEs...\n"
         )
 
         file(GLOB HLSL_SHADERS "${CMAKE_SOURCE_DIR}/client_service/service/src/renderer/shaders/*.fxc")

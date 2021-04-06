@@ -11,7 +11,8 @@ nlohmann::json VodAssociation::toJson() const {
         { "startTime", shared::timeToIso(startTime) },
         { "endTime", shared::timeToIso(endTime  ) },
         { "rawContainerFormat", rawContainerFormat },
-        { "isClip" , isClip }
+        { "isClip" , isClip },
+        { "isLocal", isLocal }
     };
 }
 
@@ -24,6 +25,7 @@ VodAssociation VodAssociation::fromJson(const nlohmann::json& j) {
     v.endTime = shared::isoStrToTime(j["endTime"].get<std::string>());
     v.rawContainerFormat = j["rawContainerFormat"].get<std::string>();
     v.isClip = j.value("isClip", false);
+    v.isLocal = j.value("isLocal", false);
     return v;
 }
 

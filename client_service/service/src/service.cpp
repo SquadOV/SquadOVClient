@@ -185,6 +185,13 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
+    LOG_INFO("Cleaning up temporary files..." << std::endl);
+    fs::remove_all(shared::filesystem::getSquadOvTempFolder());
+    fs::create_directories(shared::filesystem::getSquadOvTempFolder());
+
+    fs::remove_all(shared::filesystem::getSquadOvDvrSessionFolder());
+    fs::create_directories(shared::filesystem::getSquadOvDvrSessionFolder());
+
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
 
     LOG_INFO("Initialize Kafka API" << std::endl);
@@ -444,6 +451,33 @@ int main(int argc, char** argv) {
 
             zeroMqServerClient.sendMessage(
                 service::zeromq::ZEROMQ_RESPOND_LOCAL_VOD_TOPIC,
+                resp.toJson().dump()
+            );
+        });
+        t.detach();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE LOCAL VOD REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);
+            const auto settings = service::system::getCurrentSettings();
+            const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
+
+            service::system::GenericIpcResponse<std::string> resp;
+            resp.task = request.task;
+            try {
+                singleton->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                singleton->removeLocalEntry(request.data);
+                resp.success = true;
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to delete local VOD: " << ex.what() << std::endl);
+                resp.success = false;
+            }
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_DELETE_LOCAL_VOD_TOPIC,
                 resp.toJson().dump()
             );
         });

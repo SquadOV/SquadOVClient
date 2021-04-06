@@ -32,6 +32,8 @@ const std::string ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC = "request-vod-download";
 const std::string ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC = "vod-download-progress";
 const std::string ZEROMQ_REQUEST_LOCAL_VOD_TOPIC = "request-check-local-vod";
 const std::string ZEROMQ_RESPOND_LOCAL_VOD_TOPIC = "respond-check-local-vod";
+const std::string ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC = "request-delete-local-vod";
+const std::string ZEROMQ_RESPOND_DELETE_LOCAL_VOD_TOPIC = "respond-delete-local-vod";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

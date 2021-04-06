@@ -31,6 +31,8 @@ public:
     void pauseProcessingFromPipe(bool pause);
     void sendNullBuffer() { handleBuffer(nullptr, 0); }
 
+    virtual std::optional<std::filesystem::path> localFile() const { return {}; }
+
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
     virtual void flush() = 0;

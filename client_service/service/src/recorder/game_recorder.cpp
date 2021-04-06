@@ -17,6 +17,8 @@
 #include "system/win32/hwnd_utils.h"
 #include "system/state.h"
 #include "shared/math.h"
+#include "shared/filesystem/local_record.h"
+#include "vod/process.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -518,6 +520,11 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
         cleanDvrSession(session);
     }
 
+    LOG_INFO("Retrieving local recording info..." << std::endl);
+    const auto wasLocal = _cachedRecordingSettings->useLocalRecording;
+    const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
+    singleton->initializeFromFolder(fs::path(_cachedRecordingSettings->localRecordingLocation));
+
     LOG_INFO("Clear Cached Info..." << std::endl);
     clearCachedInfo();
     if (!isRecording()) {
@@ -535,11 +542,12 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
     if (_outputPiper) {
         LOG_INFO("Stop output piper..." << std::endl);
         const auto sessionId = this->sessionId();
+
         // Move the output piper to a new thread to wait for it to finish
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the
         // server to associate a VOD that doesn't actually exist.
-        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end](){
+        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton](){
             pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
             _outputPiper.reset(nullptr);
             outputPiper->wait();
@@ -551,13 +559,51 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = vodStartTime;
                 association.endTime = end.value().endTime;
-                association.rawContainerFormat = "mpegts";
+                association.rawContainerFormat = wasLocal ? "mp4" : "mpegts";
+                association.isLocal = wasLocal;
 
                 try {
                     service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+                    if (wasLocal && outputPiper->localFile().has_value()) {
+                        const auto rawPath = outputPiper->localFile().value();
+                        const auto processedPath = shared::filesystem::getSquadOvTempFolder() / fs::path(association.videoUuid) / fs::path("video.mp4");
+                        service::vod::processRawLocalVod(rawPath, processedPath);
+
+                        if (!fs::exists(processedPath)) {
+                            THROW_ERROR("Failed find locally processed video at: " << processedPath << std::endl);
+                        }
+
+                        // We need to process this VOD locally (aka do the equivalent of the server side fastify).
+                        shared::filesystem::LocalRecordingIndexEntry entry;
+                        entry.uuid = association.videoUuid;
+                        entry.filename = "video.mp4";
+                        entry.cacheTm = shared::nowUtc();
+                        entry.startTm = association.startTime;
+                        entry.endTm = association.endTime;
+                        entry.diskBytes = fs::file_size(processedPath);
+
+                        // After that's complete, we can finally add this file to the local index.
+                        singleton->addLocalEntryFromFilesystem(processedPath, entry);
+                    }
                 } catch (std::exception& ex) {
                     LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
                     service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+                }
+            }
+
+            if (wasLocal && outputPiper->localFile().has_value()) {
+                const auto pth = outputPiper->localFile().value();
+                outputPiper.reset(nullptr);
+
+                if (fs::exists(pth)) {
+                    for (auto i = 0; i < 30; ++i) {
+                        try {
+                            fs::remove(pth);
+                            break;
+                        } catch (...) {
+                            std::this_thread::sleep_for(std::chrono::milliseconds(150));
+                        }
+                    }
                 }
             }
         });
@@ -650,7 +696,9 @@ void GameRecorder::initializeFileOutputPiper() {
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
-    const std::string outputUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, "mpegts");
+    const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, "mpegts");
+    const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
+    const std::string outputUri = _cachedRecordingSettings->useLocalRecording ? shared::filesystem::pathUtf8(localTmpRecord) : cloudUri;
     setFileOutputFromUri(_currentId->videoUuid, outputUri);
 }
 

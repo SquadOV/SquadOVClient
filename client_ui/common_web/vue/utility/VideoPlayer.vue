@@ -26,6 +26,7 @@ import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 import { Parser as M3u8Parser } from 'm3u8-parser'
 import VideoDrawOverlay from '@client/vue/utility/VideoDrawOverlay.vue'
+import { RCMessagePacket, RCMessageType, VodRemoteControlContext } from '@client/js/vods/remote'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -87,6 +88,7 @@ export default class VideoPlayer extends Vue {
         overlay: VideoDrawOverlay
     }
     hasMadeProgress: boolean = false
+    rcContext: VodRemoteControlContext | null = null
 
     get hasVideo() : boolean {
         if (!this.vod && !this.overrideUri) {
@@ -95,13 +97,27 @@ export default class VideoPlayer extends Vue {
         return true
     }
 
+    handleRcPacket(p: RCMessagePacket) {
+        switch (p.type) {
+            case RCMessageType.StopAndDestroy:
+                this.$destroy()
+                break
+        }
+    }
+
     @Watch('vod')
     refreshPlaylist(newVod: vod.VodAssociation | null | undefined, oldVod: vod.VodAssociation | null | undefined) {
         this.manifest = null
+        this.rcContext = null
         if (!this.hasVideo) {
             this.setNoVideo()
             return
         }
+
+        this.rcContext = new VodRemoteControlContext(this.vod!.videoUuid)
+        this.rcContext.addListener((p: RCMessagePacket) => {
+            this.handleRcPacket(p)
+        })
 
         // Generally the only time we'll be switching videoUuids is when we go from one
         // user's POV to another. Therefore, we're able to make the assumption that the

@@ -8,6 +8,7 @@ export interface VodAssociation {
     endTime: Date
     rawContainerFormat: string
     isClip: boolean
+    isLocal: boolean
 }
 
 export interface VodClip {

@@ -577,6 +577,7 @@ export default class VodEditor extends Vue {
             endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
             rawContainerFormat: 'mp4',
             isClip: true,
+            isLocal: false,
         }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
         }).catch((err: any) => {
