@@ -30,6 +30,8 @@ const std::string ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC = "request-clean
 const std::string ZEROMQ_RESPOND_CLEANUP_RECORDING_FOLDER_TOPIC = "respond-cleanup-recording-folder";
 const std::string ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC = "request-vod-download";
 const std::string ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC = "vod-download-progress";
+const std::string ZEROMQ_REQUEST_LOCAL_VOD_TOPIC = "request-check-local-vod";
+const std::string ZEROMQ_RESPOND_LOCAL_VOD_TOPIC = "respond-check-local-vod";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 
@@ -42,7 +44,7 @@ public:
 
     void start();
     void addHandler(const std::string& topic, const ZeroMQHandler& handler);
-    void sendMessage(const std::string& topic, const std::string& message);
+    void sendMessage(const std::string& topic, const std::string& message, bool quiet = false);
 
 private:
     zmq::context_t _ctx;

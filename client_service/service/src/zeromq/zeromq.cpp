@@ -48,6 +48,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_LOCAL_VOD_TOPIC);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 
@@ -104,13 +105,16 @@ void ZeroMQServerClient::addHandler(const std::string& topic, const ZeroMQHandle
     _handlers[topic].push_back(handler);
 }
 
-void ZeroMQServerClient::sendMessage(const std::string& topic, const std::string& message) {
+void ZeroMQServerClient::sendMessage(const std::string& topic, const std::string& message, bool quiet) {
     std::array<zmq::const_buffer, 2> buffer = {
         zmq::buffer(topic),
         zmq::buffer(message)
     };
     auto ret = zmq::send_multipart(_pub, buffer);
-    LOG_INFO("Send ZeroMQ Message: " << topic << "\t" << ret.value_or(0) << std::endl);
+
+    if (!quiet) {
+        LOG_INFO("Send ZeroMQ Message: " << topic << "\t" << ret.value_or(0) << std::endl);
+    }
 }
 
 }

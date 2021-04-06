@@ -45,12 +45,14 @@ public:
 
     std::vector<LocalRecordingIndexEntry> getAllLocalEntries() const;
     std::optional<LocalRecordingIndexEntry> getOldestLocalEntry() const;
+    std::optional<LocalRecordingIndexEntry> getEntryForUuid(const std::string& uuid) const;
+
+    std::filesystem::path getEntryPath(const LocalRecordingIndexEntry& entry) const;
+    std::filesystem::path getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const;
 
 private:
     void migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const;
     void cleanupLocalEntry(const LocalRecordingIndexEntry& entry) const;
-    std::filesystem::path getEntryPath(const LocalRecordingIndexEntry& entry) const;
-    std::filesystem::path getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const;
     void migrateDatabase() const;
 
     mutable std::recursive_mutex _dbMutex;

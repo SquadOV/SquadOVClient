@@ -651,3 +651,28 @@ ipcMain.handle('cleanup-recording-folder', async (event, {loc, limit}) => {
         }
     }
 })
+
+ipcMain.on('request-vod-local-download', async (event, uuid) => {
+    await zeromqServer.requestVodDownload(uuid)
+})
+
+ipcMain.handle('check-vod-local', async (event, uuid) => {
+    try {
+        return {
+            success: true,
+            data: await zeromqServer.checkForLocalVod(uuid)
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
+    }
+})
+
+zeromqServer.on('vod-download-progress', (resp) => {
+    let parsedResp = JSON.parse(resp)
+    if (!!win) {
+        win.webContents.send('vod-download-progress', parsedResp)
+    }
+})

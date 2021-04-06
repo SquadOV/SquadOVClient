@@ -222,6 +222,28 @@ class ZeroMQServerClient {
         })
     }
 
+    checkForLocalVod(uuid) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-check-local-vod', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-check-local-vod', handlerId)
+                    if (parsedResp.success) {
+                        resolve(parsedResp.data)
+                    } else {
+                        reject('Failure in checking local VOD.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-check-local-vod', JSON.stringify({
+                task,
+                data: uuid
+            })])
+        })
+    }
+
     async close() {
         if (this._started) {
             try {
@@ -247,6 +269,13 @@ class ZeroMQServerClient {
 
     async requestAudioInputOptions() {
         await this._pub.send(['request-audio-input', ''])
+    }
+
+    async requestVodDownload(uuid) {
+        await this._pub.send(['request-vod-download', JSON.stringify({
+            task: uuid,
+            data: uuid,
+        })])
     }
 }
 

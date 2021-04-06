@@ -362,7 +362,8 @@ std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
         return {};
     }
 
-    return result->body;
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {

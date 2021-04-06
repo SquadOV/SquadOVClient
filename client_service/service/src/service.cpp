@@ -372,7 +372,7 @@ int main(int argc, char** argv) {
 
                 shared::filesystem::LocalRecordingIndexEntry entry;
                 entry.uuid = request.data;
-                entry.filename = "video" + vodAssoc.extension();
+                entry.filename = "video.mp4";
                 entry.startTm = vodAssoc.startTime;
                 entry.endTm = vodAssoc.endTime;
                 entry.cacheTm = shared::nowUtc();
@@ -382,34 +382,70 @@ int main(int argc, char** argv) {
                 shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(service::api::getGlobalApi()->getVodUri(request.data), entry, [&zeroMqServerClient, request](size_t dl, size_t total){
                     zeroMqServerClient.sendMessage(
                         service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
-                        nlohmann::json{{
-                            {"task", request.task},
+                        nlohmann::json{
+                            {"task", request.data},
                             {"download", dl},
                             {"total", total},
                             {"done", false}
-                        }}.dump()
+                        }.dump(),
+                        true
                     );
                 });
 
+                shared::filesystem::LocalRecordingIndexDb::singleton()->cleanupLocalFolder(settings->recording().maxLocalRecordingSizeGb);
+
                 zeroMqServerClient.sendMessage(
                     service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
-                    nlohmann::json{{
-                        {"task", request.task},
+                    nlohmann::json{
+                        {"task", request.data},
                         {"sucess", true},
                         {"done", true}
-                    }}.dump()
+                    }.dump()
                 );
             } catch (std::exception& ex) {
                 LOG_WARNING("Failed to download VOD: " << ex.what() << std::endl);
                 zeroMqServerClient.sendMessage(
                     service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
-                    nlohmann::json{{
-                        {"task", request.task},
+                    nlohmann::json{
+                        {"task", request.data},
                         {"sucess", false},
                         {"done", true}
-                    }}.dump()
+                    }.dump()
                 );
             }
+        });
+        t.detach();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_LOCAL_VOD_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE LOCAL VOD REQUEST: " << msg << std::endl);
+        std::thread t([&zeroMqServerClient, msg](){
+            const auto json = nlohmann::json::parse(msg);
+            const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);
+            const auto settings = service::system::getCurrentSettings();
+            const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
+
+            service::system::GenericIpcResponse<std::string> resp;
+            resp.task = request.task;
+            try {
+                singleton->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                const auto entry = singleton->getEntryForUuid(request.data);
+
+                if (entry.has_value()) {
+                    resp.data = shared::filesystem::pathUtf8(singleton->getEntryPath(entry.value()));
+                    resp.success = true;
+                } else {
+                    resp.success = false;
+                }
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to get local VOD: " << ex.what() << std::endl);
+                resp.success = false;
+            }
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_RESPOND_LOCAL_VOD_TOPIC,
+                resp.toJson().dump()
+            );
         });
         t.detach();
     });

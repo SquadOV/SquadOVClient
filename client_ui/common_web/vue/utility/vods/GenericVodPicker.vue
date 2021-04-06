@@ -111,11 +111,27 @@
                 </v-dialog>
 
                 <!-- download VOD button -->
-                <v-btn color="warning" icon v-if="!!downloadUri" :href="downloadUri">
+                <v-btn color="warning icon" icon v-if="!!localVodLocation" @click="openLocalDownload" :loading="checkingForLocal">
+                    <v-icon>
+                        mdi-folder-open
+                    </v-icon>
+                </v-btn>
+
+                <v-btn color="warning" icon v-else-if="!!downloadUri && useSimpleDownload" :href="downloadUri" :loading="checkingForLocal">
                     <v-icon>
                         mdi-download
                     </v-icon>
                 </v-btn>
+
+                <v-btn color="warning" icon v-else-if="!useSimpleDownload" @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal">
+                    <v-icon>
+                        mdi-download
+                    </v-icon>
+                </v-btn>
+
+                <div v-if="downloadProgress !== null">
+                    {{ (downloadProgress * 100.0).toFixed(0) }}% 
+                </div>
                 
                 <!-- create clip button -->
                 <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
@@ -154,6 +170,14 @@
             </vod-watchlist-button>
 
         </template>
+
+        <v-snackbar
+            v-model="downloadError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to download the VOD, please try again later.
+        </v-snackbar>
     </div>
 </template>
 
@@ -169,8 +193,14 @@ import * as vod from '@client/js/squadov/vod'
 import * as pi from '@client/js/pages'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { openPathInNewWindow } from '@client/js/external'
+import { DownloadProgress } from '@client/js/system/download'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
+
+/// #if DESKTOP
+import { shell, ipcRenderer } from 'electron'
+import { IpcResponse } from '@client/js/system/ipc'
+/// #endif
 
 @Component({
     components: {
@@ -208,6 +238,7 @@ export default class GenericVodPicker extends Vue {
     track: vod.VodTrack | null = null
     downloadUri: string | null = null
     context: VodEditorContext | null = null
+    localVodLocation: string | null = null
 
     @Watch('timestamp')
     onChangeTimestamp() {
@@ -273,6 +304,76 @@ export default class GenericVodPicker extends Vue {
         this.track = track
     }
 
+
+    get useSimpleDownload(): boolean {
+///#if DESKTOP
+        return false
+///#else
+        return true
+///#endif
+    }
+
+    downloadProgress: number | null = null
+    downloadError: boolean = false
+    checkingForLocal: boolean = false
+
+    @Watch('value')
+    recheckForLocalFile() {
+        if (!this.value || this.checkingForLocal) {
+            return
+        }
+///#if DESKTOP
+        this.checkingForLocal = true
+        ipcRenderer.invoke('check-vod-local', this.value.videoUuid).then((resp: IpcResponse<string>) => {
+            if (resp.success) {
+                this.localVodLocation = resp.data
+            } else {
+                this.localVodLocation = null
+            }
+        }).catch((err: any) => {
+            console.log('Failed to check for local VOD: ', err)
+        }).finally(() => {
+            this.checkingForLocal = false
+        })
+///#endif
+    }
+
+    openLocalDownload() {
+        if (!this.localVodLocation) {
+            return
+        }
+///#if DESKTOP
+        shell.showItemInFolder(this.localVodLocation)
+///#endif
+    }
+
+    doLocalDownload() {
+        if (!this.value) {
+            return
+        }
+///#if DESKTOP
+        this.downloadProgress = 0
+
+        let progressNotif = (e: any, info: DownloadProgress) => {
+            if (info.done) {
+                ipcRenderer.removeListener('vod-download-progress', progressNotif)
+                this.downloadProgress = null
+                this.downloadError = (info.success === false)
+                this.recheckForLocalFile()
+            } else if (info.download !== undefined && info.total !== undefined) {
+                if (info.total === 0) {
+                    this.downloadProgress = 0
+                } else {
+                    this.downloadProgress = info.download / info.total
+                }
+            }
+        }
+
+        ipcRenderer.send('request-vod-local-download', this.value.videoUuid)
+        ipcRenderer.on('vod-download-progress', progressNotif)
+///#endif
+    }
+
     @Watch('track')
     refreshDownloadUri() {
         this.downloadUri = null
@@ -327,6 +428,7 @@ export default class GenericVodPicker extends Vue {
 
     mounted () {
         this.refreshManifest()
+        this.recheckForLocalFile()
     }
 }
 

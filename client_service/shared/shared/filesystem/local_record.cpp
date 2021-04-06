@@ -88,11 +88,8 @@ void LocalRecordingIndexDb::migrateDatabase() const {
 
     if (existing_version != CURRENT_DB_VERSION) {
         std::ostringstream sql;
-        sql << R"|(
-            PRAGMA user_version = ?
-        )|";
+        sql << "PRAGMA user_version = " << CURRENT_DB_VERSION;
         shared::sqlite::SqlStatement stmt(_db, sql.str());
-        stmt.bindParameter(1, CURRENT_DB_VERSION);
         stmt.next();
     }
 
@@ -188,7 +185,9 @@ void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const L
         THROW_ERROR("Failed to download URI: " << resp->body << std::endl);
     }
 
-    addLocalEntryFromFilesystem(dlPath, entry);
+    auto sizedEntry = entry;
+    sizedEntry.diskBytes = fs::file_size(dlPath);
+    addLocalEntryFromFilesystem(dlPath, sizedEntry);
 }
 
 void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry) {
@@ -204,7 +203,9 @@ void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::p
         )
         VALUES (
             ?, ?, ?, ?, ?, ?
-        ))|";
+        )
+        ON CONFLICT DO NOTHING
+    )|";
 
     shared::sqlite::SqlStatement stmt(_db, sql.str());
     stmt.bindParameter(1, entry.uuid);
@@ -212,14 +213,16 @@ void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::p
     stmt.bindParameter(3, shared::timeToUnixMs(entry.startTm));
     stmt.bindParameter(4, shared::timeToUnixMs(entry.endTm));
     stmt.bindParameter(5, shared::timeToUnixMs(entry.cacheTm));
-    stmt.bindParameter(6, entry.diskBytes);
+    stmt.bindParameter(6, static_cast<int64_t>(entry.diskBytes));
     stmt.next();
 
     if (stmt.fail()) {
         THROW_ERROR("Failed to add local entry: " << stmt.errMsg() << " [" << file << "]");
     }
 
-    fs::rename(file, getEntryPath(entry));
+    const auto outputPath = getEntryPath(entry);
+    fs::create_directories(outputPath.parent_path());
+    fs::rename(file, outputPath);
 }
 
 std::filesystem::path LocalRecordingIndexDb::getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const {
@@ -245,6 +248,24 @@ std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getOldestLocalEnt
         LIMIT 1)|";
 
     shared::sqlite::SqlStatement stmt(_db, sql.str());
+    if (stmt.next()) {
+        return getLocalEntryFromSqlStatement(stmt);
+    } else {
+        return {};
+    }
+}
+
+std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getEntryForUuid(const std::string& uuid) const {
+    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
+
+    std::ostringstream sql;
+    sql << R"|(
+        SELECT *
+        FROM local_vod_entries
+        WHERE uuid = ?)|";
+
+    shared::sqlite::SqlStatement stmt(_db, sql.str());
+    stmt.bindParameter(1, uuid);
     if (stmt.next()) {
         return getLocalEntryFromSqlStatement(stmt);
     } else {

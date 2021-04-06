@@ -51,7 +51,7 @@ public:
     void doPost(const nlohmann::json& body, bool forceGzip);
     void doPut(const char* buffer, size_t numBytes);
 
-    void progressCallback(double dltotal, double dlnow);
+    void progressCallback(curl_off_t dltotal, curl_off_t dlnow);
     void outputToFile(const fs::path& output) { _outputFile = output; }
 private:
     void setJsonBody(const nlohmann::json& body, bool forceGzip);
@@ -104,7 +104,7 @@ size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userda
     return total;
 }
 
-int curlProgressCallback(void* clientp, double dltotal, double dlnow, double ultotal, double ulnow) {
+int curlProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
     HttpRequest* req = reinterpret_cast<HttpRequest*>(clientp);
     req->progressCallback(dltotal, dlnow);
     return CURL_PROGRESSFUNC_CONTINUE;
@@ -143,7 +143,7 @@ void HttpRequest::setUploadSpeed(size_t bytesPerSec) {
     curl_easy_setopt(_curl, CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(bytesPerSec));
 }
 
-void HttpRequest::progressCallback(double dltotal, double dlnow) {
+void HttpRequest::progressCallback(curl_off_t dltotal, curl_off_t dlnow) {
     for (const auto& cb : _downloadProgressCallbacks) {
         cb(static_cast<size_t>(dlnow), static_cast<size_t>(dltotal));
     }
@@ -170,8 +170,11 @@ HttpResponsePtr HttpRequest::execute() {
     }
     curl_easy_setopt(_curl, CURLOPT_HEADERDATA, resp.get());
     curl_easy_setopt(_curl, CURLOPT_HEADERFUNCTION, curlHeaderCallback);
-    curl_easy_setopt(_curl, CURLOPT_PROGRESSDATA, this);
-    curl_easy_setopt(_curl, CURLOPT_PROGRESSFUNCTION, curlProgressCallback);
+    curl_easy_setopt(_curl, CURLOPT_XFERINFODATA, this);
+    curl_easy_setopt(_curl, CURLOPT_XFERINFOFUNCTION, curlProgressCallback);
+    if (!_downloadProgressCallbacks.empty()) {
+        curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 0);
+    }
 
     _errBuffer[0] = 0;
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errBuffer);

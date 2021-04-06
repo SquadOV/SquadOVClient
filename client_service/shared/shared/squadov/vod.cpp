@@ -27,10 +27,6 @@ VodAssociation VodAssociation::fromJson(const nlohmann::json& j) {
     return v;
 }
 
-std::string VodAssociation::extension() const {
-    return "";
-}
-
 nlohmann::json VodMetadata::toJson() const {
     return {
         { "videoUuid", videoUuid },

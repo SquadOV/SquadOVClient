@@ -17,7 +17,6 @@ struct VodAssociation {
 
     nlohmann::json toJson() const;
     static VodAssociation fromJson(const nlohmann::json& j);
-    std::string extension() const;
 };
 
 struct VodMetadata {
