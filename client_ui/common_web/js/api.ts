@@ -971,6 +971,10 @@ class ApiClient {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
     }
 
+    getVodUploadPath(vodUuid: string): Promise<ApiData<string>> {
+        return axios.get(`v1/vod/${vodUuid}/upload`, this.createWebAxiosConfig())
+    }
+
     createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {
         interface ClipResponse {
             uuid: string

@@ -584,6 +584,11 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
 
                         // After that's complete, we can finally add this file to the local index.
                         singleton->addLocalEntryFromFilesystem(processedPath, entry);
+
+                        const auto finalPathParentDir = singleton->getEntryPath(entry).parent_path();
+                        const auto metadataFname = finalPathParentDir / fs::path("metadata.json");
+                        std::ofstream metadataOut(metadataFname);
+                        metadataOut << metadata.toJson().dump(4);
                     }
                 } catch (std::exception& ex) {
                     LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
@@ -696,7 +701,7 @@ void GameRecorder::initializeFileOutputPiper() {
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
-    const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, "mpegts");
+    const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
     const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
     const std::string outputUri = _cachedRecordingSettings->useLocalRecording ? shared::filesystem::pathUtf8(localTmpRecord) : cloudUri;
     setFileOutputFromUri(_currentId->videoUuid, outputUri);

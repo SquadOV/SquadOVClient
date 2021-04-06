@@ -132,6 +132,13 @@
                 <div v-if="downloadProgress !== null">
                     {{ (downloadProgress * 100.0).toFixed(0) }}% 
                 </div>
+
+                <!-- upload button -->
+                <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading">
+                    <v-icon>
+                        mdi-upload
+                    </v-icon>
+                </v-btn>
                 
                 <!-- create clip button -->
                 <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
@@ -178,6 +185,14 @@
         >
             Failed to download/delete the VOD, please try again later.
         </v-snackbar>
+
+        <v-snackbar
+            v-model="uploadError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to upload your locally recorded VOD, please submit a bug report.
+        </v-snackbar>
     </div>
 </template>
 
@@ -197,10 +212,13 @@ import { DownloadProgress } from '@client/js/system/download'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import { VodRemoteControlContext } from '@client/js/vods/remote'
+import { uploadLocalFileToGcs } from '@client/js/gcs'
 
 /// #if DESKTOP
 import { shell, ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
+import path from 'path'
+import fs from 'fs'
 /// #endif
 
 @Component({
@@ -469,6 +487,53 @@ export default class GenericVodPicker extends Vue {
 
     toggleDrawing() {
         this.$emit('update:enableDraw', !this.enableDraw)
+    }
+
+    get canUpload(): boolean {
+///#if DESKTOP
+        if (!this.value || !this.localVodLocation || this.manualDisableUpload) {
+            return false
+        }
+        return this.value.isLocal
+///#else
+        return false
+///#endif
+    }
+
+    isUploading: boolean = false
+    manualDisableUpload: boolean = false
+    uploadError: boolean = false
+    uploadLocalVod() {
+        if (!this.canUpload) {
+            return
+        }
+///#if DESKTOP
+        this.isUploading = true
+
+        setTimeout(async () => {
+            try {
+                const metadataFname = path.join(path.dirname(this.localVodLocation!), 'metadata.json')
+
+                if (!fs.existsSync(metadataFname)) {
+                    throw 'Could not find metadta filename : ' + metadataFname
+                }
+
+                const metadata: vod.VodMetadata = JSON.parse(fs.readFileSync(metadataFname, 'utf8'))
+                const uploadPath = await apiClient.getVodUploadPath(this.value!.videoUuid)
+                const sessionUri = await uploadLocalFileToGcs(this.localVodLocation!, uploadPath.data)
+
+                let newAssociation: vod.VodAssociation = vod.cleanVodAssocationData(JSON.parse(JSON.stringify(this.value!)))
+                newAssociation.isLocal = false
+                await apiClient.associateVod(newAssociation, metadata, sessionUri)
+
+                this.manualDisableUpload = true
+            } catch (ex) {
+                console.log('Failed to complete upload: ', ex)
+                this.uploadError = true
+            }
+            this.isUploading = false
+        }, 1)
+///#endif
     }
 
     mounted () {
