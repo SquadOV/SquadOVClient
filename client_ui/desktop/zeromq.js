@@ -108,7 +108,8 @@ class ZeroMQServerClient {
         if (idx === -1) {
             return
         }
-        this._handlers[topic].splice(idx)
+
+        this._handlers[topic].splice(idx, 1)
     }
 
     performVodClip(task, source, start, end) {

@@ -27,6 +27,11 @@ import 'video.js/dist/video-js.css'
 import { Parser as M3u8Parser } from 'm3u8-parser'
 import VideoDrawOverlay from '@client/vue/utility/VideoDrawOverlay.vue'
 
+/// #if DESKTOP
+import { ipcRenderer } from 'electron'
+import { IpcResponse } from '@client/js/system/ipc'
+/// #endif
+
 @Component({
     components: {
         VideoDrawOverlay
@@ -117,12 +122,29 @@ export default class VideoPlayer extends Vue {
             this.pinnedPlaying = false
         }
 
-        apiClient.getVodManifest(this.vod!.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
-            this.manifest = resp.data
-            this.toggleHasVideo()
-        }).catch((err : any) => {
-            console.log('Failed to obtain VOD manifest: ', err)
+
+///#if DESKTOP
+        ipcRenderer.invoke('check-vod-local', this.vod!.videoUuid).then((resp: IpcResponse<string>) => {
+            if (resp.success) {
+                console.log('Found Local VOD: ', resp.data)
+                this.videoUri = resp.data
+                this.toggleHasVideo()
+            }
+        }).catch((err: any) => {
+            console.log('No local VOD...falling back to checking SquadOV server.')
+        }).finally(() => {
+            if (!this.videoUri) {
+///#endif
+                apiClient.getVodManifest(this.vod!.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
+                    this.manifest = resp.data
+                    this.toggleHasVideo()
+                }).catch((err : any) => {
+                    console.log('Failed to obtain VOD manifest: ', err)
+                })
+///#if DESKTOP
+            }
         })
+///#endif
     }
 
     goToPercentage(percent: number) {
@@ -162,12 +184,12 @@ export default class VideoPlayer extends Vue {
 
     get currentMimeType(): string {
         if (!this.manifest) {
-            return ''
+            return 'video/mp4'
         }
 
         let track = vod.getVideoQualityTrack(this.manifest!, 'source')
         if (!track) {
-            return ''
+            return 'video/mp4'
         }
         return track.segments[0].mimeType
     }
