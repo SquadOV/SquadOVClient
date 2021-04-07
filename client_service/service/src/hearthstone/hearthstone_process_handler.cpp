@@ -22,7 +22,7 @@ public:
     ~HearthstoneProcessHandlerInstance();
 
 private:
-    void loadMonoMapper(const shared::TimePoint& eventTime, const void* rawData);
+    void loadMonoMapper();
     void onGameConnect(const shared::TimePoint& eventTime, const void* rawData);
     void onGameStart(const shared::TimePoint& eventTime, const void* rawData);
     void onGameEnd(const shared::TimePoint& eventTime, const void* rawData);
@@ -60,7 +60,6 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
     _logWatcher(std::make_unique<game_event_watcher::HearthstoneLogWatcher>(true, shared::nowUtc())) {
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::Hearthstone);
-    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::GameReady), std::bind(&HearthstoneProcessHandlerInstance::loadMonoMapper, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchConnect), std::bind(&HearthstoneProcessHandlerInstance::onGameConnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchStart), std::bind(&HearthstoneProcessHandlerInstance::onGameStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::MatchEnd), std::bind(&HearthstoneProcessHandlerInstance::onGameEnd, this, std::placeholders::_1, std::placeholders::_2));
@@ -80,12 +79,12 @@ HearthstoneProcessHandlerInstance::~HearthstoneProcessHandlerInstance() {
     }
 }
 
-void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& eventTime, const void* rawData) {
+void HearthstoneProcessHandlerInstance::loadMonoMapper() {
     if (_monoMapper) {
         return;
     }
 
-    LOG_INFO("Hearthstone Game Ready [" << shared::timeToStr(eventTime) << "]" << std::endl);
+    LOG_INFO("Load Hearthstone Memory..." << std::endl);
     // In addition to the log watcher, Hearthstone needs a memory mapper so that we can grab certain data
     // that isn't logged in the file such as the user's/opponent's rank, current deck (kinda), and cards in deck.
     // Note that this function *SHOULD NOT* be called right when the game is started but it should instead wait for an appropriate
@@ -93,6 +92,7 @@ void HearthstoneProcessHandlerInstance::loadMonoMapper(const shared::TimePoint& 
     auto memMapper = std::make_shared<process_watcher::memory::ModuleMemoryMapper>(_process, HEARTHSTONE_MONO_MODULE);
     process_watcher::memory::PEMapper peMapper(memMapper);
     auto monoWrapper = std::make_unique<process_watcher::memory::MonoMemoryMapper>(memMapper, peMapper); 
+
     _monoMapper = std::make_unique<process_watcher::memory::games::hearthstone::HearthstoneMemoryMapper>(std::move(monoWrapper));
 }
 
@@ -143,6 +143,7 @@ void HearthstoneProcessHandlerInstance::onArenaDraftFinish(const shared::TimePoi
     }
 
     LOG_INFO("Hearthstone Arena Draft Finish [" << shared::timeToStr(eventTime) << "]" << std::endl);
+    loadMonoMapper();
 
     try {
         service::api::getGlobalApi()->uploadHearthstoneArenaDeck(*_monoMapper->getCurrentArenaDeck(), _arenaUuid);
@@ -194,6 +195,7 @@ void HearthstoneProcessHandlerInstance::onGameStart(const shared::TimePoint& eve
     // later (i.e. not the moment the user connects to the match). In the case that
     // we are spectating we want to immediately stop recording and delete what was already
     // recorded.
+    loadMonoMapper();
     if (_monoMapper->isSpectator()) {
         LOG_INFO("Detecting spectator mode...reverting Hearthstone recording:" << _recorder->isRecording() << std::endl);
         if (_recorder->isRecording()) {
