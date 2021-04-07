@@ -186,6 +186,7 @@ std::string SquadovApi::createHearthstoneMatch(
 
     nlohmann::json jPlayers;
     for (const auto& kvp : players) {
+        LOG_INFO("Serializing player: " << kvp.second->name() << "[" << kvp.first << "]" << std::endl);
         auto j = kvp.second->toJson();
 
         // This should be fine as everything within ratings is optional within

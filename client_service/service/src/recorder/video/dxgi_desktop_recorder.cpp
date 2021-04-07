@@ -166,9 +166,16 @@ void DxgiDesktopRecorder::startRecording() {
             */
             const auto result = _dupl->ReleaseFrame();
             if (result == DXGI_ERROR_ACCESS_LOST) {
-                reacquireDuplicationInterface();
                 // Don't need to error out here since we only start to use _dupl after the
                 // call to ReleaseFrame.
+
+                try {
+                    reacquireDuplicationInterface();
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Failed to reacquire duplication interface [release frame]...retrying: " << ex.what() << std::endl);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+                    continue;
+                }
             }
 
             HRESULT hr = _dupl->AcquireNextFrame(100, &frameInfo, &desktopResource);
@@ -178,7 +185,12 @@ void DxgiDesktopRecorder::startRecording() {
             } else {
                 if (hr == DXGI_ERROR_ACCESS_LOST) {
                     LOG_INFO("DXGI Access Lost." << std::endl);
-                    reacquireDuplicationInterface();
+                    try {
+                        reacquireDuplicationInterface();
+                    } catch (std::exception& ex) {
+                        LOG_WARNING("Failed to reacquire duplication interface [DXGI_ERROR_ACCESS_LOST]...retrying: " << ex.what() << std::endl);
+                        std::this_thread::sleep_for(std::chrono::milliseconds(16));
+                    }
                     continue;
                 }
 
