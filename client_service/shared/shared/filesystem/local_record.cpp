@@ -43,6 +43,10 @@ void LocalRecordingIndexDb::initializeFromFolder(const fs::path& parentFolder) {
 
     release();
 
+    if (!fs::exists(parentFolder)) {
+        fs::create_directories(parentFolder);   
+    }
+
     const auto indexFile = parentFolder / fs::path("index.db");
     LOG_INFO("Initializing local recording database: " << indexFile << std::endl);
     if (sqlite3_open(shared::filesystem::pathUtf8(indexFile).c_str(), &_db) != SQLITE_OK) {
@@ -50,9 +54,6 @@ void LocalRecordingIndexDb::initializeFromFolder(const fs::path& parentFolder) {
     }
     migrateDatabase();
 
-    if (!fs::exists(parentFolder)) {
-        fs::create_directories(parentFolder);   
-    }
     _initFolder = parentFolder;
 }
 
