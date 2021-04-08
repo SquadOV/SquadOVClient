@@ -146,6 +146,7 @@ void DxgiDesktopRecorder::startRecording() {
 
         int64_t count = 0;
         int64_t numReused = 0;
+        
         while (_recording) {
             IDXGIResource* desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
@@ -203,11 +204,9 @@ void DxgiDesktopRecorder::startRecording() {
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
-                if (desktopResource) {
-                    desktopResource->Release();
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
+                // Re-use old frames here to try and prevent ourselves from grabbing the desktop.
+                // Don't just skip the frame as they may cause us to de-sync?
+                reuseOldFrame = true;
             }
 
             reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
