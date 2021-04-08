@@ -585,6 +585,9 @@ export default class RecordingSettingsItem extends Vue {
 
     onRequestChangeRecordingLocation() {
 ///#if DESKTOP
+        ipcRenderer.invoke('request-user-folder-selection', this.localRecordingLocation).then((folder: string) => {
+            this.syncLocalRecording(this.useLocalRecording, folder, this.maxLocalRecordingSizeGb)
+        })
 ///#endif
     }
 

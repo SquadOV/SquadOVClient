@@ -113,7 +113,7 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
 
         release();
 
-        fs::rename(_initFolder.value() / fs::path("index.db"), to / fs::path("index.db"));
+        fs::rename(oldFolder / fs::path("index.db"), to / fs::path("index.db"));
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to migrate local entry: " << ex.what() << std::endl);
         return false;

@@ -684,6 +684,20 @@ ipcMain.handle('delete-vod-local', async (event, uuid) => {
     }
 })
 
+ipcMain.handle('request-user-folder-selection', async (event, defaultPath) => {
+    let ret = await dialog.showOpenDialog({
+        title: 'Select a Folder',
+        defaultPath,
+        properties: ['openDirectory', 'promptToCreate']
+    })
+
+    if (ret.canceled || ret.filePaths.length === 0) {
+        return defaultPath
+    } else {
+        return ret.filePaths[0]
+    }
+})
+
 zeromqServer.on('vod-download-progress', (resp) => {
     let parsedResp = JSON.parse(resp)
     if (!!win) {
