@@ -165,11 +165,10 @@ void DxgiDesktopRecorder::startRecording() {
                 cannot copy desktop updates to the surface. Because of this behavior, we recommend that you
                 minimize the time between the call to release the current frame and the call to acquire the next frame.
             */
-            const auto result = _dupl->ReleaseFrame();
+            const auto result = !!_dupl ? _dupl->ReleaseFrame() : DXGI_ERROR_ACCESS_LOST;
             if (result == DXGI_ERROR_ACCESS_LOST) {
                 // Don't need to error out here since we only start to use _dupl after the
                 // call to ReleaseFrame.
-
                 try {
                     reacquireDuplicationInterface();
                 } catch (std::exception& ex) {
