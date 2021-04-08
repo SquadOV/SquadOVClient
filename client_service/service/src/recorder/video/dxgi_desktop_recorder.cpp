@@ -173,12 +173,11 @@ void DxgiDesktopRecorder::startRecording() {
                     reacquireDuplicationInterface();
                 } catch (std::exception& ex) {
                     LOG_WARNING("Failed to reacquire duplication interface [release frame]...retrying: " << ex.what() << std::endl);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(16));
-                    continue;
+                    reuseOldFrame = true;
                 }
             }
 
-            HRESULT hr = _dupl->AcquireNextFrame(100, &frameInfo, &desktopResource);
+            HRESULT hr = !!_dupl ? _dupl->AcquireNextFrame(100, &frameInfo, &desktopResource) : DXGI_ERROR_WAIT_TIMEOUT;
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 reuseOldFrame = true;
                 ++numReused;
@@ -189,14 +188,12 @@ void DxgiDesktopRecorder::startRecording() {
                         reacquireDuplicationInterface();
                     } catch (std::exception& ex) {
                         LOG_WARNING("Failed to reacquire duplication interface [DXGI_ERROR_ACCESS_LOST]...retrying: " << ex.what() << std::endl);
-                        std::this_thread::sleep_for(std::chrono::milliseconds(16));
                     }
-                    continue;
                 }
 
                 if (hr != S_OK) {
                     LOG_INFO("DXGI NOT OK:" << hr << std::endl);
-                    continue;
+                    reuseOldFrame = true;
                 }
             }
 

@@ -73,53 +73,53 @@ void Win32GdiRecorderInstance::startRecording() {
 
             const auto width = rcClient.right-rcClient.left;
             const auto height = rcClient.bottom-rcClient.top;
+            bool reuseFrame = false;
 
             // Means we're probably minimized.
             if (IsIconic(_window) || width == 0 || height == 0) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
+                reuseFrame = true;
             }
 
-            if (!hbm || width != frame.width() || height != frame.height()) {
-                if (hbm) {
-                    DeleteObject(hbm);
+            if (!reuseFrame) {
+                if (!hbm || width != frame.width() || height != frame.height()) {
+                    if (hbm) {
+                        DeleteObject(hbm);
+                    }
+                    hbm = CreateCompatibleBitmap(hdcWindow, width, height);
+                    frame.initializeImage(width, height);
+                    bi.biWidth = width;
+                    // Make bitmaps draw normally (i.e. Y=0 is the top of image...)
+                    bi.biHeight = -height;
+                    bi.biSizeImage = width * height * 4;
                 }
-                hbm = CreateCompatibleBitmap(hdcWindow, width, height);
-                frame.initializeImage(width, height);
-                bi.biWidth = width;
-                // Make bitmaps draw normally (i.e. Y=0 is the top of image...)
-                bi.biHeight = -height;
-                bi.biSizeImage = width * height * 4;
+
+                const DWORD dwBmpSize = width * height * 4;
+                const DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
+                bmfHeader.bfSize = dwSizeofDIB;
+
+                HBITMAP oldHbm = (HBITMAP)SelectObject(hdcMem, hbm);
+                BOOL ok = BitBlt(
+                    hdcMem,
+                    0, 0,
+                    width, height,
+                    hdcWindow,
+                    rcClient.left, rcClient.top,
+                    SRCCOPY
+                );
+
+                if (ok) {
+                    // According to the MSDN docs for GetDIBits we need to clear out the HBITMAP we want to
+                    // get bits from from any DCs.
+                    SelectObject(hdcMem, oldHbm);
+                    GetDIBits(hdcMem, hbm, 0,
+                        height,
+                        (void*)frame.buffer(),
+                        (BITMAPINFO *)&bi,
+                        DIB_RGB_COLORS);
+                } else {
+                    LOG_WARNING("BitBlt failed." << std::endl);
+                }
             }
-
-            const DWORD dwBmpSize = width * height * 4;
-            const DWORD dwSizeofDIB = dwBmpSize + sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER);
-            bmfHeader.bfSize = dwSizeofDIB;
-
-            HBITMAP oldHbm = (HBITMAP)SelectObject(hdcMem, hbm);
-            BOOL ok = BitBlt(
-                hdcMem,
-                0, 0,
-                width, height,
-                hdcWindow,
-                rcClient.left, rcClient.top,
-                SRCCOPY
-            );
-
-            if (!ok) {
-                LOG_WARNING("BitBlt failed." << std::endl);
-                continue;
-            } 
- 
-            // According to the MSDN docs for GetDIBits we need to clear out the HBITMAP we want to
-            // get bits from from any DCs.
-            SelectObject(hdcMem, oldHbm);
-            GetDIBits(hdcMem, hbm, 0,
-                height,
-                (void*)frame.buffer(),
-                (BITMAPINFO *)&bi,
-                DIB_RGB_COLORS);
-            
             const auto endCapture = TickClock::now();
 #if LOG_FRAME_TIME
             const auto gdiElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(endCapture - startFrame).count();
@@ -127,7 +127,7 @@ void Win32GdiRecorderInstance::startRecording() {
 
             {
                 std::lock_guard<std::mutex> guard(_encoderMutex);
-                if (_activeEncoder) {
+                if (_activeEncoder && frame.isInit()) {
                     _activeEncoder->addVideoFrame(frame);
                 }
             }

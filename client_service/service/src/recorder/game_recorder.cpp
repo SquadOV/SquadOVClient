@@ -84,11 +84,11 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         return;
     }
 
-    if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 
-    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
+    if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 #endif

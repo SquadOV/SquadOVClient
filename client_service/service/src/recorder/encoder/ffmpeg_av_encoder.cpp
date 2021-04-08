@@ -636,7 +636,7 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     // Get this number again just in case it took us awhile to receive the frame.
     const auto numFramesToEncode = numVideoFramesToEncode();
     if (numFramesToEncode >= _fps) {
-        LOG_WARNING("Encoding > 1 minute worth of frames at a single time: " << numFramesToEncode << std::endl);
+        LOG_WARNING("Encoding > 1 second worth of frames at a single time: " << numFramesToEncode << std::endl);
     } else if (!numFramesToEncode) {
         LOG_WARNING("Attempting to encode 0 frames...ignoring." << std::endl);
         return;
