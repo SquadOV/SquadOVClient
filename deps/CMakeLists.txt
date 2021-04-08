@@ -15,7 +15,7 @@ set(SKIP_INSTALL_ALL ON CACHE BOOL "")
 add_subdirectory(libpng)
 
 
-set(PA_ENABLE_DEBUG_OUTPUT OFF)
+set(PA_ENABLE_DEBUG_OUTPUT ON)
 add_subdirectory(portaudio)
 
 add_subdirectory(libzmq)

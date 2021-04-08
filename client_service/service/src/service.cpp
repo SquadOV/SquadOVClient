@@ -88,6 +88,18 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     LOG_INFO(sBuffer);
 }
 
+bool enablePaDebugLogs = false;
+extern "C" {
+typedef void (*PaUtilLogCallback ) (const char *log);
+extern void PaUtil_SetDebugPrintFunction(PaUtilLogCallback  cb);
+}
+
+void portaudioLogCallback(const char* log) {
+    if (enablePaDebugLogs) {
+        LOG_INFO("PORTAUDIO: " << log);
+    }
+}
+
 void defaultMain() {
     const auto flags = service::api::getGlobalApi()->getSessionFeatures();
 
@@ -130,7 +142,8 @@ int main(int argc, char** argv) {
 
     if (shared::getEnv("SQUADOV_DEBUG") != "") {
         LOG_INFO("Enabling Debug Logs" << std::endl);
-        shared::log::getGlobalLogger().setThreshold(shared::log::LogType::Debug);   
+        shared::log::getGlobalLogger().setThreshold(shared::log::LogType::Debug);
+        enablePaDebugLogs = true;
     }
 
     LOG_INFO("Start SquadOV" << std::endl);
@@ -145,8 +158,15 @@ int main(int argc, char** argv) {
         THROW_ERROR("Failed to initialize CURL.");
     }
 
-    if (Pa_Initialize() != paNoError) {
-        THROW_ERROR("Failed to initialize PortAudio.");
+    PaUtil_SetDebugPrintFunction(portaudioLogCallback);
+    const auto paErr =  Pa_Initialize();
+    if (paErr != paNoError) {
+        if (paErr == paUnanticipatedHostError) {
+            const auto* hostErr = Pa_GetLastHostErrorInfo();
+            LOG_ERROR("PortAudio Host Error: " << hostErr->errorCode << "\t" << hostErr->errorText << std::endl);
+            LOG_ERROR("\tPort Audio Host Api Type: " << hostErr->hostApiType << std::endl);
+        }
+        THROW_ERROR("Failed to initialize PortAudio: " << paErr << "\t" << Pa_GetErrorText(paErr));
     }
 
     const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
