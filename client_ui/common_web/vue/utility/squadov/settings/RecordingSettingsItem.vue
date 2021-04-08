@@ -303,7 +303,7 @@
                             :input-value="useLocalRecording"
                             @change="syncLocalRecording(arguments[0], localRecordingLocation, maxLocalRecordingSizeGb)"
                             hide-details
-                            label="Enable Local Recording"
+                            label="Disable Automatic Upload"
                             :disabled="changeLocalRecordingProgress"
                         >
                             <template v-slot:append>
@@ -314,7 +314,7 @@
                                         </v-icon>
                                     </template>
 
-                                    Whether to disable automatic uploading of recorded VODs to SquadOV.
+                                    Whether to disable automatic uploading of recorded VODs to SquadOV while you're in-game (i.e. streaming).
                                     Enabling this will cause your match to only be accessible via the game logs menu and your VODs will not be viewable by anyone else until you upload them.
                                     <b>This is not recommended.</b>
                                 </v-tooltip>
