@@ -314,7 +314,7 @@
                                         </v-icon>
                                     </template>
 
-                                    Whether to disable automatic uploading of recorded VODs to SquadOV while you're in-game (i.e. streaming).
+                                    Whether to disable automatic uploading of recorded VODs to SquadOV while you're in-game (i.e. streaming) and enable recording to your local disk instead.
                                     Enabling this will cause your match to only be accessible via the game logs menu and your VODs will not be viewable by anyone else until you upload them.
                                     <b>This is not recommended.</b>
                                 </v-tooltip>
