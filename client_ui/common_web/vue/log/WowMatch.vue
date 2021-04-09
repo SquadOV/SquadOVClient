@@ -81,7 +81,7 @@
                             :is-arena="!!currentMatch.arena"
                             :use-teams="!!currentMatch.arena"
                             :friendly-team="friendlyTeam"
-                            @go-to-event="goToVodTime"
+                            @go-to-event="goToVodTime(arguments[0], true)"
                         >
                         </wow-match-events>
                     </v-col>
@@ -107,7 +107,7 @@
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
-                                @go-to-time="goToVodTime"
+                                @go-to-time="goToVodTime(arguments[0], false)"
                             >
                             </wow-timeline>
                         </v-tab-item>
@@ -128,7 +128,7 @@
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
-                                @go-to-time="goToVodTime"
+                                @go-to-time="goToVodTime(arguments[0], false)"
                             >
                             </wow-spell-analysis>
                         </v-tab-item>
@@ -162,7 +162,7 @@
                                 :has-vod="!!vod && vodReady"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
-                                @go-to-time="goToVodTime"
+                                @go-to-time="goToVodTime(arguments[0], false)"
                             >
                             </wow-death-recap-analysis>
                         </v-tab-item>
@@ -292,13 +292,13 @@ export default class WowMatch extends Vue {
         return !!this.currentMatch?.arena?.success ? winningTeamId : getOppositeWowArenaTeam(winningTeamId)
     }
 
-    goToVodTime(tm : Date) {
+    goToVodTime(tm : Date, useOffset: boolean) {
         if (!this.vod) {
             return
         }
         
         let diffMs = tm.getTime() - this.vod.startTime.getTime()
-        this.$refs.player.goToTimeMs(diffMs)
+        this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 
     get currentCharacter(): string | undefined {

@@ -59,7 +59,7 @@
                             :style="roundEventsStyle"
                             :current-player="currentPlayer"
                             :metadata="playerMetadata"
-                            @go-to-event="goToVodTime"
+                            @go-to-event="goToVodTime(arguments[0], true)"
                         >
                         </valorant-round-events>
                     </v-col>
@@ -113,7 +113,7 @@
                             :current-player="currentPlayer"
                             :metadata="playerMetadata"
                             :force-disable-go-to-event="!hasMatchTiming"
-                            @go-to-event="goToVodTime"
+                            @go-to-event="goToVodTime(arguments[0], true)"
                         >
                         </valorant-match-player-card>
                     </v-col>
@@ -255,13 +255,13 @@ export default class ValorantMatch extends Vue {
         return null
     }
 
-    goToVodTime(tm : Date) {
+    goToVodTime(tm : Date, useOffset: boolean) {
         if (!this.hasMatchTiming) {
             return
         }
         
         let diffMs = tm.getTime() - this.playerMetadata!.startTime.getTime()
-        this.$refs.player.goToTimeMs(diffMs)
+        this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 
     @Watch('puuid')

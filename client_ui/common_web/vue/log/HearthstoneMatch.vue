@@ -41,6 +41,7 @@
                             :ready.sync="vodReady"
                             :current-time.sync="vodTime"
                             :enable-draw="enableDraw"
+                            :go-to-offset="1000"
                         >
                         </video-player>
 
@@ -66,7 +67,7 @@
                                     :current-match="matchWrapper"
                                     :turn="currentTurn"
                                     :style="roundEventsStyle"
-                                    @go-to-event="goToVodTime"
+                                    @go-to-event="goToVodTime(arguments[0], true)"
                                     :has-vod="hasVod && vodReady"
                                 >
                                 </hearthstone-turn-events-display>
@@ -257,13 +258,13 @@ export default class HearthstoneMatch extends Vue {
         return !!this.vod
     }
 
-    goToVodTime(tm : Date) {
+    goToVodTime(tm : Date, useOffset: boolean) {
         if (!this.hasVod) {
             return
         }
 
         let diffMs = tm.getTime() - this.vod!.startTime.getTime()
-        this.$refs.player.goToTimeMs(diffMs)
+        this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 
     @Watch('matchId')

@@ -82,6 +82,9 @@ export default class VideoPlayer extends Vue {
     @Prop()
     clipEnd!: number | undefined
 
+    @Prop({default: 3000})
+    goToOffset!: number
+
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
@@ -168,15 +171,15 @@ export default class VideoPlayer extends Vue {
             return
         }
         let time = this.player.duration() * percent
-        this.goToTimeMs(time * 1000.0)
+        this.goToTimeMs(time * 1000.0, false)
     }
 
-    goToTimeMs(tmMs : number) {
+    goToTimeMs(tmMs : number, useOffset: boolean) {
         if (!this.player || this.player.readyState() < 3) {
             return
         }
 
-        this.player.currentTime(Math.max(Math.floor(tmMs / 1000.0), 0.0))
+        this.player.currentTime(Math.max(Math.floor((tmMs - (useOffset ? this.goToOffset : 0.0)) / 1000.0), 0.0))
     }
 
     get currentVideoSourceUri() : string {
@@ -302,7 +305,7 @@ export default class VideoPlayer extends Vue {
         this.player.on('canplay', () => {
             this.$emit('update:playerHeight', this.player!.currentHeight())
             if (!!this.pinnedTimeStamp && !!this.vod && !!this.player && this.player.readyState() >= 2) {
-                this.goToTimeMs(this.pinnedTimeStamp.getTime() - this.vod.startTime.getTime())
+                this.goToTimeMs(this.pinnedTimeStamp.getTime() - this.vod.startTime.getTime(), false)
                 this.pinnedTimeStamp = null
                 if (this.pinnedPlaying) {
                     this.player.play()
@@ -417,19 +420,19 @@ export default class VideoPlayer extends Vue {
             handled = true
         } else if (cmp == 'arrowleft') {
             // Jump back 5 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 - 5000)
+            this.goToTimeMs(this.player.currentTime() * 1000 - 5000, false)
             handled = true
         } else if (cmp == 'arrowright') {
             // Jump forward 5 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 + 5000)
+            this.goToTimeMs(this.player.currentTime() * 1000 + 5000, false)
             handled = true
         } else if (cmp == 'j') {
             // Jump back 10 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 - 10000)
+            this.goToTimeMs(this.player.currentTime() * 1000 - 10000, false)
             handled = true
         } else if (cmp == 'l') {
             // Jump forward 10 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 + 10000)
+            this.goToTimeMs(this.player.currentTime() * 1000 + 10000, false)
             handled = true
         } else if (cmp == 'arrowup') {
             // Volume up

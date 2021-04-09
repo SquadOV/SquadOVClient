@@ -438,7 +438,7 @@ export default class VodEditor extends Vue {
         }
 
         if (!!this.vod) {
-            this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime())
+            this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime(), false)
         }
     }
 

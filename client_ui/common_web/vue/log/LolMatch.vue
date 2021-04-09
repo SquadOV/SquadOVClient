@@ -59,7 +59,7 @@
                             :display-events.sync="displayEvents"
                             :has-vod="!!vod && vodReady"
                             :style="eventsStyle"
-                            @go-to-timestamp="goToTimestamp"
+                            @go-to-timestamp="goToTimestamp(arguments[0], true)"
                         >
                         </lol-event-manager>
                     </v-col>
@@ -73,7 +73,7 @@
                     :current="currentMatchTimeSeconds"
                     :input-events="genericEvents"
                     :major-tick-every="90"
-                    @go-to-timestamp="goToTimestampSeconds"
+                    @go-to-timestamp="goToTimestampSeconds(arguments[0], false)"
                 >
                     <template v-slot:tick="{ tick }">
                         {{ secondsToTimeString(tick) }}
@@ -207,18 +207,18 @@ export default class LolMatch extends Vue {
     vodTime: Date | null = null
     vodReady: boolean = false
 
-    goToTimestampSeconds(t: number) {
-        this.goToTimestamp(t * 1000.0)
+    goToTimestampSeconds(t: number, useOffset: boolean) {
+        this.goToTimestamp(t * 1000.0, useOffset)
     }
 
-    goToTimestamp(t: number) {
+    goToTimestamp(t: number, useOffset: boolean) {
         if (!this.vod || !this.currentMatch?.gameStartTime) {
             return
         }
 
         // Assume t is number of milliseconds since the game started.
         let diffMs = (this.currentMatch.gameStartTime.getTime() - this.vod.startTime.getTime()) + t
-        this.$refs.player.goToTimeMs(diffMs)
+        this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 
     // This function is needed to convert from the current VOD time to the match time in seconds
