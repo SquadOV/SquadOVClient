@@ -233,6 +233,7 @@ void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::p
     const auto outputPath = getEntryPath(entry);
     fs::create_directories(outputPath.parent_path());
     fs::rename(file, outputPath);
+    LOG_INFO("Added local entry to DB: " << outputPath << std::endl);
 }
 
 std::filesystem::path LocalRecordingIndexDb::getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const {

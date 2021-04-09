@@ -185,6 +185,7 @@ HttpResponsePtr HttpRequest::execute() {
         resp->body = buffer.str();
     } else {
         resp->body = std::string(_errBuffer);
+        LOG_WARNING("Generic CURL failure: " << resp->body << std::endl);
     }
 
     if (ofile.is_open()) {

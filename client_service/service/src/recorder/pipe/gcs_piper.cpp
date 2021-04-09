@@ -242,7 +242,7 @@ size_t GCSPiper::sendDataFromBufferToGcs(const char* buffer, size_t numBytes, bo
         }
 
     } else {
-        THROW_ERROR("Failed to send data to GCS: " << ret->status << std::endl);
+        THROW_ERROR("Failed to send data to GCS: " << ret->status << "\t" << ret->body << std::endl);
     }
 
     return 0;

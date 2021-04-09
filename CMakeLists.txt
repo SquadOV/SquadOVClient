@@ -36,7 +36,7 @@ target_link_libraries(ZLIB::ZLIB INTERFACE zlib)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.74.0 REQUIRED
-    COMPONENTS filesystem system program_options iostreams zlib)
+    COMPONENTS filesystem system program_options iostreams zlib date_time)
 add_subdirectory(deps)
 add_subdirectory(client_service)
 add_subdirectory(tools)

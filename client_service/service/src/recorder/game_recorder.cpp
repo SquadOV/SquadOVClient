@@ -704,6 +704,7 @@ void GameRecorder::initializeFileOutputPiper() {
     const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
     const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
     const std::string outputUri = _cachedRecordingSettings->useLocalRecording ? shared::filesystem::pathUtf8(localTmpRecord) : cloudUri;
+    LOG_INFO("Output URI: " << outputUri << std::endl);
     setFileOutputFromUri(_currentId->videoUuid, outputUri);
 }
 

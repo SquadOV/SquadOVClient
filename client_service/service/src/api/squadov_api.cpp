@@ -331,7 +331,7 @@ void SquadovApi::deleteVod(const std::string& videoUuid) const {
 
     const auto result = _webClient->del(path.str());
 
-    if (result->status != 200) {
+    if (result->status != 204) {
         THROW_ERROR("Failed to delete VOD: " << result->status);
         return;
     }
