@@ -330,9 +330,9 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     };
 
     const EncoderChoice encodersToUse[] = {
-        {"h264_nvenc", VideoStreamContext::GPU, true },
-        {"h264_amf", VideoStreamContext::CPU, true },
-        {"h264_mf", VideoStreamContext::CPU, true },
+        //{"h264_nvenc", VideoStreamContext::GPU, true },
+        //{"h264_amf", VideoStreamContext::CPU, true },
+        //{"h264_mf", VideoStreamContext::CPU, true },
         {"libopenh264", VideoStreamContext::CPU, false }
     };
 
@@ -364,9 +364,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
             canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && useHwPipeline;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
-            _vcodecContext->bit_rate = 6000000;
+            _vcodecContext->bit_rate = 2500000;
+            _vcodecContext->rc_max_rate = 6000000;
+            _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 2;
             _vcodecContext->thread_count = 0;
-            _vcodecContext->max_b_frames = 1;
+            _vcodecContext->max_b_frames = 3;
             
             if (canUseHwAccel) {
                 AVBufferRef* hwContextRef = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
@@ -441,6 +443,38 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
 
             if (_vcodecContext->codec_id == AV_CODEC_ID_H264) {
                 av_dict_set(&options, "preset", "medium", 0);
+
+                // H264 Profile
+                if (enc.name == "h264_mf") {
+                    _vcodecContext->profile = FF_PROFILE_H264_HIGH;
+                } else {
+                    av_dict_set(&options, "profile", "high", 0);
+                }
+
+                // CRF/CQ
+                if (enc.name == "h264_mf") {
+                    av_dict_set(&options, "quality", "30", 0);
+                } else if (enc.name == "h264_nvenc") {
+                    av_dict_set(&options, "qp", "30", 0);
+                } else if (enc.name == "h264_amf") {
+                    av_dict_set(&options, "qp_i", "30", 0);
+                    av_dict_set(&options, "qp_p", "30", 0);
+                    av_dict_set(&options, "qp_b", "30", 0);
+                } else if (enc.name == "libopenh264") {
+                    _vcodecContext->qmin = 20;
+                    _vcodecContext->qmax = 30;
+                }
+
+                // Rate control
+                if (enc.name == "h264_mf") {
+                    av_dict_set(&options, "rate_control", "quality", 0);
+                } else if (enc.name == "h264_nvenc") {
+                    av_dict_set(&options, "rc", "constqp", 0);
+                } else if (enc.name == "h264_amf") {
+                    av_dict_set(&options, "rc", "cqp", 0);
+                } else if (enc.name == "libopenh264") {
+                    av_dict_set(&options, "rc_mode", "quality", 0);
+                }
             }
 
             const auto ret = avcodec_open2(_vcodecContext, _vcodec, &options);
