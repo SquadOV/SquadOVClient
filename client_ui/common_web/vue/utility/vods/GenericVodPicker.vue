@@ -49,12 +49,12 @@
             <v-divider vertical class="mx-2"></v-divider>
 
             <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
-                <!-- delete VOD button -->
-                <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
+                <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
                         <v-btn
                             color="error"
                             icon
+                            @click="showHideDeleteConfirm = true"
                             v-on="on"
                             v-bind="attrs"
                             :loading="loadingDelete || loadingLocalDelete"
@@ -65,6 +65,11 @@
                         </v-btn>
                     </template>
 
+                    Delete (VOD only)
+                </v-tooltip>
+
+                <!-- delete VOD button -->
+                <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
                     <v-card>
                         <v-card-title>
                             Confirmation
@@ -111,70 +116,128 @@
                 </v-dialog>
 
                 <!-- download VOD button -->
-                <v-btn color="warning icon" icon v-if="hasLocal" @click="openLocalDownload" :loading="checkingForLocal">
-                    <v-icon>
-                        mdi-folder-open
-                    </v-icon>
-                </v-btn>
+                <v-tooltip bottom v-if="hasLocal" @click="openLocalDownload" >
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs">
+                            <v-icon>
+                                mdi-folder-open
+                            </v-icon>
+                        </v-btn>
+                    </template>
 
-                <v-btn color="warning" icon v-else-if="!!downloadUri && useSimpleDownload && hasFastify" :href="downloadUri" :loading="checkingForLocal">
-                    <v-icon>
-                        mdi-download
-                    </v-icon>
-                </v-btn>
+                    Open Folder Location
+                </v-tooltip>
 
-                <v-btn color="warning" icon v-else-if="!useSimpleDownload && hasFastify" @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal">
-                    <v-icon>
-                        mdi-download
-                    </v-icon>
-                </v-btn>
+                <v-tooltip bottom v-else-if="!!downloadUri && useSimpleDownload && hasFastify" >
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="warning" icon :href="downloadUri" :loading="checkingForLocal" v-on="on" v-bind="attrs">
+                            <v-icon>
+                                mdi-download
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    Download
+                </v-tooltip>
+
+                <v-tooltip bottom v-else-if="!useSimpleDownload && hasFastify">
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="warning" icon @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal" v-on="on" v-bind="attrs">
+                            <v-icon>
+                                mdi-download
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    Download
+                </v-tooltip>
 
                 <div v-if="downloadProgress !== null">
                     {{ (downloadProgress * 100.0).toFixed(0) }}% 
                 </div>
 
                 <!-- upload button -->
-                <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading">
-                    <v-icon>
-                        mdi-upload
-                    </v-icon>
-                </v-btn>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
+                            <v-icon>
+                                mdi-upload
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    Upload
+                </v-tooltip>
                 
                 <!-- create clip button -->
-                <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow">
-                    <v-icon>
-                        mdi-content-cut
-                    </v-icon>
-                </v-btn>
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow" v-on="on" v-bind="attrs">
+                            <v-icon>
+                                mdi-content-cut
+                            </v-icon>
+                        </v-btn>
+                    </template>
+
+                    Clip
+                </v-tooltip>
             </template>
 
             <!-- drawing button -->
-            <v-btn color="pink accent-2" icon @click="toggleDrawing" :input-value="enableDraw">
-                <v-icon>
-                    mdi-palette
-                </v-icon>
-            </v-btn>
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="pink accent-2" icon @click="toggleDrawing" :input-value="enableDraw" v-on="on" v-bind="attrs">
+                        <v-icon>
+                            mdi-palette
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Draw
+            </v-tooltip>
 
             <!-- clip library button -->
-            <v-btn color="primary" icon @click="openClipWindowForMatch" v-if="hasFastify">
-                <v-icon>
-                    mdi-filmstrip-box-multiple
-                </v-icon>
-            </v-btn>
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="primary" icon @click="openClipWindowForMatch" v-if="hasFastify"  v-on="on" v-bind="attrs">
+                        <v-icon>
+                            mdi-filmstrip-box-multiple
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Clip Library (Match)
+            </v-tooltip>
 
             <!-- favorite -->
-            <vod-favorite-button
-                v-if="!!value && !disableFavorite && hasFastify"
-                :vod-uuid="value.videoUuid"
-            >
-            </vod-favorite-button>
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <div v-on="on" v-bind="attrs">
+                        <vod-favorite-button
+                            v-if="!!value && !disableFavorite && hasFastify"
+                            :vod-uuid="value.videoUuid"
+                        >
+                        </vod-favorite-button>
+                    </div>
+                </template>
+
+                Favorite
+            </v-tooltip>
 
             <!-- watch list -->
-            <vod-watchlist-button
-                v-if="!!value && hasFastify"
-                :vod-uuid="value.videoUuid"
-            >
-            </vod-watchlist-button>
+            <v-tooltip bottom>
+                <template v-slot:activator="{on, attrs}">
+                    <div v-on="on" v-bind="attrs">
+                        <vod-watchlist-button
+                            v-if="!!value && hasFastify"
+                            :vod-uuid="value.videoUuid"
+                        >
+                        </vod-watchlist-button>
+                    </div>
+                </template>
+
+                Add to Watch List
+            </v-tooltip>
 
         </template>
 
