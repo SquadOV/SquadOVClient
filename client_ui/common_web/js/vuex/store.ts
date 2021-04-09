@@ -68,12 +68,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseVfr22(state: RootState, b: boolean) {
+        changeUseVfr32(state: RootState, b: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.useVfr2 = b
+            state.settings.record.useVfr3 = b
             saveLocalSettings(state.settings)
 /// #endif
         },

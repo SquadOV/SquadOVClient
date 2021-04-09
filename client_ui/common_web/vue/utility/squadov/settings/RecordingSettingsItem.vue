@@ -82,8 +82,8 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="useVfr2"
-                            @change="changeUseVfr22"
+                            :input-value="useVfr3"
+                            @change="changeUseVfr32"
                             hide-details
                             label="Use Variable Framerate"
                         >
@@ -537,12 +537,12 @@ export default class RecordingSettingsItem extends Vue {
         this.$store.commit('changeUseHwEncoder', val)
     }
 
-    get useVfr2(): boolean {
-        return this.$store.state.settings.record.useVfr2
+    get useVfr3(): boolean {
+        return this.$store.state.settings.record.useVfr3
     }
 
-    changeUseVfr22(val: boolean) {
-        this.$store.commit('changeUseVfr22', val)
+    changeUseVfr32(val: boolean) {
+        this.$store.commit('changeUseVfr32', val)
     }
 
     get maxUploadSpeed(): number | null {

@@ -83,7 +83,7 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr2);
+    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
 #ifdef _WIN32
@@ -177,7 +177,7 @@ private:
     std::shared_mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
     size_t _fps = 0;
-    bool _useVfr2 = false;
+    bool _useVfr3 = false;
 
     FfmpegVideoSwapChainPtr _videoSwapChain;
 
@@ -321,7 +321,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr2) {
+void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -514,7 +514,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     _videoSwapChain->initializeGpuSupport(d3d);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = fps;
-    _useVfr2 = useVfr2;
+    _useVfr3 = useVfr3;
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
 }
 
@@ -692,7 +692,7 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     }
 
     bool forceFrame0 = false;
-    if (_useVfr2) {
+    if (_useVfr3) {
         forceFrame0 = (_vFrameNum == 0 && desiredFrameNum > 1);
         _vFrameNum = desiredFrameNum - 1;
     }
@@ -973,8 +973,8 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr2) {
-    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder, useVfr2);
+void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3) {
+    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder, useVfr3);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
