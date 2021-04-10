@@ -143,14 +143,17 @@ export default class VideoPlayer extends Vue {
 
 
 ///#if DESKTOP
+        this.videoUri = null
         ipcRenderer.invoke('check-vod-local', this.vod!.videoUuid).then((resp: IpcResponse<string>) => {
             if (resp.success) {
                 console.log('Found Local VOD: ', resp.data)
                 this.videoUri = resp.data
                 this.toggleHasVideo()
+            } else {
+                console.log('No Local VOD for: ', this.vod!.videoUuid)
             }
         }).catch((err: any) => {
-            console.log('No local VOD...falling back to checking SquadOV server.')
+            console.log('Failed to get local VOD...falling back to checking SquadOV server:', err)
         }).finally(() => {
             if (!this.videoUri) {
 ///#endif
