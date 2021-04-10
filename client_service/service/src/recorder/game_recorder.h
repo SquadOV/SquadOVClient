@@ -52,7 +52,7 @@ public:
     void startDvrSession(int flags = FLAG_ALL_RECORDING, bool autoTick = true);
     void startNewDvrSegment();
     void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_ALL_RECORDING);
-    void stop(std::optional<GameRecordEnd> end);
+    void stop(std::optional<GameRecordEnd> end, bool keepLocal = false);
     void stopInputs();
     std::string stopDvrSession();
     void cleanDvrSession(const std::string& id);

@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
             recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
-            recorder.stop({});
+            recorder.stop({}, true);
         });
     } else if (mode == "DVR") {
         const auto duration = vm["duration"].as<int>();
@@ -119,7 +119,7 @@ int main(int argc, char** argv) {
             recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
-            recorder.stop({});
+            recorder.stop({}, true);
         });
     } else if (mode == "DVRRACE") {
         std::mutex mutex;

@@ -6,6 +6,7 @@
 #include "recorder/image/image.h"
 #include "recorder/audio/audio_packet_view.h"
 #include "shared/squadov/vod.h"
+#include "system/settings.h"
 
 #ifdef _WIN32
 #include <d3d11.h>
@@ -30,7 +31,7 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3) = 0;
+    virtual void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
     
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;

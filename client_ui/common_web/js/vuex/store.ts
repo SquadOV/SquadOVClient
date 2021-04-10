@@ -182,6 +182,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         setUserActivityStatus(state: RootState, params: {userId: number, status: TrackedUserStatus}) {
             Vue.set(state.status.status, params.userId, params.status)
+        },
+        changeRecordingBitrate(state: RootState, params: {enable: boolean, bitrateKbps: number}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useBitrate = params.enable
+            state.settings.record.bitrateKbps = params.bitrateKbps
+/// #endif
         }
     },
     actions: {

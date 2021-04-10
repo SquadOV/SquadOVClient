@@ -20,6 +20,8 @@ export interface SquadOvRecordingSettings {
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
+    useBitrate: boolean
+    bitrateKbps: number
 }
 
 export function computeFileFolderSizeGb(folder: string): Promise<number> {
@@ -178,6 +180,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
+                useBitrate: false,
+                bitrateKbps: 6000,
             }
         case BaselineLevel.Medium:
             record = {
@@ -194,6 +198,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
+                useBitrate: false,
+                bitrateKbps: 6000,
             }
         case BaselineLevel.High:
             record = {
@@ -210,6 +216,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
+                useBitrate: false,
+                bitrateKbps: 6000,
             }
     }
 
@@ -236,6 +244,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
+            useBitrate: false,
+            bitrateKbps: 6000,
         },
         minimizeToTray: true,
         minimizeOnClose: true,
@@ -322,6 +332,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.maxLocalRecordingSizeGb === undefined) {
         parsedData.record.maxLocalRecordingSizeGb = 100
+    }
+
+    if (parsedData.record.useBitrate === undefined) {
+        parsedData.record.useBitrate = false
+    }
+
+    if (parsedData.record.bitrateKbps === undefined) {
+        parsedData.record.bitrateKbps = 6000
     }
 
     saveLocalSettings(parsedData, true)

@@ -321,12 +321,9 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     // This is primarily for the audio inputs so we know how many inputs to expect.
     LOG_INFO("Initialize video stream..." << std::endl);
     data.encoder->initializeVideoStream(
-        _cachedRecordingSettings->fps,
+        *_cachedRecordingSettings,
         desiredWidth,
-        desiredHeight,
-        _cachedRecordingSettings->useVideoHw,
-        _cachedRecordingSettings->useHwEncoder,
-        _cachedRecordingSettings->useVfr3
+        desiredHeight
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
@@ -506,7 +503,7 @@ void GameRecorder::stopInputs() {
     }
 }
 
-void GameRecorder::stop(std::optional<GameRecordEnd> end) {
+void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     LOG_INFO("Stop Game Recording...Clearing VOD ID" << std::endl);
     const auto vodId = _currentId ? currentId() : VodIdentifier{};
     const auto metadata = getMetadata();
@@ -547,7 +544,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the
         // server to associate a VOD that doesn't actually exist.
-        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton](){
+        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton, keepLocal](){
             pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
             _outputPiper.reset(nullptr);
             outputPiper->wait();
@@ -596,7 +593,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end) {
                 }
             }
 
-            if (wasLocal && outputPiper->localFile().has_value()) {
+            if (wasLocal && outputPiper->localFile().has_value() && !keepLocal) {
                 const auto pth = outputPiper->localFile().value();
                 outputPiper.reset(nullptr);
 
@@ -704,11 +701,11 @@ void GameRecorder::initializeFileOutputPiper() {
     const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
     const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
     const std::string outputUri = _cachedRecordingSettings->useLocalRecording ? shared::filesystem::pathUtf8(localTmpRecord) : cloudUri;
-    LOG_INFO("Output URI: " << outputUri << std::endl);
     setFileOutputFromUri(_currentId->videoUuid, outputUri);
 }
 
 void GameRecorder::setFileOutputFromUri(const std::string& videoUuid, const std::string& uri) {
+    LOG_INFO("Output URI: " << uri << std::endl);
     _outputPiper = pipe::createFileOutputPiper(videoUuid, uri);
     _outputPiper->setMaxUploadSpeed(_cachedRecordingSettings->maxUploadSpeed);
 }

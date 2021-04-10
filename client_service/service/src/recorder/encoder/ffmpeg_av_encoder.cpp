@@ -83,7 +83,7 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3);
+    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
 #ifdef _WIN32
@@ -321,7 +321,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3) {
+void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -344,7 +344,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
         try {
-            if (enc.isGpuEncoder && !useGpuEncoder) {
+            if (enc.isGpuEncoder && !settings.useHwEncoder) {
                 LOG_INFO("Skipping " << enc.name << " since user has disabled GPU encoding." << std::endl);
                 continue;
             }
@@ -362,10 +362,10 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
 
-            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && useHwPipeline;
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
-            _vcodecContext->bit_rate = 2500000;
-            _vcodecContext->rc_max_rate = 6000000;
+            _vcodecContext->bit_rate = std::min(settings.bitrateKbps, int64_t(6000)) * 1000;
+            _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;
             _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 2;
             _vcodecContext->thread_count = 0;
             _vcodecContext->max_b_frames = 3;
@@ -427,12 +427,12 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
             }
 
             // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.
-            _vcodecContext->time_base = AVRational{1, static_cast<int>(fps)};
-            _vcodecContext->framerate = AVRational{static_cast<int>(fps), 1};
+            _vcodecContext->time_base = AVRational{1, static_cast<int>(settings.fps)};
+            _vcodecContext->framerate = AVRational{static_cast<int>(settings.fps), 1};
 
             // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
             // if the GOP size is too small.
-            _vcodecContext->gop_size = static_cast<int>(fps * 5);
+            _vcodecContext->gop_size = static_cast<int>(settings.fps * 5);
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
                 _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -451,29 +451,31 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
                     av_dict_set(&options, "profile", "high", 0);
                 }
 
-                // CRF/CQ
-                if (enc.name == "h264_mf") {
-                    av_dict_set(&options, "quality", "30", 0);
-                } else if (enc.name == "h264_nvenc") {
-                    av_dict_set(&options, "qp", "30", 0);
-                } else if (enc.name == "h264_amf") {
-                    av_dict_set(&options, "qp_i", "30", 0);
-                    av_dict_set(&options, "qp_p", "30", 0);
-                    av_dict_set(&options, "qp_b", "30", 0);
-                } else if (enc.name == "libopenh264") {
-                    _vcodecContext->qmin = 20;
-                    _vcodecContext->qmax = 30;
-                }
+                if (!settings.useBitrate) {
+                    // CRF/CQ
+                    if (enc.name == "h264_mf") {
+                        av_dict_set(&options, "quality", "30", 0);
+                    } else if (enc.name == "h264_nvenc") {
+                        av_dict_set(&options, "qp", "30", 0);
+                    } else if (enc.name == "h264_amf") {
+                        av_dict_set(&options, "qp_i", "30", 0);
+                        av_dict_set(&options, "qp_p", "30", 0);
+                        av_dict_set(&options, "qp_b", "30", 0);
+                    } else if (enc.name == "libopenh264") {
+                        _vcodecContext->qmin = 20;
+                        _vcodecContext->qmax = 30;
+                    }
 
-                // Rate control
-                if (enc.name == "h264_mf") {
-                    av_dict_set(&options, "rate_control", "quality", 0);
-                } else if (enc.name == "h264_nvenc") {
-                    av_dict_set(&options, "rc", "constqp", 0);
-                } else if (enc.name == "h264_amf") {
-                    av_dict_set(&options, "rc", "cqp", 0);
-                } else if (enc.name == "libopenh264") {
-                    av_dict_set(&options, "rc_mode", "quality", 0);
+                    // Rate control
+                    if (enc.name == "h264_mf") {
+                        av_dict_set(&options, "rate_control", "quality", 0);
+                    } else if (enc.name == "h264_nvenc") {
+                        av_dict_set(&options, "rc", "constqp", 0);
+                    } else if (enc.name == "h264_amf") {
+                        av_dict_set(&options, "rc", "cqp", 0);
+                    } else if (enc.name == "libopenh264") {
+                        av_dict_set(&options, "rc_mode", "quality", 0);
+                    }
                 }
             }
 
@@ -513,9 +515,9 @@ void FfmpegAvEncoderImpl::initializeVideoStream(size_t fps, size_t width, size_t
     }
     _videoSwapChain->initializeGpuSupport(d3d);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
-    _fps = fps;
-    _useVfr3 = useVfr3;
-    _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / fps * 1.0e+9));
+    _fps = settings.fps;
+    _useVfr3 = settings.useVfr3;
+    _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / settings.fps * 1.0e+9));
 }
 
 void FfmpegAvEncoderImpl::initializeAudioStream() {
@@ -973,8 +975,8 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(size_t fps, size_t width, size_t height, bool useHwPipeline, bool useGpuEncoder, bool useVfr3) {
-    _impl->initializeVideoStream(fps, width, height, useHwPipeline, useGpuEncoder, useVfr3);
+void FfmpegAvEncoder::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) {
+    _impl->initializeVideoStream(settings, width, height);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {

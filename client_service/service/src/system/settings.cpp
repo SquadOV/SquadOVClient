@@ -31,6 +31,9 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.useLocalRecording = obj.value("useLocalRecording", false);
     settings.localRecordingLocation = obj["localRecordingLocation"].get<std::string>();
     settings.maxLocalRecordingSizeGb = obj["maxLocalRecordingSizeGb"].get<double>();
+
+    settings.useBitrate = obj.value("useBitrate", false);
+    settings.bitrateKbps = obj["bitrateKbps"].get<int64_t>();
     return settings;
 }
 

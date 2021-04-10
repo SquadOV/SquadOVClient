@@ -24,6 +24,9 @@ struct RecordingSettings {
     std::string localRecordingLocation;
     double maxLocalRecordingSizeGb;
 
+    bool useBitrate;
+    int64_t bitrateKbps;
+
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };
 
