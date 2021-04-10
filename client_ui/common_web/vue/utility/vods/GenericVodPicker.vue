@@ -116,9 +116,9 @@
                 </v-dialog>
 
                 <!-- download VOD button -->
-                <v-tooltip bottom v-if="hasLocal" @click="openLocalDownload" >
+                <v-tooltip bottom v-if="hasLocal">
                     <template v-slot:activator="{on, attrs}">
-                        <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs">
+                        <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs" @click="openLocalDownload" >
                             <v-icon>
                                 mdi-folder-open
                             </v-icon>
