@@ -122,7 +122,7 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
 
     HRESULT hr = _dxgiOutput1->DuplicateOutput(_self.device(), &_dupl);
     if (hr != S_OK) {
-        THROW_ERROR("Failed to duplicate output.");
+        THROW_ERROR("Failed to duplicate output: " << hr);
     }
 }
 
