@@ -1,3 +1,78 @@
+if (handleSquirrel()) {
+    return
+}
+
+function handleSquirrel() {
+    if (process.argv.length === 1) {
+        return false
+    }
+
+    const {app} = require('electron')
+    const ChildProcess = require('child_process')
+    const path = require('path')
+    const fs = require('fs')
+
+    const appFolder = path.resolve(process.execPath, '..')
+    const rootAtomFolder = path.resolve(appFolder, '..')
+    const updateDotExe = path.resolve(path.join(rootAtomFolder, 'Update.exe'))
+    const exeName = path.basename(process.execPath)
+
+    const spawn = function(command, args) {
+        let spawnedProcess, error
+
+        try {
+            spawnedProcess = ChildProcess.spawn(command, args, {detached: true})
+        } catch (error) {}
+
+        return spawnedProcess
+    };
+
+    const spawnUpdate = function(args) {
+        return spawn(updateDotExe, args)
+    };
+
+    const squirrelEvent = process.argv[1]
+    switch (squirrelEvent) {
+        case '--squirrel-install':
+        case '--squirrel-updated':
+            // Optionally do things such as:
+            // - Add your .exe to the PATH
+            // - Write to the registry for things like file associations and
+            //   explorer context menus
+
+            // Uninstall the old SquadOV.
+            const oldUninstaller = path.join(process.env.LOCALAPPDATA, 'Programs', 'squadov_client_ui', 'Uninstall SquadOV.exe')
+            if (fs.existsSync(oldUninstaller)) {
+                spawn(oldUninstaller, ['/S'])
+            }
+
+            // Install desktop and start menu shortcuts
+            spawnUpdate(['--createShortcut', exeName])
+
+            setTimeout(app.quit, 1000)
+            return true
+
+        case '--squirrel-uninstall':
+            // Undo anything you did in the --squirrel-install and
+            // --squirrel-updated handlers
+
+            // Remove desktop and start menu shortcuts
+            spawnUpdate(['--removeShortcut', exeName])
+
+            setTimeout(app.quit, 1000)
+            return true
+
+        case '--squirrel-obsolete':
+            // This is called on the outgoing version of your app before
+            // we update to the new version - it's the opposite of
+            // --squirrel-updated
+
+            app.quit()
+            return true
+    }
+    return false
+}
+
 const {app, BrowserWindow, Menu, Tray, ipcMain, net} = require('electron')
 const path = require('path')
 const fs = require('fs')
@@ -29,10 +104,16 @@ function loadAppSettings() {
     }
 
     if (app.isPackaged) {
+        const appFolder = path.dirname(process.execPath)
+        const updateExe = path.resolve(appFolder , '..', 'Update.exe')
+        const exeName = path.basename(process.execPath)
+
         app.setLoginItemSettings({
             openAtLogin: appSettings.runOnStartup === true,
+            path: updateExe,
             args: [
-                '--hidden'
+                '--processStart', `"${exeName}"`,
+                '--process-start-args', '"--hidden"'
             ]
         })
     }
@@ -375,24 +456,15 @@ function startClientService() {
 }
 
 function startAutoupdater() {
-    const { autoUpdater } = require("electron-updater")
-    autoUpdater.autoDownload = false
-    autoUpdater.autoInstallOnAppQuit = false
-    autoUpdater.logger = log
-    autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
+    const { autoUpdater } = require('electron')
+    autoUpdater.setFeedURL({
+        url: 'https://us-central1.content.squadov.gg/builds'
+    })
 
     setInterval(() => {
-        // This event is for when an update is available and we're past
-        // the initial start-up workflow. In this case we need to indicate
-        // to the user that an update is available and have them restart.
-        autoUpdater.checkForUpdates().then((resp) => {
-            console.log(`SquadOV Found Update to Version  ${resp.updateInfo.version} vs ${app.getVersion()}`)
-            if (resp.updateInfo.version != app.getVersion()) {
-                win.webContents.send('main-update-downloaded', resp.updateInfo.version)
-            }
-        })
+        autoUpdater.checkForUpdates()
     }, 1 * 60 * 1000)
-
+    
     let updateWindow = new BrowserWindow({
         width: 300,
         height: 300,
@@ -416,26 +488,23 @@ function startAutoupdater() {
 
     return new Promise((resolve, reject) => {
         autoUpdater.once('update-not-available', () => {
-            autoUpdater.removeAllListeners('update-available')
-            autoUpdater.removeAllListeners('download-progress')
+            autoUpdater.removeAllListeners('update-downloaded')
             updateWindow.removeAllListeners('close')
             updateWindow.close()
+
+            autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
+                console.log(`SquadOV Found Update to Version  ${releaseName} vs ${app.getVersion()}`)
+                if (releaseName != app.getVersion()) {
+                    win.webContents.send('main-update-downloaded', releaseName)
+                }
+            })
             resolve()
         })
 
-        autoUpdater.on('update-available', (info) => {
-            log.log('Index Update Available: ', info)
-            autoUpdater.downloadUpdate().then(() => {
-                autoUpdater.quitAndInstall(false, true)
-            }).catch((err) => {
-                console.log('Failed to update: ', err)
-            })
-            updateWindow.webContents.send('update-update-available', info)            
-        })
-
-        autoUpdater.on('download-progress', (progress) => {
-            log.log('Index Download Progress: ', progress)
-            updateWindow.webContents.send('update-download-progress', progress)
+        autoUpdater.once('update-downloaded', (event, releaseNotes, releaseName) => {
+            log.log('AutoUpdate Available: ', releaseName)
+            updateWindow.webContents.send('update-update-available', releaseName)
+            autoUpdater.quitAndInstall()    
         })
         autoUpdater.checkForUpdates()
     })

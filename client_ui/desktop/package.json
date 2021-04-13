@@ -1,6 +1,6 @@
 {
     "name": "squadov_client_ui",
-    "version": "0.7.20",
+    "version": "0.7.21",
     "description": "Desktop UI for SquadOV",
     "main": "index.js",
     "scripts": {
@@ -20,8 +20,13 @@
     },
     "homepage": "https://github.com/SquadOV/SquadOVClient#readme",
     "devDependencies": {
+        "@electron-forge/cli": "^6.0.0-beta.54",
+        "@electron-forge/maker-squirrel": "^6.0.0-beta.54",
+        "@electron-forge/publisher-s3": "^6.0.0-beta.54",
         "electron": "^11.2.0",
         "electron-builder": "^22.8.1",
+        "electron-rebuild": "^2.3.5",
+        "fs-extra": "^9.1.0",
         "gulp": "^4.0.2",
         "gulp-cli": "^2.3.0"
     },
@@ -35,5 +40,8 @@
         "node-forge": "^0.10.0",
         "uuid": "^8.3.2",
         "zeromq": "^6.0.0-beta.6"
+    },
+    "config": {
+        "forge": "forge.config.js"
     }
 }
