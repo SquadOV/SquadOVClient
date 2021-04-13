@@ -21,10 +21,13 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/gcs_piper.h"
 #include "system/settings.h"
+#include "system/hooks.h"
+#include "system/win32/message_loop.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
 #include <chrono>
+#include <codecvt>
 #include <cstdio>
 #include <cstdlib>
 #include <curl/curl.h>
@@ -503,16 +506,52 @@ int main(int argc, char** argv) {
         });
         t.detach();
     });
-    
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_RELOAD_SETTINGS, [](const std::string& msg){
+        LOG_INFO("RECEIVE RELOAD SETTINGS REQUEST." << std::endl);
+        service::system::getCurrentSettings()->reloadSettingsFromFile();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_KEYCODE_CHAR, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE KEYCODE CHAR REQUEST:" << msg << std::endl);
+        const auto json = nlohmann::json::parse(msg);
+        const auto request = service::system::GenericIpcRequest<int>::fromJson(json);
+
+        const UINT scanCode = MapVirtualKeyW(request.data, MAPVK_VK_TO_VSC);
+
+        wchar_t nameBuffer[256];
+        const auto result = GetKeyNameTextW(scanCode << 16, nameBuffer, 256);
+
+        std::wstring nameWStr(nameBuffer);
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+
+        service::system::GenericIpcResponse<std::string> resp;
+        resp.task = request.task;
+        resp.success = (result > 0);
+        resp.data = conv.to_bytes(nameWStr);
+
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_KEYCODE_CHAR,
+            resp.toJson().dump()
+        );
+    });
+
+    LOG_INFO("Setting up global hooks..." << std::endl);
+    service::system::initializeGlobalHooks();
+
     const auto mode = vm["mode"].as<std::string>();
     if (mode == "") {
         defaultMain();
+
+        LOG_INFO("Setting up windows message loop..." << std::endl);
+        service::system::win32::Win32MessageLoop::singleton()->start();
     } else if (mode == "wow_test") {
         wowTest(vm["log"].as<std::string>(), vm["vod"].as<std::string>(), vm["vodTime"].as<std::string>());
     } else {
         THROW_ERROR("Unknown Mode: " << mode);
     }
 
+    service::system::shutdownGlobalHooks();
     curl_global_cleanup();
     Pa_Terminate();
     return 0;

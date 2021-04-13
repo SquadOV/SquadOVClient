@@ -99,7 +99,11 @@ private:
     video::VideoRecorderPtr _vrecorder;
     audio::AudioRecorderPtr _aoutRecorder;
     audio::AudioRecorderPtr _ainRecorder;
+    std::mutex _ainMutex;
     bool _streamsInit = false;
+
+    std::optional<int64_t> _pttEnableCb = 0;
+    std::optional<int64_t> _pttDisableCb = 0;
 
     // Locked Settings. We need the video settings between the DVR recording
     // and the final video to stay the same so cache the results here.

@@ -16,12 +16,17 @@ export interface SquadOvRecordingSettings {
     outputVolume: number
     inputDevice: string
     inputVolume: number
+    usePushToTalk: boolean
     maxUploadSpeed: number | null
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
     useBitrate: boolean
     bitrateKbps: number
+}
+
+export interface SquadOvKeybindSettings {
+    pushToTalk: number[]
 }
 
 export function computeFileFolderSizeGb(folder: string): Promise<number> {
@@ -103,6 +108,7 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
 
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
+    keybinds: SquadOvKeybindSettings
     minimizeToTray: boolean
     minimizeOnClose: boolean
     runOnStartup: boolean
@@ -176,6 +182,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -194,6 +201,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -212,6 +220,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputVolume: 1.0,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -223,6 +232,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
 
     return {
         record,
+        keybinds: {
+            pushToTalk: []
+        },
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
@@ -240,12 +252,16 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             outputVolume: 1.0,
             inputDevice: 'Default Device',
             inputVolume: 1.0,
+            usePushToTalk: false,
             maxUploadSpeed: null,
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
             useBitrate: false,
             bitrateKbps: 6000,
+        },
+        keybinds: {
+            pushToTalk: []
         },
         minimizeToTray: true,
         minimizeOnClose: true,
@@ -340,6 +356,16 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.bitrateKbps === undefined) {
         parsedData.record.bitrateKbps = 6000
+    }
+
+    if (parsedData.record.usePushToTalk === undefined) {
+        parsedData.record.usePushToTalk = false   
+    }
+
+    if (parsedData.keybinds === undefined) {
+        parsedData.keybinds = {
+            pushToTalk: []
+        }
     }
 
     saveLocalSettings(parsedData, true)

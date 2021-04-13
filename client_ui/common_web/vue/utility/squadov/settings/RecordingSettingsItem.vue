@@ -236,6 +236,54 @@
                     </v-col>
                 </v-row>
 
+                <v-row>
+                    <v-col cols="12">
+                        <div class="d-flex align-center">
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="usePushToTalk"
+                                @change="changePushToTalk(arguments[0], pushToTalkKeybind)"
+                                hide-details
+                                label="Use Push-to-Talk"
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        Whether to only record your input device when you have the "push-to-talk" key depressed.
+                                    </v-tooltip>
+                                </template>
+                            </v-checkbox>
+
+                            <v-text-field
+                                v-if="usePushToTalk"
+                                :value="pttKeybindStr"
+                                @keydown="addKeyToPushToTalk"
+                                class="ml-8 flex-grow-0"
+                                solo
+                                single-line
+                                hide-details
+                                readonly
+                                style="width: 500px;"
+                            >
+                                <template v-slot:append>
+                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk">
+                                        Edit Keybind
+                                    </v-btn>
+
+                                    <v-btn class="error" @click="pttRecord = false" v-else>
+                                        Stop Recording
+                                    </v-btn>
+                                </template>
+                            </v-text-field>
+                        </div>
+                    </v-col>
+                </v-row>
+
                 <template v-if="!mini">
                     <div class="d-flex align-center mt-4">
                         <span class="text-overline mr-4">Network</span>
@@ -433,6 +481,7 @@ import { ipcRenderer } from 'electron'
 ///#endif 
 import { AudioDeviceListingResponse } from '@client/js/system/audio'
 import { changeLocalRecordingSettings, computeFileFolderSizeGb } from '@client/js/system/settings'
+import { IpcResponse } from '@client/js/system/ipc'
 
 @Component({
     components: {
@@ -714,11 +763,74 @@ export default class RecordingSettingsItem extends Vue {
         ]
     }
 
+    get usePushToTalk(): boolean {
+        return this.$store.state.settings.record.usePushToTalk
+    }
+
+    get pushToTalkKeybind(): number[] {
+        return this.$store.state.settings.keybinds.pushToTalk
+    }
+
+    pttRecord: boolean = false
+    pttKeybindStr: string = ''
+    keybindCache: Map<number, string> = new Map()
+
+    get pttKeySet(): Set<number> {
+        return new Set(this.pushToTalkKeybind)
+    }
+
+    @Watch('pushToTalkKeybind')
+    async resyncPushToTalkStr() {
+///#if DESKTOP
+        let uncachedCodes = this.pushToTalkKeybind.filter((ele: number) => !this.keybindCache.has(ele))
+        for (let code of uncachedCodes) {
+            try {
+                let k: IpcResponse<string> = await ipcRenderer.invoke('request-key-code-char', code)
+                if (k.success) {
+                    this.keybindCache.set(code, k.data)
+                } else {
+                    throw 'Bad keycode?'
+                }
+            } catch (ex) {
+                console.log('Failed to request key code: ', code)
+                this.keybindCache.set(code, '<ERROR>')
+            }
+        }
+
+        this.pttKeybindStr = this.pushToTalkKeybind.map((ele: number) => this.keybindCache.get(ele)!).join(' + ')
+///#endif
+    }
+
+    startRecordPushToTalk() {
+        this.pttRecord = true
+        this.changePushToTalk(true, [])
+    }
+
+    addKeyToPushToTalk(k: KeyboardEvent) {
+        if (!this.pttRecord) {
+            return
+        }
+
+        let code = k.which
+        if (this.pttKeySet.has(code)) {
+            return
+        }
+        this.changePushToTalk(this.usePushToTalk, [...this.pushToTalkKeybind, code])
+    }
+
+    changePushToTalk(use: boolean, keys: number[]) {
+        this.$store.commit('changePushToTalk', {
+            enable: use,
+            ptt: keys,
+        })
+    }
+
     mounted() {
-///#if DESKTOP        
+///#if DESKTOP
         this.refreshAvailableOutputs()
         this.refreshAvailableInputs()
         this.refreshLocalDiskSpaceRecordUsage()
+        this.resyncPushToTalkStr()
 
         ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
             this.outputOptions = [

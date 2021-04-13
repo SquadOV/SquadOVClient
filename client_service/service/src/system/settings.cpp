@@ -20,6 +20,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.outputVolume = obj["outputVolume"].get<double>();
     settings.inputDevice = obj["inputDevice"].get<std::string>();
     settings.inputVolume = obj["inputVolume"].get<double>();
+    settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr3 = obj.value("useVfr3", false);
 
     if (obj.count("maxUploadSpeed") != 0 && !obj["maxUploadSpeed"].is_null()) {
@@ -37,9 +38,18 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     return settings;
 }
 
+KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
+    KeybindSettings settings;
+    for (const auto& ele: obj["pushToTalk"]) {
+        settings.pushToTalk.push_back(ele.get<int>());
+    }
+    return settings;
+}
+
 LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     LocalSettings settings;
     settings.record = RecordingSettings::fromJson(obj["record"]);
+    settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
     return settings;
 }
 
@@ -48,13 +58,25 @@ Settings::Settings() {
 }
 
 void Settings::reloadSettingsFromFile() {
+    std::unique_lock lock(_mutex);
     try {
         std::ifstream ifs(shared::filesystem::getSquadOvUserSettingsFile());
         const auto obj = nlohmann::json::parse(ifs);
         _settings = LocalSettings::fromJson(obj);
+        _loaded = true;
     } catch (std::exception& ex) {
         THROW_ERROR("Failed to read settings: " << ex.what() << std::endl);
     }
+}
+
+RecordingSettings Settings::recording() {
+    std::shared_lock lock(_mutex);
+    return _settings.record;
+}
+
+KeybindSettings Settings::keybinds() {
+    std::shared_lock lock(_mutex);
+    return _settings.keybinds;
 }
 
 }

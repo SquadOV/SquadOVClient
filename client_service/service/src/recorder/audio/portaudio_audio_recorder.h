@@ -17,6 +17,7 @@ public:
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) override;
     void stop() override;
     void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) override;
+    void setVolume(double volume) override;
 
     bool exists() const override;
     const AudioPacketProperties& props() const override;

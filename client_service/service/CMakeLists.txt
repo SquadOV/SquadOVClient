@@ -25,8 +25,10 @@ SET(SRCS
     src/recorder/pipe/filesystem_piper.cpp
     src/recorder/pipe/gcs_piper.cpp
     src/system/win32/hwnd_utils.cpp
+    src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
+    src/system/hooks.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
@@ -72,9 +74,11 @@ SET(HEADERS
     src/recorder/pipe/filesystem_piper.h
     src/recorder/pipe/gcs_piper.h
     src/system/win32/hwnd_utils.h
+    src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
     src/system/ipc.h
+    src/system/hooks.h
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
@@ -133,7 +137,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
     )
 
     if(WIN32)
-        add_dependencies(${EXE_NAME} libwgc)
+        add_dependencies(${EXE_NAME} libwgc libinputhooks)
 
         file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
         add_custom_command(

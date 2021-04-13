@@ -1,8 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <shared_mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <vector>
 
 namespace service::system {
 
@@ -17,6 +19,7 @@ struct RecordingSettings {
     double outputVolume;
     std::string inputDevice;
     double inputVolume;
+    bool usePushToTalk;
 
     std::optional<size_t> maxUploadSpeed;
 
@@ -30,8 +33,14 @@ struct RecordingSettings {
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };
 
+struct KeybindSettings {
+    std::vector<int> pushToTalk;
+    static KeybindSettings fromJson(const nlohmann::json& obj);
+};
+
 struct LocalSettings {
     RecordingSettings record;
+    KeybindSettings keybinds;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -42,10 +51,15 @@ public:
 
     void reloadSettingsFromFile();
 
-    const RecordingSettings& recording() { return _settings.record; }
+    RecordingSettings recording();
+    KeybindSettings keybinds();
+    
+    bool loaded() const { return _loaded; }
 
 private:
+    std::shared_mutex _mutex;
     LocalSettings _settings;
+    bool _loaded = false;
 };
 
 using SettingsPtr = std::unique_ptr<Settings>;

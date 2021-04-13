@@ -34,6 +34,9 @@ const std::string ZEROMQ_REQUEST_LOCAL_VOD_TOPIC = "request-check-local-vod";
 const std::string ZEROMQ_RESPOND_LOCAL_VOD_TOPIC = "respond-check-local-vod";
 const std::string ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC = "request-delete-local-vod";
 const std::string ZEROMQ_RESPOND_DELETE_LOCAL_VOD_TOPIC = "respond-delete-local-vod";
+const std::string ZEROMQ_RELOAD_SETTINGS = "reload-settings";
+const std::string ZEROMQ_REQUEST_KEYCODE_CHAR = "request-keycode-char";
+const std::string ZEROMQ_RESPOND_KEYCODE_CHAR = "respond-keycode-char";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

@@ -190,6 +190,17 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }
             state.settings.record.useBitrate = params.enable
             state.settings.record.bitrateKbps = params.bitrateKbps
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[]}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.usePushToTalk = params.enable
+            state.settings.keybinds.pushToTalk = params.ptt
+            saveLocalSettings(state.settings)
 /// #endif
         }
     },

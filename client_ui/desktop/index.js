@@ -605,8 +605,9 @@ app.on('window-all-closed', () => {
     quit()
 })
 
-ipcMain.handle('reload-app-settings', () => {
+ipcMain.handle('reload-app-settings', async () => {
     loadAppSettings()
+    await zeromqServer.reloadAppSettings()
     return true
 })
 
@@ -695,6 +696,20 @@ ipcMain.handle('request-user-folder-selection', async (event, defaultPath) => {
         return defaultPath
     } else {
         return ret.filePaths[0]
+    }
+})
+
+ipcMain.handle('request-key-code-char', async (event, keyCode) => {
+    try {
+        return {
+            success: true,
+            data: await zeromqServer.requestKeyCodeChar(keyCode)
+        }
+    } catch(ex) {
+        return {
+            success: false,
+            data: ex,
+        }
     }
 })
 

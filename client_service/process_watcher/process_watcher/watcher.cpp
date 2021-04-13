@@ -69,7 +69,6 @@ void ProcessWatcher::start() {
             std::this_thread::sleep_for(500ms); 
         }
     });
-    _watchThread.join();
 }
 
 }

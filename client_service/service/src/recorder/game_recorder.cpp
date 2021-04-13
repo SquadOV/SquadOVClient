@@ -16,6 +16,7 @@
 #include "renderer/d3d11_renderer.h"
 #include "system/win32/hwnd_utils.h"
 #include "system/state.h"
+#include "system/win32/message_loop.h"
 #include "shared/math.h"
 #include "shared/filesystem/local_record.h"
 #include "vod/process.h"
@@ -80,14 +81,18 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
 
 #ifdef _WIN32
     auto* shared = service::renderer::getSharedD3d11Context();
+
+    LOG_INFO("Trying DXGI..." << std::endl);
     if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 
+    LOG_INFO("Trying WGC..." << std::endl);
     if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 
+    LOG_INFO("Trying GDI..." << std::endl);
     if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
@@ -106,9 +111,12 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     LOG_INFO("\tSet video recorder encoder..." << std::endl);
     _vrecorder->setActiveEncoder(data.encoder.get());
 
-    if (_ainRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input) != data.audioEncoderIndex.end()) {
-        LOG_INFO("\tSet audio input encoder..." << std::endl);
-        _ainRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Input));
+    {
+        std::lock_guard guard(_ainMutex);
+        if (_ainRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input) != data.audioEncoderIndex.end()) {
+            LOG_INFO("\tSet audio input encoder..." << std::endl);
+            _ainRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Input));
+        }
     }
 
     if (_aoutRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output) != data.audioEncoderIndex.end()) {
@@ -366,10 +374,27 @@ bool GameRecorder::initializeInputStreams(int flags) {
         _aoutRecorder->startRecording();
     }
 
+    std::lock_guard guard(_ainMutex);
     _ainRecorder.reset(new audio::PortaudioAudioRecorder());
-    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->inputVolume);
+    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->usePushToTalk ? 0.0 : _cachedRecordingSettings->inputVolume);
     if (_ainRecorder->exists()) {
         _ainRecorder->startRecording();
+
+        if (_cachedRecordingSettings->usePushToTalk) {
+            _pttEnableCb = service::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
+                std::lock_guard guard(_ainMutex);
+                if (_ainRecorder) {
+                    _ainRecorder->setVolume(_cachedRecordingSettings->inputVolume);
+                }
+            });
+
+            _pttDisableCb = service::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkDisable, [this](){
+                std::lock_guard guard(_ainMutex);
+                if (_ainRecorder) {
+                    _ainRecorder->setVolume(0.0);
+                }
+            });
+        }
     }
 
     return true;
@@ -497,9 +522,22 @@ void GameRecorder::stopInputs() {
         _aoutRecorder.reset(nullptr);
     }
 
-    if (_ainRecorder) {
-        _ainRecorder->stop();
-        _ainRecorder.reset(nullptr);
+    {
+        std::lock_guard guard(_ainMutex);
+        if (_ainRecorder) {
+            _ainRecorder->stop();
+            _ainRecorder.reset(nullptr);
+        }
+
+        if (_pttEnableCb.has_value()) {
+            service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkEnable, _pttEnableCb.value());
+            _pttEnableCb.reset();   
+        }
+
+        if (_pttDisableCb.has_value()) {
+            service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkDisable, _pttDisableCb.value());
+            _pttDisableCb.reset();
+        }
     }
 }
 

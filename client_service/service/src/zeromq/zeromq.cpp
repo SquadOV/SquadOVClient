@@ -50,6 +50,8 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_VOD_DOWNLOAD_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_LOCAL_VOD_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_RELOAD_SETTINGS);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_KEYCODE_CHAR);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 

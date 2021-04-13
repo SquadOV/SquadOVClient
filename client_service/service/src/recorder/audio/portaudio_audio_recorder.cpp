@@ -6,6 +6,7 @@
 #include "recorder/audio/audio_packet_view.h"
 #include "recorder/audio/fixed_size_audio_packet.h"
 
+#include <atomic>
 #include <boost/lockfree/spsc_queue.hpp>
 #include <iostream>
 #include <mutex>
@@ -34,6 +35,7 @@ public:
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
     void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume);
+    void setVolume(double volume);
 
     bool exists() const { return _exists; }
     const AudioPacketProperties& props() { return _props; }
@@ -43,7 +45,7 @@ private:
 
     EAudioDeviceDirection _dir;
     bool _exists = false;
-    double _volume = 1.0;
+    std::atomic<double> _volume = 1.0;
 
     size_t _sampleRate = 0;
     PaStreamParameters _streamParams;
@@ -238,7 +240,7 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
     AudioPacketProperties packetProps = props();
     packetProps.numSamples = static_cast<size_t>(frameCount);
 
-    FAudioPacketView view(buffer, packetProps, _volume);
+    FAudioPacketView view(buffer, packetProps, _volume.load());
     // It's not safe to do mutex operations here so we need to copy all this data into a queue that another thread
     // reads from to feed to the encoder.
     addToPacketQueue(view, inputTime);
@@ -295,6 +297,10 @@ void PortaudioAudioRecorderImpl::startRecording() {
     });
 }
 
+void PortaudioAudioRecorderImpl::setVolume(double volume) {
+    _volume = volume;
+}
+
 void PortaudioAudioRecorderImpl::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) {
     std::lock_guard<std::mutex> guard(_encoderMutex);
     _encoder = encoder;
@@ -340,6 +346,10 @@ void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::st
 
 const AudioPacketProperties& PortaudioAudioRecorder::props() const {
     return _impl->props();
+}
+
+void PortaudioAudioRecorder::setVolume(double volume) {
+    _impl->setVolume(volume);
 }
 
 }

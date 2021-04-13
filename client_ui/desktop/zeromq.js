@@ -296,6 +296,32 @@ class ZeroMQServerClient {
             data: uuid,
         })])
     }
+
+    async reloadAppSettings() {
+        await this._pub.send(['reload-settings', ''])
+    }
+
+    requestKeyCodeChar(keycode) {
+        return new Promise(async (resolve, reject) => {
+            let task = uuidv4()
+            let handlerId = this.on('respond-keycode-char', (resp) => {
+                let parsedResp = JSON.parse(resp)
+                if (parsedResp.task === task) {
+                    this.remove('respond-keycode-char', handlerId)
+                    if (parsedResp.success) {
+                        resolve(parsedResp.data)
+                    } else {
+                        reject('Failure in getting keycode char.')
+                    }
+                }
+            })
+            
+            await this._pub.send(['request-keycode-char', JSON.stringify({
+                task,
+                data: keycode
+            })])
+        })
+    }
 }
 
 module.exports.ZeroMQServerClient = ZeroMQServerClient
