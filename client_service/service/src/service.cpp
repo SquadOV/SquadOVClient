@@ -448,7 +448,7 @@ int main(int argc, char** argv) {
     });
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_LOCAL_VOD_TOPIC, [&zeroMqServerClient](const std::string& msg){
-        LOG_INFO("RECEIVE LOCAL VOD REQUEST: " << msg << std::endl);
+        LOG_INFO("RECEIVE FIND LOCAL VOD REQUEST: " << msg << std::endl);
         std::thread t([&zeroMqServerClient, msg](){
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);
@@ -481,7 +481,7 @@ int main(int argc, char** argv) {
     });
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC, [&zeroMqServerClient](const std::string& msg){
-        LOG_INFO("RECEIVE LOCAL VOD REQUEST: " << msg << std::endl);
+        LOG_INFO("RECEIVE LOCAL VOD DELETE REQUEST: " << msg << std::endl);
         std::thread t([&zeroMqServerClient, msg](){
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::system::GenericIpcRequest<std::string>::fromJson(json);

@@ -557,6 +557,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
 
     LOG_INFO("Retrieving local recording info..." << std::endl);
     const auto wasLocal = _cachedRecordingSettings->useLocalRecording;
+    const auto maxLocalSize = _cachedRecordingSettings->maxLocalRecordingSizeGb;
     const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
     singleton->initializeFromFolder(fs::path(_cachedRecordingSettings->localRecordingLocation));
 
@@ -582,7 +583,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the
         // server to associate a VOD that doesn't actually exist.
-        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton, keepLocal](){
+        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton, keepLocal, maxLocalSize](){
             pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
             _outputPiper.reset(nullptr);
             outputPiper->wait();
@@ -624,6 +625,9 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
                         const auto metadataFname = finalPathParentDir / fs::path("metadata.json");
                         std::ofstream metadataOut(metadataFname);
                         metadataOut << metadata.toJson().dump(4);
+
+                        // Need to cleanup the local recording folder after adding a new entry.
+                        singleton->cleanupLocalFolder(maxLocalSize);
                     }
                 } catch (std::exception& ex) {
                     LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
