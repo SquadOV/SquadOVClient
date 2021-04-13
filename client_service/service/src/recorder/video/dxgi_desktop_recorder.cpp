@@ -27,8 +27,7 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, service::renderer::D3d11Sh
     // I found that putting the desktop duplication on the shared context that we use for rendering
     // and the like will completely freeze the pipeline. So instead, everything on the desktop duplication
     // API will use the _self context instead.
-    _shared(shared),
-    _self() {
+    _shared(shared) {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
     initialize();
@@ -51,20 +50,6 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
 }
 
 void DxgiDesktopRecorder::initialize() {
-    IDXGIDevice* dxgiDevice = nullptr;
-    HRESULT hr = _self.device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to get IDXGIDevice.");
-    }
-
-    IDXGIAdapter* dxgiAdapter = nullptr;
-    hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to get IDXGIAdapter.");
-    }
-    dxgiDevice->Release();
-    dxgiDevice = nullptr;
-
     // Wait for the window to become unminimized so that we can grab the correct monitor.
     while (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100ms));
@@ -76,6 +61,22 @@ void DxgiDesktopRecorder::initialize() {
     if (!refMonitor) {
         THROW_ERROR("Failed to get reference monitor.");
     }
+
+    _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 & service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, refMonitor);
+
+    IDXGIDevice* dxgiDevice = nullptr;
+    HRESULT hr = _self->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to get IDXGIDevice.");
+    }
+
+    IDXGIAdapter* dxgiAdapter = nullptr;
+    hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to get IDXGIAdapter.");
+    }
+    dxgiDevice->Release();
+    dxgiDevice = nullptr;
 
     IDXGIOutput* dxgiOutput = nullptr;
     DXGI_OUTPUT_DESC outputDesc;
@@ -120,7 +121,7 @@ void DxgiDesktopRecorder::reacquireDuplicationInterface() {
         _dupl = nullptr;        
     }
 
-    HRESULT hr = _dxgiOutput1->DuplicateOutput(_self.device(), &_dupl);
+    HRESULT hr = _dxgiOutput1->DuplicateOutput(_self->device(), &_dupl);
     if (hr != S_OK) {
         THROW_ERROR("Failed to duplicate output: " << hr);
     }
@@ -221,10 +222,10 @@ void DxgiDesktopRecorder::startRecording() {
                 }
 
                 if (useHwFrame) {
-                    hwFrame.copyFromSharedGpu(&_self, tex, _rotation);
+                    hwFrame.copyFromSharedGpu(&*_self, tex, _rotation);
                 } else {
-                    auto immediate = _self.immediateContext();
-                    cpuFrame.loadFromD3d11TextureWithStaging(_self.device(), immediate.context(), tex);
+                    auto immediate = _self->immediateContext();
+                    cpuFrame.loadFromD3d11TextureWithStaging(_self->device(), immediate.context(), tex);
                 }
                 tex->Release();
             }
