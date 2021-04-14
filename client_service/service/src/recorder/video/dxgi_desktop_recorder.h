@@ -15,7 +15,7 @@ namespace service::recorder::video {
 
 class DxgiDesktopRecorder : public VideoRecorder {
 public:
-    DxgiDesktopRecorder(HWND window, service::renderer::D3d11SharedContext* shared);
+    DxgiDesktopRecorder(HWND window, DWORD pid, service::renderer::D3d11SharedContext* shared);
     ~DxgiDesktopRecorder();
 
     void startRecording() override;
@@ -36,6 +36,7 @@ private:
     size_t _height = 0;
     service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
     std::mutex _encoderMutex;
+    DWORD _pid = 0;
 
     // DX11 and DXGI related pointers.
     IDXGIOutputDuplication* _dupl = nullptr;

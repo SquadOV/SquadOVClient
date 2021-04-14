@@ -83,6 +83,20 @@ bool isWindowTopmost(HWND wnd) {
     return wnd == refWnd;
 }
 
+bool isProcessForeground(DWORD pid) {
+    HWND refWnd = GetForegroundWindow();
+    if (!refWnd) {
+        return false;
+    }
+
+    DWORD testPid;
+    if (!GetWindowThreadProcessId(refWnd, &testPid)) {
+        return false;
+    }
+
+    return (testPid == pid);
+}
+
 bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {
     RECT hwndRect;
     if(!GetWindowRect(wnd, &hwndRect)) {

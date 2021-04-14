@@ -21,13 +21,14 @@ namespace service::recorder::video {
 
 using TickClock = std::chrono::high_resolution_clock;
 
-DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, service::renderer::D3d11SharedContext* shared):
+DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, DWORD pid, service::renderer::D3d11SharedContext* shared):
     _window(window),
     // Note that there's two D3d11SharedContext objects here.
     // I found that putting the desktop duplication on the shared context that we use for rendering
     // and the like will completely freeze the pipeline. So instead, everything on the desktop duplication
     // API will use the _self context instead.
-    _shared(shared) {
+    _shared(shared),
+    _pid(pid) {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
     initialize();
@@ -50,11 +51,19 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
 }
 
 void DxgiDesktopRecorder::initialize() {
+    LOG_INFO("Initialize DXGI..." << std::endl);
     // Wait for the window to become unminimized so that we can grab the correct monitor.
-    while (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100ms));
+    while (IsIconic(_window) || !service::system::win32::isProcessForeground(_pid)) {
+        LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
+
+        TCHAR windowTitle[1024];
+        GetWindowTextA(GetForegroundWindow(), windowTitle, 1024);
+        LOG_INFO("...Foreground window is: " << windowTitle << std::endl);
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500ms));
     }
 
+    LOG_INFO("Continuing DXGI initialization since window/process is foreground..." << std::endl);
     // IDXGIOutput represents a monitor output. We need to grab the output that
     // corresponds to the monitor the input window is on.
     HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
@@ -200,7 +209,7 @@ void DxgiDesktopRecorder::startRecording() {
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
-            if (IsIconic(_window) || !service::system::win32::isWindowTopmost(_window)) {
+            if (IsIconic(_window) || !service::system::win32::isProcessForeground(_pid)) {
                 // Re-use old frames here to try and prevent ourselves from grabbing the desktop.
                 // Don't just skip the frame as they may cause us to de-sync?
                 reuseOldFrame = true;
@@ -294,7 +303,7 @@ bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindo
     }
 
     try {
-        output.reset(new DxgiDesktopRecorder(wnd, shared));
+        output.reset(new DxgiDesktopRecorder(wnd, pid, shared));
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to enable Dxgi Desktop Recording: " << ex.what() << std::endl);
         return false;
