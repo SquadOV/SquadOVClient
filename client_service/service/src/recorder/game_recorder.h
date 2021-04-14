@@ -94,6 +94,7 @@ private:
     std::unique_ptr<VodIdentifier> _currentId;
     pipe::FileOutputPiperPtr _outputPiper;
     shared::TimePoint _vodStartTime;
+    std::mutex _stopMutex;
 
     void switchToNewActiveEncoder(const EncoderDatum& data);
     video::VideoRecorderPtr _vrecorder;

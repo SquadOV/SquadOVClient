@@ -513,11 +513,13 @@ size_t GameRecorder::findDvrSegmentForVodStartTime(const shared::TimePoint& tm) 
 void GameRecorder::stopInputs() {
     _streamsInit = false;
     if (_vrecorder) {
+        LOG_INFO("...Stop video recorder." << std::endl);
         _vrecorder->stopRecording();
         _vrecorder.reset(nullptr);
     }
 
     if (_aoutRecorder) {
+        LOG_INFO("...Stop audio output recorder." << std::endl);
         _aoutRecorder->stop();
         _aoutRecorder.reset(nullptr);
     }
@@ -525,6 +527,7 @@ void GameRecorder::stopInputs() {
     {
         std::lock_guard guard(_ainMutex);
         if (_ainRecorder) {
+            LOG_INFO("...Stop audio input recorder." << std::endl);
             _ainRecorder->stop();
             _ainRecorder.reset(nullptr);
         }
@@ -542,6 +545,7 @@ void GameRecorder::stopInputs() {
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
+    std::lock_guard guard(_stopMutex);
     LOG_INFO("Stop Game Recording...Clearing VOD ID" << std::endl);
     const auto vodId = _currentId ? currentId() : VodIdentifier{};
     const auto metadata = getMetadata();
