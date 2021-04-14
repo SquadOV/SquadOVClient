@@ -181,7 +181,9 @@ const baseRoutes : any[] = [
                 name: pi.UserProfilePageId,
                 component: UserProfile,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId)
+                    userId: parseInt(route.params.userId),
+                    tab: parseInt(route.query.tab),
+                    matchTab: parseInt(route.query.matchTab)
                 })
             },
             {
@@ -189,7 +191,7 @@ const baseRoutes : any[] = [
                 name: pi.UserSquadsPageId,
                 component: UserSquads,
                 props: (route: any) => ({
-                    userId: parseInt(route.params.userId)
+                    userId: parseInt(route.params.userId),
                 })
             },
             {

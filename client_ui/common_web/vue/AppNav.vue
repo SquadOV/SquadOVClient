@@ -268,6 +268,19 @@ export default class AppNav extends Vue {
                 name: 'Library',
                 children: [
                     {
+                        name: 'Favorites',
+                        to: {
+                            name: pi.UserProfilePageId,
+                            params: {
+                                userId: this.$store.state.currentUser!.id,
+                            },
+                            query: {
+                                tab: 1,
+                                matchTab: 0,
+                            }
+                        },
+                    },
+                    {
                         name: 'Clips',
                         to: {
                             name: pi.ClipLibraryPageId,

@@ -1,5 +1,5 @@
 <template>
-    <v-tabs vertical>
+    <v-tabs vertical v-model="internalTab">
         <v-tab>
             Basic
         </v-tab>
@@ -59,7 +59,7 @@
         </v-tab>
 
         <v-tab-item>
-            <v-tabs>
+            <v-tabs v-model="internalMatchTab">
                 <v-tab>
                     Favorites
                 </v-tab>
@@ -142,7 +142,16 @@ export default class UserProfile extends Vue {
     @Prop({required: true})
     userId!: number
 
+    @Prop({default: 0})
+    tab!: number
+
+    @Prop({default: 0})
+    matchTab!: number
+
     profileUser: SquadOVUser | null = null
+
+    internalTab: number = 0
+    internalMatchTab: number = 0
 
     get localUserId(): number {
         return this.$store.state.currentUser!.id
@@ -163,6 +172,9 @@ export default class UserProfile extends Vue {
     }
 
     mounted() {
+        this.internalTab = this.tab
+        this.internalMatchTab = this.matchTab
+
         this.refreshData()
     }
 }
