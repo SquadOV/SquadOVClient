@@ -172,7 +172,7 @@
                 <!-- create clip button -->
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
-                        <v-btn color="success" icon v-if="hasFastify && isClippingEnabled" @click="openEditingWindow" v-on="on" v-bind="attrs">
+                        <v-btn color="success" icon v-if="(hasFastify || hasLocal) && isClippingEnabled" @click="openEditingWindow" v-on="on" v-bind="attrs">
                             <v-icon>
                                 mdi-content-cut
                             </v-icon>
