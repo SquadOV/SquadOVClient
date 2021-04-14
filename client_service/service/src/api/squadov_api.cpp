@@ -575,7 +575,7 @@ std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platfor
 
 void SquadovApi::finishLeagueOfLegendsMatch(const std::string& matchUuid) const {
     std::ostringstream path;
-    path << "/v1/lol/match/" << matchUuid;
+    path << "/v1/lol/match/" << matchUuid << "/finish";
 
     const auto result = _webClient->post(path.str(), {});
     if (result->status != 200) {
@@ -623,7 +623,7 @@ std::string SquadovApi::createNewTftMatch(const std::string& region, const std::
 
 void SquadovApi::finishTftMatch(const std::string& matchUuid) const {
     std::ostringstream path;
-    path << "/v1/tft/match/" << matchUuid;
+    path << "/v1/tft/match/" << matchUuid << "/finish";
 
     const auto result = _webClient->post(path.str(), {});
     if (result->status != 200) {

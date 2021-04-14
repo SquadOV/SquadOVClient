@@ -45,7 +45,7 @@ bool parseLeagueCommandLineCfg(const std::string& line, LeagueCommandLineCfg& cf
     return true;
 }
 
-const std::regex CONNECTION_READY_REGEX("CONNECTION READY \\| TeamOrder \\d*\\)\\s(.*)\\s\\*\\*LOCAL\\*\\*\\s-.*PUUID\\((.*?)\\)");
+const std::regex CONNECTION_READY_REGEX("CONNECTION READY \\| (?:TeamOrder|TeamChaos) \\d*\\)\\s(.*)\\s\\*\\*LOCAL\\*\\*\\s-.*PUUID\\((.*?)\\)");
 bool parseLeagueLocalPlayer(const std::string& line, LeagueLocalPlayer& player) {
     std::smatch matches;
     if (!std::regex_search(line, matches, CONNECTION_READY_REGEX)) {
