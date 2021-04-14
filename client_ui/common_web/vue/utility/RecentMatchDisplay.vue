@@ -19,24 +19,29 @@
 
             <v-spacer></v-spacer>
 
+            <template v-if="!!match.base.favoriteReason">
+                <div class="text-right text-caption">
+                    {{ match.base.favoriteReason }}
+                </div>
+
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-icon
+                            v-bind="attrs"
+                            v-on="on"
+                            color="warning"
+                        >
+                            mdi-star
+                        </v-icon>
+                    </template>
+
+                    {{ match.base.favoriteReason }}
+                </v-tooltip>
+            </template>
+
             <v-icon v-if="match.base.isWatchlist">
                 mdi-playlist-check
             </v-icon>
-
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <v-icon
-                        v-if="!!match.base.favoriteReason"
-                        v-bind="attrs"
-                        v-on="on"
-                        color="warning"
-                    >
-                        mdi-star
-                    </v-icon>
-                </template>
-
-                {{ match.base.favoriteReason }}
-            </v-tooltip>
         </div>
 
         <div
