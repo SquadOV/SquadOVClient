@@ -133,7 +133,7 @@ class ZeroMQServerClient {
         })
     }
 
-    performClipUpload(task, file, uri) {
+    performGcsUpload(task, file, uri) {
         return new Promise(async (resolve, reject) => {
             let handlerId = this.on('respond-gcs-upload', (resp) => {
                 let parsedResp = JSON.parse(resp)

@@ -26,7 +26,7 @@ struct GCSUploadRequest {
     static GCSUploadRequest fromJson(const nlohmann::json& json);
 };
 
-std::string uploadToGcs(const GCSUploadRequest& req);
+std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::DownloadProgressFn& progressFn);
 
 class GCSPacket {
 public:
@@ -48,6 +48,7 @@ public:
 
     std::string sessionId() const override { return _sessionUri; }
     void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
+    void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
 
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
@@ -77,6 +78,9 @@ private:
 #if DUMP_GCS_REF_VIDEO
     std::ofstream _refVideo;
 #endif 
+
+    std::optional<shared::http::DownloadProgressFn> _progressFn;
+    std::optional<size_t> _totalProgressBytes;
 };
 
 }

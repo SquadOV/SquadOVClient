@@ -317,7 +317,7 @@ ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => 
 })
 
 ipcMain.handle('request-gcs-upload', async (event, {task, file, uri}) => {
-    let retSession = await zeromqServer.performClipUpload(task, file, uri)
+    let retSession = await zeromqServer.performGcsUpload(task, file, uri)
     return retSession
 })
 
@@ -786,5 +786,12 @@ zeromqServer.on('vod-download-progress', (resp) => {
     let parsedResp = JSON.parse(resp)
     if (!!win) {
         win.webContents.send('vod-download-progress', parsedResp)
+    }
+})
+
+zeromqServer.on('gcs-upload-progress', (resp) => {
+    let parsedResp = JSON.parse(resp)
+    if (!!win) {
+        win.webContents.send('gcs-upload-progress', parsedResp)
     }
 })

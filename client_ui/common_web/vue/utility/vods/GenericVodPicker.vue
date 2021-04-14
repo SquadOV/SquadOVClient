@@ -168,6 +168,10 @@
 
                     Upload
                 </v-tooltip>
+
+                <div v-if="uploadProgress !== null">
+                    {{ (uploadProgress * 100.0).toFixed(0) }}% 
+                </div>
                 
                 <!-- create clip button -->
                 <v-tooltip bottom>
@@ -271,17 +275,14 @@ import * as vod from '@client/js/squadov/vod'
 import * as pi from '@client/js/pages'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { openPathInNewWindow } from '@client/js/external'
-import { DownloadProgress } from '@client/js/system/download'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import { VodRemoteControlContext } from '@client/js/vods/remote'
-import { uploadLocalFileToGcs } from '@client/js/gcs'
+import { DownloadUploadProgressCb, manager } from '@client/js/vods/local_manager'
 
 /// #if DESKTOP
 import { shell, ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
-import path from 'path'
-import fs from 'fs'
 /// #endif
 
 @Component({
@@ -469,30 +470,22 @@ export default class GenericVodPicker extends Vue {
 ///#endif
     }
 
+    onDownloadProgress(progress: number, finish: boolean, error: boolean) {
+        if (finish) {
+            this.downloadProgress = null
+            this.downloadError = error
+            this.recheckForLocalFile()
+        } else {
+            this.downloadProgress = progress
+        }
+    }
+
     doLocalDownload() {
         if (!this.value) {
             return
         }
 ///#if DESKTOP
-        this.downloadProgress = 0
-
-        let progressNotif = (e: any, info: DownloadProgress) => {
-            if (info.done) {
-                ipcRenderer.removeListener('vod-download-progress', progressNotif)
-                this.downloadProgress = null
-                this.downloadError = (info.success === false)
-                this.recheckForLocalFile()
-            } else if (info.download !== undefined && info.total !== undefined) {
-                if (info.total === 0) {
-                    this.downloadProgress = 0
-                } else {
-                    this.downloadProgress = info.download / info.total
-                }
-            }
-        }
-
-        ipcRenderer.send('request-vod-local-download', this.value.videoUuid)
-        ipcRenderer.on('vod-download-progress', progressNotif)
+        manager.startDownload(this.value.videoUuid)
 ///#endif
     }
 
@@ -563,46 +556,71 @@ export default class GenericVodPicker extends Vue {
 ///#endif
     }
 
-    isUploading: boolean = false
+    uploadProgress: number | null = null
     manualDisableUpload: boolean = false
     uploadError: boolean = false
+
+    get isUploading(): boolean {
+        return this.uploadProgress !== null
+    }
+
+    onUploadProgress(progress: number, finish: boolean, error: boolean) {
+        if (finish) {
+            this.uploadProgress = null
+            this.uploadError = error
+            this.manualDisableUpload = true
+        } else {
+            this.uploadProgress = progress
+        }
+    }
+
     uploadLocalVod() {
-        if (!this.canUpload) {
+        if (!this.canUpload || !this.value || !this.localVodLocation) {
             return
         }
 ///#if DESKTOP
-        this.isUploading = true
-
-        setTimeout(async () => {
-            try {
-                const metadataFname = path.join(path.dirname(this.localVodLocation!), 'metadata.json')
-
-                if (!fs.existsSync(metadataFname)) {
-                    throw 'Could not find metadta filename : ' + metadataFname
-                }
-
-                const metadata: vod.VodMetadata = JSON.parse(fs.readFileSync(metadataFname, 'utf8'))
-                const uploadPath = await apiClient.getVodUploadPath(this.value!.videoUuid)
-                const sessionUri = await uploadLocalFileToGcs(this.localVodLocation!, uploadPath.data)
-
-                let newAssociation: vod.VodAssociation = vod.cleanVodAssocationData(JSON.parse(JSON.stringify(this.value!)))
-                newAssociation.isLocal = false
-                await apiClient.associateVod(newAssociation, metadata, sessionUri)
-
-                this.manualDisableUpload = true
-            } catch (ex) {
-                console.log('Failed to complete upload: ', ex)
-                this.uploadError = true
-            }
-            this.isUploading = false
-        }, 1)
+        manager.startUpload(this.value, this.localVodLocation)
 ///#endif
+    }
+
+    _registeredDownloadCb: DownloadUploadProgressCb | null = null
+    _registeredUploadCb: DownloadUploadProgressCb | null = null
+
+    @Watch('value')
+    registerCallbacks() {
+        this.unregisterCallbacks()
+        if (!this.value) {
+            return
+        }
+        this._registeredDownloadCb = this.onDownloadProgress.bind(this)
+        manager.downloads.addCallback(this.value!.videoUuid, this._registeredDownloadCb!)
+
+        this._registeredUploadCb = this.onUploadProgress.bind(this)
+        manager.uploads.addCallback(this.value!.videoUuid, this._registeredUploadCb!)
+    }
+
+    unregisterCallbacks() {
+        if (!!this.value && !!this._registeredDownloadCb) {
+            manager.downloads.removeCallback(this.value!.videoUuid, this._registeredDownloadCb!)
+        }
+
+        if (!!this.value && !!this._registeredUploadCb) {
+            manager.uploads.removeCallback(this.value!.videoUuid, this._registeredUploadCb!)
+        }
+
+        this._registeredDownloadCb = null
+        this._registeredUploadCb = null
     }
 
     mounted () {
         this.refreshManifest()
         this.recheckForLocalFile()
         this.refreshRcContext()
+        this.registerCallbacks()
+    }
+
+    beforeDestroy() {
+        this.unregisterCallbacks()
     }
 }
 

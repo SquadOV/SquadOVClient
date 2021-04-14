@@ -25,7 +25,7 @@ GCSUploadRequest GCSUploadRequest::fromJson(const nlohmann::json& json) {
     return ret;
 }
 
-std::string uploadToGcs(const GCSUploadRequest& req) {
+std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::DownloadProgressFn& progressFn) {
     // It's a bit of a roundabout way to do it but create a local system pipe to write the file data to
     // and then just wait for the pipe to finish.
     auto pipe = std::make_unique<Pipe>(req.task);
@@ -38,8 +38,10 @@ std::string uploadToGcs(const GCSUploadRequest& req) {
         inputFname.replace(it, it + filePrefix.size(), "");
     }
 
+    const auto inputPath = fs::path(inputFname);
     GCSPiper output(req.uri, std::move(pipe));
-    output.appendFromFile(fs::path(inputFname));
+    output.setProgressCallback(progressFn, fs::file_size(inputPath));
+    output.appendFromFile(inputPath);
     output.sendNullBuffer();
     return output.sessionId();
 }
@@ -87,6 +89,11 @@ GCSPiper::GCSPiper(const std::string& destination, PipePtr&& pipe):
 
 GCSPiper::~GCSPiper() {
     flush();
+}
+
+void GCSPiper::setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes) {
+    _progressFn = progressFn;
+    _totalProgressBytes = totalBytes;
 }
 
 void GCSPiper::setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {
@@ -179,7 +186,10 @@ void GCSPiper::sendDataFromBufferToGcsWithBackoff(std::vector<char>& buffer, siz
             } else {
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
             }
-            _uploadedBytes += bytesSent;
+            _uploadedBytes += bytesSent;        
+            if (_totalProgressBytes.has_value() && _progressFn.has_value()) {
+                _progressFn.value()(_uploadedBytes, _totalProgressBytes.value());
+            }
             return;
         } catch(std::exception& ex) {
             LOG_WARNING("GCS Upload Failure: " << ex.what() << std::endl);

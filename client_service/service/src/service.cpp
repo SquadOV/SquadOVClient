@@ -303,12 +303,33 @@ int main(int argc, char** argv) {
         std::thread t([&zeroMqServerClient, msg](){
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::recorder::pipe::GCSUploadRequest::fromJson(json);
-            const auto resp = service::recorder::pipe::uploadToGcs(request);
+            const auto resp = service::recorder::pipe::uploadToGcs(request, [&zeroMqServerClient, request](size_t dl, size_t total){
+                zeroMqServerClient.sendMessage(
+                    service::zeromq::ZEROMQ_GCS_UPLOAD_PROGRESS_TOPIC,
+                    nlohmann::json{
+                        {"task", request.task},
+                        {"download", dl},
+                        {"total", total},
+                        {"done", false}
+                    }.dump(),
+                    true
+                );
+            });
 
             nlohmann::json retData;
             retData["task"] = request.task;
             retData["success"] = !resp.empty();
             retData["session"] = resp;
+
+            zeroMqServerClient.sendMessage(
+                service::zeromq::ZEROMQ_GCS_UPLOAD_PROGRESS_TOPIC,
+                nlohmann::json{
+                    {"task", request.task},
+                    {"done", true},
+                    {"success", !resp.empty()}
+                }.dump(),
+                true
+            );
 
             zeroMqServerClient.sendMessage(
                 service::zeromq::ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC,

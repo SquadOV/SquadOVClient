@@ -22,6 +22,7 @@ const std::string ZEROMQ_REQUEST_VOD_CLIP_TOPIC = "request-vod-clip";
 const std::string ZEROMQ_RESPOND_VOD_CLIP_TOPIC = "respond-vod-clip";
 const std::string ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC = "request-gcs-upload";
 const std::string ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC = "respond-gcs-upload";
+const std::string ZEROMQ_GCS_UPLOAD_PROGRESS_TOPIC = "gcs-upload-progress";
 const std::string ZEROMQ_REQUEST_FOLDER_SIZE_TOPIC = "request-folder-size";
 const std::string ZEROMQ_RESPOND_FOLDER_SIZE_TOPIC = "respond-folder-size";
 const std::string ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC = "request-change-recording-folder";
