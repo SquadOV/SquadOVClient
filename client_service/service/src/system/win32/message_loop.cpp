@@ -104,7 +104,7 @@ bool Win32MessageLoop::checkKeybindActive(const std::vector<int>& keybind) {
 int64_t Win32MessageLoop::addActionCallback(service::system::EAction a, const service::system::ActionCallback& cb) {
     std::lock_guard guard(_cbMutex);
     ActionCallbackData data;
-    data.id = _actionCbCounter++;
+    data.id = ++_actionCbCounter;
     data.cb = cb;
     _actionCallbacks[a].emplace_back(std::move(data));
     return _actionCbCounter;
