@@ -36,6 +36,7 @@
                     </video-player>
 
                     <tft-vod-picker
+                        class="full-width"
                         :match-uuid="matchUuid"
                         :puuid="puuid"
                         :vod.sync="vod"

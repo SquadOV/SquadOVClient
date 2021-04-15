@@ -10,24 +10,28 @@
         :enable-draw="enableDraw"
         @update:enableDraw="$emit('update:enableDraw', arguments[0])"
     >
-        <template v-slot:vod="{ivod}">
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <div
-                        v-on="on"
-                        v-bind="attrs"
-                    >
-                        <tft-little-legend-icon
-                            :content-id="uuidToParticipant(ivod.userUuid).companion.contentId"
-                            :width="48"
-                            :height="48"
+        <template v-slot:vod="{ivod, selected}">
+            <div
+                :class="(!!selected && ivod.videoUuid === selected.videoUuid) ? 'selected-pov' : 'pov'"
+            >
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <div
+                            v-on="on"
+                            v-bind="attrs"
                         >
-                        </tft-little-legend-icon>
-                    </div>
-                </template>
+                            <tft-little-legend-icon
+                                :content-id="uuidToParticipant(ivod.userUuid).companion.contentId"
+                                :width="48"
+                                :height="48"
+                            >
+                            </tft-little-legend-icon>
+                        </div>
+                    </template>
 
-                {{ uuidToName(ivod.userUuid) }}
-            </v-tooltip>
+                    {{ uuidToName(ivod.userUuid) }}
+                </v-tooltip>
+            </div>
         </template>
     </generic-vod-picker>
 </template>
@@ -212,12 +216,8 @@ export default class TftVodPicker extends Vue {
 
 <style scoped>
 
-.enemy-pov {
-    border: 2px solid rgb(255, 82, 82) !important;
-}
-
-.friendly-pov {
-    border: 2px solid rgb(76, 175, 80) !important;
+.pov {
+    border: 2px solid transparent !important;
 }
 
 .selected-pov {
