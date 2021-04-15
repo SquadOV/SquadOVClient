@@ -1,0 +1,63 @@
+appId: "squadov.squadov.app"
+productName: "SquadOV"
+copyright: "Copyright © 2020-2021 GRCHive, Inc."
+generateUpdatesFilesForAllChannels: true
+
+directories:
+  app: "."
+  output: "package/${os}/${arch}/${version}"
+  buildResources: "nsis"
+
+win:
+  target: "nsis"
+  icon: "nsis/icon.ico"
+  publish: 
+    - provider: generic
+      url: https://us-central1.content.squadov.gg/builds
+
+nsis:
+  differentialPackage : false
+  oneClick: true
+  include: nsis/installer.nsh
+
+files:
+  - from: "dist"
+    to: "dist"
+  - from: "assets"
+    to: "assets"
+    filter:
+      - "**/*"
+      - "!**/*.json"
+  - "index.html"
+  - "login.html"
+  - "update.html"
+  - "sessionError.html"
+  - "index.js"
+  - "login.js"
+  - "log.js"
+  - "paths.js"
+  - "rendererLog.js"
+  - "zeromq.js"
+  - "api_src/**/*"
+  - "package.json"
+  - "!**/node_modules/zeromq/build/libzmq"
+  - "!**/node_modules/zeromq/build/Release/zeromq.iobj"
+  - "!**/node_modules/zeromq/build/Release/zeromq.pdb"
+
+extraResources:
+  - from: "assets"
+    to: "assets"
+    filter:
+      - "**/*.json"
+  - from: "../../resources/tzdata"
+    to: "tzdata"
+  - from: "../../build/bin/x64/Release"
+    to: "service"
+    filter:
+      - "*.dll"
+      - "squadov_client_service.exe"
+      - "advanced_crash_dump_enabler.exe"
+      - "ffmpeg.exe"
+      - "shaders/*"
+  - from: "config/squadov.json"
+    to: "config/config.json"

@@ -16,11 +16,13 @@ Remove-Item .\dist\production -Recurse
 yarn run webpack --config ./webpack/squadov.config.js --env.target=electron-renderer
 
 Set-Location -Path ..\desktop
+yarn install --check-files
 Remove-Item .\dist -Recurse
 Remove-Item .\assets -Recurse
 Copy-Item -Path "..\assets" -Destination "assets" -Recurse -Force
 Copy-Item -Path "..\common_web\dist\production\electron-renderer" -Destination dist -Recurse -Force
-yarn electron-forge make
+Copy-Item -Path "../../build/bin/x64/Release/advanced_crash_dump_enabler.exe" -Destination nsis
+yarn run dist --config ..\..\scripts\windows\electron-builder.yml --publish always
 
 Set-Location -Path ..\..\scripts\windows
 Write-Host "Finish Packaging Windows SquadOV"

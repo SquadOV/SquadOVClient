@@ -21,11 +21,8 @@ fs.copySync(srcRelease, dstRelease, {
         return !/.*\.pdb$/.test(src)
     }
 })
-fs.copySync(srcConfig, dstConfig, {
-    filter: (src, dst) => {
-        return !/config\/(?!squadov\.json)/.test(src)
-    }
-})
+
+fs.copySync(path.join(srcConfig, 'squadov.json'), path.join(dstConfig, 'config.json'))
 
 module.exports = {
     packagerConfig: {
@@ -65,7 +62,7 @@ module.exports = {
                 iconUrl:  iconUrl,
                 name: 'squadov.squadov.app',
                 setupExe: 'SquadOV_Setup.exe',
-//                remoteReleases: 'https://us-central1.content.squadov.gg/builds',
+                //remoteReleases: 'https://us-central1.content.squadov.gg/builds',
                 setupIcon:  iconUrl
             }
         }

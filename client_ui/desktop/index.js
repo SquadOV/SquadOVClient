@@ -1,3 +1,4 @@
+/*
 if (handleSquirrel()) {
     return
 }
@@ -72,6 +73,7 @@ function handleSquirrel() {
     }
     return false
 }
+*/
 
 const {app, BrowserWindow, Menu, Tray, ipcMain, net} = require('electron')
 const path = require('path')
@@ -108,12 +110,20 @@ function loadAppSettings() {
         const updateExe = path.resolve(appFolder , '..', 'Update.exe')
         const exeName = path.basename(process.execPath)
 
+        /*
         app.setLoginItemSettings({
             openAtLogin: appSettings.runOnStartup === true,
             path: updateExe,
             args: [
                 '--processStart', `"${exeName}"`,
                 '--process-start-args', '"--hidden"'
+            ]
+        })
+        */
+        app.setLoginItemSettings({
+            openAtLogin: appSettings.runOnStartup === true,
+            args: [
+                '--hidden'
             ]
         })
     }
@@ -456,15 +466,24 @@ function startClientService() {
 }
 
 function startAutoupdater() {
-    const { autoUpdater } = require('electron')
-    autoUpdater.setFeedURL({
-        url: 'https://us-central1.content.squadov.gg/builds'
-    })
+    const { autoUpdater } = require("electron-updater")
+    autoUpdater.autoDownload = false
+    autoUpdater.autoInstallOnAppQuit = false
+    autoUpdater.logger = log
+    autoUpdater.channel = app.commandLine.hasSwitch('beta') ? 'beta' : 'latest'
 
     setInterval(() => {
-        autoUpdater.checkForUpdates()
+        // This event is for when an update is available and we're past
+        // the initial start-up workflow. In this case we need to indicate
+        // to the user that an update is available and have them restart.
+        autoUpdater.checkForUpdates().then((resp) => {
+            console.log(`SquadOV Found Update to Version  ${resp.updateInfo.version} vs ${app.getVersion()}`)
+            if (resp.updateInfo.version != app.getVersion()) {
+                win.webContents.send('main-update-downloaded', resp.updateInfo.version)
+            }
+        })
     }, 1 * 60 * 1000)
-    
+
     let updateWindow = new BrowserWindow({
         width: 300,
         height: 300,
@@ -488,23 +507,26 @@ function startAutoupdater() {
 
     return new Promise((resolve, reject) => {
         autoUpdater.once('update-not-available', () => {
-            autoUpdater.removeAllListeners('update-downloaded')
+            autoUpdater.removeAllListeners('update-available')
+            autoUpdater.removeAllListeners('download-progress')
             updateWindow.removeAllListeners('close')
             updateWindow.close()
-
-            autoUpdater.on('update-downloaded', (event, releaseNotes, releaseName) => {
-                console.log(`SquadOV Found Update to Version  ${releaseName} vs ${app.getVersion()}`)
-                if (releaseName != app.getVersion()) {
-                    win.webContents.send('main-update-downloaded', releaseName)
-                }
-            })
             resolve()
         })
 
-        autoUpdater.once('update-downloaded', (event, releaseNotes, releaseName) => {
-            log.log('AutoUpdate Available: ', releaseName)
-            updateWindow.webContents.send('update-update-available', releaseName)
-            autoUpdater.quitAndInstall()    
+        autoUpdater.once('update-available', (info) => {
+            log.log('Index Update Available: ', info)
+            autoUpdater.downloadUpdate().then(() => {
+                autoUpdater.quitAndInstall(false, true)
+            }).catch((err) => {
+                console.log('Failed to update: ', err)
+            })
+            updateWindow.webContents.send('update-update-available', info)            
+        })
+
+        autoUpdater.on('download-progress', (progress) => {
+            log.log('Index Download Progress: ', progress)
+            updateWindow.webContents.send('update-download-progress', progress)
         })
         autoUpdater.checkForUpdates()
     })
