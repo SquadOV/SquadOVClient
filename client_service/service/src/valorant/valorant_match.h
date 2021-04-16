@@ -43,7 +43,7 @@ private:
     shared::valorant::EValorantMap _map;
     std::vector<ValorantRoundMetadata> _rounds;
     std::string _matchId;
-    shared::valorant::EValorantRoundState _lastState = shared::valorant::EValorantRoundState::Buy;
+    shared::valorant::EValorantRoundState _lastState = shared::valorant::EValorantRoundState::Unknown;
 };
 
 using ValorantMatchPtr = std::unique_ptr<ValorantMatch>;
