@@ -112,9 +112,7 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
-    if (flags.enableTft || flags.enableLol) {
-        watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
-    }
+    watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
     watcher.start();
 }
 

@@ -189,14 +189,12 @@ export default class GameLog extends Vue {
                 'name': 'League of Legends',
                 'to': lolTo,
                 'route': this.$router.resolve(lolTo).route,
-                'disabled': !this.$store.state.features.enableLol
             },
             {
                 'icon': 'assets/tft-logo.png',
                 'name': 'Teamfight Tactics',
                 'to': tftTo,
                 'route': this.$router.resolve(tftTo).route,
-                'disabled': !this.$store.state.features.enableTft
             },
             {
                 'icon': 'assets/valorant-logo.png',

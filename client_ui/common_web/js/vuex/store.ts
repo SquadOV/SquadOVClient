@@ -14,8 +14,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         currentUser: null,
         hasValidSession: true,
         features: {
-            enableLol: false,
-            enableTft: false,
         },
 /// #if DESKTOP
         settings: null,

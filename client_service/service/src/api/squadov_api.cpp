@@ -82,8 +82,6 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     const auto parsedJson = nlohmann::json::parse(result->body);
     LOG_INFO("Obtain feature flags: " << parsedJson.dump(4) << std::endl);
     shared::squadov::FeatureFlags flags;
-    flags.enableLol = parsedJson["enableLol"].get<bool>();
-    flags.enableTft = parsedJson["enableTft"].get<bool>();
     _features = flags;
 }
 

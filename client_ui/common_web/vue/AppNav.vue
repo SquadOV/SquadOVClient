@@ -224,7 +224,6 @@ export default class AppNav extends Vue {
                             params: this.gameLogParams,
                             query: this.gameLogQuery
                         },
-                        disabled: !this.$store.state.features.enableLol
                     },
                     {
                         name: 'Teamfight Tactics',
@@ -233,7 +232,6 @@ export default class AppNav extends Vue {
                             params: this.gameLogParams,
                             query: this.gameLogQuery
                         },
-                        disabled: !this.$store.state.features.enableTft
                     },
                     {
                         name: 'Valorant',
