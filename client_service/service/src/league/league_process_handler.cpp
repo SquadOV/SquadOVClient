@@ -100,8 +100,6 @@ LeagueProcessHandlerInstance::~LeagueProcessHandlerInstance() {
 }
 
 void LeagueProcessHandlerInstance::onGameStart() {
-    service::system::getGlobalState()->markGameRunning(_actualGame, true);
-
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -172,6 +170,7 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
     } else {
         _actualGame = shared::EGame::LeagueOfLegends;
     }
+    service::system::getGlobalState()->markGameRunning(_actualGame, true);
 
     // There's no guarantee that the getActivePlayerName endpoint will return a non-empty string right away
     // so start a thread to start watching for that as soon as the in-game API is available to us.

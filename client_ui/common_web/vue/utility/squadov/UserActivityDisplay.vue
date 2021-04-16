@@ -7,18 +7,19 @@
         </div>
 
         <div v-else class="d-flex">
-            <v-img
-                :class="`${currentStatus.activity === SquadOvActivity.Recording ? 'recording' : ''}`"
-                v-for="(g, idx) in currentStatus.game"
-                :key="idx"
-                width="24px"
-                max-width="24px"
-                height="24px"
-                max-height="24px"
-                contain
-                :src="$root.generateAssetUri(gameToIcon(g))"
-            >
-            </v-img>
+            <template v-for="(g, idx) in currentStatus.game">
+                <v-img
+                    :class="`${currentStatus.activity === SquadOvActivity.Recording ? 'recording' : ''}`"
+                    :key="idx"
+                    width="24px"
+                    max-width="24px"
+                    height="24px"
+                    max-height="24px"
+                    contain
+                    :src="$root.generateAssetUri(gameToIcon(g))"
+                >
+                </v-img>
+            </template>
         </div>
     </div>
 </template>
