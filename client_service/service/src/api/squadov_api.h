@@ -6,7 +6,6 @@
 #include "shared/squadov/vod.h"
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
-#include "api/kafka_api.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
@@ -37,9 +36,6 @@ public:
     std::string getSessionUserUuid() const;
     shared::squadov::FeatureFlags getSessionFeatures() const { return _features; }
     void retrieveSessionFeatureFlags();
-
-    // Kafka
-    KafkaInfo getKafkaInfo() const;
 
     // User
     shared::squadov::SquadOVUser getCurrentUser() const;
@@ -74,6 +70,7 @@ public:
     std::string finishWoWEncounterMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterEnd& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
     std::string createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl);
     std::string finishWoWArenaMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaEnd& arena, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
+    void bulkUploadWoWCombatLogLine(const std::string& matchViewUuid, const std::vector<game_event_watcher::RawWoWCombatLog>& log) const;
 
     // League of Legends
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;

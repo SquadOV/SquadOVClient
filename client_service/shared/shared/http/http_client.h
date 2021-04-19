@@ -56,13 +56,13 @@ public:
 
     HttpResponsePtr download(const std::string& path, const std::filesystem::path& output) const;
     HttpResponsePtr get(const std::string& path) const;
-    HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false) const;
+    HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false, bool quiet = false) const;
     HttpResponsePtr put(const std::string& path, const char* buffer, size_t numBytes) const;
     HttpResponsePtr del(const std::string& path) const;
 
 private:
     using MethodRequestCallback = std::function<void(HttpRequest&)>;
-    HttpResponsePtr sendRequest(const std::string& path, const MethodRequestCallback& cb) const;
+    HttpResponsePtr sendRequest(const std::string& path, const MethodRequestCallback& cb, bool quiet) const;
 
     void tickRateLimit() const;
     bool _quiet = false;

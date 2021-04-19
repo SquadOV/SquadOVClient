@@ -1,5 +1,4 @@
 SET(SRCS
-    src/api/kafka_api.cpp
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
     src/aimlab/aimlab_db_interface.cpp
@@ -43,7 +42,6 @@ SET(SRCS
 
 SET(HEADERS
     src/api/squadov_api.h
-    src/api/kafka_api.h
     src/api/league_ingame_api.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
@@ -129,7 +127,6 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         portaudio
         libzmq
         ZLIB::ZLIB
-        RdKafka::rdkafka RdKafka::rdkafka++
         ${Boost_LIBRARIES}
         ${OPENSSL_LIBRARIES}
         ${FFMPEG_LIBRARIES}
