@@ -28,6 +28,26 @@ SquadovApi::SquadovApi() {
     }
 }
 
+KafkaInfo SquadovApi::getKafkaInfo() const {
+    const std::string path = "/v1/kafka/info";
+
+    const auto result = _webClient->get(path);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get SquadOV Kafka info: " << result->status);
+        return KafkaInfo{};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+
+    KafkaInfo ret;
+    ret.servers = parsedJson["servers"].get<std::string>();
+    ret.key = parsedJson["key"].get<std::string>();
+    ret.secret = parsedJson["secret"].get<std::string>();
+    ret.wowTopic = parsedJson["wowTopic"].get<std::string>();
+    return ret;
+}
+
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
 
@@ -489,23 +509,6 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
-}
-
-void SquadovApi::bulkUploadWoWCombatLogLine(const std::string& matchViewUuid, const std::vector<game_event_watcher::RawWoWCombatLog>& log) const {
-    nlohmann::json arr = nlohmann::json::array();
-    for (const auto& l : log) {
-        auto data = l.toJson();
-        data["version"] = 2;
-        arr.push_back(data);
-    }
-
-    std::ostringstream path;
-    path << "/v1/wow/users/" << getSessionUserId() << "/view/" << matchViewUuid;
-    const auto result = _webClient->post(path.str(), arr, true);
-
-    if (result->status != 204) {
-        THROW_ERROR("Failed to upload WoW combat log data: " << result->status);
-    }
 }
 
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {

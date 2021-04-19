@@ -218,6 +218,7 @@ void HttpRequest::setJsonBody(const nlohmann::json& body, bool forceGzip) {
             outputStream << jsonBody << std::flush;
             outputStream.pop();
 
+            LOG_INFO("Post CURL JSON GZIP: " << gzipBuffer.size() << std::endl);
             curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, gzipBuffer.size());
             curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, gzipBuffer.data());
         } else {
@@ -281,32 +282,32 @@ void HttpClient::removeHeaderKey(const std::string& key) {
 HttpResponsePtr HttpClient::download(const std::string& path, const std::filesystem::path& output) const {
     return sendRequest(path, [&output](HttpRequest& req){
         req.outputToFile(output);
-    }, false);
+    });
 }
 
 HttpResponsePtr HttpClient::get(const std::string& path) const {
-    return sendRequest(path, nullptr, false);
+    return sendRequest(path, nullptr);
 }
 
-HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body, bool forceGzip, bool quiet) const {
+HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body, bool forceGzip) const {
     return sendRequest(path, [&body, forceGzip](HttpRequest& req){
         req.doPost(body, forceGzip);
-    }, quiet);
+    });
 }
 
 HttpResponsePtr HttpClient::put(const std::string& path, const char* buffer, size_t numBytes) const {
     return sendRequest(path, [buffer, numBytes](HttpRequest& req){
         req.doPut(buffer, numBytes);
-    }, false);
+    });
 }
 
 HttpResponsePtr HttpClient::del(const std::string& path) const {
     return sendRequest(path, [](HttpRequest& req){
         req.doDelete();
-    }, false);
+    });
 }
 
-HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodRequestCallback& cb, bool quiet) const {
+HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodRequestCallback& cb) const {
     tickRateLimit();
 
     std::ostringstream fullPath;
@@ -317,7 +318,7 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
         // Need to sepaarate out this so modifying the headers
         // map isn't blocked by how long the request takes to run.
         std::shared_lock<std::shared_mutex> guard(_headerMutex);
-        req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned, quiet || _quiet));
+        req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned, _quiet));
     }
 
     if (_timeoutSeconds.has_value()) {

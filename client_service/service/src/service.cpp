@@ -15,6 +15,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
+#include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "vod/vod_clipper.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
@@ -213,6 +214,9 @@ int main(int argc, char** argv) {
     fs::create_directories(shared::filesystem::getSquadOvDvrSessionFolder());
 
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+
+    LOG_INFO("Initialize Kafka API" << std::endl);
+    service::api::getKafkaApi()->initialize();
 
     // Initialize global state and start to listen to messages coming via ZeroMQ about
     // how to update certain state.

@@ -12,8 +12,6 @@
 namespace service::wow {
 namespace {
 
-const auto MAX_PENDING_SIZE = 1000;
-
 int getWowRecordingFlags() {
     return service::recorder::FLAG_DXGI_RECORDING |
         (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
@@ -76,9 +74,6 @@ private:
 
     void genericMatchStart(const shared::TimePoint& tm);
     void genericMatchEnd(const std::string& matchUuid, const shared::TimePoint& tm);
-
-    void flushPendingLogs();
-    std::vector<game_event_watcher::RawWoWCombatLog> _pending;
 
     bool _combatLogActive = false;
     game_event_watcher::WoWCombatLogState _combatLog;
@@ -172,13 +167,6 @@ void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, co
     _combatLog = *log;
 }
 
-void WoWProcessHandlerInstance::flushPendingLogs() {
-    if (!_currentMatchViewUuid.empty() && !_pending.empty()) {
-        service::api::getGlobalApi()->bulkUploadWoWCombatLogLine(_currentMatchViewUuid, _pending);
-        _pending.clear();
-    }
-}
-
 void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, const void* data) {
     if (service::system::getGlobalState()->isPaused()) {
         return;
@@ -192,10 +180,7 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);
     if (inMatch()) {
         try {
-            _pending.emplace_back(std::move(log));
-            if (_pending.size() >= MAX_PENDING_SIZE) {
-                flushPendingLogs();
-            }
+            service::api::getKafkaApi()->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
         }
@@ -486,8 +471,13 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
 
     // Tell the server that the combat log is finished. I don't think this is *technically*
     // needed but a nice marker to have to force a flush out of events.
-    LOG_INFO("Forcing flush " << _currentMatchViewUuid << std::endl);
-    flushPendingLogs();
+    const game_event_watcher::RawWoWCombatLog endLog = {
+        shared::nowUtc(),
+        { "SQUADOV_END_COMBAT_LOG" },
+        -1
+    };
+    LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
+    onCombatLogLine(endLog.timestamp, (void*)&endLog);
 
     _currentMatchViewUuid = "";
 }
