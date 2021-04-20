@@ -92,7 +92,7 @@ import Component from 'nuxt-class-component'
 export default class HearthstoneIndex extends Vue {
     head() : any {
         return {
-            title: 'SquadOV - Automatic VOD Analysis for Hearthstone',
+            title: 'SquadOV - Better VODs, better match details for Hearthstone',
         }
     }
 }

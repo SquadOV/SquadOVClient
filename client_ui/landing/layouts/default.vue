@@ -17,8 +17,7 @@
                         >
                         </v-img>
 
-                        <span class="mr-1">SquadOV</span>
-                        <span class="text-caption">(Beta)</span>
+                        <span>SquadOV</span>
                     </div>
                 </NuxtLink>
             </v-toolbar-title>
@@ -33,22 +32,72 @@
                     </v-btn>
                 </template>
 
-                <v-list dense>
-                    <v-list-item to="/aimlab/">
-                        <v-list-item-title>Aim Lab</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item to="/hearthstone/"> 
-                        <v-list-item-title>Hearthstone</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item to="/valorant/">
-                        <v-list-item-title>Valorant</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item to="/wow/">
-                        <v-list-item-title>World of Warcraft</v-list-item-title>
-                    </v-list-item>
+                <v-list dense class="column-menu-list">
+                    <template v-for="(item, idx) in gameNav">
+                        <v-list-item class="column-item" :to="item.link" :key="idx">
+                            <v-list-item-avatar rounded="0" width="24" height="24">
+                                <v-img
+                                    :src="item.icon"
+                                    contain
+                                >
+                                </v-img>
+                            </v-list-item-avatar>
+                            <v-list-item-title>{{ item.name }}</v-list-item-title>
+                        </v-list-item>
+                    </template>
                 </v-list>
             </v-menu>
 
+<!--
+            <v-menu bottom offset-y>
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn text v-bind="attrs" v-on="on">
+                        Solutions
+                        <v-icon small>
+                            mdi-chevron-down
+                        </v-icon> 
+                    </v-btn>
+                </template>
+
+                <v-list dense>
+                    <v-list-item to="/coach/">
+                        <v-list-item-icon>
+                            <v-icon>
+                                mdi-school
+                            </v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Coaches</v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item to="/content/">
+                        <v-list-item-icon>
+                            <v-icon>
+                                mdi-twitch
+                            </v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Content Creators</v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item to="/esports/">
+                        <v-list-item-icon>
+                            <v-icon>
+                                mdi-trophy
+                            </v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Esports Teams</v-list-item-title>
+                    </v-list-item>
+
+                    <v-list-item to="/production/">
+                        <v-list-item-icon>
+                            <v-icon>
+                                mdi-video
+                            </v-icon>
+                        </v-list-item-icon>
+                        <v-list-item-title>Production</v-list-item-title>
+                    </v-list-item>
+                </v-list>
+            </v-menu>
+-->
             <v-btn href="https://support.squadov.gg" text>
                 Support
             </v-btn>
@@ -60,6 +109,19 @@
             <v-spacer></v-spacer>
 
             <v-btn
+                text
+                href="https://discord.gg/jVyfv9ZHHV"
+                target="_blank"
+            >
+                <v-icon class="mr-2">
+                    mdi-discord
+                </v-icon>
+
+                Join our Discord!
+            </v-btn>
+
+            <v-btn
+                class="ml-2"
                 color="info"
                 href="https://app.squadov.gg"
             >
@@ -107,6 +169,8 @@
                 </v-row>
             </v-container>
         </v-sheet>
+
+        <script charset="utf-8" type="text/javascript" src="https://js.hsforms.net/forms/shell.js"></script>
     </v-app>
 </template>
 
@@ -151,6 +215,62 @@ export default class DefaultLayout extends Vue {
             this.showHideCookieBanner = true
         }
     }
+
+
+    get gameNav(): any[] {
+        return [
+            {
+                name: 'Aim Lab',
+                link: '/aimlab/',
+                icon: '/assets/icons/aimlab-logo.png',
+            },
+            {
+                name: 'CS: GO',
+                link: '/csgo/',
+                icon: '/assets/icons/csgo-logo.png',
+            },
+            {
+                name: 'Dota 2',
+                link: '/dota2/',
+                icon: '/assets/icons/dota2-logo.png',
+            },
+            {
+                name: 'Fortnite',
+                link: '/fortnite/',
+                icon: '/assets/icons/fortnite-logo.png',
+            },
+            {
+                name: 'Hearthstone',
+                link: '/hearthstone/',
+                icon: '/assets/icons/hearthstone-logo.png',
+            },
+            {
+                name: 'League of Legends',
+                link: '/lol/',
+                icon: '/assets/icons/lol-logo.png',
+            },
+            {
+                name: 'Rocket League',
+                link: '/rocketleague/',
+                icon: '/assets/icons/rocketleague-logo.png',
+            },
+            {
+                name: 'Teamfight Tactics',
+                link: '/tft/',
+                icon: '/assets/icons/tft-logo.png',
+            },
+            {
+                name: 'Valorant',
+                link: '/valorant/',
+                icon: '/assets/icons/valorant-logo.png',
+            },
+            {
+                name: 'World of Warcraft',
+                link: '/wow/',
+                icon: '/assets/icons/wow-logo.png',
+            },
+        ]
+    }
 }
 
 </script>
@@ -166,6 +286,18 @@ export default class DefaultLayout extends Vue {
 #nav-bar a {
     color: inherit;
     text-decoration: none;
+}
+
+.column-menu-list {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    width: 400px;
+}
+
+.column-item {
+    flex-grow: 0;
+    flex-basis: 50%;
 }
 
 </style>

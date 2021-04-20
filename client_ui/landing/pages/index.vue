@@ -12,7 +12,7 @@
 
                     <span class="text-caption font-weight-bold ml-1">BETA</span>
                 </div>
-                <h2>Free automatic VOD recording, match history, and stat analysis to help you improve.</h2>
+                <h2>Because you deserve better VODs.</h2>
 
                 <div class="mt-4">
                     <v-btn class="download-button" color="success" @click="onDownload" :href="downloadLink" target="_blank">
@@ -43,6 +43,8 @@
             </div>
         </div>
 
+        <NuxtChild></NuxtChild>
+
         <v-row class="mt-4" no-gutters justify="center">
             <v-col cols="9">
                 <div class="d-flex justify-center text-h4 font-weight-bold">
@@ -50,138 +52,37 @@
                 </div>
 
                 <div class="d-flex mt-4 game-div">
-                    <NuxtLink to="/aimlab/">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/aimlab') ? 'selected-game-div' : ''}`">
-                            <v-img
-                                src="/assets/aimlab_box.jpg"
-                                height="250px"
-                                width="188px"
-                                contain
-                                alt="Aim Lab"
-                            >
-                            </v-img>
+                    <template v-for="(game, idx) in supportedGames">
+                        <NuxtLink :key="idx" :to="game.link">
+                            <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith(game.link) ? 'selected-game-div' : ''}`">
+                                <v-img
+                                    :src="game.box"
+                                    height="250px"
+                                    width="188px"
+                                    contain
+                                    :alt="game.name"
+                                >
+                                </v-img>
 
-                            <div class="text-overline beta">
-                                Beta
+                                <div :class="`text-overline ${game.status.class}`">
+                                    {{ game.status.text }}
+                                </div>
+
+                                <div class="mt-2 text-overline">
+                                    {{ game.name }}
+                                </div>
                             </div>
-
-                            <div class="mt-2 text-overline">
-                                Aim Lab
-                            </div>
-                        </div>
-                    </NuxtLink>
-
-                    <NuxtLink to="/hearthstone/">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/hearthstone') ? 'selected-game-div' : ''}`">
-                            <v-img
-                                src="/assets/hearthstone_box.jpg"
-                                height="250px"
-                                width="188px"
-                                contain
-                                alt="Hearthstone"
-                            >
-                            </v-img>
-
-                            <div class="text-overline beta">
-                                Beta
-                            </div>
-
-                            <div class="mt-2 text-overline">
-                                Hearthstone
-                            </div>
-                        </div>
-                    </NuxtLink>
-
-                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/lol') ? 'selected-game-div' : ''}`">
-                        <v-img
-                            src="/assets/lol_box.jpg"
-                            height="250px"
-                            width="188px"
-                            contain
-                            alt="League of Legends"
-                        >
-                        </v-img>
-
-                        <div class="text-overline dev">
-                            Coming Soon
-                        </div>
-
-                        <div class="mt-2 text-overline">
-                            League of Legends
-                        </div>
-                    </div>
-
-                    <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/tft') ? 'selected-game-div' : ''}`">
-                        <v-img
-                            src="/assets/tft_box.jpg"
-                            height="250px"
-                            width="188px"
-                            contain
-                            alt="Teamfight Tactics"
-                        >
-                        </v-img>
-
-                        <div class="text-overline dev">
-                            Coming Soon
-                        </div>
-
-                        <div class="mt-2 text-overline">
-                            Teamfight Tactics
-                        </div>
-                    </div>
-
-                    <NuxtLink to="/valorant/">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/valorant') ? 'selected-game-div' : ''}`">
-                            <v-img
-                                src="/assets/valorant_box.jpg"
-                                height="250px"
-                                width="188px"
-                                contain
-                                alt="Valorant"
-                            >
-                            </v-img>
-
-                            <div class="text-overline alpha">
-                                Alpha
-                            </div>
-
-                            <div class="mt-2 text-overline">
-                                Valorant
-                            </div>
-                        </div>
-                    </NuxtLink>
-
-                    <NuxtLink to="/wow/">
-                        <div :class="`d-flex flex-column align-center mx-4 single-game-div ${$nuxt.$route.path.startsWith('/wow') ? 'selected-game-div' : ''}`">
-                            <v-img
-                                src="/assets/wow_box.jpg"
-                                height="250px"
-                                width="188px"
-                                contain
-                                alt="World of Warcraft"
-                            >
-                            </v-img>
-
-                            <div class="text-overline alpha">
-                                Alpha
-                            </div>
-
-                            <div class="mt-2 text-overline">
-                                World of Warcraft
-                            </div>
-                        </div>
-                    </NuxtLink>
+                        </NuxtLink>
+                    </template>
                 </div>
             </v-col>
         </v-row>
-
-        <NuxtChild></NuxtChild>
 
         <v-row class="mt-4" no-gutters justify="center">
             <v-col cols="9">
                 <div id="final-cta" class="d-flex flex-column align-center justify-center">
                     <div class="text-h5">
-                        Download SquadOV today to start automatically recording and analyzing your VODs.
+                        What are you waiting for? Download SquadOV for <b>free</b> today.
                     </div>
 
                     <div class="mt-4">
@@ -194,18 +95,6 @@
                                 <div class="d-flex flex-column">
                                     <span class="download-text">Client (x64)</span>
                                     <span class="download-text">{{version}} (91MB)</span>
-                                </div>
-                            </div>
-                        </v-btn>
-
-                        <v-btn class="download-button" color="secondary" href="https://app.squadov.gg">
-                            <div class="d-flex">
-                                <v-icon class="mr-4">
-                                    mdi-web
-                                </v-icon>
-
-                                <div class="d-flex flex-column justify-center">
-                                    <span class="download-text">Web Client</span>
                                 </div>
                             </div>
                         </v-btn>
@@ -243,7 +132,7 @@ export default class Index extends Vue {
 
     head() : any {
         return {
-            title: 'SquadOV  - Automatic VOD Analysis for your Squad',
+            title: 'SquadOV  - Better VODs, better match details for your Squad',
             htmlAttrs: {
                 lang: 'en'
             },
@@ -264,8 +153,103 @@ export default class Index extends Vue {
         }
     }
 
+    get supportedGames(): any[] {
+        return [
+            {
+                name: 'Aim Lab',
+                link: '/aimlab/',
+                box: '/assets/aimlab_box.jpg',
+                status: {
+                    text: 'Beta',
+                    class: 'beta',
+                },
+            },
+            {
+                name: 'CS: GO',
+                link: '/csgo/',
+                box: '/assets/csgo_box.jpg',
+                status: {
+                    text: 'Coming Soon',
+                    class: 'dev',
+                },
+            },
+            {
+                name: 'Dota 2',
+                link: '/dota2/',
+                box: '/assets/dota2_box.jpg',
+                status: {
+                    text: 'Coming Soon',
+                    class: 'dev',
+                },
+            },
+            {
+                name: 'Fortnite',
+                link: '/fortnite/',
+                box: '/assets/fortnite_box.jpg',
+                status: {
+                    text: 'Coming Soon',
+                    class: 'dev',
+                },
+            },
+            {
+                name: 'Hearthstone',
+                link: '/hearthstone/',
+                box: '/assets/hearthstone_box.jpg',
+                status: {
+                    text: 'Beta',
+                    class: 'beta',
+                },
+            },
+            {
+                name: 'League of Legends',
+                link: '/lol/',
+                box: '/assets/lol_box.jpg',
+                status: {
+                    text: 'Alpha',
+                    class: 'alpha',
+                },
+            },
+            {
+                name: 'Rocket League',
+                link: '/rocketleague/',
+                box: '/assets/rocketleague_box.jpg',
+                status: {
+                    text: 'Coming Soon',
+                    class: 'dev',
+                },
+            },
+            {
+                name: 'Teamfight Tactics',
+                link: '/tft/',
+                box: '/assets/tft_box.jpg',
+                status: {
+                    text: 'Alpha',
+                    class: 'alpha',
+                },
+            },
+            {
+                name: 'Valorant',
+                link: '/valorant/',
+                box: '/assets/valorant_box.jpg',
+                status: {
+                    text: 'Beta',
+                    class: 'beta',
+                },
+            },
+            {
+                name: 'World of Warcraft',
+                link: '/wow/',
+                box: '/assets/wow_box.jpg',
+                status: {
+                    text: 'Beta',
+                    class: 'beta',
+                },
+            },
+        ]
+    }
+
     get version(): string {
-        return 'v0.7.9'
+        return 'v0.7.24'
     }
 
     get downloadLink() : string {

@@ -2,7 +2,7 @@
     <v-row no-gutters justify="center">
         <v-col cols="9">
             <v-row class="my-4">
-                <v-col align-self="center" cols="3">
+                <v-col align-self="center" cols="4">
                     <div class="d-flex flex-column ">
                         <span class="text-h4">Fully automated.</span>
                         <span class="text-subtitle-1">
@@ -12,16 +12,45 @@
                     </div>
                 </v-col>
 
-                <v-col cols="9">
-                    <div class="d-flex justify-center">
-                        <v-img
-                            class="highlight-image"
-                            max-width="80%"
-                            src="/assets/default_triple.jpg"
+                <v-col cols="8">
+                    <v-carousel cycle height="600">
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/valorant_triple_1.jpg"
                             contain
                         >
-                        </v-img>
-                    </div>
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/hearthstone_triple_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/aimlab_triple_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/wow_triple_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/lol_triple_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/tft_triple_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                    </v-carousel>
                 </v-col>
             </v-row>
             
@@ -49,6 +78,18 @@
                         <v-carousel-item
                             class="carousel-image"
                             src="/assets/WowMatchDetails_1.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/LeagueMatchDetails.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/TftMatchDetails.jpg"
                             contain
                         >
                         </v-carousel-item>
@@ -102,6 +143,18 @@
                         <v-carousel-item
                             class="carousel-image"
                             src="/assets/WowMatchHistory.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/LeagueMatchHistory.jpg"
+                            contain
+                        >
+                        </v-carousel-item>
+                        <v-carousel-item
+                            class="carousel-image"
+                            src="/assets/TftMatchHistory.jpg"
                             contain
                         >
                         </v-carousel-item>
