@@ -339,7 +339,9 @@ export default class GenericVodPicker extends Vue {
             return
         }
 
+///#if DESKTOP
         this.rcContext = new VodRemoteControlContext(this.value.videoUuid)
+///#endif
     }
 
     get isClippingEnabled(): boolean {
