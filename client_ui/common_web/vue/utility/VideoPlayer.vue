@@ -117,10 +117,12 @@ export default class VideoPlayer extends Vue {
             return
         }
 
+///#if DESKTOP
         this.rcContext = new VodRemoteControlContext(this.vod!.videoUuid)
         this.rcContext.addListener((p: RCMessagePacket) => {
             this.handleRcPacket(p)
         })
+///#endif
 
         // Generally the only time we'll be switching videoUuids is when we go from one
         // user's POV to another. Therefore, we're able to make the assumption that the
