@@ -792,7 +792,7 @@ export default class RecordingSettingsItem extends Vue {
                     throw 'Bad keycode?'
                 }
             } catch (ex) {
-                console.log('Failed to request key code: ', code)
+                console.log('Failed to request key code: ', code, ex)
                 this.keybindCache.set(code, '<ERROR>')
             }
         }

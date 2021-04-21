@@ -534,20 +534,43 @@ int main(int argc, char** argv) {
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_KEYCODE_CHAR, [&zeroMqServerClient](const std::string& msg){
         LOG_INFO("RECEIVE KEYCODE CHAR REQUEST:" << msg << std::endl);
         const auto json = nlohmann::json::parse(msg);
-        const auto request = service::system::GenericIpcRequest<int>::fromJson(json);
-
-        const UINT scanCode = MapVirtualKeyW(request.data, MAPVK_VK_TO_VSC);
-
-        wchar_t nameBuffer[256];
-        const auto result = GetKeyNameTextW(scanCode << 16, nameBuffer, 256);
-
-        std::wstring nameWStr(nameBuffer);
-        std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+        auto request = service::system::GenericIpcRequest<int>::fromJson(json);
 
         service::system::GenericIpcResponse<std::string> resp;
         resp.task = request.task;
-        resp.success = (result > 0);
-        resp.data = conv.to_bytes(nameWStr);
+
+        if (request.data >= VK_F13 && request.data <= VK_F24) {
+            // Windows apparently doesn't suppor these via GetKeyNameTextW
+            std::ostringstream name;
+            name << "F" << (13 + request.data - VK_F13);
+            resp.success = true;
+            resp.data = name.str();
+        } else {
+            UINT scanCode = MapVirtualKeyW(request.data, MAPVK_VK_TO_VSC);
+            switch (request.data) {
+                case VK_LEFT:
+                case VK_UP:
+                case VK_RIGHT:
+                case VK_DOWN:
+                case VK_PRIOR:
+                case VK_NEXT:
+                case VK_END:
+                case VK_HOME:
+                case VK_INSERT:
+                case VK_DELETE:
+                case VK_DIVIDE:
+                case VK_NUMLOCK:
+                    scanCode |= 0x100;
+            }
+
+            wchar_t nameBuffer[256];
+            const auto result = GetKeyNameTextW(scanCode << 16, nameBuffer, 256);
+
+            std::wstring nameWStr(nameBuffer);
+            std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+            resp.success = (result > 0);
+            resp.data = conv.to_bytes(nameWStr);
+        }
 
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RESPOND_KEYCODE_CHAR,
