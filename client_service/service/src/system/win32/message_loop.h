@@ -33,6 +33,7 @@ private:
     std::mutex _cbMutex;
     std::unordered_map<service::system::EAction, std::vector<ActionCallbackData>> _actionCallbacks;
     int64_t _actionCbCounter = 0;
+    bool _lastPttEnabledState = false;
 };
 
 using Win32MessageLoopPtr = std::unique_ptr<Win32MessageLoop>;

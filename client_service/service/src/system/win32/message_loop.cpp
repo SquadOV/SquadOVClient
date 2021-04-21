@@ -82,9 +82,11 @@ void Win32MessageLoop::handleKeyboardPress(bool isPress) {
     // Translate keypress into actions using the settings.
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
 
-    if (checkKeybindActive(keybinds.pushToTalk)) {
+    if (checkKeybindActive(keybinds.pushToTalk) && !_lastPttEnabledState) {
+        _lastPttEnabledState = true;
         notifySquadOvAction(service::system::EAction::PushToTalkEnable);
-    } else if (!isPress) {
+    } else if (!isPress && _lastPttEnabledState) {
+        _lastPttEnabledState = false;
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
     }
 }

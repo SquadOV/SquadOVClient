@@ -515,31 +515,40 @@ void GameRecorder::stopInputs() {
     if (_vrecorder) {
         LOG_INFO("...Stop video recorder." << std::endl);
         _vrecorder->stopRecording();
+        LOG_INFO("\tOK" << std::endl);
         _vrecorder.reset(nullptr);
     }
 
     if (_aoutRecorder) {
         LOG_INFO("...Stop audio output recorder." << std::endl);
         _aoutRecorder->stop();
+        LOG_INFO("\tOK" << std::endl);
         _aoutRecorder.reset(nullptr);
     }
 
     {
-        std::lock_guard guard(_ainMutex);
-        if (_ainRecorder) {
-            LOG_INFO("...Stop audio input recorder." << std::endl);
-            _ainRecorder->stop();
-            _ainRecorder.reset(nullptr);
-        }
-
+        // Remove PTT callbacks first as the callbacks will want a lock on audio input so we want to make sure we don't
+        // let that get in the way of stopping the audio input recorder.
         if (_pttEnableCb.has_value()) {
+            LOG_INFO("...Remove PTT enable callback." << std::endl);
             service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkEnable, _pttEnableCb.value());
+            LOG_INFO("\tOK" << std::endl);
             _pttEnableCb.reset();   
         }
 
         if (_pttDisableCb.has_value()) {
+            LOG_INFO("...Remove PTT disable callback." << std::endl);
             service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkDisable, _pttDisableCb.value());
+            LOG_INFO("\tOK" << std::endl);
             _pttDisableCb.reset();
+        }
+
+        std::lock_guard guard(_ainMutex);
+        if (_ainRecorder) {
+            LOG_INFO("...Stop audio input recorder." << std::endl);
+            _ainRecorder->stop();
+            LOG_INFO("\tOK" << std::endl);
+            _ainRecorder.reset(nullptr);
         }
     }
 }
