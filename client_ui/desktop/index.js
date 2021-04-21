@@ -90,6 +90,9 @@ process.env.API_SQUADOV_URL = config["API_URL"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
     app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../../resources/tzdata'
+process.env.SQUADOV_CSGO_RESOURCES = !!process.env.SQUADOV_CSGO_RESOURCES ?
+    process.env.SQUADOV_CSGO_RESOURCES :
+    app.isPackaged ? path.join(process.resourcesPath, 'csgo') : '../../resources/csgo'
 const iconPath = path.join(__dirname, 'assets/icon.ico')
 
 let win

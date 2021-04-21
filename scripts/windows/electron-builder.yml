@@ -51,6 +51,8 @@ extraResources:
       - "**/*.json"
   - from: "../../resources/tzdata"
     to: "tzdata"
+  - from: "../../resources/csgo"
+    to: "csgo"
   - from: "../../build/bin/x64/Release"
     to: "service"
     filter:

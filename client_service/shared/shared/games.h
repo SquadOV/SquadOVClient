@@ -13,6 +13,7 @@ enum class EGame {
     WoW,
     LeagueOfLegends,
     TFT,
+    CSGO,
 };
 
 using EGameSet = std::unordered_set<EGame>;

@@ -4,6 +4,7 @@
 #include "shared/filesystem/utility.h"
 #include "shared/filesystem/local_record.h"
 #include "aimlab/aimlab_process_handler.h"
+#include "csgo/csgo_process_handler.h"
 #include "valorant/valorant_process_handler.h"
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
@@ -17,6 +18,8 @@
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
+#include "game_event_watcher/csgo/csgo_log_watcher.h"
+#include "game_event_watcher/csgo/csgo_gsi_listener.h"
 #include "vod/vod_clipper.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/gcs_piper.h"
@@ -113,6 +116,7 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::CSGO, std::make_unique<service::csgo::CsgoProcessHandler>());
     watcher.start();
 }
 
@@ -259,10 +263,14 @@ int main(int argc, char** argv) {
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
 
-    // Some games need some other setup if they're installed. Do this every time the app starts up as
+    // Some games need some other setup if they're installed. Do this every time the app starts up because
     // doing it when the game is already running would be too late.
     LOG_INFO("Enable Hearthstone Logging" << std::endl);
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
+
+    LOG_INFO("Enable CS:GO Logging/GSI" << std::endl);
+    game_event_watcher::CsgoLogWatcher::enableCsgoLogging();
+    game_event_watcher::CsgoGsiListener::enableCsgoGsi();
 
     LOG_INFO("Registering State callbacks" << std::endl);
     service::system::getGlobalState()->addGameRunningCallback([&zeroMqServerClient](const shared::EGameSet& set){

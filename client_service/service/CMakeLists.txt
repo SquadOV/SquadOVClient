@@ -4,6 +4,7 @@ SET(SRCS
     src/api/league_ingame_api.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
+    src/csgo/csgo_process_handler.cpp
     src/valorant/valorant_process_handler.cpp
     src/valorant/valorant_match.cpp
     src/hearthstone/hearthstone_process_handler.cpp
@@ -47,6 +48,7 @@ SET(HEADERS
     src/api/league_ingame_api.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
+    src/csgo/csgo_process_handler.h
     src/valorant/valorant_process_handler.h
     src/valorant/valorant_match.h
     src/hearthstone/hearthstone_process_handler.h
@@ -168,6 +170,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             d3d11
             dxgi
             dbghelp
+            Advapi32
         )
     endif()
 

@@ -88,8 +88,67 @@ std::filesystem::path getCurrentExeFolder() {
 #endif
 }
 
+std::filesystem::path getCsgoResourcesPath() {
+    return fs::path(shared::getEnvW(L"SQUADOV_CSGO_RESOURCES"s));
+}
+
 std::filesystem::path getSquadOvTempFolder() {
     return fs::temp_directory_path() / fs::path("SquadOV");
+}
+
+std::optional<std::filesystem::path> getSteamInstallFolder() {
+    // According to the Valve GSI documentation we can find
+    // the steam folder under the registry value: HKEY_CURRENT_USER\SOFTWARE\Valve\Steam
+    // with the key "SteamPath".
+    HKEY key;
+    auto res = RegOpenKeyExW(HKEY_CURRENT_USER , L"SOFTWARE\\Valve\\Steam", 0, KEY_QUERY_VALUE, &key);
+    if (res != ERROR_SUCCESS) {
+        LOG_WARNING("Failed to find Steam Directory: " << res << std::endl);
+        return std::nullopt;
+    }
+
+    WCHAR path[1024];
+    DWORD count = 1024;
+    DWORD dwType = REG_SZ;
+    res = RegGetValueW(key, L"", L"SteamPath", RRF_RT_REG_SZ, &dwType, path, &count);
+    if (res != ERROR_SUCCESS) {
+        LOG_WARNING("Failed to get Steam Path: " << res << std::endl);
+        return std::nullopt;
+    }
+
+    return fs::path(std::wstring(path));
+}
+
+std::optional<std::filesystem::path> getCsgoInstallFolder() {
+    const auto steamPath = getSteamInstallFolder();
+    if (!steamPath.has_value()) {
+        return std::nullopt;
+    }
+    return steamPath.value() / fs::path("steamapps") / fs::path("common") / fs::path("Counter-Strike Global Offensive");
+}
+
+std::optional<std::filesystem::path> getCsgoCfgFolder() {
+    const auto path = getCsgoInstallFolder();
+    if (!path.has_value()) {
+        return std::nullopt;
+    }
+    return path.value() / fs::path("csgo") / fs::path("cfg");
+}
+
+std::optional<std::filesystem::path> getCsgoAutoExecFile() {
+    const auto path = getCsgoCfgFolder();
+    if (!path.has_value()) {
+        return std::nullopt;
+    }
+    return path.value() / fs::path("autoexec.cfg");
+}
+
+std::optional<std::filesystem::path> getCsgoLogFile() {
+    const auto path = getCsgoInstallFolder();
+    if (!path.has_value()) {
+        return std::nullopt;
+    }
+    return path.value() / fs::path("csgo") / fs::path("squadov.log");
 }
 
 }

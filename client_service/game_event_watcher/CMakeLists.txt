@@ -1,5 +1,7 @@
 SET(SRCS
     game_event_watcher/aimlab/aimlab_log_watcher.cpp
+    game_event_watcher/csgo/csgo_log_watcher.cpp
+    game_event_watcher/csgo/csgo_gsi_listener.cpp
     game_event_watcher/valorant/valorant_log_watcher.cpp
     game_event_watcher/hearthstone/hearthstone_log_watcher.cpp
     game_event_watcher/hearthstone/hearthstone_log_config.cpp
@@ -11,6 +13,8 @@ SET(SRCS
 
 SET(HEADERS
     game_event_watcher/aimlab/aimlab_log_watcher.h
+    game_event_watcher/csgo/csgo_log_watcher.h
+    game_event_watcher/csgo/csgo_gsi_listener.h
     game_event_watcher/valorant/valorant_log_watcher.h
     game_event_watcher/hearthstone/hearthstone_log_watcher.h
     game_event_watcher/hearthstone/hearthstone_log_config.h
