@@ -19,7 +19,7 @@ app.get('/healthz', function (request, response) {
 
 app.get('*', async function (request, response) {
     let apiUrl = parsedConfig.apiUrl
-    let selfUrl = `${request.protocol}://${request.hostname}${parsedConfig.usePort ? `:${port}` : ''}${request.originalUrl}`
+    let selfUrl = `${parsedConfig.protocol}://${request.hostname}${parsedConfig.usePort ? `:${port}` : ''}${request.originalUrl}`
     let hasOEmbed = false
     let hasTwitterCard = false
     let hasOpenGraph = false
