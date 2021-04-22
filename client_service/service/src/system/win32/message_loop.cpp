@@ -85,9 +85,11 @@ void Win32MessageLoop::handleKeyboardPress(bool isPress) {
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
 
     if (checkKeybindActive(keybinds.pushToTalk) && !_lastPttEnabledState) {
+        LOG_INFO("Toggling PTT [ON]" << std::endl);
         _lastPttEnabledState = true;
         notifySquadOvAction(service::system::EAction::PushToTalkEnable);
     } else if (!isPress && _lastPttEnabledState) {
+        LOG_INFO("Toggling PTT [OFF]" << std::endl);
         _lastPttEnabledState = false;
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
     }
