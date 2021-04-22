@@ -24,7 +24,6 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/gcs_piper.h"
 #include "system/settings.h"
-#include "system/hooks.h"
 #include "system/win32/message_loop.h"
 
 #include <boost/program_options.hpp>
@@ -602,9 +601,6 @@ int main(int argc, char** argv) {
         );
     });
 
-    LOG_INFO("Setting up global hooks..." << std::endl);
-    service::system::initializeGlobalHooks();
-
     const auto mode = vm["mode"].as<std::string>();
     if (mode == "") {
         defaultMain();
@@ -617,7 +613,6 @@ int main(int argc, char** argv) {
         THROW_ERROR("Unknown Mode: " << mode);
     }
 
-    service::system::shutdownGlobalHooks();
     curl_global_cleanup();
     Pa_Terminate();
     return 0;

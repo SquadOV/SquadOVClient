@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game_event_watcher/csgo/csgo_gsi_packet.h"
 #include <CivetServer.h>
 #include <memory>
 
@@ -14,11 +15,12 @@ public:
     ~CsgoGsiListener();
 
     int port() const;
+    void handleGsiPacket(const CsgoGsiPacket& packet);
 
     friend class CsgoGsiHandler;
 private:
     std::unique_ptr<CivetServer> _server;
-    CsgoGsiHandler _handler;
+    std::unique_ptr<CivetHandler> _handler;
 };
 using CsgoGsiListenerPtr = std::unique_ptr<CsgoGsiListener>;
 

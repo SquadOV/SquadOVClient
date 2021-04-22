@@ -1,6 +1,7 @@
 #include "game_event_watcher/csgo/csgo_gsi_listener.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/log/log.h"
+#include "shared/http/civetweb_utility.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -15,6 +16,10 @@ public:
     }
 
     bool handlePost(CivetServer* server, struct mg_connection* conn) {
+        const auto packet = shared::http::readTypedCivetJsonBody<CsgoGsiPacket>(conn);
+        _listener->handleGsiPacket(packet);
+
+        shared::http::writeCivetStatusResponse(shared::http::HttpStatusCode::NoContent, conn);
         return true;
     }
 
@@ -27,15 +32,17 @@ CsgoGsiListener* CsgoGsiListener::singleton() {
     return global.get();
 }
 
-CsgoGsiListener::CsgoGsiListener():
-    _handler(this) {
+CsgoGsiListener::CsgoGsiListener() {
     LOG_INFO("Initializing CS:GO GSI Listener..." << std::endl);
     std::vector<std::string> options = {
         "listening_ports", "127.0.0.1:0",
         "num_threads", "4"
     };
     _server = std::make_unique<CivetServer>(options);
-    _server->addHandler("/csgo/gsi", _handler);
+    LOG_INFO("...Initializing CS:GO GSI Listener on port: " << port() << std::endl);
+
+    _handler = std::make_unique<CsgoGsiHandler>(this);    
+    _server->addHandler("/csgo/gsi", *_handler);
 }
 
 CsgoGsiListener::~CsgoGsiListener() {
@@ -68,6 +75,10 @@ void CsgoGsiListener::enableCsgoGsi() {
 
     src.close();
     dst.close();
+}
+
+void CsgoGsiListener::handleGsiPacket(const CsgoGsiPacket& packet) {
+    LOG_INFO("Received GSI Packet: " << packet << std::endl);
 }
 
 }

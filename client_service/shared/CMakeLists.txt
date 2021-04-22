@@ -18,6 +18,7 @@ SET(SRCS
     shared/errors/error.cpp
     shared/version.cpp
     shared/http/http_client.cpp
+    shared/http/civetweb_utility.cpp
 )
 
 SET(HEADERS
@@ -44,6 +45,7 @@ SET(HEADERS
     shared/math.h
     shared/version.h
     shared/http/http_client.h
+    shared/http/civetweb_utility.h
 )
 
 add_library(squadov_shared
@@ -59,5 +61,6 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/deps/sqlite3
     ${CMAKE_SOURCE_DIR}/deps/json/single_include
     ${CMAKE_SOURCE_DIR}/deps/curl/include
+    ${CMAKE_SOURCE_DIR}/deps/civetweb/include
     ${Boost_INCLUDE_DIRS}
 )

@@ -21,7 +21,7 @@ public:
     LRESULT handleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-    void handleKeyboardPress(bool isPress);
+    void onChangeKeycodeState();
     bool checkKeybindActive(const std::vector<int>& keybind);
 
     void notifySquadOvAction(service::system::EAction action);
@@ -34,6 +34,7 @@ private:
     std::unordered_map<service::system::EAction, std::vector<ActionCallbackData>> _actionCallbacks;
     int64_t _actionCbCounter = 0;
     bool _lastPttEnabledState = false;
+    std::array<bool, 256> _virtualKeycodeState;
 };
 
 using Win32MessageLoopPtr = std::unique_ptr<Win32MessageLoop>;

@@ -16,6 +16,8 @@ std::string gameToString(EGame game) {
         return "League of Legends";
     case EGame::TFT:
         return "Teamfight Tactics";
+    case EGame::CSGO:
+        return "Counter Strike: Global Offensive";
     }
     return "";
 }
@@ -34,6 +36,8 @@ std::string gameToIconString(EGame game) {
         return "lol";
     case EGame::TFT:
         return "tft";
+    case EGame::CSGO:
+        return "csgo";
     }
     return "";
 }

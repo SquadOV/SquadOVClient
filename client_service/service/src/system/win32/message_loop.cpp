@@ -2,7 +2,6 @@
 #include "system/settings.h"
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
-#include "shared/ipc/constants.h"
 #include <thread>
 
 namespace service::system::win32 {
@@ -35,6 +34,7 @@ void Win32MessageLoop::start() {
         THROW_ERROR("Failed to create SquadOV window class: " << shared::errors::getWin32ErrorAsString());
     }
 
+    // A HWND that we can use to communicate with the client service via windows messages if necessary.
     HWND msgWnd = CreateWindowEx(
         0,
         wndClass.lpszClassName,
@@ -51,6 +51,24 @@ void Win32MessageLoop::start() {
         THROW_ERROR("Failed to create SquadOV message window: " << shared::errors::getWin32ErrorAsString());
     }
 
+    _virtualKeycodeState.fill(false);
+
+    // Register for raw input to receive WM_INPUT commands so we can handle keybinds and the like.
+    RAWINPUTDEVICE rid[2];    
+    rid[0].usUsagePage = 0x01;          // HID_USAGE_PAGE_GENERIC
+    rid[0].usUsage = 0x02;              // HID_USAGE_GENERIC_MOUSE
+    rid[0].dwFlags = RIDEV_NOLEGACY | RIDEV_INPUTSINK;    // adds mouse and also ignores legacy mouse messages
+    rid[0].hwndTarget = msgWnd;
+
+    rid[1].usUsagePage = 0x01;          // HID_USAGE_PAGE_GENERIC
+    rid[1].usUsage = 0x06;              // HID_USAGE_GENERIC_KEYBOARD
+    rid[1].dwFlags = RIDEV_NOLEGACY | RIDEV_INPUTSINK;    // adds keyboard and also ignores legacy keyboard messages
+    rid[1].hwndTarget = msgWnd;
+
+    if (!RegisterRawInputDevices(rid, 2, sizeof(RAWINPUTDEVICE))) {
+        THROW_ERROR("Failed to register raw input devices: " << shared::errors::getWin32ErrorAsString());
+    }
+
     while (true) {
         if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
             continue;
@@ -63,31 +81,84 @@ void Win32MessageLoop::start() {
 
 LRESULT Win32MessageLoop::handleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
-        case shared::ipc::IPC_KEYPRESS:
-        case shared::ipc::IPC_MOUSEPRESS:
-            handleKeyboardPress(true);
+        case WM_INPUT: {
+            UINT dwSize;
+            GetRawInputData((HRAWINPUT)lParam, RID_INPUT, NULL, &dwSize, sizeof(RAWINPUTHEADER));
+
+            std::vector<char> buffer(dwSize);
+            if (GetRawInputData((HRAWINPUT)lParam, RID_INPUT, buffer.data(), &dwSize, sizeof(RAWINPUTHEADER)) != dwSize) {
+                LOG_WARNING("Failed to read raw input...?" << std::endl);
+                return 0;
+            }
+            
+            RAWINPUT* raw = reinterpret_cast<RAWINPUT*>(buffer.data());
+            if (raw->header.dwType == RIM_TYPEKEYBOARD) {
+                if (raw->data.keyboard.Flags & RI_KEY_BREAK) {
+                    _virtualKeycodeState[raw->data.keyboard.VKey] = false;
+                } else {
+                    _virtualKeycodeState[raw->data.keyboard.VKey] = true;
+                }
+                onChangeKeycodeState();
+            } else if (raw->header.dwType == RIM_TYPEMOUSE) {
+                bool newState = false;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_DOWN ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN) {
+                    newState = true;
+                } else if (raw->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_UP ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP) {
+                    newState = false;
+                } else {
+                    return 0;
+                }
+
+                int vcode = 0;
+                if (raw->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_DOWN ||
+                    raw->data.mouse.usButtonFlags & RI_MOUSE_LEFT_BUTTON_UP) {
+                    vcode = VK_LBUTTON;
+                } else if (raw->data.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_DOWN ||
+                           raw->data.mouse.usButtonFlags & RI_MOUSE_MIDDLE_BUTTON_UP) {
+                    vcode = VK_MBUTTON;
+                } else if (raw->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN ||
+                           raw->data.mouse.usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP) {
+                    vcode = VK_RBUTTON;
+                } else if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_DOWN ||
+                           raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_4_UP) {
+                    vcode = VK_XBUTTON1;
+                } else if (raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_DOWN ||
+                           raw->data.mouse.usButtonFlags & RI_MOUSE_BUTTON_5_UP) {
+                    vcode = VK_XBUTTON2;
+                } else {
+                    return 0;
+                }
+
+                _virtualKeycodeState[vcode] = newState;
+                onChangeKeycodeState();
+            }
             return 0;
-        case shared::ipc::IPC_KEYRELEASE:
-        case shared::ipc::IPC_MOUSERELEASE:
-            handleKeyboardPress(false);
-            return 0;
+        }
     }
     return DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
-void Win32MessageLoop::handleKeyboardPress(bool isPress) {
+void Win32MessageLoop::onChangeKeycodeState() {
     if (!service::system::getCurrentSettings()->loaded()) {
         return;
     }
 
     // Translate keypress into actions using the settings.
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
-
-    if (checkKeybindActive(keybinds.pushToTalk) && !_lastPttEnabledState) {
+    const auto pttActive = checkKeybindActive(keybinds.pushToTalk);
+    if (pttActive && !_lastPttEnabledState) {
         LOG_INFO("Toggling PTT [ON]" << std::endl);
         _lastPttEnabledState = true;
         notifySquadOvAction(service::system::EAction::PushToTalkEnable);
-    } else if (!isPress && _lastPttEnabledState) {
+    } else if (!pttActive && _lastPttEnabledState) {
         LOG_INFO("Toggling PTT [OFF]" << std::endl);
         _lastPttEnabledState = false;
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
@@ -101,7 +172,7 @@ bool Win32MessageLoop::checkKeybindActive(const std::vector<int>& keybind) {
 
     bool active = true;
     for (const auto& key: keybind) {
-        active &= (GetAsyncKeyState(key) & 0x01);
+        active &= _virtualKeycodeState[key];
     }
     return active;
 }
