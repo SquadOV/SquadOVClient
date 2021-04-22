@@ -27,13 +27,15 @@ CsgoGsiListener* CsgoGsiListener::singleton() {
     return global.get();
 }
 
-CsgoGsiListener::CsgoGsiListener() {
+CsgoGsiListener::CsgoGsiListener():
+    _handler(this) {
     LOG_INFO("Initializing CS:GO GSI Listener..." << std::endl);
     std::vector<std::string> options = {
         "listening_ports", "127.0.0.1:0",
         "num_threads", "4"
     };
     _server = std::make_unique<CivetServer>(options);
+    _server->addHandler("/csgo/gsi", _handler);
 }
 
 CsgoGsiListener::~CsgoGsiListener() {

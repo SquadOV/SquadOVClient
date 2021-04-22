@@ -18,6 +18,7 @@ public:
     friend class CsgoGsiHandler;
 private:
     std::unique_ptr<CivetServer> _server;
+    CsgoGsiHandler _handler;
 };
 using CsgoGsiListenerPtr = std::unique_ptr<CsgoGsiListener>;
 
