@@ -39,7 +39,7 @@
 
                     <div class="d-flex flex-column justify-center align-center">
                         <div class="text-h6">
-                            Select the games you want to setup SquadOV for (all Riot games will be selected if you selected one of them)!
+                            Select the games you want to setup SquadOV for (all Riot games will be selected if you select one of them)!
                         </div>
 
                         <v-item-group class="d-flex" multiple v-model="gameSteps">
