@@ -65,9 +65,11 @@ void Win32MessageLoop::start() {
 LRESULT Win32MessageLoop::handleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case shared::ipc::IPC_KEYPRESS:
+        case shared::ipc::IPC_MOUSEPRESS:
             handleKeyboardPress(true);
             return 0;
         case shared::ipc::IPC_KEYRELEASE:
+        case shared::ipc::IPC_MOUSERELEASE:
             handleKeyboardPress(false);
             return 0;
     }
