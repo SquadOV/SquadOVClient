@@ -9,9 +9,17 @@ namespace game_event_watcher {
 
 class CsgoGsiHandler: public CivetHandler {
 public:
-    bool handlePost(CivetServer *server, struct mg_connection *conn) {
+    explicit CsgoGsiHandler(CsgoGsiListener* listener):
+        _listener(listener) {
+
+    }
+
+    bool handlePost(CivetServer* server, struct mg_connection* conn) {
         return true;
     }
+
+private:
+    CsgoGsiListener* _listener;
 };
 
 CsgoGsiListener* CsgoGsiListener::singleton() {
