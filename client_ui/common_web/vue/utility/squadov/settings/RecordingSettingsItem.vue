@@ -275,7 +275,7 @@
                                         Edit Keybind
                                     </v-btn>
 
-                                    <v-btn class="error" @click="pttRecord = false" v-else>
+                                    <v-btn class="error" @click="stopRecordPushToTalk" v-else>
                                         Stop Recording
                                     </v-btn>
                                 </template>
@@ -801,9 +801,26 @@ export default class RecordingSettingsItem extends Vue {
 ///#endif
     }
 
+    mousePttBind: any = null
+
     startRecordPushToTalk() {
         this.pttRecord = true
         this.changePushToTalk(true, [])
+
+        this.mousePttBind = this.addMouseToPushToTalk.bind(this)
+        window.addEventListener('mouseup', this.mousePttBind)
+    }
+
+    stopRecordPushToTalk() {
+        this.pttRecord = false
+        window.removeEventListener('mouseup', this.mousePttBind)
+    }
+
+    addVirtualKeyCodeToPushToTalk(code: number) {
+        if (this.pttKeySet.has(code)) {
+            return
+        }
+        this.changePushToTalk(this.usePushToTalk, [...this.pushToTalkKeybind, code])
     }
 
     addKeyToPushToTalk(k: KeyboardEvent) {
@@ -811,11 +828,39 @@ export default class RecordingSettingsItem extends Vue {
             return
         }
 
-        let code = k.which
-        if (this.pttKeySet.has(code)) {
+        this.addVirtualKeyCodeToPushToTalk(k.which)
+    }
+
+    addMouseToPushToTalk(m: MouseEvent) {
+        if (!this.pttRecord) {
             return
         }
-        this.changePushToTalk(this.usePushToTalk, [...this.pushToTalkKeybind, code])
+
+        // This is all windows specific atm.
+        switch (m.button) {
+            // Mouse wheel -> VK_MBUTTON (0x04)
+            case 1:
+                this.addVirtualKeyCodeToPushToTalk(0x04)
+                break
+            // Right click -> VK_RBUTTON (0x02)
+            case 2:
+                this.addVirtualKeyCodeToPushToTalk(0x02)
+                break
+            // Browser back button -> VK_XBUTTON1 (0x05)
+            case 3:
+                this.addVirtualKeyCodeToPushToTalk(0x05)
+                break
+            // Browser forward button -> VK_XBUTTON2 (0x06)
+            case 4:
+                this.addVirtualKeyCodeToPushToTalk(0x06)
+                break
+            // Ignore left click because otherwise it'd capture the end recording button click.
+            // Also ignore other buttons as I'm unsure how they're mapped to virtual key codes.
+            default:
+                return
+        }
+
+        m.preventDefault()
     }
 
     changePushToTalk(use: boolean, keys: number[]) {

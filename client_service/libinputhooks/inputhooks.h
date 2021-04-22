@@ -14,3 +14,4 @@
 extern HWND targetWindow;
 
 DLLEXPORT LRESULT __cdecl squadOvKeyboardProc(int code, WPARAM wParam, LPARAM lParam);
+DLLEXPORT LRESULT __cdecl squadOvMouseProc(int code, WPARAM wParam, LPARAM lParam);

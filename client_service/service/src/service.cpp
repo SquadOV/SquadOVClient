@@ -557,6 +557,18 @@ int main(int argc, char** argv) {
             name << "F" << (13 + request.data - VK_F13);
             resp.success = true;
             resp.data = name.str();
+        } else if (request.data == VK_RBUTTON) {
+            resp.success = true;
+            resp.data = "MOUSE1";
+        } else if (request.data == VK_MBUTTON) {
+            resp.success = true;
+            resp.data = "MOUSE2";
+        } else if (request.data == VK_XBUTTON1) {
+            resp.success = true;
+            resp.data = "MOUSE3";
+        } else if (request.data == VK_XBUTTON2) {
+            resp.success = true;
+            resp.data = "MOUSE4";
         } else {
             UINT scanCode = MapVirtualKeyW(request.data, MAPVK_VK_TO_VSC);
             switch (request.data) {

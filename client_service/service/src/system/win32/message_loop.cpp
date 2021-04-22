@@ -65,9 +65,11 @@ void Win32MessageLoop::start() {
 LRESULT Win32MessageLoop::handleMessage(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case shared::ipc::IPC_KEYPRESS:
+        case shared::ipc::IPC_MOUSEPRESS:
             handleKeyboardPress(true);
             return 0;
         case shared::ipc::IPC_KEYRELEASE:
+        case shared::ipc::IPC_MOUSERELEASE:
             handleKeyboardPress(false);
             return 0;
     }
@@ -83,9 +85,11 @@ void Win32MessageLoop::handleKeyboardPress(bool isPress) {
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
 
     if (checkKeybindActive(keybinds.pushToTalk) && !_lastPttEnabledState) {
+        LOG_INFO("Toggling PTT [ON]" << std::endl);
         _lastPttEnabledState = true;
         notifySquadOvAction(service::system::EAction::PushToTalkEnable);
     } else if (!isPress && _lastPttEnabledState) {
+        LOG_INFO("Toggling PTT [OFF]" << std::endl);
         _lastPttEnabledState = false;
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
     }

@@ -568,6 +568,11 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         cleanDvrSession(session);
     }
 
+    if (!_cachedRecordingSettings) {
+        LOG_INFO("...Cached recording settings already cleared - ignoring recording stop." << std::endl);
+        return;
+    }
+
     LOG_INFO("Retrieving local recording info..." << std::endl);
     const auto wasLocal = _cachedRecordingSettings->useLocalRecording;
     const auto maxLocalSize = _cachedRecordingSettings->maxLocalRecordingSizeGb;
@@ -577,6 +582,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     LOG_INFO("Clear Cached Info..." << std::endl);
     clearCachedInfo();
     if (!isRecording()) {
+        LOG_INFO("...Not recording - ignoring recording stop." << std::endl);
         return;
     }
 
