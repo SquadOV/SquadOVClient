@@ -53,7 +53,6 @@ void Win32MessageLoop::start() {
 
     while (true) {
         if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
             continue;
         }
 

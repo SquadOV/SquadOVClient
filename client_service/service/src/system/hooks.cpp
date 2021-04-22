@@ -35,6 +35,7 @@ void GlobalHookManager::initialize() {
         THROW_ERROR("Failed to load hook DLL: " << dllName);
     }
 
+
     HOOKPROC kproc = (HOOKPROC)GetProcAddress(_dll64, "squadOvKeyboardProc");
     if (!kproc) {
         THROW_ERROR("Failed to get DLL proc address [squadOvKeyboardProc]");
