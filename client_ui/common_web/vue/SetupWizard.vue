@@ -39,10 +39,32 @@
 
                     <div class="d-flex flex-column justify-center align-center">
                         <div class="text-h6">
-                            Select the games you want to setup SquadOV for!
+                            Select the games you want to setup SquadOV for (all Riot games will be selected if you selected one of them)!
                         </div>
 
                         <v-item-group class="d-flex" multiple v-model="gameSteps">
+                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
+                                <v-img
+                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                    width="256px"
+                                    :src="$root.generateAssetUri('assets/lol_box.jpg')"
+                                    contain
+                                    @click="toggle"
+                                >
+                                </v-img>
+                            </v-item>
+
+                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
+                                <v-img
+                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                    width="256px"
+                                    :src="$root.generateAssetUri('assets/tft_box.jpg')"
+                                    contain
+                                    @click="toggle"
+                                >
+                                </v-img>
+                            </v-item>
+
                             <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
                                 <v-img
                                     :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
