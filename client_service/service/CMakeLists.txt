@@ -130,6 +130,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         png
         portaudio
         libzmq
+        civetweb-cpp
         ZLIB::ZLIB
         RdKafka::rdkafka RdKafka::rdkafka++
         ${Boost_LIBRARIES}

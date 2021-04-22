@@ -7,13 +7,25 @@
 namespace fs = std::filesystem;
 namespace game_event_watcher {
 
+class CsgoGsiHandler: public CivetHandler {
+public:
+    bool handlePost(CivetServer *server, struct mg_connection *conn) {
+        return true;
+    }
+};
+
 CsgoGsiListener* CsgoGsiListener::singleton() {
     static auto global = std::make_unique<CsgoGsiListener>();
-    return nullptr;
+    return global.get();
 }
 
 CsgoGsiListener::CsgoGsiListener() {
     LOG_INFO("Initializing CS:GO GSI Listener..." << std::endl);
+    std::vector<std::string> options = {
+        "listening_ports", "127.0.0.1:0",
+        "num_threads", "4"
+    };
+    _server = std::make_unique<CivetServer>(options);
 }
 
 CsgoGsiListener::~CsgoGsiListener() {
@@ -21,7 +33,7 @@ CsgoGsiListener::~CsgoGsiListener() {
 }
 
 int CsgoGsiListener::port() const {
-    return 1234;
+    return _server->getListeningPorts().back();
 }
 
 void CsgoGsiListener::enableCsgoGsi() {

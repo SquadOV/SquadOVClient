@@ -19,3 +19,6 @@ set(PA_ENABLE_DEBUG_OUTPUT ON)
 add_subdirectory(portaudio)
 
 add_subdirectory(libzmq)
+
+set(CIVETWEB_ENABLE_CXX ON CACHE BOOL "")
+add_subdirectory(civetweb)

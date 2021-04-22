@@ -29,6 +29,7 @@
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
+#include <civetweb.h>
 #include <chrono>
 #include <codecvt>
 #include <cstdio>
@@ -178,6 +179,9 @@ int main(int argc, char** argv) {
     LOG_INFO("TZ FOLDER: " << tzDataFolder << std::endl);
     date::set_install(tzDataFolder);
     date::get_tzdb_list();
+
+    LOG_INFO("Init CivetWeb..." << std::endl);
+    mg_init_library(0);
 
     LOG_INFO("USER FOLDER: " << shared::filesystem::getSquadOvUserFolder() << std::endl);
 

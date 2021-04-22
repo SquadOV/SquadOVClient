@@ -35,6 +35,7 @@ target_include_directories(squadov_game_event_watcher
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/client_service/game_event_watcher
     ${CMAKE_SOURCE_DIR}/deps/tinyxml2
+    ${CMAKE_SOURCE_DIR}/deps/civetweb/include
     ${Boost_INCLUDE_DIRS}
 )
 
