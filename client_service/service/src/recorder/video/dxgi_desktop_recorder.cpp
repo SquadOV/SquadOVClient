@@ -57,8 +57,12 @@ void DxgiDesktopRecorder::initialize() {
         LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
 
         TCHAR windowTitle[1024];
-        GetWindowTextA(GetForegroundWindow(), windowTitle, 1024);
-        LOG_INFO("...Foreground window is: " << windowTitle << std::endl);
+        const auto hwnd = GetForegroundWindow();
+        GetWindowTextA(hwnd, windowTitle, 1024);
+
+        DWORD testPid = 0;
+        GetWindowThreadProcessId(hwnd, &testPid);
+        LOG_INFO("...Foreground window is: " << windowTitle << " - PID: " << testPid << std::endl);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500ms));
     }

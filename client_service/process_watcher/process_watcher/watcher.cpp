@@ -58,7 +58,7 @@ void ProcessWatcher::start() {
                             kvp.second->onProcessStops();
                         }
 
-                        LOG_INFO("Detected Process Start: " << newProcess.path() << std::endl);
+                        LOG_INFO("Detected Process Start: " << newProcess.path() << " - " << newProcess.pid() << std::endl);
                         kvp.second->publicOnProcessStarts(newProcess);
                     }
                 } else if (!watchedProcess.empty()) {
