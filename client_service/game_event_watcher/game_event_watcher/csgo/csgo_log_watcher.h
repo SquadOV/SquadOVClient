@@ -6,7 +6,6 @@
 namespace game_event_watcher {
 
 enum class ECsgoLogEvents {
-    Auth,
     Connect,
     Disconnect,
     Death

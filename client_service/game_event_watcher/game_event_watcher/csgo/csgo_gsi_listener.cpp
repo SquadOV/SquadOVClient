@@ -77,8 +77,26 @@ void CsgoGsiListener::enableCsgoGsi() {
     dst.close();
 }
 
+int64_t CsgoGsiListener::addGsiPacketListener(const CsgoGsiPacketDelegate& delegate) {
+    std::lock_guard guard(_mutex);
+    _delegates[_nextDelegateId++] = delegate;
+    return _nextDelegateId - 1;
+}
+
+void CsgoGsiListener::removeGsiPacketListener(int64_t id) {
+    std::lock_guard guard(_mutex);
+    const auto it = _delegates.find(id);
+    if (it == _delegates.end()) {
+        return;
+    }
+    _delegates.erase(it);
+}
+
 void CsgoGsiListener::handleGsiPacket(const CsgoGsiPacket& packet) {
-    LOG_INFO("Received GSI Packet: " << packet << std::endl);
+    std::shared_lock guard(_mutex);
+    for (const auto& kvp : _delegates) {
+        kvp.second(packet);
+    }
 }
 
 }

@@ -1,5 +1,6 @@
 #include "csgo/csgo_process_handler.h"
 #include "game_event_watcher/csgo/csgo_log_watcher.h"
+#include "game_event_watcher/csgo/csgo_gsi_state_manager.h"
 #include "recorder/game_recorder.h"
 #include "shared/log/log.h"
 #include "system/state.h"
@@ -13,6 +14,8 @@ public:
 
 private:
     game_event_watcher::CsgoLogWatcherPtr _logWatcher;
+    game_event_watcher::CsgoGsiStateManager _stateManager;
+
     process_watcher::process::Process  _process;
     service::recorder::GameRecorderPtr _recorder;
 };
