@@ -69,8 +69,14 @@ void Win32MessageLoop::start() {
         THROW_ERROR("Failed to register raw input devices: " << shared::errors::getWin32ErrorAsString());
     }
 
+    int errCount = 0;
     while (true) {
-        if (!PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+        if (GetMessage(&msg, NULL, 0, 0) == -1) {
+            LOG_ERROR("Failed to retrieve Win32 Message: " << shared::errors::getWin32ErrorAsString() << std::endl);
+            if (++errCount >= 5) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::seconds(3));
             continue;
         }
 
