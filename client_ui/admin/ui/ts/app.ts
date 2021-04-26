@@ -32,6 +32,9 @@ const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
 const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
 const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
 const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
+const CohortInstalledUsers = () => import('@client/vue/cohorts/CohortInstalledUsers.vue')
+const CohortActiveUsers = () => import('@client/vue/cohorts/CohortActiveUsers.vue')
+const CohortRecordingUsers = () => import('@client/vue/cohorts/CohortRecordingUsers.vue')
 
 const baseRoutes : any[] = [
     {
@@ -97,6 +100,18 @@ const baseRoutes : any[] = [
     {
         path: '/referrals/campaigns',
         component: ReferralCampaigns,
+    },
+    {
+        path: '/cohorts/installed-users',
+        component: CohortInstalledUsers,
+    },
+    {
+        path: '/cohorts/active-users',
+        component: CohortActiveUsers,
+    },
+    {
+        path: '/cohorts/recording-users',
+        component: CohortRecordingUsers,
     }
 ]
 

@@ -78,6 +78,19 @@ apiRouter.get('/metrics/:metric', async function(request, response) {
     response.status(200).json(data)
 })
 
+
+apiRouter.get('/cohorts/:cohort', async function(request, response) {
+    cohort = parseInt(request.params.cohort)
+    interval = parseInt(request.query.interval)
+    start = new Date(parseInt(request.query.start))
+    end = new Date(parseInt(request.query.end))
+    period = parseInt(request.query.period)
+    length = parseInt(request.query.length)
+
+    data = await apiServer.getCohort(cohort, interval, start, end, period, length)
+    response.status(200).json(data)
+})
+
 apiRouter.get('/kpi/:kpi', async function(request, response) {
     kpi = parseInt(request.params.kpi)
     data = await apiServer.getKpi(kpi)

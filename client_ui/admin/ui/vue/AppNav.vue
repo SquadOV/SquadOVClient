@@ -109,6 +109,24 @@ export default class AppNav extends Vue {
             ]
         },
         {
+            text: 'Cohorts',
+            open: true,
+            children: [
+                {
+                    text: 'Installed Users',
+                    to: '/cohorts/installed-users'
+                },
+                {
+                    text: 'Active Users',
+                    to: '/cohorts/active-users'
+                },
+                {
+                    text: 'Recording Users',
+                    to: '/cohorts/recording-users'
+                },
+            ]
+        },
+        {
             text: 'Referrals',
             open: true,
             children: [

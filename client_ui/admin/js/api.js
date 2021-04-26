@@ -931,6 +931,278 @@ class ApiServer {
         }
     }
 
+    async getCohortSize(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "cohort_key",
+            COUNT(u.id) AS "count"
+        FROM series AS s
+        LEFT JOIN squadov.users AS u
+            ON u.registration_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+        GROUP BY cohort_key
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return new Map(rows.map((r) => {
+            return [r.cohort_key.toISOString(), r.count]
+        }))
+    }
+
+    async getInstalledUserCohorts(interval, start, end, period, length) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        let pgPeriod
+        if (period == 0) {
+            pgPeriod = 'day'
+        } else if (period == 1) {
+            pgPeriod = 'week'
+        } else { 
+            pgPeriod = 'month'
+        }
+
+        const query = `
+            SELECT
+                DATE_TRUNC('${pgInterval}', u.registration_time) AS "cohort_key",
+                coh.cohort_period,
+                SUM(1) AS "count"
+            FROM squadov.users AS u
+            CROSS JOIN LATERAL (
+                SELECT DISTINCT ON (gs.tm) gs.tm, (EXTRACT(EPOCH FROM gs.tm - u.registration_time) / EXTRACT(EPOCH FROM INTERVAL '1 ${pgPeriod}'))::INTEGER
+                FROM generate_series(
+                    u.registration_time,
+                    u.registration_time + INTERVAL '${length} ${pgPeriod}',
+                    INTERVAL '1 ${pgPeriod}'
+                ) AS gs(tm)
+                INNER JOIN squadov.daily_active_sessions AS das
+                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                        AND das.user_id = u.id
+            ) AS coh(tm, cohort_period)
+            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            GROUP BY cohort_key, coh.cohort_period
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortData = new Map()
+        for (let [key, size] of cohortSizes) {
+            cohortData.set(key, {
+                tm: key,
+                data: new Array(length).fill(0),
+                size: size,
+            })
+        }
+
+        rows.forEach((r) => {
+            let key = r.cohort_key.toISOString()
+            let obj = cohortData.get(key)
+            if (!obj) {
+                return
+            }
+
+            if (r.cohort_period >= 0 && r.cohort_period < length) {
+                obj.data[r.cohort_period] = r.count
+            }
+
+            cohortData.set(key, obj)
+        })
+
+        return Array.from(cohortData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
+        })
+    }
+
+    async getActiveUserCohorts(interval, start, end, period, length) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        let pgPeriod
+        if (period == 0) {
+            pgPeriod = 'day'
+        } else if (period == 1) {
+            pgPeriod = 'week'
+        } else { 
+            pgPeriod = 'month'
+        }
+
+        const query = `
+            SELECT
+                DATE_TRUNC('${pgInterval}', u.registration_time) AS "cohort_key",
+                coh.cohort_period,
+                SUM(1) AS "count"
+            FROM squadov.users AS u
+            CROSS JOIN LATERAL (
+                SELECT DISTINCT ON (gs.tm) gs.tm, (EXTRACT(EPOCH FROM gs.tm - u.registration_time) / EXTRACT(EPOCH FROM INTERVAL '1 ${pgPeriod}'))::INTEGER
+                FROM generate_series(
+                    u.registration_time,
+                    u.registration_time + INTERVAL '${length} ${pgPeriod}',
+                    INTERVAL '1 ${pgPeriod}'
+                ) AS gs(tm)
+                INNER JOIN squadov.daily_active_endpoint AS das
+                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                        AND das.user_id = u.id
+            ) AS coh(tm, cohort_period)
+            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            GROUP BY cohort_key, coh.cohort_period
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortData = new Map()
+        for (let [key, size] of cohortSizes) {
+            cohortData.set(key, {
+                tm: key,
+                data: new Array(length).fill(0),
+                size: size,
+            })
+        }
+
+        rows.forEach((r) => {
+            let key = r.cohort_key.toISOString()
+            let obj = cohortData.get(key)
+            if (!obj) {
+                return
+            }
+
+            if (r.cohort_period >= 0 && r.cohort_period < length) {
+                obj.data[r.cohort_period] = r.count
+            }
+
+            cohortData.set(key, obj)
+        })
+
+        return Array.from(cohortData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
+        })
+    }
+
+    async getRecordingUserCohorts(interval, start, end, period, length) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        let pgPeriod
+        if (period == 0) {
+            pgPeriod = 'day'
+        } else if (period == 1) {
+            pgPeriod = 'week'
+        } else { 
+            pgPeriod = 'month'
+        }
+
+        const query = `
+            SELECT
+                DATE_TRUNC('${pgInterval}', u.registration_time) AS "cohort_key",
+                coh.cohort_period,
+                SUM(1) AS "count"
+            FROM squadov.users AS u
+            CROSS JOIN LATERAL (
+                SELECT DISTINCT ON (gs.tm) gs.tm, (EXTRACT(EPOCH FROM gs.tm - u.registration_time) / EXTRACT(EPOCH FROM INTERVAL '1 ${pgPeriod}'))::INTEGER
+                FROM generate_series(
+                    u.registration_time,
+                    u.registration_time + INTERVAL '${length} ${pgPeriod}',
+                    INTERVAL '1 ${pgPeriod}'
+                ) AS gs(tm)
+                INNER JOIN squadov.vods AS v
+                    ON v.start_time >= DATE_TRUNC('day', gs.tm) AND v.start_time <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                        AND v.user_uuid = u.uuid
+                WHERE v.match_uuid IS NOT NULL
+            ) AS coh(tm, cohort_period)
+            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            GROUP BY cohort_key, coh.cohort_period
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortData = new Map()
+        for (let [key, size] of cohortSizes) {
+            cohortData.set(key, {
+                tm: key,
+                data: new Array(length).fill(0),
+                size: size,
+            })
+        }
+
+        rows.forEach((r) => {
+            let key = r.cohort_key.toISOString()
+            let obj = cohortData.get(key)
+            if (!obj) {
+                return
+            }
+
+            if (r.cohort_period >= 0 && r.cohort_period < length) {
+                obj.data[r.cohort_period] = r.count
+            }
+
+            cohortData.set(key, obj)
+        })
+
+        return Array.from(cohortData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
+        })
+    }
+
+    async getCohort(cohort, interval, start, end, period, length) {
+        switch (cohort) {
+            case 0:
+                return await this.getInstalledUserCohorts(interval, start, end, period, length)
+            case 1:
+                return await this.getActiveUserCohorts(interval, start, end, period, length)
+            case 2:
+                return await this.getRecordingUserCohorts(interval, start, end, period, length)
+        }
+    }
+
     async getReferralBreakdown(referral) {
         switch (referral) {
             case 0:

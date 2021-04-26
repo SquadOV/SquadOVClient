@@ -5,6 +5,7 @@
         :items="items"
         :value="value"
         @input="$emit('input', arguments[0])"
+        hide-details
     >
     </v-select>
 </template>
