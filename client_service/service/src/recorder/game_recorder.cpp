@@ -566,6 +566,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         LOG_INFO("Stop DVR session..." << std::endl);
         const auto session = stopDvrSession();
         cleanDvrSession(session);
+        _dvrEncoder = {};
     }
 
     if (!_cachedRecordingSettings) {
