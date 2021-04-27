@@ -646,6 +646,46 @@ void SquadovApi::requestTftBackfill(const std::string& summonerName, const std::
     }
 }
 
+std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shared::TimePoint& gameStartTime, const std::string& map, const std::string& mode) {
+    const nlohmann::json body = {
+        { "server", server },
+        { "startTime", shared::timeToIso(gameStartTime) },
+        { "map", map },
+        { "mode", mode }
+    };
+
+    std::ostringstream path;
+    path << "/v1/csgo/user/" << getCurrentUser().id << "/view";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create CSGO match: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl) {
+    nlohmann::json body = {
+        { "stopTime", shared::timeToIso(gameStopTime) },
+        { "data", shared::json::JsonConverter<game_event_watcher::CsgoMatchState>::to(state) }
+    };
+
+    if (demoUrl) {
+        body["demo"] = demoUrl.value();
+    }
+
+    std::ostringstream path;
+    path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid;
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 200) {
+        THROW_ERROR("Failed to finalize CSGO match: " << result->status);
+    }
+}
+
 SquadovApi* getGlobalApi() {
     static SquadovApiPtr global = std::make_unique<SquadovApi>();
     return global.get();

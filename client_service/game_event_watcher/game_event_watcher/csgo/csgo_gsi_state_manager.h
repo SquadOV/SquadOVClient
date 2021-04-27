@@ -3,6 +3,7 @@
 #include "game_event_watcher/logs/base_log_watcher.h"
 #include "game_event_watcher/csgo/csgo_gsi_packet.h"
 #include "shared/time.h"
+#include "shared/json.h"
 
 #include <unordered_map>
 #include <vector>
@@ -110,6 +111,109 @@ private:
     std::optional<CsgoMatchState> _matchState;
     int _latestRound = -1;
     int64_t _delegateId = 0;
+};
+
+}
+
+namespace shared::json {
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoWeaponState> {
+    static nlohmann::json to(const game_event_watcher::CsgoWeaponState& v) {
+        const nlohmann::json data = {
+            { "name", v.name },
+            { "type", v.type },
+            { "paintkit", v.paintkit }
+        };
+        return data;
+    }
+};
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoPlayerRoundState> {
+    static nlohmann::json to(const game_event_watcher::CsgoPlayerRoundState& v) {
+        const nlohmann::json data = {
+            { "steamId", v.steamId },
+            { "team", v.team },
+            { "money", v.money },
+            { "equipmentValue", v.equipmentValue },
+            { "armor", v.armor },
+            { "helmet", v.helmet },
+            { "weapons", JsonConverter<decltype(v.weapons)>::to(v.weapons)}
+        };
+        return data;
+    }
+};
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoKillState> {
+    static nlohmann::json to(const game_event_watcher::CsgoKillState& v) {
+        const nlohmann::json data = {
+            { "timestamp", JsonConverter<decltype(v.timestamp)>::to(v.timestamp) },
+            { "killer", JsonConverter<decltype(v.killer)>::to(v.killer) },
+            { "victim", JsonConverter<decltype(v.victim)>::to(v.victim) },
+            { "assisters", JsonConverter<decltype(v.assisters)>::to(v.assisters) },
+            { "weapon", JsonConverter<decltype(v.weapon)>::to(v.weapon) },
+            { "headshot", JsonConverter<decltype(v.headshot)>::to(v.headshot) },
+            { "flashed", JsonConverter<decltype(v.flashed)>::to(v.flashed) },
+            { "smoked", JsonConverter<decltype(v.smoked)>::to(v.smoked) }
+        };
+
+        return data;
+    }
+};
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoRoundState> {
+    static nlohmann::json to(const game_event_watcher::CsgoRoundState& v) {
+        const nlohmann::json data = {
+            { "roundNum", v.roundNum },
+            { "winningTeam", JsonConverter<decltype(v.winningTeam)>::to(v.winningTeam) },
+            { "roundWinMethod", JsonConverter<decltype(v.roundWinMethod)>::to(v.roundWinMethod) },
+            { "buyTime", JsonConverter<decltype(v.buyTime)>::to(v.buyTime) },
+            { "playTime", JsonConverter<decltype(v.playTime)>::to(v.playTime) },
+            { "bombPlantTime", JsonConverter<decltype(v.bombPlantTime)>::to(v.bombPlantTime) },
+            { "bombNextTime", JsonConverter<decltype(v.bombNextTime)>::to(v.bombNextTime) },
+            { "roundEndTime", JsonConverter<decltype(v.roundEndTime)>::to(v.roundEndTime) },
+            { "players", JsonConverter<decltype(v.players)>::to(v.players) },
+            { "kills", JsonConverter<decltype(v.kills)>::to(v.kills) }
+        };
+        return data;
+    }
+};
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoPlayerState> {
+    static nlohmann::json to(const game_event_watcher::CsgoPlayerState& v) {
+        const nlohmann::json data = {
+            { "kills", v.kills },
+            { "deaths", v.deaths },
+            { "assists", v.assists },
+            { "mvps", v.mvps },
+            { "score", v.score },
+            { "name", v.name },
+            { "steamId", v.steamId }
+        };
+        return data;
+    }
+};
+
+template<>
+struct JsonConverter<game_event_watcher::CsgoMatchState> {
+    static nlohmann::json to(const game_event_watcher::CsgoMatchState& v) {
+        const nlohmann::json data = {
+            { "map", v.map },
+            { "mode", v.mode },
+            { "winner", JsonConverter<decltype(v.winner)>::to(v.winner) },
+            { "connectedServer", JsonConverter<decltype(v.connectedServer)>::to(v.connectedServer) },
+            { "warmupStart", JsonConverter<decltype(v.warmupStart)>::to(v.warmupStart) },
+            { "start", JsonConverter<decltype(v.start)>::to(v.start) },
+            { "end", JsonConverter<decltype(v.end)>::to(v.end) },
+            { "rounds", JsonConverter<decltype(v.rounds)>::to(v.rounds) },
+            { "players", JsonConverter<decltype(v.players)>::to(v.players) }
+        };
+        return data;
+    }
 };
 
 }

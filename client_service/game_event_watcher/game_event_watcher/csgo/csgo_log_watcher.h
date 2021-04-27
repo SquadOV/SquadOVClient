@@ -8,7 +8,6 @@ namespace game_event_watcher {
 enum class ECsgoLogEvents {
     Connect,
     Disconnect,
-    Death
 };
 
 using CsgoLogWatcherPtr = std::unique_ptr<class CsgoLogWatcher>;
