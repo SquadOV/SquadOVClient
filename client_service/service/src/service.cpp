@@ -116,7 +116,9 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::CSGO, std::make_unique<service::csgo::CsgoProcessHandler>());
+    if (service::api::getGlobalApi()->getSessionFeatures().enableCsgo) {
+        watcher.beginWatchingGame(shared::EGame::CSGO, std::make_unique<service::csgo::CsgoProcessHandler>());
+    }
     watcher.start();
 }
 
@@ -271,9 +273,11 @@ int main(int argc, char** argv) {
     LOG_INFO("Enable Hearthstone Logging" << std::endl);
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
-    LOG_INFO("Enable CS:GO Logging/GSI" << std::endl);
-    game_event_watcher::CsgoLogWatcher::enableCsgoLogging();
-    game_event_watcher::CsgoGsiListener::enableCsgoGsi();
+    if (service::api::getGlobalApi()->getSessionFeatures().enableCsgo) {
+        LOG_INFO("Enable CS:GO Logging/GSI" << std::endl);
+        game_event_watcher::CsgoLogWatcher::enableCsgoLogging();
+        game_event_watcher::CsgoGsiListener::enableCsgoGsi();
+    }
 
     LOG_INFO("Registering State callbacks" << std::endl);
     service::system::getGlobalState()->addGameRunningCallback([&zeroMqServerClient](const shared::EGameSet& set){

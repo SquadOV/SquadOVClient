@@ -3,6 +3,7 @@
 namespace shared::squadov {
 
 struct FeatureFlags {
+    bool enableCsgo = false;
 };
 
 }
