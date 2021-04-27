@@ -577,7 +577,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     const auto wasLocal = _cachedRecordingSettings->useLocalRecording;
     const auto maxLocalSize = _cachedRecordingSettings->maxLocalRecordingSizeGb;
     const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
-    singleton->initializeFromFolder(fs::path(_cachedRecordingSettings->localRecordingLocation));
+    singleton->initializeFromFolder(_cachedRecordingSettings->localRecordingLocation);
 
     LOG_INFO("Clear Cached Info..." << std::endl);
     clearCachedInfo();

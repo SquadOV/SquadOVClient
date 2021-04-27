@@ -15,6 +15,7 @@
 #include "shared/env.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "shared/strings/strings.h"
 #include "api/squadov_api.h"
 #include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
@@ -180,6 +181,9 @@ int main(int argc, char** argv) {
     LOG_INFO("TZ FOLDER: " << tzDataFolder << std::endl);
     date::set_install(tzDataFolder);
     date::get_tzdb_list();
+
+    LOG_INFO("Set Locale..." << std::endl);
+    std::setlocale(LC_ALL, "en_US.utf8");
 
     LOG_INFO("Init CivetWeb..." << std::endl);
     mg_init_library(0);
@@ -383,10 +387,13 @@ int main(int argc, char** argv) {
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::system::GenericIpcRequest<shared::filesystem::ChangeLocalRecordRequest>::fromJson(json);
 
+            const std::wstring fromFolder = shared::strings::utf8ToWcs(request.data.from);
+            const std::wstring toFolder = shared::strings::utf8ToWcs(request.data.to);
+
             service::system::GenericIpcResponse<void> resp;
             resp.task = request.task;
             try {
-                resp.success = shared::filesystem::changeLocalRecordLocation(fs::path(request.data.from), fs::path(request.data.to));
+                resp.success = shared::filesystem::changeLocalRecordLocation(fs::path(fromFolder), fs::path(toFolder));
             } catch (std::exception& ex) {
                 LOG_WARNING("Failed to change local recording folder: " << ex.what() << std::endl);
                 resp.success = false;
@@ -442,7 +449,7 @@ int main(int argc, char** argv) {
                 entry.cacheTm = shared::nowUtc();
                 entry.diskBytes = 0;
 
-                shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(settings->recording().localRecordingLocation);
                 shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(service::api::getGlobalApi()->getVodUri(request.data), entry, [&zeroMqServerClient, request](size_t dl, size_t total){
                     zeroMqServerClient.sendMessage(
                         service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
@@ -492,7 +499,7 @@ int main(int argc, char** argv) {
             service::system::GenericIpcResponse<std::string> resp;
             resp.task = request.task;
             try {
-                singleton->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                singleton->initializeFromFolder(settings->recording().localRecordingLocation);
                 const auto entry = singleton->getEntryForUuid(request.data);
 
                 if (entry.has_value()) {
@@ -525,7 +532,7 @@ int main(int argc, char** argv) {
             service::system::GenericIpcResponse<std::string> resp;
             resp.task = request.task;
             try {
-                singleton->initializeFromFolder(fs::path(settings->recording().localRecordingLocation));
+                singleton->initializeFromFolder(settings->recording().localRecordingLocation);
                 singleton->removeLocalEntry(request.data);
                 resp.success = true;
             } catch (std::exception& ex) {

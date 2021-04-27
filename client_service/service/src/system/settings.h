@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
 #include <shared_mutex>
 #include <nlohmann/json.hpp>
@@ -24,7 +25,7 @@ struct RecordingSettings {
     std::optional<size_t> maxUploadSpeed;
 
     bool useLocalRecording;
-    std::string localRecordingLocation;
+    std::filesystem::path localRecordingLocation;
     double maxLocalRecordingSizeGb;
 
     bool useBitrate;

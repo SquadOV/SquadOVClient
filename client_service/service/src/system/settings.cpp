@@ -1,8 +1,10 @@
 #include "system/settings.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/errors/error.h"
+#include "shared/strings/strings.h"
 #include <fstream>
 
+namespace fs = std::filesystem;
 namespace service::system {
 
 Settings* getCurrentSettings() {
@@ -30,7 +32,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.useLocalRecording = obj.value("useLocalRecording", false);
-    settings.localRecordingLocation = obj["localRecordingLocation"].get<std::string>();
+    settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
     settings.maxLocalRecordingSizeGb = obj["maxLocalRecordingSizeGb"].get<double>();
 
     settings.useBitrate = obj.value("useBitrate", false);

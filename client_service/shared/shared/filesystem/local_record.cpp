@@ -126,8 +126,10 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
 void LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
     const auto source = getEntryPath(entry);
     const auto dest = getEntryPath(to, entry);
-    fs::create_directories(dest.parent_path());
-    fs::rename(source, dest);
+    if (fs::exists(dest.parent_path())) {
+        fs::remove_all(dest.parent_path());
+    }
+    fs::rename(source.parent_path(), dest.parent_path());
 }
 
 bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
