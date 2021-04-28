@@ -191,13 +191,13 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     get style() : any {
         let style: any = {
             'border-left': `5px solid ${this.winLossColor}`,
-            'background-position': 'right',
-            'background-size': '50% auto',
+            'background-position': 'right center',
+            'background-size': '55% auto',
         }
 
         if (!!this.match.mapId) {
             // @ts-ignore
-            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 70%, transparent), url(${this.$root.generateAssetUri(`assets/valorant/maps/preview/${this.mapName}.png`)})`
+            style['background-image'] = `linear-gradient(to right, #1E1E1E 0 10%, transparent), url(${this.$root.generateAssetUri(`assets/valorant/maps/preview/${this.mapName}.jpg`)})`
         }
 
         return style
