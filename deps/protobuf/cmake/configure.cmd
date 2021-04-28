@@ -1,0 +1,2 @@
+cmake -G "Visual Studio 16 2019" -DCMAKE_INSTALL_PREFIX=../../../../../prebuilt/protobuf/debug -DCMAKE_BUILD_TYPE=Debug -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF ../../
+cmake -G "Visual Studio 16 2019" -DCMAKE_INSTALL_PREFIX=../../../../../prebuilt/protobuf/release -DCMAKE_BUILD_TYPE=Release -Dprotobuf_BUILD_TESTS=OFF -Dprotobuf_MSVC_STATIC_RUNTIME=OFF ../../

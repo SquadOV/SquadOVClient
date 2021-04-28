@@ -134,6 +134,7 @@ int main(int argc, char** argv) {
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
+    shared::log::Log::initializeGlobalLogger("squadov.log");
 
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
 

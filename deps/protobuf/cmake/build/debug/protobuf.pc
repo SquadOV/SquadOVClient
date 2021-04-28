@@ -1,0 +1,11 @@
+prefix=A:/Git/SquadOVClient/prebuilt/protobuf/debug
+exec_prefix=A:/Git/SquadOVClient/prebuilt/protobuf/debug
+libdir=A:/Git/SquadOVClient/prebuilt/protobuf/debug/lib
+includedir=A:/Git/SquadOVClient/prebuilt/protobuf/debug/include
+
+Name: Protocol Buffers
+Description: Google's Data Interchange Format
+Version: 3.15.8.0
+Libs: -L${libdir} -lprotobuf 
+Cflags: -I${includedir}
+Conflicts: protobuf-lite

@@ -1,0 +1,3 @@
+﻿  Building Custom Rule A:/Git/SquadOVClient/deps/protobuf/cmake/CMakeLists.txt
+  main.cc
+  protoc.vcxproj -> A:\Git\SquadOVClient\deps\protobuf\cmake\build\debug\Debug\protoc.exe

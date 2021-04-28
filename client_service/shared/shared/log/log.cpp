@@ -20,6 +20,22 @@ constexpr auto maxLogsToKeep = 10;
 
 }
 
+std::unique_ptr<Log> Log::_singleton;
+
+void Log::initializeGlobalLogger(const std::string& fname) {
+    if (_singleton) {
+        return;
+    }
+    _singleton = std::make_unique<Log>(fname);
+}
+
+Log* Log::singleton() {
+    if (!_singleton) {
+        throw std::runtime_error("Logging is not initialized.");
+    }
+    return _singleton.get();
+}
+
 Log::Log(const std::string& fname) {
     // Make sure the log directory exists.
     const auto logDir = shared::filesystem::getSquadOvServiceLogFolder();
@@ -110,11 +126,6 @@ std::string LogItem::currentLogLevel() const {
 
 bool Log::canLogPass(const LogItem& t) const {
     return (static_cast<int>(t.type()) >= static_cast<int>(_typeThreshold));
-}
-
-Log& getGlobalLogger() {
-    static Log log("squadov.log");
-    return log;
 }
 
 fs::path generateMinidump(EXCEPTION_POINTERS* ex) {

@@ -1,0 +1,31 @@
+﻿  Building Custom Rule A:/Git/SquadOVClient/deps/protobuf/cmake/CMakeLists.txt
+  any_lite.cc
+  arena.cc
+  arenastring.cc
+  extension_set.cc
+  generated_enum_util.cc
+  generated_message_table_driven_lite.cc
+  generated_message_util.cc
+  implicit_weak_message.cc
+  coded_stream.cc
+  io_win32.cc
+  strtod.cc
+  zero_copy_stream.cc
+  zero_copy_stream_impl.cc
+  zero_copy_stream_impl_lite.cc
+  map.cc
+  message_lite.cc
+  parse_context.cc
+  repeated_field.cc
+  bytestream.cc
+  common.cc
+  int128.cc
+  status.cc
+  statusor.cc
+  stringpiece.cc
+  stringprintf.cc
+  structurally_valid.cc
+  strutil.cc
+  time.cc
+  wire_format_lite.cc
+  libprotobuf-lite.vcxproj -> A:\Git\SquadOVClient\deps\protobuf\cmake\build\debug\Debug\libprotobuf-lited.lib

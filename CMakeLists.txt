@@ -20,6 +20,7 @@ set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /DEBUG /OP
 if(WIN32)
     add_definitions(-DNOMINMAX)
 endif()
+MESSAGE(STATUS "BUILDING CMAKE BUILD TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(OpenSSL REQUIRED)
 
@@ -27,6 +28,17 @@ set(FFMPEG_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/ffmpeg CACHE STRING "" FORCE)
 set(OPENH264_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/openh264 CACHE STRING "" FORCE)
 find_package(FFMPEG REQUIRED)
 find_package(RdKafka CONFIG REQUIRED)
+
+set(Protobuf_USE_STATIC_LIBS ON)
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
+    MESSAGE(STATUS "[SQUADOV] Using Release Protobuf...")
+    set(PROTOBUF_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/protobuf/release CACHE STRING "" FORCE)
+else()
+    MESSAGE(STATUS "[SQUADOV] Using Debug Protobuf...")
+    set(PROTOBUF_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/protobuf/debug CACHE STRING "" FORCE)
+endif()
+include(${PROTOBUF_ROOT}/cmake/protobuf-config.cmake)
+find_package(Protobuf REQUIRED HINTS ${PROTOBUF_ROOT}/cmake)
 
 set(OPENH264_LIBRARIES
     ${OPENH264_ROOT}/lib/openh264.lib

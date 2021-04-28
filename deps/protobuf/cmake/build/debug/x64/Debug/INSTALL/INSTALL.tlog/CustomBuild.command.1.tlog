@@ -1,0 +1,10 @@
+^A:\GIT\SQUADOVCLIENT\DEPS\PROTOBUF\CMAKE\BUILD\DEBUG\CMAKEFILES\447D8CC4137E3F8F42592B4E626EF3CF\INSTALL_FORCE.RULE
+setlocal
+cd .
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

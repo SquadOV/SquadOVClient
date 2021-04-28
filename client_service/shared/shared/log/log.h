@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <codecvt>
+#include <memory>
 #include <mutex>
 #include <optional>
 
@@ -89,6 +90,9 @@ private:
 
 class Log {
 public:
+    static void initializeGlobalLogger(const std::string& fname);
+    static Log* singleton();
+
     explicit Log(const std::string& fname);
     ~Log();
 
@@ -105,6 +109,8 @@ public:
     void flush();
 
 private:
+    static std::unique_ptr<Log> _singleton;
+
     std::string currentTimeLog() const;
     bool canLogPass(const LogItem& t) const;
 
@@ -119,13 +125,12 @@ private:
     void queueWorker();
 };
 
-Log& getGlobalLogger();
 std::filesystem::path generateMinidump(EXCEPTION_POINTERS* ex);
 
 }
 
-#define LOG_DEBUG(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Debug << x).finish();
-#define LOG_INFO(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Info << x).finish();
-#define LOG_WARNING(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Warning << x).finish();
-#define LOG_ERROR(x) shared::log::getGlobalLogger() << (shared::log::LogItemBuilder() << shared::log::LogType::Error << x).finish();
-#define LOG_FLUSH() shared::log::getGlobalLogger().flush();
+#define LOG_DEBUG(x) *shared::log::Log::singleton() << (shared::log::LogItemBuilder() << shared::log::LogType::Debug << x).finish();
+#define LOG_INFO(x) *shared::log::Log::singleton() << (shared::log::LogItemBuilder() << shared::log::LogType::Info << x).finish();
+#define LOG_WARNING(x) *shared::log::Log::singleton() << (shared::log::LogItemBuilder() << shared::log::LogType::Warning << x).finish();
+#define LOG_ERROR(x) *shared::log::Log::singleton() << (shared::log::LogItemBuilder() << shared::log::LogType::Error << x).finish();
+#define LOG_FLUSH() shared::log::Log::singleton()->flush();

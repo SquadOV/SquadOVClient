@@ -34,7 +34,8 @@ private:
     //    1) The last recorded CsgoMatchState.
     //    2) The connected server.
     // If both are set then we're actively in a game and if both are not set then
-    // we are no longer in a game.
+    // we are no longer in a game. However, it's possible start a new match without
+    // disconnecting from the server!
     std::recursive_mutex _activeGameMutex;
     std::optional<game_event_watcher::CsgoMatchState> _matchState;
     std::optional<std::string> _serverIdentifier;

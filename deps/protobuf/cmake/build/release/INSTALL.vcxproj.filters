@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="A:\Git\SquadOVClient\deps\protobuf\cmake\build\release\CMakeFiles\136141d8fc479228c91c3a00c500dc5d\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{928F6671-C47E-3338-BDC4-2FF3416DF1FC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,7 @@
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/protoc.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/libprotobuf-lite.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/libprotoc.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/libprotobuf.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/INSTALL.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/ALL_BUILD.dir
+A:/Git/SquadOVClient/deps/protobuf/cmake/build/debug/CMakeFiles/ZERO_CHECK.dir

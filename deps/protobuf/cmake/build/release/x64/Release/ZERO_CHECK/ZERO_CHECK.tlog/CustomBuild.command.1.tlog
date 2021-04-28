@@ -1,0 +1,10 @@
+^A:\GIT\SQUADOVCLIENT\DEPS\PROTOBUF\CMAKE\BUILD\RELEASE\CMAKEFILES\136141D8FC479228C91C3A00C500DC5D\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SA:/Git/SquadOVClient/deps/protobuf/cmake -BA:/Git/SquadOVClient/deps/protobuf/cmake/build/release --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file A:/Git/SquadOVClient/deps/protobuf/cmake/build/release/protobuf.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
