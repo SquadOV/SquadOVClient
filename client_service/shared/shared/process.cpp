@@ -31,16 +31,16 @@ int runProcessWithTimeout(const std::filesystem::path& exe, std::string commandL
     } else {
         WaitForSingleObject(process.hProcess, INFINITE);
     }
-    
-    CloseHandle(process.hProcess);
-    CloseHandle(process.hThread);
 
     DWORD code = 0;
-    if (GetExitCodeProcess(process.hProcess, &code) || code == STILL_ACTIVE) {
+    if (!GetExitCodeProcess(process.hProcess, &code) || code == STILL_ACTIVE) {
         LOG_WARNING("Either we failed to get exit code or the process is still running. Killing it!" << std::endl);
         TerminateProcess(process.hProcess, 1);
         code = 1;
     }
+    
+    CloseHandle(process.hProcess);
+    CloseHandle(process.hThread);
     return code;
 }
 
