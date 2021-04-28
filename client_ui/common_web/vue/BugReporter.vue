@@ -21,7 +21,7 @@
 
                 <v-textarea
                     filled
-                    label="Description (please explain what bug you encoutered and what you were doing when you experienced the bug)"
+                    label="Description (please explain what bug you encountered and what you were doing when you experienced the bug)"
                     v-model="description"
                     hide-details
                 >
