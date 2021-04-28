@@ -24,4 +24,5 @@ target_include_directories(steamworks_interface
 
 target_link_libraries(steamworks_interface
     protobuf::libprotobuf
+    steam_protobuf_csgo
 )

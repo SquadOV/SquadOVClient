@@ -19,6 +19,8 @@ SET(SRCS
     shared/version.cpp
     shared/http/http_client.cpp
     shared/http/civetweb_utility.cpp
+    shared/ipc/shared_memory.cpp
+    shared/process.cpp
 )
 
 SET(HEADERS
@@ -46,6 +48,8 @@ SET(HEADERS
     shared/version.h
     shared/http/http_client.h
     shared/http/civetweb_utility.h
+    shared/ipc/shared_memory.h
+    shared/process.h
 )
 
 add_library(squadov_shared

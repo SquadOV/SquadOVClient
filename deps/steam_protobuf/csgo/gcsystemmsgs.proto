@@ -1,3 +1,4 @@
+package protobuf.csgo;
 option optimize_for = SPEED;
 option cc_generic_services = false;
 
@@ -188,7 +189,7 @@ message CQuest_PublisherAddCommunityItemsToPlayer_Request {
 	optional uint32 match_item_type = 3;
 	optional uint32 match_item_class = 4;
 	optional string prefix_item_name = 5;
-	repeated .CQuest_PublisherAddCommunityItemsToPlayer_Request.Attribute attributes = 6;
+	repeated protobuf.csgo.CQuest_PublisherAddCommunityItemsToPlayer_Request.Attribute attributes = 6;
 	optional string note = 7;
 }
 
@@ -208,7 +209,7 @@ message CCommunity_GetGamePersonalDataCategories_Request {
 }
 
 message CCommunity_GetGamePersonalDataCategories_Response {
-	repeated .CCommunity_GamePersonalDataCategoryInfo categories = 1;
+	repeated protobuf.csgo.CCommunity_GamePersonalDataCategoryInfo categories = 1;
 	optional string app_assets_basename = 2;
 }
 

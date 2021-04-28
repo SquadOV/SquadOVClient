@@ -30,6 +30,7 @@ find_package(FFMPEG REQUIRED)
 find_package(RdKafka CONFIG REQUIRED)
 
 set(Protobuf_USE_STATIC_LIBS ON)
+set(protobuf_MODULE_COMPATIBLE ON)
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
     MESSAGE(STATUS "[SQUADOV] Using Release Protobuf...")
     set(PROTOBUF_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/protobuf/release CACHE STRING "" FORCE)

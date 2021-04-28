@@ -5,8 +5,14 @@
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
 #include "system/state.h"
+#include "shared/ipc/shared_memory.h"
+#include "shared/uuid.h"
+#include "shared/process.h"
+#include "shared/filesystem/common_paths.h"
 
 #include <mutex>
+
+namespace fs = std::filesystem;
 namespace service::csgo {
 
 class CsgoProcessHandlerInstance {
@@ -38,6 +44,8 @@ private:
     // disconnecting from the server!
     std::recursive_mutex _activeGameMutex;
     std::optional<game_event_watcher::CsgoMatchState> _matchState;
+    shared::TimePoint _matchStart;
+
     std::optional<std::string> _serverIdentifier;
     std::optional<std::string> _activeViewUuid;
 };
@@ -105,6 +113,7 @@ void CsgoProcessHandlerInstance::onSquadOvMatchStart(const shared::TimePoint& ev
 
     try {
         _activeViewUuid = service::api::getGlobalApi()->createNewCsgoMatch(_serverIdentifier.value(), eventTime, _matchState->map, _matchState->mode);
+        _matchStart = eventTime;
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create CS:GO match: " << ex.what() << std::endl);
         return;
@@ -141,8 +150,42 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
 
     const auto vodId = _recorder->currentId();
     try {
-        // TODO: Retrieve the proper demo URL.
-        service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), eventTime, *state, "");
+        const auto segmentId = shared::generateUuidv4();
+        const auto strId = shared::generateUuidv4();
+
+        shared::ipc::SharedMemory shmem(segmentId);
+        shmem.create(65536);
+
+        auto* demoUrl = shmem.createString(strId);
+
+        const fs::path retrieverExe = shared::filesystem::getCurrentExeFolder() / fs::path("csgo") / fs::path("csgo_demo_retriever.exe");
+        bool foundDemo = false;
+        // Retry this a couple times just in case the demo isn't available immediately.
+        for (int i = 0; i < 5; ++i) {
+            // Run the csgo_demo_retriever app to pull in the latest demo that corresponds to the match the user just played.
+            std::ostringstream cmd;
+            cmd << " --mode steam "
+                << " --threshold " << shared::timeToIso(_matchStart)
+                << " --shmem \"" << segmentId << "\""
+                << " --shvalue \"" << strId << "\"";
+
+            if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                continue;
+            }
+
+            foundDemo = true;
+            break;
+        }
+
+        if (!foundDemo) {
+            LOG_WARNING("Failed to find CS:GO demo on Steam." << std::endl);
+            demoUrl->clear();
+        }
+
+        std::string stdDemoUrl(demoUrl->data(), demoUrl->size());
+        service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), eventTime, *state, stdDemoUrl);
+        shmem.destroy<shared::ipc::SharedMemory::String>(strId);
 
         end = std::make_optional(service::recorder::GameRecordEnd{
             _activeViewUuid.value(),

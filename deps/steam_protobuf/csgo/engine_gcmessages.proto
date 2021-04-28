@@ -1,3 +1,4 @@
+package protobuf.csgo;
 import "google/protobuf/descriptor.proto";
 
 option cc_generic_services = false;

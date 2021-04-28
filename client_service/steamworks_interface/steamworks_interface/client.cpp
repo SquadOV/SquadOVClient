@@ -102,6 +102,34 @@ void SteamworksClient::cleanup() {
     SteamAPI_Shutdown();
 }
 
+void SteamworksClient::sendGcMessageWithResponse(uint32_t sendType, google::protobuf::Message* message, uint32_t responseType, const SteamworksGcDelegatePtr& delegate) {
+    std::condition_variable cv;
+    std::mutex m;
+    bool ready = false;
+
+    auto innerDelegate = std::make_shared<RawSteamworksGcDelegate>([&cv, &m, &ready, &delegate](const void* data, int size){
+        if (delegate) {
+            delegate->handle(data, size);
+        }
+
+        {
+            std::lock_guard guard(m);
+            ready = true;
+            cv.notify_all();
+        }
+    });
+
+    const auto handlerIt = addGcMessageHandler(responseType, innerDelegate);
+    sendGcMessage(sendType, message);
+
+    {
+        std::unique_lock guard(m);
+        cv.wait(guard, [&ready]{return ready;});   
+    }
+
+    removeGcMessageHandler(handlerIt);
+}
+
 void SteamworksClient::sendGcMessage(uint32_t type, google::protobuf::Message* message) {
     const auto protoMaskedMessageType = type | GC_PROTO_MASK;
     // From what I can tell, the byte buffer we want to end up sending to the game coordinator is composed of two parts
@@ -133,16 +161,37 @@ void SteamworksClient::sendGcMessage(uint32_t type, google::protobuf::Message* m
     }
 }
 
-void SteamworksClient::addGcMessageHandler() {
+SteamworksClient::DelegateContainer::iterator SteamworksClient::addGcMessageHandler(uint32_t type, const SteamworksGcDelegatePtr& delegate) {
+    std::lock_guard guard(_delegateMutex);
+    return _delegates.insert(std::make_pair(type, delegate));
+}
 
+void SteamworksClient::removeGcMessageHandler(const DelegateContainer::iterator& it) {
+    std::lock_guard guard(_delegateMutex);
+    _delegates.erase(it);
 }
 
 void SteamworksClient::onGcMessageAvailable(GCMessageAvailable_t* msg) {
+    std::lock_guard guard(_delegateMutex);
 
+    uint32_t msgType;
+    uint32_t msgSize;
+    std::vector<char> buffer(msg->m_nMessageSize);
+
+    if (_gcCoordinator->RetrieveMessage(&msgType, (void*)buffer.data(), buffer.size(), &msgSize) == k_EGCResultOK && msgType & GC_PROTO_MASK) {
+        const auto unmaskedMessageType = msgType & (~GC_PROTO_MASK);
+        const auto dataPtr = buffer.data() + 2 * sizeof(uint32_t);
+        const auto range = _delegates.equal_range(unmaskedMessageType);
+        for (auto it = range.first; it != range.second; ++it) {
+            if (it->second) {
+                it->second->handle(dataPtr, buffer.size() - 2 * sizeof(uint32_t));
+            }
+        }
+    }
 }
 
 void SteamworksClient::onGcMessageFail(GCMessageFailed_t* msg) {
-
+    THROW_ERROR("Failed to send Steam GC message.");
 }
 
 }

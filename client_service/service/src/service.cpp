@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
 
     if (shared::getEnv("SQUADOV_DEBUG") != "") {
         LOG_INFO("Enabling Debug Logs" << std::endl);
-        shared::log::getGlobalLogger().setThreshold(shared::log::LogType::Debug);
+        shared::log::Log::singleton()->setThreshold(shared::log::LogType::Debug);
         enablePaDebugLogs = true;
     }
 
