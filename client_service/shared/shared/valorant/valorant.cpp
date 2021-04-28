@@ -14,6 +14,8 @@ EValorantMap mapIdToValorantMap(const std::string& id) {
         return EValorantMap::Split;
     } else if (id == "/Game/Maps/Port/Port") {
         return EValorantMap::Icebox;
+    } else if (id == "/Game/Maps/Foxtrot/Foxtrot") {
+        return EValorantMap::Breeze;
     }
     return EValorantMap::Unknown;
 }
@@ -29,6 +31,8 @@ EValorantMap codenameToValorantMap(const std::string& codename) {
         return EValorantMap::Split;
     } else if (codename == "Port") {
         return EValorantMap::Icebox;
+    } else if (codename == "Foxtrot") {
+        return EValorantMap::Breeze;
     } else if (codename == "MainMenuV2") {
         return EValorantMap::MainMenu;
     } else if (codename == "Init"){ 
@@ -51,6 +55,8 @@ std::string mapToName(EValorantMap map) {
             return "Split";
         case EValorantMap::Icebox:
             return "Icebox";
+        case EValorantMap::Breeze:
+            return "Breeze";
         case EValorantMap::MainMenu:
             return "Main Menu";
         case EValorantMap::CharacterSelect:
@@ -68,6 +74,7 @@ bool isGameMap(EValorantMap map) {
         case EValorantMap::Haven:
         case EValorantMap::Split:
         case EValorantMap::Icebox:
+        case EValorantMap::Breeze:
             return true;
     }    
     return false;
