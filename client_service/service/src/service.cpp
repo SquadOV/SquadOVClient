@@ -157,17 +157,25 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
+    LOG_INFO("Set unhandled exception filter..." << std::endl);
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
 #endif
+    LOG_INFO("Set atexit..." << std::endl);
     std::atexit(onSquadovExit);
+    LOG_INFO("Set atquickexit..." << std::endl);
     std::at_quick_exit(onSquadovExit);
+    LOG_INFO("Set terminate..." << std::endl);
     std::set_terminate(onSquadovTerminate);
     
+    LOG_INFO("Initialize CURL..." << std::endl);
     if (curl_global_init(CURL_GLOBAL_ALL)) {
         THROW_ERROR("Failed to initialize CURL.");
     }
 
+    LOG_INFO("Port Audio Set Debug Logging..." << std::endl);
     PaUtil_SetDebugPrintFunction(portaudioLogCallback);
+
+    LOG_INFO("Initialize PortAudio..." << std::endl);
     const auto paErr =  Pa_Initialize();
     if (paErr != paNoError) {
         if (paErr == paUnanticipatedHostError) {
