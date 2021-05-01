@@ -35,18 +35,18 @@ class ApiServer {
                 COALESCE((
                     SELECT COUNT(DISTINCT user_id)
                     FROM squadov.daily_active_sessions AS das
-                    WHERE das.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    WHERE das.tm >= s.tm AND das.tm < s.tm + INTERVAL '1 ${pgInterval}'
                 ), 0) AS "session",
                 COALESCE((
                     SELECT COUNT(DISTINCT user_id)
                     FROM squadov.daily_active_endpoint AS dae
-                    WHERE dae.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                    WHERE dae.tm >= s.tm AND dae.tm < (s.tm + INTERVAL '1 ${pgInterval}')
                 ), 0) AS "endpoint",
                 COALESCE((
                     SELECT COUNT(DISTINCT v.user_uuid)
                     FROM squadov.vods AS v
                     WHERE v.start_time IS NOT NULL AND v.user_uuid IS NOT NULL
-                        AND v.start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                        AND v.start_time >= s.tm AND v.start_time < s.tm + INTERVAL '1 ${pgInterval}'
                 ), 0) AS "vod",
                 COALESCE((
                     SELECT COUNT(DISTINCT v.user_uuid)
@@ -55,9 +55,9 @@ class ApiServer {
                         ON u.uuid = v.user_uuid
                     LEFT JOIN squadov.daily_active_endpoint AS dae
                         ON dae.user_id = u.id
-                            AND dae.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                            AND dae.tm >= s.tm AND dae.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     WHERE v.start_time IS NOT NULL AND v.user_uuid IS NOT NULL
-                        AND v.start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                        AND v.start_time >= s.tm AND v.start_time < s.tm + INTERVAL '1 ${pgInterval}'
                         AND dae.user_id IS NULL
                 ), 0) AS "passive"
             FROM series AS s
@@ -106,7 +106,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(DISTINCT id)
                 FROM squadov.users AS u
-                WHERE u.registration_time IS NOT NULL AND u.registration_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "users"
         FROM series AS s
             `
@@ -153,12 +153,12 @@ class ApiServer {
                     FROM (
                         SELECT user_id
                         FROM squadov.daily_active_sessions AS das
-                        WHERE das.tm BETWEEN s.tm - INTERVAL '1 ${pgInterval}' AND s.tm
+                        WHERE das.tm >= s.tm - INTERVAL '1 ${pgInterval}' AND das.tm < s.tm
                     ) AS u1
                     LEFT JOIN (
                         SELECT user_id
                         FROM squadov.daily_active_sessions AS das
-                        WHERE das.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                        WHERE das.tm >= s.tm AND das.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     ) AS u2
                         ON u1.user_id = u2.user_id
                     WHERE u2.user_id IS NULL
@@ -230,7 +230,7 @@ class ApiServer {
                 FROM squadov.referral_visits AS rd
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rd.code
-                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NOT NULL
             ), 0) AS "visits",
             COALESCE((
@@ -238,7 +238,7 @@ class ApiServer {
                 FROM squadov.referral_downloads AS rd
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rd.code
-                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NOT NULL
             ), 0) AS "downloads"
         FROM series AS s
@@ -324,7 +324,7 @@ class ApiServer {
                 FROM squadov.referral_visits AS rd
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rd.code
-                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NULL
             ), 0) AS "visits",
             COALESCE((
@@ -332,7 +332,7 @@ class ApiServer {
                 FROM squadov.referral_downloads AS rd
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rd.code
-                WHERE rd.tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NULL
             ), 0) AS "downloads"
         FROM series AS s
@@ -414,7 +414,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.aimlab_tasks AS m
-                WHERE m.create_date BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.create_date >= s.tm AND m.create_date < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -459,7 +459,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.hearthstone_matches AS m
-                WHERE m.match_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.match_time >= s.tm AND m.match_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -504,7 +504,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.lol_matches AS m
-                WHERE m.game_start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.game_start_time >= s.tm AND m.game_start_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -549,7 +549,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.tft_matches AS m
-                WHERE m.game_start_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.game_start_time >= s.tm AND m.game_start_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -594,7 +594,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.valorant_matches AS m
-                WHERE m.server_start_time_utc BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.server_start_time_utc >= s.tm AND m.server_start_time_utc < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -639,7 +639,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.wow_match_view AS m
-                WHERE m.end_tm BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.end_tm >= s.tm AND m.end_tm < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "games"
         FROM series AS s
         `
@@ -684,18 +684,18 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.squad_membership_invites AS m
-                WHERE m.invite_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.invite_time >= s.tm AND m.invite_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "sent",
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.squad_membership_invites AS m
-                WHERE m.response_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.response_time >= s.tm AND m.response_time < s.tm + INTERVAL '1 ${pgInterval}'
                     AND m.joined
             ), 0) AS "accepted",
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.squad_membership_invites AS m
-                WHERE m.response_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.response_time >= s.tm AND m.response_time < s.tm + INTERVAL '1 ${pgInterval}'
                     AND NOT m.joined
             ), 0) AS "rejected"
         FROM series AS s
@@ -743,7 +743,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.squads AS m
-                WHERE m.creation_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.creation_time >= s.tm AND m.creation_time < s.tm + INTERVAL '1 ${pgInterval}'
                     AND NOT m.is_default
             ), 0) AS "squads"
         FROM series AS s
@@ -789,7 +789,7 @@ class ApiServer {
             COALESCE((
                 SELECT COUNT(1)
                 FROM squadov.vods AS m
-                WHERE m.end_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+                WHERE m.end_time >= s.tm AND m.end_time < s.tm + INTERVAL '1 ${pgInterval}'
             ), 0) AS "squads"
         FROM series AS s
         `
@@ -955,7 +955,7 @@ class ApiServer {
             COUNT(u.id) AS "count"
         FROM series AS s
         LEFT JOIN squadov.users AS u
-            ON u.registration_time BETWEEN s.tm AND s.tm + INTERVAL '1 ${pgInterval}'
+            ON u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
         GROUP BY cohort_key
         `
 
@@ -1005,7 +1005,7 @@ class ApiServer {
                     ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
                         AND das.user_id = u.id
             ) AS coh(tm, cohort_period)
-            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
             GROUP BY cohort_key, coh.cohort_period
         `
 
@@ -1079,7 +1079,7 @@ class ApiServer {
                     ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
                         AND das.user_id = u.id
             ) AS coh(tm, cohort_period)
-            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
             GROUP BY cohort_key, coh.cohort_period
         `
 
@@ -1154,7 +1154,7 @@ class ApiServer {
                         AND v.user_uuid = u.uuid
                 WHERE v.match_uuid IS NOT NULL
             ) AS coh(tm, cohort_period)
-            WHERE u.registration_time BETWEEN DATE_TRUNC('day', $1::TIMESTAMPTZ) AND DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
             GROUP BY cohort_key, coh.cohort_period
         `
 
