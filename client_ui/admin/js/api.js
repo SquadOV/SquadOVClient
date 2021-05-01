@@ -1002,7 +1002,7 @@ class ApiServer {
                     INTERVAL '1 ${pgPeriod}'
                 ) AS gs(tm)
                 INNER JOIN squadov.daily_active_sessions AS das
-                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm < DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
                         AND das.user_id = u.id
             ) AS coh(tm, cohort_period)
             WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
@@ -1076,7 +1076,7 @@ class ApiServer {
                     INTERVAL '1 ${pgPeriod}'
                 ) AS gs(tm)
                 INNER JOIN squadov.daily_active_endpoint AS das
-                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm < DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
                         AND das.user_id = u.id
             ) AS coh(tm, cohort_period)
             WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
@@ -1150,7 +1150,7 @@ class ApiServer {
                     INTERVAL '1 ${pgPeriod}'
                 ) AS gs(tm)
                 INNER JOIN squadov.vods AS v
-                    ON v.start_time >= DATE_TRUNC('day', gs.tm) AND v.start_time <= DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
+                    ON v.start_time >= DATE_TRUNC('day', gs.tm) AND v.start_time < DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
                         AND v.user_uuid = u.uuid
                 WHERE v.match_uuid IS NOT NULL
             ) AS coh(tm, cohort_period)
