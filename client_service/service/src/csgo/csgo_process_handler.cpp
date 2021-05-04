@@ -9,6 +9,8 @@
 #include "shared/uuid.h"
 #include "shared/process.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/base64/decode.h"
+#include <boost/algorithm/string.hpp>
 
 #include <mutex>
 
@@ -183,8 +185,19 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
             demoUrl->clear();
         }
 
-        std::string stdDemoUrl(demoUrl->data(), demoUrl->size());
-        service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), eventTime, *state, stdDemoUrl);
+        std::optional<std::string> finalDemoUrl;
+        std::optional<shared::TimePoint> finalDemoTimestamp;
+
+        if (foundDemo) {
+            std::string rawDemoData(demoUrl->data(), demoUrl->size());
+            std::vector<std::string> parts;
+            boost::split(parts, rawDemoData, boost::is_any_of("."));
+
+            finalDemoUrl = shared::base64::decode(parts[0]);
+            finalDemoTimestamp = shared::isoStrToTime(shared::base64::decode(parts[1]));
+        }
+        
+        service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), eventTime, *state, finalDemoUrl, finalDemoTimestamp);
         shmem.destroy<shared::ipc::SharedMemory::String>(strId);
 
         end = std::make_optional(service::recorder::GameRecordEnd{

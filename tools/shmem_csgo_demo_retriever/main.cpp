@@ -1,10 +1,13 @@
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "shared/ipc/shared_memory.h"
 #include "shared/log/log.h"
 #include "shared/process.h"
 #include "shared/uuid.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/time.h"
+#include "shared/base64/decode.h"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -39,7 +42,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::string stdDemoUrl(demoUrl->data(), demoUrl->size());
-    std::cout << "FOUND DEMO: " << stdDemoUrl << std::endl;
+    std::string rawDemoData(demoUrl->data(), demoUrl->size());
+    std::vector<std::string> parts;
+    boost::split(parts, rawDemoData, boost::is_any_of("."));
+
+    std::cout << "FOUND DEMO: " << shared::base64::decode(parts[0]) << "@" <<  shared::timeToStr(shared::isoStrToTime(shared::base64::decode(parts[1]))) << std::endl;
     return 0;
 }

@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
+enable_testing()
 
 # set the project name
 project(SquadOVClient VERSION 0.0)
@@ -54,7 +55,7 @@ target_link_libraries(ZLIB::ZLIB INTERFACE zlib)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.74.0 REQUIRED
-    COMPONENTS filesystem system program_options iostreams zlib date_time)
+    COMPONENTS filesystem system program_options iostreams zlib date_time unit_test_framework )
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)
@@ -63,3 +64,5 @@ add_subdirectory(client_service)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(tools)
 endif()
+
+add_subdirectory(tests)

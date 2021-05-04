@@ -13,6 +13,7 @@ SET(SRCS
     shared/aimlab/aimlab.cpp
     shared/uuid.cpp
     shared/base64/encode.cpp
+    shared/base64/decode.cpp
     shared/squadov/vod.cpp
     shared/hearthstone/hearthstone_ratings.cpp
     shared/errors/error.cpp
@@ -40,6 +41,7 @@ SET(HEADERS
     shared/aimlab/aimlab.h
     shared/uuid.h
     shared/base64/encode.h
+    shared/base64/decode.h
     shared/squadov/session.h
     shared/squadov/user.h
     shared/hearthstone/hearthstone_ratings.h

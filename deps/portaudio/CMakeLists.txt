@@ -469,11 +469,11 @@ ENDIF()
 # Prepared for inclusion of test files
 OPTION(PA_BUILD_TESTS "Include test projects" OFF)
 IF(PA_BUILD_TESTS)
-  SUBDIRS(test)
+  #SUBDIRS(test)
 ENDIF()
 
 # Prepared for inclusion of test files
 OPTION(PA_BUILD_EXAMPLES "Include example projects" OFF)
 IF(PA_BUILD_EXAMPLES)
-  SUBDIRS(examples)
+  #SUBDIRS(examples)
 ENDIF()

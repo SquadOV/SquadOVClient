@@ -667,14 +667,15 @@ std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shar
     return parsedJson.get<std::string>();
 }
 
-void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl) {
+void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl, const std::optional<shared::TimePoint>& demoTimestamp) {
     nlohmann::json body = {
         { "stopTime", shared::timeToIso(gameStopTime) },
         { "data", shared::json::JsonConverter<game_event_watcher::CsgoMatchState>::to(state) }
     };
 
-    if (demoUrl) {
+    if (demoUrl && demoTimestamp) {
         body["demo"] = demoUrl.value();
+        body["demoTimestamp"] = shared::timeToIso(demoTimestamp.value());
     }
 
     std::ostringstream path;

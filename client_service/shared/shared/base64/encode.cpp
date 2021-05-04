@@ -9,8 +9,6 @@
 namespace shared::base64 {
 namespace {
 
-const char BASE64_ENCODE_URL_CHARSET[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-
 std::string encodeBlock(std::string_view input) {
     // The input block can be anywhere between 1-3 characters long.
     // We should output a corresponding block that's between 2-4 characters long.

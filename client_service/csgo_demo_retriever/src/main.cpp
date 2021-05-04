@@ -4,6 +4,7 @@
 
 #include "shared/time.h"
 #include "shared/log/log.h"
+#include "shared/base64/encode.h"
 #include "shared/ipc/shared_memory.h"
 #include "steamworks_interface/client.h"
 #include "steamworks_interface/csgo/csgo_client.h"
@@ -12,6 +13,8 @@
 
 namespace po = boost::program_options;
 
+// Returns a base64 encoded string
+// DEMO_URL.DEMO_TIMESTAMP
 std::string retrieveLatestSteamDemo(const shared::TimePoint& threshold) {
     steamworks_interface::csgo::CsgoClient client;
     client.performHandshake();
@@ -45,7 +48,7 @@ std::string retrieveLatestSteamDemo(const shared::TimePoint& threshold) {
         THROW_ERROR("No Demo URL found.");
     }
 
-    return demoUrl.value();
+    return shared::base64::encode(demoUrl.value()) + "." + shared::base64::encode(shared::timeToIso(latestDemoTime));
 }
 
 int main(int argc, char** argv) {

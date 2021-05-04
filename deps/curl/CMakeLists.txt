@@ -1314,12 +1314,12 @@ if(BUILD_CURL_EXE)
   add_subdirectory(src)
 endif()
 
-option(BUILD_TESTING "Build tests" "${PERL_FOUND}")
-if(NOT PERL_FOUND)
-  message(STATUS "Perl not found, testing disabled.")
-elseif(BUILD_TESTING)
-  add_subdirectory(tests)
-endif()
+#option(BUILD_TESTING "Build tests" "${PERL_FOUND}")
+#if(NOT PERL_FOUND)
+  #message(STATUS "Perl not found, testing disabled.")
+#elseif(BUILD_TESTING)
+  #add_subdirectory(tests)
+#endif()
 
 # NTLM support requires crypto function adaptions from various SSL libs
 # TODO alternative SSL libs tests for SSP1, GNUTLS, NSS
