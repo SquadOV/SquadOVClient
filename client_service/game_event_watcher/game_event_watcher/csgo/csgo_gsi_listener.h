@@ -27,6 +27,8 @@ public:
 
     friend class CsgoGsiHandler;
 private:
+    int getPreExistingPort() const;
+
     std::unique_ptr<CivetServer> _server;
     std::unique_ptr<CivetHandler> _handler;
 

@@ -90,7 +90,7 @@ public:
 
     // CS:GO
     std::string createNewCsgoMatch(const std::string& server, const shared::TimePoint& gameStartTime, const std::string& map, const std::string& mode);
-    void finishCsgoMatch(const std::string& viewUuid, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl, const std::optional<shared::TimePoint>& demoTimestamp);
+    std::string finishCsgoMatch(const std::string& viewUuid, const std::string& localSteamId, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl, const std::optional<shared::TimePoint>& demoTimestamp);
 
     // VOD
     std::string createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;

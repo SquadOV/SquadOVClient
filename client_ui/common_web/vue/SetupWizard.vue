@@ -42,11 +42,24 @@
                             Select the games you want to setup SquadOV for (all Riot games will be selected if you select one of them)!
                         </div>
 
-                        <v-item-group class="d-flex" multiple v-model="gameSteps">
+                        <v-item-group class="d-flex flex-wrap" multiple v-model="gameSteps">
+                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Csgo">
+                                <v-img
+                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                    width="256px"
+                                    max-width="256px"
+                                    :src="$root.generateAssetUri('assets/csgo_box.jpg')"
+                                    contain
+                                    @click="toggle"
+                                >
+                                </v-img>
+                            </v-item>
+
                             <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
                                 <v-img
                                     :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
                                     width="256px"
+                                    max-width="256px"
                                     :src="$root.generateAssetUri('assets/lol_box.jpg')"
                                     contain
                                     @click="toggle"
@@ -58,6 +71,7 @@
                                 <v-img
                                     :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
                                     width="256px"
+                                    max-width="256px"
                                     :src="$root.generateAssetUri('assets/tft_box.jpg')"
                                     contain
                                     @click="toggle"
@@ -69,6 +83,7 @@
                                 <v-img
                                     :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
                                     width="256px"
+                                    max-width="256px"
                                     :src="$root.generateAssetUri('assets/valorant_box.jpg')"
                                     contain
                                     @click="toggle"
@@ -80,6 +95,7 @@
                                 <v-img
                                     :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
                                     width="256px"
+                                    max-width="256px"
                                     :src="$root.generateAssetUri('assets/wow_box.jpg')"
                                     contain
                                     @click="toggle"
@@ -138,6 +154,21 @@
                         <div class="mt-4">
                             You can see these instructions in more details in our <a href="#" @click="goToWowUserManual">user manual</a>.
                         </div>
+                    </template>
+
+                    <template v-else-if="st == DynamicSteps.Csgo">
+                        SquadOV works out of the box with CS:GO.
+                        <b>However</b>, you should be aware that we do modify your autoexec file to achieve our automatic recording and squad sync.
+                        In particular we add these lines to your autoexec.cfg:
+
+                        <pre>
+con_logfile squadov.log
+con_timestamp 1
+                        </pre>
+                        If these settings already existed in your autoexec, they have been overwritten.
+                        These settings are crucial for getting SquadOV to work with CS:GO.
+
+                        Don't know what we're talking about? You can ignore everything we just said! Enjoy!
                     </template>
 
                     <template v-else-if="st == DynamicSteps.Squad">
@@ -266,7 +297,8 @@ import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateC
 enum DynamicSteps {
     Riot,
     Wow,
-    Squad
+    Squad,
+    Csgo,
 }
 
 @Component({
@@ -300,6 +332,8 @@ export default class SetupWizard extends Vue {
                 return 'World of Warcraft'
             case DynamicSteps.Squad:
                 return 'Squads'
+            case DynamicSteps.Csgo:
+                return 'CS:GO'
         }
     }
 
@@ -316,7 +350,7 @@ export default class SetupWizard extends Vue {
     @Watch('gameSteps')
     onChangeGameSteps() {
         let gs = new Set(this.gameSteps)
-        if (!! this.defaultSquad) {
+        if (!!this.defaultSquad) {
             gs.add(DynamicSteps.Squad)
         }
 

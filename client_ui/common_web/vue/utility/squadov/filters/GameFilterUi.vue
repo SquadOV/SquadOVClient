@@ -64,19 +64,13 @@ export default class GameFilterUi extends Vue {
     get items(): any[] {
         let supportedGames: SquadOvGames[] = [
             SquadOvGames.AimLab,
+            SquadOvGames.Csgo,
             SquadOvGames.Hearthstone,
+            SquadOvGames.LeagueOfLegends,
+            SquadOvGames.TeamfightTactics,
+            SquadOvGames.Valorant,
+            SquadOvGames.WorldOfWarcraft
         ]
-
-        if (this.$store.state.features.enableLol) {
-            supportedGames.push(SquadOvGames.LeagueOfLegends)
-        }
-
-        if (this.$store.state.features.enableTft) {
-            supportedGames.push(SquadOvGames.TeamfightTactics)
-        }
-
-        supportedGames.push(SquadOvGames.Valorant, SquadOvGames.WorldOfWarcraft)
-
         return supportedGames.map((g: SquadOvGames) => ({
             text: gameToName(g),
             value: g,

@@ -17,7 +17,7 @@ struct CsgoGsiTeamPacket {
 struct CsgoGsiMapPacket {
     std::optional<int> currentSpectators;
     std::optional<std::string> mode;
-    std::optional<std::string> map;
+    std::optional<std::string> name;
     std::optional<std::string> phase;
     std::optional<int> round;
     std::vector<std::string> roundWins;
@@ -131,7 +131,7 @@ struct JsonConverter<game_event_watcher::CsgoGsiMapPacket> {
         game_event_watcher::CsgoGsiMapPacket map;
         map.currentSpectators = JsonConverter<decltype(map.currentSpectators)>::fromKey(v, "current_spectators");
         map.mode = JsonConverter<decltype(map.mode)>::fromKey(v, "mode");
-        map.map = JsonConverter<decltype(map.map)>::fromKey(v, "map");
+        map.name = JsonConverter<decltype(map.name)>::fromKey(v, "name");
         map.phase = JsonConverter<decltype(map.phase)>::fromKey(v, "phase");
         map.round = JsonConverter<decltype(map.round)>::fromKey(v, "round");
         map.teamCt = JsonConverter<decltype(map.teamCt)>::fromKey(v, "team_ct");
@@ -259,8 +259,6 @@ template<>
 struct JsonConverter<game_event_watcher::CsgoGsiPacket> {
     static game_event_watcher::CsgoGsiPacket from(const nlohmann::json& v) {
         game_event_watcher::CsgoGsiPacket packet;
-        LOG_INFO("read csgo gsi packet: " << v.dump(4) << std::endl);
-        
         packet.map = JsonConverter<decltype(packet.map)>::fromKey(v, "map");
         packet.player = JsonConverter<decltype(packet.player)>::fromKey(v, "player");
         packet.provider = JsonConverter<decltype(packet.provider)>::fromKey(v, "provider");

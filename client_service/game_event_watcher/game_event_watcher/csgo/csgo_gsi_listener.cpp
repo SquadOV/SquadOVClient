@@ -2,8 +2,10 @@
 #include "shared/filesystem/common_paths.h"
 #include "shared/log/log.h"
 #include "shared/http/civetweb_utility.h"
+#include "process_watcher/watcher.h"
 
 #include <boost/algorithm/string.hpp>
+#include <regex>
 
 namespace fs = std::filesystem;
 namespace game_event_watcher {
@@ -34,8 +36,15 @@ CsgoGsiListener* CsgoGsiListener::singleton() {
 
 CsgoGsiListener::CsgoGsiListener() {
     LOG_INFO("Initializing CS:GO GSI Listener..." << std::endl);
+
+    // To allow SquadOV to be launched AFTER CS:GO, we need to check to see if a
+    // config file exists. If a config file exists **AND** CS:GO is running, we'll
+    // use the existing port instead of creating a new one.
+    std::ostringstream listeningPort;
+    listeningPort << "127.0.0.1:" << getPreExistingPort();
+
     std::vector<std::string> options = {
-        "listening_ports", "127.0.0.1:0",
+        "listening_ports", listeningPort.str(),
         "num_threads", "4"
     };
     _server = std::make_unique<CivetServer>(options);
@@ -49,11 +58,45 @@ CsgoGsiListener::~CsgoGsiListener() {
     LOG_INFO("Shutting Down CS:GO GSI Listener..." << std::endl);
 }
 
+const std::regex portRegex("\"uri\"\\s\"http:\\/\\/127\\.0\\.0\\.1:(\\d+)\\/csgo\\/gsi\"");
+int CsgoGsiListener::getPreExistingPort() const {
+    const auto cfgDirectory = shared::filesystem::getCsgoCfgFolder();
+    if (!cfgDirectory) {
+        return 0;
+    }
+
+    const auto destCfgFile = fs::path(cfgDirectory.value()) / fs::path("gamestate_integration_squadov.cfg");
+    if (!fs::exists(destCfgFile)) {
+        return 0;
+    }
+
+    std::ifstream src(destCfgFile);
+    std::string line;
+
+    int port = 0;
+    while (src.is_open() && std::getline(src, line)) {
+        if (line.find("\"uri\"") == std::string::npos) {
+            continue;
+        }
+
+        std::smatch matches;
+        if (!std::regex_search(line, matches, portRegex) || matches.size() < 2) {
+            continue;
+        }
+
+        port = std::stoi(matches[1].str());
+        break;
+    }
+
+    return process_watcher::isGameRunning(shared::EGame::CSGO) ? port : 0;
+}
+
 int CsgoGsiListener::port() const {
     return _server->getListeningPorts().back();
 }
 
 void CsgoGsiListener::enableCsgoGsi() {
+    const auto newPort = CsgoGsiListener::singleton()->port();
     const auto cfgDirectory = shared::filesystem::getCsgoCfgFolder();
     if (!cfgDirectory.has_value() || !fs::exists(cfgDirectory.value())) {
         LOG_WARNING("Could not find CSGO cfg directory for GSI.");
@@ -69,7 +112,7 @@ void CsgoGsiListener::enableCsgoGsi() {
 
     std::string line;
     while (src.is_open() && std::getline(src, line)) {
-        boost::replace_all(line, "${PORT}", std::to_string(CsgoGsiListener::singleton()->port()));
+        boost::replace_all(line, "${PORT}", std::to_string(newPort));
         dst << line << std::endl;
     }
 

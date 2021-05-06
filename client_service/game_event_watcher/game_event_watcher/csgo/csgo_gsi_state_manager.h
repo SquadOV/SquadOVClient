@@ -21,7 +21,7 @@ struct CsgoWeaponState {
 struct CsgoPlayerRoundState {
     std::string steamId;
     std::string team;
-    std::unordered_map<int, CsgoWeaponState> weapons;
+    std::vector<CsgoWeaponState> weapons;
     int money = 0;
     int equipmentValue = 0;
     int armor = 0;
@@ -96,6 +96,9 @@ public:
     ~CsgoGsiStateManager();
 
     void handlePacket(const CsgoGsiPacket& packet);
+
+    std::string localSteamId() const { return _localSteamId.value(); }
+
 private:
     void handleMapDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiMapPacket>& prev, const std::optional<CsgoGsiMapPacket>& now, const CsgoGsiPacket& packet);
     void handlePlayerDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiPlayerPacket>& prev, const std::optional<CsgoGsiPlayerPacket>& now, const CsgoGsiPacket& packet);
@@ -109,6 +112,7 @@ private:
 
     std::optional<std::string> _localSteamId;
     std::optional<CsgoMatchState> _matchState;
+    std::mutex _stateMutex;
     int _latestRound = -1;
     int64_t _delegateId = 0;
 };
@@ -209,7 +213,7 @@ struct JsonConverter<game_event_watcher::CsgoMatchState> {
             { "warmupStart", JsonConverter<decltype(v.warmupStart)>::to(v.warmupStart) },
             { "start", JsonConverter<decltype(v.start)>::to(v.start) },
             { "end", JsonConverter<decltype(v.end)>::to(v.end) },
-            { "rounds", JsonConverter<decltype(v.rounds)>::to(v.rounds) },
+            { "rounds", JsonConverter<std::vector<game_event_watcher::CsgoRoundState>>::to(v.rounds) },
             { "players", JsonConverter<decltype(v.players)>::to(v.players) }
         };
         return data;

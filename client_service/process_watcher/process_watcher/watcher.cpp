@@ -73,4 +73,14 @@ void ProcessWatcher::start() {
     });
 }
 
+bool isGameRunning(shared::EGame game) {
+    std::vector<process::Process> processes;
+    if (!process::listRunningProcesses(processes)) {
+        return false;
+    }
+
+    const auto detector = games::createDetectorForGame(game);
+    return detector->checkIsRunning(processes);
+}
+
 }

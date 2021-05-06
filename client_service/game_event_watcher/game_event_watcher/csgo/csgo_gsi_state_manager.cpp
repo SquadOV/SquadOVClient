@@ -28,7 +28,7 @@ CsgoPlayerRoundState CsgoPlayerRoundState::from(const CsgoGsiPlayerPacket& packe
     }
 
     for (const auto& w : packet.weapons) {
-        state.weapons[w.weaponIdx] = CsgoWeaponState::from(w);
+        state.weapons.push_back(CsgoWeaponState::from(w));
     }
 
     return state;
@@ -47,6 +47,7 @@ CsgoGsiStateManager::~CsgoGsiStateManager() {
 }
 
 void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
+    std::lock_guard guard(_stateMutex);
     // We can reliably grab the local user's steam ID from the provider section of the gsi packet.
     if (!_localSteamId && packet.provider) {
         _localSteamId = packet.provider->steamId;
@@ -58,7 +59,7 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     // no map -> map exists in the gsi packet doesn't trigger a "previously" diff.
     if (packet.map && !_matchState) {
         _matchState = CsgoMatchState{};
-        _matchState->map = packet.map->map.value_or("Unknown");
+        _matchState->map = packet.map->name.value_or("Unknown");
         _matchState->mode = packet.map->mode.value_or("Unknown");
 
         if (!_matchState->isSupported()) {

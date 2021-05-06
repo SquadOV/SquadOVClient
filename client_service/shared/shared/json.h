@@ -85,6 +85,15 @@ struct JsonConverter<std::vector<T>> {
         }
         return arr;
     }
+
+    template<typename K>
+    static nlohmann::json to(const std::unordered_map<K, T>& v) {
+        nlohmann::json arr = nlohmann::json::array();
+        for (const auto& kvp : v) {
+            arr.push_back(JsonConverter<T>::to(kvp.second));
+        }
+        return arr;
+    }
 };
 
 

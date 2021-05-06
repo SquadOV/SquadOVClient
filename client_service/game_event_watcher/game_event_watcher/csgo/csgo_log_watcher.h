@@ -16,6 +16,7 @@ public:
     static void enableCsgoLogging();
 
     explicit CsgoLogWatcher(const shared::TimePoint& timeThreshold);
+    ~CsgoLogWatcher();
 
 private:
     void onGameLogChange(const LogLinesDelta& lines);

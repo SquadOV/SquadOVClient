@@ -5,6 +5,7 @@ export enum SquadOvGames {
     TeamfightTactics,
     Valorant,
     WorldOfWarcraft,
+    Csgo,
     Unknown,
 }
 
@@ -22,6 +23,8 @@ export function gameToIcon(game: SquadOvGames): string {
             return 'assets/valorant-logo.png'
         case SquadOvGames.WorldOfWarcraft:
             return 'assets/wow-logo.png'
+        case SquadOvGames.Csgo:
+            return 'assets/csgo-logo.png'
         case SquadOvGames.Unknown:
             return ''
     }
@@ -41,6 +44,8 @@ export function gameToName(game: SquadOvGames): string {
             return 'Valorant'
         case SquadOvGames.WorldOfWarcraft:
             return 'World of Warcraft'
+        case SquadOvGames.Csgo:
+            return 'CS: GO'
         case SquadOvGames.Unknown:
             return 'Unknown'
     }
@@ -60,6 +65,8 @@ export function gameShorthandToGame(str: string): SquadOvGames {
             return SquadOvGames.Valorant
         case 'wow':
             return SquadOvGames.WorldOfWarcraft
+        case 'csgo':
+            return SquadOvGames.Csgo
     }
     return SquadOvGames.Unknown
 }

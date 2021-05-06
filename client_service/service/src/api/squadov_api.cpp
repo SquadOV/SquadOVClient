@@ -657,6 +657,11 @@ std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shar
     std::ostringstream path;
     path << "/v1/csgo/user/" << getCurrentUser().id << "/view";
 
+    std::ofstream output("create.json");
+    output << body.dump(4);
+    output.close();
+
+    /*
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 200) {
         THROW_ERROR("Failed to create CSGO match: " << result->status);
@@ -665,12 +670,15 @@ std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shar
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
+    */
+   return "abcdef";
 }
 
-void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl, const std::optional<shared::TimePoint>& demoTimestamp) {
+std::string SquadovApi::finishCsgoMatch(const std::string& viewUuid, const std::string& localSteamId, const shared::TimePoint& gameStopTime, const game_event_watcher::CsgoMatchState& state, const std::optional<std::string>& demoUrl, const std::optional<shared::TimePoint>& demoTimestamp) {
     nlohmann::json body = {
         { "stopTime", shared::timeToIso(gameStopTime) },
-        { "data", shared::json::JsonConverter<game_event_watcher::CsgoMatchState>::to(state) }
+        { "data", shared::json::JsonConverter<game_event_watcher::CsgoMatchState>::to(state) },
+        { "localSteamId", std::stoll(localSteamId) }
     };
 
     if (demoUrl && demoTimestamp) {
@@ -678,6 +686,11 @@ void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::Time
         body["demoTimestamp"] = shared::timeToIso(demoTimestamp.value());
     }
 
+    std::ofstream output("finish.json");
+    output << body.dump(4);
+    output.close();
+
+    /*
     std::ostringstream path;
     path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid;
 
@@ -685,6 +698,11 @@ void SquadovApi::finishCsgoMatch(const std::string& viewUuid, const shared::Time
     if (result->status != 200) {
         THROW_ERROR("Failed to finalize CSGO match: " << result->status);
     }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+    */
+    return "abcdef";
 }
 
 SquadovApi* getGlobalApi() {

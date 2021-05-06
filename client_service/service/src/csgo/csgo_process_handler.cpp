@@ -72,6 +72,7 @@ void CsgoProcessHandlerInstance::onGsiMatchStart(const shared::TimePoint& eventT
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
+    LOG_INFO("CSGO On GSI Match Start..." << std::endl);
 
     std::lock_guard guard(_activeGameMutex);
 
@@ -89,6 +90,7 @@ void CsgoProcessHandlerInstance::onLogConnect(const shared::TimePoint& eventTime
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
+    LOG_INFO("CSGO On Log Connect..." << std::endl);
 
     std::lock_guard guard(_activeGameMutex);
 
@@ -135,6 +137,14 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
     }
 
     std::lock_guard guard(_activeGameMutex);
+
+    LOG_INFO("CSGO On GSI Match End..." << std::endl);
+    if (!_matchState) {
+        LOG_WARNING("No match state...ignoring." << std::endl);
+        return;
+    }
+
+    const auto matchStateCopy = _matchState.value();
     _matchState.reset();
 
     if (!_activeViewUuid) {
@@ -160,24 +170,29 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
 
         auto* demoUrl = shmem.createString(strId);
 
-        const fs::path retrieverExe = shared::filesystem::getCurrentExeFolder() / fs::path("csgo") / fs::path("csgo_demo_retriever.exe");
         bool foundDemo = false;
-        // Retry this a couple times just in case the demo isn't available immediately.
-        for (int i = 0; i < 5; ++i) {
-            // Run the csgo_demo_retriever app to pull in the latest demo that corresponds to the match the user just played.
-            std::ostringstream cmd;
-            cmd << " --mode steam "
-                << " --threshold " << shared::timeToIso(_matchStart)
-                << " --shmem \"" << segmentId << "\""
-                << " --shvalue \"" << strId << "\"";
 
-            if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                continue;
+        // Only CSGO competitive games get demos recorded.
+        // This will probably need to be tweaked to support FaceIT and ESEA.
+        if (matchStateCopy.mode == "competitive") {
+            const fs::path retrieverExe = shared::filesystem::getCurrentExeFolder() / fs::path("csgo") / fs::path("csgo_demo_retriever.exe");
+            // Retry this a couple times just in case the demo isn't available immediately.
+            for (int i = 0; i < 5; ++i) {
+                // Run the csgo_demo_retriever app to pull in the latest demo that corresponds to the match the user just played.
+                std::ostringstream cmd;
+                cmd << " --mode steam "
+                    << " --threshold " << shared::timeToIso(_matchStart)
+                    << " --shmem \"" << segmentId << "\""
+                    << " --shvalue \"" << strId << "\"";
+
+                if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                    continue;
+                }
+
+                foundDemo = true;
+                break;
             }
-
-            foundDemo = true;
-            break;
         }
 
         if (!foundDemo) {
@@ -197,11 +212,11 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
             finalDemoTimestamp = shared::isoStrToTime(shared::base64::decode(parts[1]));
         }
         
-        service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), eventTime, *state, finalDemoUrl, finalDemoTimestamp);
+        const auto matchUuid = service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), _stateManager.localSteamId(), eventTime, *state, finalDemoUrl, finalDemoTimestamp);
         shmem.destroy<shared::ipc::SharedMemory::String>(strId);
 
         end = std::make_optional(service::recorder::GameRecordEnd{
-            _activeViewUuid.value(),
+            matchUuid,
             eventTime
         });
     } catch (std::exception& ex) {
@@ -224,6 +239,7 @@ void CsgoProcessHandlerInstance::onLogDisconnect(const shared::TimePoint& eventT
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
+    LOG_INFO("CSGO On Log Disconnect..." << std::endl);
 
     std::lock_guard guard(_activeGameMutex);
 

@@ -38,6 +38,7 @@ target_include_directories(squadov_game_event_watcher
     PUBLIC
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/client_service/game_event_watcher
+    ${CMAKE_SOURCE_DIR}/client_service/process_watcher
     ${CMAKE_SOURCE_DIR}/deps/tinyxml2
     ${CMAKE_SOURCE_DIR}/deps/civetweb/include
     ${Boost_INCLUDE_DIRS}
@@ -45,6 +46,7 @@ target_include_directories(squadov_game_event_watcher
 
 target_link_libraries(squadov_game_event_watcher
     squadov_shared
+    squadov_process_watcher
     tinyxml2
     version
     ${Boost_LIBRARIES}

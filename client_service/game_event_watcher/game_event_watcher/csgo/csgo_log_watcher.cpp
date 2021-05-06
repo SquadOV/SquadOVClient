@@ -2,10 +2,62 @@
 #include "shared/filesystem/common_paths.h"
 #include "shared/errors/error.h"
 
+#include <boost/algorithm/string.hpp>
 #include <fstream>
+#include <optional>
+#include <string>
+#include <regex>
 
 namespace fs = std::filesystem;
 namespace game_event_watcher {
+namespace {
+
+struct CsgoLogLine {
+    shared::TimePoint tm;
+    std::string rest;
+    bool parsed = false;
+};
+
+const std::regex logRegex("(.*?):\\s(.*)");
+CsgoLogLine parseCsgoLog(const std::string& line) {
+    std::smatch matches;
+    CsgoLogLine log;
+
+    if (!std::regex_search(line, matches, logRegex) || matches.size() < 3) {
+        return log;
+    }
+
+    log.parsed = true;
+    log.tm = date::make_zoned(date::current_zone(), shared::strToLocalTime(matches[1].str(), "%m/%d/%Y - %H:%M:%S")).get_sys_time();
+    log.rest = matches[2].str();
+
+    return log;
+}
+
+const std::string serverConnectToken = "Connected to ";
+std::optional<std::string> parseServerConnect(const std::string& line) {
+    if (!boost::starts_with(line, serverConnectToken)) {
+        return std::nullopt;
+    }
+
+    return line.substr(serverConnectToken.size());
+}
+
+const std::string serverDisconnectToken = "ChangeGameUIState: CSGO_GAME_UI_STATE_INGAME -> CSGO_GAME_UI_STATE_MAINMENU";
+bool parseServerDisconnect(const std::string& line) {
+    return line.find(serverDisconnectToken) != std::string::npos;
+}
+
+}
+
+CsgoLogWatcher::~CsgoLogWatcher() {
+    // We know for a fact that we want to delete the log file because CSGO will reuse that file over and over.
+    if (_gameLogWatcher && fs::exists(_gameLogWatcher->path())) {
+        const auto logPath = _gameLogWatcher->path();
+        _gameLogWatcher.reset(nullptr);
+        fs::remove(logPath);
+    }
+}
 
 void CsgoLogWatcher::enableCsgoLogging() {
     const auto csgoPath = shared::filesystem::getCsgoInstallFolder();
@@ -69,7 +121,23 @@ CsgoLogWatcher::CsgoLogWatcher(const shared::TimePoint& timeThreshold):
 
 void CsgoLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
     for (const auto& l : lines) {
+        const auto log = parseCsgoLog(l);
+        if (!log.parsed) {
+            continue;
+        }
 
+        {
+            const auto server = parseServerConnect(log.rest);
+            if (server) {
+                notify(static_cast<int>(ECsgoLogEvents::Connect), log.tm, (void*)&server.value());
+                continue;
+            }
+        }
+
+        if (parseServerDisconnect(log.rest)) {
+            notify(static_cast<int>(ECsgoLogEvents::Disconnect), log.tm, nullptr);
+            continue;
+        }
     }
 }
 

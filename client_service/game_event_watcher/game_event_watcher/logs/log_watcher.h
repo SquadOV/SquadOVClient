@@ -32,6 +32,7 @@ public:
 
     void disableBatching() { _batchingEnabled = false; }
 
+    const std::filesystem::path& path() const { return _path; }
     void wait();
 private:
     void watchWorker();

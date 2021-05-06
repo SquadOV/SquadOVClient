@@ -22,4 +22,6 @@ private:
     bool _running = false;
 };
 
+bool isGameRunning(shared::EGame game);
+
 }
