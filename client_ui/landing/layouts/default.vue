@@ -225,7 +225,7 @@ export default class DefaultLayout extends Vue {
                 icon: '/assets/icons/aimlab-logo.png',
             },
             {
-                name: 'CS: GO',
+                name: 'CS:GO',
                 link: '/csgo/',
                 icon: '/assets/icons/csgo-logo.png',
             },

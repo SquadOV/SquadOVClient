@@ -27,6 +27,8 @@ export const TftLogPageId = 'tftLogs'
 export const TftMatchPageId = 'tftMatch'
 export const LolLogPageId = 'lolLogs'
 export const LolMatchPageId = 'lolMatch'
+export const CsgoLogPageId = 'csgoLogs'
+export const CsgoMatchPageId = 'csgoMatch'
 
 export const PerformancePageId = 'performance'
 export const VizStatsPageId = 'visualization'

@@ -5,6 +5,7 @@ import { LolPlayerMatchSummary, cleanLolPlayerMatchSummaryFromJson } from '@clie
 import { TftPlayerMatchSummary, cleanTftPlayerMatchSummaryFromJson } from '@client/js/tft/matches'
 import { WowChallenge, WowEncounter, WowArena, cleanWowChallengeFromJson, cleanWowEncounterFromJson, cleanWowArenaFromJson } from '@client/js/wow/matches'
 import { ValorantPlayerMatchSummary, cleanValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
+import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
 
 export interface BaseRecentMatch {
     matchUuid: string
@@ -28,6 +29,7 @@ export interface RecentMatch {
     wowChallenge?: WowChallenge
     wowEncounter?: WowEncounter
     wowArena?: WowArena
+    csgoMatch?: CsgoPlayerMatchSummary
 }
 
 export interface MatchFavoriteResponse {

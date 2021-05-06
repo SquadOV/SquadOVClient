@@ -45,7 +45,7 @@ export function gameToName(game: SquadOvGames): string {
         case SquadOvGames.WorldOfWarcraft:
             return 'World of Warcraft'
         case SquadOvGames.Csgo:
-            return 'CS: GO'
+            return 'CS:GO'
         case SquadOvGames.Unknown:
             return 'Unknown'
     }

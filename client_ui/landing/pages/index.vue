@@ -165,7 +165,7 @@ export default class Index extends Vue {
                 },
             },
             {
-                name: 'CS: GO',
+                name: 'CS:GO',
                 link: '/csgo/',
                 box: '/assets/csgo_box.jpg',
                 status: {

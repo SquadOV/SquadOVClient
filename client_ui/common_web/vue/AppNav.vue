@@ -210,6 +210,14 @@ export default class AppNav extends Vue {
                         },
                     },
                     {
+                        name: 'CS:GO',
+                        to: {
+                            name: pi.CsgoLogPageId,
+                            params: this.gameLogParams,
+                            query: this.gameLogQuery
+                        },
+                    },
+                    {
                         name: 'Hearthstone',
                         to: {
                             name: pi.HearthstoneLogPageId,
