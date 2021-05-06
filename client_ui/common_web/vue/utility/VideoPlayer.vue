@@ -27,6 +27,7 @@ import 'video.js/dist/video-js.css'
 import { Parser as M3u8Parser } from 'm3u8-parser'
 import VideoDrawOverlay from '@client/vue/utility/VideoDrawOverlay.vue'
 import { RCMessagePacket, RCMessageType, VodRemoteControlContext } from '@client/js/vods/remote'
+import playerjs from 'player.js'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -296,6 +297,9 @@ export default class VideoPlayer extends Vue {
                 1.5,
                 2.0
             ]
+        }, () => {
+            const adapter = new playerjs.VideoJSAdapter(this)
+            adapter.ready()
         })
 
         // Just in case videoUri and audioUri got set earlier.

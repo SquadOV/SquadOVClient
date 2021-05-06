@@ -12,4 +12,5 @@ declare module 'marked'
 declare module 'dompurify'
 declare module 'm3u8-parser'
 declare module 'streamsaver'
+declare module 'player.js'
 declare var SQUADOV_API_URL: string
