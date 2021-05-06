@@ -43,6 +43,7 @@
     "fork-ts-checker-webpack-plugin": "^5.2.0",
     "mini-css-extract-plugin": "^1.3.3",
     "node-sass": "^4.14.1",
+    "player.js": "^0.1.0",
     "regenerator-runtime": "^0.13.7",
     "sass": "^1.26.11",
     "sass-loader": "^10.0.2",
