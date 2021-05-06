@@ -298,7 +298,7 @@ export default class VideoPlayer extends Vue {
                 2.0
             ]
         }, () => {
-            const adapter = new playerjs.VideoJSAdapter(this)
+            const adapter = new playerjs.VideoJSAdapter(this.player)
             adapter.ready()
         })
 
