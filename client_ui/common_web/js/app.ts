@@ -66,6 +66,8 @@ const LolLogContainer = () => import('@client/vue/log/LolLogContainer.vue')
 const LolGameLog = () => import('@client/vue/log/LolGameLog.vue')
 const LolMatch = () => import('@client/vue/log/LolMatch.vue')
 
+const CsgoGameLog = () => import('@client/vue/log/CsgoGameLog.vue')
+
 const Performance = () => import('@client/vue/Performance.vue')
 const PerformanceComponentChooser = () => import('@client/vue/performance/PerformanceComponentChooser.vue')
 const VizStats = () => import('@client/vue/performance/VizStats.vue')
@@ -219,6 +221,14 @@ const baseRoutes : any[] = [
                         path: '',
                         name: pi.LogPageId,
                         component: LogGameChooser
+                    },
+                    {
+                        path: 'csgo',
+                        name: pi.CsgoLogPageId,
+                        component: CsgoGameLog,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                        })
                     },
                     {
                         path: 'valorant/account/:account?',

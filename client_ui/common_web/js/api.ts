@@ -151,6 +151,7 @@ interface ChangeForgottenPasswordInput {
 
 import { storeSessionCookie, getSessionId } from '@client/js/session'
 import { WowDeathRecap, cleanWowDeathRecapFromJson } from './wow/deaths'
+import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1128,6 +1129,23 @@ class ApiClient {
 
     removeVodWatchlist(videoUuid: string): Promise<void> {
         return axios.delete(`v1/vod/${videoUuid}/list/watch`, this.createWebAxiosConfig())
+    }
+
+    listCsgoMatchesForPlayer(params : {next : string | null, userId: number, start : number, end : number}) : Promise<ApiData<HalResponse<CsgoPlayerMatchSummary[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/csgo/user/${params.userId}/match`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<CsgoPlayerMatchSummary[]>>) => {
+            resp.data.data.forEach(cleanCsgoPlayerMatchSummaryFromJson)
+            return resp
+        })
     }
 }
 

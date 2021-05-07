@@ -134,6 +134,17 @@
             >
             </wow-arena-summary>
 
+            <csgo-player-match-summary-display
+                class="flex-grow-1 recent-match-item"
+                v-else-if="!!match.csgoMatch && match.base.game == SquadOvGames.Csgo"
+                :match="match.csgoMatch"
+                :user-id="match.base.userId"
+                mini
+                fill
+                :disable-link="disableClick"
+            >
+            </csgo-player-match-summary-display>
+
             <hearthstone-match-summary-display
                 class="flex-grow-1 recent-match-item"
                 v-else-if="match.base.game == SquadOvGames.Hearthstone"
@@ -163,6 +174,7 @@ import ValorantPlayerMatchSummaryDisplay from '@client/vue/utility/valorant/Valo
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
+import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 
 @Component({
@@ -176,6 +188,7 @@ import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
         WowEncounterSummary,
         WowArenaSummary,
         VideoPreviewPlayer,
+        CsgoPlayerMatchSummaryDisplay,
     }
 })
 export default class RecentMatchDisplay extends Vue {
