@@ -53,6 +53,13 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
+                        <csgo-event-round-display
+                            :match="matchData"
+                            :match-user-id="selectedMatchUserId"
+                            :current-round="currentRound"
+                            :style="roundEventsStyle"
+                        >
+                        </csgo-event-round-display>
                     </v-col>
                 </v-row>
 
@@ -90,6 +97,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import CsgoVodPicker from '@client/vue/utility/csgo/CsgoVodPicker.vue'
 import CsgoRoundTimeline from '@client/vue/utility/csgo/CsgoRoundTimeline.vue'
+import CsgoEventRoundDisplay from '@client/vue/utility/csgo/CsgoEventRoundDisplay.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
@@ -100,6 +108,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         CsgoPlayerMatchSummaryDisplay,
         CsgoVodPicker,
         CsgoRoundTimeline,
+        CsgoEventRoundDisplay,
         MatchShareButton,
         MatchFavoriteButton,
     }
@@ -136,6 +145,12 @@ export default class CsgoMatch extends Vue {
             return null
         }
         return this.match.summary.steamId
+    }
+
+    get roundEventsStyle() : any {
+        return {
+            'height': `${this.currentPlayerHeight + 64}px`,
+        }
     }
 
     @Watch('currentSteamId')

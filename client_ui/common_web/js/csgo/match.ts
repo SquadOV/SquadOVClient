@@ -8,6 +8,7 @@ import {
     CsgoRoundPlayerStats,
     CsgoEventPlayer,
     CsgoRoundKill,
+    CsgoBombStatus,
 } from '@client/js/csgo/events'
 import { SteamAccount } from '@client/js/steam/account'
 
@@ -31,6 +32,18 @@ export class CsgoEventRoundWrapper {
     _userKills: Map<number, CsgoRoundKill[]>
     _userDeaths: Map<number, CsgoRoundKill[]>
     _userAssists: Map<number, CsgoRoundKill[]>
+
+    get hasBombPlant(): boolean {
+        return !!this._r.tmBombPlant && this._r.bombPlantSite !== null && this._r.bombPlantUser !== null
+    }
+
+    get hasBombDefuse(): boolean {
+        return !!this._r.tmBombEvent && this._r.bombEventUser !== null && this._r.bombState == CsgoBombStatus.Defused
+    }
+
+    get hasBombExplode(): boolean {
+        return !!this._r.tmBombEvent && this._r.bombState == CsgoBombStatus.Exploded
+    }
 
     addKill(u: number, k: CsgoRoundKill) {
         if (!this._userKills.has(u)) {
@@ -145,6 +158,10 @@ export class CsgoFullMatchDataWrapper {
         })
     }
 
+    round(num: number): CsgoEventRoundWrapper | undefined {
+        return this._wrappedRounds.get(num)
+    }
+
     // Use the last round to obtain team information on who's friendly and who's not.
     friendlySteamIds(inputSteamId: number): number[] {
         if (this.rounds.length === 0) {
@@ -186,7 +203,10 @@ export class CsgoFullMatchDataWrapper {
             .filter((ele: number| null) => ele !== null)
     }
 
-    steamAccount(steamId: number): SteamAccount | undefined {
+    steamAccount(steamId: number | null): SteamAccount | undefined {
+        if (steamId === null) {
+            return undefined
+        }
         return this._playerMap.get(steamId)?.steamAccount
     }
 

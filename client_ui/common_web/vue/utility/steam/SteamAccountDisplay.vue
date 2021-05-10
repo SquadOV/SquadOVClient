@@ -1,12 +1,24 @@
 <template>
-    <v-img
-        :src="src"
-        :width="width"
-        :height="height"
-        :max-width="width"
-        :max-height="height"
-    >
-    </v-img>
+    <div>
+        <v-tooltip
+            offset-y bottom
+        >
+            <template v-slot:activator="{on, attrs}">
+                <v-img
+                    :src="src"
+                    :width="width"
+                    :height="height"
+                    :max-width="width"
+                    :max-height="height"
+                    v-on="on"
+                    v-bind="attrs"
+                >
+                </v-img>
+            </template>
+            
+            <span v-if="!!account">{{ account.name }}</span>
+        </v-tooltip>
+    </div>
 </template>
 
 <script lang="ts">

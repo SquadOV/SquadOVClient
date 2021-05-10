@@ -80,7 +80,7 @@
                                 <span class="font-weight-bold">Bomb Planted</span>
 
                                 <v-img
-                                    src="assets/valorant/bomb/plant.png"
+                                    :src="$root.generateAssetUri('assets/valorant/bomb/plant.png')"
                                     class="flex-grow-0"
                                 >
                                 </v-img>
@@ -97,7 +97,7 @@
                                 <span class="font-weight-bold">Bomb Defused</span>
 
                                 <v-img
-                                    src="assets/valorant/bomb/defuse.png"
+                                    :src="$root.generateAssetUri('assets/valorant/bomb/defuse.png')"
                                     class="flex-grow-0"
                                 >
                                 </v-img>
@@ -154,8 +154,6 @@ interface RoundEvent {
     plant? : ValorantMatchPlayerWrapper
     defuse? : ValorantMatchPlayerWrapper
 }
-
-const offsetMs = 1500
 
 @Component({
     components: {
@@ -299,7 +297,7 @@ export default class ValorantRoundEvents extends Vue {
 
     goToEvent(e : RoundEvent) {
         // Offset so we can actually see the action happen.
-        this.$emit('go-to-event', new Date(this.playTime!.getTime() + e.roundTimeMs - offsetMs))
+        this.$emit('go-to-event', new Date(this.playTime!.getTime() + e.roundTimeMs))
     }
 }
 

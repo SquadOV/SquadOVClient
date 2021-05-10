@@ -18,6 +18,16 @@ export enum CsgoBombSite {
     SiteUnknown
 }
 
+export function bombSiteToString(c: CsgoBombSite): string {
+    if (c == CsgoBombSite.SiteA) {
+        return 'A'
+    } else if (c == CsgoBombSite.SiteB) {
+        return 'B'
+    } else {
+        return ''
+    }
+}
+
 export enum CsgoTeam {
     CT,
     Terrorist,
