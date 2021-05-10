@@ -17,6 +17,7 @@ export interface CsgoPlayerMatchSummary {
     damagePerRound: number
     friendlyRounds: number
     enemyRounds: number
+    steamId: number
 }
 
 export function cleanCsgoPlayerMatchSummaryFromJson(s: CsgoPlayerMatchSummary): CsgoPlayerMatchSummary {

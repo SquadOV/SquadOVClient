@@ -67,6 +67,7 @@ const LolGameLog = () => import('@client/vue/log/LolGameLog.vue')
 const LolMatch = () => import('@client/vue/log/LolMatch.vue')
 
 const CsgoGameLog = () => import('@client/vue/log/CsgoGameLog.vue')
+const CsgoMatch = () => import('@client/vue/log/CsgoMatch.vue')
 
 const Performance = () => import('@client/vue/Performance.vue')
 const PerformanceComponentChooser = () => import('@client/vue/performance/PerformanceComponentChooser.vue')
@@ -443,6 +444,15 @@ const baseRoutes : any[] = [
                         }),
                     }
                 ],
+            },
+            {
+                path: 'match/csgo/:matchUuid',
+                name: pi.CsgoMatchPageId,
+                component: CsgoMatch,
+                props: (route: any) => ({
+                    matchUuid: route.params.matchUuid,
+                    userId: parseInt(route.query.userId)
+                }),
             },
             {
                 path: 'match/valorant/:matchUuid',

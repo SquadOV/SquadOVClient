@@ -69,7 +69,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary.ts'
+import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
 import {
     getGenericWinColor,
     getGenericLossColor,

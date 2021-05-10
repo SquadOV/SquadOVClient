@@ -71,6 +71,12 @@ export interface TftMatchAccessibleVods {
     userMapping: {[uuid: string] : string | undefined}
 }
 
+export interface CsgoMatchAccessibleVods {
+    vods: VodAssociation[]
+    // uuid to steam id
+    userMapping: {[uuid: string] : number | undefined}
+}
+
 interface VodSegment {
     uri: string
     duration: number

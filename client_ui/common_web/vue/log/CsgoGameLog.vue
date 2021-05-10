@@ -47,7 +47,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
-import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary.ts'
+import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 

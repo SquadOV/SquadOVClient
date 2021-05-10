@@ -26,7 +26,8 @@ import {
     ClipReact,
     ClipComment,
     cleanClipCommentFromJson,
-    VodFavoriteResponse
+    VodFavoriteResponse,
+    CsgoMatchAccessibleVods
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -150,8 +151,9 @@ interface ChangeForgottenPasswordInput {
 }
 
 import { storeSessionCookie, getSessionId } from '@client/js/session'
-import { WowDeathRecap, cleanWowDeathRecapFromJson } from './wow/deaths'
+import { WowDeathRecap, cleanWowDeathRecapFromJson } from '@client/js/wow/deaths'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
+import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/csgo/match'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1144,6 +1146,20 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<CsgoPlayerMatchSummary[]>>) => {
             resp.data.data.forEach(cleanCsgoPlayerMatchSummaryFromJson)
+            return resp
+        })
+    }
+
+    getCsgoMatchData(matchUuid: string, userId: number): Promise<ApiData<CsgoFullMatchData>> {
+        return axios.get(`v1/csgo/user/${userId}/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<CsgoFullMatchData>) => {
+            cleanCsgoFullMatchDataFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getCsgoMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<CsgoMatchAccessibleVods>> {
+        return axios.get(`v1/csgo/user/${userId}/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
+            resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
     }
