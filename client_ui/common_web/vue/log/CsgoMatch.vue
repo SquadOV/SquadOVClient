@@ -64,7 +64,7 @@
                 </v-row>
 
                 <!-- Round Timeline -->
-                <v-row class="my-4">
+                <v-row class="mt-4">
                     <csgo-round-timeline
                         :match="matchData"
                         :match-user-id="selectedMatchUserId"
@@ -74,7 +74,7 @@
                 </v-row>
 
                 <!-- Round Scoreboard -->
-                <v-row no-gutters class="my-4">
+                <v-row no-gutters class="mt-4">
                     <v-col cols="6">
                         <csgo-team-round-scoreboard
                             :match="matchData"
@@ -98,8 +98,17 @@
                 </v-row>
 
                 <!-- Match Scoreboard and player card -->
-                <v-row class="my-4">
+                <v-row class="mt-4">
+                    <v-col cols="6">
+                        <csgo-match-scoreboard
+                            :match="matchData"
+                            :match-user-id.sync="selectedMatchUserId"
+                        >
+                        </csgo-match-scoreboard>
+                    </v-col>
 
+                    <v-col cols="6">
+                    </v-col>
                 </v-row>
             </v-container>
         </template>
@@ -124,6 +133,7 @@ import CsgoVodPicker from '@client/vue/utility/csgo/CsgoVodPicker.vue'
 import CsgoRoundTimeline from '@client/vue/utility/csgo/CsgoRoundTimeline.vue'
 import CsgoEventRoundDisplay from '@client/vue/utility/csgo/CsgoEventRoundDisplay.vue'
 import CsgoTeamRoundScoreboard from '@client/vue/utility/csgo/CsgoTeamRoundScoreboard.vue'
+import CsgoMatchScoreboard from '@client/vue/utility/csgo/CsgoMatchScoreboard.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
@@ -136,6 +146,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         CsgoRoundTimeline,
         CsgoEventRoundDisplay,
         CsgoTeamRoundScoreboard,
+        CsgoMatchScoreboard,
         MatchShareButton,
         MatchFavoriteButton,
     }

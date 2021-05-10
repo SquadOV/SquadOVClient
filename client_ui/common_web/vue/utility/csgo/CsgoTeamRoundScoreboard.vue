@@ -43,6 +43,7 @@
                     :has-defuse="item.hasDefuse"
                     :has-helmet="item.hasHelmet"
                     :armor="item.armor"
+                    style="height: 56px;"
                 >
                 </csgo-loadout-display>
             </template>

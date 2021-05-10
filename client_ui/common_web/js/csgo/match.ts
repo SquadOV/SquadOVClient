@@ -172,6 +172,41 @@ export class CsgoFullMatchDataWrapper {
         })
     }
 
+    playerStats(uid: number): CsgoEventPlayer | undefined {
+        let steamId = this._userIdToSteamId.get(uid)
+        if (steamId === undefined) {
+            return undefined
+        }
+
+        return this._playerMap.get(steamId)
+    }
+
+    adr(uid: number): number {
+        let damage = 0
+        let rounds = 0
+        for (let r of this.rounds) {
+            for (let d of r._r.damage) {
+                if (d.attacker === uid) {
+                    damage += d.damageHealth
+                }
+            }
+            rounds += 1
+        }
+        return damage / rounds
+    }
+
+    kdaOrderedPlayers(): number[] {
+       return Array.from(this._playerMap.values())
+        .sort((a: CsgoEventPlayer, b: CsgoEventPlayer) => {
+            let ak = (a.kills + a.assists) / a.deaths
+            let bk = (b.kills + b.assists) / b.deaths
+            return bk - ak
+        })
+        .map((ele: CsgoEventPlayer) => {
+            return ele.userId
+        })
+    }
+
     round(num: number): CsgoEventRoundWrapper | undefined {
         return this._wrappedRounds.get(num)
     }
