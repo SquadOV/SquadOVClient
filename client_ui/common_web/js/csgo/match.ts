@@ -45,6 +45,20 @@ export class CsgoEventRoundWrapper {
         return !!this._r.tmBombEvent && this._r.bombState == CsgoBombStatus.Exploded
     }
 
+    orderedTeamPlayers(t: CsgoTeam): number[] {
+        return Array.from(this._userStats.values())
+            .filter((ele: CsgoRoundPlayerStats) => {
+                return ele.team === t
+            })
+            .sort((a: CsgoRoundPlayerStats, b: CsgoRoundPlayerStats) => {
+                // we want a consistent ordering between rounds.
+                return a.userId - b.userId
+            })
+            .map((ele: CsgoRoundPlayerStats) => {
+                return ele.userId
+            })
+    }
+
     addKill(u: number, k: CsgoRoundKill) {
         if (!this._userKills.has(u)) {
             this._userKills.set(u, [])

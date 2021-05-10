@@ -73,7 +73,31 @@
                     </csgo-round-timeline>
                 </v-row>
 
-                <!-- Scoreboard and player summary -->
+                <!-- Round Scoreboard -->
+                <v-row no-gutters class="my-4">
+                    <v-col cols="6">
+                        <csgo-team-round-scoreboard
+                            :match="matchData"
+                            :current-round="currentRound"
+                            :match-user-id="selectedMatchUserId"
+                            :team="currentTeam"
+                        >
+                        </csgo-team-round-scoreboard>
+                    </v-col>
+
+                    <v-col cols="6">
+                        <csgo-team-round-scoreboard
+                            :match="matchData"
+                            :current-round="currentRound"
+                            :match-user-id="selectedMatchUserId"
+                            :team="oppositeTeam"
+                            mirror
+                        >
+                        </csgo-team-round-scoreboard>
+                    </v-col>
+                </v-row>
+
+                <!-- Match Scoreboard and player card -->
                 <v-row class="my-4">
 
                 </v-row>
@@ -89,7 +113,8 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { CsgoFullMatchData, CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
+import { CsgoFullMatchData, CsgoFullMatchDataWrapper, CsgoEventRoundWrapper } from '@client/js/csgo/match'
+import { CsgoTeam, getCsgoOppositeTeam } from '@client/js/csgo/events'
 import { VodAssociation } from '@client/js/squadov/vod'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -98,6 +123,7 @@ import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMa
 import CsgoVodPicker from '@client/vue/utility/csgo/CsgoVodPicker.vue'
 import CsgoRoundTimeline from '@client/vue/utility/csgo/CsgoRoundTimeline.vue'
 import CsgoEventRoundDisplay from '@client/vue/utility/csgo/CsgoEventRoundDisplay.vue'
+import CsgoTeamRoundScoreboard from '@client/vue/utility/csgo/CsgoTeamRoundScoreboard.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
@@ -109,6 +135,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         CsgoVodPicker,
         CsgoRoundTimeline,
         CsgoEventRoundDisplay,
+        CsgoTeamRoundScoreboard,
         MatchShareButton,
         MatchFavoriteButton,
     }
@@ -173,6 +200,24 @@ export default class CsgoMatch extends Vue {
 
     mounted() {
         this.refreshData()
+    }
+
+    get currentTeam(): CsgoTeam {
+        if (this.selectedMatchUserId === null || !this.currentRoundData) {
+            return CsgoTeam.Spectate
+        }
+        return this.currentRoundData.userTeam(this.selectedMatchUserId)
+    }
+
+    get oppositeTeam(): CsgoTeam {
+        return getCsgoOppositeTeam(this.currentTeam)
+    }
+
+    get currentRoundData(): CsgoEventRoundWrapper | undefined {
+        if (!this.matchData) {
+            return undefined
+        }
+        return this.matchData.round(this.currentRound)
     }
 }
 

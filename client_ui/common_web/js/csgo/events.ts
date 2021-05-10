@@ -34,6 +34,16 @@ export enum CsgoTeam {
     Spectate
 }
 
+export function getCsgoOppositeTeam(t: CsgoTeam): CsgoTeam {
+    if (t == CsgoTeam.CT) {
+        return CsgoTeam.Terrorist
+    } else if (t == CsgoTeam.Terrorist) {
+        return CsgoTeam.CT
+    } else {
+        return CsgoTeam.Spectate
+    }
+}
+
 export enum CsgoRoundWinReason {
     TargetBombed = 1,
     BombDefused = 7,
@@ -94,6 +104,28 @@ export enum CsgoWeapon {
     Decoy,
     Molotov,
     Incendiary,
+}
+
+export function getCsgoPrimaryWeapon(w: CsgoWeapon[]): CsgoWeapon {
+    let candidates = w.filter((a: CsgoWeapon) => a >= CsgoWeapon.Mp9 && a <= CsgoWeapon.Negev)
+    if (candidates.length > 0) {
+        return candidates[0]
+    } else {
+        return getCsgoSidearmWeapon(w)
+    }
+}
+
+export function getCsgoSidearmWeapon(w: CsgoWeapon[]): CsgoWeapon {
+    let candidates = w.filter((a: CsgoWeapon) => a >= CsgoWeapon.P2000 && a <= CsgoWeapon.R8)
+    if (candidates.length > 0) {
+        return candidates[0]
+    } else {
+        return CsgoWeapon.Knife
+    }
+}
+
+export function getCsgoSecondaryWeapons(w: CsgoWeapon[]): CsgoWeapon[] {
+    return w.filter((a: CsgoWeapon) => a >= CsgoWeapon.He || a == CsgoWeapon.Taser)
 }
 
 export enum CsgoHitgroup {

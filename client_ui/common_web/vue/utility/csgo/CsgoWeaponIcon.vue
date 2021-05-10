@@ -1,11 +1,11 @@
 <template>
-    <v-img
+    <img
         v-if="isValid"
-        :height="height"
-        :max-height="height"
+        :style="style"
         :src="$root.generateAssetUri(src)"
+        contain
     >
-    </v-img>
+    </img>
 </template>
 
 <script lang="ts">
@@ -22,6 +22,13 @@ export default class CsgoTeamIcon extends Vue {
 
     @Prop({default: 48})
     height!: number
+
+    get style() :any {
+        return {
+            'height': `${this.height}px`,
+            'width': 'auto',
+        }
+    }
 
     get weaponIcon(): string {
         switch (this.weapon) {

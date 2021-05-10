@@ -282,7 +282,37 @@ export default class CsgoEventRoundDisplay extends Vue {
     eventStyling(e : RoundEvent) : any {
         // Left hand border (yellow) if this event directly concerns the selected player.
         // Background gradient (red vs green) for whether the event benefits the selected player.
-        return {}
+        let style: any = {}
+
+        if (this.matchUserId !== null && !!this.roundData) {
+            let isSelf = false
+            let isBenefit = false
+
+            if (!!e.kill) {
+                isSelf = e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId || e.kill.victim === this.matchUserId
+                isBenefit = e.kill.victim !== null && this.team === this.roundData.userTeam(e.kill.victim)
+            } else if (!!e.plant) {
+                isSelf = e.plant.user === this.matchUserId
+                isBenefit = this.team == this.roundData.userTeam(e.plant.user)
+            } else if (!!e.defuse) {
+                isSelf = e.defuse === this.matchUserId
+                isBenefit = this.team === this.roundData.userTeam(e.defuse) 
+            } else if (!!e.explode) {
+                isSelf = false
+                isBenefit = this.team === CsgoTeam.Terrorist
+            }
+
+            if (isSelf) {
+                style['border-left'] = '5px solid #FFD700'
+            } else {
+                style['border-left'] = '5px solid transparent'
+            }
+
+            let gradientColor: Color = isBenefit ? getGenericWinColor() : getGenericLossColor()
+            style['background'] = `linear-gradient(90deg, rgba(${gradientColor.r},${gradientColor.g},${gradientColor.b},0.0) 70%, rgba(${gradientColor.r},${gradientColor.g},${gradientColor.b},0.5) 100%)`
+        }
+
+        return style
     }
 
     userStyling(userId: number): any {
