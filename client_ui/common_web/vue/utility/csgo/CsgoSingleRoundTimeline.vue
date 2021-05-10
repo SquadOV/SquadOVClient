@@ -129,7 +129,7 @@ export default class CsgoSingleRoundTimeline extends Vue {
 
         return {
             'background-color': colorToCssString(this.userTeam === CsgoTeam.CT ? getCsgoCtColor() : getCsgoTerroristColor()),
-            'border-top': `2px solid ${colorToCssString(isWinner ? getGenericWinColor() : getGenericLossColor())}`
+            'border-top': `2px solid ${colorToCssString(isWinner ? getGenericWinColor() : getGenericLossColor())}`,
             'height': '36px',
             'max-height': '36px',
         }
