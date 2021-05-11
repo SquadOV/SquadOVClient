@@ -162,6 +162,14 @@
             <v-tab>
                 H2H
             </v-tab>
+
+            <v-tab-item>
+                <csgo-head-to-head-display
+                    :match="match"
+                    :match-user-id="matchUserId"
+                >
+                </csgo-head-to-head-display>
+            </v-tab-item>
         </v-tabs>
     </div>
 </template>
@@ -179,6 +187,7 @@ import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.v
 import GenericStat from '@client/vue/utility/GenericStat.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import CsgoWeaponIcon from '@client/vue/utility/csgo/CsgoWeaponIcon.vue'
+import CsgoHeadToHeadDisplay from '@client/vue/utility/csgo/CsgoHeadToHeadDisplay.vue'
 
 interface CsgoStats {
     kda: number
@@ -209,6 +218,7 @@ interface CsgoWeaponStats {
         GenericStat,
         ValorantHitTracker,
         CsgoWeaponIcon,
+        CsgoHeadToHeadDisplay,
     }
 })
 export default class CsgoPlayerMatchCard extends Vue {

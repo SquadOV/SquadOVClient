@@ -10,6 +10,7 @@
                     :height="height"
                     :max-width="width"
                     :max-height="height"
+                    contain
                     v-on="on"
                     v-bind="attrs"
                 >
