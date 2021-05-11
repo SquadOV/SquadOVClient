@@ -26,7 +26,7 @@
 
         <v-btn
             tile
-            :class="`round-button flex-grow-1 flex-shrink-1 ${ (currentRound == roundData.roundNum) ? 'selected-round' : '' }`"
+            :class="`round-button full-width flex-grow-1 flex-shrink-1 ${ (currentRound == roundData.roundNum) ? 'selected-round' : '' }`"
             :style="style"
             @click="$emit('update:currentRound', roundData.roundNum)"
         >

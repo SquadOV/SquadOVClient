@@ -216,6 +216,14 @@ export default class CsgoMatch extends Vue {
         })
     }
 
+    @Watch('matchData')
+    onNewMatch() {
+        if (!this.matchData || this.matchData.rounds.length == 0) {
+            return
+        }
+        this.currentRound = this.matchData.rounds[0].roundNum
+    }
+
     mounted() {
         this.refreshData()
     }

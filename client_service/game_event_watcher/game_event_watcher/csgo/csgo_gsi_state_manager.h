@@ -85,6 +85,11 @@ struct CsgoMatchState {
     bool isSupported() const;
 };
 
+struct CsgoTrackedPlayerState {
+    CsgoPlayerState match;
+    CsgoPlayerRoundState round;
+};
+
 enum class ECsgoGsiEvents {
     MatchStart,
     MatchEnd
@@ -102,7 +107,7 @@ public:
 private:
     void handleMapDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiMapPacket>& prev, const std::optional<CsgoGsiMapPacket>& now, const CsgoGsiPacket& packet);
     void handlePlayerDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiPlayerPacket>& prev, const std::optional<CsgoGsiPlayerPacket>& now, const CsgoGsiPacket& packet);
-    void handleRoundDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiRoundPacket>& prev, const std::optional<CsgoGsiRoundPacket>& now, const CsgoGsiPacket& packet);
+    bool handleRoundDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiRoundPacket>& prev, const std::optional<CsgoGsiRoundPacket>& now, const CsgoGsiPacket& packet);
 
     void startMatch(const shared::TimePoint& tm);
     void endMatch(const shared::TimePoint& tm);
@@ -115,6 +120,9 @@ private:
     std::mutex _stateMutex;
     int _latestRound = -1;
     int64_t _delegateId = 0;
+
+    CsgoTrackedPlayerState _tracked;
+    void updateTrackedUserState(const shared::TimePoint& tm, const CsgoGsiPacket& packet);
 };
 
 }

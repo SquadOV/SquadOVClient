@@ -74,6 +74,7 @@
 
                             <template v-if="!!eve.plant">
                                 <steam-account-display
+                                    v-if="eve.plant.user !== null"
                                     :width="32"
                                     :height="32"
                                     :account="match.steamAccount(match.userIdToSteamId(eve.plant.user))"
@@ -81,7 +82,8 @@
                                 >
                                 </steam-account-display>
 
-                                <span class="font-weight-bold">Bomb Planted at {{ bombSiteToString(eve.plant.site) }}</span>
+                                <span class="font-weight-bold" v-if="eve.plant.site !== null">Bomb Planted at {{ bombSiteToString(eve.plant.site) }}</span>
+                                <span class="font-weight-bold" v-else>Bomb Planted</span>
 
                                 <v-img
                                     class="ml-2"
@@ -97,10 +99,11 @@
 
                             <template v-if="!!eve.defuse">
                                 <steam-account-display
+                                    v-if="eve.defuse.user !== null"
                                     :width="32"
                                     :height="32"
-                                    :account="match.steamAccount(match.userIdToSteamId(eve.defuse))"
-                                    :style="userStyling(eve.defuse)"
+                                    :account="match.steamAccount(match.userIdToSteamId(eve.defuse.user))"
+                                    :style="userStyling(eve.defuse.user)"
                                 >
                                 </steam-account-display>
 
@@ -159,15 +162,19 @@ import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.v
 import CsgoRoundKillDisplay from '@client/vue/utility/csgo/CsgoRoundKillDisplay.vue'
 
 interface BombPlant {
-    user: number
-    site: CsgoBombSite
+    user: number | null
+    site: CsgoBombSite | null
+}
+
+interface BombDefuse {
+    user: number | null
 }
 
 interface RoundEvent {
     roundTimeMs: number
     kill?: CsgoRoundKill
     plant?: BombPlant
-    defuse?: number
+    defuse?: BombDefuse
     explode?: boolean
 }
 
@@ -215,8 +222,8 @@ export default class CsgoEventRoundDisplay extends Vue {
             events.push({
                 roundTimeMs: this.roundData._r.tmBombPlant!.getTime() - this.startTime.getTime(),
                 plant: {
-                    user: this.roundData._r.bombPlantUser!,
-                    site: this.roundData._r.bombPlantSite!,
+                    user: this.roundData._r.bombPlantUser,
+                    site: this.roundData._r.bombPlantSite,
                 }
             })
         }
@@ -225,7 +232,9 @@ export default class CsgoEventRoundDisplay extends Vue {
         if (this.roundData.hasBombDefuse) {
             events.push({
                 roundTimeMs: this.roundData._r.tmBombEvent!.getTime() - this.startTime.getTime(),
-                defuse: this.roundData._r.bombEventUser!,
+                defuse: {
+                    user: this.roundData._r.bombEventUser,
+                }
             })
         } else if (this.roundData.hasBombExplode) {
             events.push({
@@ -290,13 +299,14 @@ export default class CsgoEventRoundDisplay extends Vue {
 
             if (!!e.kill) {
                 isSelf = e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId || e.kill.victim === this.matchUserId
-                isBenefit = e.kill.victim !== null && this.team === this.roundData.userTeam(e.kill.victim)
+                // Need to check for killer and assister to handle the case where we're only getting data from GSI and don't necessarily have a victim to team check.
+                isBenefit = (e.kill.victim !== null && this.team === this.roundData.userTeam(e.kill.victim)) || e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId
             } else if (!!e.plant) {
                 isSelf = e.plant.user === this.matchUserId
-                isBenefit = this.team == this.roundData.userTeam(e.plant.user)
+                isBenefit = this.team === CsgoTeam.Terrorist
             } else if (!!e.defuse) {
-                isSelf = e.defuse === this.matchUserId
-                isBenefit = this.team === this.roundData.userTeam(e.defuse) 
+                isSelf = e.defuse.user === this.matchUserId
+                isBenefit = this.team === CsgoTeam.CT
             } else if (!!e.explode) {
                 isSelf = false
                 isBenefit = this.team === CsgoTeam.Terrorist

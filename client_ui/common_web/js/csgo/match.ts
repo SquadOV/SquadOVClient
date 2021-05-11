@@ -34,11 +34,11 @@ export class CsgoEventRoundWrapper {
     _userAssists: Map<number, CsgoRoundKill[]>
 
     get hasBombPlant(): boolean {
-        return !!this._r.tmBombPlant && this._r.bombPlantSite !== null && this._r.bombPlantUser !== null
+        return !!this._r.tmBombPlant
     }
 
     get hasBombDefuse(): boolean {
-        return !!this._r.tmBombEvent && this._r.bombEventUser !== null && this._r.bombState == CsgoBombStatus.Defused
+        return !!this._r.tmBombEvent && this._r.bombState == CsgoBombStatus.Defused
     }
 
     get hasBombExplode(): boolean {
@@ -169,6 +169,8 @@ export class CsgoFullMatchDataWrapper {
     get rounds(): CsgoEventRoundWrapper[] {
         return this._d.container.rounds.map((ele: CsgoEventRound) => {
             return this._wrappedRounds.get(ele.roundNum)!
+        }).sort((a: CsgoEventRoundWrapper, b: CsgoEventRoundWrapper) => {
+            return a.roundNum - b.roundNum
         })
     }
 

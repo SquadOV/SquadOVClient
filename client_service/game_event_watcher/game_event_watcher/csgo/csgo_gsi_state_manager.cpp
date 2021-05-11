@@ -63,6 +63,7 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
         _matchState->mode = packet.map->mode.value_or("Unknown");
 
         if (!_matchState->isSupported()) {
+            LOG_WARNING("Unsupported CSGO mode: " << _matchState->mode << std::endl);
             // Ideally we'd like to support all possible game modes.
             _matchState.reset();
             return;
@@ -72,6 +73,8 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
             const auto phase = packet.map->phase.value();
             handleNewMatchPhase(tm, phase);
         }
+
+        _tracked = {};
     }
 
     if (!_matchState) {
@@ -79,8 +82,9 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     }
 
     // Must be first so that we can know accurately which round we're on.
+    bool freezeLoadout = false;
     if (packet.previous) {
-        handleRoundDiff(tm, packet.previous->round, packet.round, packet);
+        freezeLoadout = handleRoundDiff(tm, packet.previous->round, packet.round, packet);
     }
 
     // We need to detect the bomb plant separately as the planted phase doesn't
@@ -98,6 +102,27 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     if (packet.previous) {
         handlePlayerDiff(tm, packet.previous->player, packet.player, packet);
     }
+
+    // Copy player state into our own CsgoTrackedPlayerState structure.
+    // We want to have this happen AFTER handlePlayerDiff because that function
+    // will compare against this struct to get an accurate read on the number
+    // of kills/deaths/assists that actually happened.
+    updateTrackedUserState(tm, packet);
+
+    if (freezeLoadout) {
+        // This indicates the start of the play round.
+        auto roundIt = _matchState->rounds.find(_latestRound);
+        if (roundIt != _matchState->rounds.end()) {
+            roundIt->second.playTime = tm;
+            // Lock the user's loadout for the round at this point. We might miss stuff
+            // if they buy after the round starts but that should be fine.
+            if (packet.player && _localSteamId) {
+                CsgoPlayerRoundState state = _tracked.round;
+                state.steamId = _localSteamId.value();
+                roundIt->second.players[_localSteamId.value()] = state;
+            }
+        }
+    }
     
     // Must be last so that we capture all information BEFORE we end the match.
     if (packet.previous) {
@@ -108,6 +133,61 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     // quits in the middle of the match back to the menu.
     if (_matchState && packet.player && packet.player->activity.value_or("") == "menu") {
         endMatch(tm);
+    }
+}
+
+void CsgoGsiStateManager::updateTrackedUserState(const shared::TimePoint& tm, const CsgoGsiPacket& packet) {
+    if (!packet.player) {
+        return;
+    }
+
+    if (!packet.player->steamId || packet.player->steamId.value() != _localSteamId.value()) {
+        return;
+    }
+
+    if (packet.player->matchStats) {
+        const auto ms = packet.player->matchStats.value();
+        if (ms.kills) {
+            _tracked.match.kills = ms.kills.value();
+        }
+
+        if (ms.assists) {
+            _tracked.match.assists = ms.assists.value();
+        }
+
+        if (ms.deaths) {
+            _tracked.match.deaths = ms.deaths.value();
+        }
+    }
+
+    if (packet.player->state) {
+        const auto& state = packet.player->state.value();
+        if (state.money) {
+            _tracked.round.money = state.money.value();
+        }
+
+        if (state.equipmentValue) {
+            _tracked.round.equipmentValue = state.equipmentValue.value();
+        }
+
+        if (state.armor) {
+            _tracked.round.armor = state.armor.value();
+        }
+
+        if (state.helmet) {
+            _tracked.round.helmet = state.helmet.value();
+        }
+    }
+
+    if (packet.player->team) {
+        _tracked.round.team = packet.player->team.value();
+    }
+
+    if (!packet.player->weapons.empty()) {
+        _tracked.round.weapons.clear();
+        for (const auto& w : packet.player->weapons) {
+            _tracked.round.weapons.push_back(CsgoWeaponState::from(w));
+        }
     }
 }
 
@@ -144,6 +224,11 @@ void CsgoGsiStateManager::handlePlayerDiff(const shared::TimePoint& tm, const st
         return;
     }
 
+    // If for some reason the previous player wasn't us, we want to ignore the differences as well.
+    if (prev->steamId) {
+        return;
+    }
+
     auto it = _matchState->players.find(_localSteamId.value());
     if (it == _matchState->players.end()) {
         CsgoPlayerState newState = {};
@@ -164,64 +249,49 @@ void CsgoGsiStateManager::handlePlayerDiff(const shared::TimePoint& tm, const st
     // Also use the changes in KDA to track the round kills array as well.
     if (prev->matchStats && now->matchStats) {
         auto roundIt = _matchState->rounds.find(_latestRound);
+        if (roundIt != _matchState->rounds.end()) {
+            if (prev->matchStats->kills && now->matchStats->kills && now->matchStats->kills.value() > _tracked.match.kills) {
+                it->second.kills = now->matchStats->kills.value();
 
-        if (prev->matchStats->kills && now->matchStats->kills) {
-            it->second.kills = now->matchStats->kills.value();
+                const auto diff = now->matchStats->kills.value() - _tracked.match.kills;
+                auto hs = (prev->state && prev->state->roundKillsHs && now->state && now->state->roundKillsHs) ? now->state->roundKillsHs.value() - prev->state->roundKillsHs.value() : 0;
+                for (auto i = 0; i < diff; ++i) {
+                    CsgoKillState kill = {};
+                    kill.timestamp = tm;
+                    kill.killer = _localSteamId;
+                    kill.headshot = (hs-- > 0);
 
-            // We got some kills so we need to determine what weapon we used to kill.
-            // If we're firing a weapon, then we can just go ahead and assume we got the
-            // kill using the weapon. If we aren't firing a weapon then we used something else
-            // (knife or grenade). It's impossible to tell based on the information given via
-            // GSI so we just ignore that.
-            std::optional<std::string> weapon = std::nullopt;
-            if (!prev->weapons.empty()) {
-                for (const auto& w : prev->weapons) {
-                    if (w.ammoClip && w.name) {
-                        weapon = w.name.value();
-                        break;
+                    if (now->state) {
+                        kill.flashed = now->state->flashed.value_or(0) >= 64;
+                        kill.smoked = now->state->smoked.value_or(0) >= 64;
                     }
+
+                    roundIt->second.kills.push_back(kill);
                 }
             }
 
-            const auto diff = now->matchStats->kills.value() - prev->matchStats->kills.value();
-            auto hs = (prev->state && prev->state->roundKillsHs && now->state && now->state->roundKillsHs) ? now->state->roundKillsHs.value() - prev->state->roundKillsHs.value() : 0;
-            for (auto i = 0; i < diff; ++i) {
-                CsgoKillState kill = {};
-                kill.timestamp = tm;
-                kill.killer = _localSteamId;
-                kill.headshot = (hs-- > 0);
-                kill.weapon = weapon;
+            if (prev->matchStats->assists && now->matchStats->assists && now->matchStats->assists.value() > _tracked.match.assists) {
+                it->second.assists = now->matchStats->assists.value();
 
-                if (now->state) {
-                    kill.flashed = now->state->flashed.value_or(0) >= 64;
-                    kill.smoked = now->state->smoked.value_or(0) >= 64;
+                const auto diff = now->matchStats->assists.value() - _tracked.match.assists;
+                for (auto i = 0; i < diff; ++i) {
+                    CsgoKillState kill = {};
+                    kill.timestamp = tm;
+                    kill.assisters = { _localSteamId.value() };
+                    roundIt->second.kills.push_back(kill);
                 }
-
-                roundIt->second.kills.push_back(kill);
             }
-        }
 
-        if (prev->matchStats->assists && now->matchStats->assists) {
-            it->second.assists = now->matchStats->assists.value();
+            if (prev->matchStats->deaths && now->matchStats->deaths && now->matchStats->deaths.value() > _tracked.match.deaths) {
+                it->second.deaths = now->matchStats->deaths.value();
 
-            const auto diff = now->matchStats->assists.value() - prev->matchStats->assists.value();
-            for (auto i = 0; i < diff; ++i) {
-                CsgoKillState kill = {};
-                kill.timestamp = tm;
-                kill.assisters = { _localSteamId.value() };
-                roundIt->second.kills.push_back(kill);
-            }
-        }
-
-        if (prev->matchStats->deaths && now->matchStats->deaths) {
-            it->second.deaths = now->matchStats->deaths.value();
-
-            const auto diff = now->matchStats->deaths.value() - prev->matchStats->deaths.value();
-            for (auto i = 0; i < diff; ++i) {
-                CsgoKillState kill = {};
-                kill.timestamp = tm;
-                kill.victim = _localSteamId;
-                roundIt->second.kills.push_back(kill);
+                const auto diff = now->matchStats->deaths.value() - _tracked.match.deaths;
+                for (auto i = 0; i < diff; ++i) {
+                    CsgoKillState kill = {};
+                    kill.timestamp = tm;
+                    kill.victim = _localSteamId;
+                    roundIt->second.kills.push_back(kill);
+                }
             }
         }
 
@@ -235,9 +305,9 @@ void CsgoGsiStateManager::handlePlayerDiff(const shared::TimePoint& tm, const st
     }
 }
 
-void CsgoGsiStateManager::handleRoundDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiRoundPacket>& prev, const std::optional<CsgoGsiRoundPacket>& now, const CsgoGsiPacket& packet) {
+bool CsgoGsiStateManager::handleRoundDiff(const shared::TimePoint& tm, const std::optional<CsgoGsiRoundPacket>& prev, const std::optional<CsgoGsiRoundPacket>& now, const CsgoGsiPacket& packet) {
     if (!prev || !now) {
-        return;
+        return false;
     }
 
     if (prev->phase && now->phase) {
@@ -264,34 +334,12 @@ void CsgoGsiStateManager::handleRoundDiff(const shared::TimePoint& tm, const std
         } else if (now->phase.value() == "freezetime" && packet.map) {
             onStartNewRound(tm, packet.map->round.value_or(_latestRound), packet);
         } else if (now->phase.value() == "live") {
-            // This indicates the start of the play round.
-            auto roundIt = _matchState->rounds.find(_latestRound);
-            if (roundIt != _matchState->rounds.end()) {
-                roundIt->second.playTime = tm;
-            }
-
-            // Lock the user's loadout for the round at this point. We might miss stuff
-            // if they buy after the round starts but that should be fine.
-            if (packet.player && _localSteamId) {
-                CsgoPlayerRoundState state = {};
-                state.steamId = _localSteamId.value();
-                state.team = packet.player->team.value_or("Unknown");
-
-                for (const auto& w : packet.player->weapons) {
-                    state.weapons[w.weaponIdx] = CsgoWeaponState::from(w);
-                }
-
-                if (packet.player->state) {
-                    state.money = packet.player->state->money.value_or(0);
-                    state.equipmentValue = packet.player->state->equipmentValue.value_or(0);
-                    state.armor = packet.player->state->armor.value_or(0);
-                    state.helmet = packet.player->state->helmet.value_or(false);
-                }
-
-                roundIt->second.players[_localSteamId.value()] = state;
-            }
+            // Return true to indicate that we want to freeze the user's loadout after we process it.
+            return true;
         }
     }
+    
+    return false;
 }
 
 void CsgoGsiStateManager::startMatch(const shared::TimePoint& tm) {
@@ -315,6 +363,8 @@ void CsgoGsiStateManager::endMatch(const shared::TimePoint& tm) {
         notify(static_cast<int>(ECsgoGsiEvents::MatchEnd), tm, (void*)&_matchState.value(), false);
     }
 
+    _latestRound = -1;
+    _tracked = {};
     _matchState.reset();
 }
 
