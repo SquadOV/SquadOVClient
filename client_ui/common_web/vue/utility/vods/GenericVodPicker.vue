@@ -23,7 +23,7 @@
             </div>
         </div>
 
-        <div class="d-flex align-center" v-if="!hasFastify && !hasLocal">
+        <div class="d-flex align-center" v-if="!!value && !hasFastify && !hasLocal">
             <div class="text-subtitle-2 font-weight-bold">
                 VOD Processing...
             </div>
