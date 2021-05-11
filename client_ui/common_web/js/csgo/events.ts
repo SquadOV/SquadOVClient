@@ -106,6 +106,98 @@ export enum CsgoWeapon {
     Incendiary,
 }
 
+export function getCsgoWeaponName(w: CsgoWeapon): string {
+    switch (w) {
+        case CsgoWeapon.Knife:
+            return 'Knife'
+        case CsgoWeapon.Bomb:
+            return 'Bomb'
+        case CsgoWeapon.Taser:
+            return 'Taser'
+        case CsgoWeapon.P2000:
+            return 'P2000'
+        case CsgoWeapon.Usps:
+            return 'USPS'
+        case CsgoWeapon.Glock:
+            return 'Glock'
+        case CsgoWeapon.P250:
+            return 'P250'
+        case CsgoWeapon.FiveSeven:
+            return 'Five-Seven'
+        case CsgoWeapon.Tec9:
+            return 'Tec-9'
+        case CsgoWeapon.Cz75:
+            return 'CZ75a'
+        case CsgoWeapon.DuelBerettas:
+            return 'Duel Berettas'
+        case CsgoWeapon.Deagle:
+            return 'Desert Eagle'
+        case CsgoWeapon.R8:
+            return 'R8 Revolver'
+        case CsgoWeapon.Mp9:
+            return 'Mp9'
+        case CsgoWeapon.Mac10:
+            return 'Mac-10'
+        case CsgoWeapon.PpBizon:
+            return 'PP-Bizon'
+        case CsgoWeapon.Mp7:
+            return 'Mp7'
+        case CsgoWeapon.Ump45:
+            return 'UMP-45'
+        case CsgoWeapon.P90:
+            return 'P90'
+        case CsgoWeapon.Mp5:
+            return 'Mp5'
+        case CsgoWeapon.Famas:
+            return 'Famas'
+        case CsgoWeapon.Galil:
+            return 'Galil AR'
+        case CsgoWeapon.M4a4:
+            return 'M4A4'
+        case CsgoWeapon.M4a1s:
+            return 'M4A1-S'
+        case CsgoWeapon.Ak47:
+            return 'AK47'
+        case CsgoWeapon.Aug:
+            return 'AUG'
+        case CsgoWeapon.Sg553:
+            return 'SG 553'
+        case CsgoWeapon.Scout:
+            return 'Scout'
+        case CsgoWeapon.Awp:
+            return 'Awp'
+        case CsgoWeapon.Scar20:
+            return 'SCAR-20'
+        case CsgoWeapon.G3sg1:
+            return 'G3SG1'
+        case CsgoWeapon.Nova:
+            return 'Nova'
+        case CsgoWeapon.Xm1014:
+            return 'XM1014'
+        case CsgoWeapon.Mag7:
+            return 'Mag7'
+        case CsgoWeapon.SawedOff:
+            return 'Sawed-Off'
+        case CsgoWeapon.M249:
+            return 'M249'
+        case CsgoWeapon.Negev:
+            return 'Negev'
+        case CsgoWeapon.He:
+            return 'HE'
+        case CsgoWeapon.Flashbang:
+            return 'Flashbang'
+        case CsgoWeapon.Smoke:
+            return 'Smoke'
+        case CsgoWeapon.Decoy:
+            return 'Decoy'
+        case CsgoWeapon.Molotov:
+            return 'Molotov'
+        case CsgoWeapon.Incendiary:
+            return 'Incendiary'
+    }
+    return ''
+}
+
 export function getCsgoPrimaryWeapon(w: CsgoWeapon[]): CsgoWeapon {
     let candidates = w.filter((a: CsgoWeapon) => a >= CsgoWeapon.Mp9 && a <= CsgoWeapon.Negev)
     if (candidates.length > 0) {

@@ -108,6 +108,11 @@
                     </v-col>
 
                     <v-col cols="6">
+                        <csgo-player-match-card
+                            :match="matchData"
+                            :match-user-id="selectedMatchUserId"
+                        >
+                        </csgo-player-match-card>
                     </v-col>
                 </v-row>
             </v-container>
@@ -134,6 +139,7 @@ import CsgoRoundTimeline from '@client/vue/utility/csgo/CsgoRoundTimeline.vue'
 import CsgoEventRoundDisplay from '@client/vue/utility/csgo/CsgoEventRoundDisplay.vue'
 import CsgoTeamRoundScoreboard from '@client/vue/utility/csgo/CsgoTeamRoundScoreboard.vue'
 import CsgoMatchScoreboard from '@client/vue/utility/csgo/CsgoMatchScoreboard.vue'
+import CsgoPlayerMatchCard from '@client/vue/utility/csgo/CsgoPlayerMatchCard.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 
@@ -147,6 +153,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         CsgoEventRoundDisplay,
         CsgoTeamRoundScoreboard,
         CsgoMatchScoreboard,
+        CsgoPlayerMatchCard,
         MatchShareButton,
         MatchFavoriteButton,
     }
