@@ -62,7 +62,7 @@
 
                                 <div class="text-subtitle-2">
                                     We use cookies to help us better reach out to gamers just like you!
-                                    You can read more in our <a href="/cookie">Cookie Policy</a> and <a href="/privacy">Privacy Policy</a>.
+                                    You can read more in our <a href="https://squadov.gg/cookie">Cookie Policy</a> and <a href="https://squadov.gg/privacy">Privacy Policy</a>.
                                 </div>
                             </div>
 
