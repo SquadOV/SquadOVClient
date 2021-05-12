@@ -4,6 +4,7 @@
 #include <functional>
 #include <google/protobuf/message.h>
 #include <unordered_map>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <steam/steam_api.h>
@@ -39,10 +40,10 @@ private:
 
     // Callback for whenever the game coordinator (GC) has a message for us.
     void onGcMessageAvailable(GCMessageAvailable_t* msg);
-    CCallback<SteamworksClient, GCMessageAvailable_t, false> _gcMessageAvailableCb;
+    std::unique_ptr<CCallback<SteamworksClient, GCMessageAvailable_t, false>> _gcMessageAvailableCb;
     // Callback for whenever we failed to send a message to the GC.
     void onGcMessageFail(GCMessageFailed_t* msg);
-    CCallback<SteamworksClient, GCMessageFailed_t, false> _gcMessageFailedCb;
+    std::unique_ptr<CCallback<SteamworksClient, GCMessageFailed_t, false>> _gcMessageFailedCb;
 
     std::recursive_mutex _delegateMutex;
     DelegateContainer _delegates;

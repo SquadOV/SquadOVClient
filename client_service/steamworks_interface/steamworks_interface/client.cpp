@@ -44,9 +44,7 @@ SteamworksClient* SteamworksClient::singleton() {
     return client.get();
 }
 
-SteamworksClient::SteamworksClient():
-    _gcMessageAvailableCb(this, &SteamworksClient::onGcMessageAvailable),
-    _gcMessageFailedCb(this, &SteamworksClient::onGcMessageFail) {
+SteamworksClient::SteamworksClient() {
     try {
         if (SteamAPI_RestartAppIfNecessary(k_uAppIdInvalid)) {
             THROW_ERROR("Failed to restart app in Steam.");
@@ -70,6 +68,9 @@ SteamworksClient::SteamworksClient():
         if (!_gcCoordinator) {
             THROW_ERROR("Failed to obtain Steam GC coordinator.");
         }
+
+        _gcMessageAvailableCb.reset(new CCallback<SteamworksClient, GCMessageAvailable_t, false>(this, &SteamworksClient::onGcMessageAvailable));
+        _gcMessageFailedCb.reset(new CCallback<SteamworksClient, GCMessageFailed_t, false>(this, &SteamworksClient::onGcMessageFail));
 
         _running = true;
         _callbackThread = std::thread([this](){
@@ -120,11 +121,17 @@ void SteamworksClient::sendGcMessageWithResponse(uint32_t sendType, google::prot
     });
 
     const auto handlerIt = addGcMessageHandler(responseType, innerDelegate);
-    sendGcMessage(sendType, message);
 
-    {
+    while (true) {
+        LOG_INFO("Send Steam Message: " << sendType << "...Expecting: " << responseType << std::endl);
+        // Keep sending the message until we get a response because for some reason
+        // onGcMessageAvailable will get called but then when we called ReceiveMessage
+        // it'll tell us no message is available.
+        sendGcMessage(sendType, message);
         std::unique_lock guard(m);
-        cv.wait(guard, [&ready]{return ready;});   
+        if (cv.wait_for(guard, std::chrono::seconds(1), [&ready]{return ready;})) {
+            break;
+        }
     }
 
     removeGcMessageHandler(handlerIt);
@@ -178,13 +185,15 @@ void SteamworksClient::onGcMessageAvailable(GCMessageAvailable_t* msg) {
     uint32_t msgSize;
     std::vector<char> buffer(msg->m_nMessageSize);
 
-    if (_gcCoordinator->RetrieveMessage(&msgType, (void*)buffer.data(), buffer.size(), &msgSize) == k_EGCResultOK && msgType & GC_PROTO_MASK) {
-        const auto unmaskedMessageType = msgType & (~GC_PROTO_MASK);
-        const auto dataPtr = buffer.data() + 2 * sizeof(uint32_t);
-        const auto range = _delegates.equal_range(unmaskedMessageType);
-        for (auto it = range.first; it != range.second; ++it) {
-            if (it->second) {
-                it->second->handle(dataPtr, buffer.size() - 2 * sizeof(uint32_t));
+    while (_gcCoordinator->RetrieveMessage(&msgType, (void*)buffer.data(), buffer.size(), &msgSize) == k_EGCResultOK) {
+        if (msgType & GC_PROTO_MASK) {
+            const auto unmaskedMessageType = msgType & (~GC_PROTO_MASK);
+            const auto dataPtr = buffer.data() + 2 * sizeof(uint32_t);
+            const auto range = _delegates.equal_range(unmaskedMessageType);
+            for (auto it = range.first; it != range.second; ++it) {
+                if (it->second) {
+                    it->second->handle(dataPtr, buffer.size() - 2 * sizeof(uint32_t));
+                }
             }
         }
     }

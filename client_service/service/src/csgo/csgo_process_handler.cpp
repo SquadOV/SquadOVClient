@@ -111,7 +111,7 @@ void CsgoProcessHandlerInstance::fulfillDemoRequest() {
             << " --shmem \"" << segmentId << "\""
             << " --shvalue \"" << strId << "\"";
 
-        if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
+        if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(10))) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1500));
             continue;
         }
