@@ -144,6 +144,7 @@ void CsgoProcessHandlerInstance::onGsiMainMenu(const shared::TimePoint& eventTim
     std::thread t([this](){
         fulfillDemoRequest();
     });
+    t.detach();
 }
 
 void CsgoProcessHandlerInstance::onGsiMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
@@ -245,7 +246,10 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
         if (matchStateCopy.mode == "competitive") {
             std::lock_guard guard(_demoMutex);
             DemoRequest req;
-            req.threshold = _matchStart;
+
+            // Subtract 10 minutes to account for a full fledged warmup because the
+            // "match start" doesn't occur until after warmup occurs.
+            req.threshold = _matchStart - std::chrono::minutes(10);
             req.viewUuid = _activeViewUuid.value();
             _demoRequest = req;
         }
