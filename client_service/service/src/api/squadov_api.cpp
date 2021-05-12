@@ -657,10 +657,6 @@ std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shar
     std::ostringstream path;
     path << "/v1/csgo/user/" << getCurrentUser().id << "/view";
 
-    std::ofstream output("create.json");
-    output << body.dump(4);
-    output.close();
-
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 200) {
         THROW_ERROR("Failed to create CSGO match: " << result->status);
@@ -683,10 +679,6 @@ std::string SquadovApi::finishCsgoMatch(const std::string& viewUuid, const std::
         body["demoTimestamp"] = shared::timeToIso(demoTimestamp.value());
     }
 
-    std::ofstream output("finish.json");
-    output << body.dump(4);
-    output.close();
-
     std::ostringstream path;
     path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid;
 
@@ -697,6 +689,21 @@ std::string SquadovApi::finishCsgoMatch(const std::string& viewUuid, const std::
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
+}
+
+void SquadovApi::associateCsgoDemo(const std::string& viewUuid, const std::string& demoUrl, const shared::TimePoint& demoTimestamp) {
+    nlohmann::json body = {
+        { "demo", demoUrl },
+        { "demoTimestamp", shared::timeToIso(demoTimestamp) }
+    };
+
+    std::ostringstream path;
+    path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid << "/demo";
+
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 204) {
+        THROW_ERROR("Failed to associate CSGO demo: " << result->status);
+    }
 }
 
 SquadovApi* getGlobalApi() {

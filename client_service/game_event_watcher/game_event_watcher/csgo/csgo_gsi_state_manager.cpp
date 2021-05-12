@@ -77,6 +77,12 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
         _tracked = {};
     }
 
+    if (packet.previous && packet.previous->player && packet.previous->player->activity && packet.player && packet.player->activity) {
+        if (packet.player->activity.value() == "menu") {
+            notify(static_cast<int>(ECsgoGsiEvents::MainMenu), tm, nullptr, false);
+        }
+    }
+
     if (!_matchState) {
         return;
     }

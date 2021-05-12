@@ -17,6 +17,11 @@
 namespace fs = std::filesystem;
 namespace service::csgo {
 
+struct DemoRequest {
+    std::string viewUuid;
+    shared::TimePoint threshold;
+};
+
 class CsgoProcessHandlerInstance {
 public:
     CsgoProcessHandlerInstance(const process_watcher::process::Process& p);
@@ -31,6 +36,7 @@ private:
 
     void onGsiMatchStart(const shared::TimePoint& eventTime, const void* rawData);
     void onGsiMatchEnd(const shared::TimePoint& eventTime, const void* rawData);
+    void onGsiMainMenu(const shared::TimePoint& eventTime, const void* rawData);
 
     void onLogConnect(const shared::TimePoint& eventTime, const void* rawData);
     void onLogDisconnect(const shared::TimePoint& eventTime, const void* rawData);
@@ -50,6 +56,14 @@ private:
 
     std::optional<std::string> _serverIdentifier;
     std::optional<std::string> _activeViewUuid;
+
+    // Demos don't seem to be available as soon as the match is done. It seems more reasonable
+    // to wait for the user to go back to the main menu before sending out the demo request.
+    // Thus, when the game ends, we fill out the demo request. The demo request is fulfilled
+    // only when exiting to the main menu or exiting the game.
+    std::mutex _demoMutex;
+    std::optional<DemoRequest> _demoRequest;
+    void fulfillDemoRequest();
 };
 
 CsgoProcessHandlerInstance::CsgoProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -59,13 +73,77 @@ CsgoProcessHandlerInstance::CsgoProcessHandlerInstance(const process_watcher::pr
 
     _stateManager.notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoGsiEvents::MatchStart), std::bind(&CsgoProcessHandlerInstance::onGsiMatchStart, this, std::placeholders::_1, std::placeholders::_2));
     _stateManager.notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoGsiEvents::MatchEnd), std::bind(&CsgoProcessHandlerInstance::onGsiMatchEnd, this, std::placeholders::_1, std::placeholders::_2));
+    _stateManager.notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoGsiEvents::MainMenu), std::bind(&CsgoProcessHandlerInstance::onGsiMainMenu, this, std::placeholders::_1, std::placeholders::_2));
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoLogEvents::Connect), std::bind(&CsgoProcessHandlerInstance::onLogConnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoLogEvents::Disconnect), std::bind(&CsgoProcessHandlerInstance::onLogDisconnect, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 CsgoProcessHandlerInstance::~CsgoProcessHandlerInstance() {
+    fulfillDemoRequest();
+}
 
+void CsgoProcessHandlerInstance::fulfillDemoRequest() {
+    std::lock_guard guard(_demoMutex);
+    if (!_demoRequest) {
+        return;
+    }
+
+    const auto segmentId = shared::generateUuidv4();
+    const auto strId = shared::generateUuidv4();
+
+    shared::ipc::SharedMemory shmem(segmentId);
+    shmem.create(65536);
+
+    auto* demoUrl = shmem.createString(strId);
+
+    bool foundDemo = false;
+
+    const fs::path retrieverExe = shared::filesystem::getCurrentExeFolder() / fs::path("csgo") / fs::path("csgo_demo_retriever.exe");
+
+    // Mike note: I'm a little worried of holding the _demoMutex lock for a whole minute but yolo?
+    // Retry this a couple times just in case the demo isn't available immediately.
+    for (int i = 0; i < 10; ++i) {
+        // Run the csgo_demo_retriever app to pull in the latest demo that corresponds to the match the user just played.
+        std::ostringstream cmd;
+        cmd << " --mode steam "
+            << " --threshold " << shared::timeToIso(_demoRequest.value().threshold)
+            << " --shmem \"" << segmentId << "\""
+            << " --shvalue \"" << strId << "\"";
+
+        if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+            continue;
+        }
+
+        foundDemo = true;
+        break;
+    }
+
+    if (foundDemo) {
+        std::string rawDemoData(demoUrl->data(), demoUrl->size());
+        std::vector<std::string> parts;
+        boost::split(parts, rawDemoData, boost::is_any_of("."));
+
+        const auto demoUrl = shared::base64::decode(parts[0]);
+        const auto demoTimestamp = shared::isoStrToTime(shared::base64::decode(parts[1]));
+
+        try {
+            service::api::getGlobalApi()->associateCsgoDemo(_demoRequest.value().viewUuid, demoUrl, demoTimestamp);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to associate CSGO demo: " << ex.what() << std::endl);
+        }
+    }
+
+    shmem.destroy<shared::ipc::SharedMemory::String>(strId);
+    _demoRequest.reset();
+}
+
+void CsgoProcessHandlerInstance::onGsiMainMenu(const shared::TimePoint& eventTime, const void* rawData) {
+    // Put this into a new thread so that we don't prevent ourselves from handling further GSI events.
+    std::thread t([this](){
+        fulfillDemoRequest();
+    });
 }
 
 void CsgoProcessHandlerInstance::onGsiMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
@@ -162,59 +240,17 @@ void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTim
 
     const auto vodId = _recorder->currentId();
     try {
-        const auto segmentId = shared::generateUuidv4();
-        const auto strId = shared::generateUuidv4();
-
-        shared::ipc::SharedMemory shmem(segmentId);
-        shmem.create(65536);
-
-        auto* demoUrl = shmem.createString(strId);
-
-        bool foundDemo = false;
-
         // Only CSGO competitive games get demos recorded.
         // This will probably need to be tweaked to support FaceIT and ESEA.
         if (matchStateCopy.mode == "competitive") {
-            const fs::path retrieverExe = shared::filesystem::getCurrentExeFolder() / fs::path("csgo") / fs::path("csgo_demo_retriever.exe");
-            // Retry this a couple times just in case the demo isn't available immediately.
-            for (int i = 0; i < 5; ++i) {
-                // Run the csgo_demo_retriever app to pull in the latest demo that corresponds to the match the user just played.
-                std::ostringstream cmd;
-                cmd << " --mode steam "
-                    << " --threshold " << shared::timeToIso(_matchStart)
-                    << " --shmem \"" << segmentId << "\""
-                    << " --shvalue \"" << strId << "\"";
-
-                if (shared::process::runProcessWithTimeout(retrieverExe, cmd.str(), std::chrono::seconds(5))) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-                    continue;
-                }
-
-                foundDemo = true;
-                break;
-            }
+            std::lock_guard guard(_demoMutex);
+            DemoRequest req;
+            req.threshold = _matchStart;
+            req.viewUuid = _activeViewUuid.value();
+            _demoRequest = req;
         }
 
-        if (!foundDemo) {
-            LOG_WARNING("Failed to find CS:GO demo on Steam." << std::endl);
-            demoUrl->clear();
-        }
-
-        std::optional<std::string> finalDemoUrl;
-        std::optional<shared::TimePoint> finalDemoTimestamp;
-
-        if (foundDemo) {
-            std::string rawDemoData(demoUrl->data(), demoUrl->size());
-            std::vector<std::string> parts;
-            boost::split(parts, rawDemoData, boost::is_any_of("."));
-
-            finalDemoUrl = shared::base64::decode(parts[0]);
-            finalDemoTimestamp = shared::isoStrToTime(shared::base64::decode(parts[1]));
-        }
-        
-        const auto matchUuid = service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), _stateManager.localSteamId(), eventTime, *state, finalDemoUrl, finalDemoTimestamp);
-        shmem.destroy<shared::ipc::SharedMemory::String>(strId);
-
+        const auto matchUuid = service::api::getGlobalApi()->finishCsgoMatch(_activeViewUuid.value(), _stateManager.localSteamId(), eventTime, *state, std::nullopt, std::nullopt);
         end = std::make_optional(service::recorder::GameRecordEnd{
             matchUuid,
             eventTime

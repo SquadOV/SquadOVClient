@@ -92,7 +92,8 @@ struct CsgoTrackedPlayerState {
 
 enum class ECsgoGsiEvents {
     MatchStart,
-    MatchEnd
+    MatchEnd,
+    MainMenu
 };
 
 class CsgoGsiStateManager: public BaseLogWatcher {
