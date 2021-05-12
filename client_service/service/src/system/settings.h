@@ -31,6 +31,8 @@ struct RecordingSettings {
     bool useBitrate;
     int64_t bitrateKbps;
 
+    int32_t vodEndDelaySeconds;
+
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };
 

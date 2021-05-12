@@ -191,6 +191,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeVodEndDelaySeconds(state: RootState, v: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.vodEndDelaySeconds = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[]}) {
 /// #if DESKTOP
             if (!state.settings) {

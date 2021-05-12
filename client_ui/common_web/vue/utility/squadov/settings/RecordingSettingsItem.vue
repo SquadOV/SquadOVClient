@@ -457,6 +457,45 @@
                     </div>
                 </template>
 
+                <template v-if="!mini && showLocalRecordingSettings">
+                    <div class="d-flex align-center mt-4">
+                        <span class="text-overline mr-4">Miscellaneous</span>
+                    </div>
+                    <v-divider></v-divider>
+                    <v-row>
+                        <v-col cols="3">
+                            <v-text-field
+                                :value="vodEndDelaySeconds"
+                                @change="changeVodEndDelaySeconds(parseInt(arguments[0]))"
+                                type="number"
+                                :rules="vodDelayRules"
+                                solo
+                                single-line
+                            >
+                                <template v-slot:prepend>
+                                    <div>
+                                        Post-Game Recording: 
+                                    </div>
+                                </template>
+                                <template v-slot:append>
+                                    <div class="d-flex align-center">
+                                        <div>Seconds</div>
+                                        <v-tooltip bottom max-width="450px">
+                                            <template v-slot:activator="{on, attrs}">
+                                                <v-icon v-on="on" v-bind="attrs">
+                                                    mdi-help-circle
+                                                </v-icon>
+                                            </template>
+
+                                            Will delay the end of the recorded video by the specified number of seconds so you can capture some post-game video.
+                                        </v-tooltip>
+                                    </div>
+                                </template>
+                            </v-text-field>
+                        </v-col>
+                    </v-row>
+                </template>
+
                 <v-snackbar
                     v-model="localRecordChangeFail"
                     :timeout="5000"
@@ -760,6 +799,21 @@ export default class RecordingSettingsItem extends Vue {
             (value: string) => !isNaN(parseInt(value)) || 'Must be a number',
             (value: string) => parseInt(value) <= 6000 || 'Must be less than 6000Kbps',
             (value: string) => parseInt(value) > 0 || 'Must be greater than 0Kbps'
+        ]
+    }
+
+    get vodEndDelaySeconds(): number {
+        return this.$store.state.settings.record.vodEndDelaySeconds
+    }
+
+    changeVodEndDelaySeconds(v: number) {
+        this.$store.commit('changeVodEndDelaySeconds', v)
+    }
+
+    get vodDelayRules(): any[] {
+        return [
+            (value: string) => !!value || 'Required.',
+            (value: string) => !isNaN(parseInt(value)) || 'Must be a number',
         ]
     }
 

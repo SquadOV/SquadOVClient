@@ -560,6 +560,13 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     const auto metadata = getMetadata();
     _currentId.reset(nullptr);
 
+    // Only do the delay if we're going to be uploading the VOD. If we're not going to be uploading
+    // the VOD then it doesn't matter what delay there is.
+    if (end && _cachedRecordingSettings && _cachedRecordingSettings->vodEndDelaySeconds > 0) {
+        LOG_INFO("VOD Stop Delay: " << _cachedRecordingSettings->vodEndDelaySeconds << std::endl);
+        std::this_thread::sleep_for(std::chrono::seconds(_cachedRecordingSettings->vodEndDelaySeconds));
+    }
+
     LOG_INFO("Stop Inputs..." << std::endl);
     stopInputs();
     if (_dvrEncoder.hasEncoder()) {

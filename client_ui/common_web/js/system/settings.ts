@@ -23,6 +23,7 @@ export interface SquadOvRecordingSettings {
     maxLocalRecordingSizeGb: number
     useBitrate: boolean
     bitrateKbps: number
+    vodEndDelaySeconds: number
 }
 
 export interface SquadOvKeybindSettings {
@@ -189,6 +190,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 maxLocalRecordingSizeGb: 100,
                 useBitrate: false,
                 bitrateKbps: 6000,
+                vodEndDelaySeconds: 0,
             }
         case BaselineLevel.Medium:
             record = {
@@ -208,6 +210,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 maxLocalRecordingSizeGb: 100,
                 useBitrate: false,
                 bitrateKbps: 6000,
+                vodEndDelaySeconds: 0,
             }
         case BaselineLevel.High:
             record = {
@@ -227,6 +230,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 maxLocalRecordingSizeGb: 100,
                 useBitrate: false,
                 bitrateKbps: 6000,
+                vodEndDelaySeconds: 0,
             }
     }
 
@@ -259,6 +263,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             maxLocalRecordingSizeGb: 100,
             useBitrate: false,
             bitrateKbps: 6000,
+            vodEndDelaySeconds: 0,
         },
         keybinds: {
             pushToTalk: []
@@ -366,6 +371,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.keybinds = {
             pushToTalk: []
         }
+    }
+
+    if (parsedData.record.vodEndDelaySeconds === undefined) {
+        parsedData.record.vodEndDelaySeconds = 0
     }
 
     saveLocalSettings(parsedData, true)

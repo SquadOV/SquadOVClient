@@ -37,6 +37,8 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.useBitrate = obj.value("useBitrate", false);
     settings.bitrateKbps = obj["bitrateKbps"].get<int64_t>();
+
+    settings.vodEndDelaySeconds = obj["vodEndDelaySeconds"].get<int32_t>();
     return settings;
 }
 
