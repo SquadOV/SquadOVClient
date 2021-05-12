@@ -161,7 +161,16 @@ export class CsgoFullMatchDataWrapper {
         this._userIdToSteamId = new Map()
 
         for (let p of this._d.container.players) {
-            this._playerMap.set(p.steamAccount.steamId, p)
+            if (this._playerMap.has(p.steamAccount.steamId)) {
+                // Need to merge stats because these players are the same
+                let data = this._playerMap.get(p.steamAccount.steamId)!
+                data.kills += p.kills
+                data.deaths += p.deaths
+                data.assists += p.assists
+                data.mvps += p.mvps
+            } else {
+                this._playerMap.set(p.steamAccount.steamId, p)
+            }
             this._userIdToSteamId.set(p.userId, p.steamAccount.steamId)
         }
     }

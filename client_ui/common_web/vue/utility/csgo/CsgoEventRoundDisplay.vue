@@ -299,8 +299,12 @@ export default class CsgoEventRoundDisplay extends Vue {
 
             if (!!e.kill) {
                 isSelf = e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId || e.kill.victim === this.matchUserId
-                // Need to check for killer and assister to handle the case where we're only getting data from GSI and don't necessarily have a victim to team check.
-                isBenefit = e.kill.victim !== this.matchUserId && (e.kill.victim !== null && this.team === this.roundData.userTeam(e.kill.victim)) || e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId
+                if (e.kill.victim === this.matchUserId) {
+                    isBenefit = false
+                } else {
+                    // Need to check for killer and assister to handle the case where we're only getting data from GSI and don't necessarily have a victim to team check.
+                    isBenefit = (e.kill.victim !== null && this.team !== this.roundData.userTeam(e.kill.victim)) || e.kill.killer === this.matchUserId || e.kill.assister === this.matchUserId
+                }
             } else if (!!e.plant) {
                 isSelf = e.plant.user === this.matchUserId
                 isBenefit = this.team === CsgoTeam.Terrorist
