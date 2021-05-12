@@ -16,6 +16,7 @@ export interface CsgoFullMatchData {
     summary: CsgoPlayerMatchSummary
     view: CsgoView
     container: CsgoEventContainer
+    clockOffsetMs: number
 }
 
 export function cleanCsgoFullMatchDataFromJson(d: CsgoFullMatchData): CsgoFullMatchData {

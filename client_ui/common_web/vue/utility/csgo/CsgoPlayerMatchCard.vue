@@ -167,6 +167,7 @@
                 <csgo-head-to-head-display
                     :match="match"
                     :match-user-id="matchUserId"
+                    @go-to-event="$emit('go-to-event', arguments[0])"
                 >
                 </csgo-head-to-head-display>
             </v-tab-item>

@@ -58,6 +58,7 @@
                             :match-user-id="selectedMatchUserId"
                             :current-round="currentRound"
                             :style="roundEventsStyle"
+                            @go-to-event="goToVodTime(arguments[0])"
                         >
                         </csgo-event-round-display>
                     </v-col>
@@ -111,6 +112,7 @@
                         <csgo-player-match-card
                             :match="matchData"
                             :match-user-id="selectedMatchUserId"
+                            @go-to-event="goToVodTime(arguments[0])"
                         >
                         </csgo-player-match-card>
                     </v-col>
@@ -178,6 +180,10 @@ export default class CsgoMatch extends Vue {
     currentRound: number = 0
     selectedMatchUserId: number | null = null
 
+    $refs!: {
+        player: VideoPlayer
+    }
+
     get matchData(): CsgoFullMatchDataWrapper | null {
         if (!this.match) {
             return null
@@ -244,6 +250,19 @@ export default class CsgoMatch extends Vue {
             return undefined
         }
         return this.matchData.round(this.currentRound)
+    }
+
+    goToVodTime(tm : Date) {
+        if (!this.vod) {
+            return
+        }
+        
+        let diffMs = tm.getTime() - this.vod.startTime.getTime()
+        if (!!this.match) {
+            diffMs += this.match.clockOffsetMs
+        }
+
+        this.$refs.player.goToTimeMs(diffMs, true)
     }
 }
 
