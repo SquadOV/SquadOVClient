@@ -537,13 +537,14 @@ function startAutoupdater() {
 
 let currentSessionExpiration = null
 let sessionRetryCount = 0
-function startSessionHeartbeat(onBeat) {
+function startSessionHeartbeat(onBeat, isInitial) {
     try {
         const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
         log.log('Performing session heartbeat...', url)
         const request = net.request({
             method: 'POST',
-            url
+            url,
+            timeout: 5,
         })
         request.setHeader('Content-Type', 'application/json')
         request.write(JSON.stringify({
@@ -559,10 +560,9 @@ function startSessionHeartbeat(onBeat) {
             // expires, we want to put the app into an error state that that keeps trying
             // to update the session but is other not functional.
             if (!!currentSessionExpiration) {
-                // In the case where we're passed the expiration we need to restart and throw the user
-                // onto the session error screen.
+                // In the case where we're passed the expiration we need to restart and force the user to re-log.
                 if (new Date() > currentSessionExpiration) {
-                    restart()
+                    logout()
                     return
                 }
             } else {
@@ -574,14 +574,19 @@ function startSessionHeartbeat(onBeat) {
             log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
             setTimeout(() => {
                 // We need to push onBeat forward just in case this is the first session heartbeat.
-                startSessionHeartbeat(onBeat)
+                startSessionHeartbeat(onBeat, false)
             }, timeoutMs)
             sessionRetryCount += 1
         }
 
         request.on('error', (err) => {
             log.log('Error in Sesssion Heartbeat: ', err)
-            retrySessionHeartbeat()
+            if (!!isInitial) {
+                log.log('Initial session heartbeat failure...logging out.')
+                logout()
+            } else {
+                retrySessionHeartbeat()
+            }
         })
 
         request.on('response', (resp) => {
@@ -692,7 +697,7 @@ app.on('ready', async () => {
             await requestOutputDevices()
             await requestInputDevices()
         }
-    })
+    }, true)
 })
 
 app.on('window-all-closed', () => {
