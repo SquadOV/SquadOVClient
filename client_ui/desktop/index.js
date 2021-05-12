@@ -544,7 +544,7 @@ function startSessionHeartbeat(onBeat, isInitial) {
         const request = net.request({
             method: 'POST',
             url,
-            timeout: 5,
+            timeout: 15,
         })
         request.setHeader('Content-Type', 'application/json')
         request.write(JSON.stringify({
