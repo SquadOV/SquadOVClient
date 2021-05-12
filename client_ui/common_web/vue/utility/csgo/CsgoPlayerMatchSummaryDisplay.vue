@@ -1,67 +1,69 @@
 <template>
-    <router-link :to="gameTo" :event="disableClick ? '' : 'click'">
-        <v-sheet
-            :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
-            rounded
-            :style="style"
-        >
-            <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
-                <!-- Match Summary -->
-                <v-col cols="3" align-self="center">
-                    <div class="pl-2">
-                        <div>
-                            <span class="text-h4 font-weight-bold">{{ match.map }}</span>
-                            <span class="text-h6">&nbsp;({{ match.mode }})</span>
+    <div>
+        <router-link :to="gameTo" :event="disableClick ? '' : 'click'">
+            <v-sheet
+                :class="`match-summary ${fill ? 'full-parent-height' : ''}`"
+                rounded
+                :style="style"
+            >
+                <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`">
+                    <!-- Match Summary -->
+                    <v-col cols="3" align-self="center">
+                        <div class="pl-2">
+                            <div>
+                                <span class="text-h4 font-weight-bold">{{ match.map }}</span>
+                                <span class="text-h6">&nbsp;({{ match.mode }})</span>
+                            </div>
+
+                            <div>
+                                {{ dateTime }} ({{ matchLength }})
+                            </div>
+                        </div>
+                    </v-col>
+
+                    <!-- Hit tracker -->
+                    <v-col cols="4" align-self="center">
+                        <valorant-hit-tracker
+                            :headshots="match.headshots"
+                            :bodyshots="match.bodyshots"
+                            :legshots="match.legshots"
+                            :mini="mini"
+                        >
+                        </valorant-hit-tracker>
+                    </v-col>
+
+                    <!-- Match Score (Team Round Score, KDA, ADR, Mvps) -->
+                    <v-col cols="3" align-self="center">
+                        <div :style="wlColorStyle">
+                            {{ match.friendlyRounds }} - {{ match.enemyRounds }}
                         </div>
 
                         <div>
-                            {{ dateTime }} ({{ matchLength }})
+                            <span class="font-weight-bold">KDA </span>{{ match.kills }} / {{ match.deaths}} / {{ match.assists }} ({{ kda }})
                         </div>
-                    </div>
-                </v-col>
 
-                <!-- Hit tracker -->
-                <v-col cols="4" align-self="center">
-                    <valorant-hit-tracker
-                        :headshots="match.headshots"
-                        :bodyshots="match.bodyshots"
-                        :legshots="match.legshots"
-                        :mini="mini"
-                    >
-                    </valorant-hit-tracker>
-                </v-col>
+                        <div>
+                            <span class="font-weight-bold">ADR </span> {{ match.damagePerRound.toFixed(1) }}
+                            <span class="font-weight-bold">MVP </span> {{ match.mvps }}
+                        </div>
+                    </v-col>
 
-                <!-- Match Score (Team Round Score, KDA, ADR, Mvps) -->
-                <v-col cols="3" align-self="center">
-                    <div :style="wlColorStyle">
-                        {{ match.friendlyRounds }} - {{ match.enemyRounds }}
+                    <!-- Other indicators (VOD/Demo) -->
+                    <div class="demo-div" v-if="match.hasDemo">
+                        <v-icon color="black">
+                            mdi-television-box
+                        </v-icon>
                     </div>
 
-                    <div>
-                        <span class="font-weight-bold">KDA </span>{{ match.kills }} / {{ match.deaths}} / {{ match.assists }} ({{ kda }})
+                    <div class="vod-div" v-if="hasVod">
+                        <v-icon color="black">
+                            mdi-video
+                        </v-icon>
                     </div>
-
-                    <div>
-                        <span class="font-weight-bold">ADR </span> {{ match.damagePerRound.toFixed(1) }}
-                        <span class="font-weight-bold">MVP </span> {{ match.mvps }}
-                    </div>
-                </v-col>
-
-                <!-- Other indicators (VOD/Demo) -->
-                <div class="demo-div" v-if="match.hasDemo">
-                    <v-icon color="black">
-                        mdi-television-box
-                    </v-icon>
-                </div>
-
-                <div class="vod-div" v-if="hasVod">
-                    <v-icon color="black">
-                        mdi-video
-                    </v-icon>
-                </div>
-            </v-row>
-        </v-sheet>
-    </router-link>
+                </v-row>
+            </v-sheet>
+        </router-link>
+    </div>
 </template>
 
 <script lang="ts">
