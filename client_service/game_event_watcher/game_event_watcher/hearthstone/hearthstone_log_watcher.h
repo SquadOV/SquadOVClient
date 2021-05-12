@@ -26,11 +26,11 @@ enum class EHearthstoneLogEvents {
 
 struct HearthstoneGameConnectionInfo {
     std::string ip;
-    int port;
-    int gameId;
-    int clientId;
+    int port = 0;
+    int gameId = 0;
+    int clientId = 0;
     std::string spectateKey;
-    bool reconnecting;
+    bool reconnecting = false;
 
     nlohmann::json toJson() const;
     bool valid() const { return !ip.empty(); }

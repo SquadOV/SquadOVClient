@@ -13,7 +13,7 @@ enum class ELeagueLogEvents {
 };
 
 struct LeagueCommandLineCfg {
-    int64_t gameId;
+    int64_t gameId = 0;
     std::string region;
     std::string platformId;
 };

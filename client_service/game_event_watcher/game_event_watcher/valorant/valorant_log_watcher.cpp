@@ -44,8 +44,8 @@ bool parseGameLogMapChange(const std::string& line, ValorantMapChangeData& data)
 
 struct ValorantRoundData {
     shared::TimePoint logTime;
-    double clientTime;
-    double serverTime;
+    double clientTime = 0.0;
+    double serverTime = 0.0;
 };
 
 const std::regex roundStartRegex("\\[(.*?):\\d{3}\\].*?Gameplay started at local time (.*) \\(server time (.*)\\)");

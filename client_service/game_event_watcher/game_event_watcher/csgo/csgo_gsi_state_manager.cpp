@@ -152,7 +152,7 @@ void CsgoGsiStateManager::updateTrackedUserState(const shared::TimePoint& tm, co
     }
 
     if (packet.player->matchStats) {
-        const auto ms = packet.player->matchStats.value();
+        const auto& ms = packet.player->matchStats.value();
         if (ms.kills) {
             _tracked.match.kills = ms.kills.value();
         }

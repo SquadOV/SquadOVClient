@@ -32,7 +32,7 @@ enum class EWoWLogEvents {
 
 struct WoWCombatLogState {
     std::string combatLogVersion;
-    bool advancedLog;
+    bool advancedLog = false;
     std::string buildVersion;
 
     nlohmann::json toJson() const;
@@ -41,59 +41,59 @@ struct WoWCombatLogState {
 struct RawWoWCombatLog {
     shared::TimePoint timestamp;
     std::vector<std::string> log;
-    int64_t logLine;
+    int64_t logLine = 0;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWEncounterStart {
-    int encounterId;
+    int encounterId = 0;
     std::string encounterName;
-    int difficulty;
-    int numPlayers;
-    int instanceId;
+    int difficulty = 0;
+    int numPlayers = 0;
+    int instanceId = 0;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWChallengeModeStart {
     std::string challengeName;
-    int instanceId;
-    int keystoneLevel;
+    int instanceId = 0;
+    int keystoneLevel = 0;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWEncounterEnd {
-    int encounterId;
+    int encounterId = 0;
     std::string encounterName;
-    int difficulty;
-    int numPlayers;
-    bool success;
+    int difficulty = 0;
+    int numPlayers = 0;
+    bool success = false;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWChallengeModeEnd {
-    int instanceId;
-    bool success;
-    int keystoneLevel;
-    int64_t timeMs;
+    int instanceId = 0;
+    bool success = false;
+    int keystoneLevel = 0;
+    int64_t timeMs = 0;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWArenaStart {
-    int instanceId;
+    int instanceId = 0;
     std::string type;
-    int localTeamId;
+    int localTeamId = 0;
 
     nlohmann::json toJson() const;
 };
 
 struct WoWArenaEnd {
-    int winningTeamId;
-    int matchDurationSeconds;
+    int winningTeamId = 0;
+    int matchDurationSeconds = 0;
     int newRatings[2];
 
     nlohmann::json toJson() const;
@@ -107,7 +107,7 @@ struct WoWCombatantInfo {
 
 struct WoWZoneChange {
     std::string zoneName;
-    int instanceId;
+    int instanceId = 0;
 };
 
 class WoWLogWatcher : public BaseLogWatcher {

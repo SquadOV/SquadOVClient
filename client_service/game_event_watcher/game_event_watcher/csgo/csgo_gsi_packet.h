@@ -34,7 +34,7 @@ struct CsgoGsiPlayerMatchStatsPacket {
 };
 
 struct CsgoGsiWeaponPacket {
-    int weaponIdx;
+    int weaponIdx = 0;
     std::optional<std::string> name;
     std::optional<std::string> paintkit;
     std::optional<std::string> state;
