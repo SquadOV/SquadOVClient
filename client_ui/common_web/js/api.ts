@@ -1062,7 +1062,7 @@ class ApiClient {
     }
 
     markClipView(clipUuid: string): Promise<void> {
-        return axios.post(`v1/clip/${clipUuid}/view`, {}, this.createWebAxiosConfig(true))
+        return axios.get(`v1/clip/${clipUuid}/view`, this.createWebAxiosConfig(true))
     }
 
     getClipComments(params : {next : string | null, clipUuid : string , start : number, end : number}): Promise<ApiData<HalResponse<ClipComment[]>>> {

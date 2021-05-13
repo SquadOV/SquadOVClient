@@ -47,7 +47,6 @@
 
         <template v-if="!!$store.state.currentUser">
             <v-divider vertical class="mx-2"></v-divider>
-
             <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
