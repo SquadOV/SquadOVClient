@@ -16,6 +16,17 @@
 
             <v-tab>
                 <v-icon left>
+                    mdi-security
+                </v-icon>
+                Security
+            </v-tab>
+
+            <v-tab-item>
+                <account-security-settings-item></account-security-settings-item>
+            </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
                     mdi-cog
                 </v-icon>
                 System
@@ -58,10 +69,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import RecordingSettingsItem from '@client/vue/utility/squadov/settings/RecordingSettingsItem.vue'
+import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
 
 @Component({
     components: {
-        RecordingSettingsItem
+        RecordingSettingsItem,
+        AccountSecuritySettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {

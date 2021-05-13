@@ -321,6 +321,13 @@ class ApiClient {
         return axios.post('auth/forgotpw/change', input, this.createWebAxiosConfig())
     }
 
+    changePassword(currentPw: string, newPw: string): Promise<void> {
+        return axios.post('v1/users/me/changepw', {
+            currentPw,
+            newPw,
+        }, this.createWebAxiosConfig())
+    }
+
     sessionHeartbeat(sessionId: string): Promise<ApiData<SquadOvHeartbeatResponse>> {
         return axios.post('auth/session/heartbeat', {
             sessionId

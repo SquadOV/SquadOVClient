@@ -7,6 +7,7 @@ export interface SquadOVUser {
     email: string
     verified: boolean
     uuid: string
+    enabled2fa: boolean
 }
 
 export interface SquadOVUserHandle {
