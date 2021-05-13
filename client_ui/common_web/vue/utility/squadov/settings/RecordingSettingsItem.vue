@@ -236,7 +236,7 @@
                     </v-col>
                 </v-row>
 
-                <v-row>
+                <v-row v-if="!mini && showLocalRecordingSettings">
                     <v-col cols="12">
                         <div class="d-flex align-center">
                             <v-checkbox
