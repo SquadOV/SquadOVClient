@@ -8,7 +8,10 @@
             :style="roundStyling(rnd - 1)"
             @click="goToRound(rnd - 1)"
         >
-            <span class="text-center">{{ rnd }}</span>
+            <div class="d-flex flex-column justify-center align-center">
+                <div>{{ rnd }}</div>
+                <div v-if="!!currentPlayer">{{ roundWins[rnd-1] }} - {{ roundLoss[rnd-1] }}</div>
+            </div>
         </v-btn>
     </div>
 </template>
@@ -49,6 +52,50 @@ export default class ValorantRoundTimeline extends Vue {
         this.$emit('update:round', r)
     }
 
+    get roundWins(): number[] {
+        let ret: number[] = []
+        let cnt = 0
+        for (let i = 0; i < this.totalRounds; ++i) {
+            ret.push(cnt)
+
+            if (!this.currentPlayer) {
+                continue
+            }
+
+            let rnd = this.match.getRound(i)
+            if (!rnd) {
+                continue
+            }
+
+            if (rnd._r.winningTeam === this.currentPlayer._p.teamId) {
+                cnt += 1
+            }
+        }
+        return ret
+    }
+
+    get roundLoss(): number[] {
+        let ret: number[] = []
+        let cnt = 0
+        for (let i = 0; i < this.totalRounds; ++i) {
+            ret.push(cnt)
+
+            if (!this.currentPlayer) {
+                continue
+            }
+
+            let rnd = this.match.getRound(i)
+            if (!rnd) {
+                continue
+            }
+
+            if (rnd._r.winningTeam !== this.currentPlayer._p.teamId) {
+                cnt += 1
+            }
+        }
+        return ret
+    }
+
     roundStyling(rnd : number) : any {
         let round = this.match.getRound(rnd)
         if (!round) {
@@ -71,9 +118,10 @@ export default class ValorantRoundTimeline extends Vue {
             }
         }
 
-        return {
+        let ret: any = {
             'border-top': `2px solid rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b})`
         }
+        return ret
     }
 }
 
