@@ -304,7 +304,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
 
-const MAX_CLIP_LENGTH_SECONDS = 45
+const MAX_CLIP_LENGTH_SECONDS = 180
 
 @Component({
     components: {
