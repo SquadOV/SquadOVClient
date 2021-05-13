@@ -42,6 +42,10 @@
                             <span class="stat-label">DPR </span> {{ dpr }}
                             <span class="stat-label">CSPR </span> {{ cspr }}
                         </div>
+
+                        <div v-if="!!match.serverStartTimeUtc">
+                            {{ standardFormatTime(match.serverStartTimeUtc )}}
+                        </div>
                     </v-col>
                 </v-row>
 
@@ -72,6 +76,7 @@ import { getOrdinal } from '@client/js/ordinal'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
+import { standardFormatTime } from '@client/js/time'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import * as pi from '@client/js/pages'
@@ -83,6 +88,8 @@ import * as pi from '@client/js/pages'
     }
 })
 export default class ValorantPlayerMatchSummaryDisplay extends Vue {
+    standardFormatTime = standardFormatTime
+
     @Prop({required: true})
     match! : ValorantPlayerMatchSummary
 
