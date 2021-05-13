@@ -464,7 +464,7 @@ function startClientService() {
         win.webContents.send('reset-state')
         setTimeout(() => {
             startClientService()
-        }, 500)
+        }, 1000)
     })
 }
 
