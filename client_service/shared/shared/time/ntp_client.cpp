@@ -95,11 +95,20 @@ void NTPClient::initialize() {
     _running = true;
     // Start a thread that refreshes the offset every once in awhile.
     _tickThread = std::thread([this](){
+        const auto interval = std::chrono::seconds(NTP_TICK_INTERVAL_SECONDS);
+        const auto step = std::chrono::seconds(1);
+        auto elapsed = std::chrono::seconds(0);
+
         while (_running) {
             // Run the tick in a thread since we don't want it to block the entire program if we aren't able to
             // get a response from an NTP server in a timely fashion.
-            tick();
-            std::this_thread::sleep_for(std::chrono::seconds(NTP_TICK_INTERVAL_SECONDS));
+            if (elapsed >= interval) {
+                tick();
+                elapsed = std::chrono::seconds(0);
+            }
+
+            std::this_thread::sleep_for(step);
+            elapsed += step;
         }
     });
 }
