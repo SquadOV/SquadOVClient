@@ -181,7 +181,7 @@ void GCSPiper::sendDataFromBufferToGcsWithBackoff(std::vector<char>& buffer, siz
     for (auto i = 0; i < GCS_MAX_RETRIES; ++i) {
         try {
             const auto bytesSent = sendDataFromBufferToGcs(buffer.data(), requestedBytes, isLast);
-            if (bytesSent == buffer.size()) {
+            if (bytesSent >= buffer.size()) {
                 buffer.clear();
             } else {
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
