@@ -129,6 +129,13 @@ export default class TotalRecordedPlaytimeWidget extends Vue {
             })
         }
 
+        if (this.playtime.csgoMs > 0) {
+            ret.push({
+                game: SquadOvGames.Csgo,
+                timeMs: this.playtime.csgoMs,
+            })
+        }
+
         if (this.playtime.hearthstoneMs > 0) {
             ret.push({
                 game: SquadOvGames.Hearthstone,
