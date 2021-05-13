@@ -25,6 +25,7 @@ void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
 }
 
 int main(int argc, char** argv) {
+    shared::log::Log::initializeGlobalLogger("manual_clipper.log");
     po::options_description desc("Options");
     desc.add_options()
         ("input", po::value<std::string>()->required(), "Input video to clip")

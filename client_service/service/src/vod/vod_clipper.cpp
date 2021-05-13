@@ -460,10 +460,25 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->pix_fmt = icontainer.codecContext->pix_fmt;
                 container->codecContext->time_base = av_inv_q(icontainer.codecContext->framerate);
                 container->codecContext->bit_rate = icontainer.codecContext->bit_rate;
+                container->codecContext->rc_max_rate = container->codecContext->bit_rate;
+                container->codecContext->rc_buffer_size = container->codecContext->rc_max_rate * 2;
                 container->codecContext->gop_size = container->codecContext->time_base.den * 5;
-                container->codecContext->max_b_frames = 1;
+                container->codecContext->max_b_frames = 3;
 
                 av_dict_set(&options, "preset", "medium", 0);
+                if (c == "h264_amf") {
+                    av_dict_set(&options, "qp_i", "28", 0);
+                    av_dict_set(&options, "qp_p", "28", 0);
+                    av_dict_set(&options, "qp_b", "28", 0);
+                    av_dict_set(&options, "rc", "cqp", 0);
+                } else if (c == "libopenh264") {
+                    container->codecContext->qmin = 15;
+                    container->codecContext->qmax = 28;
+                    av_dict_set(&options, "rc_mode", "quality", 0);
+                } else if (c == "h264_nvenc") {
+                    av_dict_set(&options, "qp", "28", 0);
+                    av_dict_set(&options, "rc", "constqp", 0);
+                }
             } else {
                 container->codecContext->sample_rate = icontainer.codecContext->sample_rate;
                 container->codecContext->channel_layout = icontainer.codecContext->channel_layout;
