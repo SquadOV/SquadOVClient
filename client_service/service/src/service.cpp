@@ -1,3 +1,4 @@
+#include "shared/time/ntp_client.h"
 #include "process_watcher/watcher.h"
 #include "shared/games.h"
 #include "shared/filesystem/common_paths.h"
@@ -135,6 +136,9 @@ int main(int argc, char** argv) {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
     shared::log::Log::initializeGlobalLogger("squadov.log");
+
+    // NTP can't be init before the logger since we log stuff inside the NTP client.
+    shared::time::NTPClient::singleton()->initialize();
 
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
 

@@ -55,7 +55,16 @@ target_link_libraries(ZLIB::ZLIB INTERFACE zlib)
 
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost 1.74.0 REQUIRED
-    COMPONENTS filesystem system program_options iostreams zlib date_time unit_test_framework )
+    COMPONENTS
+        filesystem
+        system
+        program_options
+        iostreams
+        zlib
+        date_time
+        unit_test_framework
+)
+MESSAGE(STATUS "BOOST LIBS ${Boost_LIBRARIES}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)

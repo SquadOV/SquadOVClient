@@ -211,6 +211,7 @@ if(WIN32)
         date-tz
         png
         dbghelp
+        ${Boost_LIBRARIES}
     )
 endif()
 

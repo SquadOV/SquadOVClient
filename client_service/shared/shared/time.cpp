@@ -1,3 +1,4 @@
+#include "shared/time/ntp_client.h"
 #include "shared/time.h"
 
 #include <date/tz.h>
@@ -16,7 +17,7 @@ TimePoint zeroTime() {
 }
 
 TimePoint nowUtc() {
-    return std::chrono::system_clock::now();
+    return shared::time::NTPClient::singleton()->now();
 }
 
 TimePoint strToTime(const std::string& dt, const std::string& format) {
