@@ -19,6 +19,7 @@ namespace {
 
 constexpr int32_t NTP_TICK_INTERVAL_SECONDS = 1024;
 constexpr int64_t NTP_TIMESTAMP_DELTA = 2208988800;
+constexpr int64_t NTP_ERROR_MS_THRESHOLD = 43200000;
 
 struct NTPTimestamp {
     NTPTimestamp() {
@@ -113,49 +114,62 @@ void NTPClient::initialize() {
     });
 }
 
+void NTPClient::enable(bool enabled, bool doTick) {
+    _enabled = enabled;
+    if (doTick) {
+        tick();
+    }
+}
+
 void NTPClient::tick() {
     LOG_INFO("...Performing NTP tick." << std::endl);
     int64_t newOffset = 0;
 
-    std::vector<int64_t> offsets;
-    offsets.reserve(NTP_SERVERS.size());
-    for (auto i = 0; i < NTP_SERVERS.size(); ++i) {
-        const auto os = offsetToServer(NTP_SERVERS[i]);
-        if (os >= 0) {
-            offsets.push_back(os);
-        }
-    }
-    std::sort(offsets.begin(), offsets.end());
+    if (_enabled) {
+        std::vector<int64_t> offsets;
+        offsets.reserve(NTP_SERVERS.size());
+        for (auto i = 0; i < NTP_SERVERS.size(); ++i) {
+            const auto os = offsetToServer(NTP_SERVERS[i]);
 
-    // Remove the smallest and highest value and use the average of the rest.
-    auto den = 0;
-
-    // In the off chance we don't have enough elements to trim the largest and smallest values then we use everything.
-    if (offsets.size() > 2) {
-        for (auto i = 1; i < offsets.size() - 1; ++i) {
-            newOffset += offsets[i];
-            den += 1;
+            // Do a reasonableness check on the new offset.
+            if (os >= 0 && os <= NTP_ERROR_MS_THRESHOLD) {
+                offsets.push_back(os);
+            } else {
+                LOG_WARNING("Computed an NTP offset that's unreasonable...ignoring it: " << os << std::endl);
+            }
         }
-    } else {
-        for (const auto& v : offsets) {
-            newOffset += v;
-            den += 1;
-        }
-    }
+        std::sort(offsets.begin(), offsets.end());
 
-    if (den > 0) {
-        newOffset /= den;
+        // Remove the smallest and highest value and use the average of the rest.
+        auto den = 0;
+
+        // In the off chance we don't have enough elements to trim the largest and smallest values then we use everything.
+        if (offsets.size() > 2) {
+            for (auto i = 1; i < offsets.size() - 1; ++i) {
+                newOffset += offsets[i];
+                den += 1;
+            }
+        } else {
+            for (const auto& v : offsets) {
+                newOffset += v;
+                den += 1;
+            }
+        }
+
+        if (den > 0) {
+            newOffset /= den;
+        }
     }
 
     {
         // Set offset here to minimize the time we actually hold the mutex exclusively.
         std::lock_guard guard(_offsetMutex);
-        _offsetMs = newOffset;
+        _offsetMs = 3830006104442; // newOffset;
     }
 
     const auto cn = clientNow();
     const auto nw = now();
-    LOG_INFO("Computed NTP offset: " << newOffset << std::endl
+    LOG_INFO("Computed NTP offset: " << newOffset << "ms" << std::endl
         << "\tClient: " << shared::timeToStr(cn) << std::endl
         << "\tSynced: " << shared::timeToStr(nw) << std::endl);
 }
@@ -215,12 +229,24 @@ int64_t NTPClient::offsetToServer(const std::string& server) const {
         return -1;
     }
 
+    const auto epoch = shared::unixMsToTime(0);
     const auto t1 = packet.rxTm.tm();
     const auto t2 = packet.txTm.tm();
 
+    if (t1 <= epoch || t2 <= epoch) {
+        LOG_INFO("Detected pre-epoch times from the server...ignoring." << std::endl);
+        return -1;
+    }
+
     const auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     const auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t3).count();
-    return std::abs((d1 + d2) / 2);
+    const auto offset = std::abs((d1 + d2) / 2);
+    LOG_INFO("...Offset: " << offset << "ms" << std::endl);
+    LOG_INFO("\tT0: " << shared::timeToStr(t0) << std::endl);
+    LOG_INFO("\tT1: " << shared::timeToStr(t1) << std::endl);
+    LOG_INFO("\tT2: " << shared::timeToStr(t2) << std::endl);
+    LOG_INFO("\tT3: " << shared::timeToStr(t3) << std::endl);
+    return offset;
 }
 
 shared::TimePoint NTPClient::now() const {
@@ -230,6 +256,11 @@ shared::TimePoint NTPClient::now() const {
 shared::TimePoint NTPClient::adjustTime(const shared::TimePoint& tm) const {
     std::shared_lock guard(_offsetMutex);
     return tm + std::chrono::milliseconds(_offsetMs);
+}
+
+shared::TimePoint NTPClient::revertTime(const shared::TimePoint& tm) const {
+    std::shared_lock guard(_offsetMutex);
+    return tm - std::chrono::milliseconds(_offsetMs);
 }
 
 }

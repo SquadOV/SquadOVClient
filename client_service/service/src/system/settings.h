@@ -17,21 +17,21 @@ struct RecordingSettings {
     bool useVfr3 = false;
 
     std::string outputDevice;
-    double outputVolume;
+    double outputVolume = 1.0;
     std::string inputDevice;
-    double inputVolume;
-    bool usePushToTalk;
+    double inputVolume = 1.0;
+    bool usePushToTalk = false;
 
     std::optional<size_t> maxUploadSpeed;
 
-    bool useLocalRecording;
+    bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;
-    double maxLocalRecordingSizeGb;
+    double maxLocalRecordingSizeGb = 1.0;
 
-    bool useBitrate;
-    int64_t bitrateKbps;
+    bool useBitrate = false;
+    int64_t bitrateKbps = 6000;
 
-    int32_t vodEndDelaySeconds;
+    int32_t vodEndDelaySeconds = 0;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };
@@ -44,6 +44,7 @@ struct KeybindSettings {
 struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
+    bool enableNtp = true;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -56,6 +57,7 @@ public:
 
     RecordingSettings recording();
     KeybindSettings keybinds();
+    bool enableNtp();
     
     bool loaded() const { return _loaded; }
 

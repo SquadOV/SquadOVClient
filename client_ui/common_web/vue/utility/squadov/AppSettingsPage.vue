@@ -59,6 +59,15 @@
                     label="Minimize SquadOV on close"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="syncToNtp"
+                    @change="changeSyncToNtp"
+                    dense
+                    hide-details
+                    label="Sync time to NTP servers"
+                >
+                </v-checkbox>
             </v-tab-item>
         </v-tabs>
     </v-container>
@@ -109,6 +118,14 @@ export default class AppSettingsPage extends Vue {
 
     changeMinimizeOnClose(v: boolean) {
         this.$store.commit('setMinimizeOnClose', v)
+    }
+
+    get syncToNtp(): boolean {
+        return this.$store.state.settings.enableNtp
+    }
+
+    changeSyncToNtp(v: boolean) {
+        this.$store.commit('setEnableNtp', v)
     }
 }
 

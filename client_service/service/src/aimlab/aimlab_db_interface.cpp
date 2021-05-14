@@ -2,6 +2,7 @@
 #include "shared/sqlite/sqlite.h"
 #include "shared/errors/error.h"
 #include "shared/filesystem/utility.h"
+#include "shared/time/ntp_client.h"
 
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -16,7 +17,7 @@ shared::aimlab::TaskData getTaskDataFromSqlStatement(SqlStatement& stmt) {
     data.taskId = stmt.getColumn<int>(0);
     data.klutchId = stmt.getColumn<std::string>(1);
     data.taskName = stmt.getColumn<std::string>(2);
-    data.createDate = stmt.getTimeColumnFromString(3, "%Y-%m-%d %H:%M:%S");
+    data.createDate = shared::time::NTPClient::singleton()->adjustTime(stmt.getTimeColumnFromString(3, "%Y-%m-%d %H:%M:%S"));
     data.mode = stmt.getColumn<int>(4);
     data.score = stmt.getColumn<int>(5);
     data.version = stmt.getColumn<std::string>(6);

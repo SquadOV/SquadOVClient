@@ -114,6 +114,7 @@ export interface SquadOvLocalSettings {
     minimizeOnClose: boolean
     runOnStartup: boolean
     setupWizardRun: boolean
+    enableNtp: boolean
 }
 
 function getSettingsFname() : string {
@@ -242,7 +243,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
-        setupWizardRun: false
+        setupWizardRun: false,
+        enableNtp: true,
     }
 /// #else
     return {
@@ -271,7 +273,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
-        setupWizardRun: false
+        setupWizardRun: false,
+        enableNtp: true,
     }
 /// #endif
 }
@@ -375,6 +378,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.vodEndDelaySeconds === undefined) {
         parsedData.record.vodEndDelaySeconds = 0
+    }
+
+    if (parsedData.enableNtp === undefined) {
+        parsedData.enableNtp = true
     }
 
     saveLocalSettings(parsedData, true)

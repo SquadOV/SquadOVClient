@@ -54,6 +54,7 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     LocalSettings settings;
     settings.record = RecordingSettings::fromJson(obj["record"]);
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
+    settings.enableNtp = obj.value("enableNtp", false);
     return settings;
 }
 
@@ -63,13 +64,15 @@ Settings::Settings() {
 
 void Settings::reloadSettingsFromFile() {
     std::unique_lock lock(_mutex);
+    const auto fpath = shared::filesystem::getSquadOvUserSettingsFile();
+    LOG_INFO("Loading Settings: " << fpath << std::endl);
     try {
-        std::ifstream ifs(shared::filesystem::getSquadOvUserSettingsFile());
+        std::ifstream ifs(fpath);
         const auto obj = nlohmann::json::parse(ifs);
         _settings = LocalSettings::fromJson(obj);
         _loaded = true;
     } catch (std::exception& ex) {
-        THROW_ERROR("Failed to read settings: " << ex.what() << std::endl);
+        LOG_WARNING("Failed to read settings (assuming default): " << ex.what() << std::endl);
     }
 }
 
@@ -81,6 +84,11 @@ RecordingSettings Settings::recording() {
 KeybindSettings Settings::keybinds() {
     std::shared_lock lock(_mutex);
     return _settings.keybinds;
+}
+
+bool Settings::enableNtp() {
+    std::shared_lock lock(_mutex);
+    return _settings.enableNtp;
 }
 
 }

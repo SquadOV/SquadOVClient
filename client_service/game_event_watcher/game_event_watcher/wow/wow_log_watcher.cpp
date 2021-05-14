@@ -21,7 +21,13 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const 
         return false;
     }
 
-    const auto currentLocal = date::make_zoned(date::current_zone(), shared::filesystem::timeOfLastFileWrite(logPath)).get_local_time();
+    // We need to account for the double adjust here. timeOfLastFileWrite will ALREADY call nowUtc() (which uses the NTP client).
+    // Thus, the year will be adjusted already. We shouldn't ever be doing multi year adjustments but it's a possibility to look out for just in case.
+    // We need the NON-adjusted year.
+    const auto currentLocal = date::make_zoned(
+        date::current_zone(),
+        shared::time::NTPClient::singleton()->revertTime(shared::filesystem::timeOfLastFileWrite(logPath))
+    ).get_local_time();
     std::ostringstream datetime;
     datetime << parts[0] << "/" << date::year_month_day{date::floor<date::days>(currentLocal)}.year() << " " << parts[1];
 

@@ -209,6 +209,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.keybinds.pushToTalk = params.ptt
             saveLocalSettings(state.settings)
 /// #endif
+        },
+        setEnableNtp(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.enableNtp = v
+            saveLocalSettings(state.settings)
+/// #endif
         }
     },
     actions: {
