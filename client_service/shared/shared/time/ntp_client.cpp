@@ -164,7 +164,7 @@ void NTPClient::tick() {
     {
         // Set offset here to minimize the time we actually hold the mutex exclusively.
         std::lock_guard guard(_offsetMutex);
-        _offsetMs = 3830006104442; // newOffset;
+        _offsetMs = newOffset;
     }
 
     const auto cn = clientNow();
