@@ -23,19 +23,7 @@
 
                             <div class="d-flex flex-column justify-center">
                                 <span class="download-text">Client (x64)</span>
-                                <span class="download-text">{{version}} (80MB)</span>
-                            </div>
-                        </div>
-                    </v-btn>
-
-                    <v-btn class="download-button" color="secondary" href="https://app.squadov.gg">
-                        <div class="d-flex">
-                            <v-icon class="mr-4">
-                                mdi-web
-                            </v-icon>
-
-                            <div class="d-flex flex-column justify-center">
-                                <span class="download-text">Web Client</span>
+                                <span class="download-text">{{version}} (115MB)</span>
                             </div>
                         </div>
                     </v-btn>
@@ -169,8 +157,8 @@ export default class Index extends Vue {
                 link: '/csgo/',
                 box: '/assets/csgo_box.jpg',
                 status: {
-                    text: 'Coming Soon',
-                    class: 'dev',
+                    text: 'Alpha',
+                    class: 'alpha',
                 },
             },
             {
@@ -249,7 +237,7 @@ export default class Index extends Vue {
     }
 
     get version(): string {
-        return 'v0.7.24'
+        return 'v0.8.0'
     }
 
     get downloadLink() : string {
