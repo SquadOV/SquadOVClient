@@ -133,6 +133,7 @@ export interface LoginOutput {
     userId: number
     sessionId: string
     verified: boolean
+    twoFactor: string | null
 }
 
 interface RegisterInput {
@@ -154,6 +155,7 @@ import { storeSessionCookie, getSessionId } from '@client/js/session'
 import { WowDeathRecap, cleanWowDeathRecapFromJson } from '@client/js/wow/deaths'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/csgo/match'
+import { MfaData } from '@client/js/squadov/mfa'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -283,6 +285,13 @@ class ApiClient {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
     }
 
+    finishMfaLogin(mfaId: string, code: string): Promise<ApiData<LoginOutput>> {
+        return axios.post('auth/login/mfa', {
+            id: mfaId,
+            code,
+        }, this.createWebAxiosConfig())
+    }
+
     register(inp : RegisterInput, params: any) : Promise<void> {
         return axios.post('auth/register', inp, {
             ...this.createWebAxiosConfig(),
@@ -326,6 +335,31 @@ class ApiClient {
             currentPw,
             newPw,
         }, this.createWebAxiosConfig())
+    }
+
+    verifyPassword(pw: string): Promise<void> {
+        return axios.post('v1/users/me/pw/verify', {
+            password: pw
+        }, this.createWebAxiosConfig())
+    }
+
+    request2FAQrCodeUrl(): Promise<ApiData<MfaData>> {
+        return axios.get('v1/users/me/2fa/qr', this.createWebAxiosConfig())
+    }
+
+    enable2fa(code: string, secret: string): Promise<ApiData<string[]>> {
+        return axios.post('v1/users/me/2fa', {
+            code,
+            secret,
+        }, this.createWebAxiosConfig())
+    }
+
+    disable2fa(code: string): Promise<void> {
+        return axios.delete(`v1/users/me/2fa?code=${code}`, this.createWebAxiosConfig())
+    }
+
+    check2faStatus(): Promise<ApiData<boolean>> {
+        return axios.get('v1/users/me/2fa', this.createWebAxiosConfig())
     }
 
     sessionHeartbeat(sessionId: string): Promise<ApiData<SquadOvHeartbeatResponse>> {

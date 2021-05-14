@@ -86,8 +86,10 @@
             :timeout="5000"
             color="error"
         >
-            Incorrect username/password. Please try again.
+            Incorrect username/password (or two-factor code). Please try again.
         </v-snackbar>
+
+        <mfa-auth-dialog ref="mfa"></mfa-auth-dialog>
     </v-container>
 </template>
 
@@ -103,8 +105,13 @@ import { ipcRenderer } from 'electron'
 /// #endif
 
 import { apiClient, ApiData, LoginOutput } from '@client/js/api'
+import MfaAuthDialog from '@client/vue/utility/auth/MfaAuthDialog.vue'
 
-@Component
+@Component({
+    components: {
+        MfaAuthDialog
+    }
+})
 export default class Login extends Vue {
     // If we get to the login page and 'reg'
     // is also passed in (non-empty) then that
@@ -135,6 +142,10 @@ export default class Login extends Vue {
     password: string = ''
     forcedUsernameMessages : string[] = []
 
+    $refs!: {
+        mfa: MfaAuthDialog
+    }
+
     get usernameRules() : any[] {
         return [
             (value : any) => !!value || 'Required.',
@@ -156,6 +167,32 @@ export default class Login extends Vue {
     mounted() {
         this.onSyncReg()
     }
+    
+    handleSuccessfulLogin(data: LoginOutput) {
+        // Successful login - store the session ID.
+/// #if DESKTOP
+        ipcRenderer.send('obtain-session', [data.sessionId, data.userId])
+/// #endif
+        // Forcefully set session ID on the Api client just in case
+        // we're going to the email verification check page.
+        apiClient.setSessionFull(data.sessionId, data.userId)
+
+        if (!!data.verified) {
+            // We can close out the login app now.
+/// #if DESKTOP
+            ipcRenderer.send('finish-login')
+/// #else
+            this.$router.replace({
+                name: pi.DashboardPageId,
+            })
+/// #endif
+        } else {
+            // Redirect to a screen to wait for email verification.
+            this.$router.replace({
+                name: pi.WaitForVerifyPageId,
+            })
+        }
+    }
 
     login() {
         this.inProgress = true
@@ -163,28 +200,18 @@ export default class Login extends Vue {
             username: this.username,
             password: this.password,
         }).then((resp : ApiData<LoginOutput>) => {
-            // Successful login - store the session ID.
-/// #if DESKTOP
-            ipcRenderer.send('obtain-session', [resp.data.sessionId, resp.data.userId])
-/// #endif
-            // Forcefully set session ID on the Api client just in case
-            // we're going to the email verification check page.
-            apiClient.setSessionFull(resp.data.sessionId, resp.data.userId)
-
-            if (!!resp.data.verified) {
-                // We can close out the login app now.
-/// #if DESKTOP
-                ipcRenderer.send('finish-login')
-/// #else
-                this.$router.replace({
-                    name: pi.DashboardPageId,
+            if (!!resp.data.twoFactor) {
+                // Ask for two factor code before passing that back to the server to finish the user login.
+                this.$refs.mfa.open((code: string) => {
+                    apiClient.finishMfaLogin(resp.data.twoFactor!, code).then((r2: ApiData<LoginOutput>) => {
+                        this.handleSuccessfulLogin(r2.data)
+                    }).catch((err: any) => {
+                        console.log('MFA Login Failure')
+                        this.showHideAuthError = true
+                    })
                 })
-/// #endif
             } else {
-                // Redirect to a screen to wait for email verification.
-                this.$router.replace({
-                    name: pi.WaitForVerifyPageId,
-                })
+                this.handleSuccessfulLogin(resp.data)
             }
         }).catch((err : any) => {
             if (!!err.response && err.response.status === 401) {
