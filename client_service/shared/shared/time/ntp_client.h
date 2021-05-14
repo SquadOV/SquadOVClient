@@ -15,6 +15,7 @@ public:
 
     void initialize();
     shared::TimePoint now() const;
+    shared::TimePoint adjustTime(const shared::TimePoint& tm) const;
 private:
     void tick();
     shared::TimePoint clientNow() const;

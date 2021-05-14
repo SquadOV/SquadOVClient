@@ -3,6 +3,7 @@
 #include "shared/timer.h"
 #include "shared/errors/error.h"
 #include "shared/version.h"
+#include "shared/time/ntp_client.h"
 #include <boost/algorithm/string.hpp>
 #include <vector>
 
@@ -28,7 +29,7 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const 
         date::current_zone(),
         shared::strToLocalTime(datetime.str(), "%m/%d/%Y %T")
     );
-    log.timestamp = t.get_sys_time();
+    log.timestamp = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
 
     // Need to combine everything from the 3rd part onwards back
     // into one string since there could be spaces in the tokens

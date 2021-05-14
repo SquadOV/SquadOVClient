@@ -4,6 +4,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/time/ntp_client.h"
 
 #include <boost/algorithm/string.hpp>
 #include <chrono>
@@ -34,7 +35,7 @@ bool parseGameLogMapChange(const std::string& line, ValorantMapChangeData& data)
         return false;
     }
 
-    data.logTime = shared::strToTime(matches[1].str(), valorantLogDtFormat);
+    data.logTime = shared::time::NTPClient::singleton()->adjustTime(shared::strToTime(matches[1].str(), valorantLogDtFormat));
     data.map = matches[2].str();
     data.ready = matches[3].str() == "TRUE";
     data.complete = matches[4].str() == "TRUE";
@@ -54,7 +55,7 @@ bool parseRoundChange(const std::string& line, ValorantRoundData& data) {
     if (!std::regex_search(line, matches, roundStartRegex)) {
         return false;
     }
-    data.logTime = shared::strToTime(matches[1].str(), valorantLogDtFormat);
+    data.logTime = shared::time::NTPClient::singleton()->adjustTime(shared::strToTime(matches[1].str(), valorantLogDtFormat));
     data.clientTime = std::stod(matches[2].str());
     data.serverTime = std::stod(matches[3].str());
     return true;

@@ -224,8 +224,12 @@ int64_t NTPClient::offsetToServer(const std::string& server) const {
 }
 
 shared::TimePoint NTPClient::now() const {
+    return adjustTime(clientNow());
+}
+
+shared::TimePoint NTPClient::adjustTime(const shared::TimePoint& tm) const {
     std::shared_lock guard(_offsetMutex);
-    return clientNow() + std::chrono::milliseconds(_offsetMs);
+    return tm + std::chrono::milliseconds(_offsetMs);
 }
 
 }

@@ -1,6 +1,7 @@
 #include "game_event_watcher/csgo/csgo_log_watcher.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/errors/error.h"
+#include "shared/time/ntp_client.h"
 
 #include <boost/algorithm/string.hpp>
 #include <fstream>
@@ -28,7 +29,7 @@ CsgoLogLine parseCsgoLog(const std::string& line) {
     }
 
     log.parsed = true;
-    log.tm = date::make_zoned(date::current_zone(), shared::strToLocalTime(matches[1].str(), "%m/%d/%Y - %H:%M:%S")).get_sys_time();
+    log.tm = shared::time::NTPClient::singleton()->adjustTime(date::make_zoned(date::current_zone(), shared::strToLocalTime(matches[1].str(), "%m/%d/%Y - %H:%M:%S")).get_sys_time());
     log.rest = matches[2].str();
 
     return log;

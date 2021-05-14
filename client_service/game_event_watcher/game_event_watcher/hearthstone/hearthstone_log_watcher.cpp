@@ -3,6 +3,7 @@
 #include "shared/filesystem/common_paths.h"
 #include "shared/filesystem/utility.h"
 #include "shared/log/log.h"
+#include "shared/time/ntp_client.h"
 
 #include <date/tz.h>
 #include <regex>
@@ -30,7 +31,7 @@ HearthstoneRawLog parseLogLine(const std::string& line) {
     // Hearthstone prints out log times using the local time I believe so we need to convert it into
     // UTC before passing it through the rest of the application.
     const auto t = date::make_zoned(date::current_zone(), shared::strToLocalTime(matches[1].str()));
-    log.tm = t.get_sys_time();
+    log.tm = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
     if (matches.size() == 3) {
         log.log = matches[2].str();
     } else if (matches.size() == 4) {
@@ -59,7 +60,7 @@ HearthstoneRawLog parseFilePrintLogLine(const std::string& line, const std::stri
     newTmString << shared::timeToDateString(now.get_local_time()) << " " << matches[1].str();
 
     const auto t = date::make_zoned(date::current_zone(), shared::strToLocalTime(newTmString.str()));
-    log.tm = t.get_sys_time();
+    log.tm = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
     log.section = section;
     log.log = matches[2].str();
     return log;

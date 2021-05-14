@@ -1,11 +1,12 @@
 #include "game_event_watcher/csgo/csgo_gsi_packet.h"
 #include "shared/io.h"
+#include "shared/time/ntp_client.h"
 
 namespace game_event_watcher {
 
 shared::TimePoint CsgoGsiPacket::timestamp() const {
     if (provider && provider->timestamp) {
-        return shared::unixMsToTime(provider->timestamp.value() * 1000);
+        return shared::time::NTPClient::singleton()->adjustTime(shared::unixMsToTime(provider->timestamp.value() * 1000));
     } else {
         return shared::nowUtc();
     }
