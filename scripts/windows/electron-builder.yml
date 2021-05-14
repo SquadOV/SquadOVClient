@@ -61,5 +61,8 @@ extraResources:
       - "advanced_crash_dump_enabler.exe"
       - "ffmpeg.exe"
       - "shaders/*"
+      - "csgo/csgo_demo_retriever.exe"
+      - "csgo/steam_api64.dll"
+      - "csgo/steam_appid.txt"
   - from: "config/squadov.json"
     to: "config/config.json"

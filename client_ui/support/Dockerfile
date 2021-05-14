@@ -19,6 +19,7 @@ COPY package.json /squadov
 COPY shims.d.ts /squadov
 COPY tsconfig.json /squadov
 COPY nuxt.config.js /squadov
+COPY yarn.lock /squadov
 
 WORKDIR /squadov
 RUN yarn install && yarn generate
