@@ -97,7 +97,7 @@ void NTPClient::initialize() {
     _tickThread = std::thread([this](){
         const auto interval = std::chrono::seconds(NTP_TICK_INTERVAL_SECONDS);
         const auto step = std::chrono::seconds(1);
-        auto elapsed = std::chrono::seconds(0);
+        auto elapsed = std::chrono::seconds(NTP_TICK_INTERVAL_SECONDS);
 
         while (_running) {
             // Run the tick in a thread since we don't want it to block the entire program if we aren't able to
