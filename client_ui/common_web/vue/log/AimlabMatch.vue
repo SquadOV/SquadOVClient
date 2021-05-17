@@ -20,6 +20,7 @@
                         :match-uuid="taskId"
                         :game="SquadOvGames.AimLab"
                         :user-id="userId"
+                        :graphql-stats="statPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -51,6 +52,7 @@
                 <aimlab-task-performance-history
                     :task="data"
                     :user-id="userId"
+                    :stats.sync="statPermissions"
                 >
                 </aimlab-task-performance-history>
             </div>
@@ -67,6 +69,7 @@ import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { StatPermission } from '@client/js/stats/statPrimitives'
 
 import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
 import AimlabTaskPerformanceHistory from '@client/vue/utility/aimlab/AimlabTaskPerformanceHistory.vue'
@@ -101,6 +104,7 @@ export default class AimlabMatch extends Vue {
     data : AimlabTaskData | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false
+    statPermissions: StatPermission[] = []
 
     @Watch('taskId')
     refreshTask() {

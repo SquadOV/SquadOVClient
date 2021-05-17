@@ -56,10 +56,11 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
 import { statLibrary } from '@client/js/stats/statLibrary'
+import { StatPermission } from '@client/js/stats/statPrimitives'
 import StatContainer from '@client/vue/stats/StatContainer.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 
@@ -76,7 +77,32 @@ export default class AimlabTaskPerformanceHistory extends Vue {
     @Prop({required: true})
     userId!: number
 
+    @Prop({required: true})
+    stats!: StatPermission[]
+
     content : AimlabContent = getAimlabContent()
+
+    mounted() {
+        this.syncStatPermissions()
+    }
+
+    @Watch('allStats')
+    syncStatPermissions() {
+        let newStats = this.allStats.map((st: string) => {
+            let stId = statLibrary.splitId(st)
+            let obj = statLibrary.getStatObject(stId)
+            return obj.permission
+        })
+        this.$emit('update:stats', Array.from(new Set(newStats)))
+    }
+
+    get allStats(): string[] {
+        let stats: string[] = [this.content.getTaskCommonScoreStat(this.task.taskName, this.task.mode)!]
+        if (this.hasExtraStats) {
+            stats.push(...(this.content.getTaskExtraStats(this.task.taskName, this.task.mode)!))
+        }
+        return stats
+    }
 
     get hasExtraStats() : boolean {
         let stats = this.content.getTaskExtraStats(this.task.taskName, this.task.mode)

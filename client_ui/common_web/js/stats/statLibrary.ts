@@ -2,25 +2,6 @@ import { createAimlabStatFolder } from '@client/js/stats/aimlabStatLibrary'
 import { StatFolder, StatObject, StatInstance } from '@client/js/stats/statPrimitives'
 import { v4 as uuidv4 } from 'uuid'
 
-export enum StatPermission {
-    AimlabGridshot,
-    AimlabSpidershot,
-    AimlabMicroshot,
-    AimlabSixshot,
-    AimlabMicroflex,
-    AimlabMotionshot,
-    AimlabMultishot,
-    AimlabDetection,
-    AimlabDecisionshot,
-    AimlabStrafetrack,
-    AimlabCircletrack,
-    AimlabStrafeshot,
-    AimlabCircleshot,
-    AimlabLinetrace,
-    AimlabMultilinetrace,
-    AimlabPentakill,
-}
-
 class StatLibrary {
     _root: StatFolder
 

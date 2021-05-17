@@ -5,7 +5,8 @@ import {
     StatOptionInstance,
     StatInstance,
     createStatGroupFunctionOption,
-    createStatSortDirectionOption
+    createStatSortDirectionOption,
+    StatPermission
 } from '@client/js/stats/statPrimitives'
 import { GraphqlStatsQueryBuilder } from '@client/js/graphql/graphql'
 import {
@@ -133,10 +134,11 @@ function createGenericAimlabParseResponseIntoInstance<T extends AimlabCommonStat
     }
 }
 
-function createGenericAimlabStats(task: string, mode: string) : { [id: string] : StatObject } {
+function createGenericAimlabStats(task: string, mode: string, perm: StatPermission) : { [id: string] : StatObject } {
     return {
         'score': {
             name: 'Score',
+            permission: perm,
             availableOptions: [...getCommonAimLabOptions()],
             addToGraphqlBuilder: createGenericAimlabAddToGraphqlBuilder(task, mode, 'score'),
             parseResponseIntoInstance: createGenericAimlabParseResponseIntoInstance<AimlabCommonStatData>(task, mode, 'score')
@@ -144,28 +146,32 @@ function createGenericAimlabStats(task: string, mode: string) : { [id: string] :
     }
 }
 
-function createAimlabSparStats(task: string, mode: string) : { [id: string] : StatObject } {
+function createAimlabSparStats(task: string, mode: string, perm: StatPermission) : { [id: string] : StatObject } {
     return {
         'score': {
             name: 'Score',
+            permission: perm,
             availableOptions: [...getCommonAimLabOptions()],
             addToGraphqlBuilder: createGenericAimlabAddToGraphqlBuilder(task, mode, 'score'),
             parseResponseIntoInstance: createGenericAimlabParseResponseIntoInstance<AimlabSparData>(task, mode, 'score')
         },
         'kill': {
             name: 'Kills',
+            permission: perm,
             availableOptions: [...getCommonAimLabOptions()],
             addToGraphqlBuilder: createGenericAimlabAddToGraphqlBuilder(task, mode, 'kill'),
             parseResponseIntoInstance: createGenericAimlabParseResponseIntoInstance<AimlabSparData>(task, mode, 'kill')
         },
         'ttk': {
             name: 'Time-to-Kill (ms)',
+            permission: perm,
             availableOptions: [...getCommonAimLabOptions()],
             addToGraphqlBuilder: createGenericAimlabAddToGraphqlBuilder(task, mode, 'ttk'),
             parseResponseIntoInstance: createGenericAimlabParseResponseIntoInstance<AimlabSparData>(task, mode, 'ttk')
         },
         'acc': {
             name: 'Accuracy (%)',
+            permission: perm,
             availableOptions: [...getCommonAimLabOptions()],
             addToGraphqlBuilder: createGenericAimlabAddToGraphqlBuilder(task, mode, 'acc'),
             parseResponseIntoInstance: createGenericAimlabParseResponseIntoInstance<AimlabSparData>(task, mode, 'acc')
@@ -181,26 +187,26 @@ enum AimlabModeFlags {
     All = 7
 }
 
-function createStandardAimlabStatFolder(id: string, name: string, flags: number, fn: (a: string, b: string) => { [id: string] : StatObject }): StatFolder {
+function createStandardAimlabStatFolder(id: string, name: string, flags: number, fn: (a: string, b: string, c: StatPermission) => { [id: string] : StatObject }, perm: StatPermission): StatFolder {
     let children : { [id: string] : StatFolder }= {}
     if (flags & AimlabModeFlags.Ultimate) {
         children['ultimate'] = {
             name: 'Ultimate',
-            stats: fn(id, 'ultimate')
+            stats: fn(id, 'ultimate', perm)
         }
     }
 
     if (flags & AimlabModeFlags.Precision) {
         children['precision'] = {
             name: 'Precision',
-            stats: fn(id, 'precision')
+            stats: fn(id, 'precision', perm)
         }
     }
 
     if (flags & AimlabModeFlags.Speed) {
         children['speed'] = {
             name: 'Speed',
-            stats: fn(id, 'speed')
+            stats: fn(id, 'speed', perm)
         }
     }
 
@@ -214,22 +220,22 @@ export function createAimlabStatFolder() : StatFolder {
     return {
         name: 'Aimlab',
         childFolders: {
-            'gridshot': createStandardAimlabStatFolder('gridshot', 'Gridshot', AimlabModeFlags.All, createAimlabSparStats),
-            'spidershot': createStandardAimlabStatFolder('spidershot', 'Spidershot', AimlabModeFlags.All, createAimlabSparStats),
-            'microshot': createStandardAimlabStatFolder('microshot', 'Microshot', AimlabModeFlags.All, createAimlabSparStats),
-            'sixshot': createStandardAimlabStatFolder('sixshot', 'Sixshot', AimlabModeFlags.All, createAimlabSparStats),
-            'microflex': createStandardAimlabStatFolder('microflex', 'Microflex', AimlabModeFlags.All, createAimlabSparStats),
-            'motionshot': createStandardAimlabStatFolder('motionshot', 'Motionshot', AimlabModeFlags.All, createAimlabSparStats),
-            'multishot': createStandardAimlabStatFolder('multishot', 'Multishot', AimlabModeFlags.All, createAimlabSparStats),
-            'detection': createStandardAimlabStatFolder('detection', 'Detection', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'decisionshot': createStandardAimlabStatFolder('decisionshot', 'Decisionshot', AimlabModeFlags.All, createGenericAimlabStats),
-            'strafetrack': createStandardAimlabStatFolder('strafetrack', 'Strafetrack', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'circletrack': createStandardAimlabStatFolder('circletrack', 'Circletrack', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'strafeshot': createStandardAimlabStatFolder('strafeshot', 'Strafeshot', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'circleshot': createStandardAimlabStatFolder('circleshot', 'Circleshot', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'linetrace': createStandardAimlabStatFolder('linetrace', 'Linetrace', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'multilinetrace': createStandardAimlabStatFolder('multilinetrace', 'Multilinetrace', AimlabModeFlags.Ultimate, createGenericAimlabStats),
-            'pentakill': createStandardAimlabStatFolder('pentakill', 'Pentakill', AimlabModeFlags.Ultimate, createGenericAimlabStats),
+            'gridshot': createStandardAimlabStatFolder('gridshot', 'Gridshot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabGridshot),
+            'spidershot': createStandardAimlabStatFolder('spidershot', 'Spidershot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabSpidershot),
+            'microshot': createStandardAimlabStatFolder('microshot', 'Microshot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabMicroshot),
+            'sixshot': createStandardAimlabStatFolder('sixshot', 'Sixshot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabSixshot),
+            'microflex': createStandardAimlabStatFolder('microflex', 'Microflex', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabMicroflex),
+            'motionshot': createStandardAimlabStatFolder('motionshot', 'Motionshot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabMotionshot),
+            'multishot': createStandardAimlabStatFolder('multishot', 'Multishot', AimlabModeFlags.All, createAimlabSparStats, StatPermission.AimlabMultishot),
+            'detection': createStandardAimlabStatFolder('detection', 'Detection', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabDetection),
+            'decisionshot': createStandardAimlabStatFolder('decisionshot', 'Decisionshot', AimlabModeFlags.All, createGenericAimlabStats, StatPermission.AimlabDecisionshot),
+            'strafetrack': createStandardAimlabStatFolder('strafetrack', 'Strafetrack', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabStrafetrack),
+            'circletrack': createStandardAimlabStatFolder('circletrack', 'Circletrack', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabCircletrack),
+            'strafeshot': createStandardAimlabStatFolder('strafeshot', 'Strafeshot', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabStrafeshot),
+            'circleshot': createStandardAimlabStatFolder('circleshot', 'Circleshot', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabCircleshot),
+            'linetrace': createStandardAimlabStatFolder('linetrace', 'Linetrace', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabLinetrace),
+            'multilinetrace': createStandardAimlabStatFolder('multilinetrace', 'Multilinetrace', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabMultilinetrace),
+            'pentakill': createStandardAimlabStatFolder('pentakill', 'Pentakill', AimlabModeFlags.Ultimate, createGenericAimlabStats, StatPermission.AimlabPentakill),
         }
     }
 }

@@ -96,7 +96,7 @@ import {
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { ShareAccessTokenResponse } from '@client/js/squadov/share'
-import { StatPermission } from '@client/js/stats/statLibrary'
+import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToGcs } from '@client/js/gcs'
 
 /// #if DESKTOP

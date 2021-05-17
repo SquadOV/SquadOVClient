@@ -86,7 +86,6 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { StatPermission } from '@client/js/stats/statLibrary'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 
 @Component({

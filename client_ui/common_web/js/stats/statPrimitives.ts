@@ -19,8 +19,29 @@ export interface StatNode {
     parent? : StatNode
 }
 
+export enum StatPermission {
+    AimlabGridshot,
+    AimlabSpidershot,
+    AimlabMicroshot,
+    AimlabSixshot,
+    AimlabMicroflex,
+    AimlabMotionshot,
+    AimlabMultishot,
+    AimlabDetection,
+    AimlabDecisionshot,
+    AimlabStrafetrack,
+    AimlabCircletrack,
+    AimlabStrafeshot,
+    AimlabCircleshot,
+    AimlabLinetrace,
+    AimlabMultilinetrace,
+    AimlabPentakill,
+    Unknown,
+}
+
 export interface StatObject extends StatNode {
     availableOptions: StatOption[]
+    permission: StatPermission
     addToGraphqlBuilder<T>(b: GraphqlStatsQueryBuilder<T>, opts: StatOptionInstance): void
     parseResponseIntoInstance(stats: AllStats, inst: StatInstance): void
 }
