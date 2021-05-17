@@ -30,6 +30,11 @@ export interface SquadOvKeybindSettings {
     pushToTalk: number[]
 }
 
+export interface SquadOvVideoPlaybackSettings {
+    smallStepSize: number
+    largeStepSize: number
+}
+
 export function computeFileFolderSizeGb(folder: string): Promise<number> {
     return new Promise((resolve, reject) => {
 ///#if DESKTOP
@@ -110,6 +115,7 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
     keybinds: SquadOvKeybindSettings
+    playback: SquadOvVideoPlaybackSettings
     minimizeToTray: boolean
     minimizeOnClose: boolean
     runOnStartup: boolean
@@ -240,6 +246,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         keybinds: {
             pushToTalk: []
         },
+        playback: {
+            smallStepSize: 5000,
+            largeStepSize: 10000,
+        },
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
@@ -269,6 +279,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         },
         keybinds: {
             pushToTalk: []
+        },
+        playback: {
+            smallStepSize: 5000,
+            largeStepSize: 10000,
         },
         minimizeToTray: true,
         minimizeOnClose: true,
@@ -382,6 +396,13 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.enableNtp === undefined) {
         parsedData.enableNtp = true
+    }
+
+    if (parsedData.playback === undefined) {
+        parsedData.playback = {
+            smallStepSize: 5000,
+            largeStepSize: 10000,
+        }
     }
 
     saveLocalSettings(parsedData, true)

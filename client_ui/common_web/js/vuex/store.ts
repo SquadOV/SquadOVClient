@@ -218,7 +218,25 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.enableNtp = v
             saveLocalSettings(state.settings)
 /// #endif
-        }
+        },
+        changeSmallStep(state: RootState, v: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.playback.smallStepSize = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeLargeStep(state: RootState, v: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.playback.largeStepSize = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
     },
     actions: {
         async reloadLocalSettings(context) {

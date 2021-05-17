@@ -1,6 +1,17 @@
 <template>
     <v-container class="full-parent-height" fluid>
         <v-tabs class="full-parent-height" vertical>
+            <v-tab>
+                <v-icon left>
+                    mdi-play-circle
+                </v-icon>
+                Playback
+            </v-tab>
+
+            <v-tab-item>
+                <playback-settings-item></playback-settings-item>
+            </v-tab-item>
+
             <template v-if="useRecordingSettings">
                 <v-tab>
                     <v-icon left>
@@ -79,11 +90,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import RecordingSettingsItem from '@client/vue/utility/squadov/settings/RecordingSettingsItem.vue'
 import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
+import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
 
 @Component({
     components: {
         RecordingSettingsItem,
         AccountSecuritySettingsItem,
+        PlaybackSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {
