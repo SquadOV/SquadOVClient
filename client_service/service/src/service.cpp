@@ -464,17 +464,24 @@ int main(int argc, char** argv) {
                 entry.diskBytes = 0;
 
                 shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(settings->recording().localRecordingLocation);
-                shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(service::api::getGlobalApi()->getVodUri(request.data), entry, [&zeroMqServerClient, request](size_t dl, size_t total){
-                    zeroMqServerClient.sendMessage(
-                        service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
-                        nlohmann::json{
-                            {"task", request.data},
-                            {"download", dl},
-                            {"total", total},
-                            {"done", false}
-                        }.dump(),
-                        true
-                    );
+                
+                shared::TimePoint lastProgressTm = shared::nowUtc();
+                shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(service::api::getGlobalApi()->getVodUri(request.data), entry, [&zeroMqServerClient, &lastProgressTm, request](size_t dl, size_t total){
+                    const auto now = shared::nowUtc();
+                    const auto threshold = lastProgressTm + std::chrono::seconds(1);
+                    if (now > threshold) {
+                        zeroMqServerClient.sendMessage(
+                            service::zeromq::ZEROMQ_VOD_DOWNLOAD_PROGRESS_TOPIC,
+                            nlohmann::json{
+                                {"task", request.data},
+                                {"download", dl},
+                                {"total", total},
+                                {"done", false}
+                            }.dump(),
+                            true
+                        );
+                        lastProgressTm = now;
+                    }
                 });
 
                 shared::filesystem::LocalRecordingIndexDb::singleton()->cleanupLocalFolder(settings->recording().maxLocalRecordingSizeGb);
