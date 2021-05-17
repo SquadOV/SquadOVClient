@@ -1,4 +1,4 @@
-const DDRAGON_BASE_URL = 'http://ddragon.leagueoflegends.com/cdn'
+const DDRAGON_BASE_URL = 'https://ddragon.leagueoflegends.com/cdn'
 import axios from 'axios'
 import { ApiData } from '@client/js/api'
 
@@ -286,7 +286,7 @@ class LolDdragonClientContainer {
     }
 
     refreshValidVersions() {
-        axios.get(`http://ddragon.leagueoflegends.com/api/versions.json`).then((resp: ApiData<string[]>) => {
+        axios.get(`https://ddragon.leagueoflegends.com/api/versions.json`).then((resp: ApiData<string[]>) => {
             resp.data.forEach((ele: string) => this.validVersions.add(ele))
             this.defaultVersion = resp.data[0]
         }).catch((err: any) => {
