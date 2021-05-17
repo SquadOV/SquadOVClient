@@ -382,7 +382,6 @@ export default class AppNav extends Vue {
             })
 /// #endif
         })
-        
     }
 
     @Watch('$route')

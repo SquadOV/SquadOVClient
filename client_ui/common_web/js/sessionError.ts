@@ -8,6 +8,7 @@ import Vuetify, {
     VProgressCircular
 } from 'vuetify/lib'
 import StatusDisplay from '@client/vue/utility/squadov/StatusDisplay.vue'
+import LogoutButton from '@client/vue/utility/auth/LogoutButton.vue'
 
 Vue.use(Vuetify)
 
@@ -17,7 +18,8 @@ new Vue({
         VApp,
         VMain,
         VProgressCircular,
-        StatusDisplay
+        StatusDisplay,
+        LogoutButton
     },
     vuetify: new Vuetify({
         theme: {

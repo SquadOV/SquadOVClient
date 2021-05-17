@@ -537,7 +537,7 @@ function startAutoupdater() {
 
 let currentSessionExpiration = null
 let sessionRetryCount = 0
-function startSessionHeartbeat(onBeat, isInitial) {
+function startSessionHeartbeat(onBeat) {
     try {
         const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
         log.log('Performing session heartbeat...', url)
@@ -551,7 +551,7 @@ function startSessionHeartbeat(onBeat, isInitial) {
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
 
-        let retrySessionHeartbeat = () => {
+        let retrySessionHeartbeat = (connError) => {
             let timeoutMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 15000)
             // We want to retry a few times up until the session is expired
             // to try and get a new session just in case the user's internet
@@ -559,16 +559,18 @@ function startSessionHeartbeat(onBeat, isInitial) {
             // where we aren't able to obtain a valid session before the session
             // expires, we want to put the app into an error state that that keeps trying
             // to update the session but is other not functional.
-            if (!!currentSessionExpiration) {
+            if (!!currentSessionExpiration && !connError) {
                 // In the case where we're passed the expiration we need to restart and force the user to re-log.
                 if (new Date() > currentSessionExpiration) {
                     logout()
                     return
                 }
             } else {
-                // This is the first session heartbeat. Need to display some sort of loading error
+                // This is the first session heartbeat or some connection error. Need to display some sort of loading error
                 // screen so that the user isn't just greeted with nothing.
-                win.loadFile('sessionError.html')
+                if (!win.webContents.getURL().includes('sessionError.html')) {
+                    win.loadFile('sessionError.html')
+                }
             }
 
             log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
@@ -581,12 +583,7 @@ function startSessionHeartbeat(onBeat, isInitial) {
 
         request.on('error', (err) => {
             log.log('Error in Sesssion Heartbeat: ', err)
-            if (!!isInitial) {
-                log.log('Initial session heartbeat failure...logging out.')
-                logout()
-            } else {
-                retrySessionHeartbeat()
-            }
+            retrySessionHeartbeat(true)
         })
 
         request.on('response', (resp) => {
@@ -594,7 +591,8 @@ function startSessionHeartbeat(onBeat, isInitial) {
                 log.log('Sesssion Heartbeat Unauthorized: ', resp.statusCode, resp.statusMessage)
                 logout()
             } else if (resp.statusCode != 200) {
-                retrySessionHeartbeat()
+                log.log('Bad response code: ', resp.statusCode)
+                retrySessionHeartbeat(false)
             } else {
                 let body = ''
                 resp.on('data', (chunk) => {
@@ -697,7 +695,7 @@ app.on('ready', async () => {
             await requestOutputDevices()
             await requestInputDevices()
         }
-    }, true)
+    })
 })
 
 app.on('window-all-closed', () => {
