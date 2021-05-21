@@ -81,7 +81,7 @@
                             :is-arena="!!currentMatch.arena"
                             :use-teams="!!currentMatch.arena"
                             :friendly-team="friendlyTeam"
-                            @go-to-event="goToVodTime(arguments[0], true)"
+                            @go-to-event="goToVodTime"
                         >
                         </wow-match-events>
                     </v-col>

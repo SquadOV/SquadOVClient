@@ -310,18 +310,18 @@ export default class WowMatchEvents extends Vue {
         if (!this.selectedEncounter) {
             return
         }
-        this.$emit('go-to-event', this.selectedEncounter.startTm)
+        this.$emit('go-to-event', this.selectedEncounter.startTm, false)
     }
 
     goToEncounterEnd() {
         if (!this.selectedEncounter) {
             return
         }
-        this.$emit('go-to-event', this.selectedEncounter.endTm)
+        this.$emit('go-to-event', this.selectedEncounter.endTm, false)
     }
 
     goToEvent(e: UnifiedWowEventContainer) {
-        this.$emit('go-to-event', e.tm)
+        this.$emit('go-to-event', e.tm, true)
     }
 
     obtainUserEventHighlightColor(e: WowUserTarget): string {
