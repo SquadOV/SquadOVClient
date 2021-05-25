@@ -61,6 +61,17 @@ export function millisecondsToTimeString(totalMs : number) : string {
     }
 }
 
+export function timeStringToMilliseconds(ts: string): number {
+    let components = ts.split('.')
+    if (components.length === 0) {
+        return 0
+    }
+
+    let seconds = timeStringToSeconds(components[0])
+    let ms = parseInt(components[1])
+    return seconds * 1000 + ms
+}
+
 export function dateMin(a: Date, b: Date): Date {
     if (a < b) {
         return a

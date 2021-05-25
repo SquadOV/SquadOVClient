@@ -23,12 +23,12 @@
                     :current="currentTimestamp"
                     :input-events="events"
                     :major-tick-every="majorTicksEvery"
-                    :interval-ticks="intervalTicksEvery"
+                    :interval-ticks="intervalTicks"
                     @go-to-timestamp="updateTimestampFromTimeline"
                     fill
                 >
                     <template v-slot:tick="{ tick }">
-                        {{ secondsToTimeString(tick) }}
+                        {{ secondsToTimeString(tick / 1000.0) }}
                     </template>
                 </generic-match-timeline>
             </div>
@@ -40,7 +40,7 @@
                     :current="currentTimestamp"
                     :input-events="events"
                     :major-tick-every="majorTicksEvery"
-                    :interval-ticks="intervalTicksEvery"
+                    :interval-ticks="intervalTicks"
                     :clip-start-handle="clipStart"
                     @update:clipStartHandle="setClipStart"
                     :clip-end-handle="clipEnd"
@@ -49,7 +49,7 @@
                     disable-seeking
                 >
                     <template v-slot:tick="{ tick }">
-                        {{ secondsToTimeString(tick) }}
+                        {{ secondsToTimeString(tick / 1000.0) }}
                     </template>
                 </generic-match-timeline>
             </div>
@@ -292,7 +292,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { VodEditorContext, requestVodClip } from '@client/js/vods/editor'
 import { VodAssociation, VodMetadata } from '@client/js/squadov/vod'
 import { GenericEvent} from '@client/js/event'
-import { secondsToTimeString, timeStringToSeconds } from '@client/js/time'
+import { secondsToTimeString, millisecondsToTimeString, timeStringToMilliseconds } from '@client/js/time'
 
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
@@ -304,7 +304,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
 
-const MAX_CLIP_LENGTH_SECONDS = 180
+const MAX_CLIP_LENGTH_MILLISECONDS = 180000
 
 @Component({
     components: {
@@ -359,17 +359,17 @@ export default class VodEditor extends Vue {
         urlInput: any
     }
 
-    get videoDurationSeconds(): number {
+    get videoDurationMs(): number {
         return this.end - this.start
     }
 
     get majorTicksEvery(): number {
-        let ticks = this.videoDurationSeconds / 30.0
+        let ticks = this.videoDurationMs / 30.0
         return Math.round(ticks)
     }
 
-    get intervalTicksEvery(): number {
-        return Math.round(this.majorTicksEvery / 10.0)
+    get intervalTicks(): number {
+        return 10
     }
 
     doCopy() {
@@ -411,7 +411,7 @@ export default class VodEditor extends Vue {
             return
         }
 
-        let dt = new Date(this.vod.startTime.getTime() + t * 1000.0)
+        let dt = new Date(this.vod.startTime.getTime() + t)
         this.updateTimestampFromContext(dt, true)
     }
 
@@ -420,7 +420,7 @@ export default class VodEditor extends Vue {
             return
         }
 
-        this.currentTimestamp = (dt.getTime() - this.vod.startTime.getTime()) / 1000.0
+        this.currentTimestamp = dt.getTime() - this.vod.startTime.getTime()
     }
 
     updateTimestampFromContext(dt: Date, force: boolean = false) {
@@ -432,7 +432,7 @@ export default class VodEditor extends Vue {
 
         if (!this.initialSync) {
             this.setClipStart(this.currentTimestamp)
-            this.setClipEnd(this.currentTimestamp + MAX_CLIP_LENGTH_SECONDS)
+            this.setClipEnd(this.currentTimestamp + MAX_CLIP_LENGTH_MILLISECONDS)
             this.$refs.player.setPinned(dt)
             this.initialSync = true
         }
@@ -446,12 +446,12 @@ export default class VodEditor extends Vue {
         if (!this.vod) {
             return new Date()
         }
-        return new Date(this.vod.startTime.getTime() + this.currentTimestamp * 1000.0)
+        return new Date(this.vod.startTime.getTime() + this.currentTimestamp)
     }
 
     resetClip() {
         this.clipStart = 0
-        this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_SECONDS, this.end)
+        this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_MILLISECONDS, this.end)
     }
 
     @Watch('videoUuid')
@@ -492,7 +492,7 @@ export default class VodEditor extends Vue {
         if (!this.vod) {
             return 0
         }
-        return (this.vod.endTime.getTime() - this.vod.startTime.getTime()) / 1000.0
+        return this.vod.endTime.getTime() - this.vod.startTime.getTime()
     }
 
     get events(): GenericEvent[] {
@@ -500,11 +500,11 @@ export default class VodEditor extends Vue {
     }
 
     get currentTimeStr(): string {
-        return secondsToTimeString(this.currentTimestamp)
+        return millisecondsToTimeString(this.currentTimestamp)
     }
 
     get clipStartStr(): string {
-        return secondsToTimeString(this.clipStart)
+        return millisecondsToTimeString(this.clipStart)
     }
 
     get clipDuration(): number {
@@ -512,7 +512,7 @@ export default class VodEditor extends Vue {
     }
     
     changeClipStart(s: string) {
-        this.setClipStart(timeStringToSeconds(s))
+        this.setClipStart(timeStringToMilliseconds(s))
     }
 
     setClipStart(s: number) {
@@ -520,18 +520,18 @@ export default class VodEditor extends Vue {
         this.clipStart = Math.min(Math.max(s, this.start), this.end)
         if (this.clipDuration < 0) {
             this.clipEnd = Math.min(this.clipStart + oldDuration, this.end)
-        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-            this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_SECONDS, this.end)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_MILLISECONDS) {
+            this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_MILLISECONDS, this.end)
         }
         this.startKey += 1
     }
 
     get clipEndStr(): string {
-        return secondsToTimeString(this.clipEnd)
+        return millisecondsToTimeString(this.clipEnd)
     }
 
     changeClipEnd(s: string) {
-        this.setClipEnd(timeStringToSeconds(s))
+        this.setClipEnd(timeStringToMilliseconds(s))
     }
 
     setClipEnd(s: number) {
@@ -539,8 +539,8 @@ export default class VodEditor extends Vue {
         this.clipEnd = Math.min(Math.max(s, this.start), this.end)
         if (this.clipDuration < 0) {
             this.clipStart = Math.max(this.clipEnd - oldDuration, this.start)
-        } else if (this.clipDuration > MAX_CLIP_LENGTH_SECONDS) {
-            this.clipStart = Math.max(this.clipEnd - MAX_CLIP_LENGTH_SECONDS, this.start)
+        } else if (this.clipDuration > MAX_CLIP_LENGTH_MILLISECONDS) {
+            this.clipStart = Math.max(this.clipEnd - MAX_CLIP_LENGTH_MILLISECONDS, this.start)
         }
         this.endKey += 1
     }
@@ -573,8 +573,8 @@ export default class VodEditor extends Vue {
             matchUuid: this.vod.matchUuid,
             userUuid: this.$store.state.currentUser.uuid,
             videoUuid: '',
-            startTime: new Date(this.vod.startTime.getTime() + this.clipStart * 1000.0),
-            endTime: new Date(this.vod.startTime.getTime() + this.clipEnd * 1000.0),
+            startTime: new Date(this.vod.startTime.getTime() + this.clipStart),
+            endTime: new Date(this.vod.startTime.getTime() + this.clipEnd),
             rawContainerFormat: 'mp4',
             isClip: true,
             isLocal: false,
@@ -626,7 +626,7 @@ export default class VodEditor extends Vue {
         this.showHideClipDialog = true
 
         // Add a second to the end of the video to ensure that we capture that last second completely.
-        requestVodClip(videoUri, this.clipStart, this.clipEnd + 1).then((resp: {
+        requestVodClip(videoUri, this.clipStart, this.clipEnd + 1000).then((resp: {
             path: string,
             metadata: VodMetadata,
         }) => {

@@ -19,6 +19,8 @@ namespace fs = std::filesystem;
 namespace service::vod {
 namespace {
 
+constexpr int64_t CLIPPING_TIME_BASE = 1000;
+
 struct InputStreamContainer {
     AVCodecContext* codecContext = nullptr;
 
@@ -179,7 +181,9 @@ void VodClipper::openInput() {
         THROW_ERROR("0-index stream is not a video. Did we make this?");
     }
 
-    const int64_t scaledTs = av_rescale_q(_request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}, vstream->time_base);
+    // The start/end time comes in milliseconds so we need to make sure we convert the timestamp
+    // using the millisecond timebase.
+    const int64_t scaledTs = av_rescale_q(_request.start, AVRational{1, CLIPPING_TIME_BASE}, vstream->time_base);
     if (avformat_seek_file(_inputContext, 0, INT64_MIN, scaledTs, scaledTs, 0) < 0) {
         THROW_ERROR("Failed to seek to specified start time in input.");
     }
@@ -276,9 +280,9 @@ shared::squadov::VodMetadata VodClipper::run() {
                     break;
                 }
 
-                if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.start * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) < 0) {
+                if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.start, AVRational{1, CLIPPING_TIME_BASE}) < 0) {
                     continue;
-                } else if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.end * AV_TIME_BASE, AVRational{1, AV_TIME_BASE}) >= 0)  {
+                } else if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.end, AVRational{1, CLIPPING_TIME_BASE}) >= 0)  {
                     finished = true;
                     break;
                 }
