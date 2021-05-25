@@ -6,7 +6,7 @@ namespace process_watcher::memory::games::hearthstone::types {
 namespace {
 const std::string HEARTHSTONE_SERVICES_MAPPER_FULL_NAME = "HearthstoneServices";
 const std::string DYNAMIC_SERVICES_FIELD_NAME = "s_dynamicServices";
-const std::string SERVICES_FIELD_NAME = "s_services";
+const std::string SERVICES_FIELD_NAME = "s_runtimeServices";
 }
 
 GameMgrMapperSPtr HearthstoneServicesMapper::getGameMgr(const process_watcher::memory::mono::MonoImageMapper& image, int32_t domainId) {
