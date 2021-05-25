@@ -10,8 +10,8 @@
             fill
             ref="player"
             :loop-clip="previewClip"
-            :clip-start="previewClip ? clipStart : undefined"
-            :clip-end="previewClip ? clipEnd : undefined"
+            :clip-start="previewClip ? clipStart / 1000.0 : undefined"
+            :clip-end="previewClip ? clipEnd / 1000.0 : undefined"
         >
         </video-player>
 
