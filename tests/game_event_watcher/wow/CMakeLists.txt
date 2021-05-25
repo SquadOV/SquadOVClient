@@ -1,0 +1,2 @@
+GENERATE_TEST("wow_combat_log_parser_test" "wow_combat_log_parser_test.cpp")
+set_property(TARGET wow_combat_log_parser_test APPEND PROPERTY COMPILE_DEFINITIONS "DATA_FOLDER=${CMAKE_CURRENT_SOURCE_DIR}/data")

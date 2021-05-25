@@ -1,0 +1,1 @@
+5/14 23:54:47.887  ENCOUNTER_START,2395,"Hakkar, the Soulflayer",23,5,2291

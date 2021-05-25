@@ -5,6 +5,7 @@
 #include "shared/version.h"
 #include "shared/time/ntp_client.h"
 #include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <vector>
 
 using namespace std::literals::string_literals;
@@ -44,7 +45,9 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const 
     const auto tokenPart = boost::join_if(parts, " ", [](const std::string& p) {
         return !boost::trim_copy(p).empty();
     });
-    boost::split(log.log, tokenPart, boost::is_any_of(","));
+
+    boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);
+    std::copy(tok.begin(), tok.end(), std::back_inserter(log.log));
     return true;
 }
 
