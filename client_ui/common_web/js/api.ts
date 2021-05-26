@@ -160,6 +160,7 @@ import { AimlabMatchFilters } from './aimlab/filters'
 import { HearthstoneMatchFilters } from './hearthstone/filters'
 import { CsgoMatchFilters } from './csgo/filters'
 import { LolMatchFilters } from './lol/filters'
+import { TftMatchFilters } from './tft/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -742,7 +743,7 @@ class ApiClient {
         return axios.get(`v1/users/${userId}/accounts/riot/tft`, this.createWebAxiosConfig())
     }
 
-    listTftMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<TftPlayerMatchSummary[]>>> {
+    listTftMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: TftMatchFilters}) : Promise<ApiData<HalResponse<TftPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/tft/user/${params.userId}/accounts/${params.puuid}/matches`, {
@@ -750,6 +751,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 

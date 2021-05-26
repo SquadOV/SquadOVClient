@@ -1,5 +1,10 @@
 <template>
     <v-container fluid id="tftGameLog">
+        <tft-filter-ui
+            v-model="filters"
+            class="mb-2"
+        >
+        </tft-filter-ui>
         <v-row>
             <v-col cols="12">
                 <!-- 
@@ -49,15 +54,18 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { TftPlayerMatchSummary } from '@client/js/tft/matches'
+import { TftMatchFilters, createEmptyTftMatchFilters } from '@client/js/tft/filters'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
+import TftFilterUi from '@client/vue/utility/tft/TftFilterUi.vue'
 
 const maxTasksPerRequest : number = 20
 
 @Component({
     components: {
         LoadingContainer,
-        TftMatchSummary
+        TftMatchSummary,
+        TftFilterUi,
     }
 })
 export default class TftGameLog extends Vue {
@@ -70,12 +78,14 @@ export default class TftGameLog extends Vue {
     allMatches : TftPlayerMatchSummary[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
+    filters: TftMatchFilters = createEmptyTftMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
     }
 
     @Watch('userId')
+    @Watch('filters', {deep: true})
     refreshData() {
         this.allMatches = null
         this.nextLink = null
@@ -105,6 +115,7 @@ export default class TftGameLog extends Vue {
             puuid: this.puuid,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<TftPlayerMatchSummary[]>>) => {
             if (!this.allMatches) {
                 this.allMatches = resp.data.data
