@@ -1,5 +1,10 @@
 <template>
     <v-container fluid id="valorantGameLog">
+        <valorant-filter-ui
+            v-model="filters"
+            class="mb-2"
+        >
+        </valorant-filter-ui>
         <v-row>
             <v-col cols="4">
                 <!-- 
@@ -57,10 +62,12 @@ import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
 import { ValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
+import { ValorantMatchFilters, createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ValorantPlayerCard from '@client/vue/utility/valorant/ValorantPlayerCard.vue'
 import ValorantMatchScroller from '@client/vue/utility/valorant/ValorantMatchScroller.vue'
+import ValorantFilterUi from '@client/vue/utility/valorant/ValorantFilterUi.vue'
 
 const maxTasksPerRequest : number = 20
 
@@ -68,7 +75,8 @@ const maxTasksPerRequest : number = 20
     components: {
         LoadingContainer,
         ValorantPlayerCard,
-        ValorantMatchScroller
+        ValorantMatchScroller,
+        ValorantFilterUi
     }
 })
 export default class ValorantGameLog extends Vue {
@@ -84,6 +92,7 @@ export default class ValorantGameLog extends Vue {
     allMatches : ValorantPlayerMatchSummary[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
+    filters: ValorantMatchFilters = createEmptyValorantMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -110,6 +119,15 @@ export default class ValorantGameLog extends Vue {
         return this.account.puuid
     }
 
+    @Watch('filters', {deep: true})
+    onFilterChange() {
+        if (!this.accountPuuid) {
+            return
+        }
+
+        this.loadMoreMatches(this.accountPuuid, null)
+    }
+
     @Watch('accountPuuid')
     loadMoreMatches(newPuuid : string | null, oldPuuid : string | null) {
         if (!this.accountPuuid) {
@@ -132,6 +150,7 @@ export default class ValorantGameLog extends Vue {
             puuid: this.accountPuuid!,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<ValorantPlayerMatchSummary[]>>) => {
             if (!this.allMatches) {
                 this.allMatches = resp.data.data

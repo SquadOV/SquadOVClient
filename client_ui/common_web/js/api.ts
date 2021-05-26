@@ -161,6 +161,7 @@ import { HearthstoneMatchFilters } from './hearthstone/filters'
 import { CsgoMatchFilters } from './csgo/filters'
 import { LolMatchFilters } from './lol/filters'
 import { TftMatchFilters } from './tft/filters'
+import { ValorantMatchFilters } from './valorant/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -542,7 +543,7 @@ class ApiClient {
         })
     }
 
-    listValorantMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
+    listValorantMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: ValorantMatchFilters}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, {
@@ -550,6 +551,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 
