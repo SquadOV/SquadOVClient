@@ -1,5 +1,11 @@
 <template>
     <v-container fluid id="lolGameLog">
+        <lol-filter-ui
+            v-model="filters"
+            class="mb-2"
+        >
+        </lol-filter-ui>
+
         <v-row>
             <v-col cols="12">
                 <!-- 
@@ -48,6 +54,8 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { LolPlayerMatchSummary } from '@client/js/lol/matches'
+import { LolMatchFilters, createEmptyLolMatchFilters } from '@client/js/lol/filters'
+import LolFilterUi from '@client/vue/utility/lol/LolFilterUi.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import LolMatchSummary from '@client/vue/utility/lol/LolMatchSummary.vue'
 
@@ -56,7 +64,8 @@ const maxTasksPerRequest : number = 20
 @Component({
     components: {
         LoadingContainer,
-        LolMatchSummary
+        LolMatchSummary,
+        LolFilterUi,
     }
 })
 export default class LolGameLog extends Vue {
@@ -69,12 +78,14 @@ export default class LolGameLog extends Vue {
     allMatches : LolPlayerMatchSummary[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
+    filters: LolMatchFilters = createEmptyLolMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
     }
 
     @Watch('userId')
+    @Watch('filters', {deep: true})
     refreshData() {
         this.allMatches = null
         this.nextLink = null
@@ -104,6 +115,7 @@ export default class LolGameLog extends Vue {
             puuid: this.puuid,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<LolPlayerMatchSummary[]>>) => {
             if (!this.allMatches) {
                 this.allMatches = resp.data.data
