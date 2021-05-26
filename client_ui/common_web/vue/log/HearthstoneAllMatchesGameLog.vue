@@ -1,29 +1,37 @@
 <template>
-    <loading-container :is-loading="!allMatchIds">
-        <template v-slot:default="{ loading }">
-            <div v-if="!loading">
-                <hearthstone-match-scroller
-                    :matches="allMatchIds"
-                    v-if="allMatchIds.length > 0"
-                    :user-id="userId"
-                >
-                </hearthstone-match-scroller>
+    <div>
+        <hearthstone-filter-ui
+            v-model="filters"
+            class="my-2"
+        >
+        </hearthstone-filter-ui>
 
-                <div class="text-center" v-else>
-                    <span class="text-h5">No Hearthstone games found.</span>
+        <loading-container :is-loading="!allMatchIds">
+            <template v-slot:default="{ loading }">
+                <div v-if="!loading">
+                    <hearthstone-match-scroller
+                        :matches="allMatchIds"
+                        v-if="allMatchIds.length > 0"
+                        :user-id="userId"
+                    >
+                    </hearthstone-match-scroller>
+
+                    <div class="text-center" v-else>
+                        <span class="text-h5">No Hearthstone games found.</span>
+                    </div>
+
+                    <v-btn
+                        v-if="hasNext"
+                        color="primary"
+                        block
+                        @click="loadMoreData"  
+                    >
+                        Load More
+                    </v-btn>
                 </div>
-
-                <v-btn
-                    v-if="hasNext"
-                    color="primary"
-                    block
-                    @click="loadMoreData"  
-                >
-                    Load More
-                </v-btn>
-            </div>
-        </template>
-    </loading-container>
+            </template>
+        </loading-container>
+    </div>
 </template>
 
 <script lang="ts">
@@ -34,6 +42,8 @@ import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
+import { HearthstoneMatchFilters, createEmptyHearthstoneMatchFilters } from '@client/js/hearthstone/filters'
+import HearthstoneFilterUi from '@client/vue/utility/hearthstone/HearthstoneFilterUi.vue'
 import HearthstoneMatchScroller from '@client/vue/utility/hearthstone/HearthstoneMatchScroller.vue'
 
 const maxTasksPerRequest : number = 20
@@ -41,7 +51,8 @@ const maxTasksPerRequest : number = 20
 @Component({
     components: {
         LoadingContainer,
-        HearthstoneMatchScroller
+        HearthstoneMatchScroller,
+        HearthstoneFilterUi,
     }
 })
 export default class HearthstoneAllMatchesGameLog extends Vue {
@@ -54,6 +65,8 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
 
     @Prop({required: true})
     userId!: number
+
+    filters: HearthstoneMatchFilters = createEmptyHearthstoneMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
@@ -69,6 +82,7 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
             filter: this.filteredGameTypes,
+            aux: this.filters,
         }).then((resp : ApiData<HalResponse<string[]>>) => {
             if (!this.allMatchIds) {
                 this.allMatchIds = resp.data.data
@@ -88,6 +102,7 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
 
     @Watch('filteredGameTypes')
     @Watch('userId')
+    @Watch('filters', {deep: true})
     refreshData() {
         this.allMatchIds = null
         this.lastIndex = 0

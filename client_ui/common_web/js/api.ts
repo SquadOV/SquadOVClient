@@ -157,6 +157,7 @@ import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@cl
 import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/csgo/match'
 import { MfaData } from '@client/js/squadov/mfa'
 import { AimlabMatchFilters } from './aimlab/filters'
+import { HearthstoneMatchFilters } from './hearthstone/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -587,7 +588,7 @@ class ApiClient {
         })
     }
 
-    listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number, filter : HearthstoneGameType[]}) : Promise<ApiData<HalResponse<string[]>>> {
+    listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number, filter : HearthstoneGameType[], aux: HearthstoneMatchFilters}) : Promise<ApiData<HalResponse<string[]>>> {
         return !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/hearthstone/user/${params.userId!}/match`, {
@@ -595,17 +596,28 @@ class ApiClient {
                 params: {
                     start: params.start,
                     end: params.end,
-                    filter: JSON.stringify(params.filter)
+                    filter: JSON.stringify(params.filter),
+                    ...params.aux,
                 }
             })
     }
 
-    listHearthstoneMatchesForArenaRun(collectionUuid: string, userId: number): Promise<ApiData<string[]>> {
-        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, this.createWebAxiosConfig())
+    listHearthstoneMatchesForArenaRun(collectionUuid: string, userId: number, filters: HearthstoneMatchFilters): Promise<ApiData<string[]>> {
+        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, {
+            params: {
+                ...filters
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
-    listHearthstoneMatchesForDuelRun(collectionUuid: string, userId: number): Promise<ApiData<string[]>> {
-        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}/matches`, this.createWebAxiosConfig())
+    listHearthstoneMatchesForDuelRun(collectionUuid: string, userId: number, filters: HearthstoneMatchFilters): Promise<ApiData<string[]>> {
+        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}/matches`, {
+            params: {
+                ...filters
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
     listHearthstoneArenaRunsForPlayer(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<string[]>>> {
