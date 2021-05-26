@@ -1,10 +1,5 @@
 <template>
     <v-container fluid id="valorantGameLog">
-        <valorant-filter-ui
-            v-model="filters"
-            class="mb-2"
-        >
-        </valorant-filter-ui>
         <v-row>
             <v-col cols="4">
                 <!-- 
@@ -23,6 +18,12 @@
             </v-col>
 
             <v-col cols="8">
+                <valorant-filter-ui
+                    v-model="filters"
+                    class="mb-2"
+                >
+                </valorant-filter-ui>
+                
                 <!-- 
                     Game log
                 -->
