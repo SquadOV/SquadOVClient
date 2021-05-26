@@ -1,5 +1,11 @@
 <template>
     <v-container fluid id="csgoGameLog">
+        <csgo-filter-ui
+            v-model="filters"
+            class="my-2"
+        >
+        </csgo-filter-ui>
+
         <v-row>
             <v-col cols="12">
                 <!-- 
@@ -48,8 +54,10 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
+import { CsgoMatchFilters, createEmptyCsgoMatchFilters } from '@client/js/csgo/filters'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
+import CsgoFilterUi from '@client/vue/utility/csgo/CsgoFilterUi.vue'
 
 const maxTasksPerRequest : number = 20
 
@@ -57,6 +65,7 @@ const maxTasksPerRequest : number = 20
     components: {
         LoadingContainer,
         CsgoPlayerMatchSummaryDisplay,
+        CsgoFilterUi,
     }
 })
 export default class CsgoGameLog extends Vue {
@@ -66,12 +75,14 @@ export default class CsgoGameLog extends Vue {
     allMatches : CsgoPlayerMatchSummary[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
+    filters: CsgoMatchFilters = createEmptyCsgoMatchFilters()
 
     get hasNext() : boolean {
         return !!this.nextLink
     }
 
     @Watch('userId')
+    @Watch('filters', {deep: true})
     refreshData() {
         this.allMatches = null
         this.nextLink = null
@@ -89,6 +100,7 @@ export default class CsgoGameLog extends Vue {
             userId: this.userId,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<CsgoPlayerMatchSummary[]>>) => {
             if (!this.allMatches) {
                 this.allMatches = resp.data.data

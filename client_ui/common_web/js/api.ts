@@ -158,6 +158,7 @@ import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/cs
 import { MfaData } from '@client/js/squadov/mfa'
 import { AimlabMatchFilters } from './aimlab/filters'
 import { HearthstoneMatchFilters } from './hearthstone/filters'
+import { CsgoMatchFilters } from './csgo/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1188,7 +1189,7 @@ class ApiClient {
         return axios.delete(`v1/vod/${videoUuid}/list/watch`, this.createWebAxiosConfig())
     }
 
-    listCsgoMatchesForPlayer(params : {next : string | null, userId: number, start : number, end : number}) : Promise<ApiData<HalResponse<CsgoPlayerMatchSummary[]>>> {
+    listCsgoMatchesForPlayer(params : {next : string | null, userId: number, start : number, end : number, filters: CsgoMatchFilters}) : Promise<ApiData<HalResponse<CsgoPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/csgo/user/${params.userId}/match`, {
@@ -1196,6 +1197,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 

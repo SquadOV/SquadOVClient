@@ -112,3 +112,11 @@ export default class AimlabFilterUi extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+.selection-checkbox {
+    margin: 0px !important;
+}
+
+</style>
