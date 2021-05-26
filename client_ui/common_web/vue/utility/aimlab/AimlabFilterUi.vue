@@ -1,0 +1,114 @@
+<template>
+    <generic-match-filter-ui>
+        <div class="d-flex align-center">
+            <v-select
+                label="Tasks"
+                v-model="internalValue.tasks"
+                @input="syncToValue"
+                :items="taskItems"
+                deletable-chips
+                chips
+                multiple
+                clearable
+                outlined
+                hide-details
+                dense
+                style="max-width: 500px;"
+            >
+                <template v-slot:item="{ item }">
+                    <div class="d-flex full-width align-center">
+                        <v-checkbox
+                            class="selection-checkbox"
+                            dense
+                            hide-details
+                            :input-value="internalValue.tasks.includes(item.value)"
+                            readonly
+                        >
+                        </v-checkbox>
+
+                        {{ item.text }}
+
+                        <v-spacer></v-spacer>
+
+                        <v-img
+                            :src="$root.generateAssetUri(item.icon)"
+                            :width="32"
+                            :max-width="32"
+                            :height="32"
+                            :max-height="32"
+                            contain
+                        >
+                        </v-img>
+                    </div>
+                </template>
+            </v-select>
+
+            <v-checkbox
+                class="ml-2 mt-0"
+                label="Must have VOD"
+                v-model="internalValue.hasVod"
+                @change="syncToValue"
+                hide-details
+                dense
+            ></v-checkbox>
+        </div>
+    </generic-match-filter-ui>
+</template>
+
+<script lang="ts">
+
+import Vue from 'vue'
+import Component from 'vue-class-component'
+import { Watch, Prop } from 'vue-property-decorator'
+import { AimlabMatchFilters, createEmptyAimlabMatchFilters } from '@client/js/aimlab/filters'
+import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
+import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+
+@Component({
+    components: {
+        GenericMatchFilterUi
+    }
+})
+export default class AimlabFilterUi extends Vue {
+    @Prop({required: true})
+    value!: AimlabMatchFilters
+
+    internalValue: AimlabMatchFilters = createEmptyAimlabMatchFilters()
+
+    get content(): AimlabContent {
+        return getAimlabContent()
+    }
+
+    get taskItems(): any[] {
+        return this.content.validTaskKeys.map((k: string) => {
+            return {
+                value: k,
+                text: this.content.getTaskName(k),
+                icon: this.content.getTaskIcon(k),
+            }
+        }).sort((a, b) => {
+            if (a.text < b.text) {
+                return -1
+            } else if (a.text > b.text) {
+                return 1
+            } else {
+                return 0
+            }
+        })
+    }
+
+    @Watch('value')
+    syncFromValue() {
+        this.internalValue = JSON.parse(JSON.stringify(this.value))
+    }
+
+    syncToValue() {
+        this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+    }
+
+    mounted() {
+        this.syncFromValue()
+    }
+}
+
+</script>

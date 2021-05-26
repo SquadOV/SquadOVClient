@@ -1,22 +1,30 @@
 <template>
-    <loading-container :is-loading="!allTasks">
-        <template v-slot:default="{ loading }">
-            <div v-if="!loading">
-                <aimlab-task-scroller
-                    :tasks="allTasks"
-                    v-if="allTasks.length > 0"
-                    :can-load-more="hasNext"
-                    :user-id="userId"
-                    @load-more="loadMoreData"
-                >
-                </aimlab-task-scroller>
+    <div>
+        <aimlab-filter-ui
+            v-model="filters"
+            class="my-2"
+        >
+        </aimlab-filter-ui>
+        
+        <loading-container :is-loading="!allTasks">
+            <template v-slot:default="{ loading }">
+                <div v-if="!loading">                
+                    <aimlab-task-scroller
+                        :tasks="allTasks"
+                        v-if="allTasks.length > 0"
+                        :can-load-more="hasNext"
+                        :user-id="userId"
+                        @load-more="loadMoreData"
+                    >
+                    </aimlab-task-scroller>
 
-                <div class="text-center" v-else>
-                    <span class="text-h5">No Aim Lab tasks found.</span>
+                    <div class="text-center" v-else>
+                        <span class="text-h5">No Aim Lab tasks found.</span>
+                    </div>
                 </div>
-            </div>
-        </template>
-    </loading-container>
+            </template>
+        </loading-container>
+    </div>
 </template>
 
 <script lang="ts">
@@ -26,20 +34,24 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
+import { AimlabMatchFilters, createEmptyAimlabMatchFilters } from '@client/js/aimlab/filters'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import AimlabTaskScroller from '@client/vue/utility/aimlab/AimlabTaskScroller.vue'
+import AimlabFilterUi from '@client/vue/utility/aimlab/AimlabFilterUi.vue'
 
 const maxTasksPerRequest : number = 20
 
 @Component({
     components: {
         LoadingContainer,
-        AimlabTaskScroller
+        AimlabTaskScroller,
+        AimlabFilterUi,
     }
 })
 export default class AimlabGameLog extends Vue {
     @Prop({required: true})
     userId!: number
+    filters: AimlabMatchFilters = createEmptyAimlabMatchFilters()
 
     allTasks : AimlabTaskData[] | null = null
     lastIndex: number = 0
@@ -50,6 +62,7 @@ export default class AimlabGameLog extends Vue {
     }
 
     @Watch('userId')
+    @Watch('filters', { deep: true })
     refreshData() {
         this.allTasks = null
         this.nextLink = null
@@ -66,7 +79,8 @@ export default class AimlabGameLog extends Vue {
             next: this.nextLink,
             userId: this.userId,
             start: this.lastIndex,
-            end: this.lastIndex + maxTasksPerRequest
+            end: this.lastIndex + maxTasksPerRequest,
+            filters: this.filters,
         }).then((resp : ApiData<HalResponse<AimlabTaskData[]>>) => {
             if (!this.allTasks) {
                 this.allTasks = resp.data.data

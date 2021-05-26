@@ -1,64 +1,34 @@
 <template>
-    <div>
-        <template v-if="showFilters">
-            <v-btn
-                class="pa-0"
-                text
-                @click="showFilters = false"
-                x-small
-            >
-                <v-icon x-small>
-                    mdi-chevron-down
-                </v-icon>
-                Hide Filters
-            </v-btn>
-        </template>
-
-        <template v-else>
-            <v-btn
-                class="pa-0"
-                text
-                @click="showFilters = true"
-                x-small
-            >
-                <v-icon x-small>
-                    mdi-chevron-right
-                </v-icon>
-                Show Filters
-            </v-btn>
-        </template>
-
-        <div v-if="showFilters">
-            <div class="d-flex align-center">
-                <game-filter-ui
-                    v-model="internalValue.games"
-                    @input="syncToValue"
-                ></game-filter-ui>
-                <squad-filter-ui
-                    v-if="!disableSquads"
-                    v-model="internalValue.squads"
-                    @input="syncToValue"
-                    class="ml-1"
-                ></squad-filter-ui>
-                <user-filter-ui
-                    v-if="!disableUsers"
-                    v-model="internalValue.users"
-                    :squads="internalValue.squads"
-                    @input="syncToValue"
-                    class="ml-1"
-                ></user-filter-ui>
-                
-            </div>
-
-            <div class="d-flex align-center mt-1">
-                <time-range-filter-ui
-                    :start.sync="internalValue.timeStart"
-                    :end.sync="internalValue.timeEnd"
-                    @on-change="syncToValue"
-                ></time-range-filter-ui>
-            </div>
+    <generic-match-filter-ui>
+        <div class="d-flex align-center">
+            <game-filter-ui
+                v-model="internalValue.games"
+                @input="syncToValue"
+            ></game-filter-ui>
+            <squad-filter-ui
+                v-if="!disableSquads"
+                v-model="internalValue.squads"
+                @input="syncToValue"
+                class="ml-1"
+            ></squad-filter-ui>
+            <user-filter-ui
+                v-if="!disableUsers"
+                v-model="internalValue.users"
+                :squads="internalValue.squads"
+                @input="syncToValue"
+                class="ml-1"
+            ></user-filter-ui>
+            
         </div>
-    </div>
+
+        <div class="d-flex align-center mt-1">
+            <time-range-filter-ui
+                :start.sync="internalValue.timeStart"
+                :end.sync="internalValue.timeEnd"
+                @on-change="syncToValue"
+            ></time-range-filter-ui>
+        </div>
+    </generic-match-filter-ui>
 </template>
 
 <script lang="ts">
@@ -71,9 +41,10 @@ import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
 import SquadFilterUi from '@client/vue/utility/squadov/filters/SquadFilterUi.vue'
 import UserFilterUi from '@client/vue/utility/squadov/filters/UserFilterUi.vue'
 import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilterUi.vue'
-
+import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
 @Component({
     components: {
+        GenericMatchFilterUi,
         GameFilterUi,
         SquadFilterUi,
         UserFilterUi,
@@ -91,7 +62,6 @@ export default class RecentMatchFiltersUi extends Vue {
     disableUsers!: boolean
 
     internalValue: RecentMatchFilters = createEmptyRecentMatchFilters()
-    showFilters: boolean = false
 
     @Watch('value')
     syncFromValue() {

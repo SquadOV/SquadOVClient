@@ -19,9 +19,15 @@ interface AimlabRawData {
 
 export class AimlabContent {
     data : AimlabRawData
+    validTaskKeys: string[]
 
     constructor(inputData : any) {
         this.data = inputData
+
+        this.validTaskKeys = []
+        for (const key of Object.keys(this.data.tasks)) {
+            this.validTaskKeys.push(key)
+        }
     }
 
     isTaskSupported(id : string) : boolean {

@@ -156,6 +156,7 @@ import { WowDeathRecap, cleanWowDeathRecapFromJson } from '@client/js/wow/deaths
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/csgo/match'
 import { MfaData } from '@client/js/squadov/mfa'
+import { AimlabMatchFilters } from './aimlab/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -512,7 +513,7 @@ class ApiClient {
         })
     }
 
-    allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {
+    allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number, filters: AimlabMatchFilters}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/aimlab/user/${params.userId!}`, {
@@ -520,6 +521,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 
