@@ -78,7 +78,8 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     }
 
     if (packet.previous && packet.previous->player && packet.previous->player->activity && packet.player && packet.player->activity) {
-        if (packet.player->activity.value() == "menu") {
+        // We need to check the 'map' too because the pause menu will also put CSGO into the 'menu' state.
+        if (packet.player->activity.value() == "menu" && !packet.map) {
             notify(static_cast<int>(ECsgoGsiEvents::MainMenu), tm, nullptr, false);
         }
     }
@@ -136,8 +137,10 @@ void CsgoGsiStateManager::handlePacket(const CsgoGsiPacket& packet) {
     }
 
     // There's one last match end edge case that we want to detect - when the user
-    // quits in the middle of the match back to the menu.
-    if (_matchState && packet.player && packet.player->activity.value_or("") == "menu") {
+    // quits in the middle of the match back to the menu. Similar to the main menu event,
+    // we only care about this when the user goes back to the main menu and not when they
+    // get to the pause menu in game. Thus 'map' must be null.
+    if (_matchState && packet.player && packet.player->activity.value_or("") == "menu" && !packet.map) {
         endMatch(tm);
     }
 }
