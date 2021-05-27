@@ -91,6 +91,22 @@ class StaticDataClient {
         return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/talents/${id}/icon.png`
     }
 
+    getWowContentArenaUrl(): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/content/arenas.json`
+    }
+
+    getWowContentDungeonsUrl(): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/content/dungeons.json`
+    }
+
+    getWowContentRaidsUrl(): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/content/raids.json`
+    }
+
+    getWowContentEncountersUrl(): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/content/encounters.json`
+    }
+
     getTftLittleLegendIcon(id: string): string {
         return `${STATIC_CONTENT_BASE_URL}/tft/companions/${id}/portrait.png`
     }

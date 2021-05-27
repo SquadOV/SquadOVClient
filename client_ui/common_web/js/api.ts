@@ -162,6 +162,7 @@ import { CsgoMatchFilters } from './csgo/filters'
 import { LolMatchFilters } from './lol/filters'
 import { TftMatchFilters } from './tft/filters'
 import { ValorantMatchFilters } from './valorant/filters'
+import { WowMatchFilters } from './wow/filters'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -845,7 +846,7 @@ class ApiClient {
         })
     }
 
-    listWoWEncountersForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowEncounter[]>>> {
+    listWoWEncountersForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowEncounter[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/encounters`, {
@@ -853,6 +854,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 
@@ -862,7 +864,7 @@ class ApiClient {
         })
     }
 
-    listWoWChallengesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowChallenge[]>>> {
+    listWoWChallengesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowChallenge[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/challenges`, {
@@ -870,6 +872,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 
@@ -879,7 +882,7 @@ class ApiClient {
         })
     }
 
-    listWoWArenasForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number}): Promise<ApiData<HalResponse<WowArena[]>>> {
+    listWoWArenasForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowArena[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/arena`, {
@@ -887,6 +890,7 @@ class ApiClient {
                 params: {
                     start: params.start!,
                     end: params.end!,
+                    ...params.filters,
                 }
             })
 

@@ -46,8 +46,14 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const 
         return !boost::trim_copy(p).empty();
     });
 
-    boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);
-    std::copy(tok.begin(), tok.end(), std::back_inserter(log.log));
+    try {
+        boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);
+        std::copy(tok.begin(), tok.end(), std::back_inserter(log.log));
+    } catch (std::exception& ex) {
+        // This is generally fine - we'll fail for like "EMOTE" but I mean whatever.
+        LOG_WARNING("Failed to tokenize WoW combat log line: " << ex.what() << std::endl << "\t" << line << std::endl);
+        return false;
+    }
     return true;
 }
 
