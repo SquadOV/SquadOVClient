@@ -20,6 +20,7 @@
 #include <shared_mutex>
 #include <nlohmann/json.hpp>
 #include <vector>
+#include <unordered_set>
 
 namespace service::api {
 
@@ -109,6 +110,10 @@ private:
     shared::squadov::SquadOVSessionStorage _session;
     shared::squadov::FeatureFlags _features;
     mutable std::shared_mutex _sessionMutex;
+
+    // Various caches of things we want to keep track of.
+    mutable std::mutex _riotAccountOwnershipMutex;
+    mutable std::unordered_set<std::string> _verifiedRiotAccounts;
 };
 
 using SquadovApiPtr = std::unique_ptr<SquadovApi>;

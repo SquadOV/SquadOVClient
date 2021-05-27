@@ -512,6 +512,13 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
 }
 
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {
+    {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        if (_verifiedRiotAccounts.find(puuid) != _verifiedRiotAccounts.end()) {
+            return true;
+        }
+    }
+
     const nlohmann::json body = {
         { "gameName", gameName },
         { "tagLine", tagLine },
@@ -522,10 +529,22 @@ bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, con
     path << "/v1/users/" << getSessionUserId() << "/accounts/riot/valorant/account";
 
     const auto result = _webClient->post(path.str(), body);
-    return result->status == 204;
+    const bool ok = result->status == 204;
+    if (ok) {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        _verifiedRiotAccounts.insert(puuid);
+    }
+    return ok;
 }
 
 bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName, const std::string& puuid) const {
+    {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        if (_verifiedRiotAccounts.find(puuid) != _verifiedRiotAccounts.end()) {
+            return true;
+        }
+    }
+
     const nlohmann::json body = {
         { "summonerName", summonerName },
         { "puuid", puuid }
@@ -535,10 +554,22 @@ bool SquadovApi::verifyLeagueOfLegendsAccountOwnership(const std::string& summon
     path << "/v1/users/" << getSessionUserId() << "/accounts/riot/lol/account";
 
     const auto result = _webClient->post(path.str(), body);
-    return result->status == 204;
+    const bool ok = result->status == 204;
+    if (ok) {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        _verifiedRiotAccounts.insert(puuid);
+    }
+    return ok;
 }
 
 bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName, const std::string& puuid) const {
+    {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        if (_verifiedRiotAccounts.find(puuid) != _verifiedRiotAccounts.end()) {
+            return true;
+        }
+    }
+    
     const nlohmann::json body = {
         { "summonerName", summonerName },
         { "puuid", puuid }
@@ -548,7 +579,12 @@ bool SquadovApi::verifyTftAccountOwnership(const std::string& summonerName, cons
     path << "/v1/users/" << getSessionUserId() << "/accounts/riot/tft/account";
 
     const auto result = _webClient->post(path.str(), body);
-    return result->status == 204;
+    const bool ok = result->status == 204;
+    if (ok) {
+        std::lock_guard guard(_riotAccountOwnershipMutex);
+        _verifiedRiotAccounts.insert(puuid);
+    }
+    return ok;
 }
 
 std::string SquadovApi::createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const {
