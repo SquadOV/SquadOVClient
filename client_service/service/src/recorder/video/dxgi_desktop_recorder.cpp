@@ -219,7 +219,11 @@ void DxgiDesktopRecorder::startRecording() {
                 reuseOldFrame = true;
             }
 
-            reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
+            // Need a check to see if reuseOldFrame is not already true because otherwise
+            // we could use frameInfo without it being initialized and run into a win32 error.
+            if (!reuseOldFrame) {
+                reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
+            }
 
             const auto postAcquireTm = TickClock::now();
             
