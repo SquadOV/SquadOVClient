@@ -1,5 +1,5 @@
 <template>
-    <v-container fluid id="valorantGameLog">
+    <v-container fluid>
         <v-row>
             <v-col cols="4">
                 <!-- 

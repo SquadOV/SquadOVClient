@@ -43,6 +43,9 @@ export class ValorantContent {
 
         for (let m of (jData["Maps"] || jData["maps"])) {
             const mapName = m["Name"] || m["name"]
+            if (mapName == "Null UI Data!") {
+                continue
+            }
             this._mapAssetNameToMap[m["AssetName"] || m["assetName"]] = mapName
 
             let path = m["AssetPath"] || m["assetPath"]
@@ -51,8 +54,13 @@ export class ValorantContent {
         }
 
         for (let m of (jData["GameModes"] || jData["gameModes"])) {
+            let name = m["Name"] || m["name"]
+            if (name == "Onboarding" || name == "PRACTICE" || name == "SwiftPlay") {
+                continue
+            }
+
             let path = m["AssetPath"] || m["assetPath"]
-            this._gameModes[path] = m["Name"] || m["name"]
+            this._gameModes[path] = name
             this.availableModes.push(path)
         }
 
