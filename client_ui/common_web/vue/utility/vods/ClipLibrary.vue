@@ -273,7 +273,7 @@ export default class ClipLibrary extends Vue {
     get finalFilters(): RecentMatchFilters {
         let filters: RecentMatchFilters = JSON.parse(JSON.stringify(this.filters))
 
-        if (this.userId !== undefined) {
+        if (this.userId !== undefined && !this.onlyFavorite && !this.onlyWatchlist) {
             filters.users = [this.userId]
         }
 
