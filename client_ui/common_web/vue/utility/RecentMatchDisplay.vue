@@ -50,6 +50,7 @@
             @mouseout="onLeave"
         >
             <video-preview-player
+                v-if="!disablePreview"
                 :vod="match.base.vod"
                 class="recent-match-item preview-item"
                 ref="player"
@@ -201,16 +202,23 @@ export default class RecentMatchDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop({type: Boolean, default: false})
+    disablePreview!: boolean
+
     $refs!: {
         player: VideoPreviewPlayer
     }
 
     onHover() {
-        this.$refs.player.startPlay()
+        if (!this.match.base.isLocal) {
+            this.$refs.player.startPlay()
+        }
     }
 
     onLeave() {
-        this.$refs.player.pausePlay()
+        if (!this.match.base.isLocal) {
+            this.$refs.player.pausePlay()
+        }
     }
 }
 

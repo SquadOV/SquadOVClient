@@ -9,6 +9,7 @@ import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@cl
 
 export interface BaseRecentMatch {
     matchUuid: string
+    isLocal: boolean
     tm: Date
     game: SquadOvGames
     vod: VodManifest

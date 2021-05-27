@@ -130,6 +130,7 @@
                                                 class="mb-4 full-width"
                                                 :match="match"
                                                 :disable-click="inSelectMode"
+                                                :disable-preview="match.base.isLocal"
                                             >
                                             </recent-match-display>
                                         </div>
@@ -295,7 +296,9 @@ export default class RecentRecordedMatches extends Vue {
     get finalFilters(): RecentMatchFilters {
         let filters: RecentMatchFilters = JSON.parse(JSON.stringify(this.filters))
 
-        if (this.userId !== undefined) {
+        // We shouldn't use the users filter if we only want favorites/watch list otherwise
+        // we won't get matches of other users that we favorited/watch listed.
+        if (this.userId !== undefined && !this.onlyFavorite && !this.onlyWatchlist) {
             filters.users = [this.userId]
         }
 
