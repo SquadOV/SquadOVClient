@@ -23,6 +23,7 @@ SET(SRCS
     shared/ipc/shared_memory.cpp
     shared/process.cpp
     shared/time/ntp_client.cpp
+    shared/audio/timing.cpp
 )
 
 SET(HEADERS
@@ -54,6 +55,7 @@ SET(HEADERS
     shared/ipc/shared_memory.h
     shared/process.h
     shared/time/ntp_client.h
+    shared/audio/timing.h
 )
 
 add_library(squadov_shared

@@ -2,6 +2,7 @@
 
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "shared/audio/timing.h"
 #include "recorder/encoder/av_encoder.h"
 #include "recorder/audio/audio_packet_view.h"
 #include "recorder/audio/fixed_size_audio_packet.h"
@@ -231,10 +232,7 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
     // The total number of frames we're being sent here is frameCount * numChannels.
     // Create audio packet and send it to the encoder.
     const float* buffer = reinterpret_cast<const float*>(input);
-
-    // Compute the input time using the AVSyncClock.
-    const auto elapsedMs = std::chrono::milliseconds(static_cast<int64_t>((timeInfo->currentTime - _startTime) * 1000.0)); 
-    const auto inputTime = _syncStartTime + elapsedMs;
+    const auto inputTime = service::recorder::encoder::AVSyncClock::now();
 
     // Need to change the number of packets since the number of frames isn't fixed.
     AudioPacketProperties packetProps = props();
@@ -251,6 +249,8 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
 void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, const service::recorder::encoder::AVSyncClock::time_point& tm) {
     const auto samplesPerPacket = AudioPacket::N / view.props().numChannels;
     const auto numQueuePackets = (view.props().numSamples + samplesPerPacket - 1) / samplesPerPacket;
+
+    auto packetTm = tm;
     for (std::remove_const_t<decltype(numQueuePackets)> i = 0; i < numQueuePackets; ++i) {
         // Start and end indices of the samples in the input packet view to store in the new fixed size packet. End index is non-inculsive.
         const auto start = i * samplesPerPacket;
@@ -262,9 +262,15 @@ void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, 
         service::recorder::audio::AudioPacketProperties props = view.props();
         props.numSamples = end - start; 
 
-        AudioPacket packet(props, tm);
+        AudioPacket packet(props, packetTm);
         packet.copyFrom(view, start * view.props().numChannels, end * view.props().numChannels);
         _packetQueue.push(packet);
+
+        // Each packet's timestamp should be adjusted based off how long the previous packet was
+        // so that we treat each packet separately. To do this adjustment, remember that
+        // the sampling frequency is X samples / second. Thus to get the number of seconds all we
+        // have to do is do N / X where N is the number of samples.
+        packetTm += shared::audio::samplesToNsDiff(view.props().samplingRate, props.numSamples);
     }
 }
 

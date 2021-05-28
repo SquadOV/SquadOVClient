@@ -23,6 +23,9 @@ public:
     }
 
     const T* buffer() const { return _buffer; }
+    const T* offsetBuffer(size_t offsetSamples) const {
+        return buffer() + offsetSamples * props().numChannels;
+    }
     const AudioPacketProperties& props() const { return _props; }
     double volume() const { return _volume; }
 

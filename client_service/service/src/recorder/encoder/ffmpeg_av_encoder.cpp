@@ -6,6 +6,7 @@
 #include "shared/log/log.h"
 #include "shared/timer.h"
 #include "shared/filesystem/utility.h"
+#include "shared/audio/timing.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
 #include "recorder/encoder/ffmpeg_video_swap_chain.h"
@@ -74,6 +75,7 @@ int packetPropsToFFmpegSampleRate(const service::recorder::audio::AudioPacketPro
 
 constexpr size_t audioNumChannels = 2;
 constexpr size_t audioSamplesPerFrame = 480;
+const std::chrono::nanoseconds maxAudioDeviation = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(80));
 
 }
 
@@ -144,6 +146,7 @@ private:
         // Once the queue reaches the size of an actual frame,
         // we'll send that to the encoder to be written out.
         AVAudioFifo* fifo = nullptr;
+        AVSyncClock::time_point nextPacketTime;
         std::shared_mutex fifoMutex;
 
         // samplesStorage is the place where we'll use swr to convert the
@@ -164,6 +167,7 @@ private:
         AudioStreamData(const AudioStreamData&) = delete;
         AudioStreamData(AudioStreamData&&) = delete;
 
+        size_t addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t offset);
         void reinitSampleStorage(int inputSamples);
         void writeStoredSamplesToFifo(int numSamples);
 
@@ -202,6 +206,30 @@ FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
     av_freep(&samplesStorage[0]);
     av_audio_fifo_free(fifo);
     swr_free(&swr);
+}
+
+size_t FfmpegAvEncoderImpl::AudioStreamData::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t offset) {
+    const auto numSamplesToUse = view.props().numSamples - offset;
+
+    if (numSamplesToUse > 0) {
+        receivedSamples += numSamplesToUse;
+
+        // Immediately process input audio packets to try to best achieve real-time processing.
+        reinitSampleStorage(static_cast<int>(numSamplesToUse));
+
+        const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(view.offsetBuffer(offset));                    
+        const auto numConverted = swr_convert(
+            swr,
+            samplesStorage,
+            static_cast<int>(maxSamples),
+            &inputByteBuffer,
+            static_cast<int>(numSamplesToUse));
+
+        processedSamples += numSamplesToUse;
+        convertedSamples += numConverted;
+        writeStoredSamplesToFifo(numConverted);
+    }
+    return numSamplesToUse;
 }
 
 void FfmpegAvEncoderImpl::AudioStreamData::reinitSampleStorage(int inputSamples) {
@@ -663,8 +691,10 @@ long long FfmpegAvEncoderImpl::numVideoFramesToEncode() {
     if (now < refFrameTime) {
         return 0;
     } else {
-        const auto elapsedFrames = std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count() / _nsPerFrame.count();
-        return elapsedFrames;
+        // We should note that refFrameTime is the time at which we should add a new frame. Thus, any time PAST refFrameTime indicates that
+        // at least 1 frame should be added. Thus, we want to use a CEIL instead of a FLOOR here to represent that fact.
+        const auto elapsedFrames = std::ceil(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count()) / _nsPerFrame.count());
+        return static_cast<long long>(elapsedFrames);
     }
 }
 
@@ -718,25 +748,42 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     if (!_running) {
         return;
     }
+
+    // The packet is coming from before we actually even started recording? Probably safe to discard in that case.
+    if (tm < _syncStartTime) {
+        return;
+    }
     
+    size_t numSilenceSamples = 0;
+
     auto& streamData = *_astreams[encoderIdx];
-    streamData.receivedSamples += view.props().numSamples;
 
-    // Immediately process input audio packets to try to best achieve real-time processing.
-    streamData.reinitSampleStorage(static_cast<int>(view.props().numSamples));
+    const auto diffTm = (tm >= streamData.nextPacketTime) ? tm - streamData.nextPacketTime : streamData.nextPacketTime - tm;
+    if (diffTm >= maxAudioDeviation) {
+        if (tm > streamData.nextPacketTime) {
+            // When the audio samples are coming further out into the future than we'd reasonably expect then we should
+            // insert a bunch of silence in to compensate.
+            numSilenceSamples = shared::audio::timeDiffToNumSamples(view.props().samplingRate, diffTm);
+        }
+    }
 
-    const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(view.buffer());                    
-    const auto numConverted = swr_convert(
-        streamData.swr,
-        streamData.samplesStorage,
-        static_cast<int>(streamData.maxSamples),
-        &inputByteBuffer,
-        static_cast<int>(view.props().numSamples));
+    if (numSilenceSamples > 0) {
+        // Create a fake packet with the appropriate number of samples containing just silence.
+        std::vector<float> silenceData(numSilenceSamples * view.props().numChannels, 0.f);
 
-    streamData.processedSamples += view.props().numSamples;
-    streamData.convertedSamples += numConverted;
-    streamData.writeStoredSamplesToFifo(numConverted);
+        auto props = view.props();
+        props.numSamples = numSilenceSamples;
 
+        service::recorder::audio::FAudioPacketView silence(silenceData.data(), props, 0.0);
+        streamData.addAudioFrame(silence, 0);
+    }
+
+    const auto totalSamplesAdded = streamData.addAudioFrame(view, 0);
+    if (numSilenceSamples > 0) {
+        streamData.nextPacketTime = tm;    
+    }
+    streamData.nextPacketTime += shared::audio::samplesToNsDiff(view.props().samplingRate, totalSamplesAdded);
+    
     // I don't believe there's a need to do this on multiple encoder indexes...The only
     // time this *might* screw up is if encoder index 0 receives 0 audio packets. Oh well?
     // The FIFO is protected by a shared mutex because each audio input stream is fed in from a
@@ -810,6 +857,13 @@ void FfmpegAvEncoderImpl::start() {
         return;
     }
 
+    // This must be set before _running is set to true as addVideo/AudioFrame will use this value and
+    // use this time to sync the audio and video. This time is when our video and audio should start.
+    _syncStartTime = AVSyncClock::now();
+    for (const auto& s : _astreams) {
+        s->nextPacketTime = _syncStartTime;
+    }
+
     // Start a thread to send frames and packets to the underlying encoder.
     // Some encoders (e.g. H264_NVENC) don't play nicely with variable framerate
     // so we need to force the variable framerate input that we'll get to be
@@ -827,9 +881,6 @@ void FfmpegAvEncoderImpl::start() {
         }
         _running = true;
     }
-
-    // Use this time to sync the audio and video. This time is when our video and audio should start.
-    _syncStartTime = AVSyncClock::now();
 
     // The packet thread is responsible for actually writing the encoded packets to the file.
     _packetThread = std::thread([this](){
