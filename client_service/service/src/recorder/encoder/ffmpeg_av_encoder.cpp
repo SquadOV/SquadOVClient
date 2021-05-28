@@ -764,6 +764,7 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
             // When the audio samples are coming further out into the future than we'd reasonably expect then we should
             // insert a bunch of silence in to compensate.
             numSilenceSamples = shared::audio::timeDiffToNumSamples(view.props().samplingRate, diffTm);
+            LOG_WARNING("Inserting " << numSilenceSamples << " samples to compensate for audio drift of " << diffTm.count() << "ns." << std::endl);
         }
     }
 
