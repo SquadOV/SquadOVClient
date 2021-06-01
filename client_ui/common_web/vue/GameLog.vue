@@ -108,7 +108,10 @@
             </v-btn>
         </div>
         <v-divider></v-divider>
-        <router-view :key="forceUpdateKey"></router-view>
+
+        <keep-alive :max="3">
+            <router-view :key="routerKey"></router-view>
+        </keep-alive>
     </v-container>
 </template>
 
@@ -120,6 +123,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { Squad, SquadMembership } from '@client/js/squadov/squad'
 import { SquadOVUser, getSquadOVUser } from '@client/js/squadov/user'
 import { apiClient, ApiData } from '@client/js/api' 
+import { routeLevelToKey } from '@client/js/routes'
 import * as pi from '@client/js/pages'
 
 @Component
@@ -137,6 +141,11 @@ export default class GameLog extends Vue {
 
     showHideSquadMenu: boolean = false
     forceUpdateKey: number = 0
+
+    get routerKey(): string {
+        let key = routeLevelToKey(this.$route, 2)
+        return `${key}.${this.forceUpdateKey}`
+    }
 
     get hasSquadDropdown(): boolean {
         return !!this.allSquads && this.allSquads.length > 0
