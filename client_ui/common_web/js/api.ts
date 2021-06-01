@@ -95,7 +95,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { ShareAccessTokenResponse } from '@client/js/squadov/share'
+import { LinkShareData, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToGcs } from '@client/js/gcs'
 
@@ -1010,8 +1010,25 @@ class ApiClient {
         })
     }
 
-    getMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames, graphqlStats: StatPermission[] | undefined): Promise<ApiData<string>> {
-        return axios.post(`v1/match/${matchUuid}/share`, {
+    getMatchSharePermissions(matchUuid: string, game: SquadOvGames): Promise<ApiData<MatchVideoSharePermissions>> {
+        return axios.get(`v1/match/${matchUuid}/share/internal`, {
+            ...this.createWebAxiosConfig(),
+            params: {
+                game,
+            }
+        })
+    }
+
+    getMatchShareUrl(matchUuid: string): Promise<ApiData<LinkShareData>> {
+        return axios.get(`v1/match/${matchUuid}/share/public`, this.createWebAxiosConfig())
+    }
+
+    deleteMatchShareUrl(matchUuid: string): Promise<void> {
+        return axios.delete(`v1/match/${matchUuid}/share/public`, this.createWebAxiosConfig())
+    }
+
+    createMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames, graphqlStats: StatPermission[] | undefined): Promise<ApiData<LinkShareData>> {
+        return axios.post(`v1/match/${matchUuid}/share/public`, {
             fullPath,
             game,
             graphqlStats,

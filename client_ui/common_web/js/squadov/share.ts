@@ -3,3 +3,13 @@ export interface ShareAccessTokenResponse {
     key: string
     uid: number
 }
+
+export interface LinkShareData {
+    isLinkShared: boolean
+    shareUrl: string | null
+}
+
+export interface MatchVideoSharePermissions {
+    canShare: boolean
+    canClip: boolean
+}

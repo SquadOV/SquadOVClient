@@ -36,6 +36,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.WorldOfWarcraft"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -175,8 +176,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { GenericWowMatchContainer, getOppositeWowArenaTeam } from '@client/js/wow/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
@@ -202,6 +202,7 @@ import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis.vue'
 import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -220,7 +221,7 @@ import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
         WowPlayersAnalysis
     }
 })
-export default class WowMatch extends Vue {
+export default class WowMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     
     @Prop({type:Number, required: true})
@@ -383,6 +384,7 @@ export default class WowMatch extends Vue {
     @Watch('userId')
     refreshMatch() {
         this.currentMatch = null
+        this.refreshMatchPermissions(this.matchUuid, SquadOvGames.WorldOfWarcraft)
         apiClient.getWoWMatch(this.userId, this.matchUuid).then((resp: ApiData<GenericWowMatchContainer>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {

@@ -20,6 +20,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.TeamfightTactics"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -65,8 +66,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { WrappedTftMatch, TftPlayerMatchSummary, TftParticipant, getTftSetNumber } from '@client/js/tft/matches'
@@ -80,6 +80,7 @@ import TftScoreboard from '@client/vue/utility/tft/TftScoreboard.vue'
 import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -92,7 +93,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton,
     }
 })
-export default class TftMatch extends Vue {
+export default class TftMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
 
     @Prop({required: true})
@@ -156,6 +157,7 @@ export default class TftMatch extends Vue {
 
     @Watch('matchUuid')
     refreshData() {
+        this.refreshMatchPermissions(this.matchUuid, SquadOvGames.TeamfightTactics)
         apiClient.getTftMatch(this.matchUuid).then((resp: ApiData<WrappedTftMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {

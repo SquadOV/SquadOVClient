@@ -23,6 +23,7 @@
                         :match-uuid="matchId"
                         :game="SquadOvGames.Hearthstone"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -170,8 +171,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -190,6 +190,7 @@ import HearthstoneVodPovPicker from '@client/vue/utility/hearthstone/Hearthstone
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -207,7 +208,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton
     }
 })
-export default class HearthstoneMatch extends Vue {
+export default class HearthstoneMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     
     @Prop({required: true})
@@ -272,6 +273,8 @@ export default class HearthstoneMatch extends Vue {
     refreshData() {
         this.ready = false
         this.currentMatch = null
+        this.refreshMatchPermissions(this.matchId, SquadOvGames.Hearthstone)
+        
         apiClient.getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<RawHearthstoneMatch>) => {
             this.currentMatch = resp.data
 

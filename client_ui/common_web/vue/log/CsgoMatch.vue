@@ -21,6 +21,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Csgo"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -124,8 +125,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
@@ -144,6 +144,7 @@ import CsgoMatchScoreboard from '@client/vue/utility/csgo/CsgoMatchScoreboard.vu
 import CsgoPlayerMatchCard from '@client/vue/utility/csgo/CsgoPlayerMatchCard.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -160,7 +161,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton,
     }
 })
-export default class CsgoMatch extends Vue {
+export default class CsgoMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     match: CsgoFullMatchData | null = null
 
@@ -215,6 +216,7 @@ export default class CsgoMatch extends Vue {
     @Watch('matchUuid')
     @Watch('userId')
     refreshData() {
+        this.refreshMatchPermissions(this.matchUuid, SquadOvGames.Csgo)
         apiClient.getCsgoMatchData(this.matchUuid, this.userId).then((resp: ApiData<CsgoFullMatchData>) => {
             this.match = resp.data
         }).catch((err: any) => {

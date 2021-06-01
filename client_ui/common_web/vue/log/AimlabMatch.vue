@@ -21,6 +21,7 @@
                         :game="SquadOvGames.AimLab"
                         :user-id="userId"
                         :graphql-stats="statPermissions"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -62,8 +63,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, ApiData } from '@client/js/api'
@@ -78,6 +78,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -90,7 +91,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton
     }
 })
-export default class AimlabMatch extends Vue {
+export default class AimlabMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
 
     @Prop({required: true})
@@ -108,6 +109,7 @@ export default class AimlabMatch extends Vue {
 
     @Watch('taskId')
     refreshTask() {
+        this.refreshMatchPermissions(this.taskId, SquadOvGames.AimLab)
         apiClient.getAimlabTaskData(this.taskId, this.userId).then((resp : ApiData<AimlabTaskData>) => {
             this.data = resp.data
         }).catch((err : any) => {

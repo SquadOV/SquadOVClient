@@ -20,6 +20,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.LeagueOfLegends"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -140,8 +141,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { FullLolMatch, LolPlayerMatchSummary } from '@client/js/lol/matches'
 import { LolParticipant, LolParticipantIdentity } from '@client/js/lol/participant'
@@ -165,6 +165,7 @@ import LolStatTimelineContainer from '@client/vue/utility/lol/LolStatTimelineCon
 import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -182,7 +183,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton,
     }
 })
-export default class LolMatch extends Vue {
+export default class LolMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     secondsToTimeString = secondsToTimeString
 
@@ -276,6 +277,7 @@ export default class LolMatch extends Vue {
     @Watch('matchUuid')
     refreshData() {
         this.currentMatch = null
+        this.refreshMatchPermissions(this.matchUuid, SquadOvGames.LeagueOfLegends)
         apiClient.getLolMatch(this.matchUuid).then((resp: ApiData<FullLolMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {

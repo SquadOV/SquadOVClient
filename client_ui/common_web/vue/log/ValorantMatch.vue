@@ -19,6 +19,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Valorant"
                         :user-id="userId"
+                        :permissions="matchPermissions"
                     >
                     </match-share-button>
                 </div>
@@ -125,8 +126,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodAssociation } from '@client/js/squadov/vod'
@@ -150,6 +150,7 @@ import ValorantMatchPlayerCard from '@client/vue/utility/valorant/ValorantMatchP
 import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
+import MatchShareBase from '@client/vue/log/MatchShareBase'
 
 @Component({
     components: {
@@ -166,7 +167,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
         MatchFavoriteButton,
     }
 })
-export default class ValorantMatch extends Vue {
+export default class ValorantMatch extends mixins(MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     
     @Prop()
@@ -276,6 +277,7 @@ export default class ValorantMatch extends Vue {
 
     @Watch('matchUuid')
     refreshMatch() {
+        this.refreshMatchPermissions(this.matchUuid, SquadOvGames.Valorant)
         apiClient.getValorantMatchDetails(this.matchUuid).then((resp : ApiData<ValorantMatchDetails>) => {
             this.currentMatch = resp.data
         }).catch((err : any) => {
