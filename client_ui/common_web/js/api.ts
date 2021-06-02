@@ -95,7 +95,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { LinkShareData, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
+import { LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToGcs } from '@client/js/gcs'
 
@@ -1011,11 +1011,17 @@ class ApiClient {
     }
 
     getMatchSharePermissions(matchUuid: string, game: SquadOvGames): Promise<ApiData<MatchVideoSharePermissions>> {
-        return axios.get(`v1/match/${matchUuid}/share/internal`, {
+        return axios.get(`v1/match/${matchUuid}/share/permissions`, {
             ...this.createWebAxiosConfig(),
             params: {
                 game,
             }
+        })
+    }
+
+    getMatchShareConnections(matchUuid: string): Promise<ApiData<MatchVideoShareConnection[]>> {
+        return axios.get(`v1/match/${matchUuid}/share/internal`, {
+            ...this.createWebAxiosConfig()
         })
     }
 
@@ -1246,6 +1252,24 @@ class ApiClient {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
+    }
+
+    createShareConnection(req: MatchVideoShareConnection, game: SquadOvGames | undefined): Promise<ApiData<MatchVideoShareConnection[]>> {
+        return axios.post('v1/share', {
+            conn: req,
+            game,
+        }, this.createWebAxiosConfig())
+    }
+
+    deleteShareConnection(connId: number): Promise<void> {
+        return axios.delete(`v1/share/${connId}`, this.createWebAxiosConfig())
+    }
+
+    editShareConnection(connId: number, canShare: boolean, canClip: boolean) {
+        return axios.post(`v1/share/${connId}`, {
+            canShare,
+            canClip
+        }, this.createWebAxiosConfig())
     }
 }
 

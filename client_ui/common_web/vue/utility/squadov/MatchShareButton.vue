@@ -37,6 +37,12 @@
                         Share Settings
                     </div>
                     <v-divider class="mb-2"></v-divider>
+        
+                    <share-connections-editor
+                        :match-uuid="matchUuid"
+                        :game="game"
+                    >
+                    </share-connections-editor>
 
                     <!-- Public share settings -->
                     <div class="text-overline mt-4">
@@ -159,11 +165,13 @@ import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { LinkShareData, MatchVideoSharePermissions } from '@client/js/squadov/share'
+import ShareConnectionsEditor from '@client/vue/utility/squadov/ShareConnectionsEditor.vue'
+import { LinkShareData, MatchVideoSharePermissions, MatchVideoShareConnection } from '@client/js/squadov/share'
 
 @Component({
     components: {
-        LoadingContainer
+        LoadingContainer,
+        ShareConnectionsEditor
     }
 })
 export default class MatchShareButton extends Vue {
@@ -190,7 +198,6 @@ export default class MatchShareButton extends Vue {
     creatingLink: boolean = false
     needConfirmDeleteLink: boolean = false
     deletingLink: boolean = false
-
     messages: string[] = []
 
     $refs!: {

@@ -13,3 +13,11 @@ export interface MatchVideoSharePermissions {
     canShare: boolean
     canClip: boolean
 }
+
+export interface MatchVideoShareConnection extends MatchVideoSharePermissions {
+    id: number
+    matchUuid: string | null
+    videoUuid: string | null
+    destUserId: number | null
+    destSquadId: number | null
+}
