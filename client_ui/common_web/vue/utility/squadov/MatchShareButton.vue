@@ -142,6 +142,20 @@
                             </div>
                         </template>
                     </loading-container>
+
+                    <template v-if="!!shareUrl">
+                        <!-- Share to social media -->
+                        <div class="text-overline mt-4">
+                            Social Media
+                        </div>
+                        <v-divider class="mb-2"></v-divider>
+
+                        <div class="d-flex flex-wrap align-center justify-center full-width">
+                            <facebook-share-button class="mx-1" :url="shareUrl"></facebook-share-button>
+                            <reddit-share-button class="mx-1" :url="shareUrl"></reddit-share-button>
+                            <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
+                        </div>
+                    </template>
                 </div>
             </v-card>
         </v-dialog>
@@ -166,12 +180,18 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ShareConnectionsEditor from '@client/vue/utility/squadov/ShareConnectionsEditor.vue'
-import { LinkShareData, MatchVideoSharePermissions, MatchVideoShareConnection } from '@client/js/squadov/share'
+import { LinkShareData, MatchVideoSharePermissions } from '@client/js/squadov/share'
+import FacebookShareButton from '@client/vue/utility/squadov/share/FacebookShareButton.vue'
+import TwitterShareButton from '@client/vue/utility/squadov/share/TwitterShareButton.vue'
+import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButton.vue'
 
 @Component({
     components: {
         LoadingContainer,
-        ShareConnectionsEditor
+        ShareConnectionsEditor,
+        FacebookShareButton,
+        TwitterShareButton,
+        RedditShareButton
     }
 })
 export default class MatchShareButton extends Vue {
