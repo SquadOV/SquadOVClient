@@ -303,6 +303,7 @@ import fs from 'fs'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
+import { LinkShareData } from '@client/js/squadov/share'
 
 const MAX_CLIP_LENGTH_MILLISECONDS = 180000
 
@@ -604,8 +605,8 @@ export default class VodEditor extends Vue {
             return
         }
 
-        apiClient.getClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<string>) => {
-            this.clipShareUrl = resp.data
+        apiClient.createClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<LinkShareData>) => {
+            this.clipShareUrl = resp.data.shareUrl
         }).catch((err: any) => {
             console.log('Failed to get share URL for clip: ', err)
             this.shareError = true

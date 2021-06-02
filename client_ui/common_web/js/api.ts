@@ -1041,10 +1041,30 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    getClipShareUrl(clipUuid: string, fullPath: string): Promise<ApiData<string>> {
-        return axios.post(`v1/clip/${clipUuid}/share`, {
+    getClipSharePermissions(clipUuid: string): Promise<ApiData<MatchVideoSharePermissions>> {
+        return axios.get(`v1/clip/${clipUuid}/share/permissions`, {
+            ...this.createWebAxiosConfig(),
+        })
+    }
+
+    getClipShareConnections(clipUuid: string): Promise<ApiData<MatchVideoShareConnection[]>> {
+        return axios.get(`v1/clip/${clipUuid}/share/internal`, {
+            ...this.createWebAxiosConfig()
+        })
+    }
+
+    createClipShareUrl(clipUuid: string, fullPath: string): Promise<ApiData<LinkShareData>> {
+        return axios.post(`v1/clip/${clipUuid}/share/public`, {
             fullPath,
         }, this.createWebAxiosConfig())
+    }
+
+    getClipShareUrl(clipUuid: string): Promise<ApiData<LinkShareData>> {
+        return axios.get(`v1/clip/${clipUuid}/share/public`, this.createWebAxiosConfig())
+    }
+
+    deleteClipShareUrl(clipUuid: string): Promise<void> {
+        return axios.delete(`v1/clip/${clipUuid}/share/public`, this.createWebAxiosConfig())
     }
 
     exchangeShareAccessToken(accessTokenId: string): Promise<ApiData<ShareAccessTokenResponse>> {

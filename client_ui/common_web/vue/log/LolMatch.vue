@@ -19,7 +19,6 @@
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.LeagueOfLegends"
-                        :user-id="userId"
                         :permissions="matchPermissions"
                     >
                     </match-share-button>

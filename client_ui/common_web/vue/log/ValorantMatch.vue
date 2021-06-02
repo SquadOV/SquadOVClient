@@ -18,7 +18,6 @@
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Valorant"
-                        :user-id="userId"
                         :permissions="matchPermissions"
                     >
                     </match-share-button>

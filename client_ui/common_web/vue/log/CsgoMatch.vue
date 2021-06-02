@@ -20,7 +20,6 @@
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Csgo"
-                        :user-id="userId"
                         :permissions="matchPermissions"
                     >
                     </match-share-button>

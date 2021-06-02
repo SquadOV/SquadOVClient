@@ -66,11 +66,11 @@
                             </vod-watchlist-button>
                         </template>
 
-                        <clip-share-button
+                        <match-share-button
                             :clip-uuid="clipUuid"
-                            v-if="isOwner"
+                            :permissions="permissions"
                         >
-                        </clip-share-button>
+                        </match-share-button>
                     </div>
 
                     <div class="d-flex align-center">
@@ -198,11 +198,12 @@ import { VodClip, ClipReact, ClipComment } from '@client/js/squadov/vod'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { standardFormatTime } from '@client/js/time'
 import { gameToIcon } from '@client/js/squadov/game'
+import { MatchVideoSharePermissions } from '@client/js/squadov/share'
 import * as pi from '@client/js/pages'
 
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import ClipShareButton from '@client/vue/utility/vods/ClipShareButton.vue'
+import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 
@@ -212,7 +213,7 @@ const maxCommentsPerRequest = 20
     components: {
         VideoPlayer,
         LoadingContainer,
-        ClipShareButton,
+        MatchShareButton,
         VodFavoriteButton,
         VodWatchlistButton
     }
@@ -241,6 +242,18 @@ export default class ClipView extends Vue {
     commentText: string = ''
     commentPending: boolean = false
     commentError: boolean = false
+
+    permissions: MatchVideoSharePermissions | null = null
+
+    @Watch('clipUuid')
+    refreshPermissions() {
+        this.permissions = null
+        apiClient.getClipSharePermissions(this.clipUuid).then((resp: ApiData<MatchVideoSharePermissions>) => {
+            this.permissions = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get clip share permissions: ', err)
+        })
+    }
 
     get hasValidComment(): boolean {
         return this.commentText.length > 0
@@ -400,6 +413,7 @@ export default class ClipView extends Vue {
 
     mounted() {
         this.refreshData()
+        this.refreshPermissions()
     }
 
     get registerTo(): any {

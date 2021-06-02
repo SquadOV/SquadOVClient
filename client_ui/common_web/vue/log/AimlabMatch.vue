@@ -19,7 +19,6 @@
                     <match-share-button
                         :match-uuid="taskId"
                         :game="SquadOvGames.AimLab"
-                        :user-id="userId"
                         :graphql-stats="statPermissions"
                         :permissions="matchPermissions"
                     >

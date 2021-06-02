@@ -15,7 +15,7 @@
         >
             <v-card>
                 <v-card-title>
-                    Share this match!
+                    {{ !!matchUuid ? 'Share this match!' : 'Share this clip!' }}
 
                     <v-spacer></v-spacer>
 
@@ -32,18 +32,6 @@
                 <v-divider></v-divider>
 
                 <div class="pa-4">
-                    <!-- Manual share settings -->
-                    <div class="text-overline">
-                        Share Settings
-                    </div>
-                    <v-divider class="mb-2"></v-divider>
-        
-                    <share-connections-editor
-                        :match-uuid="matchUuid"
-                        :game="game"
-                    >
-                    </share-connections-editor>
-
                     <!-- Public share settings -->
                     <div class="text-overline mt-4">
                         Link Sharing
@@ -136,7 +124,11 @@
                                     </div>
 
                                     <div class="text-caption">
-                                        Warning: Everyone with this link will be able to view this match and the VODs you <b>currently</b> have share access to until you delete this link!
+                                        {{ !!matchUuid ?
+                                            'Warning: Everyone with this link will be able to view this match and the VODs you <b>currently</b> have share access to until you delete this link!' :
+                                            'Warning: Everyone with this link will be able to view this clip until you delete this link!'
+                                        }}
+                                        
                                     </div>
                                 </template>
                             </div>
@@ -156,6 +148,19 @@
                             <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
                         </div>
                     </template>
+
+                    <!-- Manual share settings -->
+                    <div class="text-overline">
+                        Share Settings
+                    </div>
+                    <v-divider class="mb-2"></v-divider>
+        
+                    <share-connections-editor
+                        :match-uuid="matchUuid"
+                        :video-uuid="clipUuid"
+                        :game="game"
+                    >
+                    </share-connections-editor>
                 </div>
             </v-card>
         </v-dialog>
@@ -195,14 +200,14 @@ import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButt
     }
 })
 export default class MatchShareButton extends Vue {
-    @Prop({required: true})
-    matchUuid!: string
+    @Prop()
+    matchUuid!: string | undefined
 
-    @Prop({required: true})
+    @Prop()
+    clipUuid!: string | undefined
+
+    @Prop()
     game!: SquadOvGames
-
-    @Prop({required: true})
-    userId!: number
 
     @Prop({required: true})
     permissions!: MatchVideoSharePermissions | null
@@ -231,7 +236,11 @@ export default class MatchShareButton extends Vue {
 
     generatePublicLink() {
         this.creatingLink = true
-        apiClient.createMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game, this.graphqlStats).then((resp: ApiData<LinkShareData>) => {
+        
+        let promise = !!this.matchUuid ?
+            apiClient.createMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game, this.graphqlStats) :
+            apiClient.createClipShareUrl(this.clipUuid!, this.$route.fullPath)
+        promise.then((resp: ApiData<LinkShareData>) => {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
             this.showHideError = true
@@ -243,7 +252,8 @@ export default class MatchShareButton extends Vue {
 
     deletePublicLink() {
         this.deletingLink = true
-        apiClient.deleteMatchShareUrl(this.matchUuid).then(() => {
+        let promise = !!this.matchUuid ? apiClient.deleteMatchShareUrl(this.matchUuid) : apiClient.deleteClipShareUrl(this.clipUuid!)
+        promise.then(() => {
             this.isSharedPublic = false
             this.shareUrl = null
         }).catch((err: any) => {
@@ -256,10 +266,13 @@ export default class MatchShareButton extends Vue {
 
     @Watch('$route.fullPath')
     @Watch('matchUuid')
+    @Watch('clipUuid')
     refreshLinkShareData() {
         this.isSharedPublic = null
         this.shareUrl = null
-        apiClient.getMatchShareUrl(this.matchUuid).then((resp: ApiData<LinkShareData>) => {
+
+        let promise = !!this.matchUuid ? apiClient.getMatchShareUrl(this.matchUuid) : apiClient.getClipShareUrl(this.clipUuid!)
+        promise.then((resp: ApiData<LinkShareData>) => {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
             this.showHideError = true

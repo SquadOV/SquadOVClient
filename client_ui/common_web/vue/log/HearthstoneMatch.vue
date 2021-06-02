@@ -22,7 +22,6 @@
                     <match-share-button
                         :match-uuid="matchId"
                         :game="SquadOvGames.Hearthstone"
-                        :user-id="userId"
                         :permissions="matchPermissions"
                     >
                     </match-share-button>

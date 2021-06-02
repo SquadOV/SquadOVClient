@@ -242,13 +242,12 @@ export default class ShareConnectionsEditor extends Vue {
     refreshConnections() {
         this.internalValue = null
 
-        if (!!this.matchUuid) {
-            apiClient.getMatchShareConnections(this.matchUuid).then((resp: ApiData<MatchVideoShareConnection[]>) => {
-                this.internalValue = resp.data
-            }).catch((err: any) => {
-                console.log('Failed to get match share connections: ', err)
-            })
-        }
+        let promise = !!this.matchUuid ? apiClient.getMatchShareConnections(this.matchUuid) : apiClient.getClipShareConnections(this.videoUuid!)
+        promise.then((resp: ApiData<MatchVideoShareConnection[]>) => {
+            this.internalValue = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get share connections: ', err)
+        })
     }
 
     refreshSquads() {

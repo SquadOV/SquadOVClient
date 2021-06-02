@@ -35,7 +35,6 @@
                     <match-share-button
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.WorldOfWarcraft"
-                        :user-id="userId"
                         :permissions="matchPermissions"
                     >
                     </match-share-button>
