@@ -1,7 +1,7 @@
 <template>
     <v-select
         label="Games"
-        :value="value"
+        :value="value.sort()"
         @input="changeValue"
         :items="items"
         deletable-chips
@@ -12,6 +12,7 @@
         hide-details
         dense
         :loading="loading"
+        v-if="value !== undefined"
     >
         <template v-slot:item="{ item }">
             <div class="d-flex full-width align-center">

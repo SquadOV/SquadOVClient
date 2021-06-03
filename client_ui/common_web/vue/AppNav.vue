@@ -384,10 +384,21 @@ export default class AppNav extends Vue {
         })
     }
 
-    @Watch('$route')
+    isActive: boolean = false
+
+    activated() {
+        this.isActive = true
+    }
+
+    deactivated() {
+        this.isActive = false
+    }
+
+    @Watch('$route.fullPath')
     @Watch('isLoggedIn')
+    @Watch('isActive')
     refreshNotifications() {
-        if (!this.isLoggedIn) {
+        if (!this.isLoggedIn || !this.isActive) {
             return
         }
 
