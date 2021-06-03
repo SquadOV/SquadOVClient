@@ -14,6 +14,12 @@
                     mdi-chevron-right
                 </v-icon>
             </v-btn>
+
+            <v-btn small icon @click="navRefresh">
+                <v-icon>
+                    mdi-refresh
+                </v-icon>
+            </v-btn>
         </template>
 
         <v-toolbar-title class="mr-4">
@@ -427,6 +433,10 @@ export default class AppNav extends Vue {
 
     navForward() {
         this.$router.forward()
+    }
+
+    navRefresh() {
+        this.$router.go(0)
     }
 
     goToLink(url: string) {
