@@ -152,6 +152,9 @@ export default class ShareConnectionsEditor extends Vue {
     @Prop()
     game!: SquadOvGames | undefined
 
+    @Prop({type: Boolean, default: false})
+    noClip!: boolean
+
     internalValue: MatchVideoShareConnection[] | null = []
     validSquads: Squad[] | null = null
     squadsToShare: Squad[] = []
@@ -190,7 +193,7 @@ export default class ShareConnectionsEditor extends Vue {
     }
     
     get squadConnHeaders(): any[] {
-        return [
+        let ret: any[] = [
             {
                 text: 'Squad',
                 value: 'squad',
@@ -199,17 +202,22 @@ export default class ShareConnectionsEditor extends Vue {
                 text: 'Share',
                 value: 'share',
             },
-            {
+        ]
+
+        if (!this.noClip) {
+            ret.push({
                 text: 'Clip',
                 value: 'clip',
-            },
-            {
-                text: 'Actions',
-                value: 'actions',
-                sortable: false,
-                filterable: false
-            }
-        ]
+            })
+        }
+
+        ret.push({
+            text: 'Actions',
+            value: 'actions',
+            sortable: false,
+            filterable: false
+        })
+        return ret
     }
 
     get squadMap(): Map<number, Squad> {

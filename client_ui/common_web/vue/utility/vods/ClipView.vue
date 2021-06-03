@@ -69,6 +69,7 @@
                         <match-share-button
                             :clip-uuid="clipUuid"
                             :permissions="permissions"
+                            no-clip
                         >
                         </match-share-button>
                     </div>
@@ -248,7 +249,7 @@ export default class ClipView extends Vue {
     @Watch('clipUuid')
     refreshPermissions() {
         this.permissions = null
-        apiClient.getClipSharePermissions(this.clipUuid).then((resp: ApiData<MatchVideoSharePermissions>) => {
+        apiClient.getGenericSharePermissions(undefined, this.clipUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.permissions = resp.data
         }).catch((err: any) => {
             console.log('Failed to get clip share permissions: ', err)

@@ -33,7 +33,7 @@
 
                 <div class="pa-4">
                     <!-- Public share settings -->
-                    <div class="text-overline mt-4">
+                    <div class="text-overline">
                         Link Sharing
                     </div>
                     <v-divider class="mb-2"></v-divider>
@@ -67,15 +67,20 @@
                                     </div>
 
                                     <div class="d-flex align-center">
-                                        <v-btn
-                                            text
-                                            color="error"
-                                            small
-                                            v-if="!needConfirmDeleteLink"
-                                            @click="needConfirmDeleteLink = true"
-                                        >
-                                            Delete Link
-                                        </v-btn>
+                                        <template v-if="!needConfirmDeleteLink">
+                                            <v-btn
+                                                text
+                                                color="error"
+                                                small
+                                                @click="needConfirmDeleteLink = true"
+                                            >
+                                                Delete Link
+                                            </v-btn>
+                                            <v-spacer></v-spacer>
+                                            <facebook-share-button class="mx-1" :url="shareUrl"></facebook-share-button>
+                                            <reddit-share-button class="mx-1" :url="shareUrl"></reddit-share-button>
+                                            <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
+                                        </template>
                                         
                                         <template v-else>
                                             <span class="text-overline">
@@ -123,34 +128,16 @@
                                         </v-btn>
                                     </div>
 
-                                    <div class="text-caption">
-                                        {{ !!matchUuid ?
-                                            'Warning: Everyone with this link will be able to view this match and the VODs you <b>currently</b> have share access to until you delete this link!' :
-                                            'Warning: Everyone with this link will be able to view this clip until you delete this link!'
-                                        }}
-                                        
+                                    <div class="text-caption font-weight-bold mt-1">
+                                        {{ warningText }}
                                     </div>
                                 </template>
                             </div>
                         </template>
                     </loading-container>
 
-                    <template v-if="!!shareUrl">
-                        <!-- Share to social media -->
-                        <div class="text-overline mt-4">
-                            Social Media
-                        </div>
-                        <v-divider class="mb-2"></v-divider>
-
-                        <div class="d-flex flex-wrap align-center justify-center full-width">
-                            <facebook-share-button class="mx-1" :url="shareUrl"></facebook-share-button>
-                            <reddit-share-button class="mx-1" :url="shareUrl"></reddit-share-button>
-                            <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
-                        </div>
-                    </template>
-
                     <!-- Manual share settings -->
-                    <div class="text-overline">
+                    <div class="text-overline mt-2">
                         Share Settings
                     </div>
                     <v-divider class="mb-2"></v-divider>
@@ -159,6 +146,7 @@
                         :match-uuid="matchUuid"
                         :video-uuid="clipUuid"
                         :game="game"
+                        :no-clip="noClip"
                     >
                     </share-connections-editor>
                 </div>
@@ -212,6 +200,9 @@ export default class MatchShareButton extends Vue {
     @Prop({required: true})
     permissions!: MatchVideoSharePermissions | null
 
+    @Prop({type: Boolean, default: false})
+    noClip!: boolean
+
     @Prop()
     graphqlStats!: StatPermission[]
 
@@ -227,6 +218,14 @@ export default class MatchShareButton extends Vue {
 
     $refs!: {
         urlInput: any
+    }
+
+    get warningText(): string {
+        if (!!this.matchUuid) {
+            return 'Warning: Everyone with this link will be able to view this match and the VODs you <b>currently</b> have share access to until you delete this link!'
+        } else {
+            return 'Warning: Everyone with this link will be able to view this clip until you delete this link!'
+        }
     }
 
     handlePublicLinkResponse(resp: LinkShareData) {

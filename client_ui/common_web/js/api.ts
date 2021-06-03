@@ -1010,13 +1010,12 @@ class ApiClient {
         })
     }
 
-    getMatchSharePermissions(matchUuid: string, game: SquadOvGames): Promise<ApiData<MatchVideoSharePermissions>> {
-        return axios.get(`v1/match/${matchUuid}/share/permissions`, {
-            ...this.createWebAxiosConfig(),
-            params: {
-                game,
-            }
-        })
+    getGenericSharePermissions(matchUuid: string | undefined | null, videoUuid: string | undefined | null, game: SquadOvGames | undefined | null): Promise<ApiData<MatchVideoSharePermissions>> {
+        return axios.post(`v1/share/permissions`, {
+            matchUuid,
+            videoUuid,
+            game
+        }, this.createWebAxiosConfig(),)
     }
 
     getMatchShareConnections(matchUuid: string): Promise<ApiData<MatchVideoShareConnection[]>> {
@@ -1039,12 +1038,6 @@ class ApiClient {
             game,
             graphqlStats,
         }, this.createWebAxiosConfig())
-    }
-
-    getClipSharePermissions(clipUuid: string): Promise<ApiData<MatchVideoSharePermissions>> {
-        return axios.get(`v1/clip/${clipUuid}/share/permissions`, {
-            ...this.createWebAxiosConfig(),
-        })
     }
 
     getClipShareConnections(clipUuid: string): Promise<ApiData<MatchVideoShareConnection[]>> {

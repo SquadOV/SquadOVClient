@@ -10,7 +10,7 @@ export default class MatchShareBase extends Vue {
 
     refreshMatchPermissions(matchUuid: string, game: SquadOvGames) {
         this.matchPermissions = null
-        apiClient.getMatchSharePermissions(matchUuid, game).then((resp: ApiData<MatchVideoSharePermissions>) => {
+        apiClient.getGenericSharePermissions(matchUuid, undefined, game).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.matchPermissions = resp.data
         }).catch((err: any) => {
             console.log('Failed to get match share permissions: ', err)
