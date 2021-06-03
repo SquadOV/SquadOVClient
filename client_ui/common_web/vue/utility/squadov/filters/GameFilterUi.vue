@@ -1,7 +1,7 @@
 <template>
     <v-select
         label="Games"
-        :value="value.sort()"
+        :value="sortedValue"
         @input="changeValue"
         :items="items"
         deletable-chips
@@ -49,6 +49,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { SquadOvGames, gameToName, gameToIcon } from '@client/js/squadov/game'
+import { Squad } from '@client/js/squadov/squad'
 
 @Component
 export default class GameFilterUi extends Vue {
@@ -57,6 +58,24 @@ export default class GameFilterUi extends Vue {
 
     @Prop({type: Boolean, default: false})
     loading!: boolean
+
+    get sortedValue(): SquadOvGames[] {
+        if (!this.value) {
+            return []
+        }
+
+        return this.value.sort((a: SquadOvGames, b: SquadOvGames) => {
+            let aName = gameToName(a)
+            let bName = gameToName(b)
+            if (aName < bName) {
+                return -1
+            } else if (aName > bName) {
+                return 1
+            } else {
+                return 0
+            }
+        })
+    }
 
     changeValue(v: SquadOvGames[]) {
         if (v.length === 0) {
