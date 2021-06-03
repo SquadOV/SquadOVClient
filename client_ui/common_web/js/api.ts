@@ -95,7 +95,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
+import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToGcs } from '@client/js/gcs'
 
@@ -1275,14 +1275,30 @@ class ApiClient {
     }
 
     deleteShareConnection(connId: number): Promise<void> {
-        return axios.delete(`v1/share/${connId}`, this.createWebAxiosConfig())
+        return axios.delete(`v1/share/conn/${connId}`, this.createWebAxiosConfig())
     }
 
     editShareConnection(connId: number, canShare: boolean, canClip: boolean) {
-        return axios.post(`v1/share/${connId}`, {
+        return axios.post(`v1/share/conn/${connId}`, {
             canShare,
             canClip
         }, this.createWebAxiosConfig())
+    }
+
+    getAutoShareConnections(): Promise<ApiData<AutoShareConnection[]>> {
+        return axios.get('v1/share/auto', this.createWebAxiosConfig())
+    }
+
+    newAutoShareConnection(conn: AutoShareConnection): Promise<ApiData<AutoShareConnection>> {
+        return axios.post('v1/share/auto', conn, this.createWebAxiosConfig())
+    }
+
+    deleteAutoShareConnection(connId: number): Promise<void> {
+        return axios.delete(`v1/share/auto/${connId}`, this.createWebAxiosConfig())
+    }
+
+    editAutoShareConnection(connId: number, conn: AutoShareConnection): Promise<void> {
+        return axios.post(`v1/share/auto/${connId}`, conn, this.createWebAxiosConfig())
     }
 }
 

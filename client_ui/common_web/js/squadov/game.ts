@@ -9,6 +9,16 @@ export enum SquadOvGames {
     Unknown,
 }
 
+export let allGames = [
+    SquadOvGames.AimLab,
+    SquadOvGames.Hearthstone,
+    SquadOvGames.LeagueOfLegends,
+    SquadOvGames.TeamfightTactics,
+    SquadOvGames.Valorant,
+    SquadOvGames.WorldOfWarcraft,
+    SquadOvGames.Csgo
+]
+
 export function gameToIcon(game: SquadOvGames): string {
     switch (game) {
         case SquadOvGames.AimLab:

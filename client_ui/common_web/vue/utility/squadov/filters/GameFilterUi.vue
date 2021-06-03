@@ -11,6 +11,7 @@
         outlined
         hide-details
         dense
+        :loading="loading"
     >
         <template v-slot:item="{ item }">
             <div class="d-flex full-width align-center">
@@ -52,6 +53,9 @@ import { SquadOvGames, gameToName, gameToIcon } from '@client/js/squadov/game'
 export default class GameFilterUi extends Vue {
     @Prop({type: Array})
     value!: SquadOvGames[] | undefined
+
+    @Prop({type: Boolean, default: false})
+    loading!: boolean
 
     changeValue(v: SquadOvGames[]) {
         if (v.length === 0) {

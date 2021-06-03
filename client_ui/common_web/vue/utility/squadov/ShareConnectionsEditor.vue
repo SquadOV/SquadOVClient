@@ -88,7 +88,7 @@
 
                                     <v-btn
                                         color="primary"
-                                        :loading="deletePending"
+                                        :loading="addPending"
                                         @click="shareWithNewSquads"
                                     >
                                         Share

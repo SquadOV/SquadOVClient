@@ -3,44 +3,9 @@
         <v-tabs class="full-parent-height" vertical>
             <v-tab>
                 <v-icon left>
-                    mdi-play-circle
-                </v-icon>
-                Playback
-            </v-tab>
-
-            <v-tab-item>
-                <playback-settings-item></playback-settings-item>
-            </v-tab-item>
-
-            <template v-if="useRecordingSettings">
-                <v-tab>
-                    <v-icon left>
-                        mdi-video-image
-                    </v-icon>
-                    Recording
-                </v-tab>
-
-                <v-tab-item>
-                    <recording-settings-item></recording-settings-item>
-                </v-tab-item>
-            </template>
-
-            <v-tab>
-                <v-icon left>
-                    mdi-security
-                </v-icon>
-                Security
-            </v-tab>
-
-            <v-tab-item>
-                <account-security-settings-item></account-security-settings-item>
-            </v-tab-item>
-
-            <v-tab>
-                <v-icon left>
                     mdi-cog
                 </v-icon>
-                System
+                General
             </v-tab>
 
             <v-tab-item>
@@ -80,6 +45,58 @@
                 >
                 </v-checkbox>
             </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
+                    mdi-play-circle
+                </v-icon>
+                Playback
+            </v-tab>
+
+            <v-tab-item>
+                <playback-settings-item></playback-settings-item>
+            </v-tab-item>
+
+            <template v-if="useRecordingSettings">
+                <v-tab>
+                    <v-icon left>
+                        mdi-video-image
+                    </v-icon>
+                    Recording
+                </v-tab>
+
+                <v-tab-item>
+                    <recording-settings-item></recording-settings-item>
+                </v-tab-item>
+            </template>
+
+            <v-tab>
+                <v-icon left>
+                    mdi-security
+                </v-icon>
+                Security
+            </v-tab>
+
+            <v-tab-item>
+                <account-security-settings-item></account-security-settings-item>
+            </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
+                    mdi-share-variant
+                </v-icon>
+                Sharing
+            </v-tab>
+
+            <v-tab-item>
+                <div class="my-2">
+                    Manage your auto-sharing settings for your matches and clips on this page.
+                    Only your matches with recorded VODs and your created clips are auto-shared, not those that are shared with you.
+                </div>
+
+                <sharing-settings-item></sharing-settings-item>
+                
+            </v-tab-item>
         </v-tabs>
     </v-container>
 </template>
@@ -91,12 +108,14 @@ import Component from 'vue-class-component'
 import RecordingSettingsItem from '@client/vue/utility/squadov/settings/RecordingSettingsItem.vue'
 import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
 import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
+import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSettingsItem.vue'
 
 @Component({
     components: {
         RecordingSettingsItem,
         AccountSecuritySettingsItem,
         PlaybackSettingsItem,
+        SharingSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {
