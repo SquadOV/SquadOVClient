@@ -31,7 +31,6 @@ import { VodAssociation, CsgoMatchAccessibleVods } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { getActiveUserId } from '@client/js/app'
 
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
@@ -145,7 +144,7 @@ export default class CsgoVodPicker extends Vue {
     @Watch('matchUuid')
     refreshData() {
         this.availableVods = null
-        apiClient.getCsgoMatchAccessibleVods(this.matchUuid, getActiveUserId()).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
+        apiClient.getCsgoMatchAccessibleVods(this.matchUuid).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain CSGO VODs: ', err)

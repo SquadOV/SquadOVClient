@@ -32,7 +32,6 @@ import { apiClient, ApiData } from '@client/js/api'
 import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import { ValorantMatchDetailsWrapper, ValorantMatchTeamWrapper } from '@client/js/valorant/valorant_matches_parsed'
 import { ValorantMatchAccessibleVods } from '@client/js/squadov/vod'
-import { getActiveUserId } from '@client/js/app'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
@@ -177,7 +176,7 @@ export default class ValorantVodPovPicker extends Vue {
         }
 
         // Using the current user ID here is correct as we only want the VODS accessible to the current user (not to the user whose match we're viewing).
-        apiClient.getValorantMatchAccessibleVods(this.matchUuid, getActiveUserId()).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+        apiClient.getValorantMatchAccessibleVods(this.matchUuid).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Valorant VODs: ', err)

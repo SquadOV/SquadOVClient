@@ -580,15 +580,15 @@ class ApiClient {
         })
     }
 
-    getValorantMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<ValorantMatchAccessibleVods>> {
-        return axios.get(`v1/valorant/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+    getValorantMatchAccessibleVods(matchUuid: string): Promise<ApiData<ValorantMatchAccessibleVods>> {
+        return axios.get(`v1/valorant/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
     }
 
-    getHearthstoneMatchAccessibleVods(matchId: string, userId: number): Promise<ApiData<HearthstoneMatchAccessibleVods>> {
-        return axios.get(`v1/hearthstone/user/${userId}/match/${matchId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
+    getHearthstoneMatchAccessibleVods(matchId: string): Promise<ApiData<HearthstoneMatchAccessibleVods>> {
+        return axios.get(`v1/hearthstone/match/${matchId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -771,8 +771,8 @@ class ApiClient {
         })
     }
 
-    getTftMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<TftMatchAccessibleVods>> {
-        return axios.get(`v1/tft/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<TftMatchAccessibleVods>) => {
+    getTftMatchAccessibleVods(matchUuid: string): Promise<ApiData<TftMatchAccessibleVods>> {
+        return axios.get(`v1/tft/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<TftMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -807,8 +807,8 @@ class ApiClient {
         })
     }
 
-    getLolMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<LeagueMatchAccessibleVods>> {
-        return axios.get(`v1/lol/match/${matchUuid}/user/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
+    getLolMatchAccessibleVods(matchUuid: string): Promise<ApiData<LeagueMatchAccessibleVods>> {
+        return axios.get(`v1/lol/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -925,8 +925,8 @@ class ApiClient {
         })
     }
 
-    getWoWMatchAccessibleVods(userId: number, matchUuid: string): Promise<ApiData<WowMatchAccessibleVods>> {
-        return axios.get(`v1/wow/match/${matchUuid}/users/${userId}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<WowMatchAccessibleVods>) => {
+    getWoWMatchAccessibleVods(matchUuid: string): Promise<ApiData<WowMatchAccessibleVods>> {
+        return axios.get(`v1/wow/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<WowMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })
@@ -1260,8 +1260,8 @@ class ApiClient {
         })
     }
 
-    getCsgoMatchAccessibleVods(matchUuid: string, userId: number): Promise<ApiData<CsgoMatchAccessibleVods>> {
-        return axios.get(`v1/csgo/user/${userId}/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
+    getCsgoMatchAccessibleVods(matchUuid: string): Promise<ApiData<CsgoMatchAccessibleVods>> {
+        return axios.get(`v1/csgo/match/${matchUuid}/vods`, this.createWebAxiosConfig(true)).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
             resp.data.vods.forEach(cleanVodAssocationData)
             return resp
         })

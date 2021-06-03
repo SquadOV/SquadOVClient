@@ -29,7 +29,6 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
-import { getActiveUserId } from '@client/js/app'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
@@ -167,7 +166,7 @@ export default class HearthstoneVodPovPicker extends Vue {
     @Watch('matchId')
     refreshData() {
         this.availableVods = null
-        apiClient.getHearthstoneMatchAccessibleVods(this.matchId, getActiveUserId()).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
+        apiClient.getHearthstoneMatchAccessibleVods(this.matchId).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to get accessible Hearthstone match VODS: ', err)

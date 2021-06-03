@@ -48,7 +48,6 @@ import {
 } from '@client/js/wow/character'
 import { WowMatchAccessibleVods, VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
-import { getActiveUserId } from '@client/js/app'
 
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
@@ -171,7 +170,7 @@ export default class WowVodPovPicker extends Vue {
     }
 
     refreshData() {
-        apiClient.getWoWMatchAccessibleVods(getActiveUserId(), this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
+        apiClient.getWoWMatchAccessibleVods(this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
             this.allAccessibleVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to get WoW match accessible VODs: ', err)

@@ -222,7 +222,7 @@ export default class MatchShareButton extends Vue {
 
     get warningText(): string {
         if (!!this.matchUuid) {
-            return 'Warning: Everyone with this link will be able to view this match and the VODs you <b>currently</b> have share access to until you delete this link!'
+            return 'Warning: Everyone with this link will be able to view this match and the VODs you currently have share access to until you delete this link!'
         } else {
             return 'Warning: Everyone with this link will be able to view this clip until you delete this link!'
         }
