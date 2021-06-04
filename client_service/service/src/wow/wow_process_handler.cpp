@@ -474,6 +474,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
     const game_event_watcher::RawWoWCombatLog endLog = {
         shared::nowUtc(),
         { "SQUADOV_END_COMBAT_LOG" },
+        "SQUADOV_END_COMBAT_LOG"
         -1
     };
     LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);

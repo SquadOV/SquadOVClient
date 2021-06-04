@@ -45,6 +45,7 @@ bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const 
     const auto tokenPart = boost::join_if(parts, " ", [](const std::string& p) {
         return !boost::trim_copy(p).empty();
     });
+    log.rawLog = tokenPart;
 
     try {
         boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);

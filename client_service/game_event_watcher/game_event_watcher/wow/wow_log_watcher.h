@@ -41,6 +41,7 @@ struct WoWCombatLogState {
 struct RawWoWCombatLog {
     shared::TimePoint timestamp;
     std::vector<std::string> log;
+    std::string rawLog;
     int64_t logLine = 0;
 
     nlohmann::json toJson() const;
