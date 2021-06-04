@@ -9,6 +9,7 @@ import Vuetify, {
 } from 'vuetify/lib'
 import StatusDisplay from '@client/vue/utility/squadov/StatusDisplay.vue'
 import LogoutButton from '@client/vue/utility/auth/LogoutButton.vue'
+import TitleBar from '@client/vue/TitleBar.vue'
 
 Vue.use(Vuetify)
 
@@ -19,11 +20,21 @@ new Vue({
         VMain,
         VProgressCircular,
         StatusDisplay,
-        LogoutButton
+        LogoutButton,
+        TitleBar
     },
     vuetify: new Vuetify({
         theme: {
             dark: true,
         },
     }),
+    methods: {
+        generateAssetUri(s: string): string {
+/// #if DESKTOP
+            return s
+/// #else
+            return `/${s}`
+/// #endif
+        }
+    },
 }).$mount('#app')

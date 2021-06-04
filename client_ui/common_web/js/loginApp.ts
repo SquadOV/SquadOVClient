@@ -11,6 +11,7 @@ import VueRouter from 'vue-router'
 import Login from '@client/vue/auth/Login.vue'
 import Register from '@client/vue/auth/Register.vue'
 import EmailVerify from '@client/vue/auth/EmailVerify.vue'
+import TitleBar from '@client/vue/TitleBar.vue'
 
 Vue.use(Vuetify)
 Vue.use(VueRouter)
@@ -41,12 +42,22 @@ new Vue({
         VApp,
         VMain,
         Login,
-        Register
+        Register,
+        TitleBar
     },
     vuetify: new Vuetify({
         theme: {
             dark: true,
         },
     }),
+    methods: {
+        generateAssetUri(s: string): string {
+/// #if DESKTOP
+            return s
+/// #else
+            return `/${s}`
+/// #endif
+        }
+    },
     router,
 }).$mount('#app')
