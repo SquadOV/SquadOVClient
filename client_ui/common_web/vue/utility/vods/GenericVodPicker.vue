@@ -113,48 +113,7 @@
                         </v-card-actions>
                     </v-card>
                 </v-dialog>
-
-                <!-- download VOD button -->
-                <v-tooltip bottom v-if="hasLocal">
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs" @click="openLocalDownload" >
-                            <v-icon>
-                                mdi-folder-open
-                            </v-icon>
-                        </v-btn>
-                    </template>
-
-                    Open Folder Location
-                </v-tooltip>
-
-                <v-tooltip bottom v-else-if="!!downloadUri && useSimpleDownload && hasFastify" >
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn color="warning" icon :href="downloadUri" :loading="checkingForLocal" v-on="on" v-bind="attrs">
-                            <v-icon>
-                                mdi-download
-                            </v-icon>
-                        </v-btn>
-                    </template>
-
-                    Download
-                </v-tooltip>
-
-                <v-tooltip bottom v-else-if="!useSimpleDownload && hasFastify">
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn color="warning" icon @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal" v-on="on" v-bind="attrs">
-                            <v-icon>
-                                mdi-download
-                            </v-icon>
-                        </v-btn>
-                    </template>
-
-                    Download
-                </v-tooltip>
-
-                <div v-if="downloadProgress !== null">
-                    {{ (downloadProgress * 100.0).toFixed(0) }}% 
-                </div>
-
+                
                 <!-- upload button -->
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
@@ -171,20 +130,61 @@
                 <div v-if="uploadProgress !== null">
                     {{ (uploadProgress * 100.0).toFixed(0) }}% 
                 </div>
-                
-                <!-- create clip button -->
-                <v-tooltip bottom>
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn color="success" icon v-if="(hasFastify || hasLocal) && isClippingEnabled" @click="openEditingWindow" v-on="on" v-bind="attrs">
-                            <v-icon>
-                                mdi-content-cut
-                            </v-icon>
-                        </v-btn>
-                    </template>
-
-                    Clip
-                </v-tooltip>
             </template>
+
+            <!-- download VOD button -->
+            <v-tooltip bottom v-if="hasLocal">
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs" @click="openLocalDownload" >
+                        <v-icon>
+                            mdi-folder-open
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Open Folder Location
+            </v-tooltip>
+
+            <v-tooltip bottom v-else-if="!!downloadUri && useSimpleDownload && hasFastify" >
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="warning" icon :href="downloadUri" :loading="checkingForLocal" v-on="on" v-bind="attrs">
+                        <v-icon>
+                            mdi-download
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Download
+            </v-tooltip>
+
+            <v-tooltip bottom v-else-if="!useSimpleDownload && hasFastify">
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="warning" icon @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal" v-on="on" v-bind="attrs">
+                        <v-icon>
+                            mdi-download
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Download
+            </v-tooltip>
+
+            <div v-if="downloadProgress !== null">
+                {{ (downloadProgress * 100.0).toFixed(0) }}% 
+            </div>
+            
+            <!-- create clip button -->
+            <v-tooltip bottom v-if="clippingAllowed" >
+                <template v-slot:activator="{on, attrs}">
+                    <v-btn color="success" icon @click="openEditingWindow" v-on="on" v-bind="attrs">
+                        <v-icon>
+                            mdi-content-cut
+                        </v-icon>
+                    </v-btn>
+                </template>
+
+                Clip
+            </v-tooltip>
 
             <!-- drawing button -->
             <v-tooltip bottom>
@@ -278,6 +278,7 @@ import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import { VodRemoteControlContext } from '@client/js/vods/remote'
 import { DownloadUploadProgressCb, manager } from '@client/js/vods/local_manager'
+import { MatchVideoSharePermissions } from '@client/js/squadov/share'
 
 /// #if DESKTOP
 import { shell, ipcRenderer } from 'electron'
@@ -323,6 +324,26 @@ export default class GenericVodPicker extends Vue {
     context: VodEditorContext | null = null
     localVodLocation: string | null = null
     rcContext: VodRemoteControlContext | null = null
+
+    permissions: MatchVideoSharePermissions | null = null
+
+    @Watch('value')
+    refreshPermissions() {
+        this.permissions = null
+        if (!this.value) {
+            return
+        }
+
+        apiClient.getGenericSharePermissions(undefined, this.value.videoUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
+            this.permissions = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get video share permissions: ', err)
+        })
+    }
+
+    get clippingAllowed(): boolean {
+        return (this.hasFastify || this.hasLocal) && this.isClippingEnabled && !!this.permissions && this.permissions.canClip
+    }
 
     @Watch('timestamp')
     onChangeTimestamp() {
