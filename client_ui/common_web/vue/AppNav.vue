@@ -2,40 +2,13 @@
     <v-app-bar
         dense
     >
-        <template v-if="useIntegratedAppNav">
-            <v-btn small icon @click="navBack">
-                <v-icon>
-                    mdi-chevron-left
-                </v-icon>
-            </v-btn>
-
-            <v-btn small icon @click="navForward">
-                <v-icon>
-                    mdi-chevron-right
-                </v-icon>
-            </v-btn>
-
-            <v-btn small icon @click="navRefresh">
-                <v-icon>
-                    mdi-refresh
-                </v-icon>
-            </v-btn>
-        </template>
-
-        <v-toolbar-title class="mr-4">
-            <router-link :to="homeTo">
-                <div class="d-flex align-center">
-                    <v-img
-                        class="mr-1"
-                        width="32px"
-                        :src="$root.generateAssetUri('assets/icon.png')"
-                        contain
-                    >
-                    </v-img>
-                    SquadOV 
-                </div>
-            </router-link>
-        </v-toolbar-title>
+        <v-btn
+            text
+            exact
+            :to="homeTo"
+        >
+            Home
+        </v-btn>
 
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
@@ -417,26 +390,6 @@ export default class AppNav extends Vue {
 
     mounted() {
         this.refreshNotifications()
-    }
-
-    get useIntegratedAppNav(): boolean {
-/// #if DESKTOP
-        return true
-/// #else
-        return false
-/// #endif
-    }
-
-    navBack() {
-        this.$router.back()
-    }
-
-    navForward() {
-        this.$router.forward()
-    }
-
-    navRefresh() {
-        this.$router.go(0)
     }
 
     goToLink(url: string) {

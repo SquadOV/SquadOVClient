@@ -20,7 +20,7 @@ a {
 }
 
 html {
-    overflow: auto !important;
+    overflow-y: hidden !important;
 }
 
 .vod-div {
@@ -74,4 +74,15 @@ html {
 .flex-break {
     flex-basis: 100%;
     height: 0;
+}
+
+#desktopAppDiv {
+    height: calc(100vh - 32px);
+    margin-top: 32px;
+    overflow: auto !important;
+}
+
+#webAppDiv {
+    height: calc(100vh);
+    overflow: auto !important;
 }

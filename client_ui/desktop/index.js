@@ -339,6 +339,7 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
         editorWin = new BrowserWindow({
             width: 1600,
             height: 900,
+            frame: false,
             webPreferences: {
                 nodeIntegration: true,
                 webSecurity: app.isPackaged,
@@ -365,6 +366,7 @@ ipcMain.on('open-path-window', (event, path) => {
     let pathWin = new BrowserWindow({
         width: 1600,
         height: 900,
+        frame: false,
         webPreferences: {
             nodeIntegration: true,
             webSecurity: app.isPackaged,
@@ -632,6 +634,7 @@ app.on('ready', async () => {
     win = new BrowserWindow({
         width: 1600,
         height: 900,
+        frame: false,
         webPreferences: {
             nodeIntegration: true,
             webSecurity: app.isPackaged
@@ -822,4 +825,23 @@ zeromqServer.on('gcs-upload-progress', (resp) => {
     if (!!win) {
         win.webContents.send('gcs-upload-progress', parsedResp)
     }
+})
+
+ipcMain.on('minimize', (event) => {
+    let window = BrowserWindow.fromWebContents(event.sender)
+    window.minimize()
+})
+
+ipcMain.on('maximize', (event) => {
+    let window = BrowserWindow.fromWebContents(event.sender)
+    if (window.isMaximized()) {
+        window.unmaximize()
+    } else {
+        window.maximize()
+    }
+})
+
+ipcMain.on('closeWindow', (event) => {
+    let window = BrowserWindow.fromWebContents(event.sender)
+    window.close()
 })

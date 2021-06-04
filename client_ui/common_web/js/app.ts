@@ -31,6 +31,7 @@ const Dashboard = () => import('@client/vue/Dashboard.vue')
 const UserProfile = () => import('@client/vue/profile/UserProfile.vue')
 const UserSquads = () => import('@client/vue/squads/UserSquads.vue')
 const SingleSquadPage = () => import('@client/vue/squads/SingleSquadPage.vue')
+const TitleBar = () => import('@client/vue/TitleBar.vue')
 
 const GameLog = () => import('@client/vue/GameLog.vue')
 const LogGameChooser = () => import('@client/vue/log/LogGameChooser.vue')
@@ -735,6 +736,7 @@ new Vue({
         VApp,
         VMain,
         App,
+        TitleBar,
     },
     vuetify: new Vuetify({
         theme: {
