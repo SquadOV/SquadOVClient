@@ -57,21 +57,19 @@ export default class HearthstoneTurnTimelineDisplay extends Vue {
     }
 
     turnStyling(rnd : number) : any {
-        let accentColor : Color = { r : 0, g : 0, b : 0}
+        let accentColor : string
         if (rnd == 0) {
-            accentColor.r = 25
-            accentColor.g = 118
-            accentColor.b = 210
+            accentColor = 'color-enemy'
         } else {
             if (this.currentMatch.isTurnForCurrentPlayer(rnd)) {
-                accentColor = getSameTeamColor()
+                accentColor = 'color-friendly'
             } else {
-                accentColor = getOpposingTeamColor()   
+                accentColor = 'color-enemy'
             }
         }
 
         return {
-            'border-top': `2px solid rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b})`
+            'border-top': `2px solid var(--${accentColor})`
         }
     }
 }

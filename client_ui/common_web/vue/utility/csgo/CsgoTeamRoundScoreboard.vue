@@ -61,7 +61,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper} from '@client/js/csgo/match'
-import { Color, getGenericWinColor, getGenericLossColor, colorToCssString } from '@client/js/color'
 import { CsgoTeam, CsgoWeapon } from '@client/js/csgo/events'
 import { SteamAccount } from '@client/js/steam/account'
 import CsgoTeamIcon from '@client/vue/utility/csgo/CsgoTeamIcon.vue'
@@ -224,15 +223,8 @@ export default class CsgoTeamRoundScoreboard extends Vue {
     }
 
     get headerDivStyle() : any {
-        let color : Color = { r : 0, g : 0, b : 0}
-        if (this.team == this.userTeam) {
-            color = getGenericWinColor()
-        } else {
-            color = getGenericLossColor()
-        }
-
         return {
-            'background-color': `${colorToCssString(color)}`
+            'background-color': `var(--${this.team == this.userTeam ? 'color-top-place' : 'color-bottom-place'})`
         }
     }
 }

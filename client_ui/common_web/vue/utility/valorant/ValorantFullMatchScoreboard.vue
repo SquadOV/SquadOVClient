@@ -58,12 +58,7 @@ import {
     ValorantMatchPlayerWrapper,
 } from '@client/js/valorant/valorant_matches_parsed'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
-import {
-    getBlueTeamColor,
-    getRedTeamColor,
-    getSameTeamColor
-} from '@client/js/valorant/valorant_colors'
-import { Color } from '@client/js/color'
+import { Color, colorFromElementTheme } from '@client/js/color'
 
 import ValorantRankTier from '@client/vue/utility/valorant/ValorantRankTier.vue'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
@@ -94,24 +89,26 @@ export default class ValorantFullMatchScoreboard extends Vue {
         let style : any = {}
 
         if (p._p.puuid == this.currentPlayer?._p.puuid) {
-            style['border-left'] = '5px solid #FFD700'
+            style['border-left'] = '5px solid var(--color-self)'
         }
 
-        let color : Color = { r : 0, g : 0, b : 0 }
+        let color : string
         if (!!this.currentPlayer) {
             if (this.currentPlayer._p.teamId == p._p.teamId) {
-                color = getSameTeamColor()
+                color = 'color-friendly'
             } else {
-                color = getRedTeamColor()
+                color = 'color-enemy'
             }
         } else {
             if (p._p.teamId == 'Blue') {
-                color = getBlueTeamColor()
+                color = 'color-blue-team'
             } else {
-                color = getRedTeamColor()
+                color = 'color-red-team'
             }
         }
-        style['background-color'] = `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`
+
+        let rgb: Color = colorFromElementTheme(this.$parent.$el, color)
+        style['background-color'] = `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
         return style
     } 
 

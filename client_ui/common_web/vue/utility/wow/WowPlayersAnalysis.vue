@@ -28,7 +28,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { WowCharacter } from '@client/js/wow/character'
-import { getGenericWinColor, getGenericLossColor, colorToCssString } from '@client/js/color'
 import WowCharacterFullDisplay from '@client/vue/utility/wow/WowCharacterFullDisplay.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 
@@ -56,7 +55,7 @@ export default class WowPlayersAnalysis extends Vue {
 
     charStyle(char: WowCharacter): any {
         return {
-            'border-right': `2px solid ${colorToCssString(char.team === this.friendlyTeam ? getGenericWinColor() : getGenericLossColor())}`
+            'border-right': `2px solid var(--${char.team === this.friendlyTeam ? 'color-top-place' : 'color-bottom-place'})`
         }
     }
 }

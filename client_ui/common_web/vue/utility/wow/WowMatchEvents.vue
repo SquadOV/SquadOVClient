@@ -249,9 +249,7 @@ import {
 import {
     WowCharacter
 } from '@client/js/wow/character'
-import * as colors from '@client/js/wow/colors'
 import * as wowc from '@client/js/wow/constants'
-import { colorToCssString } from '@client/js/color'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { secondsToTimeString } from '@client/js/time'
 import { applyFilterToCondition } from '@client/js/boolean'
@@ -326,15 +324,15 @@ export default class WowMatchEvents extends Vue {
 
     obtainUserEventHighlightColor(e: WowUserTarget): string {
         if (e.guid == this.currentCharacter) {
-            return colorToCssString(colors.getSelfColor())
+            return 'color-self'
         } else if (this.friendlyGuidSet.has(e.guid)) {
-            return colorToCssString(colors.getSuccessColor())
+            return 'color-friendly'
         }
-        return colorToCssString(colors.getFailureColor())
+        return 'color-enemy'
     }
 
     eventStyling(e : UnifiedWowEventContainer) : any {
-        let borderHighlightColor: string = 'transparent'
+        let borderHighlightColor: string = 'color-transparent'
 
         if (!!e.death) {
             borderHighlightColor = this.obtainUserEventHighlightColor(e.death)
@@ -343,7 +341,7 @@ export default class WowMatchEvents extends Vue {
         }
 
         let style: any = {
-            'border-left': `5px solid ${borderHighlightColor}`
+            'border-left': `5px solid var(--${borderHighlightColor})`
         }
         return style
     }

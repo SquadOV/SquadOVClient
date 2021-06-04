@@ -1,4 +1,4 @@
-import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor } from '@client/js/color'
+import { Color } from '@client/js/color'
 import { LolMatch, getTeamIdFromParticipantId } from '@client/js/lol/matches'
 import { LolMatchEvent } from '@client/js/lol/timeline'
 
@@ -18,7 +18,7 @@ export function getLolRedTeamColor(): Color {
     }
 }
 
-export function computeColorForLolEvent(match: LolMatch, e: LolMatchEvent, currentParticipantId: number | null | undefined) : Color {
+export function computeColorForLolEvent(match: LolMatch, e: LolMatchEvent, currentParticipantId: number | null | undefined) : string {
     let benefitsMyTeam = false
     let isMe = false
 
@@ -54,10 +54,10 @@ export function computeColorForLolEvent(match: LolMatch, e: LolMatchEvent, curre
 
     
     if (!!currentParticipantId) {
-        return isMe ? getGenericFirstPlaceColor() :
-                benefitsMyTeam ? getGenericWinColor() : 
-                    getGenericLossColor()
+        return isMe ? 'color-first-place' :
+                benefitsMyTeam ? 'color-top-place' : 
+                    'color-bottom-place'
     } else {
-        return benefitsMyTeam ? getLolBlueTeamColor() : getLolRedTeamColor()
+        return benefitsMyTeam ? 'color-blue-team' : 'color-red-team'
     }
 }

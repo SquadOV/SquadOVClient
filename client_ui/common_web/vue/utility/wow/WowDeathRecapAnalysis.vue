@@ -51,7 +51,6 @@ import { Prop } from 'vue-property-decorator'
 import { UnifiedWowEventContainer, WowDeath } from '@client/js/wow/events'
 import { WowCharacter } from '@client/js/wow/character'
 import { secondsToTimeString } from '@client/js/time'
-import { getGenericWinColor, getGenericLossColor, colorToCssString } from '@client/js/color'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import WowDeathRecap from '@client/vue/utility/wow/WowDeathRecap.vue'
 
@@ -117,7 +116,7 @@ export default class WowDeathRecapAnalysis extends Vue {
 
     deathTabStyle(d: DeathPacket): any {
         return {
-            'border-right': `2px solid ${colorToCssString(d.char.team === this.friendlyTeam ? getGenericWinColor() : getGenericLossColor())}`
+            'border-right': `2px solid var(--${d.char.team === this.friendlyTeam ? 'color-top-place' : 'color-bottom-place'})`
         }
     }
 }

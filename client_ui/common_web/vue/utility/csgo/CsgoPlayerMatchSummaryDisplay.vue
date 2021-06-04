@@ -72,11 +72,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
-import {
-    getGenericWinColor,
-    getGenericLossColor,
-    colorToCssString
-} from '@client/js/color'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { kda } from '@client/js/valorant/valorant_player_stats'
@@ -126,7 +121,7 @@ export default class CsgoPlayerMatchSummaryDisplay extends Vue {
     }
 
     get winLossColor(): string {
-        return colorToCssString(this.match.winner ? getGenericWinColor() : getGenericLossColor() )
+        return `var(--${this.match.winner ? 'color-top-place': 'color-bottom-place'})` 
     }
 
     get wlColorStyle() : any {

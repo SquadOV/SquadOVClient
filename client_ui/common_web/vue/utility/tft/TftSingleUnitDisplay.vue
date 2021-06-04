@@ -96,15 +96,12 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import { TftUnit, TftUnitData } from '@client/js/tft/units'
 import { TftTraitData } from '@client/js/tft/traits'
 import { TftItemData } from '@client/js/tft/items'
 import { staticClient } from '@client/js/staticData'
 import { ApiData } from '@client/js/api'
-import {
-    colorToCssString,
-} from '@client/js/color'
 import {
     getTftCostColor
 } from '@client/js/tft/colors'
@@ -212,7 +209,7 @@ export default class TftSingleUnitDisplay extends Vue {
     get unitStyle() : any {
         return {
             'border-radius': '5px',
-            'border': `2px solid ${colorToCssString(getTftCostColor(!!this.unitData ? this.unitData.cost : 1))}`
+            'border': `2px solid var(--${getTftCostColor(!!this.unitData ? this.unitData.cost : 1)})`
         }
     }
 }

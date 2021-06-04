@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div ref="root">
         <v-sheet class="full-parent-height" v-if="!!roundData">
             <div class="d-flex align-center pa-4">
                 <csgo-team-icon
@@ -156,7 +156,7 @@ import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper} from '@client/js/csgo/match'
 import { CsgoBombSite, CsgoRoundKill, CsgoTeam, bombSiteToString } from '@client/js/csgo/events'
 import { millisecondsToTimeString } from '@client/js/time'
-import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor, colorToCssString } from '@client/js/color'
+import { ColorA, colorFromElementTheme } from '@client/js/color'
 import CsgoTeamIcon from '@client/vue/utility/csgo/CsgoTeamIcon.vue'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 import CsgoRoundKillDisplay from '@client/vue/utility/csgo/CsgoRoundKillDisplay.vue'
@@ -197,6 +197,10 @@ export default class CsgoEventRoundDisplay extends Vue {
 
     @Prop({required: true})
     currentRound!: number
+
+    $refs!: {
+        root: HTMLElement
+    }
 
     get startTime(): Date {
         return this.roundData?._r.tmRoundPlay || this.match._d.summary.matchStartTime
@@ -317,12 +321,12 @@ export default class CsgoEventRoundDisplay extends Vue {
             }
 
             if (isSelf) {
-                style['border-left'] = '5px solid #FFD700'
+                style['border-left'] = '5px solid var(--color-self)'
             } else {
                 style['border-left'] = '5px solid transparent'
             }
 
-            let gradientColor: Color = isBenefit ? getGenericWinColor() : getGenericLossColor()
+            let gradientColor: ColorA = colorFromElementTheme(this.$parent.$el, isBenefit ? 'color-top-place' : 'color-bottom-place')
             style['background'] = `linear-gradient(90deg, rgba(${gradientColor.r},${gradientColor.g},${gradientColor.b},0.0) 70%, rgba(${gradientColor.r},${gradientColor.g},${gradientColor.b},0.5) 100%)`
         }
 
@@ -333,19 +337,19 @@ export default class CsgoEventRoundDisplay extends Vue {
         if (!this.roundData) {
             return {}
         }
-        let color: Color = getGenericLossColor()
+        let color: string = ''
         let refTeam: CsgoTeam = this.roundData.userTeam(!!this.matchUserId ? this.matchUserId : 0)
         let inputTeam: CsgoTeam = this.roundData.userTeam(userId)
         if (userId === this.matchUserId) {
-            color = getGenericFirstPlaceColor()
+            color = 'color-first-place'
         } else if (refTeam === inputTeam) {
-            color = getGenericWinColor()
+            color = 'color-top-place'
         } else {
-            color = getGenericLossColor()
+            color = 'color-bottom-place'
         }
 
         return {
-            'border': `2px solid ${colorToCssString(color)}`
+            'border': `2px solid var(--${color})`
         }
     }
 }

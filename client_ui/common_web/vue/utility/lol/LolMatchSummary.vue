@@ -128,11 +128,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { LolPlayerMatchSummary, LolMiniParticipantStats, getLolGameMode } from '@client/js/lol/matches'
-import {
-    getGenericWinColor,
-    getGenericLossColor,
-    colorToCssString,
-} from '@client/js/color'
 import * as pi from '@client/js/pages'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
 import { ddragonContainer } from '@client/js/lolDdragon'
@@ -203,7 +198,7 @@ export default class LolMatchSummary extends Vue {
     }
 
     get winLossColor(): string {
-        return colorToCssString((!!this.currentPlayer?.win) ? getGenericWinColor() : getGenericLossColor())
+        return `var(--${!!this.currentPlayer?.win ? 'color-top-place' : 'color-bottom-place'})`
     }
 
     get style() : any {

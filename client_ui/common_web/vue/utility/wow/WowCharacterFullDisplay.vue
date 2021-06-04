@@ -141,7 +141,6 @@ import WowSpellIcon from '@client/vue/utility/wow/WowSpellIcon.vue'
 import WowCovenantDisplay from '@client/vue/utility/wow/WowCovenantDisplay.vue'
 import { staticClient } from '@client/js/staticData'
 import { specIdToColor } from '@client/js/wow/colors'
-import { colorToCssString } from '@client/js/color'
 
 @Component({
     components: {
@@ -208,7 +207,7 @@ export default class WowCharacterFullDisplay extends Vue {
 
     get specTextStyling(): any {
         return {
-            color: colorToCssString(specIdToColor(this.character.specId))
+            color: `var(--${specIdToColor(this.character.specId)})`
         }
     }
 

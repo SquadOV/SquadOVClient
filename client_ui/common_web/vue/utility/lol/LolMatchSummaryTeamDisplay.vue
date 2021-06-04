@@ -130,15 +130,15 @@ export default class LolMatchSummaryTeamDisplay extends Vue {
 }
 
 .same-team-div {
-    border: 2px solid #4CAF50;
+    border: 2px solid var(--color-friendly);
 }
 
 .enemy-team-div {
-    border: 2px solid #FF5252;
+    border: 2px solid var(--color-enemy);
 }
 
 .self-div {
-    border: 2px solid #FFC107;
+    border: 2px solid var(--color-self);
 }
 
 </style>

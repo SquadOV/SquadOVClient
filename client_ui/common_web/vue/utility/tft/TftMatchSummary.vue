@@ -73,12 +73,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { TftPlayerMatchSummary, getTftSetNumber } from '@client/js/tft/matches'
-import {
-    colorToCssString,
-    getGenericFirstPlaceColor,
-    getGenericTopPlaceColor,
-    getGenericBottomPlaceColor
-} from '@client/js/color'
 import * as pi from '@client/js/pages'
 import { getOrdinal } from '@client/js/ordinal'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
@@ -146,14 +140,14 @@ export default class TftMatchSummary extends Vue {
     }
 
     get winLossColor(): string {
-        return colorToCssString((this.match.placement > 4) ? getGenericBottomPlaceColor() :
-            (this.match.placement > 1) ? getGenericTopPlaceColor() :
-            getGenericFirstPlaceColor())
+        return (this.match.placement > 4) ? 'color-bottom-place' :
+            (this.match.placement > 1) ? 'color-top-place' :
+            'color-first-place'
     }
 
     get style() : any {
         return {
-            'border-left': `5px solid ${this.winLossColor}`,
+            'border-left': `5px solid var(--${this.winLossColor})`,
             'background-position': 'right',
             'background-size': 'contain',
         }
@@ -165,7 +159,7 @@ export default class TftMatchSummary extends Vue {
 
     get placementStyle(): any {
         return {
-            'color': this.winLossColor
+            'color': `var(--${this.winLossColor})`
         }
     }
 }

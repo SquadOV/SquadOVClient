@@ -195,11 +195,11 @@ export default class ValorantHeadToHeadDisplay extends Vue {
 }
 
 .kill-highlight {
-    border-left: 3px solid #4CAF50;
+    border-left: 3px solid var(--color-friendly);
 }
 
 .death-highlight {
-    border-left: 3px solid #FF5252;
+    border-left: 3px solid var(--color-enemy);
 }
 
 </style>

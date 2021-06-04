@@ -68,7 +68,7 @@ export default class HearthstoneBattlegroundsTurnTimelineDisplay extends Vue {
     }
 
     roundStyling(rnd : number) : any {
-        let accentColor : Color = getOpposingTeamColor()
+        let accentColor : string = 'color-bottom-place'
         
         // For battlegrounds we highlight based off whether or not we won the attack turn.
         let turn = rnd * 2
@@ -77,14 +77,14 @@ export default class HearthstoneBattlegroundsTurnTimelineDisplay extends Vue {
         if (!!snapshot && !!hero) {
             let ws = snapshot.battlegroundsWinState(hero._entity.entityId)
             if (ws == BattlegroundsRoundWinState.Win) {
-                accentColor = getSameTeamColor()
+                accentColor = 'color-top-place'
             } else if (ws == BattlegroundsRoundWinState.Draw) {
-                accentColor = getNeutralTeamColor()
+                accentColor = 'color-neutral'
             }
         }
 
         return {
-            'border-top': `2px solid rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b})`,
+            'border-top': `2px solid var(--${accentColor})`,
             'width': '100%'
         }
     }

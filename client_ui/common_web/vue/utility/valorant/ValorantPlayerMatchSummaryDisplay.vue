@@ -134,21 +134,21 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     }
 
     get csRankStyle() : any {
-        let color = '#424242'
+        let color = 'color-neutral-place'
         if (this.match.combatScoreRank == 1) {
-            color = '#AF9500'
+            color = 'color-first-place'
         } else if (this.match.combatScoreRank == 2) {
-            color = '#6C7A86'
+            color = 'color-second-place'
         } else if (this.match.combatScoreRank == 3) {
-            color = '#AD8A56'
+            color = 'color-third-place'
         }
         return {
-            'background-color': color
+            'background-color': `var(--${color})`
         }
     }
 
     get winLossColor() : string {
-        let color : string = !!this.match.won ? '#4CAF50' : '#FF5252'
+        let color : string = !!this.match.won ? 'color-top-place' : 'color-bottom-place'
         return color
     }
 
@@ -168,21 +168,25 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         let color = ''
         let queue = getGameMode(this.match.gameMode, this.match.isRanked)
         if (!!this.match.provisioningFlowId && getIsCustom(this.match.provisioningFlowId)) {
-            color = '#343a40'
+            color = 'color-val-custom'
         } else if (this.match.isRanked) {
-            color = '#6c757d'
+            color = 'color-val-ranked'
         } else if (queue == 'Unrated') {
-            color = '#007bff'
+            color = 'color-val-unrated'
         } else if (queue == 'Deathmatch') {
-            color = '#17a2b8'
+            color = 'color-val-deathmatch'
         } else if (queue == 'Spike Rush') {
-            color = '#28a745'
+            color = 'color-val-spikerush'
+        } else if (queue == 'Escalation') {
+            color = 'color-val-escalation'
+        } else if (queue == 'Replication') {
+            color = 'color-val-replication'
         } else {
-            color = '#ff0000'
+            color = 'color-val-unknown'
         }
 
         return {
-            'background-color': color,
+            'background-color': `val(--${color})`,
         }
     }
 
@@ -197,7 +201,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get style() : any {
         let style: any = {
-            'border-left': `5px solid ${this.winLossColor}`,
+            'border-left': `5px solid var(--${this.winLossColor})`,
             'background-position': 'right center',
             'background-size': '55% auto',
         }
@@ -212,7 +216,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     get wlColorStyle() : any {
         return {
-            'color': `${this.winLossColor}`
+            'color': `var(--${this.winLossColor})`
         }
     }
 

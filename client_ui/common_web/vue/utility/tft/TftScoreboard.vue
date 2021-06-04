@@ -52,12 +52,6 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { WrappedTftMatch, TftParticipant } from '@client/js/tft/matches'
 import { getOrdinal } from '@client/js/ordinal'
-import {
-    colorToCssString,
-    getGenericFirstPlaceColor,
-    getGenericTopPlaceColor,
-    getGenericBottomPlaceColor
-} from '@client/js/color'
 import TftFullTraitDisplay from '@client/vue/utility/tft/TftFullTraitDisplay.vue'
 import TftFullUnitDisplay from '@client/vue/utility/tft/TftFullUnitDisplay.vue'
 import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
@@ -80,9 +74,9 @@ export default class TftScoreboard extends Vue {
 
     placementStyle(place: number): any {
         return {
-            'color': colorToCssString((place > 4) ? getGenericBottomPlaceColor() :
-                (place > 1) ? getGenericTopPlaceColor() :
-                getGenericFirstPlaceColor())
+            'color': `var(--${(place > 4) ? 'color-bottom-place' :
+                (place > 1) ? 'color-top-place' :
+                'color-first-place'})`
         }
     }
 

@@ -95,11 +95,11 @@ export default class WowCharacterIcon extends Vue {
 <style scoped>
 
 .friendly-char {
-    border: 2px solid rgb(76, 175, 80) !important;
+    border: 2px solid var(--color-friendly) !important;
 }
 
 .enemy-char {
-    border: 2px solid rgb(255, 82, 82) !important;
+    border: 2px solid var(--color-enemy) !important;
 }
 
 </style>

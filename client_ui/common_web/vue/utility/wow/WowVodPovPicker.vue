@@ -218,7 +218,7 @@ export default class WowVodPovPicker extends Vue {
 }
 
 .selected-char {
-    border: 2px solid #FFD700 !important;
+    border: 2px solid var(--color-self) !important;
 }
 
 .unselected-char {

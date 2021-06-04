@@ -39,10 +39,10 @@ export default class ValorantMatchHeaderSummary extends Vue {
 
     get winLossColor() : string {
         if (!this.currentPlayer) {
-            return '#1E1E1E'
+            return 'color-self'
         } else {
             let won = this.match.getPlayerTeam(this.currentPlayer)
-            return won ?  '#4CAF50' : '#FF5252'
+            return won ?  'color-top-place' : 'color-bottom-place'
         }
     }
 
@@ -69,7 +69,7 @@ export default class ValorantMatchHeaderSummary extends Vue {
 
     get style() : any {
         let ret : any = {
-            'border-left': `5px solid ${this.winLossColor}`,
+            'border-left': `5px solid var(--${this.winLossColor})`,
             'background-position': 'right',
             'background-size': 'contain',
         }

@@ -254,13 +254,11 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import { Prop } from 'vue-property-decorator'
 import { LolMatch, extractSameTeamPlayersFromTeamId } from '@client/js/lol/matches'
 import { LolTeamStats } from '@client/js/lol/team'
-import { LolParticipant, WrappedLolParticipant, LolParticipantIdentity } from '@client/js/lol/participant'
+import { LolParticipant, WrappedLolParticipant } from '@client/js/lol/participant'
 import { formatThousands } from '@client/js/lol/number'
-import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor, colorToCssString } from '@client/js/color'
-import { getLolBlueTeamColor, getLolRedTeamColor } from '@client/js/lol/color'
 import { ddragonContainer } from '@client/js/lolDdragon'
 
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
@@ -356,27 +354,27 @@ export default class LolMatchTeamScoreboard extends Vue {
     }
 
     playerChampionStyle(p: WrappedLolParticipant) : any {
-        let borderColor: Color
+        let borderColor: string
 
         if (!!this.currentParticipantId) {
             if (p.participant.participantId === this.currentParticipantId) {
-                borderColor = getGenericFirstPlaceColor()
+                borderColor = 'color-self'
             } else if (this.sameTeam) {
-                borderColor = getGenericWinColor()
+                borderColor = 'color-friendly'
             } else {
-                borderColor = getGenericLossColor()
+                borderColor = 'color-enemy'
             }
         } else {
             if (this.teamId === 100) {
-                borderColor = getLolBlueTeamColor()
+                borderColor = 'color-blue-team'
             } else {
-                borderColor = getLolRedTeamColor()
+                borderColor = 'color-red-team'
             }
         }
 
         return {
             'border-radius': '4px',
-            'border': `2px solid ${colorToCssString(borderColor)}`,
+            'border': `2px solid var(--${borderColor})`,
         }
     }
 }

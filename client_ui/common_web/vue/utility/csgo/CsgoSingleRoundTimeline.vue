@@ -60,8 +60,6 @@ import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper } from '@client/js/csgo/match'
 import { CsgoRoundPlayerStats } from '@client/js/csgo/events'
 import { CsgoTeam } from '@client/js/csgo/events'
-import { getCsgoCtColor, getCsgoTerroristColor } from '@client/js/csgo/color'
-import { colorToCssString, getGenericWinColor, getGenericLossColor } from '@client/js/color'
 
 @Component
 export default class CsgoSingleRoundTimeline extends Vue {
@@ -128,8 +126,8 @@ export default class CsgoSingleRoundTimeline extends Vue {
         let isWinner = this.matchUserId === null ? false : this.roundData.isUserWinner(this.matchUserId)
 
         return {
-            'background-color': colorToCssString(this.userTeam === CsgoTeam.CT ? getCsgoCtColor() : getCsgoTerroristColor()),
-            'border-top': `2px solid ${colorToCssString(isWinner ? getGenericWinColor() : getGenericLossColor())}`,
+            'background-color': `var(--${this.userTeam === CsgoTeam.CT ? 'color-csgo-ct' : 'color-csgo-t'})`,
+            'border-top': `2px solid var(--${isWinner ? 'color-first-place' : 'color-bottom-place'})`,
             'height': '36px',
             'max-height': '36px',
         }

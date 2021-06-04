@@ -41,7 +41,6 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import * as color from '@client/js/color'
 import { openUrlInBrowser } from '@client/js/external'
 
 //@ts-ignore
@@ -89,19 +88,19 @@ export default class StatusDisplay extends Vue {
     }
 
     get statusStyle(): any {
-        let statusColor: color.Color
+        let statusColor: string
         if (this.activeMaintenance.length > 0) {
-            statusColor = color.getStatusMaintenanceColor()
+            statusColor = 'color-status-maintenance'
         } else if (this.indicator == 'minor') {
-            statusColor = color.getStatusMinorColor()
+            statusColor = 'color-status-minor'
         } else if (this.indicator == 'major') {
-            statusColor = color.getStatusMajorColor()
+            statusColor = 'color-status-major'
         } else if (this.upcomingMaintenance.length > 0) {
-            statusColor = color.getStatusMaintenanceColor()
+            statusColor ='color-status-maintenance'
         } else if (this.indicator == 'none') {
-            statusColor = color.getStatusOkColor()
+            statusColor = 'color-status-ok'
         } else {
-            statusColor = color.getStatusCriticalColor()
+            statusColor = 'color-status-critical'
         }
         
         return {
@@ -110,7 +109,7 @@ export default class StatusDisplay extends Vue {
             border: '2px solid black',
             'border-radius': '50%',
             display: 'inline-block',
-            'background-color': color.colorToCssString(statusColor),
+            'background-color':  `var(--${statusColor})`,
         }
     }
 
@@ -141,13 +140,13 @@ export default class StatusDisplay extends Vue {
     }
 
     maintenanceStyle(i: Incident): any {
-        let statusColor: color.Color
+        let statusColor: string
         if (i.status == 'in_progress' || i.status == 'verifying') {
-            statusColor = color.getStatusCriticalColor()
+            statusColor = 'color-status-critical'
         } else if (i.status == 'scheduled') {
-            statusColor = color.getStatusOkColor()
+            statusColor = 'color-status-ok'
         } else {
-            statusColor = color.getStatusMaintenanceColor()
+            statusColor = 'color-status-maintenance'
         }
 
         return {
@@ -156,7 +155,7 @@ export default class StatusDisplay extends Vue {
             border: '2px solid black',
             'border-radius': '50%',
             display: 'inline-block',
-            'background-color': color.colorToCssString(statusColor),
+            'background-color':  `var(--${statusColor})`,
         }
     }
 
@@ -174,15 +173,15 @@ export default class StatusDisplay extends Vue {
     }
 
     incidentStyle(i: Maintenance): any {
-        let statusColor: color.Color
+        let statusColor: string
         if (i.status == 'resolved' || i.status == 'postmortem') {
-            statusColor = color.getStatusOkColor()
+            statusColor = 'color-status-ok'
         } else if (i.status == 'monitoring') {
-            statusColor = color.getStatusMinorColor()
+            statusColor = 'color-status-minor'
         } else if (i.status == 'identified') {
-            statusColor = color.getStatusMajorColor()
+            statusColor = 'color-status-major'
         } else {
-            statusColor = color.getStatusCriticalColor()
+            statusColor = 'color-status-critical'
         }
 
         return {
@@ -191,7 +190,7 @@ export default class StatusDisplay extends Vue {
             border: '2px solid black',
             'border-radius': '50%',
             display: 'inline-block',
-            'background-color': color.colorToCssString(statusColor),
+            'background-color':  `var(--${statusColor})`,
         }
     }
 
@@ -266,7 +265,7 @@ export default class StatusDisplay extends Vue {
 <style scoped>
 
 .status-window {
-    border: 1px solid red;
+    border: 1px solid var(--color-bottom-place);
     border-radius: 5px;
 }
 

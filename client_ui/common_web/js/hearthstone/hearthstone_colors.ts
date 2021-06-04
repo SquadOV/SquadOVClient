@@ -24,34 +24,18 @@ export function getNeutralTeamColor(): Color {
     }
 }
 
-export function getRarityColor(rarity: HearthstoneCardRarity): Color {
+export function getRarityColor(rarity: HearthstoneCardRarity): string {
     switch (rarity) {
         default:
         case HearthstoneCardRarity.Invalid:
         case HearthstoneCardRarity.Free:
         case HearthstoneCardRarity.Common:
-            return {
-                r: 105,
-                g: 105,
-                b: 105
-            }
+            return 'color-hs-common'
         case HearthstoneCardRarity.Rare:
-            return {
-                r: 56,
-                g: 142,
-                b: 254
-            }
+            return 'color-hs-rare'
         case HearthstoneCardRarity.Epic:
-            return {
-                r: 169,
-                g: 48,
-                b: 205
-            }
+            return 'color-hs-epic'
         case HearthstoneCardRarity.Legendary:
-            return {
-                r: 251,
-                g: 142,
-                b: 4
-            }
+            return 'color-hs-legendary'
     }
 }

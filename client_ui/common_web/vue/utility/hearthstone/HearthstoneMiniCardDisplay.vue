@@ -26,7 +26,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { staticClient } from '@client/js/staticData'
-import { getSameTeamColor, getOpposingTeamColor } from '@client/js/hearthstone/hearthstone_colors'
 import HearthstoneFullCardDisplay from '@client/vue/utility/hearthstone/HearthstoneFullCardDisplay.vue'
 
 @Component({
@@ -74,9 +73,9 @@ export default class HearthstoneMiniCardDisplay extends Vue {
         }
 
         if (this.history) {
-            let histColor = this.isFriendly ? getSameTeamColor() : getOpposingTeamColor()
+            let histColor = this.isFriendly ? 'color-friendly' : 'color-enemy'
             style['border-radius'] = '4px'
-            style['border'] = `4px solid rgb(${histColor.r}, ${histColor.g}, ${histColor.b})`
+            style['border'] = `4px solid var(--${histColor})`
             style['width'] = `${this.maxHeight}px`
         } else {
             style['border-radius'] = '50%'

@@ -50,7 +50,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
 import { SteamAccount } from '@client/js/steam/account'
-import { Color, getGenericLossColor, getGenericWinColor } from '@client/js/color'
+import { ColorA, colorFromElementTheme } from '@client/js/color'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 
 interface TableData {
@@ -161,20 +161,20 @@ export default class CsgoMatchScoreboard extends Vue {
         let style : any = {}
 
         if (this.matchUserId === uid) {
-            style['border-left'] = '5px solid #FFD700'
+            style['border-left'] = '5px solid var(--color-self)'
         }
 
         if (this.matchUserId !== null) {
-            let color : Color = { r : 0, g : 0, b : 0 }
+            let color : ColorA = { r : 0, g : 0, b : 0, a: 0 }
             let lastRound = this.match.rounds[this.match.rounds.length - 1]
             if (!!lastRound) {
                 let refTeam = lastRound.userTeam(this.matchUserId)
                 let testTeam = lastRound.userTeam(uid)
 
                 if (refTeam == testTeam) {
-                    color = getGenericWinColor()
+                    color = colorFromElementTheme(this.$parent.$el, 'color-top-place')
                 } else {
-                    color = getGenericLossColor()
+                    color = colorFromElementTheme(this.$parent.$el, 'color-bottom-place')
                 }
                 style['background-color'] = `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`
             }

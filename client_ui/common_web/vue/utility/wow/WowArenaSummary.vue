@@ -36,11 +36,6 @@ import WowGenericMatchSummary from '@client/vue/utility/wow/WowGenericMatchSumma
 import { Prop } from 'vue-property-decorator'
 import { WowArena, getOppositeWowArenaTeam } from '@client/js/wow/matches'
 import { secondsToTimeString } from '@client/js/time'
-import {
-    getGenericWinColor,
-    getGenericLossColor,
-    colorToCssString
-} from '@client/js/color'
 
 @Component({
     components: {
@@ -71,11 +66,8 @@ export default class WowArenaSummary extends Vue {
     }
 
     get ratingColorStyle() : any {
-        let color = this.arena.success ? 
-            getGenericWinColor() :
-            getGenericLossColor()
         return {
-            'color': colorToCssString(color)
+            'color': `var(--${this.arena.success ? 'color-top-place' : 'color-bottom-place'})`
         }
     }
 

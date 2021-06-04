@@ -105,7 +105,6 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoEventRoundWrapper, CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
 import { CsgoRoundKill, CsgoTeam } from '@client/js/csgo/events'
-import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor, colorToCssString } from '@client/js/color'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 import CsgoWeaponIcon from '@client/vue/utility/csgo/CsgoWeaponIcon.vue'
 
@@ -132,19 +131,19 @@ export default class CsgoRoundKillDisplay extends Vue {
     roundData!: CsgoEventRoundWrapper
 
     userStyling(userId: number): any {
-        let color: Color = getGenericLossColor()
+        let color: string = ''
         let refTeam: CsgoTeam = this.roundData.userTeam(!!this.matchUserId ? this.matchUserId : 0)
         let inputTeam: CsgoTeam = this.roundData.userTeam(userId)
         if (userId === this.matchUserId) {
-            color = getGenericFirstPlaceColor()
+            color = 'color-first-place'
         } else if (refTeam === inputTeam) {
-            color = getGenericWinColor()
+            color = 'color-top-place'
         } else {
-            color = getGenericLossColor()
+            color = 'color-bottom-place'
         }
 
         return {
-            'border': `2px solid ${colorToCssString(color)}`
+            'border': `2px solid var(--${color})`
         }
     }
 }

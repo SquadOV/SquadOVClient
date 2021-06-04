@@ -150,6 +150,7 @@ import { VodAssociation } from '@client/js/squadov/vod'
 import { GenericEvent } from '@client/js/event'
 import { secondsToTimeString } from '@client/js/time'
 import { computeColorForLolEvent } from '@client/js/lol/color'
+import { colorFromElementTheme} from '@client/js/color'
 import { SquadOvGames } from '@client/js/squadov/game'
 
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -325,7 +326,7 @@ export default class LolMatch extends mixins(MatchShareBase) {
                 tm: ele.timestamp / 1000,
                 value: ele,
                 key: ele.type.toLowerCase().replace('_', '-'),
-                color: computeColorForLolEvent(this.currentMatch!.match, ele, this.currentParticipantId)
+                color: colorFromElementTheme(this.$parent.$el, computeColorForLolEvent(this.currentMatch!.match, ele, this.currentParticipantId))
             }
         })
     }

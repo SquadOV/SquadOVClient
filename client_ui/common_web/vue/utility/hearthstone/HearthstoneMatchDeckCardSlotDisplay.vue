@@ -33,7 +33,7 @@
                         </span>
 
                         <span v-else-if="isLegendary">
-                            <v-icon small color="#FFC107">
+                            <v-icon small color="var(--color-hs-legendary)">
                                 mdi-star
                             </v-icon>
                         </span>
@@ -97,7 +97,7 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
     get rarityStyle() : any {
         let color = getRarityColor(this.cardSlot.metadata.rarity)
         return {
-            'background-color': `rgb(${color.r}, ${color.g}, ${color.b})`
+            'background-color': `var(--${color})`
         }
     }
 
@@ -139,7 +139,7 @@ export default class HearthstoneMatchDeckCardSlotDisplay extends Vue {
     border: 1px solid gray;
     font-weight: 700;
     background-color: #343434;
-    color: #FFC107;
+    color: var(--color-hs-legendary);
 }
 
 </style>

@@ -8,6 +8,74 @@ export interface ColorA extends Color {
     a : number
 }
 
+export function colorFromElementTheme(element: Element, key: string): ColorA {
+    let value = getComputedStyle(element).getPropertyValue(`--${key}`).trim()
+    if (value.startsWith('#')) {
+        // Assume the hex is well formed with 6 digits.
+        let match = value.match(/\#([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])/i)
+        if (!match) {
+            console.log('Failed to parse rgba value [hex] from: ', value)
+            return {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0.0
+            }    
+        }
+
+        return {
+            r: parseInt(match[1], 16),
+            g: parseInt(match[2], 16),
+            b: parseInt(match[3], 16),
+            a: 1.0
+        }
+    } else if (value.startsWith('rgb(')) {
+        let match = value.match(/rgb\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?\)/i)
+        if (!match) {
+            console.log('Failed to parse rgba value [rgb] from: ', value)
+            return {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0.0
+            }    
+        }
+
+        return {
+            r: parseInt(match[1]),
+            g: parseInt(match[2]),
+            b: parseInt(match[3]),
+            a: 1.0
+        }
+    } else if (value.startsWith('rgba(')) {
+        let match = value.match(/rgba\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?\)/i)
+        if (!match) {
+            console.log('Failed to parse rgba value [rgba] from: ', value)
+            return {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 0.0
+            }    
+        }
+
+        return {
+            r: parseInt(match[1]),
+            g: parseInt(match[2]),
+            b: parseInt(match[3]),
+            a: parseFloat(match[4])
+        }
+    } else {
+        console.log('Failed to parse rgba value from: ', value)
+        return {
+            r: 0,
+            g: 0,
+            b: 0,
+            a: 0.0
+        }
+    }
+}
+
 export function colorToCssString(c: Color): string {
     return `rgb(${c.r}, ${c.g}, ${c.b})`
 }

@@ -1,0 +1,78 @@
+:root {
+    // General colors
+    --color-friendly: #005AB5;
+    --color-enemy: #DC3220;
+    --color-neutral: rgb(245, 245, 220);
+    --color-self: rgb(255, 215, 0);
+    --color-first-place: #FFC107;
+    --color-second-place: #6C7A86;
+    --color-third-place: #AD8A56;
+    --color-top-place: #005AB5;
+    --color-bottom-place: #DC3220;
+    --color-neutral-place: #424242;
+    --color-blue-team: rgb(25, 118, 210);
+    --color-red-team: rgb(255, 82, 82);
+    --color-transparent: rgba(0, 0, 0, 0.0);
+    // Status
+    --color-status-maintenance: rgb(135, 206, 250);
+    --color-status-ok: rgb(76, 175, 80);
+    --color-status-critical: rgb(255, 82, 82);
+    --color-status-major: rgb(255, 165, 0);
+    --color-status-minor: rgb(255, 193, 7);
+    // CSGO
+    --color-csgo-ct: rgb(93, 121, 174);
+    --color-csgo-t: rgb(222, 155, 53);
+    // Hearthstone
+    --color-hs-common: rgb(105, 105, 105);
+    --color-hs-rare: rgb(56, 142, 254);
+    --color-hs-epic: rgb(169, 48, 205);
+    --color-hs-legendary: rgb(251, 142, 4);
+    // TFT
+    --color-tft-1-cost: rgb(49, 65, 76);
+    --color-tft-2-cost: rgb(18, 118, 57);
+    --color-tft-3-cost: rgb(38, 113, 170);
+    --color-tft-4-cost: rgb(236, 8, 173);
+    --color-tft-5-cost: rgb(219, 119, 8);
+    // World of Warcraft
+    --color-wow-dps: rgb(255, 215, 0);
+    --color-wow-hps: #005AB5;
+    --color-wow-drps: #FF5252;
+    --color-wow-class-mage: rgb(63, 199, 235);
+    --color-wow-class-paladin: rgb(244, 140, 186);
+    --color-wow-class-warrior: rgb(198, 155, 109);
+    --color-wow-class-druid: rgb(255, 124, 10);
+    --color-wow-class-dk: rgb(196, 30, 58);
+    --color-wow-class-hunter: rgb(170, 211, 114);
+    --color-wow-class-priest: rgb(255, 255, 255);
+    --color-wow-class-rogue: rgb(255, 244, 104);
+    --color-wow-class-shaman: rgb(0, 112, 221);
+    --color-wow-class-warlock: rgb(135, 136, 238);
+    --color-wow-class-monk: rgb(0, 255, 152);
+    --color-wow-class-dh: rgb(163, 48, 201);
+    --color-wow-school-none: rgb(255, 255, 255);
+    --color-wow-school-physical: rgb(255, 255, 0);
+    --color-wow-school-holy: rgb(255, 229, 127);
+    --color-wow-school-fire: rgb(255, 127, 0);
+    --color-wow-school-nature: rgb(76, 255, 76);
+    --color-wow-school-frost: rgb(127, 255, 255);
+    --color-wow-school-shadow: rgb(127, 127, 255);
+    --color-wow-school-arcane: rgb(255, 127, 255);
+    --color-wow-quality-poor: rgb(157, 157, 157);
+    --color-wow-quality-uncommon: rgb(30, 255, 0);
+    --color-wow-quality-rare: rgb(0, 112, 221);
+    --color-wow-quality-epic: rgb(163, 53, 238);
+    --color-wow-quality-legendary: rgb(255, 128, 0);
+    --color-wow-quality-artifact: rgb(230, 204, 128);
+    --color-wow-quality-heirloom: rgb(230, 204, 128);
+    --color-wow-quality-token: rgb(0, 204, 255);
+    --color-wow-quality-common: rgb(255, 255, 255);
+    // Valorant
+    --color-val-custom: #343a40;
+    --color-val-ranked: #6c757d;
+    --color-val-unrated: #007bff;
+    --color-val-deathmatch: #17a2b8;
+    --color-val-spikerush: #28a745;
+    --color-val-escalation: #FF00AA;
+    --color-val-replication: #6B238F;
+    --color-val-unknown: #FF0000;
+}

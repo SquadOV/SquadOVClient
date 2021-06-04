@@ -187,7 +187,7 @@ import {
 } from '@client/js/wow/character'
 import * as wowc from '@client/js/wow/constants'
 import * as colors from '@client/js/wow/colors'
-import { colorToCssString } from '@client/js/color'
+import { colorToCssString, colorFromElementTheme } from '@client/js/color'
 import { StatXYSeriesData, LineStyle } from '@client/js/stats/seriesData'
 import { apiClient, ApiData } from '@client/js/api'
 import {
@@ -386,7 +386,7 @@ export default class WowTimeline extends Vue {
             let classId = specIdToClassId(c.specId)
             let dupSpecCount = specIdCount.has(classId) ? specIdCount.get(classId)! : 0
             let style = {
-                color: colorToCssString(colors.specIdToColor(c.specId)),
+                color: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(c.specId))),
             }
             guidToSymbol.set(c.guid, validSymbols[dupSpecCount % validSymbols.length])
             specIdCount.set(classId, dupSpecCount + 1)
@@ -395,13 +395,13 @@ export default class WowTimeline extends Vue {
 
         let endpointToLineStyle: Map<string, LineStyle> = new Map()
         endpointToLineStyle.set(DPS_ENDPOINT, {
-            color: colorToCssString(colors.getDpsColor())
+            color: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-wow-dps'))
         })
         endpointToLineStyle.set(HPS_ENDPOINT, {
-            color: colorToCssString(colors.getHpsColor())
+            color: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-wow-hps'))
         })
         endpointToLineStyle.set(DRPS_ENDPOINT, {
-            color: colorToCssString(colors.getDrpsColor())
+            color: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-wow-drps'))
         })
 
         let endpointToSymbol: Map<string, string> = new Map()
@@ -433,7 +433,7 @@ export default class WowTimeline extends Vue {
                     x: this.convertTmToX(this.currentTime),
                     name: '',
                     symbol: 'none',
-                    colorOverride: colorToCssString(colors.getSelfColor()),
+                    colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-self')),
                 })
             }
         }
@@ -450,7 +450,7 @@ export default class WowTimeline extends Vue {
                             x: this.convertTmToX(e.tm),
                             name: `${playerName} - Death`,
                             symbol: `image://assets/wow/stats/skull.png`,
-                            colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                            colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(this.guidToSpecId.get(guid)!))),
                         })
                     } else if (!!e.resurrect && (!filterGuid || e.resurrect.guid == filterGuid)) {
                         let guid = e.resurrect.guid
@@ -461,7 +461,7 @@ export default class WowTimeline extends Vue {
                             x: this.convertTmToX(e.tm),
                             name: `${playerName} - Resurrect`,
                             symbol: `image://assets/wow/stats/res.png`,
-                            colorOverride: colorToCssString(colors.specIdToColor(this.guidToSpecId.get(guid)!)),
+                            colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(this.guidToSpecId.get(guid)!))),
                         })
                     }
                 }
@@ -518,7 +518,7 @@ export default class WowTimeline extends Vue {
                     if (e.spellId in this.spellIdNames) {
                         let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
                         section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
-                        section.setColor(colorToCssString(colors.spellSchoolToColor(e.spellSchool)))
+                        section.setColor(colorToCssString(colorFromElementTheme(this.$parent.$el, colors.spellSchoolToColor(e.spellSchool))))
                         track.addSection(section)
                     }
                 }
@@ -546,10 +546,10 @@ export default class WowTimeline extends Vue {
                         section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
 
                         if (isWowAuraBuff(e.auraType)) {
-                            section.setColor(colorToCssString(colors.getSuccessColor()))
+                            section.setColor(colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-top-place')))
                             section.setPreferredLayer(0)
                         } else {
-                            section.setColor(colorToCssString(colors.getFailureColor()))
+                            section.setColor(colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-bottom-place')))
                             section.setPreferredLayer(1)
                         }
 
@@ -621,11 +621,11 @@ export default class WowTimeline extends Vue {
                         data.setSymbol(endpointToSymbol.get(e))
                         if (friendly) {
                             data.setStyle({
-                                color: colorToCssString(colors.getSuccessColor())
+                                color: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-top-place'))
                             })
                         } else {
                             data.setStyle({
-                                color: colorToCssString(colors.getFailureColor())
+                                color: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-bottom-place'))
                             })
                         }
                     }
@@ -686,7 +686,12 @@ export default class WowTimeline extends Vue {
                     )
                     data.setGroup(group)
                     data.setGroupStyle(
-                        colorToCssString(this.guidToTeam.get(guid) === this.friendlyTeam ? colors.getSuccessColor() : colors.getFailureColor()),
+                        colorToCssString(
+                            colorFromElementTheme(
+                                this.$parent.$el,
+                                this.guidToTeam.get(guid) === this.friendlyTeam ? 'color-friendly' : 'color-enemy'
+                            )
+                        ),
                         staticClient.getWowSpecsIconUrl(this.patch, this.guidToSpecId.get(guid)!)
                     )
                     data.setSymbol(guidToSymbol.get(guid))

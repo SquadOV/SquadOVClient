@@ -52,86 +52,38 @@ import {
     DH_CLASS_ID
 } from '@client/js/wow/character'
 
-export function classIdToColor(cls: number): Color {
+export function classIdToColor(cls: number): string {
     switch (cls) {
         case WARRIOR_CLASS_ID:
-            return {
-                r: 198,
-                g: 155,
-                b: 109
-            }
+            return 'color-wow-class-warrior'
         case PALLY_CLASS_ID:
-            return {
-                r: 244,
-                g: 140,
-                b: 186
-            }
+            return 'color-wow-class-paladin'
         case HUNTER_CLASS_ID:
-            return {
-                r: 170,
-                g: 211,
-                b: 114
-            }
+            return 'color-wow-class-hunter'
         case ROGUE_CLASS_ID:
-            return {
-                r: 255,
-                g: 244,
-                b: 104
-            }
+            return 'color-wow-class-rogue'
         case PRIEST_CLASS_ID:
-            return {
-                r: 255,
-                g: 255,
-                b: 255
-            }
+            return 'color-wow-class-priest'
         case DK_CLASS_ID:
-            return {
-                r: 196,
-                g: 30,
-                b: 58
-            }
+            return 'color-wow-class-dk'
         case SHAMAN_CLASS_ID:
-            return {
-                r: 0,
-                g: 112,
-                b: 221
-            }
+            return 'color-wow-class-shaman'
         case MAGE_CLASS_ID:
-            return {
-                r: 63,
-                g: 199,
-                b: 235
-            }
+            return 'color-wow-class-mage'
         case WARLOCK_CLASS_ID:
-            return {
-                r: 135,
-                g: 136,
-                b: 238
-            }
+            return 'color-wow-class-warlock'
         case MONK_CLASS_ID:
-            return {
-                r: 0,
-                g: 255,
-                b: 152
-            }
+            return 'color-wow-class-monk'
         case DRUID_CLASS_ID:
-            return {
-                r: 255,
-                g: 124,
-                b: 10
-            }
+            return 'color-wow-class-druid'
         case DH_CLASS_ID:
-            return {
-                r: 163,
-                g: 48,
-                b: 201
-            }
+            return 'color-wow-class-dh'
         default:
-            return getSelfColor()
+            return 'color-self'
     }
 }
 
-export function specIdToColor(specId: number): Color {
+export function specIdToColor(specId: number): string {
     const classId = specIdToClassId(specId)
     return classIdToColor(classId)
 }
@@ -145,57 +97,25 @@ const WOW_SCHOOL_FROST = 0x10
 const WOW_SCHOOL_SHADOW = 0x20
 const WOW_SCHOOL_ARCANE = 0x40
 
-export function spellSchoolToColor(school: number): Color {
+export function spellSchoolToColor(school: number): string {
     switch (school) {
         case WOW_SCHOOL_PHYSICAL:
-            return {
-                r: 255,
-                g: 255,
-                b: 0
-            }
+            return 'color-wow-school-physical'
         case WOW_SCHOOL_HOLY:
-            return {
-                r: 255,
-                g: 229,
-                b: 127
-            }
+            return 'color-wow-school-holy'
         case WOW_SCHOOL_FIRE:
-            return {
-                r: 255,
-                g: 127,
-                b: 0
-            }
+            return 'color-wow-school-fire'
         case WOW_SCHOOL_NATURE:
-            return {
-                r: 76,
-                g: 255,
-                b: 76
-            }
+            return 'color-wow-school-nature'
         case WOW_SCHOOL_FROST:
-            return {
-                r: 127,
-                g: 255,
-                b: 255,
-            }
+            return 'color-wow-school-frost'
         case WOW_SCHOOL_SHADOW:
-            return {
-                r: 127,
-                g: 127,
-                b: 255,
-            }
+            return 'color-wow-school-shadow'
         case WOW_SCHOOL_ARCANE:
-            return {
-                r: 255,
-                g: 127,
-                b: 255,
-            }
+            return 'color-wow-school-arcane'
         case WOW_SCHOOL_NONE:
         default:
-            return {
-                r: 255,
-                g: 255,
-                b: 255
-            }
+            return 'color-wow-school-none'
     }
 }
 
@@ -209,57 +129,26 @@ const WOW_QUALITY_ARTIFCAT = 6
 const WOW_QUALITY_HEIRLOOM = 7
 const WOW_QUALITY_TOKEN = 8
 
-export function wowItemQualityToColor(quality: number): Color {
+export function wowItemQualityToColor(quality: number): string {
     switch (quality) {
         case WOW_QUALITY_POOR:
-            return {
-                r: 157,
-                g: 157,
-                b: 157,
-            }
+            return 'color-wow-quality-poor'
         case WOW_QUALITY_UNCOMMON:
-            return {
-                r: 30,
-                g: 255,
-                b: 0,
-            }
+            return 'color-wow-quality-uncommon'
         case WOW_QUALITY_RARE:
-            return {
-                r: 0,
-                g: 112,
-                b: 221,
-            }
+            return 'color-wow-quality-rare'
         case WOW_QUALITY_EPIC:
-            return {
-                r: 163,
-                g: 53,
-                b: 238,
-            }
+            return 'color-wow-quality-epic'
         case WOW_QUALITY_LEGENDARY:
-            return {
-                r: 255,
-                g: 128,
-                b: 0,
-            }
+            return 'color-wow-quality-legendary'
         case WOW_QUALITY_ARTIFCAT:
+            return 'color-wow-quality-artifact'
         case WOW_QUALITY_HEIRLOOM:
-            return {
-                r: 230,
-                g: 204,
-                b: 128,
-            }
+            return 'color-wow-quality-heirloom'
         case WOW_QUALITY_TOKEN:
-            return {
-                r: 0,
-                g: 204,
-                b: 255,
-            }
+            return 'color-wow-quality-token'
         case WOW_QUALITY_COMMON:
         default:
-            return {
-                r: 255,
-                g: 255,
-                b: 255,
-            }
+            return 'color-wow-quality-common'
     }
 }

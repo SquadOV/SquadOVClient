@@ -284,7 +284,7 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     }
 
     computeWLColor(w: boolean) : string {
-        return w ? '#4CAF50' : '#FF5252'
+        return w ? 'color-top-place' : 'color-bottom-place'
     }
 
     get winLossColor() : string {
@@ -298,19 +298,19 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
 
     get currentPlayerHpStyle() : any {
         return {
-            'color': this.winLossColor
+            'color': `var(--${this.winLossColor})`
         }
     }
 
     get opposingPlayerHpStyle() : any {
         return {
-            'color': this.opposingPlayerHpColor
+            'color': `var(--${this.opposingPlayerHpColor})`
         }
     }
 
     get divStyle() : any {
         return {
-            'border-left': `5px solid ${this.winLossColor}`,
+            'border-left': `5px solid var(--${this.winLossColor})`,
         }
     }
 

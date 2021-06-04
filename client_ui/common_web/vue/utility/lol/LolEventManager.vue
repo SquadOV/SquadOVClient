@@ -141,7 +141,6 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { LolMatch, getTeamIdFromParticipantId } from '@client/js/lol/matches'
 import { LolMatchTimeline, LolMatchEvent, LolMatchFrame } from '@client/js/lol/timeline'
 import { formatRoundTime } from '@client/js/valorant/valorant_utility'
-import { Color, colorToCssString } from '@client/js/color'
 import { computeColorForLolEvent } from '@client/js/lol/color'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
 
@@ -183,9 +182,9 @@ export default class LolEventManager extends Vue {
     }
 
     eventStyling(e : LolMatchEvent) : any {
-        let borderHighlightColor: Color = computeColorForLolEvent(this.match, e, this.currentParticipantId)
+        let borderHighlightColor: string = computeColorForLolEvent(this.match, e, this.currentParticipantId)
         let style: any = {
-            'border-left': `5px solid ${colorToCssString(borderHighlightColor)}`
+            'border-left': `5px solid var(--${borderHighlightColor})`
         }
         return style
     }

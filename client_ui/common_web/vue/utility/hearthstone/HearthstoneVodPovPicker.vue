@@ -188,15 +188,15 @@ export default class HearthstoneVodPovPicker extends Vue {
 }
 
 .friendly-hero {
-    border: 2px solid rgb(76, 175, 80) !important;
+    border: 2px solid var(--color-friendly) !important;
 }
 
 .enemy-hero {
-    border: 2px solid rgb(255, 82, 82) !important;
+    border: 2px solid var(--color-enemy) !important;
 }
 
 .selected-hero {
-    border: 2px solid #FFD700 !important;
+    border: 2px solid var(--color-self) !important;
 }
 
 .selection-div {

@@ -159,7 +159,7 @@ import { wowCache } from '@client/js/wow/staticCache'
 import { staticClient } from '@client/js/staticData'
 import * as wowc from '@client/js/wow/constants'
 import * as colors from '@client/js/wow/colors'
-import { colorToCssString, colorAToCssString } from '@client/js/color'
+import { colorToCssString, colorAToCssString, colorFromElementTheme } from '@client/js/color'
 import TimePeriodGraph from '@client/vue/stats/TimePeriodGraph.vue'
 import {
     dateRangeIntersects,
@@ -287,8 +287,8 @@ export default class WowSpellAnalysis extends Vue {
                             let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
                             section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
                             section.setColor(colorAToCssString({
+                                ...colorFromElementTheme(this.$parent.$el, colors.spellSchoolToColor(e.spellSchool)),
                                 a: e.success ? 255 : 127,
-                                ...colors.spellSchoolToColor(e.spellSchool)
                             }))
                             section.setIconOpacity(e.success ? 1 : 0.2)
                             if (e.success) {
@@ -332,10 +332,10 @@ export default class WowSpellAnalysis extends Vue {
                             let section = new StatTimePeriodSection(this.spellIdNames[e.spellId], start, end)
                             section.setIcon(staticClient.getWowSpellIconUrl(this.patch, e.spellId))
                             if (isWowAuraBuff(e.auraType)) {
-                                section.setColor(colorToCssString(colors.getSuccessColor()))
+                                section.setColor(colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-top-place')))
                                 section.setPreferredLayer(0)
                             } else {
-                                section.setColor(colorToCssString(colors.getFailureColor()))
+                                section.setColor(colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-bottom-place')))
                                 section.setPreferredLayer(1)
                             }
                             track.addSection(section)
@@ -350,7 +350,12 @@ export default class WowSpellAnalysis extends Vue {
 
                 d.setGroup(c.name)
                 d.setGroupStyle(
-                    colorToCssString(c.team === this.friendlyTeam ? colors.getSuccessColor() : colors.getFailureColor()),
+                    colorToCssString(
+                        colorFromElementTheme(
+                            this.$parent.$el,
+                            c.team === this.friendlyTeam ? 'color-top-place' : 'color-bottom-place'
+                        )
+                    )
                     staticClient.getWowSpecsIconUrl(this.patch, c.specId)
                 )
 
@@ -359,7 +364,7 @@ export default class WowSpellAnalysis extends Vue {
                         x: this.convertTmToX(this.currentTime),
                         name: '',
                         symbol: 'none',
-                        colorOverride: colorToCssString(colors.getSelfColor()),
+                        colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-self')),
                     })
                 }
 
@@ -370,14 +375,14 @@ export default class WowSpellAnalysis extends Vue {
                                 x: this.convertTmToX(e.tm),
                                 name: `Death`,
                                 symbol: `image://assets/wow/stats/skull.png`,
-                                colorOverride: colorToCssString(colors.specIdToColor(c.specId)),
+                                colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(c.specId))),
                             })
                         } else if (!!e.resurrect && e.resurrect.guid == c.guid) {
                             d.addXMarkLine({
                                 x: this.convertTmToX(e.tm),
                                 name: `Resurrect`,
                                 symbol: `image://assets/wow/stats/res.png`,
-                                colorOverride: colorToCssString(colors.specIdToColor(c.specId)),
+                                colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(c.specId))),
                             })
                         }
                     }

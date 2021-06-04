@@ -84,10 +84,6 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { WowCommonMatch } from '@client/js/wow/matches'
-import {
-    getSuccessColor,
-    getFailureColor
-} from '@client/js/wow/colors'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { staticClient } from '@client/js/staticData'
@@ -167,9 +163,9 @@ export default class WowGenericMatchSummary extends Vue {
     }
 
     get style() : any {
-        let wlColor = this.match.success ? getSuccessColor() : getFailureColor()
+        let wlColor = this.match.success ? 'color-top-place' : 'color-bottom-place'
         let style: any = {
-            'border-left': `5px solid rgb(${wlColor.r}, ${wlColor.g}, ${wlColor.b})`,
+            'border-left': `5px solid var(--${wlColor})`,
             'background-position': 'right',
             'background-size': this.mini ? 'auto 150%' : '50% auto',
         }

@@ -138,12 +138,7 @@ import {
     ValorantMatchPlayerWrapper,
     ValorantMatchKillWrapper
 } from '@client/js/valorant/valorant_matches_parsed'
-import {
-    getBlueTeamColor,
-    getRedTeamColor,
-    getSameTeamColor
-} from '@client/js/valorant/valorant_colors'
-import { Color } from '@client/js/color'
+import { Color, colorFromElementTheme } from '@client/js/color'
 import { formatRoundTime } from '@client/js/valorant/valorant_utility'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantWeaponAbilityIcon from '@client/vue/utility/valorant/ValorantWeaponAbilityIcon.vue'
@@ -211,31 +206,33 @@ export default class ValorantRoundEvents extends Vue {
         }
         let altPlayer = this.altEventPlayer(e)
 
-        let color : Color = { r : 0, g : 0, b : 0}
+        let color : string
         let isSelf = false
         if (!!this.currentPlayer) {
             if (eventPlayer._p.teamId == this.currentPlayer._p.teamId) {
-                color = getSameTeamColor()
+                color = 'color-friendly'
             } else {
-                color = getRedTeamColor()
+                color = 'color-enemy'
             }
             isSelf = (eventPlayer._p.puuid == this.currentPlayer._p.puuid) ||
                 (altPlayer?._p.puuid == this.currentPlayer._p.puuid)
         } else {
             if (eventPlayer._p.teamId == 'Blue') {
-                color = getBlueTeamColor()
+                color = 'color-blue-team'
             } else if (eventPlayer._p.teamId == 'Red') {
-                color = getRedTeamColor()
+                color = 'color-red-team'
+            } else {
+                color = 'color-neutral'
             }
         }
 
-        
+        let rgb: Color = colorFromElementTheme(this.$parent.$el, color)
         let style : any = {
-            'background': `linear-gradient(90deg, rgba(${color.r},${color.g},${color.b},0.0) 70%, rgba(${color.r},${color.g},${color.b},0.5) 100%)`
+            'background': `linear-gradient(90deg, rgba(${rgb.r},${rgb.g},${rgb.b},0.0) 70%, rgba(${rgb.r},${rgb.g},${rgb.b},0.5) 100%)`
         }
 
         if (isSelf) {
-            style['border-left'] = '5px solid #FFD700'
+            style['border-left'] = '5px solid var(--color-self)'
         }
 
         return style

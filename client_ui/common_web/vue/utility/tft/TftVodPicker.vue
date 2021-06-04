@@ -220,7 +220,7 @@ export default class TftVodPicker extends Vue {
 }
 
 .selected-pov {
-    border: 2px solid #FFD700 !important;
+    border: 2px solid var(--color-self) !important;
 }
 
 .selection-div {

@@ -103,6 +103,7 @@ export default class TitleBar extends Vue {
     height: 32px;
     width: 100%;
     padding: 4px;
+    border-bottom: 1px solid #606060;
 }
 
 </style>

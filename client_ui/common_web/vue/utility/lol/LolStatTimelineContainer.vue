@@ -216,7 +216,7 @@ import { LolTeamStats, lolTeamIdToString, getOpposingLolTeam } from '@client/js/
 import { WrappedLolParticipant } from '@client/js/lol/participant'
 import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import { ddragonContainer } from '@client/js/lolDdragon'
-import { colorToCssString, getGenericFirstPlaceColor } from '@client/js/color'
+import { colorToCssString, colorFromElementTheme } from '@client/js/color'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 
@@ -419,7 +419,7 @@ export default class LolStatTimelineContainer extends Vue {
                     x: this.currentTime,
                     name: '',
                     symbol: 'none',
-                    colorOverride: colorToCssString(getGenericFirstPlaceColor()),
+                    colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, 'color-self')),
                 })
 
                 return data

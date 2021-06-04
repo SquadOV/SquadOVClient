@@ -104,9 +104,6 @@ import {
 } from '@client/js/lol/matches'
 import {
     WrappedLolParticipant,
-    ELolDisplayStat,
-    allLolDisplayStats,
-    lolDisplayStatToCategory,
     lolDisplayStatToName,
     extractLolDisplayStatFromParticipant,
     allLolStatCategories,
@@ -116,7 +113,6 @@ import {
 } from '@client/js/lol/participant'
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
 import { ddragonContainer } from '@client/js/lolDdragon'
-import { Color, getGenericWinColor, getGenericLossColor, getGenericFirstPlaceColor, colorToCssString } from '@client/js/color'
 import { getLolBlueTeamColor, getLolRedTeamColor } from '@client/js/lol/color'
 import LolAdvancedStatDisplay from '@client/vue/utility/lol/LolAdvancedStatDisplay.vue'
 
@@ -164,29 +160,29 @@ export default class LolMatchAdvancedStats extends Vue {
     }
 
     playerChampionStyle(p: WrappedLolParticipant) : any {
-        let borderColor: Color
+        let borderColor: string
         let playerTeam = getTeamIdFromParticipantId(this.match, p.participant.participantId)
 
         if (!!this.currentParticipantId) {
             let currentTeam = getTeamIdFromParticipantId(this.match, this.currentParticipantId)
             if (p.participant.participantId === this.currentParticipantId) {
-                borderColor = getGenericFirstPlaceColor()
+                borderColor = 'color-self'
             } else if (currentTeam === playerTeam) {
-                borderColor = getGenericWinColor()
+                borderColor = 'color-friendly'
             } else {
-                borderColor = getGenericLossColor()
+                borderColor = 'color-enemy'
             }
         } else {
             if (playerTeam === 100) {
-                borderColor = getLolBlueTeamColor()
+                borderColor = 'color-blue-team'
             } else {
-                borderColor = getLolRedTeamColor()
+                borderColor = 'color-red-team'
             }
         }
 
         return {
             'border-radius': '4px',
-            'border': `2px solid ${colorToCssString(borderColor)}`,
+            'border': `2px solid var(--${borderColor})`,
         }
     }
 

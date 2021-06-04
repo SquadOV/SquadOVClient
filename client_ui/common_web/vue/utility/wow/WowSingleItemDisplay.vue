@@ -36,7 +36,6 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { WowItem } from '@client/js/wow/character'
 import { staticClient } from '@client/js/staticData'
 import { wowItemQualityToColor } from '@client/js/wow/colors'
-import { colorToCssString } from '@client/js/color'
 import { wowCache, WowItemStatic } from '@client/js/wow/staticCache'
 
 @Component
@@ -79,7 +78,7 @@ export default class WowSingleItemDisplay extends Vue {
         }
 
         return {
-            border: `2px solid ${colorToCssString(wowItemQualityToColor(item.quality))}`
+            border: `2px solid var(--${wowItemQualityToColor(item.quality)})`
         }
     }
 
@@ -89,7 +88,7 @@ export default class WowSingleItemDisplay extends Vue {
         }
 
         return {
-            color: `${colorToCssString(wowItemQualityToColor(item.quality))}`
+            color: `var(--${wowItemQualityToColor(item.quality)})`
         }
     }
 }

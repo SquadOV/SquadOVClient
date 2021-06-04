@@ -26,11 +26,6 @@ import {
     ValorantMatchDetailsWrapper,
     ValorantMatchPlayerWrapper
 } from '@client/js/valorant/valorant_matches_parsed'
-import {
-    getBlueTeamColor,
-    getRedTeamColor,
-    getSameTeamColor
-} from '@client/js/valorant/valorant_colors'
 import { Color } from '@client/js/color'
 
 @Component
@@ -103,23 +98,25 @@ export default class ValorantRoundTimeline extends Vue {
         }
 
         let winner = round._r.winningTeam
-        let accentColor : Color = { r : 0, g : 0, b : 0}
+        let accentColor : string
         if (!!this.currentPlayer) {
             if (winner == this.currentPlayer._p.teamId) {
-                accentColor = getSameTeamColor()
+                accentColor = 'color-friendly'
             } else {
-                accentColor = getRedTeamColor()
+                accentColor = 'color-enemy'
             }
         } else {
             if (winner == 'Blue') {
-                accentColor = getBlueTeamColor()
+                accentColor = 'color-blue-team'
             } else if (winner == 'Red') {
-                accentColor = getRedTeamColor()
+                accentColor = 'color-red-team'
+            } else {
+                accentColor = 'color-neutral'
             }
         }
 
         let ret: any = {
-            'border-top': `2px solid rgb(${accentColor.r}, ${accentColor.g}, ${accentColor.b})`
+            'border-top': `2px solid var(--${accentColor})`
         }
         return ret
     }

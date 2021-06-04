@@ -73,7 +73,7 @@ import {
     getRedTeamColor,
     getSameTeamColor
 } from '@client/js/valorant/valorant_colors'
-import { Color } from '@client/js/color'
+import { Color, colorFromElementTheme } from '@client/js/color'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
@@ -189,23 +189,24 @@ export default class ValorantTeamRoundDisplay extends Vue {
     }
 
     get headerDivStyle() : any {
-        let color : Color = { r : 0, g : 0, b : 0}
+        let color : string
         if (!!this.currentPlayer) {
             if (this.currentPlayer._p.teamId == this.team._t.teamId) {
-                color = getSameTeamColor()
+                color = 'color-friendly'
             } else {
-                color = getRedTeamColor()
+                color = 'color-enemy'
             }
         } else {
             if (this.team._t.teamId == 'Blue') {
-                color = getBlueTeamColor()
+                color = 'color-blue-team'
             } else {
-                color = getRedTeamColor()
+                color = 'color-red-team'
             }
         }
 
+        let rgb = colorFromElementTheme(this.$parent.$el, color)
         return {
-            'background-color': `rgba(${color.r}, ${color.g}, ${color.b}, 0.5)`
+            'background-color': `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`
         }
     }
 }

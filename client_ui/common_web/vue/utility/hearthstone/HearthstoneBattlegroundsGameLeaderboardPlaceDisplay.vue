@@ -37,9 +37,9 @@ export default class HearthstoneBattlegroundsGameLeaderboardPlaceDisplay extends
 
     get textStyle(): any {
         return {
-            'color': (this.place > 4) ? '#FF5252' :
-                (this.place > 1) ? '#4CAF50' :
-                '#FFC107'
+            'color': `var(--${(this.place > 4) ? 'color-bottom-place' :
+                (this.place > 1) ? 'color-top-place' :
+                'color-first-place'})`
         }
     }
 }
