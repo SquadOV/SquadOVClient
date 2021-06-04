@@ -99,6 +99,38 @@
 
             <v-select
                 v-if="forArenas"
+                label="Brackets"
+                v-model="internalValue.brackets"
+                @input="syncToValue"
+                :items="bracketItems"
+                :loading="bracketItems === null"
+                deletable-chips
+                chips
+                multiple
+                clearable
+                outlined
+                hide-details
+                dense
+                style="max-width: 500px;"
+            >
+                <template v-slot:item="{ item }">
+                    <div class="d-flex full-width align-center">
+                        <v-checkbox
+                            class="selection-checkbox"
+                            dense
+                            hide-details
+                            :input-value="internalValue.brackets.includes(item.value)"
+                            readonly
+                        >
+                        </v-checkbox>
+
+                        {{ item.text }}
+                    </div>
+                </template>
+            </v-select>
+
+            <v-select
+                v-if="forArenas"
                 label="Arenas"
                 v-model="internalValue.arenas"
                 @input="syncToValue"
@@ -182,6 +214,23 @@ export default class WowFilterUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+    }
+
+    get bracketItems(): any[] {
+        return [
+            {
+                text: '2v2',
+                value: '2v2',
+            },
+            {
+                text: '3v3',
+                value: '3v3',
+            },
+            {
+                text: 'Skirmish',
+                value: 'Skirmish',
+            }
+        ]
     }
 
     mounted() {

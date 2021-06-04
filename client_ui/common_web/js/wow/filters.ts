@@ -4,6 +4,7 @@ export interface WowMatchFilters {
     raids: number[]
     dungeons: number[]
     arenas: number[]
+    brackets: string[]
 }
 
 export function createEmptyWowMatchFilters(): WowMatchFilters {
@@ -13,5 +14,6 @@ export function createEmptyWowMatchFilters(): WowMatchFilters {
         raids: [],
         dungeons: [],
         arenas: [],
+        brackets: [],
     }
 }
