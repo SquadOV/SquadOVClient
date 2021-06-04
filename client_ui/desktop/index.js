@@ -843,5 +843,8 @@ ipcMain.on('maximize', (event) => {
 
 ipcMain.on('closeWindow', (event) => {
     let window = BrowserWindow.fromWebContents(event.sender)
+    if (event.sender.isDevToolsOpened()) {
+        event.sender.closeDevTools()
+    }
     window.close()
 })
