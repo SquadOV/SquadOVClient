@@ -24,8 +24,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation, CsgoMatchAccessibleVods } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -35,6 +34,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 import { SteamAccount } from '@client/js/steam/account'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -42,7 +42,7 @@ import { SteamAccount } from '@client/js/steam/account'
         SteamAccountDisplay,
     }
 })
-export default class CsgoVodPicker extends Vue {
+export default class CsgoVodPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     matchUuid!: string
 
@@ -142,7 +142,12 @@ export default class CsgoVodPicker extends Vue {
     }
 
     @Watch('matchUuid')
+    @Watch('isActive')
     refreshData() {
+        if (!this.isActive) {
+            return
+        }
+
         this.availableVods = null
         apiClient.getCsgoMatchAccessibleVods(this.matchUuid).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
             this.availableVods = resp.data

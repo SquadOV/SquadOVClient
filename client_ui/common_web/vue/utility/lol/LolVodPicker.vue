@@ -26,8 +26,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -43,6 +42,7 @@ import { WrappedLolParticipant } from '@client/js/lol/participant'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -50,7 +50,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
         GenericVodPicker,
     }
 })
-export default class LolVodPicker extends Vue {
+export default class LolVodPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     matchUuid!: string
 
@@ -86,7 +86,11 @@ export default class LolVodPicker extends Vue {
     }
 
     @Watch('matchUuid')
+    @Watch('isActive')
     refreshData() {
+        if (!this.isActive) {
+            return
+        }
         this.availableVods = null
         apiClient.getLolMatchAccessibleVods(this.matchUuid).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             this.availableVods = resp.data

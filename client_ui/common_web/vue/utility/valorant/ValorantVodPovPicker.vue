@@ -24,8 +24,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -36,6 +35,7 @@ import { ValorantMatchAccessibleVods } from '@client/js/squadov/vod'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -43,7 +43,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
         ValorantAgentIcon,
     }
 })
-export default class ValorantVodPovPicker extends Vue {
+export default class ValorantVodPovPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     puuid!: string
 
@@ -169,12 +169,14 @@ export default class ValorantVodPovPicker extends Vue {
         return map
     }
 
+    @Watch('matchUuid')
+    @Watch('isActive')
     refreshData() {
-        this.availableVods = null
-        if (!this.match) {
+        if (!this.isActive) {
             return
         }
 
+        this.availableVods = null
         // Using the current user ID here is correct as we only want the VODS accessible to the current user (not to the user whose match we're viewing).
         apiClient.getValorantMatchAccessibleVods(this.matchUuid).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             this.availableVods = resp.data

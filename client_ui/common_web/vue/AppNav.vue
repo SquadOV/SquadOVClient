@@ -109,13 +109,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { apiClient, ApiData } from '@client/js/api'
 import { clearSessionCookie } from '@client/js/session'
 import { openUrlInBrowser } from '@client/js/external'
+import CommonComponent from '@client/vue/CommonComponent'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -124,7 +124,7 @@ import { ipcRenderer } from 'electron'
 import { NotificationSummary } from '@client/js/squadov/notification'
 
 @Component
-export default class AppNav extends Vue {
+export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
 
     get isDesktop(): boolean {
@@ -361,16 +361,6 @@ export default class AppNav extends Vue {
             })
 /// #endif
         })
-    }
-
-    isActive: boolean = false
-
-    activated() {
-        this.isActive = true
-    }
-
-    deactivated() {
-        this.isActive = false
     }
 
     @Watch('$route.fullPath')

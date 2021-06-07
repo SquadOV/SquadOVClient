@@ -39,8 +39,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import {
     WowCharacter,
@@ -53,6 +52,7 @@ import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -61,7 +61,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
         GenericVodPicker
     }
 })
-export default class WowVodPovPicker extends Vue {
+export default class WowVodPovPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     vod!: VodAssociation | null
 
@@ -169,7 +169,13 @@ export default class WowVodPovPicker extends Vue {
         this.selectUserId(this.userId)
     }
 
+    @Watch('matchUuid')
+    @Watch('isActive')
     refreshData() {
+        if (!this.isActive) {
+            return
+        }
+        this.allAccessibleVods = null
         apiClient.getWoWMatchAccessibleVods(this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
             this.allAccessibleVods = resp.data
         }).catch((err: any) => {

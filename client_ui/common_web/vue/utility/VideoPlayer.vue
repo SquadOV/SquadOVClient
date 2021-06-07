@@ -18,7 +18,7 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import * as vod from '@client/js/squadov/vod'
@@ -34,12 +34,14 @@ import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
+import CommonComponent from '@client/vue/CommonComponent'
+
 @Component({
     components: {
         VideoDrawOverlay
     }
 })
-export default class VideoPlayer extends Vue {
+export default class VideoPlayer extends mixins(CommonComponent) {
     @Prop({required: true})
     vod! : vod.VodAssociation | null | undefined
     
@@ -58,6 +60,7 @@ export default class VideoPlayer extends Vue {
     // When we load a new video, this is the time we want to go to immediately.
     pinnedTimeStamp: Date | null = null
     pinnedPlaying: boolean = false
+    reactivateTimestamp: Date | null = null
 
     @Prop()
     playerHeight!: number
@@ -109,8 +112,17 @@ export default class VideoPlayer extends Vue {
         }
     }
 
+    @Watch('isActive')
+    onActiveChange() {
+        if (this.isActive && !!this.player && !!this.vod) {
+            this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
+            this.player.reset()
+        }
+    }
+
     @Watch('vod')
     refreshPlaylist(newVod: vod.VodAssociation | null | undefined, oldVod: vod.VodAssociation | null | undefined) {
+        console.log('refresh playlist: ', newVod, oldVod)
         this.manifest = null
         this.rcContext = null
         if (!this.hasVideo) {
@@ -139,18 +151,27 @@ export default class VideoPlayer extends Vue {
             let desiredVideoTime = this.player.currentTime()
             this.pinnedTimeStamp = new Date(oldVod.startTime.getTime() + desiredVideoTime * 1000)
             this.pinnedPlaying = !this.player.paused()
+        } else if (!!this.reactivateTimestamp) {
+            this.pinnedTimeStamp = this.reactivateTimestamp
+            this.pinnedPlaying = false
+            this.reactivateTimestamp = null
         } else {
             this.pinnedTimeStamp = null
             this.pinnedPlaying = false
         }
-
 
 ///#if DESKTOP
         this.videoUri = null
         ipcRenderer.invoke('check-vod-local', this.vod!.videoUuid).then((resp: IpcResponse<string>) => {
             if (resp.success) {
                 console.log('Found Local VOD: ', resp.data)
-                this.videoUri = resp.data
+                if (this.videoUri !== resp.data) {
+                    this.videoUri = resp.data
+                } else {
+                    // Same video? Probably due to keep-alive when the user switched back to the page.
+                    // Need to make sure the video refreshes.
+                    this.refreshPlayerSources()
+                }
                 this.toggleHasVideo()
             } else {
                 console.log('No Local VOD for: ', this.vod!.videoUuid)

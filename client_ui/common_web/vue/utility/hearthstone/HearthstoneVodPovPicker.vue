@@ -23,8 +23,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -32,6 +31,7 @@ import { HearthstoneMatchAccessibleVods } from '@client/js/squadov/vod'
 import HearthstoneHeroDisplay from '@client/vue/utility/hearthstone/HearthstoneHeroDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -39,7 +39,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
         GenericVodPicker,
     }
 })
-export default class HearthstoneVodPovPicker extends Vue {
+export default class HearthstoneVodPovPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     matchId!: string
 
@@ -164,7 +164,12 @@ export default class HearthstoneVodPovPicker extends Vue {
     }
 
     @Watch('matchId')
+    @Watch('isActive')
     refreshData() {
+        if (!this.isActive) {
+            return
+        }
+
         this.availableVods = null
         apiClient.getHearthstoneMatchAccessibleVods(this.matchId).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
             this.availableVods = resp.data

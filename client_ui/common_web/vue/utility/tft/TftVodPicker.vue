@@ -38,8 +38,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -48,6 +47,7 @@ import { WrappedTftMatch, TftParticipant } from '@client/js/tft/matches'
 import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -55,7 +55,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
         GenericVodPicker
     }
 })
-export default class TftVodPicker extends Vue {
+export default class TftVodPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     matchUuid!: string
 
@@ -109,7 +109,11 @@ export default class TftVodPicker extends Vue {
     }
 
     @Watch('matchUuid')
+    @Watch('isActive')
     refreshData() {
+        if (!this.isActive) {
+            return
+        }
         this.availableVods = null
         apiClient.getTftMatchAccessibleVods(this.matchUuid).then((resp: ApiData<TftMatchAccessibleVods>) => {
             this.availableVods = resp.data

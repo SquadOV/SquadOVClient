@@ -50,8 +50,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
@@ -59,9 +58,10 @@ import { standardFormatTime } from '@client/js/time'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import * as pi from '@client/js/pages'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component
-export default class AimlabTaskSummaryDisplay extends Vue {
+export default class AimlabTaskSummaryDisplay extends mixins(CommonComponent) {
     @Prop({ required : true })
     task! : AimlabTaskData
 
@@ -101,7 +101,13 @@ export default class AimlabTaskSummaryDisplay extends Vue {
     }
 
     @Watch('task', {deep: true})
+    @Watch('isActive')
     refreshVod() {
+        if (!this.isActive) {
+            return
+        }
+
+        this.vod = null
         apiClient.findVodFromMatchUserId(this.task.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
