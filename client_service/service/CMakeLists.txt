@@ -21,6 +21,7 @@ SET(SRCS
     src/recorder/image/d3d_image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
     src/recorder/audio/device.cpp
+    src/recorder/audio/win32/wasapi_interface.cpp
     src/recorder/pipe/pipe.cpp
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
@@ -70,6 +71,7 @@ SET(HEADERS
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
     src/recorder/audio/device.h
+    src/recorder/audio/win32/wasapi_interface.h
     src/recorder/pipe/pipe.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h

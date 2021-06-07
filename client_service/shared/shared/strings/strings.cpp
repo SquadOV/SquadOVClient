@@ -1,5 +1,6 @@
 #include "shared/strings/strings.h"
 
+#include <codecvt>
 #include <cwchar>
 #include <vector>
 
@@ -16,6 +17,11 @@ std::wstring utf8ToWcs(const std::string& str) {
     std::vector<wchar_t> wstr(len);
     std::mbsrtowcs(&wstr[0], &cStr, wstr.size(), &state);
     return std::wstring(wstr.data(), wstr.size()-1);
+}
+
+std::string wcsToUtf8(const std::wstring& str) {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv;
+    return conv.to_bytes(str);
 }
 
 }

@@ -24,6 +24,7 @@
 #include "game_event_watcher/csgo/csgo_gsi_listener.h"
 #include "vod/vod_clipper.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "recorder/audio/win32/wasapi_interface.h"
 #include "recorder/pipe/gcs_piper.h"
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
@@ -260,14 +261,14 @@ int main(int argc, char** argv) {
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC,
-            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
+            service::recorder::audio::win32::WASAPIInterface::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Input).toJson().dump()
         );
     });
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC, [&zeroMqServerClient](const std::string&) {
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RESPOND_AUDIO_OUTPUT_TOPIC,
-            service::recorder::audio::PortaudioAudioRecorder::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
+            service::recorder::audio::win32::WASAPIInterface::getDeviceListing(service::recorder::audio::EAudioDeviceDirection::Output).toJson().dump()
         );
     });
 
