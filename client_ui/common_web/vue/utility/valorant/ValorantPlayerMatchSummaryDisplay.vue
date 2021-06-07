@@ -186,7 +186,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
         }
 
         return {
-            'background-color': `val(--${color})`,
+            'background-color': `var(--${color})`,
         }
     }
 
