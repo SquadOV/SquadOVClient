@@ -24,6 +24,12 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
     LPWSTR defaultDeviceId = nullptr;
     IPropertyStore* props = nullptr;
 
+    if (dir == EAudioDeviceDirection::Input) {
+        LOG_INFO("Listing WASAPI Input Audio Devices..." << std::endl);
+    } else {
+        LOG_INFO("Listing WASAPI Output Audio Devices..." << std::endl);
+    }
+
     auto safeCleanup = [&](){
         if (audioEnum) {
             audioEnum->Release();
@@ -77,7 +83,7 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
 
     hr = audioEnum->GetDefaultAudioEndpoint(
         dataflow,
-        (dir == service::recorder::audio::EAudioDeviceDirection::Output) ? eConsole : eCommunications,
+        eConsole,
         &defaultDevice
     );
 
@@ -146,9 +152,11 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
             resp.default = sDeviceName;
         }
 
+        LOG_INFO("FOUND AUDIO DEVICE: " << sDeviceName << " " << (resp.default == sDeviceName) << std::endl);
+
         CoTaskMemFree(deviceId);
         deviceId = nullptr;
-        
+
         device->Release();
         device = nullptr;
     }

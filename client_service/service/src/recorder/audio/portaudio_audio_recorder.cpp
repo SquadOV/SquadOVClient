@@ -22,6 +22,27 @@ extern "C" {
 
 namespace service::recorder::audio {
 
+PortaudioInitRAII::PortaudioInitRAII() {
+    LOG_INFO("Initialize PortAudio..." << std::endl);
+    const auto paErr =  Pa_Initialize();
+    if (paErr != paNoError) {
+        if (paErr == paUnanticipatedHostError) {
+            const auto* hostErr = Pa_GetLastHostErrorInfo();
+            LOG_ERROR("PortAudio Host Error: " << hostErr->errorCode << "\t" << hostErr->errorText << std::endl);
+            LOG_ERROR("\tPort Audio Host Api Type: " << hostErr->hostApiType << std::endl);
+        }
+        THROW_ERROR("Failed to initialize PortAudio: " << paErr << "\t" << Pa_GetErrorText(paErr));
+    }
+}
+
+PortaudioInitRAII::~PortaudioInitRAII() {
+    LOG_INFO("Terminate PortAudio..." << std::endl);
+    const auto paErr = Pa_Terminate();
+    if (paErr != paNoError) {
+        LOG_ERROR("Failed to terminate PortAudio: " << paErr << "\t" << Pa_GetErrorText(paErr));
+    }
+}
+
 constexpr size_t audioSamplesPerFrame = 1024;
 using AudioPacket = FixedSizeAudioPacket<float, audioSamplesPerFrame>;
 using AudioPacketQueue = boost::lockfree::spsc_queue<AudioPacket, boost::lockfree::capacity<4096>, boost::lockfree::fixed_sized<true>>;

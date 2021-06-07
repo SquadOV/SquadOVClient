@@ -5,6 +5,13 @@
 
 namespace service::recorder::audio {
 
+struct PortaudioInitRAII {
+    PortaudioInitRAII();
+    ~PortaudioInitRAII();
+};
+
+using PortaudioInitRAIIPtr = std::unique_ptr<PortaudioInitRAII>;
+
 class PortaudioAudioRecorderImpl;
 class PortaudioAudioRecorder : public AudioRecorder {
 public:

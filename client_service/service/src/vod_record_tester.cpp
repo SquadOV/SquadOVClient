@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
     std::cout << "Init FFMpeg Logging" << std::endl;
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
-    Pa_Initialize();
 
     const auto processName = vm["process"].as<std::string>();
 
@@ -177,6 +176,5 @@ int main(int argc, char** argv) {
     }
     std::cout << "Output VOD to: " << outputFname << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(10));
-    Pa_Terminate();
     return 0;
 }

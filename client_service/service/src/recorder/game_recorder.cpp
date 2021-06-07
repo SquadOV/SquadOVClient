@@ -27,6 +27,7 @@
 #include <future>
 #include <iostream>
 #include <sstream>
+#include <portaudio.h>
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
@@ -368,6 +369,12 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
     _vrecorder->startRecording();
 
+    LOG_INFO("Initialize PortAudio..." << std::endl);
+    {
+        std::lock_guard guard(_paInitMutex);
+        _paInit.reset(new audio::PortaudioInitRAII);
+    }
+
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
     _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume);
     if (_aoutRecorder->exists()) {
@@ -512,6 +519,7 @@ size_t GameRecorder::findDvrSegmentForVodStartTime(const shared::TimePoint& tm) 
 
 void GameRecorder::stopInputs() {
     _streamsInit = false;
+
     if (_vrecorder) {
         LOG_INFO("...Stop video recorder." << std::endl);
         _vrecorder->stopRecording();
@@ -550,6 +558,11 @@ void GameRecorder::stopInputs() {
             LOG_INFO("\tOK" << std::endl);
             _ainRecorder.reset(nullptr);
         }
+    }
+
+    {
+        std::lock_guard guard(_paInitMutex);
+        _paInit.reset(nullptr);
     }
 }
 

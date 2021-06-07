@@ -181,17 +181,6 @@ int main(int argc, char** argv) {
     LOG_INFO("Port Audio Set Debug Logging..." << std::endl);
     PaUtil_SetDebugPrintFunction(portaudioLogCallback);
 
-    LOG_INFO("Initialize PortAudio..." << std::endl);
-    const auto paErr =  Pa_Initialize();
-    if (paErr != paNoError) {
-        if (paErr == paUnanticipatedHostError) {
-            const auto* hostErr = Pa_GetLastHostErrorInfo();
-            LOG_ERROR("PortAudio Host Error: " << hostErr->errorCode << "\t" << hostErr->errorText << std::endl);
-            LOG_ERROR("\tPort Audio Host Api Type: " << hostErr->hostApiType << std::endl);
-        }
-        THROW_ERROR("Failed to initialize PortAudio: " << paErr << "\t" << Pa_GetErrorText(paErr));
-    }
-
     const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
     LOG_INFO("TZ FOLDER: " << tzDataFolder << std::endl);
     date::set_install(tzDataFolder);

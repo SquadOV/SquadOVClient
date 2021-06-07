@@ -98,6 +98,10 @@ private:
 
     void switchToNewActiveEncoder(const EncoderDatum& data);
     video::VideoRecorderPtr _vrecorder;
+
+    std::mutex _paInitMutex;
+    audio::PortaudioInitRAIIPtr _paInit;
+
     audio::AudioRecorderPtr _aoutRecorder;
     audio::AudioRecorderPtr _ainRecorder;
     std::mutex _ainMutex;
