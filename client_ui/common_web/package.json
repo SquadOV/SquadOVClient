@@ -27,6 +27,7 @@
     "@types/express": "^4.17.8",
     "@types/fabric": "^4.2.3",
     "@types/fontfaceobserver": "^0.0.6",
+    "@types/lru-cache": "^5.1.0",
     "@types/node": "^14.11.2",
     "@types/video.js": "^7.3.11",
     "babel-loader": "^8.1.0",

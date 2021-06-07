@@ -61,17 +61,17 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
 import { version } from '@client/package.json'
+import TopLevelComponent from '@client/vue/TopLevelComponent'
 
 @Component({
     components: {
         AppNav,
     }
 })
-export default class WebApp extends Vue {
+export default class WebApp extends mixins(TopLevelComponent) {
     version: string = version
     showHideLicenses: boolean = false
 

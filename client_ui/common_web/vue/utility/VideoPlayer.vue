@@ -122,7 +122,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
 
     @Watch('vod')
     refreshPlaylist(newVod: vod.VodAssociation | null | undefined, oldVod: vod.VodAssociation | null | undefined) {
-        console.log('refresh playlist: ', newVod, oldVod)
         this.manifest = null
         this.rcContext = null
         if (!this.hasVideo) {

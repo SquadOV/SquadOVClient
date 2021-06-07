@@ -64,6 +64,7 @@ html {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow: auto !important;
 }
 
 .v-input--dense.v-text-field--outlined .v-chip {
@@ -81,10 +82,8 @@ html {
 #desktopAppDiv {
     height: calc(100vh - 32px);
     margin-top: 32px;
-    overflow: auto !important;
 }
 
 #webAppDiv {
     height: calc(100vh);
-    overflow: auto !important;
 }
