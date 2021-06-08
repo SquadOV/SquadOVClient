@@ -260,7 +260,7 @@ export default class ValorantMatch extends mixins(MatchShareBase) {
             return
         }
         
-        let diffMs = tm.getTime() - this.playerMetadata!.startTime.getTime()
+        let diffMs = tm.getTime() - this.vod!.startTime.getTime()
         this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 
