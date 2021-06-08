@@ -186,6 +186,7 @@ void CsgoProcessHandlerInstance::onLogConnect(const shared::TimePoint& eventTime
 void CsgoProcessHandlerInstance::onSquadOvMatchStart(const shared::TimePoint& eventTime) {
     std::lock_guard guard(_activeGameMutex);
     if (!_matchState || !_serverIdentifier) {
+        LOG_INFO("..Ignoring due to no server identifier or match state." << std::endl);
         return;
     }
 
@@ -196,6 +197,11 @@ void CsgoProcessHandlerInstance::onSquadOvMatchStart(const shared::TimePoint& ev
 
     try {
         _activeViewUuid = service::api::getGlobalApi()->createNewCsgoMatch(_serverIdentifier.value(), eventTime, _matchState->map, _matchState->mode);
+        LOG_INFO("Started new CSGO match @" << shared::timeToStr(eventTime) << std::endl
+            << "\tServer: " << _serverIdentifier.value() << std::endl
+            << "\tMap: " << _matchState->map << std::endl
+            << "\tMode: " << _matchState->mode << std::endl
+        );
         _matchStart = eventTime;
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to create CS:GO match: " << ex.what() << std::endl);
