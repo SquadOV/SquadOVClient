@@ -15,10 +15,18 @@ import { apiClient, ApiData } from '@client/js/api'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 
+/// #if DESKTOP
+import { ipcRenderer } from 'electron'
+import { IpcResponse } from '@client/js/system/ipc'
+/// #endif
+
 @Component
 export default class VideoPreviewPlayer extends Vue {
     @Prop({required: true})
     vod!: vod.VodManifest
+
+    @Prop({type: Boolean, default: false})
+    useLocalVod!: boolean
 
     videoUri: string | null = null
     player: videojs.Player | null = null
@@ -88,24 +96,37 @@ export default class VideoPreviewPlayer extends Vue {
 
             this.previousTime = tm
         })
+
+        this.player.volume(0)
     }
 
     @Watch('vod')
     refreshPreviewUri() {
-        let previewUri = this.vod.videoTracks[0]?.preview
-        if (!previewUri) {
-            this.videoUri = null
-            return
-        }
-
-        apiClient.getVodSegment(previewUri).then((resp : ApiData<string>) => {
-            this.videoUri = resp.data
-            Vue.nextTick(() => {
-                this.onVideoUriChange()
+        if (this.useLocalVod) {
+            ipcRenderer.invoke('check-vod-local', this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
+                this.videoUri = resp.data
+                Vue.nextTick(() => {
+                    this.onVideoUriChange()
+                })
+            }).catch((err: any) => {
+                console.log('Failed to get local VOD for preview: ', err)
             })
-        }).catch((err : any) => {
-            console.log('Failed to get final URL for video preview: ', err)
-        })
+        } else {
+            let previewUri = this.vod.videoTracks[0]?.preview
+            if (!previewUri) {
+                this.videoUri = null
+                return
+            }
+
+            apiClient.getVodSegment(previewUri).then((resp : ApiData<string>) => {
+                this.videoUri = resp.data
+                Vue.nextTick(() => {
+                    this.onVideoUriChange()
+                })
+            }).catch((err : any) => {
+                console.log('Failed to get final URL for video preview: ', err)
+            })
+        }
     }
 
     mounted() {

@@ -11,6 +11,7 @@ namespace service::zeromq {
 
 const std::string ZEROMQ_SESSION_ID_TOPIC = "session-id";
 const std::string ZEROMQ_READY_TOPIC = "on-ready";
+const std::string ZEROMQ_LOCAL_API_PORT_TOPIC = "on-local-api-port";
 const std::string ZEROMQ_CHANGE_PAUSE_TOPIC = "change-state-pause";
 const std::string ZEROMQ_RUNNING_GAMES_TOPIC = "change-running-games";
 const std::string ZEROMQ_RECORDING_GAMES_TOPIC = "change-recording-games";

@@ -1,6 +1,6 @@
 <template>
     <v-container class="full-parent-height" fluid>
-        <v-tabs class="full-parent-height" vertical>
+        <v-tabs class="full-parent-height" vertical v-model="tab">
             <v-tab>
                 <v-icon left>
                     mdi-cog
@@ -105,6 +105,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
 import RecordingSettingsItem from '@client/vue/utility/squadov/settings/RecordingSettingsItem.vue'
 import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
 import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
@@ -119,7 +120,22 @@ import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSet
     }
 })
 export default class AppSettingsPage extends Vue {
-    
+    @Prop()
+    inputTab!: number | undefined
+
+    tab: number = 0
+
+    @Watch('inputTab')
+    syncFromInput() {
+        if (this.inputTab !== undefined) {
+            this.tab = this.inputTab
+        }
+    }
+
+    mounted() {
+        this.syncFromInput()
+    }
+
     get useRecordingSettings(): boolean{
 ///#if DESKTOP
         return true

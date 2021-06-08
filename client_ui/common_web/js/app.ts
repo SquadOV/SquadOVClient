@@ -95,6 +95,7 @@ const ClipLibrary = () => import('@client/vue/utility/vods/ClipLibrary.vue')
 const ClipView = () => import('@client/vue/utility/vods/ClipView.vue')
 const SetupWizard = () => import('@client/vue/SetupWizard.vue')
 const Player = () => import('@client/vue/Player.vue')
+const LocalStorageManager = () => import ('@client/vue/LocalStorageManager.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -210,6 +211,11 @@ const baseRoutes : any[] = [
                 path: 'setupwizard',
                 name: pi.SetupWizardPageId,
                 component: SetupWizard,
+            },
+            {
+                path: 'localstorage',
+                name: pi.LocalStoragePageId,
+                component: LocalStorageManager,
             },
             { 
                 path: 'logs/:userId',
@@ -560,6 +566,9 @@ const baseRoutes : any[] = [
                 path: 'settings',
                 component: AppSettingsPage,
                 name: pi.SettingsPageId,
+                props: (route: any) => ({
+                    inputTab: route.query.inputTab,
+                })
             },
             {
                 path: 'clip',

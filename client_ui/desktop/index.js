@@ -827,6 +827,17 @@ zeromqServer.on('gcs-upload-progress', (resp) => {
     }
 })
 
+let apiPort = null
+zeromqServer.on('on-local-api-port', (resp) => {
+    let port = JSON.parse(resp)
+    apiPort = port
+})
+
+ipcMain.handle('request-local-api-port', (event) => {
+    event.returnValue = apiPort
+    return apiPort
+})
+
 ipcMain.on('minimize', (event) => {
     let window = BrowserWindow.fromWebContents(event.sender)
     window.minimize()

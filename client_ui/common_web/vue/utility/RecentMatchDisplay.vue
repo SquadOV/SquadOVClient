@@ -52,6 +52,7 @@
             <video-preview-player
                 v-if="!disablePreview"
                 :vod="match.base.vod"
+                :use-local-vod="useLocalVodPreview"
                 class="recent-match-item preview-item"
                 ref="player"
             >
@@ -72,7 +73,7 @@
                 v-else-if="!!match.lolMatch && match.base.game == SquadOvGames.LeagueOfLegends"
                 :match="match.lolMatch"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
             >
@@ -84,7 +85,7 @@
                 :match="match.tftMatch"
                 :user-id="match.base.userId"
                 :puuid="match.tftMatch.puuid"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
             >
@@ -97,7 +98,7 @@
                 :user-id="match.base.userId"
                 :account="match.valorantMatch.puuid"
                 fill
-                mini
+                :mini="!disableMini"
                 :disable-click="disableClick"
             >
             </valorant-player-match-summary-display>
@@ -107,7 +108,7 @@
                 v-else-if="!!match.wowChallenge && match.base.game == SquadOvGames.WorldOfWarcraft"
                 :challenge="match.wowChallenge"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
             >
@@ -118,7 +119,7 @@
                 v-else-if="!!match.wowEncounter && match.base.game == SquadOvGames.WorldOfWarcraft"
                 :encounter="match.wowEncounter"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
             >
@@ -129,7 +130,7 @@
                 v-else-if="!!match.wowArena && match.base.game == SquadOvGames.WorldOfWarcraft"
                 :arena="match.wowArena"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
             >
@@ -140,7 +141,7 @@
                 v-else-if="!!match.csgoMatch && match.base.game == SquadOvGames.Csgo"
                 :match="match.csgoMatch"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
             >
@@ -151,7 +152,7 @@
                 v-else-if="match.base.game == SquadOvGames.Hearthstone"
                 :match-id="match.base.matchUuid"
                 :user-id="match.base.userId"
-                mini
+                :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
             >
@@ -205,18 +206,24 @@ export default class RecentMatchDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     disablePreview!: boolean
 
+    @Prop({type: Boolean, default: false})
+    disableMini!: boolean
+
+    @Prop({type: Boolean, default: false})
+    useLocalVodPreview!: boolean
+
     $refs!: {
         player: VideoPreviewPlayer
     }
 
     onHover() {
-        if (!this.match.base.isLocal) {
+        if (!this.match.base.isLocal || this.useLocalVodPreview) {
             this.$refs.player.startPlay()
         }
     }
 
     onLeave() {
-        if (!this.match.base.isLocal) {
+        if (!this.match.base.isLocal || this.useLocalVodPreview) {
             this.$refs.player.pausePlay()
         }
     }

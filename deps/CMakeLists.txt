@@ -27,3 +27,8 @@ add_subdirectory(libzmq)
 
 set(CIVETWEB_ENABLE_CXX ON CACHE BOOL "")
 add_subdirectory(civetweb)
+
+set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(oatpp)
+set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")

@@ -440,20 +440,19 @@
                             </template>
                         </v-text-field>
 
-                        <div style="width: 300px;">
-                            <v-progress-linear
-                                :color="diskSpaceUsageColor"
-                                :value="localDiskSpaceRecordUsageGb / maxLocalRecordingSizeGb * 100"
-                                striped
-                                rounded
-                                height="24"
-                            >
-                            </v-progress-linear>
-                        </div>
+                        <local-disk-space-usage-display
+                            :max-width="300"
+                            ref="loc"
+                        >
+                        </local-disk-space-usage-display>
 
-                        <div class="ml-4">
-                            {{ localDiskSpaceRecordUsageGb.toFixed(2) }} / {{ maxLocalRecordingSizeGb.toFixed(2) }} GB
-                        </div>
+                        <v-btn
+                            color="primary"
+                            class="ml-2"
+                            :to="localManageTo"
+                        >
+                            Manage
+                        </v-btn>
                     </div>
                 </template>
 
@@ -514,22 +513,29 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import LocalDiskSpaceUsageDisplay from '@client/vue/utility/squadov/local/LocalDiskSpaceUsageDisplay.vue'
 
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
 ///#endif 
 import { AudioDeviceListingResponse } from '@client/js/system/audio'
-import { changeLocalRecordingSettings, computeFileFolderSizeGb } from '@client/js/system/settings'
+import { changeLocalRecordingSettings } from '@client/js/system/settings'
 import { IpcResponse } from '@client/js/system/ipc'
+import { LocalStoragePageId } from '@client/js/pages'
 
 @Component({
     components: {
         LoadingContainer,
+        LocalDiskSpaceUsageDisplay,
     }
 })
 export default class RecordingSettingsItem extends Vue {
     @Prop({type: Boolean, default: false})
     mini!: boolean
+
+    $refs!: {
+        loc: LocalDiskSpaceUsageDisplay
+    }
 
     outputOptions: string[] = []
     defaultOutput: string = ''
@@ -563,6 +569,12 @@ export default class RecordingSettingsItem extends Vue {
 ///#if DESKTOP
         ipcRenderer.send('request-input-devices')
 ///#endif
+    }
+
+    get localManageTo(): any {
+        return {
+            name: LocalStoragePageId
+        }
     }
 
     get selectedOutput(): string {
@@ -727,34 +739,14 @@ export default class RecordingSettingsItem extends Vue {
         return this.$store.state.settings.record.localRecordingLocation
     }
 
-    localDiskSpaceRecordUsageGb: number = 0
     localRecordChangeFail: boolean = false
-
-    @Watch('localRecordingLocation')
-    refreshLocalDiskSpaceRecordUsage() {
-        computeFileFolderSizeGb(this.localRecordingLocation).then((resp: number) => {
-            this.localDiskSpaceRecordUsageGb = resp
-        }).catch((err: any) => {
-            console.log('Failed to get local disk space record usage: ', err)
-        })
-    }
 
     get maxLocalRecordingSizeGb(): number {
         return this.$store.state.settings.record.maxLocalRecordingSizeGb
     }
 
-    get diskSpaceUsageColor(): string {
-        let percent = this.localDiskSpaceRecordUsageGb / this.maxLocalRecordingSizeGb
-        if (percent < 0.5) {
-            return 'success'
-        } else if (percent < 0.9) {
-            return 'warning'
-        } else {
-            return 'error'
-        }
-    }
-
     changeLocalRecordingProgress: boolean = false
+
     syncLocalRecording(use: boolean, loc: string, limit: number) {
         if (this.changeLocalRecordingProgress) {
             return
@@ -762,7 +754,7 @@ export default class RecordingSettingsItem extends Vue {
         this.changeLocalRecordingProgress = true
         changeLocalRecordingSettings(this.$store.state.settings.record, use, loc, limit).then(() => {
             this.$store.commit('changeLocalRecording', {use, loc, limit})
-            this.refreshLocalDiskSpaceRecordUsage()
+            this.$refs.loc.refresh()
         }).catch((err: any) => {
             console.log('Failed to change local recording settings: ', err)
             this.localRecordChangeFail = true
@@ -928,7 +920,6 @@ export default class RecordingSettingsItem extends Vue {
 ///#if DESKTOP
         this.refreshAvailableOutputs()
         this.refreshAvailableInputs()
-        this.refreshLocalDiskSpaceRecordUsage()
         this.resyncPushToTalkStr()
 
         ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {

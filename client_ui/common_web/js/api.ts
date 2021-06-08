@@ -163,6 +163,7 @@ import { LolMatchFilters } from './lol/filters'
 import { TftMatchFilters } from './tft/filters'
 import { ValorantMatchFilters } from './valorant/filters'
 import { WowMatchFilters } from './wow/filters'
+import { LocalVodsDto } from './local/types'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -172,11 +173,13 @@ class ApiClient {
     _sessionId: string | null
     _tempSessionId: string | null
     _tempUserId: number | null
+    _localApiPort: number | null
 
     constructor() {
         this._sessionId = null
         this._tempSessionId = null
         this._tempUserId = null
+        this._localApiPort = null
     }
 
     setSessionId(s : string) {
@@ -238,6 +241,21 @@ class ApiClient {
         }
 
         return ret
+    }
+
+    createLocalAxiosConfig(): Promise<any> {
+        return new Promise( async (resolve) => {
+            if (this._localApiPort === null) {
+                this._localApiPort = await ipcRenderer.invoke('request-local-api-port')
+            }
+
+            resolve({
+                baseURL: `http://localhost:${this._localApiPort}/`,
+                headers: {
+                    'x-squadov-api-key': process.env.SQUADOV_API_KEY
+                }
+            })
+        })
     }
 
     //
@@ -1010,6 +1028,13 @@ class ApiClient {
         })
     }
 
+    getMatchDataFromVideoUuid(videoUuid: string): Promise<ApiData<RecentMatch>> {
+        return axios.get(`v1/vod/${videoUuid}/match`, this.createWebAxiosConfig()).then((resp: ApiData<RecentMatch) => {
+            cleanRecentMatchFromJson(resp.data)
+            return resp
+        })
+    }
+
     getGenericSharePermissions(matchUuid: string | undefined | null, videoUuid: string | undefined | null, game: SquadOvGames | undefined | null): Promise<ApiData<MatchVideoSharePermissions>> {
         return axios.post(`v1/share/permissions`, {
             matchUuid,
@@ -1299,6 +1324,17 @@ class ApiClient {
 
     editAutoShareConnection(connId: number, conn: AutoShareConnection): Promise<void> {
         return axios.post(`v1/share/auto/${connId}`, conn, this.createWebAxiosConfig())
+    }
+
+    // Local API
+    async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
+        return axios.get('api/vods', {
+            ...await this.createLocalAxiosConfig(),
+            params: {
+                start,
+                end
+            }
+        })
     }
 }
 

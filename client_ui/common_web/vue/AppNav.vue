@@ -271,6 +271,14 @@ export default class AppNav extends mixins(CommonComponent) {
                             name: pi.ClipLibraryPageId,
                         },
                     },
+///#if DESKTOP
+                    {
+                        name: 'Local',
+                        to: {
+                            name: pi.LocalStoragePageId,
+                        },
+                    },
+///#endif
                 ]
             },
             {
