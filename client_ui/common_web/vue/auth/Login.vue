@@ -177,21 +177,14 @@ export default class Login extends Vue {
         // we're going to the email verification check page.
         apiClient.setSessionFull(data.sessionId, data.userId)
 
-        if (!!data.verified) {
-            // We can close out the login app now.
+        // We can close out the login app now.
 /// #if DESKTOP
-            ipcRenderer.send('finish-login')
+        ipcRenderer.send('finish-login')
 /// #else
-            this.$router.replace({
-                name: pi.DashboardPageId,
-            })
+        this.$router.replace({
+            name: pi.DashboardPageId,
+        })
 /// #endif
-        } else {
-            // Redirect to a screen to wait for email verification.
-            this.$router.replace({
-                name: pi.WaitForVerifyPageId,
-            })
-        }
     }
 
     login() {

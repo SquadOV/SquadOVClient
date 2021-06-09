@@ -165,14 +165,6 @@ const baseRoutes : any[] = [
                     changePasswordId: route.params.changePasswordId
                 })
             },
-            {
-                path: 'verify',
-                name: pi.WaitForVerifyPageId,
-                component: EmailVerify,
-                props: () => ({
-                    ipc: false
-                })
-            },
             { 
                 path: 'verify/:verificationId',
                 name: pi.VerifyEmailPageId,
@@ -641,10 +633,6 @@ router.beforeEach((to : any, from : any, next : any) => {
                 next({
                     name: pi.DashboardPageId
                 })
-            } else if (!store.state.currentUser?.verified) {
-                next({
-                    name: pi.WaitForVerifyPageId
-                })
             } else {
                 next()
             }
@@ -698,12 +686,6 @@ ipcRenderer.invoke('request-session').then((session : {
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
         store.commit('setUser' , resp.data)
         store.dispatch('loadUserFeatureFlags')
-
-        if (!resp.data.verified) {
-            router.replace({
-                name: pi.WaitForVerifyPageId
-            })
-        }
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover
