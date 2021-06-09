@@ -1,5 +1,6 @@
 <template>
-    <v-tabs vertical v-model="internalTab">
+    <div>
+    <v-tabs vertical v-model="internalTab" v-if="isLocal">
         <v-tab>
             Basic
         </v-tab>
@@ -25,130 +26,238 @@
                                         Username
                                     </div>
                                     
-                                    <div>
-                                        {{ profileUser.username }}
-                                    </div>
-                                </v-col>
-
-                                <v-col cols="4" v-if="isLocal">
-                                    <div class="font-weight-bold">
-                                        Email
-                                    </div>
-
                                     <div class="d-flex align-center">
-                                        {{ profileUser.email }}
-                                        <v-icon
-                                            class="ml-2"
-                                            color="success"
-                                            small
-                                            v-if="profileUser.verified"
-                                        >
-                                            mdi-check-circle
-                                        </v-icon>
-                                        
-                                        <template v-else>
-                                            <v-icon
-                                                class="ml-2"
-                                                color="error"
-                                                small
-                                            >
-                                                mdi-close-circle
-                                            </v-icon>
+                                        <div v-if="!editUsername">
+                                            {{ profileUser.username }}
+                                        </div>
 
+                                        <v-text-field
+                                            v-model="pendingUsername"
+                                            filled
+                                            hide-details
+                                            single-line
+                                            dense
+                                            v-else
+                                        >
+                                        </v-text-field>
+
+                                        <v-btn
+                                            icon
+                                            class="ml-2"
+                                            color="warning"
+                                            v-if="!editUsername"
+                                            @click="editUsername = true"
+                                            x-small
+                                        >
+                                            <v-icon>
+                                                mdi-pencil
+                                            </v-icon>
+                                        </v-btn>
+
+                                        <template v-else>
                                             <v-btn
+                                                icon
                                                 class="ml-2"
                                                 color="success"
-                                                small
-                                                v-if="!sentVerification"
-                                                @click="resendVerification"
-                                                :loading="emailPending" 
+                                                @click="finishEditUsername"
+                                                x-small
+                                                :loading="editInProgress"
                                             >
-                                                Resend Email Verification
+                                                <v-icon>
+                                                    mdi-check-circle
+                                                </v-icon>
                                             </v-btn>
-
-                                            <div class="ml-2" v-else>
-                                                Email Sent!
-                                            </div>
 
                                             <v-btn
-                                                class="ml-2"
-                                                color="secondary"
+                                                    icon
+                                                    class="ml-2"
+                                                    color="error"
+                                                    @click="editUsername = false"
+                                                    x-small
+                                                >
+                                                    <v-icon>
+                                                        mdi-close-circle
+                                                    </v-icon>
+                                                </v-btn>
+                                            </template>
+                                        </div>
+                                    </v-col>
+
+                                    <v-col cols="4" v-if="isLocal">
+                                        <div class="font-weight-bold">
+                                            Email
+                                        </div>
+
+                                        <div class="d-flex align-center">
+                                            <v-icon
+                                                class="mr-2"
+                                                color="success"
                                                 small
-                                                @click="recheckVerification"
-                                                :loading="checkPending"
+                                                v-if="profileUser.verified"
                                             >
-                                                Refresh
+                                                mdi-check-circle
+                                            </v-icon>
+
+                                            <div v-if="!editEmail">
+                                                {{ profileUser.email }}
+                                            </div>
+
+                                            <v-text-field
+                                                v-model="pendingEmail"
+                                                filled
+                                                hide-details
+                                                single-line
+                                                dense
+                                                v-else
+                                            >
+                                            </v-text-field>
+
+                                            <v-btn
+                                                icon
+                                                class="ml-2"
+                                                color="warning"
+                                                v-if="!editEmail"
+                                                @click="editEmail = true"
+                                                x-small
+                                            >
+                                                <v-icon>
+                                                    mdi-pencil
+                                                </v-icon>
                                             </v-btn>
-                                        </template>
-                                    </div>
-                                </v-col>
-                            </v-row>
-                        </v-container>
-                    </div>
-                </template>
-            </loading-container>
-        </v-tab-item>
 
-        <v-tab>
-            Matches
-        </v-tab>
+                                            <template v-else>
+                                                <v-btn
+                                                    icon
+                                                    class="ml-2"
+                                                    color="success"
+                                                    @click="finishEditEmail"
+                                                    x-small
+                                                    :loading="editInProgress"
+                                                >
+                                                    <v-icon>
+                                                        mdi-check-circle
+                                                    </v-icon>
+                                                </v-btn>
 
-        <v-tab-item>
-            <v-tabs v-model="internalMatchTab">
-                <v-tab>
-                    Favorites
-                </v-tab>
+                                                <v-btn
+                                                    icon
+                                                    class="ml-2"
+                                                    color="error"
+                                                    @click="editEmail = false"
+                                                    x-small
+                                                >
+                                                    <v-icon>
+                                                        mdi-close-circle
+                                                    </v-icon>
+                                                </v-btn>
+                                            </template>
 
-                <v-tab-item>
-                    <user-match-favorites
-                        :user-id="userId"
-                    >
-                    </user-match-favorites>
-                </v-tab-item>
+                                            
+                                            
+                                            <template v-if="!profileUser.verified">
+                                                <v-btn
+                                                    class="ml-2"
+                                                    color="success"
+                                                    small
+                                                    v-if="!sentVerification"
+                                                    @click="resendVerification"
+                                                    :loading="emailPending" 
+                                                >
+                                                    Resend Email Verification
+                                                </v-btn>
 
-                <v-tab>
-                    Watchlist
-                </v-tab>
+                                                <div class="ml-2" v-else>
+                                                    Email Sent!
+                                                </div>
 
-                <v-tab-item>
-                    <user-match-watchlist
-                        :user-id="userId"
-                    >
-                    </user-match-watchlist>
-                </v-tab-item>
-            </v-tabs>
-        </v-tab-item>
+                                                <v-btn
+                                                    class="ml-2"
+                                                    color="secondary"
+                                                    small
+                                                    @click="recheckVerification"
+                                                    :loading="checkPending"
+                                                >
+                                                    Refresh
+                                                </v-btn>
+                                            </template>
+                                        </div>
+                                    </v-col>
+                                </v-row>
+                            </v-container>
+                        </div>
+                    </template>
+                </loading-container>
+            </v-tab-item>
 
-        <v-tab>
-            Clips
-        </v-tab>
+            <v-tab>
+                Matches
+            </v-tab>
 
-        <v-tab-item>
-            <v-tabs>
-                <v-tab>
-                    Favorites
-                </v-tab>
+            <v-tab-item>
+                <v-tabs v-model="internalMatchTab">
+                    <v-tab>
+                        Favorites
+                    </v-tab>
 
-                <v-tab-item>
-                    <user-clip-favorites
-                        :user-id="userId"
-                    >
-                    </user-clip-favorites>
-                </v-tab-item>
+                    <v-tab-item>
+                        <user-match-favorites
+                            :user-id="userId"
+                        >
+                        </user-match-favorites>
+                    </v-tab-item>
 
-                <v-tab>
-                    Watchlist
-                </v-tab>
+                    <v-tab>
+                        Watchlist
+                    </v-tab>
 
-                <v-tab-item>
-                    <user-clip-watchlist
-                        :user-id="userId"
-                    >
-                    </user-clip-watchlist>
-                </v-tab-item>
-            </v-tabs>
-        </v-tab-item>
-    </v-tabs>
+                    <v-tab-item>
+                        <user-match-watchlist
+                            :user-id="userId"
+                        >
+                        </user-match-watchlist>
+                    </v-tab-item>
+                </v-tabs>
+            </v-tab-item>
+
+            <v-tab>
+                Clips
+            </v-tab>
+
+            <v-tab-item>
+                <v-tabs>
+                    <v-tab>
+                        Favorites
+                    </v-tab>
+
+                    <v-tab-item>
+                        <user-clip-favorites
+                            :user-id="userId"
+                        >
+                        </user-clip-favorites>
+                    </v-tab-item>
+
+                    <v-tab>
+                        Watchlist
+                    </v-tab>
+
+                    <v-tab-item>
+                        <user-clip-watchlist
+                            :user-id="userId"
+                        >
+                        </user-clip-watchlist>
+                    </v-tab-item>
+                </v-tabs>
+            </v-tab-item>
+        </v-tabs>
+    
+        <v-snackbar
+            v-model="editFailure"
+            :timeout="5000"
+            color="error"
+        >
+            Failed edit your user profile. Please try again later.
+        </v-snackbar>
+    </div>
 </template>
 
 <script lang="ts">
@@ -193,10 +302,69 @@ export default class UserProfile extends Vue {
     verificationErr: boolean = false
     checkPending: boolean = false
 
+    editInProgress: boolean = false
+    editFailure: boolean = false
+
+    editUsername: boolean = false
+    pendingUsername: string = ''
+
+    editEmail: boolean = false
+    pendingEmail: string = ''
+
+    @Watch('profileUser', {deep: true})
+    syncFromProfileUser() {
+        if (!this.profileUser) {
+            return
+        }
+        this.pendingUsername = this.profileUser.username
+        this.pendingEmail = this.profileUser.email
+    }
+
+    finishEditUsername() {
+        this.editInProgress = true
+        apiClient.editMyUsername(this.pendingUsername).then(() => {
+            if (!!this.profileUser) {
+                this.profileUser.username = this.pendingUsername
+                if (this.isLocal) {
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser))
+                }
+            }
+            this.pendingUsername = ''
+            this.editUsername = false
+        }).catch((err: any) => {
+            console.log('Failed to edit username: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.editInProgress = false
+        })
+    }
+
+    finishEditEmail() {
+        this.editInProgress = true
+        apiClient.editMyEmail(this.pendingEmail).then(() => {
+            if (!!this.profileUser) {
+                this.profileUser.email = this.pendingEmail
+                this.profileUser.verified = false
+                if (this.isLocal) {
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser))
+                }
+            }
+            this.pendingEmail = ''
+            this.editEmail = false
+        }).catch((err: any) => {
+            console.log('Failed to edit email: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.editInProgress = false
+        })
+    }
+
     recheckVerification() {
         this.checkPending = true
         getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
-            this.$store.commit('setUser' , resp.data)
+            if (this.isLocal) {
+                this.$store.commit('setUser' , resp.data)
+            }
             this.profileUser = resp.data
         }).catch((err: any) => {
             console.log('Failed to refresh squadovuser : ', err)

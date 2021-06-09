@@ -351,6 +351,18 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
+    editMyUsername(username: string): Promise<void> {
+        return axios.post('v1/users/me/profile/username', {
+            username
+        }, this.createWebAxiosConfig())
+    }
+
+    editMyEmail(email: string): Promise<void> {
+        return axios.post('v1/users/me/profile/email', {
+            email
+        }, this.createWebAxiosConfig())
+    }
+
     changeForgottenPassword(input: ChangeForgottenPasswordInput) : Promise<void> {
         return axios.post('auth/forgotpw/change', input, this.createWebAxiosConfig())
     }

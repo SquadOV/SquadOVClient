@@ -36,6 +36,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api' 
 
 @Component
@@ -47,12 +48,17 @@ export default class ReferralLink extends Vue {
         urlInput: any
     }
 
-    mounted() {
+    @Watch('$store.state.currentUser.username')
+    refreshReferral() {
         apiClient.myReferralLink().then((resp: ApiData<string>) => {
             this.link = resp.data
         }).catch((err: any) => {
             console.log('Failed to get referral link: ', err)
         })
+    }
+
+    mounted() {
+        this.refreshReferral()
     }
 
     doCopy() {
