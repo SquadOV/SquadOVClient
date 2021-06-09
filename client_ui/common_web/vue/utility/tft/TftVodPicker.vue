@@ -2,7 +2,7 @@
     <generic-vod-picker
         :value="vod"
         @input="selectVod"
-        :options="allPovs"
+        :options.sync="allPovs"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
@@ -142,13 +142,16 @@ export default class TftVodPicker extends mixins(CommonComponent) {
         return map
     }
 
-    get allPovs(): VodAssociation[] {
-        let ret: VodAssociation[] = []
+    allPovs: VodAssociation[] = []
+    
+    @Watch('selfPov')
+    @Watch('nonSelfPovs')
+    syncOptions() {
+        this.allPovs = []
         if (!!this.selfPov) {
-            ret.push(this.selfPov)
+            this.allPovs.push(this.selfPov)
         }
-        ret.push(...this.nonSelfPovs)
-        return ret
+        this.allPovs.push(...this.nonSelfPovs)
     }
 
     get selfPov(): VodAssociation | undefined {
@@ -172,13 +175,15 @@ export default class TftVodPicker extends mixins(CommonComponent) {
         })
     }
 
-    selectVod(vod: VodAssociation) {
-        if (vod.videoUuid === this.vod?.videoUuid) {
-            return
-        }
+    selectVod(vod: VodAssociation | null) {
+        if (!!vod) {
+            if (vod.videoUuid === this.vod?.videoUuid) {
+                return
+            }
 
-        if (!this.availableVods) {
-            return
+            if (!this.availableVods) {
+                return
+            }
         }
 
         this.$emit('update:vod', vod)

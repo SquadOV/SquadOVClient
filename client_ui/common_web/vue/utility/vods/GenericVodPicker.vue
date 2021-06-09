@@ -377,6 +377,24 @@ export default class GenericVodPicker extends Vue {
         this.confirmationText = ''
     }
 
+    onDeleteFinish(videoUuid: string) {
+        this.hideDeleteConfirm()
+
+        let newOptions = [...this.options]
+        let idx = newOptions.findIndex((ele: VodAssociation) => ele.videoUuid === videoUuid)
+        if (idx === -1) {
+            return
+        }
+
+        newOptions.splice(idx, 1)
+        this.$emit('update:options', newOptions)
+        if (newOptions.length === 0) {
+            this.$emit('input', null)
+        } else {
+            this.$emit('input', newOptions[0])
+        }
+    }
+
     deleteVod() {
         if (!this.value) {
             return
@@ -387,8 +405,7 @@ export default class GenericVodPicker extends Vue {
 
         apiClient.deleteVod(this.value.videoUuid).then(() => {
             if (!this.loadingLocalDelete) {
-                this.hideDeleteConfirm()
-                this.$router.go(0)
+                this.onDeleteFinish(this.value!.videoUuid)
             }
         }).catch((err: any) => {
             console.log('Failed to delete VOD: ', err)
@@ -405,8 +422,7 @@ export default class GenericVodPicker extends Vue {
                 ipcRenderer.invoke('delete-vod-local', this.value!.videoUuid).then((resp: IpcResponse<void>) => {
                     if (resp.success) {
                         if (!this.loadingDelete) {
-                            this.hideDeleteConfirm()
-                            this.$router.go(0)
+                            this.onDeleteFinish(this.value!.videoUuid)
                         }
                     } else {
                         this.downloadError = true

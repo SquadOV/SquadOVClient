@@ -2,7 +2,7 @@
     <generic-vod-picker
         :value="vod"
         @input="selectVodForUserUuid(arguments[0].userUuid)"
-        :options="orderedVods"
+        :options.sync="orderedVods"
         :match-uuid="matchId"
         :timestamp="timestamp"
         :game="game"
@@ -64,8 +64,12 @@ export default class HearthstoneVodPovPicker extends mixins(CommonComponent) {
         return SquadOvGames.Hearthstone
     }
 
-    get orderedVods(): VodAssociation[] {
-        return [...this.friendlyPovs, ...this.enemyPovs]
+    orderedVods: VodAssociation[] = []
+    
+    @Watch('friendlyPovs')
+    @Watch('enemyPovs')
+    syncOptions() {
+        this.orderedVods = [...this.friendlyPovs, ...this.enemyPovs]
     }
 
     get friendlyPovs(): VodAssociation[] {
@@ -148,6 +152,14 @@ export default class HearthstoneVodPovPicker extends mixins(CommonComponent) {
         }
 
         this.selectVodForUserUuid(uuid)
+    }
+
+    selectVod(vod: VodAssociation | null) {
+        if (!!vod) {
+            this.selectVodForUserUuid(vod.userUuid)
+        } else {
+            this.$emit('update:vod', vod)
+        }
     }
 
     selectVodForUserUuid(uuid: string) {

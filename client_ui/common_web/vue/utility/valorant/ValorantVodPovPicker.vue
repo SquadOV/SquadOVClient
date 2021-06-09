@@ -2,7 +2,7 @@
     <generic-vod-picker
         :value="vod"
         @input="selectVod"
-        :options="orderedVods"
+        :options.sync="orderedVods"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
@@ -90,8 +90,12 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
         return this.match.getPlayerAgentId(puuid)
     }
 
-    get orderedVods(): VodAssociation[] {
-        return [...this.friendlyPovs, ...this.enemyPovs]
+    orderedVods: VodAssociation[] = []
+    
+    @Watch('friendlyPovs')
+    @Watch('enemyPovs')
+    syncOptions() {
+        this.orderedVods = [...this.friendlyPovs, ...this.enemyPovs]
     }
 
     get friendlyPovs(): VodAssociation[] {
@@ -192,27 +196,31 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
         this.selectPuuid(this.puuid)
     }
 
-    selectVod(vod: VodAssociation) {
-        if (vod.videoUuid === this.vod?.videoUuid) {
-            return
-        }
+    selectVod(vod: VodAssociation | null) {
+        if (!!vod) {
+            if (vod.videoUuid === this.vod?.videoUuid) {
+                return
+            }
 
-        if (!this.availableVods) {
-            return
-        }
+            if (!this.availableVods) {
+                return
+            }
 
-        let puuid = this.availableVods!.userMapping[vod.userUuid]
-        if (!puuid) {
-            return
-        }
+            let puuid = this.availableVods!.userMapping[vod.userUuid]
+            if (!puuid) {
+                return
+            }
 
-        this.$emit('update:puuid', puuid)
-        this.$emit('update:vod', vod)
-        apiClient.getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
-            this.$emit('update:playerMetadata', resp.data)
-        }).catch((err : any) => {
-            console.log('Failed to obtain Valorant VOD Player Metadata: ', err)
-        })
+            this.$emit('update:puuid', puuid)
+            this.$emit('update:vod', vod)
+            apiClient.getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+                this.$emit('update:playerMetadata', resp.data)
+            }).catch((err : any) => {
+                console.log('Failed to obtain Valorant VOD Player Metadata: ', err)
+            })
+        } else {
+            this.$emit('update:vod', null)
+        }
     }
 
     selectPuuid(puuid: string) {

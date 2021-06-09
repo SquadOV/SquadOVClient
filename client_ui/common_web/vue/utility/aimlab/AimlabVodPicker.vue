@@ -1,7 +1,8 @@
 <template>
     <generic-vod-picker
         :value="vod"
-        :options="options"
+        @input="$emit('update:vod', arguments[0])"
+        :options.sync="options"
         :match-uuid="taskId"
         :timestamp="timestamp"
         :game="game"
@@ -57,8 +58,10 @@ export default class AimlabVodPicker extends Vue {
     @Prop({type: Boolean, default: false})
     enableDraw!: boolean
 
-    get options(): VodAssociation[] {
-        return [this.vod]
+    options: VodAssociation[] = []
+    
+    mounted() {
+        this.options = [this.vod]
     }
 
     get game(): SquadOvGames {

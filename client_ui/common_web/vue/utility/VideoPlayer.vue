@@ -1,7 +1,9 @@
 <template>
     <div>
-        <video v-if="hasVideo" :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
-        </video>
+        <div v-if="hasVideo">
+            <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
+            </video>
+        </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
             <span class="text-h4">No VOD Available.</span>
@@ -99,7 +101,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     forceNoVideo: boolean = false
 
     get hasVideo() : boolean {
-        if (!this.vod && !this.overrideUri || this.forceNoVideo) {
+        if ((!this.vod && !this.overrideUri) || this.forceNoVideo) {
             return false
         }
         return true
@@ -108,7 +110,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     handleRcPacket(p: RCMessagePacket) {
         switch (p.type) {
             case RCMessageType.StopAndDestroy:
-                this.$destroy()
+                if (!!this.player) {
+                    this.forceNoVideo = true
+                    this.player.dispose()
+                    this.player = null
+                }
                 break
         }
     }
@@ -125,6 +131,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     refreshPlaylist(newVod: vod.VodAssociation | null | undefined, oldVod: vod.VodAssociation | null | undefined) {
         this.manifest = null
         this.rcContext = null
+        this.forceNoVideo = false
         if (!this.hasVideo) {
             this.setNoVideo()
             return
@@ -186,7 +193,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.toggleHasVideo()
                 }).catch((err : any) => {
                     this.setNoVideo()
-                    this.forceNoVideo = true
                     console.log('Failed to obtain VOD manifest: ', err)
                 })
 ///#if DESKTOP
@@ -296,6 +302,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
 
     setNoVideo() {
         this.$emit('update:playerHeight', 500)
+        if (!!this.player) {
+            this.player.dispose()
+            this.player = null
+        }
+        this.forceNoVideo = true
     }
 
     setPinned(dt: Date) {

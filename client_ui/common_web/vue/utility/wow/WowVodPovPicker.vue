@@ -2,7 +2,7 @@
     <generic-vod-picker
         :value="vod"
         @input="selectVod"
-        :options="allPovs"
+        :options.sync="allPovs"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
@@ -136,13 +136,17 @@ export default class WowVodPovPicker extends mixins(CommonComponent) {
         return ret
     }
 
-    get allPovs(): VodAssociation[] {
+    allPovs: VodAssociation[] = []
+    
+    @Watch('allAccessibleVods')
+    syncOptions() {
         if (!this.allAccessibleVods) {
-            return []
+            this.allPovs = []
+        } else {
+            this.allPovs = this.allAccessibleVods.vods.filter((ele: VodAssociation) => {
+                return !!this.charForUuid(ele.userUuid)
+            })
         }
-        return this.allAccessibleVods.vods.filter((ele: VodAssociation) => {
-            return !!this.charForUuid(ele.userUuid)
-        })
     }
 
     charForUuid(uuid: string): WowCharacter | null {
@@ -198,13 +202,15 @@ export default class WowVodPovPicker extends mixins(CommonComponent) {
         this.selectVod(vod)
     }
 
-    selectVod(vod: VodAssociation) {
-        if (vod.videoUuid === this.vod?.videoUuid) {
-            return
-        }
+    selectVod(vod: VodAssociation | null) {
+        if (!!vod) {
+            if (vod.videoUuid === this.vod?.videoUuid) {
+                return
+            }
 
-        if (!this.allAccessibleVods) {
-            return
+            if (!this.allAccessibleVods) {
+                return
+            }
         }
 
         this.$emit('update:vod', vod)

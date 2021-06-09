@@ -2,7 +2,7 @@
     <generic-vod-picker
         :value="vod"
         @input="selectVod"
-        :options="orderedVods"
+        :options.sync="orderedVods"
         :match-uuid="matchUuid"
         :timestamp="timestamp"
         :game="game"
@@ -148,8 +148,12 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         }
     }
 
-    get orderedVods(): VodAssociation[] {
-        return [...this.friendlyPovs, ...this.enemyPovs]
+    orderedVods: VodAssociation[] = []
+    
+    @Watch('friendlyPovs')
+    @Watch('enemyPovs')
+    syncOptions() {
+        this.orderedVods = [...this.friendlyPovs, ...this.enemyPovs]
     }
 
     get friendlyPovs(): VodAssociation[] {
@@ -207,15 +211,16 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         this.selectVod(vod)
     }
 
-    selectVod(vod: VodAssociation) {
-        if (vod.videoUuid === this.vod?.videoUuid) {
-            return
-        }
+    selectVod(vod: VodAssociation | null) {
+        if (!!vod) {
+            if (vod.videoUuid === this.vod?.videoUuid) {
+                return
+            }
 
-        if (!this.availableVods) {
-            return
+            if (!this.availableVods) {
+                return
+            }
         }
-
         this.$emit('update:vod', vod)
     }
 
