@@ -32,6 +32,7 @@ private:
     void onValorantRSOLogin(const shared::TimePoint& eventTime,const void* rawData);
 
     void backfillMatchHistory();
+    bool recheckOwnsAccount();
 
     game_event_watcher::ValorantLogWatcherPtr _logWatcher;
 
@@ -72,8 +73,24 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
 ValorantProcessHandlerInstance::~ValorantProcessHandlerInstance() {
 }
 
+bool ValorantProcessHandlerInstance::recheckOwnsAccount() {
+    if (_ownsAccount) {
+        return true;
+    }
+
+    LOG_INFO("Rechecking owns account: " << _currentUser.username << "#" << _currentUser.tag << std::endl);
+
+    if (!_currentUser.puuid.empty()) {
+        _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(_currentUser.username, _currentUser.tag, _currentUser.puuid);
+        LOG_INFO("Owns Account: " << _ownsAccount << std::endl);
+    } else {
+        LOG_INFO("...Ignoring. No PUUID found yet?" << std::endl);
+    }
+    return _ownsAccount;
+}
+
 void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoint& eventTime, const void* rawData) {
-    if (service::system::getGlobalState()->isPaused() || !_ownsAccount) {
+    if (service::system::getGlobalState()->isPaused() || !recheckOwnsAccount()) {
         return;
     }
 
@@ -175,7 +192,7 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
 }
 
 void ValorantProcessHandlerInstance::backfillMatchHistory() {
-    if (!_ownsAccount) {
+    if (!recheckOwnsAccount()) {
         return;
     }
     service::api::getGlobalApi()->requestValorantMatchBackfill(_currentUser.puuid);
@@ -216,13 +233,11 @@ void ValorantProcessHandlerInstance::onValorantRSOLogin(const shared::TimePoint&
         << "\tUsername: " << user->username << std::endl
         << "\tTagline: " << user->tag << std::endl);
 
-    _ownsAccount = service::api::getGlobalApi()->verifyValorantAccountOwnership(user->username, user->tag, user->puuid);
-    LOG_INFO("Owns Account: " << _ownsAccount << std::endl);
-    if (!_ownsAccount) {
+    _currentUser = *user;
+    
+    if (!recheckOwnsAccount()) {
         return;
     }
-
-    _currentUser = *user;
 
     try {
         backfillMatchHistory();
