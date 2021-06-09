@@ -601,7 +601,7 @@ export default class GenericVodPicker extends Vue {
             return
         }
 ///#if DESKTOP
-        manager.startUpload(this.value, this.localVodLocation)
+        manager.enqueueUpload(this.value.videoUuid)
 ///#endif
     }
 

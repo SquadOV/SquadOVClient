@@ -9,6 +9,109 @@
 
             <div>
                 <div class="d-flex align-center justify-end">
+                    <v-dialog persistent v-model="showDeleteConfirm" max-width="60%" v-if="inSelectMode">
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn
+                                color="error"
+                                icon
+                                :disabled="selected.length === 0"
+                                v-on="on"
+                                v-bind="attrs"
+                            >
+                                <v-icon>
+                                    mdi-delete
+                                </v-icon>
+                            </v-btn>
+                        </template>
+
+                        <v-card>
+                            <v-card-title>
+                                Are you sure?
+                            </v-card-title>
+
+                            <v-card-text>
+                                Are you sure you want to delete {{ selected.length }} VODs from your local storage?
+                                This will <b>NOT</b> delete the VOD from our servers.
+                            </v-card-text>
+
+                            <v-card-actions>
+                                <v-btn
+                                    color="error"
+                                    @click="showDeleteConfirm = false"
+                                >
+                                    Cancel
+                                </v-btn>
+
+                                <v-spacer></v-spacer>
+
+                                <v-btn
+                                    color="success"
+                                    @click="deleteLocalVods"
+                                    :loading="deleteInProgress"
+                                >
+                                    Delete
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-dialog persistent v-model="showUploadConfirm" max-width="60%" v-if="inSelectMode">
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn
+                                color="accent"
+                                icon
+                                :disabled="selected.length === 0"
+                                v-on="on"
+                                v-bind="attrs"
+                            >
+                                <v-icon>
+                                    mdi-upload
+                                </v-icon>
+                            </v-btn>
+                        </template>
+
+                        <v-card>
+                            <v-card-title>
+                                Are you sure?
+                            </v-card-title>
+
+                            <v-card-text>
+                                Are you sure you want to upload {{ selected.length }} VODs from your local storage?
+                                This may take a significant amount of time and bandwidth.
+                            </v-card-text>
+
+                            <v-card-actions>
+                                <v-btn
+                                    color="error"
+                                    @click="showUploadConfirm = false"
+                                >
+                                    Cancel
+                                </v-btn>
+
+                                <v-spacer></v-spacer>
+
+                                <v-btn
+                                    color="success"
+                                    @click="uploadLocalVods"
+                                >
+                                    Upload
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-btn color="success" icon @click="inSelectMode = true" v-if="!inSelectMode">
+                        <v-icon>
+                            mdi-cursor-default
+                        </v-icon>
+                    </v-btn>
+
+                    <v-btn icon @click="inSelectMode = false" v-else-if="inSelectMode">
+                        <v-icon>
+                            mdi-close
+                        </v-icon>
+                    </v-btn>
+
                     <v-btn color="warning" icon @click="onRequestChangeRecordingLocation">
                         <v-icon>
                             mdi-folder-open
@@ -52,6 +155,8 @@
                                                 :disable-click="inSelectMode"
                                                 use-local-vod-preview
                                                 disable-mini
+                                                show-upload-progress
+                                                :ref="vod"
                                             >
                                             </recent-match-display>
                                         </div>
@@ -73,6 +178,14 @@
                 Load More
             </v-btn>
         </div>
+
+        <v-snackbar
+            v-model="deleteError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to delete the VOD(s), please submit a bug report.
+        </v-snackbar>
     </div>
 </template>
 
@@ -88,11 +201,13 @@ import { apiClient, ApiData } from '@client/js/api'
 import { RecentMatch } from '@client/js/squadov/recentMatch'
 
 /// #if DESKTOP
-import { shell } from 'electron'
+import { shell, ipcRenderer } from 'electron'
+import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
 import { SettingsPageId } from '@client/js/pages'
 import { LocalVodsDto } from '@client/js/local/types'
+import { manager } from '@client/js/vods/local_manager'
 
 const MAX_VODS_PER_REQUEST = 10
 
@@ -109,10 +224,57 @@ export default class LocalStorageManager extends Vue {
 
     start: number = 0
     end: number = MAX_VODS_PER_REQUEST
-    hasMore: boolean = true
+    hasMore: boolean = false
 
     inSelectMode: boolean = false
     selected: string[] = []
+
+    showDeleteConfirm: boolean = false
+    deleteInProgress: boolean = false
+    deleteError: boolean = false
+
+    showUploadConfirm: boolean = false
+
+    deleteLocalVods() {
+        this.deleteInProgress = true
+///#if DESKTOP
+        for (let v of this.selected) {
+            //@ts-ignore
+            let ele: RecentMatchDisplay = this.$refs[v][0]
+            ele.destroyPreview()
+        }
+
+        setTimeout(() => {
+            Promise.all(this.selected.map((ele: string) => {
+                return ipcRenderer.invoke('delete-vod-local', ele)
+            })).then((resp: IpcResponse<void>[]) => {
+                if (resp.every((ele: IpcResponse<void>) => ele.success)) {
+                    let selectedSet = new Set(this.selected)
+
+                    if (!!this.localVods) {
+                        this.localVods = this.localVods.filter((ele: string) => !selectedSet.has(ele))
+                    }
+                    
+                    this.selected = []
+                    this.showDeleteConfirm = false
+                } else {
+                    this.deleteError = true
+                }
+            }).catch((err: any) => {
+                console.log('Failed to delete local VOD: ', err)
+                this.deleteError = true
+            }).finally(() => {
+                this.deleteInProgress = false
+            })
+        }, 1000)
+///#endif
+    }
+
+    uploadLocalVods() {
+        this.showUploadConfirm = false
+        this.selected.forEach((ele: string) => manager.enqueueUpload(ele))
+        this.selected = []
+    }
 
     @Watch('localVods')
     syncMatches() {

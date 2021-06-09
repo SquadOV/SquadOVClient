@@ -96,9 +96,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     }
     hasMadeProgress: boolean = false
     rcContext: VodRemoteControlContext | null = null
+    forceNoVideo: boolean = false
 
     get hasVideo() : boolean {
-        if (!this.vod && !this.overrideUri) {
+        if (!this.vod && !this.overrideUri || this.forceNoVideo) {
             return false
         }
         return true
@@ -184,6 +185,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.manifest = resp.data
                     this.toggleHasVideo()
                 }).catch((err : any) => {
+                    this.setNoVideo()
+                    this.forceNoVideo = true
                     console.log('Failed to obtain VOD manifest: ', err)
                 })
 ///#if DESKTOP

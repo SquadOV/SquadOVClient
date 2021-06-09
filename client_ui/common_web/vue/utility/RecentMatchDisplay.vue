@@ -50,7 +50,7 @@
             @mouseout="onLeave"
         >
             <video-preview-player
-                v-if="!disablePreview"
+                v-if="!disablePreview && !forceNoPreview"
                 :vod="match.base.vod"
                 :use-local-vod="useLocalVodPreview"
                 class="recent-match-item preview-item"
@@ -157,6 +157,13 @@
                 :disable-click="disableClick"
             >
             </hearthstone-match-summary-display>
+
+            <upload-progress-display
+                class="ml-2"
+                v-if="showUploadProgress"
+                :video-uuid="match.base.vod.videoTracks[0].metadata.videoUuid"
+            >
+            </upload-progress-display>
         </div>
     </div>
 </template>
@@ -178,6 +185,7 @@ import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
+import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDisplay.vue'
 
 @Component({
     components: {
@@ -191,6 +199,7 @@ import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
         WowArenaSummary,
         VideoPreviewPlayer,
         CsgoPlayerMatchSummaryDisplay,
+        UploadProgressDisplay,
     }
 })
 export default class RecentMatchDisplay extends Vue {
@@ -212,6 +221,11 @@ export default class RecentMatchDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     useLocalVodPreview!: boolean
 
+    @Prop({type: Boolean, default: false})
+    showUploadProgress!: boolean
+
+    forceNoPreview: boolean = false
+
     $refs!: {
         player: VideoPreviewPlayer
     }
@@ -225,6 +239,13 @@ export default class RecentMatchDisplay extends Vue {
     onLeave() {
         if (!this.match.base.isLocal || this.useLocalVodPreview) {
             this.$refs.player.pausePlay()
+        }
+    }
+
+    destroyPreview() {
+        if (!!this.$refs.player) {
+            this.$refs.player.$destroy()
+            this.forceNoPreview = true
         }
     }
 }

@@ -8,6 +8,8 @@ import { VodAssociation, VodMetadata, cleanVodAssocationData } from '@client/js/
 import { apiClient } from '@client/js/api'
 import { v4 as uuidv4 } from 'uuid'
 import { uploadLocalFileToGcs } from '@client/js/gcs'
+import { IpcResponse } from '../system/ipc'
+import { response } from 'express'
 
 export type DownloadUploadProgressCb = (progress: number, finish: boolean, error: boolean) => void
 
@@ -78,8 +80,20 @@ class LocalVodIoProgressManager {
 class LocalVodManager {
     downloads: LocalVodIoProgressManager = new LocalVodIoProgressManager()
     uploads: LocalVodIoProgressManager = new LocalVodIoProgressManager()
+
+    uploadQueue: string[] = []
+    uploadInProgress: boolean = false
+    uploadTicking: boolean = false
     
     constructor() {
+        setInterval(async () => {
+            if (this.uploadTicking) {
+                return
+            }
+            this.uploadTicking = true
+            await this.tickUploadQueue()
+            this.uploadTicking = false
+        }, 1000)
     }
 
     startDownload(uuid: string) {
@@ -107,8 +121,44 @@ class LocalVodManager {
 /// #endif
     }
 
+    enqueueUpload(videoUuid: string) {
+        this.uploadQueue.push(videoUuid)
+    }
+
+    async tickUploadQueue() {
+///#if DESKTOP
+        if (this.uploadInProgress) {
+            return
+        }
+
+        let nextVideoUuid: string | undefined = this.uploadQueue.shift()
+        if (!nextVideoUuid) {
+            return
+        }
+
+        try {
+            let vod = await apiClient.findVodFromVideoUuid(nextVideoUuid)
+            let localResp: IpcResponse<string> = await ipcRenderer.invoke('check-vod-local', nextVideoUuid)
+
+            if (!localResp.success) {
+                throw 'No local VOD for uploading found.'
+            }
+
+            this.startUpload(vod.data, localResp.data)
+        } catch (ex) {
+            console.log('Failed to obtain VOD upload data: ', ex)
+            return
+        }
+///#endif
+    }
+
     startUpload(vod: VodAssociation, localLoc: string) {
 /// #if DESKTOP
+        // No need to upload a VOD that isn't local!
+        if (!vod.isLocal) {
+            return
+        }
+        this.uploadInProgress = true
         this.uploads.notifyProgress(vod.videoUuid, 0.0)
         setTimeout(async () => {
             try {
@@ -146,6 +196,8 @@ class LocalVodManager {
                 console.log('Failed to complete upload: ', ex)
                 this.uploads.notifyError(vod.videoUuid)
             }
+
+            this.uploadInProgress = false
         }, 1)
 /// #endif
     }

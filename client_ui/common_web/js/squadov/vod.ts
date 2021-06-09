@@ -88,6 +88,7 @@ export interface VodMetadata {
     videoUuid: string
     resX: number
     resY: number
+    fps: number
     minBitrate: number
     avgBitrate: number
     maxBitrate: number
