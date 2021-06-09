@@ -326,7 +326,7 @@ export default class UserProfile extends Vue {
             if (!!this.profileUser) {
                 this.profileUser.username = this.pendingUsername
                 if (this.isLocal) {
-                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser))
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser)))
                 }
             }
             this.pendingUsername = ''
@@ -346,7 +346,7 @@ export default class UserProfile extends Vue {
                 this.profileUser.email = this.pendingEmail
                 this.profileUser.verified = false
                 if (this.isLocal) {
-                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser))
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser)))
                 }
             }
             this.pendingEmail = ''
