@@ -239,8 +239,13 @@ bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext*
 
     // Create a temporary processor and do a check to make sure the device we're on supports
     // everything we'd expect.
-    service::renderer::D3d11VideoProcessor processor(shared);
-    return processor.isSupported(width, height);
+    try {
+        service::renderer::D3d11VideoProcessor processor(shared);
+        return processor.isSupported(width, height);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Critical failure in D3d11VideoProcessor: " << ex.what() << std::endl);
+        return false;
+    }
 }
 
 size_t FfmpegGPUVideoSwapChain::frameWidth() const {
