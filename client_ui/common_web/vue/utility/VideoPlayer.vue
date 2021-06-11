@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div v-if="hasVideo">
+        <div v-if="hasVideo" :style="parentDivStyle">
             <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
             </video>
         </div>
@@ -99,6 +99,17 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     hasMadeProgress: boolean = false
     rcContext: VodRemoteControlContext | null = null
     forceNoVideo: boolean = false
+
+    get parentDivStyle(): any {
+        if (this.fill) {
+            return {
+                'width': '100%',
+                'height': '100%',
+            }
+        } else {
+            return {}
+        }
+    }
 
     get hasVideo() : boolean {
         if ((!this.vod && !this.overrideUri) || this.forceNoVideo) {
@@ -319,6 +330,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             return
         }
 
+        this.forceNoVideo = false
         this.player = videojs(this.$refs.video, {
             controls: true,
             autoplay: false,
