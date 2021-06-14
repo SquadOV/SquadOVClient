@@ -7,7 +7,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const cssLoaders = [
     {
-        loader: MiniCssExtractPlugin.loader
+        loader: MiniCssExtractPlugin.loader,
+        options: {
+            esModule: false,
+        },
     },
     'css-loader'
 ]
@@ -153,7 +156,7 @@ module.exports = (env, argv, subfolder) => {
             new VuetifyLoaderPlugin(),
             new MiniCssExtractPlugin({
                 filename: `${baseFilename}.css`,
-                chunkFilename: `${chunkBaseFilename}.css`
+                chunkFilename: `${chunkBaseFilename}.css`,
             }),
             new ForkTsCheckerWebpackPlugin({
                 typescript: {

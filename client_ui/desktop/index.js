@@ -342,6 +342,7 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
             frame: false,
             webPreferences: {
                 nodeIntegration: true,
+                contextIsolation: false,
                 webSecurity: app.isPackaged,
             },
             icon: iconPath
@@ -369,6 +370,7 @@ ipcMain.on('open-path-window', (event, path) => {
         frame: false,
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
             webSecurity: app.isPackaged,
         },
         icon: iconPath
@@ -494,6 +496,7 @@ function startAutoupdater() {
         height: 300,
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
         },
         frame: false,
         resizable: false,
@@ -637,6 +640,7 @@ app.on('ready', async () => {
         frame: false,
         webPreferences: {
             nodeIntegration: true,
+            contextIsolation: false,
             webSecurity: app.isPackaged
         },
         icon: iconPath

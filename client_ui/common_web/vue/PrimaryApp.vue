@@ -124,7 +124,7 @@ import AppNav from '@client/vue/AppNav.vue'
 import LicenseData from '@client/vue/LicenseData.vue'
 import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
-import { version } from '@client/package.json'
+import rawData from '@client/package.json'
 import TopLevelComponent from '@client/vue/TopLevelComponent'
 
 /// #if DESKTOP
@@ -140,7 +140,7 @@ import { ipcRenderer } from 'electron'
     }
 })
 export default class PrimaryApp extends mixins(TopLevelComponent) {
-    version: string = version
+    version: string = rawData.version
     showHideLicenses: boolean = false
     showHideBug: boolean = false
 
