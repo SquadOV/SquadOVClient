@@ -292,7 +292,7 @@ std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid, co
     const auto result = _webClient->post(path, body);
 
     if (result->status != 200) {
-        THROW_ERROR("Failed to create VOD VOD: " << result->status);
+        THROW_ERROR("Failed to create VOD: " << result->status);
         return "";
     }
 

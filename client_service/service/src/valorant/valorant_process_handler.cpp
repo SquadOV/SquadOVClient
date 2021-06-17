@@ -149,12 +149,9 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
     // be back at the main menu before we get this event (as expected).
     std::optional<service::recorder::GameRecordEnd> end = std::nullopt;
 
+    bool failedToEnd = false;
     if (_currentMatch->matchId() == state->matchId && state->stagedMatchEnd) {
         _currentMatch->finishMatch(eventTime);
-
-        const auto vodId = _recorder->currentId();
-        const auto sessionId = _recorder->sessionId();
-        const auto vodStartTime = _recorder->vodStartTime();
 
         try {
             // Store match details. Upload match without match details first just to get the match populated.
@@ -171,8 +168,20 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
                 matchUuid,
                 _currentMatch->endTime()
             });
+            
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to upload valorant match: " << ex.what() << std::endl);
+            failedToEnd = true;
+        }
+    }
+
+    if (_recorder->isRecording()) {
+        const auto vodId = _recorder->currentId();
+        const auto sessionId = _recorder->sessionId();
+        const auto vodStartTime = _recorder->vodStartTime();
+        _recorder->stop(end);
+
+        if (failedToEnd) {
             // Any errors should result in the VOD being deleted.
             try {
                 service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
@@ -180,10 +189,6 @@ void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint&
                 LOG_WARNING("Failed to delete VOD: " << ex.what());            
             }
         }
-    }
-
-    if (_recorder->isRecording()) {
-        _recorder->stop(end);
     }
 
     // Reset the current match. If the check above fails, then this is the only thing that
