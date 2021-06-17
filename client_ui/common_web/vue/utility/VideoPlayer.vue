@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div v-if="hasVideo" :style="parentDivStyle">
+        <div v-if="hasVideo" :style="parentDivStyle" :key="forceRedraw">
             <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
             </video>
         </div>
@@ -99,6 +99,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     hasMadeProgress: boolean = false
     rcContext: VodRemoteControlContext | null = null
     forceNoVideo: boolean = false
+    forceRedraw: number = 0
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -136,6 +137,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
             this.player.reset()
         }
+
+        this.forceRedraw += 1
     }
 
     @Watch('vod')
