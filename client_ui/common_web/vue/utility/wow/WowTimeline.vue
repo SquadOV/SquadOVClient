@@ -1,6 +1,19 @@
 <template>
     <div class="full-width">
-        <div class="d-flex align-center">
+        <div class="d-flex align-center pa-2">
+            <div class="text-h6 font-weight-bold">
+                Display Options: 
+            </div>
+
+            <wow-character-chooser
+                :characters="matchCharacters"
+                v-model="charactersToDisplay"
+                :patch="patch"
+                multiple
+                style="max-width: 500px;"
+            >
+            </wow-character-chooser>
+
             <v-dialog
                 v-model="showSettings"
                 max-width="60%"
@@ -9,7 +22,6 @@
                     <v-btn
                         class="my-1"
                         v-on="on"
-                        block
                         color="primary"
                     >
                         Settings
@@ -199,6 +211,7 @@ import { staticClient } from '@client/js/staticData'
 import { StatTimePeriodData, StatTimePeriodTrackData, StatTimePeriodSection } from '@client/js/stats/periodData'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
 
 const STAT_SECOND_STEP = 5.0
 const BASE_GRAPH_HEIGHT = 650
@@ -222,7 +235,8 @@ function endpointToStatName(endpoint: string): string {
 @Component({
     components: {
         LoadingContainer,
-        LineGraph
+        LineGraph,
+        WowCharacterChooser,
     }
 })
 export default class WowTimeline extends Vue {
@@ -261,6 +275,9 @@ export default class WowTimeline extends Vue {
     @Prop({required: true})
     patch!: string
 
+    @Prop({default: ''})
+    charGuid!: string | undefined
+
     $refs!: {
         graph: LineGraph
     }
@@ -268,6 +285,7 @@ export default class WowTimeline extends Vue {
     cachedStats: {[v:string]: WowMatchStatContainer} = {}
     pendingEndpoints: Set<string> = new Set()
     spellIdNames: {[id: number]: string} = {}
+    charactersToDisplay: WowCharacter[] = []
 
     // Graph settings
     showSettings: boolean = false
@@ -284,6 +302,10 @@ export default class WowTimeline extends Vue {
     showTime: boolean = true
     showAuras: boolean = false
     showSpells: boolean = false
+
+    get displayGuidSet(): Set<string> {
+        return new Set(this.charactersToDisplay.map((ele: WowCharacter) => ele.guid))
+    }
 
     get friendlyCharacters(): WowCharacter[] {
         if (!this.matchCharacters) {
@@ -360,6 +382,9 @@ export default class WowTimeline extends Vue {
             }
 
             for (let [guid, _stats] of Object.entries(this.cachedStats[e])) {
+                if (!this.displayGuidSet.has(guid)) {
+                    continue
+                }
                 let name = this.guidToName.has(guid) ?
                     this.guidToName.get(guid)! :
                     guid
@@ -428,7 +453,7 @@ export default class WowTimeline extends Vue {
         })
 
         let addTimeToSeries = (data: StatXYSeriesData) => {
-             if (!!this.currentTime && this.showTime) {
+             if (this.showTime && !!this.currentTime) {
                 data.addXMarkLine({
                     x: this.convertTmToX(this.currentTime),
                     name: '',
@@ -646,6 +671,10 @@ export default class WowTimeline extends Vue {
                 }
             } else {
                 for (let [guid, stats] of Object.entries(this.cachedStats[e])) {
+                    if (!this.displayGuidSet.has(guid)) {
+                        continue
+                    }
+
                     let playerName = this.guidToName.has(guid) ?
                         this.guidToName.get(guid)! :
                         guid
@@ -767,6 +796,20 @@ export default class WowTimeline extends Vue {
         this.refreshData()
     }
 
+    @Watch('matchCharacters')
+    @Watch('charGuid')
+    resetDisplayOptions() {
+        let char = this.matchCharacters.find((ele: WowCharacter) => ele.guid === this.charGuid)
+        
+        if (!!char) {
+            this.charactersToDisplay = [char]
+        } else if (this.matchCharacters.length > 0) {
+            this.charactersToDisplay = [this.matchCharacters[0]]
+        } else {
+            this.charactersToDisplay = []
+        }
+    }
+
     refreshDataEndpoint(endpoint: string) {
         if (endpoint in this.cachedStats) {
             return
@@ -816,6 +859,7 @@ export default class WowTimeline extends Vue {
     }
 
     mounted() {
+        this.resetDisplayOptions()
         this.refreshData()
     }
 
