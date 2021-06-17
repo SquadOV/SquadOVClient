@@ -68,7 +68,7 @@
                                         max-width="32"
                                         max-height="32"
                                         contain
-                                        :src="$root.generateAssetUri(spellIdIcon(sanitizeSpellId(item.spellId)))"
+                                        :src="spellIdIcon(sanitizeSpellId(item.spellId))"
                                     >
                                     </v-img>
 
