@@ -194,3 +194,178 @@ export function getStatusMinorColor(): Color {
         b: 7,
     }
 }
+
+export function generateRandomColor(): Color {
+    return {
+        r: Math.random() * 255,
+        g: Math.random() * 255,
+        b: Math.random() * 255,
+    }
+}
+
+const uniqueColorPalette: Color[] = [
+    {
+        r: 105,
+        g: 105,
+        b: 105,
+    },
+    {
+        r: 128,
+        g: 0,
+        b: 0,
+    },
+    {
+        r: 0,
+        g: 100,
+        b: 0,
+    },
+    {
+        r: 128,
+        g: 128,
+        b: 0,
+    },
+    {
+        r: 72,
+        g: 61,
+        b: 139,
+    },
+    {
+        r: 0,
+        g: 139,
+        b: 139,
+    },
+    {
+        r: 205,
+        g: 133,
+        b: 63,
+    },
+    {
+        r: 70,
+        g: 130,
+        b: 180,
+    },
+    {
+        r: 154,
+        g: 205,
+        b: 50,
+    },
+    {
+        r: 0,
+        g: 0,
+        b: 139,
+    },
+    {
+        r: 143,
+        g: 188,
+        b: 143,
+    },
+    {
+        r: 139,
+        g: 0,
+        b: 139,
+    },
+    {
+        r: 176,
+        g: 48,
+        b: 96,
+    },
+    {
+        r: 255,
+        g: 69,
+        b: 0,
+    },
+    {
+        r: 255,
+        g: 140,
+        b: 0,
+    },
+    {
+        r: 255,
+        g: 215,
+        b: 0,
+    },
+    {
+        r: 0,
+        g: 255,
+        b: 0,
+    },
+    {
+        r: 138,
+        g: 43,
+        b: 226,
+    },
+    {
+        r: 0,
+        g: 255,
+        b: 127,
+    },
+    {
+        r: 220,
+        g: 20,
+        b: 60,
+    },
+    {
+        r: 0,
+        g: 255,
+        b: 255,
+    },
+    {
+        r: 0,
+        g: 0,
+        b: 255,
+    },
+    {
+        r: 218,
+        g: 112,
+        b: 214,
+    },
+    {
+        r: 255,
+        g: 0,
+        b: 255,
+    },
+    {
+        r: 30,
+        g: 144,
+        b: 255,
+    },
+    {
+        r: 240,
+        g: 230,
+        b: 140,
+    },
+    {
+        r: 250,
+        g: 128,
+        b: 114,
+    },
+    {
+        r: 144,
+        g: 238,
+        b: 144,
+    },
+    {
+        r: 173,
+        g: 216,
+        b: 230,
+    },
+    {
+        r: 255,
+        g: 20,
+        b: 147,
+    },
+    {
+        r: 123,
+        g: 104,
+        b: 238,
+    },
+    {
+        r: 255,
+        g: 182,
+        b: 193,
+    },
+]
+
+export function generateUniqueColor(idx: number): Color {
+    return uniqueColorPalette[idx % uniqueColorPalette.length]
+}

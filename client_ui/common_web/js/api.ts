@@ -156,14 +156,16 @@ import { WowDeathRecap, cleanWowDeathRecapFromJson } from '@client/js/wow/deaths
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { CsgoFullMatchData, cleanCsgoFullMatchDataFromJson } from '@client/js/csgo/match'
 import { MfaData } from '@client/js/squadov/mfa'
-import { AimlabMatchFilters } from './aimlab/filters'
-import { HearthstoneMatchFilters } from './hearthstone/filters'
-import { CsgoMatchFilters } from './csgo/filters'
-import { LolMatchFilters } from './lol/filters'
-import { TftMatchFilters } from './tft/filters'
-import { ValorantMatchFilters } from './valorant/filters'
-import { WowMatchFilters } from './wow/filters'
-import { LocalVodsDto } from './local/types'
+import { AimlabMatchFilters } from '@client/js/aimlab/filters'
+import { HearthstoneMatchFilters } from '@client/js/hearthstone/filters'
+import { CsgoMatchFilters } from '@client/js/csgo/filters'
+import { LolMatchFilters } from '@client/js/lol/filters'
+import { TftMatchFilters } from '@client/js/tft/filters'
+import { ValorantMatchFilters } from '@client/js/valorant/filters'
+import { WowMatchFilters } from '@client/js/wow/filters'
+import { LocalVodsDto } from '@client/js/local/types'
+import { SquadOvCommunity, CommunityFilter, cleanCommunityFromJson, CommunityRole } from '@client/js/squadov/community'
+import { cleanUser2UserSubscriptionFromJson, User2UserSubscription } from './squadov/subscription'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1041,7 +1043,7 @@ class ApiClient {
     }
 
     getMatchDataFromVideoUuid(videoUuid: string): Promise<ApiData<RecentMatch>> {
-        return axios.get(`v1/vod/${videoUuid}/match`, this.createWebAxiosConfig()).then((resp: ApiData<RecentMatch) => {
+        return axios.get(`v1/vod/${videoUuid}/match`, this.createWebAxiosConfig()).then((resp: ApiData<RecentMatch>) => {
             cleanRecentMatchFromJson(resp.data)
             return resp
         })
@@ -1052,7 +1054,7 @@ class ApiClient {
             matchUuid,
             videoUuid,
             game
-        }, this.createWebAxiosConfig(),)
+        }, this.createWebAxiosConfig())
     }
 
     getMatchShareConnections(matchUuid: string): Promise<ApiData<MatchVideoShareConnection[]>> {
@@ -1336,6 +1338,43 @@ class ApiClient {
 
     editAutoShareConnection(connId: number, conn: AutoShareConnection): Promise<void> {
         return axios.post(`v1/share/auto/${connId}`, conn, this.createWebAxiosConfig())
+    }
+
+    listCommunities(filter: CommunityFilter): Promise<ApiData<SquadOvCommunity[]>> {
+        return axios.get('v1/community', {
+            ...this.createWebAxiosConfig(),
+            params: filter,
+        }).then((resp: ApiData<SquadOvCommunity[]>) => {
+            resp.data.forEach(cleanCommunityFromJson)
+            return resp
+        })
+    }
+
+    createCommunity(c: SquadOvCommunity): Promise<ApiData<SquadOvCommunity>> {
+        return axios.post('v1/community', {
+            community: c,
+        }, this.createWebAxiosConfig()).then((resp: ApiData<SquadOvCommunity>) => {
+            cleanCommunityFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getCommunityFromSlug(slug: string): Promise<ApiData<SquadOvCommunity>> {
+        return axios.get(`public/community/slug/${slug}`, this.createWebAxiosConfig()).then((resp: ApiData<SquadOvCommunity>) => {
+            cleanCommunityFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getMyCommunityRolesFromSlug(slug: string): Promise<ApiData<CommunityRole[]>> {
+        return axios.get(`v1/community/slug/${slug}/role`, this.createWebAxiosConfig())
+    }
+
+    getMyCommunitySubscription(slug: string): Promise<ApiData<User2UserSubscription[]>> {
+        return axios.get(`v1/community/slug/${slug}/sub`, this.createWebAxiosConfig()).then((resp: ApiData<User2UserSubscription[]>) => {
+            resp.data.forEach(cleanUser2UserSubscriptionFromJson)
+            return resp
+        })
     }
 
     // Local API

@@ -48,3 +48,7 @@ export const ClipLibraryPageId = 'clipLibrary'
 export const ClipPageId = 'clip'
 export const PlayerPageId = 'player'
 export const LocalStoragePageId = 'localStorage'
+
+export const CommunityHomePageId = 'communities'
+export const CommunityDiscoverPageId = 'communityDiscover'
+export const CommunityPageId = 'communityPage'

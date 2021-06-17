@@ -341,6 +341,21 @@ export default class AppNav extends mixins(CommonComponent) {
                 ]
             },
             {
+                name: 'Social',
+                children: [
+                    {
+                        name: 'Squads',
+                        to: this.squadsTo,
+                    },
+                    {
+                        name: 'Communities',
+                        to: {
+                            name: pi.CommunityHomePageId,
+                        },
+                    },
+                ]
+            },
+            {
                 name: 'Performance',
                 children: [
                     {

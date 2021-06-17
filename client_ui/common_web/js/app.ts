@@ -97,6 +97,11 @@ const SetupWizard = () => import('@client/vue/SetupWizard.vue')
 const Player = () => import('@client/vue/Player.vue')
 const LocalStorageManager = () => import ('@client/vue/LocalStorageManager.vue')
 
+const Community = () => import('@client/vue/Community.vue')
+const CommunityFeed = () => import('@client/vue/utility/community/CommunityFeed.vue')
+const CommunityPage = () => import('@client/vue/utility/community/CommunityPage.vue')
+const CommunityDiscover = () => import('@client/vue/utility/community/CommunityDiscover.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -578,6 +583,30 @@ const baseRoutes : any[] = [
                     clipUuid: route.params.clipUuid
                 })
             },
+            {
+                path: 'c',
+                component: Community,
+                children: [
+                    {
+                        path: '',
+                        name: pi.CommunityHomePageId,
+                        component: CommunityFeed,
+                    },
+                    {
+                        path: 'discover',
+                        name: pi.CommunityDiscoverPageId,
+                        component: CommunityDiscover,
+                    },
+                    {
+                        path: ':communitySlug',
+                        name: pi.CommunityPageId,
+                        component: CommunityPage,
+                        props: (route: any) => ({
+                            slug: route.params.communitySlug
+                        })
+                    }
+                ]
+            }
         ]
     }
 ]
