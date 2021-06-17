@@ -220,7 +220,7 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
                                 return false;
                             }
 
-                            if (path.filename().native().find(L"WoWCombatLog-"s) != 0) {
+                            if (path.filename().native().find(L"WoWCombatLog"s) != 0) {
                                 return false;
                             }
 
@@ -250,11 +250,12 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
         return;
     }
 
-    LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << std::endl);
     _logPath = combatLogPath;
     using std::placeholders::_1;
 
-    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks() && !legacy, false, loop);
+    _legacy = legacy || (combatLogPath.filename().native().find(L"WoWCombatLog-"s) == std::string::npos);
+    LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << " [Legacy: " << _legacy << "]" << std::endl);
+    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks() && !_legacy, false, loop);
     _watcher->disableBatching();
 }
 

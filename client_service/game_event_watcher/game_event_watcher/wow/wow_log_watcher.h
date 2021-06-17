@@ -119,6 +119,8 @@ public:
     void loadFromPath(const std::filesystem::path& logPath, bool loop = true, bool legacy = false);
     void moveLogToBackup();
 
+    bool legacy() const { return _legacy; }
+
     void wait();
 private:
     void onCombatLogChange(const LogLinesDelta& lines);
@@ -127,6 +129,7 @@ private:
     LogWatcherPtr _watcher;
     int64_t _logLine = 0;
     bool _running = true;
+    bool _legacy = false;
     std::thread _timestampLogThread;
     shared::TimePoint _lastLogTime = shared::zeroTime();
 };
