@@ -36,6 +36,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.WorldOfWarcraft"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>

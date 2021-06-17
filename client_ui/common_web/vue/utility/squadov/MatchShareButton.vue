@@ -206,6 +206,9 @@ export default class MatchShareButton extends Vue {
     @Prop()
     graphqlStats!: StatPermission[]
 
+    @Prop({required: true})
+    fullPath!: string
+
     showHideError: boolean = false
     showHideShare: boolean = false
 
@@ -237,8 +240,8 @@ export default class MatchShareButton extends Vue {
         this.creatingLink = true
         
         let promise = !!this.matchUuid ?
-            apiClient.createMatchShareUrl(this.matchUuid, this.$route.fullPath, this.game, this.graphqlStats) :
-            apiClient.createClipShareUrl(this.clipUuid!, this.$route.fullPath)
+            apiClient.createMatchShareUrl(this.matchUuid, this.fullPath, this.game, this.graphqlStats) :
+            apiClient.createClipShareUrl(this.clipUuid!, this.fullPath)
         promise.then((resp: ApiData<LinkShareData>) => {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
@@ -263,7 +266,6 @@ export default class MatchShareButton extends Vue {
         })
     }
 
-    @Watch('$route.fullPath')
     @Watch('matchUuid')
     @Watch('clipUuid')
     refreshLinkShareData() {

@@ -23,6 +23,7 @@
                         :match-uuid="matchId"
                         :game="SquadOvGames.Hearthstone"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>

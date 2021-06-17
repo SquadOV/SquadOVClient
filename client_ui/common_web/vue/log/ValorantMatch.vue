@@ -19,6 +19,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.Valorant"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>

@@ -20,6 +20,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.TeamfightTactics"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>

@@ -21,6 +21,7 @@
                         :game="SquadOvGames.AimLab"
                         :graphql-stats="statPermissions"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>
