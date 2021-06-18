@@ -169,6 +169,18 @@
                 hide-details
                 dense
             ></v-checkbox>
+
+            <v-select
+                class="ml-2"
+                label="Success"
+                v-model="internalValue.isWinner"
+                :items="successItems"
+                @change="syncToValue"
+                hide-details
+                outlined
+                dense
+            >
+            </v-select>
         </div>
     </generic-match-filter-ui>
 </template>
@@ -214,6 +226,23 @@ export default class WowFilterUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+    }
+
+    get successItems(): any[] {
+        return [
+            {
+                text: this.forArenas ? 'Win' : 'Clear',
+                value: true,
+            },
+            {
+                text: this.forArenas ? 'Loss' : 'Wipe',
+                value: false,
+            },
+            {
+                text: 'All',
+                value: null,
+            }
+        ]
     }
 
     get bracketItems(): any[] {

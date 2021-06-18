@@ -5,6 +5,7 @@ export interface WowMatchFilters {
     dungeons: number[]
     arenas: number[]
     brackets: string[]
+    isWinner: boolean | null
 }
 
 export function createEmptyWowMatchFilters(): WowMatchFilters {
@@ -15,5 +16,6 @@ export function createEmptyWowMatchFilters(): WowMatchFilters {
         dungeons: [],
         arenas: [],
         brackets: [],
+        isWinner: null,
     }
 }
