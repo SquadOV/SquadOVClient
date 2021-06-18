@@ -6,7 +6,15 @@
         </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
-            <span class="text-h4">No VOD Available.</span>
+            <v-col cols="7">
+                <div class="text-h4 font-weight-bold">No VOD Available.</div>
+                <v-alert border="left" colored-border color="error" elevation="2" class="text-subtitle-2 mt-2 py-2">
+                    SquadOV must be running on your machine (not the web client) for it to record a VOD. We <b>DO NOT</b> record VODs for games that happened in the past or when SquadOV is not running/installed.
+                    Please refer to the support wizard on how to properly setup SquadOV for the game(s) you play.
+                    Sometimes it takes a bit longer for your machine to upload VODs to our servers, in that case please wait a few minutes.
+                    If all else fails, please feel free to submit a bug report!
+                </v-alert>
+            </v-col>
         </v-row>
 
         <video-draw-overlay
