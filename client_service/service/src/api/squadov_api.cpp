@@ -12,10 +12,14 @@ namespace service::api {
 namespace {
 
 const std::string WEB_SESSION_HEADER_KEY = "x-squadov-session-id";
+constexpr int MAX_WOW_MATCH_FINISH_RETRY = 3;
 
 }
 
-SquadovApi::SquadovApi() {
+SquadovApi::SquadovApi():
+    _rdGen(std::random_device{}()),
+    _rdDist(0.0, 1.0)
+{
     {
         std::ostringstream host;
         host << shared::getEnv("API_SQUADOV_URL", "http://127.0.0.1:8080");
@@ -26,6 +30,11 @@ SquadovApi::SquadovApi() {
         // which should be plenty fast.
         _webClient->setRateLimit(0.2);
     }
+}
+
+std::chrono::milliseconds SquadovApi::generateRandomBackoff(int64_t base, size_t tryCount) const {
+    std::lock_guard guard(_randomMutex);
+    return std::chrono::milliseconds(static_cast<int64_t>(base + std::pow(2, tryCount) + _rdDist(_rdGen) * 1000));
 }
 
 KafkaInfo SquadovApi::getKafkaInfo() const {
@@ -413,14 +422,24 @@ std::string SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, co
 
     std::ostringstream path;
     path << "/v1/wow/match/challenge/" << matchUuid;
-    const auto result = _webClient->post(path.str(), body);
 
-    if (result->status != 200) {
-        THROW_ERROR("Failed to create finish WoW challenge: " << result->status);
+    int lastStatus = 0;
+    for (int i = 0; i < MAX_WOW_MATCH_FINISH_RETRY; ++i) {
+        const auto result = _webClient->post(path.str(), body);
+
+        lastStatus = result->status;
+        if (result->status != 200) {
+            LOG_INFO("...Error from server...retrying." << std::endl);
+            std::this_thread::sleep_for(generateRandomBackoff(1000, static_cast<size_t>(i)));
+            continue;
+        }
+
+        const auto parsedJson = nlohmann::json::parse(result->body);
+        return parsedJson.get<std::string>();
     }
 
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson.get<std::string>();
+    THROW_ERROR("Failed to finish WoW challenge: " << lastStatus);
+    return "";
 }
 
 std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const game_event_watcher::WoWCombatLogState& cl) {
@@ -457,14 +476,24 @@ std::string SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, co
 
     std::ostringstream path;
     path << "/v1/wow/match/encounter/" << matchUuid;
-    const auto result = _webClient->post(path.str(), body);
 
-    if (result->status != 200) {
-        THROW_ERROR("Failed to finish WoW encounter: " << result->status);
+    int lastStatus = 0;
+    for (int i = 0; i < MAX_WOW_MATCH_FINISH_RETRY; ++i) {
+        const auto result = _webClient->post(path.str(), body);
+
+        lastStatus = result->status;
+        if (result->status != 200) {
+            LOG_INFO("...Error from server...retrying." << std::endl);
+            std::this_thread::sleep_for(generateRandomBackoff(1000, static_cast<size_t>(i)));
+            continue;
+        }
+
+        const auto parsedJson = nlohmann::json::parse(result->body);
+        return parsedJson.get<std::string>();
     }
 
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson.get<std::string>();
+    THROW_ERROR("Failed to finish WoW encounter: " << lastStatus);
+    return "";
 }
 
 std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl) {
@@ -501,14 +530,24 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
 
     std::ostringstream path;
     path << "/v1/wow/match/arena/" << matchUuid;
-    const auto result = _webClient->post(path.str(), body);
 
-    if (result->status != 200) {
-        THROW_ERROR("Failed to finish WoW arena: " << result->status);
+    int lastStatus = 0;
+    for (int i = 0; i < MAX_WOW_MATCH_FINISH_RETRY; ++i) {
+        const auto result = _webClient->post(path.str(), body);
+
+        lastStatus = result->status;
+        if (result->status != 200) {
+            LOG_INFO("...Error from server...retrying." << std::endl);
+            std::this_thread::sleep_for(generateRandomBackoff(1000, static_cast<size_t>(i)));
+            continue;
+        }
+
+        const auto parsedJson = nlohmann::json::parse(result->body);
+        return parsedJson.get<std::string>();
     }
 
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson.get<std::string>();
+    THROW_ERROR("Failed to finish WoW arena: " << lastStatus);
+    return "";
 }
 
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {
