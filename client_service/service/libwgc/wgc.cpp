@@ -118,12 +118,21 @@ WindowsGraphicsCaptureImpl::WindowsGraphicsCaptureImpl(HWND window, service::ren
 }
 
 void WindowsGraphicsCaptureImpl::stopRecording() {
-    _running = true;
-    _frameArrived.revoke();
-    _session.Close();
-    _framePool.Close();
-    _framePool = nullptr;
-    _session = nullptr;
+    _running = false;
+    if (_frameArrived) {
+        _frameArrived.revoke();
+    }
+
+    if (_session) {
+        _session.Close();
+        _session = nullptr;
+    }
+
+    if (_framePool) {
+        _framePool.Close();
+        _framePool = nullptr;
+    }
+    
     _item = nullptr;
 
     // Need this to make sure we don't destroy the object with an active encoder mutex.
