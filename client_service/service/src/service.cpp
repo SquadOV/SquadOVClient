@@ -187,6 +187,23 @@ int main(int argc, char** argv) {
     date::set_install(tzDataFolder);
     date::get_tzdb_list();
 
+    // Sanity check the timezone in the logs...
+    {
+        const auto gmt = shared::nowUtc();
+        const auto local = date::make_zoned(date::current_zone(), gmt);
+        const auto checkGmt = date::make_zoned(
+            date::current_zone(),
+            shared::strToLocalTime(
+                shared::localTimeToString(local.get_local_time()),
+                "%Y-%m-%d %T"
+            )
+        ).get_sys_time();
+        LOG_INFO("Current TimeZone: " << date::current_zone()->name() << std::endl);
+        LOG_INFO("\tGMT: " << shared::timeToStr(gmt) << std::endl);
+        LOG_INFO("\tLocal: " << shared::localTimeToString(local.get_local_time()) << std::endl);
+        LOG_INFO("\tCheck GMT: " << shared::timeToStr(checkGmt) << std::endl);
+    }
+
     LOG_INFO("Set Locale..." << std::endl);
     std::setlocale(LC_ALL, "en_US.utf8");
 

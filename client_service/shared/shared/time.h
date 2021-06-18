@@ -34,7 +34,7 @@ std::string localTimeToString(const date::local_time<T>& t) {
     date::hh_mm_ss hms(date::floor<std::chrono::milliseconds>(t - dp));
 
     std::ostringstream ss;
-    ss << ymd.year() << "-" << ymd.month() << "-" << ymd.day() << " " << hms;
+    ss << ymd.year() << "-" << std::setfill('0') << std::setw(2) << (unsigned)ymd.month() << "-" << ymd.day() << std::setw(0) <<  " " << hms;
     return ss.str();
 }
 
