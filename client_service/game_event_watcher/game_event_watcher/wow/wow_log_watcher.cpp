@@ -398,7 +398,8 @@ nlohmann::json RawWoWCombatLog::toJson() const {
         {"timestamp", shared::timeToIso(timestamp)},
         // Uhhh...I made the mistake of naming it parts on the server instead of log. Oop.
         {"parts", parts },
-        {"logLine", logLine }
+        {"logLine", logLine },
+        {"rawLog", rawLog }
     };
 }
 
