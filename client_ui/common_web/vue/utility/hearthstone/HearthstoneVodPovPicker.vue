@@ -140,7 +140,6 @@ export default class HearthstoneVodPovPicker extends mixins(CommonComponent) {
     onChangeVods() {
         this.$emit('update:vod', null)
         if (!this.availableVods) {
-            console.log('no vods')
             return
         }
 

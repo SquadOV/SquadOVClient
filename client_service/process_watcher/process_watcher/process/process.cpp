@@ -32,14 +32,14 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
         return nullptr;
     }
 
-    TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
-    if (GetModuleFileNameEx(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
+    WCHAR szProcessName[MAX_PATH] = L"<unknown>";
+    if (GetModuleFileNameExW(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
         LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
     }
     CloseHandle(hProcess);
 
-    return std::make_unique<process_watcher::process::Process>(std::string(szProcessName), id);
+    return std::make_unique<process_watcher::process::Process>(std::wstring(szProcessName), id);
 }
 
 #endif

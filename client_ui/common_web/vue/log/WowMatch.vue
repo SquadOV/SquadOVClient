@@ -36,6 +36,7 @@
                         :match-uuid="matchUuid"
                         :game="SquadOvGames.WorldOfWarcraft"
                         :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
                     >
                     </match-share-button>
                 </div>
@@ -107,6 +108,7 @@
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
+                                :char-guid="currentCharacter"
                                 @go-to-time="goToVodTime(arguments[0], false)"
                             >
                             </wow-timeline>
@@ -128,6 +130,7 @@
                                 :current-time="vodTime"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
+                                :char-guid="currentCharacter"
                                 @go-to-time="goToVodTime(arguments[0], false)"
                             >
                             </wow-spell-analysis>

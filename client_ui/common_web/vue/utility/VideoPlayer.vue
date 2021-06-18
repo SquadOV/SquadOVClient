@@ -1,12 +1,20 @@
 <template>
     <div>
-        <div v-if="hasVideo" :style="parentDivStyle">
+        <div v-if="hasVideo" :style="parentDivStyle" :key="forceRedraw">
             <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
             </video>
         </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
-            <span class="text-h4">No VOD Available.</span>
+            <v-col cols="7">
+                <div class="text-h4 font-weight-bold">No VOD Available.</div>
+                <v-alert border="left" colored-border color="error" elevation="2" class="text-subtitle-2 mt-2 py-2">
+                    SquadOV must be running on your machine (not the web client) for it to record a VOD. We <b>DO NOT</b> record VODs for games that happened in the past or when SquadOV is not running/installed.
+                    Please refer to the support wizard on how to properly setup SquadOV for the game(s) you play.
+                    Sometimes it takes a bit longer for your machine to upload VODs to our servers, in that case please wait a few minutes.
+                    If all else fails, please feel free to submit a bug report!
+                </v-alert>
+            </v-col>
         </v-row>
 
         <video-draw-overlay
@@ -99,6 +107,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     hasMadeProgress: boolean = false
     rcContext: VodRemoteControlContext | null = null
     forceNoVideo: boolean = false
+    forceRedraw: number = 0
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -136,6 +145,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
             this.player.reset()
         }
+
+        this.forceRedraw += 1
     }
 
     @Watch('vod')

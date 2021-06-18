@@ -20,6 +20,8 @@ public:
     Process(const std::string& path, OSProcessHandle pid): _path(path), _pid(pid) {}
 
 #ifdef _WIN32
+    Process(const std::wstring& path, OSProcessHandle pid): _path(path), _pid(pid) {}
+
     std::wstring name() const { return _path.filename().wstring(); }
 #else
     std::string name() const { return _path.filename().string(); }

@@ -1,6 +1,19 @@
 <template>
     <div class="full-width">
-        <div class="d-flex align-center">
+        <div class="d-flex align-center pa-2">
+            <div class="text-h6 font-weight-bold">
+                Display Options: 
+            </div>
+
+            <wow-character-chooser
+                :characters="matchCharacters"
+                v-model="charactersToDisplay"
+                :patch="patch"
+                multiple
+                style="max-width: 500px;"
+            >
+            </wow-character-chooser>
+
             <v-dialog
                 v-model="showSettings"
                 max-width="60%"
@@ -9,7 +22,6 @@
                     <v-btn
                         class="my-1"
                         v-on="on"
-                        block
                         color="primary"
                     >
                         Settings
@@ -19,31 +31,7 @@
                 <v-card class="full-parent-height">
                     <v-container class="full-parent-height">
                         <v-row class="full-parent-height">
-                            <v-col cols="6" class="full-parent-height">
-                                <v-list dense class="full-parent-height" style="overflow: auto;">
-                                    <v-list-item-group
-                                        v-model="showGuids"
-                                        multiple
-                                    >
-                                        <v-list-item
-                                            v-for="(c, idx) in matchCharacters"
-                                            :key="`guid-${idx}`"
-                                            :value="c.guid"
-                                        >
-                                            <template v-slot:default="{ active }">
-                                                <v-list-item-action>
-                                                    <v-checkbox :input-value="active"></v-checkbox>
-                                                </v-list-item-action>
-
-                                                <wow-character-display :character="c" :patch="patch">
-                                                </wow-character-display>
-                                            </template>
-                                        </v-list-item>
-                                    </v-list-item-group>
-                                </v-list>
-                            </v-col>
-
-                            <v-col cols="6">
+                            <v-col cols="12">
                                 <div class="text-overline">
                                     General
                                 </div>
@@ -174,13 +162,14 @@ import {
     SerializedWowMatchEvents,
     isWowAuraBuff,
 } from '@client/js/wow/events'
-import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
+import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
+
 const HEIGHT_PER_LAYER = 32
 
 @Component({
     components: {
         TimePeriodGraph,
-        WowCharacterDisplay
+        WowCharacterChooser
     }
 })
 export default class WowSpellAnalysis extends Vue {
@@ -215,9 +204,12 @@ export default class WowSpellAnalysis extends Vue {
     @Prop({required: true})
     patch!: string
 
+    @Prop({default: ''})
+    charGuid!: string | undefined
+
     spellIdNames: {[id: number]: string} = {}
 
-    showGuids: string[] = []
+    charactersToDisplay: WowCharacter[] = []
     showSettings: boolean = false
     onlyImportant: boolean = false
     showFailed: boolean = false
@@ -233,7 +225,7 @@ export default class WowSpellAnalysis extends Vue {
     }
 
     get guidSet(): Set<string> {
-        return new Set(this.showGuids)
+        return new Set(this.charactersToDisplay.map((ele: WowCharacter) => ele.guid))
     }
 
     get activeData(): StatTimePeriodData[] {
@@ -427,8 +419,22 @@ export default class WowSpellAnalysis extends Vue {
         }
     }
 
+    @Watch('matchCharacters')
+    @Watch('charGuid')
+    resetDisplayOptions() {
+        let char = this.matchCharacters.find((ele: WowCharacter) => ele.guid === this.charGuid)
+        
+        if (!!char) {
+            this.charactersToDisplay = [char]
+        } else if (this.matchCharacters.length > 0) {
+            this.charactersToDisplay = [this.matchCharacters[0]]
+        } else {
+            this.charactersToDisplay = []
+        }
+    }
+
     mounted() {
-        this.showGuids = this.matchCharacters.map((c: WowCharacter) => c.guid)
+        this.resetDisplayOptions()
     }
 
     redraw() {

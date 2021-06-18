@@ -148,6 +148,11 @@ void WoWProcessHandlerInstance::cleanup() {
     LOG_INFO("Ending DVR session..." << std::endl);
     _recorder->stop({});
 
+    if (_logWatcher->legacy()) {
+        LOG_INFO("Doing Legacy Log Cleanup..." << std::endl);
+        _logWatcher->moveLogToBackup();
+    }
+
     LOG_INFO("Finish WoW cleanup..." << std::endl);
 }
 

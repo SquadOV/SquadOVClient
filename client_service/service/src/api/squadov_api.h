@@ -19,6 +19,7 @@
 #include <memory>
 #include <shared_mutex>
 #include <nlohmann/json.hpp>
+#include <random>
 #include <vector>
 #include <unordered_set>
 
@@ -114,6 +115,11 @@ private:
     // Various caches of things we want to keep track of.
     mutable std::mutex _riotAccountOwnershipMutex;
     mutable std::unordered_set<std::string> _verifiedRiotAccounts;
+
+    mutable std::mutex _randomMutex;
+    mutable std::mt19937 _rdGen;
+    std::uniform_real_distribution<> _rdDist;
+    std::chrono::milliseconds generateRandomBackoff(int64_t base, size_t tryCount) const;
 };
 
 using SquadovApiPtr = std::unique_ptr<SquadovApi>;

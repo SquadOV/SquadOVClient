@@ -69,6 +69,7 @@
                         <match-share-button
                             :clip-uuid="clipUuid"
                             :permissions="permissions"
+                            :full-path="$route.fullPath"
                             no-clip
                         >
                         </match-share-button>
