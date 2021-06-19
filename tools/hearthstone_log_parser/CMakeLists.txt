@@ -22,4 +22,5 @@ target_link_libraries(hearthstone_log_parser
     squadov_shared
     ${Boost_LIBRARIES}
     date-tz
+    dbghelp
 )

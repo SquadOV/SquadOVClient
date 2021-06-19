@@ -1,5 +1,6 @@
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "shared/log/log.h"
+#include "shared/time.h"
 
 #include <boost/program_options.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -27,7 +28,7 @@ int main(int argc, char** argv) {
     const fs::path logPath(vm["log"].as<std::string>());
     const fs::path powerPath(vm["power"].as<std::string>());
 
-    HearthstoneLogWatcher watcher(false);
+    HearthstoneLogWatcher watcher(false, shared::nowUtc());
     watcher.notifyOnEvent(static_cast<int>(EHearthstoneLogEvents::GameReady), [](const shared::TimePoint& tm, const void* data){
         LOG_INFO("Hearthstone Game Ready [" << shared::timeToStr(tm) << "]" << std::endl);
     });

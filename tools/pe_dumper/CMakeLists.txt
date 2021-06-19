@@ -20,6 +20,6 @@ target_include_directories(pe_dumper
 target_link_libraries(pe_dumper
     squadov_process_watcher
     squadov_shared
-    Boost::program_options
+    ${Boost_LIBRARIES}
     dbghelp
 )

@@ -22,4 +22,5 @@ target_link_libraries(file_watch_tester
     squadov_shared
     Boost::program_options
     date-tz
+    dbghelp
 )

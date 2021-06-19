@@ -26,6 +26,7 @@ int main(int argc, char** argv) {
                 std::cout << l << std::endl;
             }
         },
+        shared::nowUtc(),
         false,
         true
     );

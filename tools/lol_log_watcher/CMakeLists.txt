@@ -22,4 +22,5 @@ target_link_libraries(lol_log_watcher
     squadov_shared
     ${Boost_LIBRARIES}
     date-tz
+    dbghelp
 )
