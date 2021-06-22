@@ -294,6 +294,13 @@ export default class Community extends Vue {
         if (query === '') {
             return
         }
+
+        this.$router.push({
+            name: CommunityDiscoverPageId,
+            query: {
+                search: query,
+            }
+        })
     }
 
     get routerKey(): string {

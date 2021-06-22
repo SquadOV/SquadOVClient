@@ -38,6 +38,7 @@ export const RegisterPageId = 'register'
 export const ForgotPasswordPageId = 'forgotPw'
 export const VerifyEmailPageId = 'verifyEmail'
 
+export const TwitchOauthPageId = 'twitchOauth'
 export const RsoOauthPageId = 'rso'
 export const InviteResponsePageId = 'inviteResponse'
 export const ShareRedirectPageId = 'share'

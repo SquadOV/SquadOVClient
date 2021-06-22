@@ -299,7 +299,7 @@ export default class LocalStorageManager extends Vue {
         return {
             name: SettingsPageId,
             query: {
-                inputTab: 2
+                inputTab: 3,
             }
         }
     }

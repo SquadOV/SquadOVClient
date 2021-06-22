@@ -166,6 +166,7 @@ import { WowMatchFilters } from '@client/js/wow/filters'
 import { LocalVodsDto } from '@client/js/local/types'
 import { SquadOvCommunity, CommunityFilter, cleanCommunityFromJson, CommunityRole } from '@client/js/squadov/community'
 import { cleanUser2UserSubscriptionFromJson, User2UserSubscription } from './squadov/subscription'
+import { LinkedAccounts, TwitchAccount } from './squadov/accounts'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1103,7 +1104,7 @@ class ApiClient {
         return axios.post(`public/share/${accessTokenId}/exchange`, {}, this.createWebAxiosConfig())
     }
 
-    deleteRiotAccount(userId: number, puuid: string): Promise<ApiData<void>> {
+    deleteRiotAccount(userId: number, puuid: string): Promise<void> {
         return axios.delete(`v1/users/${userId}/accounts/riot/generic/${puuid}`, this.createWebAxiosConfig())
     }
 
@@ -1375,6 +1376,26 @@ class ApiClient {
             resp.data.forEach(cleanUser2UserSubscriptionFromJson)
             return resp
         })
+    }
+
+    getLinkedTwitchAcccount(): Promise<ApiData<TwitchAccount[]>> {
+        return axios.get(`v1/users/me/accounts/twitch`, this.createWebAxiosConfig())
+    }
+
+    getAllLinkedAccounts(): Promise<ApiData<LinkedAccounts>> {
+        return axios.get(`v1/users/me/accounts`, this.createWebAxiosConfig())
+    }
+
+    deleteMyLinkedTwitchAccount(twitchUserId: number): Promise<void> {
+        return axios.delete(`v1/users/me/accounts/twitch/${twitchUserId}`, this.createWebAxiosConfig())
+    }
+
+    getTwitchOauthAuthorizeUrl(): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/oauth/twitch`, this.createWebAxiosConfig())
+    }
+
+    submitTwitchOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
+        return axios.post(`auth/oauth/twitch`, {code, state, redirectUrl}, this.createWebAxiosConfig())
     }
 
     // Local API

@@ -53,14 +53,29 @@
                                 </div>
                             </div>
 
-                            <div v-else-if="needsSubToJoin">
-                                <div class="font-weight-bold text-h6" v-if="hasSub">
-                                    You must join the community to see posts.
-                                </div>
+                            <div class="d-flex align-center justify-center" v-else-if="needsSubToJoin">
+                                <template v-if="hasSub">
+                                    <div class="font-weight-bold text-h6">
+                                        You must join the community to see posts.
+                                    </div>
 
-                                <div class="font-weight-bold text-h6" v-else>
-                                    This community requires you to subscribe to the community creator prior to joining.
-                                </div>
+                                    <community-join-button
+                                        :community="community"
+                                    >
+                                    </community-join-button>
+                                </template>
+
+                                <template v-else>
+                                    <div class="font-weight-bold text-h6">
+                                        This community requires you to subscribe to the community creator prior to joining.
+                                    </div>
+
+                                    <community-subscription-button
+                                        :community="community"
+                                        :sub.sync="sub"
+                                    >
+                                    </community-subscription-button>
+                                </template>
                             </div>
 
                             <div class="font-weight-bold text-h6" v-else>
@@ -88,11 +103,15 @@ import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvCommunity, CommunityRole, CommunitySecurityLevel } from '@client/js/squadov/community'
 import { User2UserSubscription } from '@client/js/squadov/subscription'
 import * as pi from '@client/js/pages'
+import CommunityJoinButton from '@client/vue/utility/community/CommunityJoinButton.vue'
+import CommunitySubscriptionButton from '@client/vue/utility/community/CommunitySubscriptionButton.vue'
 
 @Component({
     components: {
         LoadingContainer,
         CommunityListItem,
+        CommunityJoinButton,
+        CommunitySubscriptionButton,   
     }
 })
 export default class CommunityPage extends Vue {

@@ -86,6 +86,8 @@ const VerifyEmail = () => import('@client/vue/auth/VerifyEmail.vue')
 const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
+const TwitchOauthHandler = () => import('@client/vue/auth/oauth/TwitchOauthHandler.vue')
+
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
 const VodEditor = () => import('@client/vue/utility/vods/VodEditor.vue')
@@ -540,6 +542,15 @@ const baseRoutes : any[] = [
                 }),
             },
             {
+                path: 'twitch/oauth-callback',
+                component: TwitchOauthHandler,
+                name: pi.TwitchOauthPageId,
+                props: (route : any) => ({
+                    code: route.query.code,
+                    state: route.query.state,
+                }),
+            },
+            {
                 path: 'invite/:inviteUuid/:action',
                 component: SquadInviteResponsePage,
                 name: pi.InviteResponsePageId,
@@ -596,6 +607,9 @@ const baseRoutes : any[] = [
                         path: 'discover',
                         name: pi.CommunityDiscoverPageId,
                         component: CommunityDiscover,
+                        props: (route: any) => ({
+                            search: route.query.search
+                        })
                     },
                     {
                         path: ':communitySlug',

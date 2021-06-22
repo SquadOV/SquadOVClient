@@ -48,6 +48,17 @@
 
             <v-tab>
                 <v-icon left>
+                    mdi-account
+                </v-icon>
+                Accounts
+            </v-tab>
+
+            <v-tab-item>
+                <linked-accounts-settings-item></linked-accounts-settings-item>
+            </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
                     mdi-play-circle
                 </v-icon>
                 Playback
@@ -110,6 +121,7 @@ import RecordingSettingsItem from '@client/vue/utility/squadov/settings/Recordin
 import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
 import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
 import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSettingsItem.vue'
+import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/LinkedAccountsSettingsItem.vue'
 
 @Component({
     components: {
@@ -117,6 +129,7 @@ import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSet
         AccountSecuritySettingsItem,
         PlaybackSettingsItem,
         SharingSettingsItem,
+        LinkedAccountsSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {
