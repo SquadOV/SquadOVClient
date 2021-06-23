@@ -19,7 +19,9 @@ export enum AnalyticsAction {
     DownloadVod,
     StartDrawVod,
     EndDrawVod,
+    OpenCreateClip,
     CreateClip,
+    SaveClip,
     ChangePov,
     // Match Info
     GoToPhase,

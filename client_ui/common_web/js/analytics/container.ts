@@ -6,10 +6,12 @@ import {
     AnalyticsAction
 } from '@client/js/analytics/events'
 import ua from 'universal-analytics'
+import mixpanel from 'mixpanel-browser'
 
 ///#if DESKTOP
 import fs from 'fs'
 import path from 'path'
+import { Route } from 'vue-router'
 ///#else
 ///#endif
 
@@ -17,6 +19,14 @@ export class AnalyticsContainer {
     _isInit: boolean = false
     _store: Store<RootState>
     _ga: ua.Visitor
+
+    get platform(): string {
+///#if DESKTOP
+        return 'app'
+///#else
+        return 'web'
+///#endif
+    }
 
     generateOrLoadClientId(): string {
         console.log('Checking for anonymous analytics ID...')
@@ -44,15 +54,15 @@ export class AnalyticsContainer {
 ///#else
         window.localStorage.setItem(key, newClientId)
 ///#endif
-
         return newClientId
     }
 
     constructor(store: Store<RootState>) {
         this._store = store
 
+        let anonId = this.generateOrLoadClientId()
         // Generate or load a uuid for this [anonymous] user.
-        this._ga = ua('UA-185942570-1', this.generateOrLoadClientId())
+        this._ga = ua('UA-185942570-1', anonId)
 ///#if DESKTOP
         this._ga.set('ds', 'app')
 ///#else
@@ -61,22 +71,35 @@ export class AnalyticsContainer {
         this._ga.set('aip', true)
         // isLoggedIn
         this._ga.set('cd[1]', (!!this._store.state.currentUser).toString())
+
+        mixpanel.init('68b7bcde2b8c2ae564daf927e46d391f')
+        mixpanel.identify(anonId)
     }
 
-    pageView(fullPath: string) {
-        this._ga.pageview(fullPath).send()
+    pageView(route: Route) {
+        this._ga.pageview(route.fullPath).send()
     }
 
-    event(fullPath: string, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
+    event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
+        let routeName = !!route.name ? route.name : 'Unknown'
         let params = {
             ec: AnalyticsCategory[category],
             ea: AnalyticsAction[action],
             el: label,
-            dp: fullPath,
+            dp: route.fullPath,
+            dt: routeName,
             ev: value,
         }
 
         this._ga.event(params).send()
+        mixpanel.track(`${params.ec}-${params.ea}`, {
+            path: route.fullPath,
+            route: routeName,
+            loggedIn: !!this._store.state.currentUser,
+            label,
+            value,
+            platform: this.platform,
+        })
     }
 }
 

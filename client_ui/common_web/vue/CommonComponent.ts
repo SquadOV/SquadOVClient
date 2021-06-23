@@ -15,7 +15,7 @@ export default class CommonComponent extends Vue {
     }
 
     sendAnalyticsEvent(category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
-        this.analytics.event(this.$route.fullPath, category, action, label, value)
+        this.analytics.event(this.$route, category, action, label, value)
     }
 
     activated() {

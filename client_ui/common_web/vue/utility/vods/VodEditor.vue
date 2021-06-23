@@ -286,8 +286,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodEditorContext, requestVodClip } from '@client/js/vods/editor'
 import { VodAssociation, VodMetadata } from '@client/js/squadov/vod'
@@ -313,7 +313,7 @@ const MAX_CLIP_LENGTH_MILLISECONDS = 180000
         GenericMatchTimeline
     }
 })
-export default class VodEditor extends Vue {
+export default class VodEditor extends mixins(CommonComponent) {
     secondsToTimeString = secondsToTimeString
 
     @Prop({required: true})
@@ -570,6 +570,7 @@ export default class VodEditor extends Vue {
         }
 
         this.saveInProgress = true
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.SaveClip, '', this.clipEnd - this.clipStart)
         apiClient.createClip(this.videoUuid, this.localClipPath, {
             matchUuid: this.vod.matchUuid,
             userUuid: this.$store.state.currentUser.uuid,
@@ -626,6 +627,7 @@ export default class VodEditor extends Vue {
         this.clipInProgress = true
         this.showHideClipDialog = true
 
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', this.clipEnd - this.clipStart)
         // Add a second to the end of the video to ensure that we capture that last second completely.
         requestVodClip(videoUri, this.clipStart, this.clipEnd + 1000).then((resp: {
             path: string,

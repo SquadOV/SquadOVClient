@@ -44,6 +44,7 @@
     "fontfaceobserver": "^2.1.0",
     "fork-ts-checker-webpack-plugin": "^6.2.10",
     "mini-css-extract-plugin": "^1.6.0",
+    "mixpanel-browser": "^2.41.0",
     "node-sass": "^6.0.0",
     "player.js": "^0.1.0",
     "qrcode": "^1.4.4",

@@ -586,7 +586,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         this.context.startSource(this.value)
         this.onChangeTimestamp()
 
-        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', 0)
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.OpenCreateClip, '', 0)
         openVodEditingWindow(this.value.videoUuid, this.game)
     }
 

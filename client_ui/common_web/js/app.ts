@@ -600,7 +600,7 @@ const statusTracker = new TrackedUserStatsManager(store)
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
 
 router.afterEach((to: Route, from: Route) => {
-    getAnalyticsContainer().pageView(to.fullPath)
+    getAnalyticsContainer().pageView(to)
 })
 
 router.beforeEach((to : Route, from : Route, next : any) => {
