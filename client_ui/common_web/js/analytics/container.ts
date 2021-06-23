@@ -63,11 +63,7 @@ export class AnalyticsContainer {
         let anonId = this.generateOrLoadClientId()
         // Generate or load a uuid for this [anonymous] user.
         this._ga = ua('UA-185942570-1', anonId)
-///#if DESKTOP
-        this._ga.set('ds', 'app')
-///#else
-        this._ga.set('ds', 'web')
-///#endif
+        this._ga.set('ds', this.platform)
         this._ga.set('aip', true)
         // isLoggedIn
         this._ga.set('cd[1]', (!!this._store.state.currentUser).toString())
@@ -77,10 +73,17 @@ export class AnalyticsContainer {
     }
 
     pageView(route: Route) {
+        if (!this._store.state.settings?.anonymousAnalytics) {
+            return
+        }
         this._ga.pageview(route.fullPath).send()
     }
 
     event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
+        if (!this._store.state.settings?.anonymousAnalytics) {
+            return
+        }
+        
         let routeName = !!route.name ? route.name : 'Unknown'
         let params = {
             ec: AnalyticsCategory[category],

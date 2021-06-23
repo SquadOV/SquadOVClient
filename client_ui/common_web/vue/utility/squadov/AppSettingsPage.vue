@@ -44,6 +44,15 @@
                     label="Sync time to NTP servers"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="anonymousAnalytics"
+                    @change="changeAnonymousAnalytics"
+                    dense
+                    hide-details
+                    label="Send Anonymous Usage Data to SquadOV"
+                >
+                </v-checkbox>
             </v-tab-item>
 
             <v-tab>
@@ -174,6 +183,14 @@ export default class AppSettingsPage extends Vue {
 
     changeSyncToNtp(v: boolean) {
         this.$store.commit('setEnableNtp', v)
+    }
+
+    get anonymousAnalytics(): boolean {
+        return this.$store.state.settings.anonymousAnalytics
+    }
+
+    changeAnonymousAnalytics(v: boolean) {
+        this.$store.commit('setAnonymousAnalytics', v)
     }
 }
 

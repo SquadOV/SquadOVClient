@@ -237,6 +237,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        setAnonymousAnalytics(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.anonymousAnalytics = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
     },
     actions: {
         async reloadLocalSettings(context) {

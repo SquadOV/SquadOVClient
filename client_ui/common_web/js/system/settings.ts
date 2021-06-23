@@ -121,6 +121,7 @@ export interface SquadOvLocalSettings {
     runOnStartup: boolean
     setupWizardRun: boolean
     enableNtp: boolean
+    anonymousAnalytics: boolean
 }
 
 function getSettingsFname() : string {
@@ -255,6 +256,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        anonymousAnalytics: true,
     }
 /// #else
     return {
@@ -289,6 +291,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        anonymousAnalytics: true,
     }
 /// #endif
 }
@@ -403,6 +406,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             smallStepSize: 5000,
             largeStepSize: 10000,
         }
+    }
+
+    if (parsedData.anonymousAnalytics === undefined) {
+        parsedData.anonymousAnalytics = true
     }
 
     saveLocalSettings(parsedData, true)
