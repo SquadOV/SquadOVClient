@@ -165,8 +165,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
@@ -187,7 +187,7 @@ import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButt
         RedditShareButton
     }
 })
-export default class MatchShareButton extends Vue {
+export default class MatchShareButton extends mixins(CommonComponent) {
     @Prop()
     matchUuid!: string | undefined
 
@@ -242,6 +242,8 @@ export default class MatchShareButton extends Vue {
         let promise = !!this.matchUuid ?
             apiClient.createMatchShareUrl(this.matchUuid, this.fullPath, this.game, this.graphqlStats) :
             apiClient.createClipShareUrl(this.clipUuid!, this.fullPath)
+
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Share, this.AnalyticsAction.CreateSharePublic, !!this.matchUuid ? 'Match': 'Clip', 0)
         promise.then((resp: ApiData<LinkShareData>) => {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
@@ -254,6 +256,8 @@ export default class MatchShareButton extends Vue {
 
     deletePublicLink() {
         this.deletingLink = true
+
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Share, this.AnalyticsAction.DeleteSharePublic, !!this.matchUuid ? 'Match': 'Clip', 0)
         let promise = !!this.matchUuid ? apiClient.deleteMatchShareUrl(this.matchUuid) : apiClient.deleteClipShareUrl(this.clipUuid!)
         promise.then(() => {
             this.isSharedPublic = false
@@ -283,10 +287,13 @@ export default class MatchShareButton extends Vue {
 
     onShow() {
         this.refreshLinkShareData()
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Share, this.AnalyticsAction.ShareMatchClip, !!this.matchUuid ? 'Match': 'Clip', 0)
         this.showHideShare = true
     }
 
     doCopy() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Share, this.AnalyticsAction.CopySharePublic, !!this.matchUuid ? 'Match': 'Clip', 0)
+
         let inputEle = this.$refs.urlInput.$el.querySelector('input')
         inputEle.select()
         document.execCommand('copy')

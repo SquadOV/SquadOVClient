@@ -205,6 +205,7 @@ import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton
 import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis.vue'
 import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -223,7 +224,7 @@ import MatchShareBase from '@client/vue/log/MatchShareBase'
         WowPlayersAnalysis
     }
 })
-export default class WowMatch extends mixins(MatchShareBase) {
+export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     
     @Prop({type:Number, required: true})
@@ -270,8 +271,29 @@ export default class WowMatch extends mixins(MatchShareBase) {
         return ret
     }
 
+    get tabLabel(): string {
+        switch (this.selectedTab) {
+            case 0:
+                return 'Timeline'
+            case 1:
+                return 'Spells'
+            case 2:
+                return 'Players'
+            case 3:
+                return 'Deaths'
+        }
+        return ''
+    }
+
     @Watch('selectedTab')
     refreshTab() {
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.NavigateMatchInfo,
+            this.tabLabel,
+            this.selectedTab
+        )
+
         switch (this.selectedTab) {
             case 0:
                 if (!!this.$refs.timeline) {

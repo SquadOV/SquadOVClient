@@ -28,7 +28,7 @@
             tile
             :class="`round-button full-width flex-grow-1 flex-shrink-1 ${ (currentRound == roundData.roundNum) ? 'selected-round' : '' }`"
             :style="style"
-            @click="$emit('update:currentRound', roundData.roundNum)"
+            @click="goToRound"
         >
             <span class="text-center">{{ roundData.roundNum + 1 }}</span>
             <v-icon color="yellow" v-if="isMvp">
@@ -54,15 +54,16 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper } from '@client/js/csgo/match'
 import { CsgoRoundPlayerStats } from '@client/js/csgo/events'
 import { CsgoTeam } from '@client/js/csgo/events'
+import CommonComponent from '@client/vue/CommonComponent'
+
 
 @Component
-export default class CsgoSingleRoundTimeline extends Vue {
+export default class CsgoSingleRoundTimeline extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: CsgoFullMatchDataWrapper
 
@@ -74,6 +75,11 @@ export default class CsgoSingleRoundTimeline extends Vue {
 
     @Prop({required: true})
     currentRound!: number
+
+    goToRound() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToPhase, 'Round', this.roundData.roundNum)
+        this.$emit('update:currentRound', this.roundData.roundNum)
+    }
 
     get userTeam(): CsgoTeam {
         if (this.matchUserId === null) {

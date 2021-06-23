@@ -199,7 +199,7 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import {
     LolMatch,
@@ -219,6 +219,7 @@ import { ddragonContainer } from '@client/js/lolDdragon'
 import { colorToCssString, colorFromElementTheme } from '@client/js/color'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -226,7 +227,7 @@ import LineGraph from '@client/vue/stats/LineGraph.vue'
         LineGraph
     }
 })
-export default class LolStatTimelineContainer extends Vue {
+export default class LolStatTimelineContainer extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: LolMatch
 
@@ -444,7 +445,9 @@ export default class LolStatTimelineContainer extends Vue {
     }
 
     handleClick(evt: {gridIndex: number, pts: number[]}) {
-        this.$emit('go-to-timestamp', evt.pts[0] * 1000.0)
+        let tm = evt.pts[0] * 1000.0
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToTimeline, '', tm)
+        this.$emit('go-to-timestamp', tm)
     }
 
     mounted() {

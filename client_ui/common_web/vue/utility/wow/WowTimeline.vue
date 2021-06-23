@@ -181,7 +181,7 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import {
     UnifiedWowEventContainer,
@@ -212,6 +212,7 @@ import { StatTimePeriodData, StatTimePeriodTrackData, StatTimePeriodSection } fr
 import LineGraph from '@client/vue/stats/LineGraph.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 const STAT_SECOND_STEP = 5.0
 const BASE_GRAPH_HEIGHT = 650
@@ -239,7 +240,7 @@ function endpointToStatName(endpoint: string): string {
         WowCharacterChooser,
     }
 })
-export default class WowTimeline extends Vue {
+export default class WowTimeline extends mixins(CommonComponent) {
     @Prop({type:Number, required: true})
     userId!: number
 
@@ -330,6 +331,12 @@ export default class WowTimeline extends Vue {
         // the X axis is still going to be relative to the absolute start time of the entire
         // match and what we're receiving in pts is just the (x, y) coordinates effectively.
         let dt = new Date(this.startTime.getTime() + evt.pts[0] * 1000.0)
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToTimeline,
+            'Timeline',
+            dt.getTime()
+        )
         this.$emit('go-to-time', dt)
     }
 

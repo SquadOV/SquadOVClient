@@ -54,13 +54,14 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop } from 'vue-property-decorator'
 import { apiClient } from '@client/js/api' 
+import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 @Component
-export default class SquadInviteCreateCard extends Vue {
+export default class SquadInviteCreateCard extends mixins(CommonComponent) {
     @Prop({required: true})
     squadId!: number
 
@@ -82,6 +83,8 @@ export default class SquadInviteCreateCard extends Vue {
 
     sendInvite() {
         this.invitePending = true
+        this.sendAnalyticsEvent(AnalyticsCategory.Button, AnalyticsAction.InviteSquad, '', 0)
+        
         apiClient.sendSquadInvite(this.squadId, this.inviteUsernames, this.inviteEmails).then(() => {
             this.showSuccess = true
             this.$emit('on-send-invite')

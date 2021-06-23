@@ -40,12 +40,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { apiClient } from '@client/js/api'
+import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 @Component
-export default class SquadCreationCard extends Vue {
+export default class SquadCreationCard extends mixins(CommonComponent) {
     newSquadName: string = ''
     createPending: boolean = false
     showHideCreateSquadError: boolean = false
@@ -61,6 +62,8 @@ export default class SquadCreationCard extends Vue {
 
     performCreate() {
         this.createPending = true
+        this.sendAnalyticsEvent(AnalyticsCategory.Button, AnalyticsAction.CreateSquad, '', 0)
+
         apiClient.createSquad(this.newSquadName, this.$store.state.currentUser.username).then(() => {
             this.$emit('on-new-squad', this.newSquadName)
         }).catch((err: any) => {

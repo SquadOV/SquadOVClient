@@ -150,8 +150,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper} from '@client/js/csgo/match'
 import { CsgoBombSite, CsgoRoundKill, CsgoTeam, bombSiteToString } from '@client/js/csgo/events'
@@ -160,6 +159,7 @@ import { ColorA, colorFromElementTheme } from '@client/js/color'
 import CsgoTeamIcon from '@client/vue/utility/csgo/CsgoTeamIcon.vue'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 import CsgoRoundKillDisplay from '@client/vue/utility/csgo/CsgoRoundKillDisplay.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 interface BombPlant {
     user: number | null
@@ -185,7 +185,7 @@ interface RoundEvent {
         CsgoRoundKillDisplay
     }
 })
-export default class CsgoEventRoundDisplay extends Vue {
+export default class CsgoEventRoundDisplay extends mixins(CommonComponent) {
     millisecondsToTimeString = millisecondsToTimeString
     bombSiteToString = bombSiteToString
 
@@ -277,18 +277,30 @@ export default class CsgoEventRoundDisplay extends Vue {
     }
 
     goToBuy() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Buy', this.buyTime!.getTime())
         this.$emit('go-to-event', this.buyTime!)
     }
 
     goToPlay() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Play', this.playTime!.getTime())
         this.$emit('go-to-event', this.playTime!)
     }
 
     goToStop() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Stop', this.stopTime!.getTime())
         this.$emit('go-to-event', this.stopTime!)
     }
 
     goToEvent(e: RoundEvent) {
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            !!e.kill ? 'Kill' :
+                !!e.plant ? 'Plant' :
+                !!e.defuse ? 'Defuse' :
+                !!e.explode ? 'Explode' : '',
+            this.playTime!.getTime() + e.roundTimeMs
+        )
         this.$emit('go-to-event', new Date(this.playTime!.getTime() + e.roundTimeMs))
     }
 

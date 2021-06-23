@@ -235,8 +235,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import {
     SerializedWowMatchEvents,
@@ -253,13 +252,14 @@ import * as wowc from '@client/js/wow/constants'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { secondsToTimeString } from '@client/js/time'
 import { applyFilterToCondition } from '@client/js/boolean'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
         LoadingContainer
     }
 })
-export default class WowMatchEvents extends Vue {
+export default class WowMatchEvents extends mixins(CommonComponent) {
     @Prop({required: true})
     events!: SerializedWowMatchEvents | null
 
@@ -308,6 +308,13 @@ export default class WowMatchEvents extends Vue {
         if (!this.selectedEncounter) {
             return
         }
+
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            'Encounter Start',
+            this.selectedEncounter.startTm.getTime()
+        )
         this.$emit('go-to-event', this.selectedEncounter.startTm, false)
     }
 
@@ -315,10 +322,24 @@ export default class WowMatchEvents extends Vue {
         if (!this.selectedEncounter) {
             return
         }
+
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            'Encounter End',
+            this.selectedEncounter.endTm.getTime()
+        )
         this.$emit('go-to-event', this.selectedEncounter.endTm, false)
     }
 
     goToEvent(e: UnifiedWowEventContainer) {
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            !!e.death ? 'Death' :
+                !!e.resurrect ? 'Resurrect' : '',
+            e.tm.getTime(),
+        )
         this.$emit('go-to-event', e.tm, true)
     }
 

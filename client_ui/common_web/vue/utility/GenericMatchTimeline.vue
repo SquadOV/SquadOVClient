@@ -82,14 +82,15 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { GenericEvent} from '@client/js/event'
 import { generateSteppedArrayRange } from '@client/js/array'
 import { colorToCssString } from '@client/js/color'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component
-export default class GenericMatchTimeline extends Vue {
+export default class GenericMatchTimeline extends mixins(CommonComponent) {
     @Prop({required: true})
     start!: number
 
@@ -143,6 +144,7 @@ export default class GenericMatchTimeline extends Vue {
     get hasClipHandles(): boolean {
         return this.clipStartHandle !== undefined && this.clipEndHandle !== undefined
     }
+
     get clipBarStyle(): any {
         if (!this.hasClipHandles) {
             return {}
@@ -177,6 +179,7 @@ export default class GenericMatchTimeline extends Vue {
 
     changeCurrent(e: MouseEvent) {
         let tm = this.computeTimeFromMouseEvent(e)
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToTimeline, '', tm)
         this.$emit('go-to-timestamp', tm)
     }
 

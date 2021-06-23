@@ -400,6 +400,18 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             }
         })
 
+        this.player.on('play', () => {
+            if (!!this.player) {
+                this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.PlayVod, '', this.player.currentTime())
+            }
+        })
+
+        this.player.on('pause', () => {
+            if (!!this.player) {
+                this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StopVod, '', this.player.currentTime())
+            }
+        })
+
         if (!this.disableTheater) {
             // Construct a custom "theater mode" button a la YouTube 
             let button = videojs.getComponent('Button')

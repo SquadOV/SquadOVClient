@@ -145,6 +145,7 @@ import CsgoPlayerMatchCard from '@client/vue/utility/csgo/CsgoPlayerMatchCard.vu
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -161,7 +162,7 @@ import MatchShareBase from '@client/vue/log/MatchShareBase'
         MatchFavoriteButton,
     }
 })
-export default class CsgoMatch extends mixins(MatchShareBase) {
+export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     match: CsgoFullMatchData | null = null
 

@@ -66,7 +66,7 @@
                                 fab
                                 small
                                 color="white"
-                                @click="goToTime(kill.tm)"
+                                @click="sendAnalyticsEvent(AnalyticsCategory.MatchInfo, AnalyticsAction.GoToEvent, 'Kill', kill.tm.getTime()); goToTime(kill.tm)"
                             >
                                 <v-icon>mdi-play</v-icon>
                             </v-btn>
@@ -80,8 +80,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
 import { SteamAccount } from '@client/js/steam/account'
@@ -89,6 +88,7 @@ import { millisecondsToTimeString } from '@client/js/time'
 import { CsgoWeapon } from '@client/js/csgo/events'
 import SteamAccountDisplay from '@client/vue/utility/steam/SteamAccountDisplay.vue'
 import CsgoWeaponIcon from '@client/vue/utility/csgo/CsgoWeaponIcon.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 interface CsgoH2hData {
     againstUserId: number
@@ -113,7 +113,7 @@ interface CsgoH2hData {
         CsgoWeaponIcon,
     }
 })
-export default class CsgoHeadToHeadDisplay extends Vue {
+export default class CsgoHeadToHeadDisplay extends mixins(CommonComponent) {
     millisecondsToTimeString = millisecondsToTimeString
 
     @Prop({required: true})

@@ -100,7 +100,7 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { WowDeath } from '@client/js/wow/events'
 import { WowCharacter } from '@client/js/wow/character'
@@ -111,6 +111,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import { staticClient } from '@client/js/staticData'
 import { wowCache } from '@client/js/wow/staticCache'
+import CommonComponent from '@client/vue/CommonComponent'
 
 const DEATH_RECAP_LENGTH_SECONDS: number = 5
 
@@ -120,7 +121,7 @@ const DEATH_RECAP_LENGTH_SECONDS: number = 5
         WowCharacterDisplay,
     }
 })
-export default class WowDeathRecapAnalysis extends Vue {
+export default class WowDeathRecapAnalysis extends mixins(CommonComponent) {
     secondsToTimeString = secondsToTimeString
 
     @Prop({required: true})
@@ -157,6 +158,12 @@ export default class WowDeathRecapAnalysis extends Vue {
 
     goToEvent(e: WowDeathRecapEvent) {
         let tm = e.tm.getTime() + e.diffMs
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            'Death Recap Damage',
+            tm,
+        )
         this.$emit('go-to-time', new Date(tm))
     }
 
