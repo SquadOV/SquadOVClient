@@ -271,7 +271,11 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
 
         // There's some things that need to be limited by what we've determined the user's limitations to be on the server side.
-        service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+        try {
+            service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to update session feature flags: " << ex.what() << std::endl << "\tUsing Previously Stored Feature Flags." << std::endl);
+        }
 
         const auto features = service::api::getGlobalApi()->getSessionFeatures();
         _cachedRecordingSettings->resY = std::min(_cachedRecordingSettings->resY, features.maxRecordPixelY);
