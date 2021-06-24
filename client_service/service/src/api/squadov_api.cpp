@@ -91,6 +91,11 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     const auto parsedJson = nlohmann::json::parse(result->body);
     LOG_INFO("Obtain feature flags: " << parsedJson.dump(4) << std::endl);
     shared::squadov::FeatureFlags flags;
+    flags.maxRecordPixelY = parsedJson["maxRecordPixelY"].get<int>();
+    flags.maxRecordFps = parsedJson["maxRecordFps"].get<int>();
+    flags.allowRecordUpload = parsedJson["allowRecordUpload"].get<bool>();
+    
+    std::lock_guard guard(_featureMutex);
     _features = flags;
 }
 

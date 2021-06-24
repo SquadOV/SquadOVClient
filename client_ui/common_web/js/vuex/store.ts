@@ -14,6 +14,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         currentUser: null,
         hasValidSession: true,
         features: {
+            maxRecordPixelY: 0,
+            maxRecordFps: 0,
+            allowRecordUpload: false,
         },
 /// #if DESKTOP
         settings: null,

@@ -269,6 +269,14 @@ void GameRecorder::loadCachedInfo() {
         // Just in case the user changed it in the UI already, just sync up via the file.
         service::system::getCurrentSettings()->reloadSettingsFromFile();
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
+
+        // There's some things that need to be limited by what we've determined the user's limitations to be on the server side.
+        service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+
+        const auto features = service::api::getGlobalApi()->getSessionFeatures();
+        _cachedRecordingSettings->resY = std::min(_cachedRecordingSettings->resY, features.maxRecordPixelY);
+        _cachedRecordingSettings->fps = std::min(_cachedRecordingSettings->fps, features.maxRecordFps);
+        _cachedRecordingSettings->useLocalRecording = _cachedRecordingSettings->useLocalRecording || !features.allowRecordUpload;
     }
 
     if (!_process.empty() && (!_cachedWindowInfo || !_cachedWindowInfo->init)) {

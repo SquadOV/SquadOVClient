@@ -71,7 +71,7 @@
                 </v-icon>
             </v-btn>
 
-            <recording-settings-item mini></recording-settings-item>
+            <recording-settings-item mini ref="record"></recording-settings-item>
         </div>
     </v-sheet>
 </template>
@@ -104,6 +104,19 @@ export default class RecordingStatusWindow extends Vue {
     selectedInput: string = ''
     defaultInput: string = ''
     inputVolume: number = 1.0
+
+    $refs!: {
+        record: RecordingSettingsItem
+    }
+
+    @Watch('expanded')
+    onToggleExpanded() {
+        if (this.expanded) {
+            Vue.nextTick(() => {
+                this.$refs.record.refreshFeatureFlags()
+            })            
+        }
+    }
 
     get gameIconsToShow(): string[] {
         if (this.isRecording) {

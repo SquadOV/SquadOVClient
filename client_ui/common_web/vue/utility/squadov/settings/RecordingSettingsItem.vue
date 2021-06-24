@@ -16,6 +16,7 @@
                                     v-for="res in resolutionItems"
                                     :key="`res-${res}`"
                                     :value="res"
+                                    :disabled="res > $store.state.features.maxRecordPixelY"
                                 >
                                     {{ res }}p
                                 </v-btn>
@@ -31,6 +32,7 @@
                                     v-for="fps in fpsItems"
                                     :key="`fps-${fps}`"
                                     :value="fps"
+                                    :disabled="fps > $store.state.features.maxRecordFps"
                                 >
                                     {{ fps }}
                                 </v-btn>
@@ -388,11 +390,11 @@
                     <div class="d-flex align-center">
                         <v-checkbox
                             class="ma-0"
-                            :input-value="useLocalRecording"
+                            :input-value="useLocalRecording || !$store.state.features.allowRecordUpload"
                             @change="syncLocalRecording(arguments[0], localRecordingLocation, maxLocalRecordingSizeGb)"
                             hide-details
                             label="Disable Automatic Upload"
-                            :disabled="changeLocalRecordingProgress"
+                            :disabled="changeLocalRecordingProgress || !$store.state.features.allowRecordUpload"
                         >
                             <template v-slot:append>
                                 <v-tooltip bottom max-width="450px">
@@ -916,11 +918,16 @@ export default class RecordingSettingsItem extends Vue {
         })
     }
 
+    refreshFeatureFlags() {
+        this.$store.dispatch('loadUserFeatureFlags')
+    }
+
     mounted() {
 ///#if DESKTOP
         this.refreshAvailableOutputs()
         this.refreshAvailableInputs()
         this.resyncPushToTalkStr()
+        this.refreshFeatureFlags()
 
         ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
             this.outputOptions = [
