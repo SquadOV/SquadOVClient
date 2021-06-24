@@ -17,6 +17,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             maxRecordPixelY: 0,
             maxRecordFps: 0,
             allowRecordUpload: false,
+            allowWowCombatLogUpload: false,
         },
 /// #if DESKTOP
         settings: null,

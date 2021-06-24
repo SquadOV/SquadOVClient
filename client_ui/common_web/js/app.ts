@@ -592,8 +592,6 @@ const router = new VueRouter({
 const store = new Vuex.Store(RootStoreOptions)
 
 import { initializeAnalyticsContainer, getAnalyticsContainer } from '@client/js/analytics/container'
-initializeAnalyticsContainer(store)
-
 import { TrackedUserStatsManager } from '@client/js/squadov/status'
 const statusTracker = new TrackedUserStatsManager(store)
 
@@ -674,6 +672,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
 ipcRenderer.invoke('request-app-folder').then((appFolder: string) => {
     process.env.SQUADOV_USER_APP_FOLDER = appFolder
     store.dispatch('reloadLocalSettings')
+    initializeAnalyticsContainer(store)
 })
 
 ipcRenderer.on('reset-state', () => {
