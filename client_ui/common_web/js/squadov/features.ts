@@ -3,3 +3,7 @@ export interface FeatureFlags {
     maxRecordFps: number
     allowRecordUpload: boolean
 }
+
+export interface GlobalFlags {
+    disableRegistration: boolean
+}

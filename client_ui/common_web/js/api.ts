@@ -85,7 +85,7 @@ import {
     cleanFullLolMatch
 } from '@client/js/lol/matches'
 import {
-    FeatureFlags
+    FeatureFlags, GlobalFlags
 } from '@client/js/squadov/features'
 import { TotalRecordedPlaytime } from '@client/js/squadov/playtime'
 import {
@@ -1041,7 +1041,7 @@ class ApiClient {
     }
 
     getMatchDataFromVideoUuid(videoUuid: string): Promise<ApiData<RecentMatch>> {
-        return axios.get(`v1/vod/${videoUuid}/match`, this.createWebAxiosConfig()).then((resp: ApiData<RecentMatch) => {
+        return axios.get(`v1/vod/${videoUuid}/match`, this.createWebAxiosConfig()).then((resp: ApiData<RecentMatch>) => {
             cleanRecentMatchFromJson(resp.data)
             return resp
         })
@@ -1336,6 +1336,10 @@ class ApiClient {
 
     editAutoShareConnection(connId: number, conn: AutoShareConnection): Promise<void> {
         return axios.post(`v1/share/auto/${connId}`, conn, this.createWebAxiosConfig())
+    }
+
+    getGlobalAppFeatures(): Promise<ApiData<GlobalFlags>> {
+        return axios.get('/public/flags', this.createWebAxiosConfig())
     }
 
     // Local API
