@@ -152,7 +152,7 @@
                     </template>
 
                     <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
-                        <div class="text-h6">No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends!</div>
+                        <div class="text-h6">No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends! <b>SquadOV does not record games if was not running on your local machine for the full duration of the match.</b></div>
                     </div>
                 </template>
             </loading-container>
