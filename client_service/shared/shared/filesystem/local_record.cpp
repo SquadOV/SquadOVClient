@@ -292,7 +292,7 @@ std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getOldestLocalEnt
     sql << R"|(
         SELECT *
         FROM local_vod_entries
-        ORDER BY cache_time DESC
+        ORDER BY cache_time ASC
         LIMIT 1)|";
 
     shared::sqlite::SqlStatement stmt(_db, sql.str());
