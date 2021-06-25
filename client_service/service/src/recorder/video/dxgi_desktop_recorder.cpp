@@ -75,7 +75,7 @@ void DxgiDesktopRecorder::initialize() {
         THROW_ERROR("Failed to get reference monitor.");
     }
 
-    _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 & service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, refMonitor);
+    _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, refMonitor);
 
     IDXGIDevice* dxgiDevice = nullptr;
     HRESULT hr = _self->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);

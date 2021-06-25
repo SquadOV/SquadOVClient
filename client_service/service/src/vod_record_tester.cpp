@@ -12,6 +12,8 @@ extern "C" {
 #include "process_watcher/process/process.h"
 #include "recorder/game_recorder.h"
 #include "shared/log/log.h"
+#include "api/squadov_api.h"
+#include "shared/env.h"
 
 namespace po = boost::program_options;
 using namespace process_watcher;
@@ -53,6 +55,8 @@ int main(int argc, char** argv) {
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
 
+    service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID"));
+
     const auto processName = vm["process"].as<std::string>();
 
     std::vector<process::Process> processes;
@@ -92,7 +96,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);
