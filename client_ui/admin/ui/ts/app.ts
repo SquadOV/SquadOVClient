@@ -29,6 +29,8 @@ const MetricGameValorant = () => import('@client/vue/metrics/MetricGameValorant.
 const MetricGameWow = () => import('@client/vue/metrics/MetricGameWow.vue')
 const MetricVods = () => import('@client/vue/metrics/MetricVods.vue')
 const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
+const MetricAverageAge = () => import('@client/vue/metrics/MetricAverageAge.vue')
+
 const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
 const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
 const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
@@ -44,6 +46,10 @@ const baseRoutes : any[] = [
     {
         path: '/metrics/active-users',
         component: MetricActiveUsers,
+    },
+    {
+        path: '/metrics/average-age',
+        component: MetricAverageAge,
     },
     {
         path: '/metrics/lost-users',

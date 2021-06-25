@@ -53,6 +53,10 @@ export default class AppNav extends Vue {
                     to: '/metrics/active-users',
                 },
                 {
+                    text: 'Average Age',
+                    to: '/metrics/average-age',
+                },
+                {
                     text: 'Lost Users',
                     to: '/metrics/lost-users',
                 },
