@@ -52,7 +52,7 @@ public:
     std::filesystem::path getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const;
 
 private:
-    void migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const;
+    std::pair<std::filesystem::path, std::filesystem::path> migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const;
     void cleanupLocalEntry(const LocalRecordingIndexEntry& entry) const;
     void migrateDatabase() const;
 
