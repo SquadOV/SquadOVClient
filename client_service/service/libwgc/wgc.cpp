@@ -15,6 +15,7 @@
 #include "recorder/image/image.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_texture.h"
+#include "shared/log/log.h"
 
 #include <atomic>
 #include <iostream>
@@ -220,4 +221,17 @@ service::recorder::video::VideoRecorder* createWindowsGraphicsCaptureInterface(c
     }
 
     return new WindowsGraphicsCaptureItf(window, context, useGpuFrame);
+}
+
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDll,
+    DWORD fdwReason,
+    LPVOID lpReserve
+) {
+    switch (fdwReason) {
+        case DLL_PROCESS_ATTACH:
+            shared::log::Log::initializeGlobalLogger("wgc.log");
+            break;
+    }
+    return TRUE;
 }

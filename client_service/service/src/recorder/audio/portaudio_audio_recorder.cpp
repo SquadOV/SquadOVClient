@@ -118,7 +118,7 @@ AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirecti
             continue;
         }
 
-        LOG_INFO("FOUND AUDIO DEVICE: " << ldiName << " " << hostInfo->name << " " << (i == defaultDevice) << std::endl
+        LOG_INFO("FOUND AUDIO DEVICE: '" << ldiName << "' " << hostInfo->name << " " << (i == defaultDevice) << std::endl
             << "\tCHANNELS: " << ldi->maxInputChannels << " " << ldi->maxOutputChannels << std::endl
             << "\tSAMPLE RATE:" << ldi->defaultSampleRate << std::endl);
 
@@ -144,6 +144,9 @@ PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 }
 
 void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) {
+    LOG_INFO("Load Selected Audio Device: '" << selected << "' @ " << volume << std::endl);
+    PortaudioAudioRecorder::getDeviceListing(dir);
+
     // Try to find the selected device. If we can't find it then use the default device.
     PaDeviceIndex selectedDevice = paNoDevice;
     for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount() ; ++i) {
@@ -164,6 +167,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
         }
 
         if (ldiName == selected) {
+            LOG_INFO("...Found selected device!" << std::endl);
             selectedDevice = i;
             break;
         }
@@ -177,6 +181,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
                 Pa_GetDefaultInputDevice() :
                 Pa_GetDefaultOutputDevice();
         usingDefault = true;
+        LOG_INFO("...Falling back to default device." << std::endl);
     }
 
     // If we still have no device then just don't record from this input.
