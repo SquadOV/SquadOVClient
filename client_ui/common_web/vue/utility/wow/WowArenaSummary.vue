@@ -11,7 +11,7 @@
     >
         <template v-slot="{ instanceName }">
             <div class="text-subtitle-1 font-weight-bold">
-                {{ instanceName }} ({{ arena.type }})
+                {{ instanceName }} ({{ arenaType }})
             </div>
 
             <div class="d-flex align-center text-subtitle-2" :style="ratingColorStyle">
@@ -57,6 +57,14 @@ export default class WowArenaSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableLink!: boolean
+
+    get arenaType(): string {
+        if (this.arena.type === '5v5') {
+            return 'War Game'
+        } else {
+            return this.arena.type
+        }
+    }
 
     get friendlyTeam(): number {
         if (this.arena.winningTeamId === null) {

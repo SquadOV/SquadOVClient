@@ -128,8 +128,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
@@ -142,6 +141,7 @@ import { Color, colorFromElementTheme } from '@client/js/color'
 import { formatRoundTime } from '@client/js/valorant/valorant_utility'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantWeaponAbilityIcon from '@client/vue/utility/valorant/ValorantWeaponAbilityIcon.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 interface RoundEvent {
     roundTimeMs: number
@@ -156,7 +156,7 @@ interface RoundEvent {
         ValorantWeaponAbilityIcon
     }
 })
-export default class ValorantRoundEvents extends Vue {
+export default class ValorantRoundEvents extends mixins(CommonComponent) {
     formatRoundTime : any = formatRoundTime
 
     @Prop({required: true})
@@ -285,16 +285,27 @@ export default class ValorantRoundEvents extends Vue {
     }
 
     goToPlay() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Play', this.playTime!.getTime())
         this.$emit('go-to-event', this.playTime!)
     }
 
     goToBuy() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Buy', this.buyTime!.getTime())
         this.$emit('go-to-event', this.buyTime!)
     }
 
     goToEvent(e : RoundEvent) {
+        let tm = this.playTime!.getTime() + e.roundTimeMs
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            !!e.kill ? 'Kill' :
+                !!e.plant ? 'Plant' : 
+                !!e.defuse ? 'Defuse' : '',
+            tm
+        )
         // Offset so we can actually see the action happen.
-        this.$emit('go-to-event', new Date(this.playTime!.getTime() + e.roundTimeMs))
+        this.$emit('go-to-event', new Date(tm))
     }
 }
 

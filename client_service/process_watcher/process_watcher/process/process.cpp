@@ -1,6 +1,7 @@
 #include "process_watcher/process/process.h"
 
 #include "shared/errors/error.h"
+#include "shared/system/win32/hwnd_utils.h"
 
 #include <algorithm>
 #include <memory>
@@ -29,6 +30,18 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
 
     if (hProcess == NULL) {
         LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
+        return nullptr;
+    }
+
+    try {
+        // We only want to use windows that have a visible window.
+        const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
+        if (window == NULL) {
+            LOG_DEBUG("Failed to find window for process." << std::endl);
+            return nullptr;
+        }
+    } catch (std::exception& ex) {
+        LOG_DEBUG("Failed to find window [exception] for process: " << ex.what() << std::endl);
         return nullptr;
     }
 

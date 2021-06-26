@@ -32,10 +32,24 @@ public:
     const SyncTime& syncTime() const { return _tm; }
     
     void copyFrom(const AudioPacketView<T>& view, size_t start = 0, size_t end = N) {
-        assert((end - start) == (props().numSamples * props().numChannels));
-        size_t bi = 0;
-        for (size_t i = start; i < end; ++i) {
-            _buffer[bi++] = view.buffer()[i] * static_cast<T>(view.volume());
+        if (view.props().numChannels != _props.numChannels) {
+            for (size_t i = 0; i < _props.numSamples; ++i) {
+                // We fill the new sample with just the average value.
+                // We use the same value in all channels.
+                T val = T(0.0);
+                for (auto j = 0; j < view.props().numChannels; ++j) {
+                    val += view.buffer()[start + i * view.props().numChannels + j] * static_cast<T>(view.volume());
+                }
+                val /= view.props().numChannels;
+                for (auto j = 0; j < _props.numChannels; ++j) {
+                    _buffer[i * _props.numChannels + j] = val;
+                }
+            }
+        } else {
+            size_t bi = 0;
+            for (size_t i = start; i < end; ++i) {
+                _buffer[bi++] = view.buffer()[i] * static_cast<T>(view.volume());
+            }
         }
     }
 

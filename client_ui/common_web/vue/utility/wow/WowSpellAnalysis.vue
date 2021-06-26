@@ -140,7 +140,7 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { StatTimePeriodData, StatTimePeriodTrackData, StatTimePeriodSection } from '@client/js/stats/periodData'
 import { wowCache } from '@client/js/wow/staticCache'
@@ -163,6 +163,7 @@ import {
     isWowAuraBuff,
 } from '@client/js/wow/events'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 const HEIGHT_PER_LAYER = 32
 
@@ -172,7 +173,7 @@ const HEIGHT_PER_LAYER = 32
         WowCharacterChooser
     }
 })
-export default class WowSpellAnalysis extends Vue {
+export default class WowSpellAnalysis extends mixins(CommonComponent) {
     HEIGHT_PER_LAYER: number = HEIGHT_PER_LAYER
 
     // Absolute start time - this is what we use to generate our timestamp strings.
@@ -392,6 +393,12 @@ export default class WowSpellAnalysis extends Vue {
         // the X axis is still going to be relative to the absolute start time of the entire
         // match and what we're receiving in pts is just the (x, y) coordinates effectively.
         let dt = new Date(this.startTime.getTime() + evt.pts[0] * 1000.0)
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToTimeline,
+            'Spell',
+            dt.getTime()
+        )
         this.$emit('go-to-time', dt)
     }
 

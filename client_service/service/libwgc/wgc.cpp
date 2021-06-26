@@ -15,6 +15,7 @@
 #include "recorder/image/image.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_texture.h"
+#include "shared/log/log.h"
 
 #include <atomic>
 #include <iostream>
@@ -154,14 +155,23 @@ void WindowsGraphicsCaptureImpl::onFrameArrived(
 
     if (changedSize) {
         _lastSize = frameContentSize;
-        _gpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
-        _cpuFrame.initializeImage(_lastSize.Width, _lastSize.Height);
     }
 
     auto rtSurface = frame.Surface();
     auto access = rtSurface.as<IDirect3DDxgiInterfaceAccess>();
     winrt::com_ptr<ID3D11Texture2D> frameSurface;
     winrt::check_hresult(access->GetInterface(winrt::guid_of<ID3D11Texture2D>(), frameSurface.put_void()));
+
+    D3D11_TEXTURE2D_DESC desc;
+    frameSurface->GetDesc(&desc);
+
+    if (desc.Width != _gpuFrame.width() || desc.Height != _gpuFrame.height()) {
+        _gpuFrame.initializeImage(desc.Width, desc.Height);
+    }
+
+    if (desc.Width != _cpuFrame.width() || desc.Height != _cpuFrame.height()) {
+        _cpuFrame.initializeImage(desc.Width, desc.Height);
+    }
 
     {
         std::lock_guard<std::mutex> guard(_encoderMutex);
@@ -220,4 +230,17 @@ service::recorder::video::VideoRecorder* createWindowsGraphicsCaptureInterface(c
     }
 
     return new WindowsGraphicsCaptureItf(window, context, useGpuFrame);
+}
+
+BOOL WINAPI DllMain(
+    HINSTANCE hinstDll,
+    DWORD fdwReason,
+    LPVOID lpReserve
+) {
+    switch (fdwReason) {
+        case DLL_PROCESS_ATTACH:
+            shared::log::Log::initializeGlobalLogger("wgc.log");
+            break;
+    }
+    return TRUE;
 }

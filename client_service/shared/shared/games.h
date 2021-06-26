@@ -7,13 +7,14 @@
 namespace shared {
 
 enum class EGame {
-    Valorant,
     Aimlab,
     Hearthstone,
-    WoW,
     LeagueOfLegends,
     TFT,
+    Valorant,
+    WoW,
     CSGO,
+    Unknown
 };
 
 using EGameSet = std::unordered_set<EGame>;

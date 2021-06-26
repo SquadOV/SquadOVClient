@@ -3,6 +3,12 @@
         <div v-if="hasVideo" :style="parentDivStyle" :key="forceRedraw">
             <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
             </video>
+
+            <video-draw-overlay
+                v-if="enableDraw"
+                ref="overlay"
+            >
+            </video-draw-overlay>
         </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
@@ -16,12 +22,6 @@
                 </v-alert>
             </v-col>
         </v-row>
-
-        <video-draw-overlay
-            v-if="enableDraw"
-            ref="overlay"
-        >
-        </video-draw-overlay>
     </div>
 </template>
 
@@ -400,6 +400,24 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             }
         })
 
+        this.player.on('play', () => {
+            if (!!this.player) {
+                this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.PlayVod, '', this.player.currentTime())
+            }
+        })
+
+        this.player.on('pause', () => {
+            if (!!this.player) {
+                this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StopVod, '', this.player.currentTime())
+            }
+        })
+
+        this.player.on('fullscreenchange', () => {
+            if (!!this.$refs.overlay) {
+                this.$refs.overlay.overlayResize()
+            }
+        })
+
         if (!this.disableTheater) {
             // Construct a custom "theater mode" button a la YouTube 
             let button = videojs.getComponent('Button')
@@ -424,10 +442,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             })
         }
 
-        this.player.on('keydown', (e: KeyboardEvent) => {
-            this.handleKeypress(e)
-        })
-
         let cbar = this.player.getChild('controlBar')
         if (!!cbar) {
             for (let ctrl of cbar.children()) {
@@ -437,6 +451,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                         // Everything else should just be handled by the player.
                         e.preventDefault()
 
+                        // This needs to be here since the control bar will eat focus and prevent the handle keypress from working normally.
                         this.handleKeypress(e)
                     }
                 })
@@ -548,7 +563,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }
     }
 
+    keydownHandler: any = null
     mounted() {
+        this.keydownHandler = this.handleKeypress.bind(this)
+        window.addEventListener('keydown', this.keydownHandler)
+
         if (!!this.overrideUri) {
             this.videoUri = this.overrideUri
             this.toggleHasVideo()
@@ -561,6 +580,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         if (!!this.player) {
             this.player.dispose()
         }
+        window.removeEventListener('keydown', this.keydownHandler)
         this.player = null
     }
 }

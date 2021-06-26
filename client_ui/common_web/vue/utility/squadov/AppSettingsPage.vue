@@ -44,6 +44,26 @@
                     label="Sync time to NTP servers"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="anonymousAnalytics"
+                    @change="changeAnonymousAnalytics"
+                    dense
+                    hide-details
+                    label="Send Anonymous Usage Data to SquadOV"
+                >
+                </v-checkbox>
+            </v-tab-item>
+
+             <v-tab>
+                <v-icon left>
+                    mdi-gamepad
+                </v-icon>
+                Games
+            </v-tab>
+
+            <v-tab-item>
+                <per-game-settings-item></per-game-settings-item>
             </v-tab-item>
 
             <v-tab>
@@ -122,6 +142,7 @@ import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/Ac
 import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
 import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSettingsItem.vue'
 import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/LinkedAccountsSettingsItem.vue'
+import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSettingsItem.vue'
 
 @Component({
     components: {
@@ -130,6 +151,7 @@ import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/Lin
         PlaybackSettingsItem,
         SharingSettingsItem,
         LinkedAccountsSettingsItem,
+        PerGameSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {
@@ -187,6 +209,14 @@ export default class AppSettingsPage extends Vue {
 
     changeSyncToNtp(v: boolean) {
         this.$store.commit('setEnableNtp', v)
+    }
+
+    get anonymousAnalytics(): boolean {
+        return this.$store.state.settings.anonymousAnalytics
+    }
+
+    changeAnonymousAnalytics(v: boolean) {
+        this.$store.commit('setAnonymousAnalytics', v)
     }
 }
 

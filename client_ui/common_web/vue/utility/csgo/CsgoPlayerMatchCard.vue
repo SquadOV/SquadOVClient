@@ -177,8 +177,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper } from '@client/js/csgo/match'
 import {
@@ -189,6 +188,7 @@ import GenericStat from '@client/vue/utility/GenericStat.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import CsgoWeaponIcon from '@client/vue/utility/csgo/CsgoWeaponIcon.vue'
 import CsgoHeadToHeadDisplay from '@client/vue/utility/csgo/CsgoHeadToHeadDisplay.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 interface CsgoStats {
     kda: number
@@ -222,7 +222,7 @@ interface CsgoWeaponStats {
         CsgoHeadToHeadDisplay,
     }
 })
-export default class CsgoPlayerMatchCard extends Vue {
+export default class CsgoPlayerMatchCard extends mixins(CommonComponent) {
     getCsgoWeaponName = getCsgoWeaponName
 
     @Prop({required: true})

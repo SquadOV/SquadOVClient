@@ -167,6 +167,7 @@ import LolVodPicker from '@client/vue/utility/lol/LolVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -184,7 +185,7 @@ import MatchShareBase from '@client/vue/log/MatchShareBase'
         MatchFavoriteButton,
     }
 })
-export default class LolMatch extends mixins(MatchShareBase) {
+export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
     SquadOvGames: any = SquadOvGames
     secondsToTimeString = secondsToTimeString
 

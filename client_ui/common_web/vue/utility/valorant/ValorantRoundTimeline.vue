@@ -18,8 +18,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import {
     ValorantMatchRoundWrapper,
@@ -27,9 +26,10 @@ import {
     ValorantMatchPlayerWrapper
 } from '@client/js/valorant/valorant_matches_parsed'
 import { Color } from '@client/js/color'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component
-export default class ValorantRoundTimeline extends Vue {
+export default class ValorantRoundTimeline extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: ValorantMatchDetailsWrapper
 
@@ -44,6 +44,7 @@ export default class ValorantRoundTimeline extends Vue {
     }
 
     goToRound(r : number) {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToPhase, 'Round', r)
         this.$emit('update:round', r)
     }
 

@@ -15,18 +15,18 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { CsgoFullMatchDataWrapper, CsgoEventRoundWrapper } from '@client/js/csgo/match'
 import CsgoSingleRoundTimeline from '@client/vue/utility/csgo/CsgoSingleRoundTimeline.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
         CsgoSingleRoundTimeline,
     }
 })
-export default class CsgoRoundTimeline extends Vue {
+export default class CsgoRoundTimeline extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: CsgoFullMatchDataWrapper
 

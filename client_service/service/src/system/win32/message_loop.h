@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace service::system::win32 {
+namespace shared::system::win32 {
 
 class Win32MessageLoop {
 public:

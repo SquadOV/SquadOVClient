@@ -264,8 +264,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
@@ -291,7 +291,7 @@ import { IpcResponse } from '@client/js/system/ipc'
         VodWatchlistButton,
     }
 })
-export default class GenericVodPicker extends Vue {
+export default class GenericVodPicker extends mixins(CommonComponent) {
     @Prop({required: true})
     value!: VodAssociation | null
 
@@ -326,6 +326,13 @@ export default class GenericVodPicker extends Vue {
     rcContext: VodRemoteControlContext | null = null
 
     permissions: MatchVideoSharePermissions | null = null
+
+    @Watch('value')
+    checkAnalytics(newVod: VodAssociation | null, oldVod: VodAssociation | null) {
+        if (!!newVod && !!oldVod) {
+            this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.ChangePov, '', this.options.length)
+        }
+    }
 
     @Watch('value')
     refreshPermissions() {
@@ -402,6 +409,7 @@ export default class GenericVodPicker extends Vue {
 
         this.loadingDelete = true
         this.loadingLocalDelete = this.hasLocal
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DeleteVod, '', 0)
 
         apiClient.deleteVod(this.value.videoUuid).then(() => {
             if (!this.loadingLocalDelete) {
@@ -523,6 +531,7 @@ export default class GenericVodPicker extends Vue {
             return
         }
 ///#if DESKTOP
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DownloadVod, '', 0)
         manager.startDownload(this.value.videoUuid)
 ///#endif
     }
@@ -576,10 +585,17 @@ export default class GenericVodPicker extends Vue {
         this.context = new VodEditorContext(this.value.videoUuid)
         this.context.startSource(this.value)
         this.onChangeTimestamp()
+
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.OpenCreateClip, '', 0)
         openVodEditingWindow(this.value.videoUuid, this.game)
     }
 
     toggleDrawing() {
+        if (!this.enableDraw) {
+            this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StartDrawVod, '', 0)
+        } else {
+            this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.EndDrawVod, '', 0)
+        }
         this.$emit('update:enableDraw', !this.enableDraw)
     }
 
@@ -617,6 +633,7 @@ export default class GenericVodPicker extends Vue {
             return
         }
 ///#if DESKTOP
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.UploadVod, '', 0)
         manager.enqueueUpload(this.value.videoUuid)
 ///#endif
     }

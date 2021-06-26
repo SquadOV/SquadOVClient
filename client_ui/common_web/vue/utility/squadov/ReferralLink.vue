@@ -34,13 +34,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api' 
 
 @Component
-export default class ReferralLink extends Vue {
+export default class ReferralLink extends mixins(CommonComponent) {
     link: string | null = null
     showHideCopy: boolean = false
 
@@ -63,6 +63,8 @@ export default class ReferralLink extends Vue {
 
     doCopy() {
         let inputEle = this.$refs.urlInput.$el.querySelector('input')
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Button, this.AnalyticsAction.CopyReferral, '', 0)
+
         inputEle.select()
         document.execCommand('copy')
         this.showHideCopy = true

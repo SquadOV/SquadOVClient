@@ -4,6 +4,7 @@ import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
+import { SquadOvGames } from '../squadov/game'
 /// #endif
 
 export interface SquadOvRecordingSettings {
@@ -14,8 +15,10 @@ export interface SquadOvRecordingSettings {
     useVfr3: boolean
     outputDevice: string
     outputVolume: number
+    outputMono: boolean
     inputDevice: string
     inputVolume: number
+    inputMono: boolean
     usePushToTalk: boolean
     maxUploadSpeed: number | null
     useLocalRecording: boolean
@@ -121,6 +124,8 @@ export interface SquadOvLocalSettings {
     runOnStartup: boolean
     setupWizardRun: boolean
     enableNtp: boolean
+    anonymousAnalytics: boolean
+    disabledGames: SquadOvGames[]
 }
 
 function getSettingsFname() : string {
@@ -188,8 +193,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -208,8 +215,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -228,8 +237,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -255,6 +266,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        anonymousAnalytics: true,
+        disabledGames: [],
     }
 /// #else
     return {
@@ -266,8 +279,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVfr3: false,
             outputDevice: 'Default Device',
             outputVolume: 1.0,
+            outputMono: false,
             inputDevice: 'Default Device',
             inputVolume: 1.0,
+            inputMono: false,
             usePushToTalk: false,
             maxUploadSpeed: null,
             useLocalRecording: false,
@@ -289,6 +304,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        anonymousAnalytics: true,
+        disabledGames: [],
     }
 /// #endif
 }
@@ -403,6 +420,22 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             smallStepSize: 5000,
             largeStepSize: 10000,
         }
+    }
+
+    if (parsedData.anonymousAnalytics === undefined) {
+        parsedData.anonymousAnalytics = true
+    }
+
+    if (parsedData.record.outputMono === undefined) {
+        parsedData.record.outputMono = false
+    }
+
+    if (parsedData.record.inputMono === undefined) {
+        parsedData.record.inputMono = false
+    }
+
+    if (parsedData.disabledGames === undefined) {
+        parsedData.disabledGames = []
     }
 
     saveLocalSettings(parsedData, true)

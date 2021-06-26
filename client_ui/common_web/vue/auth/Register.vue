@@ -1,93 +1,109 @@
 <template>
-    <v-container fluid class="full-parent-height">
-        <v-row class="full-parent-height" justify="center" align="center">
-            <v-col cols="8">
-                <h1 class="mb-4">Register with SquadOV</h1>
+    <loading-container :is-loading="canRegister === null">
+        <template v-slot:default="{ loading }">
+            <template v-if="!loading">
+                <v-container fluid class="full-parent-height" v-if="canRegister">
+                    <v-row class="full-parent-height" justify="center" align="center">
+                        <v-col cols="8">
+                            <h1 class="mb-4">Register with SquadOV</h1>
 
-                <v-form
-                    v-model="formValid"
-                >
-                    <v-text-field
-                        v-model="username"
-                        label="Username"
-                        solo
-                        :rules="usernameRules"
-                    >
-                    </v-text-field>
+                            <v-form
+                                v-model="formValid"
+                            >
+                                <v-text-field
+                                    v-model="username"
+                                    label="Username"
+                                    solo
+                                    :rules="usernameRules"
+                                >
+                                </v-text-field>
 
-                    <v-text-field
-                        v-model="email"
-                        label="Email"
-                        solo
-                        :rules="emailRules"
-                    >
-                    </v-text-field>
+                                <v-text-field
+                                    v-model="email"
+                                    label="Email"
+                                    solo
+                                    :rules="emailRules"
+                                >
+                                </v-text-field>
 
-                    <v-text-field
-                        v-model="password"
-                        label="Password"
-                        solo
-                        :rules="passwordRules"
-                        type="password"
-                    >
-                    </v-text-field>
+                                <v-text-field
+                                    v-model="password"
+                                    label="Password"
+                                    solo
+                                    :rules="passwordRules"
+                                    type="password"
+                                >
+                                </v-text-field>
 
-                    <v-text-field
-                        v-model="confirmPassword"
-                        label="Confirm Password"
-                        solo
-                        :rules="confirmRules"
-                        type="password"
-                    >
-                    </v-text-field>
-                </v-form>
+                                <v-text-field
+                                    v-model="confirmPassword"
+                                    label="Confirm Password"
+                                    solo
+                                    :rules="confirmRules"
+                                    type="password"
+                                >
+                                </v-text-field>
+                            </v-form>
 
-                <div class="mb-4">
-                    <v-btn
-                        :disabled="!formValid"
-                        block
-                        color="success"
-                        @click="register"
-                        :loading="inProgress"
+                            <div class="mb-4">
+                                <v-btn
+                                    :disabled="!formValid"
+                                    block
+                                    color="success"
+                                    @click="register"
+                                    :loading="inProgress"
+                                >
+                                    Register
+                                </v-btn>
+                            </div>
+
+                            <div class="d-flex">
+                                <p>
+                                    Already have an account? <router-link :to="loginTo">Login</router-link>.
+                                </p>
+                            </div>
+                        </v-col>
+                    </v-row>
+
+                    <v-snackbar
+                        v-model="showHideDuplicateError"
+                        :timeout="5000"
+                        color="error"
                     >
-                        Register
-                    </v-btn>
+                        An account with that username or email already exists. Usernames and emails are case-insensitive!
+                    </v-snackbar>
+
+                    <v-snackbar
+                        v-model="showHideGenericError"
+                        :timeout="5000"
+                        color="error"
+                    >
+                        Registration failed. Please try again shortly.
+                    </v-snackbar>
+                </v-container>
+
+                <div class="full-parent-height d-flex align-center justify-center text-h4 font-weight-bold" v-else>
+                    Registrations are temporarily closed. Please try again later!
                 </div>
-
-                <div class="d-flex">
-                    <p>
-                        Already have an account? <router-link :to="loginTo">Login</router-link>.
-                    </p>
-                </div>
-            </v-col>
-        </v-row>
-
-        <v-snackbar
-            v-model="showHideDuplicateError"
-            :timeout="5000"
-            color="error"
-        >
-            An account with that username or email already exists. Usernames and emails are case-insensitive!
-        </v-snackbar>
-
-        <v-snackbar
-            v-model="showHideGenericError"
-            :timeout="5000"
-            color="error"
-        >
-            Registration failed. Please try again shortly.
-        </v-snackbar>
-    </v-container>
+            </template>
+        </template>
+    </loading-container>
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { Prop } from 'vue-property-decorator'
-import { apiClient } from '@client/js/api'
+import { apiClient, ApiData } from '@client/js/api'
+import { GlobalFlags } from '@client/js/squadov/features'
 
-@Component
+@Component({
+    components: {
+        LoadingContainer
+    }
+})
 export default class Register extends Vue {
     @Prop()
     inviteUuid!: string | undefined
@@ -98,6 +114,7 @@ export default class Register extends Vue {
     @Prop()
     sig!: string | undefined
 
+    canRegister: boolean | null = null
     formValid: boolean = false
     inProgress: boolean = false
     showHideDuplicateError: boolean = false
@@ -108,6 +125,23 @@ export default class Register extends Vue {
 
     password: string = ''
     confirmPassword: string = ''
+
+    refreshEnabled() {
+        apiClient.getGlobalAppFeatures().then((resp: ApiData<GlobalFlags>) => {
+            this.canRegister = !resp.data.disableRegistration
+        }).catch((err: any) => {
+            console.log('Failed to get if registration is enabled, allowing registrations as fall through: ', err)
+
+            // Generally the advice is to fail secure aka if we fail we'd probably want to disable registrations.
+            // That seems like a shitty idea though so I'd rather fail and allow registrations. And honestly
+            // chances are that if the previous function fails then any registration isn't going to succeed anyway.
+            this.canRegister = true
+        })
+    }
+
+    mounted() {
+        this.refreshEnabled()
+    }
 
     get usernameRules() : any[] {
         return [

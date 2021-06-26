@@ -38,7 +38,10 @@ public:
 
     int64_t getSessionUserId() const;
     std::string getSessionUserUuid() const;
-    shared::squadov::FeatureFlags getSessionFeatures() const { return _features; }
+    shared::squadov::FeatureFlags getSessionFeatures() const {
+        std::shared_lock guard(_featureMutex);
+        return _features;
+    }
     void retrieveSessionFeatureFlags();
 
     // Kafka
@@ -109,8 +112,10 @@ private:
 
     // I'm not a big fan of leaving this here...
     shared::squadov::SquadOVSessionStorage _session;
-    shared::squadov::FeatureFlags _features;
     mutable std::shared_mutex _sessionMutex;
+
+    shared::squadov::FeatureFlags _features;
+    mutable std::shared_mutex _featureMutex;
 
     // Various caches of things we want to keep track of.
     mutable std::mutex _riotAccountOwnershipMutex;

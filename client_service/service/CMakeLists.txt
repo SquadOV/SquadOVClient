@@ -27,7 +27,6 @@ SET(SRCS
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
     src/recorder/pipe/gcs_piper.cpp
-    src/system/win32/hwnd_utils.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
@@ -78,7 +77,6 @@ SET(HEADERS
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
     src/recorder/pipe/gcs_piper.h
-    src/system/win32/hwnd_utils.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h

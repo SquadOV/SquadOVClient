@@ -258,7 +258,11 @@ export default class WowFilterUi extends Vue {
             {
                 text: 'Skirmish',
                 value: 'Skirmish',
-            }
+            },
+            {
+                text: 'War Game',
+                value: '5v5',
+            },
         ]
     }
 

@@ -100,6 +100,12 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor) {
             factory->Release();
         }
 
+        if (dxgiOutput) {
+            LOG_INFO("...Found monitor." << std::endl);
+        } else {
+            LOG_INFO("...No monitor found." << std::endl);
+        }
+
         try {
             hr = D3D11CreateDevice(
                 adapter,
@@ -131,24 +137,23 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor) {
                 _device1 = nullptr;
             }
 
-            if (flags & CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT) {
-                IDXGIOutput1* output1 = nullptr;
-                hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&output1);
-                if (hr != S_OK) {
-                    dxgiOutput->Release();
-                    THROW_ERROR("Failed to get IDXGIOutput1.");
-                }
-
-                IDXGIOutputDuplication* dupl = nullptr;
-                hr = output1->DuplicateOutput(_device, &dupl);
-                output1->Release();
-                if (hr != S_OK) {
-                    THROW_ERROR("Duplicate output failure: " << hr);
-                }
-                dupl->Release();
-            }
-
             if (dxgiOutput) {
+                if (flags & CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT) {
+                    IDXGIOutput1* output1 = nullptr;
+                    hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&output1);
+                    if (hr != S_OK) {
+                        dxgiOutput->Release();
+                        THROW_ERROR("Failed to get IDXGIOutput1.");
+                    }
+
+                    IDXGIOutputDuplication* dupl = nullptr;
+                    hr = output1->DuplicateOutput(_device, &dupl);
+                    output1->Release();
+                    if (hr != S_OK) {
+                        THROW_ERROR("Duplicate output failure: " << hr);
+                    }
+                    dupl->Release();
+                }
                 dxgiOutput->Release();
             }
         } catch (std::exception& ex) {

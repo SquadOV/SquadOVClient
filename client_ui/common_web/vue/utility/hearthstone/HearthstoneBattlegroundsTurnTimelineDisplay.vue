@@ -40,17 +40,17 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { HearthstoneMatchWrapper } from '@client/js/hearthstone/hearthstone_match'
 import { BattlegroundsRoundWinState } from '@client/js/hearthstone/hearthstone_snapshot'
 import { Color } from '@client/js/color'
 import { getSameTeamColor, getOpposingTeamColor, getNeutralTeamColor } from '@client/js/hearthstone/hearthstone_colors'
+import CommonComponent from '@client/vue/CommonComponent'
 
 // Display num turns + 1 (mulligan) rounds.
 @Component
-export default class HearthstoneBattlegroundsTurnTimelineDisplay extends Vue {
+export default class HearthstoneBattlegroundsTurnTimelineDisplay extends mixins(CommonComponent) {
     @Prop({required: true})
     currentMatch!: HearthstoneMatchWrapper
 
@@ -64,6 +64,7 @@ export default class HearthstoneBattlegroundsTurnTimelineDisplay extends Vue {
     }
 
     goToTurn(turn : number) {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToPhase, 'Mulligan', 0)
         this.$emit('update:turn', turn)
     }
 

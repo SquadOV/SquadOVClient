@@ -135,21 +135,22 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { LolMatch, getTeamIdFromParticipantId } from '@client/js/lol/matches'
 import { LolMatchTimeline, LolMatchEvent, LolMatchFrame } from '@client/js/lol/timeline'
 import { formatRoundTime } from '@client/js/valorant/valorant_utility'
 import { computeColorForLolEvent } from '@client/js/lol/color'
 import LolEventDisplay from '@client/vue/utility/lol/LolEventDisplay.vue'
+import CommonComponent from '@client/vue/CommonComponent'
+
 
 @Component({
     components: {
         LolEventDisplay
     }
 })
-export default class LolEventManager extends Vue {
+export default class LolEventManager extends mixins(CommonComponent) {
     formatRoundTime = formatRoundTime
 
     @Prop({required: true})
@@ -178,6 +179,7 @@ export default class LolEventManager extends Vue {
     showRiftHerald: boolean = true
 
     goToEvent(e: LolMatchEvent) {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, e.type, e.timestamp)
         this.$emit('go-to-timestamp', e.timestamp)
     }
 

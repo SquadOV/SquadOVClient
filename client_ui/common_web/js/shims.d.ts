@@ -14,4 +14,5 @@ declare module 'm3u8-parser'
 declare module 'streamsaver'
 declare module 'player.js'
 declare module 'qrcode'
+declare module 'mixpanel-browser'
 declare var SQUADOV_API_URL: string

@@ -85,7 +85,7 @@ import {
     cleanFullLolMatch
 } from '@client/js/lol/matches'
 import {
-    FeatureFlags
+    FeatureFlags, GlobalFlags
 } from '@client/js/squadov/features'
 import { TotalRecordedPlaytime } from '@client/js/squadov/playtime'
 import {
@@ -1396,6 +1396,10 @@ class ApiClient {
 
     submitTwitchOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
         return axios.post(`auth/oauth/twitch`, {code, state, redirectUrl}, this.createWebAxiosConfig())
+    }
+    
+    getGlobalAppFeatures(): Promise<ApiData<GlobalFlags>> {
+        return axios.get('/public/flags', this.createWebAxiosConfig())
     }
 
     // Local API

@@ -82,8 +82,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
@@ -94,6 +93,7 @@ import { formatRoundTime } from '@client/js/valorant/valorant_utility'
 
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantWeaponAbilityIcon from '@client/vue/utility/valorant/ValorantWeaponAbilityIcon.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 // This constant is shared with ValorantRoundEvents.
 const offsetMs = 1500
@@ -104,7 +104,7 @@ const offsetMs = 1500
         ValorantWeaponAbilityIcon
     }
 })
-export default class ValorantHeadToHeadDisplay extends Vue {
+export default class ValorantHeadToHeadDisplay extends mixins(CommonComponent) {
     formatRoundTime : any = formatRoundTime
 
     @Prop({type:Array, required: true})
@@ -129,7 +129,14 @@ export default class ValorantHeadToHeadDisplay extends Vue {
 
     goToKill(kill : ValorantMatchKillWrapper) {
         let roundStart = this.metadata?.rounds[kill.roundNum]?.roundTime!
-        this.$emit('go-to-event', new Date(roundStart.getTime() + kill._k.timeSinceRoundStartMillis - offsetMs))
+        let tm = roundStart.getTime() + kill._k.timeSinceRoundStartMillis - offsetMs
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.GoToEvent,
+            'Kill',
+            tm
+        )
+        this.$emit('go-to-event', new Date(tm))
     }
 
     killsAgainst(puuid : string) : ValorantMatchKillWrapper[] {

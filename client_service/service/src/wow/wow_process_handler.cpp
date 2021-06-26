@@ -168,6 +168,12 @@ void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, co
     const game_event_watcher::WoWCombatLogState* log = reinterpret_cast<const game_event_watcher::WoWCombatLogState*>(data);
     LOG_INFO("Start WoW Combat Log [Version " << log->combatLogVersion << "- Advanced " << log->advancedLog << " - Build " << log->buildVersion << "] @ " << shared::timeToStr(tm) << std::endl);
 
+    try {
+        service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to refresh session feature flags: " << ex.what() << std::endl);
+    }
+
     _combatLogActive = true;
     _combatLog = *log;
 }
@@ -184,10 +190,13 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     // Send combat log line to server associated with the current combat log.
     const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);
     if (inMatch()) {
-        try {
-            service::api::getKafkaApi()->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
-        } catch (std::exception& ex) {
-            LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
+        const auto flags = service::api::getGlobalApi()->getSessionFeatures();
+        if (flags.allowWowCombatLogUpload) {
+            try {
+                service::api::getKafkaApi()->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
+            } catch (std::exception& ex) {
+                LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
+            }
         }
     }
 }

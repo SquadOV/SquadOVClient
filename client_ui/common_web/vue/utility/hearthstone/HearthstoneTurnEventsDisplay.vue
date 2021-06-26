@@ -56,21 +56,21 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { HearthstoneMatchWrapper } from '@client/js/hearthstone/hearthstone_match'
-import { HearthstoneGameBlockWrapper } from '@client/js/hearthstone/hearthstone_actions'
+import { BlockType, HearthstoneGameBlockWrapper } from '@client/js/hearthstone/hearthstone_actions'
 import { HearthstoneMatchSnapshotWrapper } from '@client/js/hearthstone/hearthstone_snapshot'
 import { secondsToTimeString } from '@client/js/time'
 import HearthstoneGameBlockRenderer from '@client/vue/utility/hearthstone/HearthstoneGameBlockRenderer.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
         HearthstoneGameBlockRenderer
     }
 })
-export default class HearthstoneTurnEventsDisplay extends Vue {
+export default class HearthstoneTurnEventsDisplay extends mixins(CommonComponent) {
     @Prop({required: true})
     currentMatch!: HearthstoneMatchWrapper
 
@@ -118,10 +118,12 @@ export default class HearthstoneTurnEventsDisplay extends Vue {
     }
 
     goToTurn() {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, 'Turn', this.turnTime!.getTime())
         this.$emit('go-to-event', this.turnTime!)
     }
 
     goToEvent(block: HearthstoneGameBlockWrapper) {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchInfo, this.AnalyticsAction.GoToEvent, BlockType[block.blockType], block.blockTime!.getTime())
         this.$emit('go-to-event', block.blockTime!)
     }
 }

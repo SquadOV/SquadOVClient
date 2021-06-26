@@ -171,6 +171,10 @@ void D3dImage::initializeImage(size_t width, size_t height, bool shared) {
         THROW_ERROR("Failed to create D3d image.");
     }
 
+    // Need to release the renderer bundles if the size changes too as we're changing the
+    // size of the output image.
+    _renderBundles.clear();
+
     _init = true;
 }
 

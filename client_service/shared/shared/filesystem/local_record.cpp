@@ -104,32 +104,49 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
         return true;
     }
 
+    // (source , destination)
+    std::vector<std::pair<fs::path, fs::path>> migrationTasks;
     try {
         const auto oldFolder = _initFolder.value();
         const auto entries = getAllLocalEntries();
         for (const auto& e : entries) {
-            migrateLocalEntry(e, to);
+            migrationTasks.push_back(migrateLocalEntry(e, to));
         }
 
         release();
 
-        fs::rename(oldFolder / fs::path("index.db"), to / fs::path("index.db"));
+        const auto oldIndex = oldFolder / fs::path("index.db");
+        const auto newIndex = to / fs::path("index.db");
+        fs::copy(oldIndex, newIndex);
+        migrationTasks.push_back(std::make_pair(oldIndex, newIndex));
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to migrate local entry: " << ex.what() << std::endl);
+
+        // In the case of failure, we remove all the new destination paths.
+        for (const auto& kvp : migrationTasks) {
+            fs::remove_all(kvp.second);
+        }
+
         return false;
+    }
+
+    // In the case of success, we remove all the old source destination paths.
+    for (const auto& kvp : migrationTasks) {
+        fs::remove_all(kvp.first);
     }
 
     initializeFromFolder(to);
     return true;
 }
 
-void LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
+std::pair<fs::path, fs::path> LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
     const auto source = getEntryPath(entry);
     const auto dest = getEntryPath(to, entry);
     if (fs::exists(dest.parent_path())) {
         fs::remove_all(dest.parent_path());
     }
-    fs::rename(source.parent_path(), dest.parent_path());
+    fs::copy(source.parent_path(), dest.parent_path());
+    return std::make_pair(source.parent_path(), dest.parent_path());
 }
 
 bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
@@ -203,39 +220,57 @@ void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const L
 }
 
 void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry) {
-    std::ostringstream sql;
-    sql << R"|(
-        INSERT INTO local_vod_entries (
-            uuid,
-            filename,
-            start_time,
-            end_time,
-            cache_time,
-            disk_bytes
-        )
-        VALUES (
-            ?, ?, ?, ?, ?, ?
-        )
-        ON CONFLICT DO NOTHING
-    )|";
+    const auto outputPath = getEntryPath(entry);
+    const auto parentDir = outputPath.parent_path();
+    fs::create_directories(parentDir);
 
-    shared::sqlite::SqlStatement stmt(_db, sql.str());
-    stmt.bindParameter(1, entry.uuid);
-    stmt.bindParameter(2, entry.filename);
-    stmt.bindParameter(3, shared::timeToUnixMs(entry.startTm));
-    stmt.bindParameter(4, shared::timeToUnixMs(entry.endTm));
-    stmt.bindParameter(5, shared::timeToUnixMs(entry.cacheTm));
-    stmt.bindParameter(6, static_cast<int64_t>(entry.diskBytes));
-    stmt.next();
-
-    if (stmt.fail()) {
-        THROW_ERROR("Failed to add local entry: " << stmt.errMsg() << " [" << file << "]");
+    bool failure = false;
+    try {
+        fs::copy(file, outputPath);
+        LOG_INFO("Added local entry to DB: " << outputPath << std::endl);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to create local entry: " << ex.what() << std::endl);
+        failure = true;
+        return;
     }
 
-    const auto outputPath = getEntryPath(entry);
-    fs::create_directories(outputPath.parent_path());
-    fs::rename(file, outputPath);
-    LOG_INFO("Added local entry to DB: " << outputPath << std::endl);
+    if (!failure) {
+        std::ostringstream sql;
+        sql << R"|(
+            INSERT INTO local_vod_entries (
+                uuid,
+                filename,
+                start_time,
+                end_time,
+                cache_time,
+                disk_bytes
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?
+            )
+            ON CONFLICT DO NOTHING
+        )|";
+
+        shared::sqlite::SqlStatement stmt(_db, sql.str());
+        stmt.bindParameter(1, entry.uuid);
+        stmt.bindParameter(2, entry.filename);
+        stmt.bindParameter(3, shared::timeToUnixMs(entry.startTm));
+        stmt.bindParameter(4, shared::timeToUnixMs(entry.endTm));
+        stmt.bindParameter(5, shared::timeToUnixMs(entry.cacheTm));
+        stmt.bindParameter(6, static_cast<int64_t>(entry.diskBytes));
+        stmt.next();
+
+        if (stmt.fail()) {
+            LOG_WARNING("Failed to add local entry: " << stmt.errMsg() << " [" << file << "]");
+            failure = true;
+        }
+    }
+
+    if (failure) {
+        fs::remove_all(parentDir);
+    }
+
+    fs::remove(file);
 }
 
 std::filesystem::path LocalRecordingIndexDb::getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const {
@@ -257,7 +292,7 @@ std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getOldestLocalEnt
     sql << R"|(
         SELECT *
         FROM local_vod_entries
-        ORDER BY cache_time DESC
+        ORDER BY cache_time ASC
         LIMIT 1)|";
 
     shared::sqlite::SqlStatement stmt(_db, sql.str());

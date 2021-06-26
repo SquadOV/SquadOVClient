@@ -6,7 +6,7 @@ import Vuetify, {
     VApp,
     VMain,
 } from 'vuetify/lib'
-import VueRouter from 'vue-router'
+import VueRouter, { Route } from 'vue-router'
 import Vuex from 'vuex'
 import VueMeta from 'vue-meta'
 
@@ -634,12 +634,17 @@ const router = new VueRouter({
 
 const store = new Vuex.Store(RootStoreOptions)
 
+import { initializeAnalyticsContainer, getAnalyticsContainer } from '@client/js/analytics/container'
 import { TrackedUserStatsManager } from '@client/js/squadov/status'
 const statusTracker = new TrackedUserStatsManager(store)
 
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
 
-router.beforeEach((to : any, from : any, next : any) => {
+router.afterEach((to: Route, from: Route) => {
+    getAnalyticsContainer().pageView(to)
+})
+
+router.beforeEach((to : Route, from : Route, next : any) => {
     console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
     
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
@@ -710,6 +715,7 @@ router.beforeEach((to : any, from : any, next : any) => {
 ipcRenderer.invoke('request-app-folder').then((appFolder: string) => {
     process.env.SQUADOV_USER_APP_FOLDER = appFolder
     store.dispatch('reloadLocalSettings')
+    initializeAnalyticsContainer(store)
 })
 
 ipcRenderer.on('reset-state', () => {

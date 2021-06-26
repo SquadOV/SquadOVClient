@@ -1,4 +1,4 @@
-#include "system/win32/hwnd_utils.h"
+#include "shared/system/win32/hwnd_utils.h"
 
 #ifdef _WIN32
 
@@ -8,7 +8,7 @@
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
 
-namespace service::system::win32 {
+namespace shared::system::win32 {
 namespace {
 
 struct EnumData {
@@ -33,7 +33,7 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
 
 }
 
-HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds& maxDelayMs) {
+HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds& maxDelayMs, const std::chrono::milliseconds& step, bool quiet) {
     // Need to first find the window associated with the process.
     EnumData window;
     window.pid = pid;
@@ -42,7 +42,6 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     // determining the window can't be found as the user might have just
     // started the game so it's still in the process of creating the window.
     auto delay = std::chrono::milliseconds(0);
-    const auto step = std::chrono::milliseconds(1000);
 
     const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
     HANDLE pHandle = OpenProcess(access, FALSE, pid);
@@ -56,8 +55,14 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
         if (window.found) {
             char windowTitle[1024];
             GetWindowTextA(window.out, windowTitle, 1024);
-            LOG_INFO("Found Window for Process: " << windowTitle << std::endl);
+            if (!quiet) {
+                LOG_INFO("Found Window for Process: " << windowTitle << std::endl);
+            }
             return window.out;
+        }
+
+        if (step.count() == 0) {
+            return NULL;
         }
 
         std::this_thread::sleep_for(step);

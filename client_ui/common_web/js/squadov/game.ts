@@ -19,6 +19,27 @@ export let allGames = [
     SquadOvGames.Csgo
 ]
 
+export function gameToRect(game: SquadOvGames): string {
+    switch (game) {
+        case SquadOvGames.AimLab:
+            return 'assets/games/aimlab_rect_small.jpg'
+        case SquadOvGames.Hearthstone:
+            return 'assets/games/hearthstone_rect_small.jpg'
+        case SquadOvGames.LeagueOfLegends:
+            return 'assets/games/lol_rect_small.jpg'
+        case SquadOvGames.TeamfightTactics:
+            return 'assets/games/tft_rect_small.jpg'
+        case SquadOvGames.Valorant:
+            return 'assets/games/valorant_rect_small.jpg'
+        case SquadOvGames.WorldOfWarcraft:
+            return 'assets/games/wow_rect_small.jpg'
+        case SquadOvGames.Csgo:
+            return 'assets/games/csgo_rect_small.jpg'
+        case SquadOvGames.Unknown:
+            return ''
+    }
+}
+
 export function gameToIcon(game: SquadOvGames): string {
     switch (game) {
         case SquadOvGames.AimLab:

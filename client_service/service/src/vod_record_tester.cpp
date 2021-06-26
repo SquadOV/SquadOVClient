@@ -12,6 +12,8 @@ extern "C" {
 #include "process_watcher/process/process.h"
 #include "recorder/game_recorder.h"
 #include "shared/log/log.h"
+#include "api/squadov_api.h"
+#include "shared/env.h"
 
 namespace po = boost::program_options;
 using namespace process_watcher;
@@ -52,6 +54,8 @@ int main(int argc, char** argv) {
     std::cout << "Init FFMpeg Logging" << std::endl;
     av_log_set_level(AV_LOG_VERBOSE);
     av_log_set_callback(ffmpegLogCallback);
+
+    service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID"));
 
     const auto processName = vm["process"].as<std::string>();
 

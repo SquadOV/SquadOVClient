@@ -10,6 +10,7 @@ struct AudioPacketProperties {
     
     size_t numChannels = 0;
     bool isPlanar = false;
+    bool forceMono = false;
 };
 
 }

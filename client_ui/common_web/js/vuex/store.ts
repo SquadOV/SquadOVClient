@@ -7,6 +7,7 @@ import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
 import { RootState } from '@client/js/vuex/state'
 import { TrackedUserStatus } from '@client/js/squadov/status'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
@@ -14,6 +15,10 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         currentUser: null,
         hasValidSession: true,
         features: {
+            maxRecordPixelY: 0,
+            maxRecordFps: 0,
+            allowRecordUpload: false,
+            allowWowCombatLogUpload: false,
         },
 /// #if DESKTOP
         settings: null,
@@ -87,23 +92,25 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
+        changeOutputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.outputDevice = params.device
             state.settings.record.outputVolume = params.volume
+            state.settings.record.outputMono = params.mono
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeInputDevice(state: RootState, params: {device: string, volume : number}) {
+        changeInputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.inputDevice = params.device
             state.settings.record.inputVolume = params.volume
+            state.settings.record.inputMono = params.mono
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -234,6 +241,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.playback.largeStepSize = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        setAnonymousAnalytics(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.anonymousAnalytics = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeDisabledGames(state: RootState, games: SquadOvGames[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.disabledGames = games
             saveLocalSettings(state.settings)
 /// #endif
         },

@@ -20,8 +20,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.useHwEncoder = obj.value("useHwEncoder", true);
     settings.outputDevice = obj["outputDevice"].get<std::string>();
     settings.outputVolume = obj["outputVolume"].get<double>();
+    settings.outputMono = obj.value("outputMono", false);
     settings.inputDevice = obj["inputDevice"].get<std::string>();
     settings.inputVolume = obj["inputVolume"].get<double>();
+    settings.inputMono = obj.value("inputMono", false);
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr3 = obj.value("useVfr3", false);
 

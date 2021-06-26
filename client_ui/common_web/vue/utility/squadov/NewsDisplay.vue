@@ -45,8 +45,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import axios from 'axios'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SingleNewsDisplay from '@client/vue/utility/squadov/SingleNewsDisplay.vue'
@@ -60,13 +60,15 @@ import { daysAgo } from '@client/js/time'
         SingleNewsDisplay
     }
 })
-export default class NewsDisplay extends Vue {
+export default class NewsDisplay extends mixins(CommonComponent) {
     newsIndex: NewsIndex[] | null = null
     selected: NewsIndex | null = null
     showNews: boolean = false
     itvl: number = 0
 
     selectNews(n: NewsIndex) {
+        this.sendAnalyticsEvent(this.AnalyticsCategory.Button, this.AnalyticsAction.ReadNewsUpdate, n.title, 0)
+        
         this.showNews = true
         this.selected = n
     }

@@ -85,6 +85,28 @@ export default class TitleBar extends Vue {
     closeWindow() {
         ipcRenderer.send('closeWindow')
     }
+
+    keydownHandler: any = null
+
+    handleKeypress(e: KeyboardEvent) {
+        let cmp = e.key.toLowerCase()
+        if (e.ctrlKey && cmp == 'r') {
+            this.navRefresh()
+        } else if (e.altKey && cmp == 'arrowleft') {
+            this.navBack()
+        } else if (e.altKey && cmp == 'arrowright') {
+            this.navForward()
+        }
+    }
+
+    mounted() {
+        this.keydownHandler = this.handleKeypress.bind(this)
+        window.addEventListener('keydown', this.keydownHandler)
+    }
+
+    beforeDestroy() {
+        window.removeEventListener('keydown', this.keydownHandler)
+    }
 }
 
 </script>

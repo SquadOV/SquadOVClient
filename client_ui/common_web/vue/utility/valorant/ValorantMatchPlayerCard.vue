@@ -14,7 +14,7 @@
             </valorant-agent-icon>
         </div>
         <v-divider></v-divider>
-        <v-tabs grow color="primary">
+        <v-tabs grow color="primary" v-model="tab">
             <v-tab>
                 Summary
             </v-tab>
@@ -148,9 +148,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import Component, { mixins } from 'vue-class-component'
+import { Prop, Watch } from 'vue-property-decorator'
 import { ValorantMatchPlayerMatchMetadata } from '@client/js/valorant/valorant_matches'
 import {
     ValorantMatchDetailsWrapper,
@@ -164,6 +163,7 @@ import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.
 import ValorantWeaponAbilityKillStats from '@client/vue/utility/valorant/ValorantWeaponAbilityKillStats.vue'
 import ValorantHeadToHeadDisplay from '@client/vue/utility/valorant/ValorantHeadToHeadDisplay.vue'
 import GenericStat from '@client/vue/utility/GenericStat.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -175,7 +175,7 @@ import GenericStat from '@client/vue/utility/GenericStat.vue'
         GenericStat
     }
 })
-export default class ValorantMatchPlayerCard extends Vue {
+export default class ValorantMatchPlayerCard extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: ValorantMatchDetailsWrapper
 
@@ -187,6 +187,30 @@ export default class ValorantMatchPlayerCard extends Vue {
 
     @Prop({type: Boolean, default: false})
     forceDisableGoToEvent! : boolean
+
+    tab: number = 0
+
+    get tabLabel(): string {
+        switch (this.tab) {
+            case 0:
+                return 'Summary'
+            case 1:
+                return 'Weapons'
+            case 2:
+                return 'H2H'
+        }
+        return ''
+    }
+
+    @Watch('tab')
+    onChangeTab() {
+        this.sendAnalyticsEvent(
+            this.AnalyticsCategory.MatchInfo,
+            this.AnalyticsAction.NavigateMatchInfo,
+            this.tabLabel,
+            this.tab
+        )
+    }
 
     agentName(id : string) : string {
         let cnt = getValorantContent(null)

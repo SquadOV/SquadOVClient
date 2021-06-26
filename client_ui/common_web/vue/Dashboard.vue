@@ -127,8 +127,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { SquadMembership } from '@client/js/squadov/squad'
@@ -157,7 +157,7 @@ import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
         ReferralLink,
     }
 })
-export default class Dashboard extends Vue {
+export default class Dashboard extends mixins(CommonComponent) {
     preselectedSquad: string | null = null
     mySquads: SquadMembership[] = []
     selectedSquad: SquadMembership | undefined | null = null
