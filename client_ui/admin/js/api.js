@@ -11,6 +11,64 @@ class ApiServer {
         })
     }
 
+    async getAverageAgeKpi(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+            WITH series(tm) AS (
+                SELECT *
+                FROM generate_series(
+                    DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
+                    DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                    INTERVAL '1 ${pgInterval}'
+                )
+            )
+            SELECT
+                s.tm AS "tm",
+                COALESCE((
+                    SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY inp.v)
+                    FROM (
+                        SELECT
+                            inp.v,
+                            percent_rank() OVER (ORDER BY inp.v DESC) AS "pct"
+                        FROM (
+                            SELECT DISTINCT ON (u.id)
+                                (EXTRACT(EPOCH FROM (s.tm + INTERVAL '1 week')) - EXTRACT(EPOCH FROM u.registration_time)) / 60 / 60 / 24 AS "v"
+                            FROM squadov.daily_active_endpoint AS dae
+                            INNER JOIN squadov.users AS u
+                                ON u.id = dae.user_id
+                            WHERE dae.tm >= s.tm AND dae.tm < (s.tm + INTERVAL '1 week')
+                                AND u.registration_time IS NOT NULL
+                        ) AS inp
+                    ) AS inp
+                    WHERE inp.pct <= 0.5
+                ), 0) AS "val"
+            FROM series AS s
+            `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        return rows.map((r) => {
+            return {
+                tm: r.tm,
+                data: {
+                    'Value': parseInt(r.val),
+                },
+                sub: ['Value']
+            }
+        })
+    }
+
     async getActiveUsers(interval, start, end) {
         let pgInterval
         if (interval == 0) {
@@ -928,6 +986,8 @@ class ApiServer {
                 return await this.getVods(interval, start, end)
             case 14: // Lost Users
                 return await this.getLostUsers(interval, start, end)
+            case 15: // Average Age
+                return await this.getAverageAgeKpi(interval, start, end)
         }
     }
 

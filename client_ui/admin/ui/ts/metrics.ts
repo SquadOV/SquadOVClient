@@ -14,6 +14,7 @@ export enum Metrics {
     Squads,
     Vods,
     LostUsers,
+    AverageAge,
 }
 
 export interface MetricDatum {
