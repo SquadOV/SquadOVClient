@@ -88,5 +88,11 @@
         "Ability1": "Stun",
         "Ability2": "Uninvited Guest",
         "Ultimate": "Spatial Drift"        
+    },
+    "KAY/O": {
+        "GrenadeAbility": "Frag/ment",
+        "Ability1": "Flash/Drive",
+        "Ability2": "Zero/Point",
+        "Ultimate": "Null/Cmd"
     }
 }

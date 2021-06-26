@@ -10,12 +10,14 @@ export default class CommonComponent extends Vue {
     AnalyticsCategory = AnalyticsCategory
     AnalyticsAction = AnalyticsAction
 
-    get analytics(): AnalyticsContainer {
+    get analytics(): AnalyticsContainer | null {
         return getAnalyticsContainer()
     }
 
     sendAnalyticsEvent(category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
-        this.analytics.event(this.$route, category, action, label, value)
+        if (!!this.analytics) {
+            this.analytics.event(this.$route, category, action, label, value)
+        }
     }
 
     activated() {

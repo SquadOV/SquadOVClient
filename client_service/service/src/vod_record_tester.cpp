@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
 
     const auto outputFname = vm["output"].as<std::string>();
     // Doesn't really matter what game we stick in here yolo.
-    service::recorder::GameRecorder recorder(finalProcess, shared::EGame::Aimlab);
+    service::recorder::GameRecorder recorder(finalProcess, shared::EGame::WoW);
     recorder.loadCachedInfo();
     recorder.setFileOutputFromUri("bobbothebuilder", outputFname);
     // Wait for it to grab window info

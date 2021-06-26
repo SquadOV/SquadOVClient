@@ -115,6 +115,6 @@ export function initializeAnalyticsContainer(store: Store<RootState>) {
     analytics = new AnalyticsContainer(store)
 }
 
-export function getAnalyticsContainer(): AnalyticsContainer {
+export function getAnalyticsContainer(): AnalyticsContainer | null {
     return analytics!
 }

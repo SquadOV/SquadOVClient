@@ -3,7 +3,8 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { ProvidePlugin } = require('webpack');
 
 const cssLoaders = [
     {
@@ -50,6 +51,13 @@ module.exports = (env, argv, subfolder) => {
     let baseFilename = isDesktop ? '[name]' : '[name].[contenthash]'
     let chunkBaseFilename = isDesktop ? '[id]' : '[id].[chunkhash]'
 
+    let plugins = isDesktop? [] : [
+        new ProvidePlugin({
+            process: 'process/browser',
+            Buffer: ['buffer', 'Buffer'],
+        })
+    ]
+
     return {
         target,
         entry,
@@ -64,12 +72,6 @@ module.exports = (env, argv, subfolder) => {
                 {
                     test: /\.tsx?$/,
                     use: [
-                        {
-                            loader: 'cache-loader',
-                            options: {
-                                cacheIdentifier: `cache-loader:${process.env.NODE_ENV}:${subfolder}:${target}`
-                            }
-                        },
                         "thread-loader",
                         babelLoader,
                         {
@@ -177,6 +179,7 @@ module.exports = (env, argv, subfolder) => {
                 template: path.join(__dirname, 'js.template.ejs'),
                 minify: false,
             }),
+            ...plugins
         ],
         resolve: {
             alias: {
@@ -184,6 +187,23 @@ module.exports = (env, argv, subfolder) => {
                 '@client': path.resolve(__dirname, '../'),
             },
             extensions: ['.js', '.vue', '.scss', '.ts'],
+            fallback: {
+                "util": require.resolve("util/"),
+                "assert": require.resolve("assert/"),
+                "url": require.resolve("url/"),
+                "net": false,
+                "tls": false,
+                "fs": false,
+                "buffer": "buffer",
+                "querystring": require.resolve("querystring-es3"),
+                "https": require.resolve("https-browserify"),
+                "http": require.resolve("stream-http"),
+                "crypto": require.resolve("crypto-browserify"),
+                "stream": require.resolve("stream-browserify"),
+                "zlib": require.resolve("browserify-zlib"),
+                "path": require.resolve("path-browserify"),
+                "process": require.resolve("process/browser")
+            }
         }
     }
 }
