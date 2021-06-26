@@ -56,7 +56,7 @@ public:
     void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
-    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume);
+    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono);
     void setVolume(double volume);
 
     bool exists() const { return _exists; }
@@ -68,6 +68,7 @@ private:
     EAudioDeviceDirection _dir;
     bool _exists = false;
     std::atomic<double> _volume = 1.0;
+    bool _mono = false;
 
     size_t _sampleRate = 0;
     PaStreamParameters _streamParams;
@@ -143,8 +144,8 @@ PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 
 }
 
-void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) {
-    LOG_INFO("Load Selected Audio Device: '" << selected << "' @ " << volume << std::endl);
+void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono) {
+    LOG_INFO("Load Selected Audio Device: '" << selected << "' @ " << volume << " [Mono: " << mono << "]" << std::endl);
     PortaudioAudioRecorder::getDeviceListing(dir);
 
     // Try to find the selected device. If we can't find it then use the default device.
@@ -230,9 +231,10 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
 
     // Setup packet properties so that we can communicate with the encoder as to what format the packets will be coming in.
     _props.isPlanar = false;
-    _props.numChannels = _streamParams.channelCount;
+    _props.numChannels = mono ? 1 : _streamParams.channelCount;
     _props.numSamples = 0;
     _props.samplingRate = _sampleRate;
+    _props.forceMono = mono;
     
     LOG_INFO("Open recording device: " << di->name << " (" << _streamParams.device << "/" << Pa_GetDeviceCount() << ")" << std::endl
         << "\tChannels: " << _streamParams.channelCount << std::endl
@@ -244,13 +246,14 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
         LOG_ERROR("Failed to open port audio stream: " << err);
         if (!usingDefault) {
             LOG_WARNING("Falling back to default device." << std::endl);
-            loadDevice(dir, "", volume);
+            loadDevice(dir, "", volume, mono);
         } else {
             LOG_WARNING("No audio devices to fall back to...ignoring this audio stream." << std::endl);
         }
     } else {
         _exists = true;
         _volume = volume;
+        _mono = mono;
     }
 }
 
@@ -263,6 +266,8 @@ int PortaudioAudioRecorderImpl::portaudioCallback(const void* input, void* outpu
     // Need to change the number of packets since the number of frames isn't fixed.
     AudioPacketProperties packetProps = props();
     packetProps.numSamples = static_cast<size_t>(frameCount);
+    // This gets changed because the output packet might need to be mono while we aren't necessarily recording mono.
+    packetProps.numChannels = _streamParams.channelCount;
 
     FAudioPacketView view(buffer, packetProps, _volume.load());
     // It's not safe to do mutex operations here so we need to copy all this data into a queue that another thread
@@ -286,7 +291,8 @@ void PortaudioAudioRecorderImpl::addToPacketQueue(const FAudioPacketView& view, 
 
         // We need to change numSamples to be how many samples we actually store in this packet.
         service::recorder::audio::AudioPacketProperties props = view.props();
-        props.numSamples = end - start; 
+        props.numSamples = end - start;
+        props.numChannels = _props.numChannels;
 
         AudioPacket packet(props, packetTm);
         packet.copyFrom(view, start * view.props().numChannels, end * view.props().numChannels);
@@ -372,8 +378,8 @@ bool PortaudioAudioRecorder::exists() const {
     return _impl->exists();
 }
 
-void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume) {
-    _impl->loadDevice(dir, selected, volume);
+void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono) {
+    _impl->loadDevice(dir, selected, volume, mono);
 }
 
 const AudioPacketProperties& PortaudioAudioRecorder::props() const {

@@ -14,8 +14,10 @@ export interface SquadOvRecordingSettings {
     useVfr3: boolean
     outputDevice: string
     outputVolume: number
+    outputMono: boolean
     inputDevice: string
     inputVolume: number
+    inputMono: boolean
     usePushToTalk: boolean
     maxUploadSpeed: number | null
     useLocalRecording: boolean
@@ -189,8 +191,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -209,8 +213,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -229,8 +235,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVfr3: false,
                 outputDevice: 'Default Device',
                 outputVolume: 1.0,
+                outputMono: false,
                 inputDevice: 'Default Device',
                 inputVolume: 1.0,
+                inputMono: false,
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -268,8 +276,10 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVfr3: false,
             outputDevice: 'Default Device',
             outputVolume: 1.0,
+            outputMono: false,
             inputDevice: 'Default Device',
             inputVolume: 1.0,
+            inputMono: false,
             usePushToTalk: false,
             maxUploadSpeed: null,
             useLocalRecording: false,
@@ -410,6 +420,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.anonymousAnalytics === undefined) {
         parsedData.anonymousAnalytics = true
+    }
+
+    if (parsedData.record.outputMono === undefined) {
+        parsedData.record.outputMono = false
+    }
+
+    if (parsedData.record.inputMono === undefined) {
+        parsedData.record.inputMono = false
     }
 
     saveLocalSettings(parsedData, true)

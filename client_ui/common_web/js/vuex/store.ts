@@ -91,23 +91,25 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeOutputDevice(state: RootState, params: {device: string, volume : number}) {
+        changeOutputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.outputDevice = params.device
             state.settings.record.outputVolume = params.volume
+            state.settings.record.outputMono = params.mono
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeInputDevice(state: RootState, params: {device: string, volume : number}) {
+        changeInputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.inputDevice = params.device
             state.settings.record.inputVolume = params.volume
+            state.settings.record.inputMono = params.mono
             saveLocalSettings(state.settings)
 /// #endif
         },

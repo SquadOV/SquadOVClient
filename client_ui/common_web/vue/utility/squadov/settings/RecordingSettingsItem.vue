@@ -180,6 +180,15 @@
                                     mdi-refresh
                                 </v-icon>
                             </v-btn>
+
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="outputMono"
+                                @change="changeOutputMono"
+                                hide-details
+                                label="Mono"
+                            >
+                            </v-checkbox>
                         </div>
 
                         <div>
@@ -220,6 +229,15 @@
                                     mdi-refresh
                                 </v-icon>
                             </v-btn>
+
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="inputMono"
+                                @change="changeInputMono"
+                                hide-details
+                                label="Mono"
+                            >
+                            </v-checkbox>
                         </div>
 
                         <div>
@@ -587,6 +605,7 @@ export default class RecordingSettingsItem extends Vue {
         this.$store.commit('changeOutputDevice', {
             device: val,
             volume: this.outputVolume,
+            mono: this.outputMono,
         })
     }
 
@@ -598,11 +617,24 @@ export default class RecordingSettingsItem extends Vue {
         this.$store.commit('changeOutputDevice', {
             device: this.selectedOutput,
             volume: val,
+            mono: this.outputMono,
         })
     }
 
     get outputVolumeStr(): string {
         return `${(this.outputVolume * 100.0).toFixed(0)}%`
+    }
+
+    get outputMono(): boolean {
+        return this.$store.state.settings.record.outputMono
+    }
+
+    changeOutputMono(v: boolean) {
+        this.$store.commit('changeOutputDevice', {
+            device: this.selectedOutput,
+            volume: this.outputVolume,
+            mono: v,
+        })
     }
 
     get selectedInput(): string {
@@ -629,6 +661,18 @@ export default class RecordingSettingsItem extends Vue {
     
     get inputVolumeStr(): string {
         return `${(this.inputVolume * 100.0).toFixed(0)}%`
+    }
+
+    get inputMono(): boolean {
+        return this.$store.state.settings.record.inputMono
+    }
+
+    changeInputMono(v: boolean) {
+        this.$store.commit('changeInputDevice', {
+            device: this.selectedInput,
+            volume: this.inputVolume,
+            mono: v,
+        })
     }
 
     get resY(): number {

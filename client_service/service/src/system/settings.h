@@ -18,8 +18,10 @@ struct RecordingSettings {
 
     std::string outputDevice;
     double outputVolume = 1.0;
+    bool outputMono = false;
     std::string inputDevice;
     double inputVolume = 1.0;
+    bool inputMono = false;
     bool usePushToTalk = false;
 
     std::optional<size_t> maxUploadSpeed;

@@ -388,14 +388,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
 
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
-    _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume);
+    _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume, _cachedRecordingSettings->outputMono);
     if (_aoutRecorder->exists()) {
         _aoutRecorder->startRecording();
     }
 
     std::lock_guard guard(_ainMutex);
     _ainRecorder.reset(new audio::PortaudioAudioRecorder());
-    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->usePushToTalk ? 0.0 : _cachedRecordingSettings->inputVolume);
+    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->usePushToTalk ? 0.0 : _cachedRecordingSettings->inputVolume, _cachedRecordingSettings->inputMono);
     if (_ainRecorder->exists()) {
         _ainRecorder->startRecording();
 
