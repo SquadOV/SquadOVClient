@@ -7,6 +7,8 @@
 #include <optional>
 #include <vector>
 
+#include "shared/games.h"
+
 namespace service::system {
 
 struct RecordingSettings {
@@ -47,6 +49,7 @@ struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
     bool enableNtp = true;
+    std::vector<shared::EGame> disabledGames;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -60,6 +63,7 @@ public:
     RecordingSettings recording();
     KeybindSettings keybinds();
     bool enableNtp();
+    bool isGameEnabled(shared::EGame);
     
     bool loaded() const { return _loaded; }
 

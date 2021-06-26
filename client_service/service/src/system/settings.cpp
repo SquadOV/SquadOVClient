@@ -57,6 +57,11 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     settings.record = RecordingSettings::fromJson(obj["record"]);
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
     settings.enableNtp = obj.value("enableNtp", false);
+
+    for (const auto& val : obj["disabledGames"]) {
+        settings.disabledGames.push_back(static_cast<shared::EGame>(val.get<int32_t>()));
+    }
+
     return settings;
 }
 
@@ -91,6 +96,11 @@ KeybindSettings Settings::keybinds() {
 bool Settings::enableNtp() {
     std::shared_lock lock(_mutex);
     return _settings.enableNtp;
+}
+
+bool Settings::isGameEnabled(shared::EGame) {
+    std::shared_lock lock(_mutex);
+    return true;
 }
 
 }
