@@ -4,6 +4,7 @@ import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
+import { SquadOvGames } from '../squadov/game'
 /// #endif
 
 export interface SquadOvRecordingSettings {
@@ -124,6 +125,7 @@ export interface SquadOvLocalSettings {
     setupWizardRun: boolean
     enableNtp: boolean
     anonymousAnalytics: boolean
+    disabledGames: SquadOvGames[]
 }
 
 function getSettingsFname() : string {
@@ -265,6 +267,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         setupWizardRun: false,
         enableNtp: true,
         anonymousAnalytics: true,
+        disabledGames: [],
     }
 /// #else
     return {
@@ -302,6 +305,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         setupWizardRun: false,
         enableNtp: true,
         anonymousAnalytics: true,
+        disabledGames: [],
     }
 /// #endif
 }
@@ -428,6 +432,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.inputMono === undefined) {
         parsedData.record.inputMono = false
+    }
+
+    if (parsedData.disabledGames === undefined) {
+        parsedData.disabledGames = []
     }
 
     saveLocalSettings(parsedData, true)

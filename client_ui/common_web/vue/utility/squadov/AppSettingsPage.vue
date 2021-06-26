@@ -55,6 +55,17 @@
                 </v-checkbox>
             </v-tab-item>
 
+             <v-tab>
+                <v-icon left>
+                    mdi-gamepad
+                </v-icon>
+                Games
+            </v-tab>
+
+            <v-tab-item>
+                <per-game-settings-item></per-game-settings-item>
+            </v-tab-item>
+
             <v-tab>
                 <v-icon left>
                     mdi-play-circle
@@ -119,6 +130,7 @@ import RecordingSettingsItem from '@client/vue/utility/squadov/settings/Recordin
 import AccountSecuritySettingsItem from '@client/vue/utility/squadov/settings/AccountSecuritySettingsItem.vue'
 import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackSettingsItem.vue'
 import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSettingsItem.vue'
+import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSettingsItem.vue'
 
 @Component({
     components: {
@@ -126,6 +138,7 @@ import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSet
         AccountSecuritySettingsItem,
         PlaybackSettingsItem,
         SharingSettingsItem,
+        PerGameSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {

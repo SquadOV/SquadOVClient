@@ -7,6 +7,7 @@ import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
 import { RootState } from '@client/js/vuex/state'
 import { TrackedUserStatus } from '@client/js/squadov/status'
+import { SquadOvGames } from '@client/js/squadov/game'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
@@ -249,6 +250,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.anonymousAnalytics = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeDisabledGames(state: RootState, games: SquadOvGames[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.disabledGames = games
             saveLocalSettings(state.settings)
 /// #endif
         },
