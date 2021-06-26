@@ -436,10 +436,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             })
         }
 
-        this.player.on('keydown', (e: KeyboardEvent) => {
-            this.handleKeypress(e)
-        })
-
         let cbar = this.player.getChild('controlBar')
         if (!!cbar) {
             for (let ctrl of cbar.children()) {
@@ -449,6 +445,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                         // Everything else should just be handled by the player.
                         e.preventDefault()
 
+                        // This needs to be here since the control bar will eat focus and prevent the handle keypress from working normally.
                         this.handleKeypress(e)
                     }
                 })
@@ -560,7 +557,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }
     }
 
+    keydownHandler: any = null
     mounted() {
+        this.keydownHandler = this.handleKeypress.bind(this)
+        window.addEventListener('keydown', this.keydownHandler)
+
         if (!!this.overrideUri) {
             this.videoUri = this.overrideUri
             this.toggleHasVideo()
@@ -573,6 +574,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         if (!!this.player) {
             this.player.dispose()
         }
+        window.removeEventListener('keydown', this.keydownHandler)
         this.player = null
     }
 }
