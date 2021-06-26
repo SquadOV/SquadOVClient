@@ -5,6 +5,7 @@
 #include <shared_mutex>
 #include <nlohmann/json.hpp>
 #include <optional>
+#include <unordered_set>
 #include <vector>
 
 #include "shared/games.h"
@@ -49,7 +50,7 @@ struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
     bool enableNtp = true;
-    std::vector<shared::EGame> disabledGames;
+    std::unordered_set<shared::EGame> disabledGames;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };

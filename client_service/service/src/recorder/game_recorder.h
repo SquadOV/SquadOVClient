@@ -89,6 +89,7 @@ private:
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;
     shared::EGame _game;
+    bool isGameEnabled() const;
 
     EncoderDatum _encoder;
     std::unique_ptr<VodIdentifier> _currentId;

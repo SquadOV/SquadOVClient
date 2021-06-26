@@ -182,6 +182,11 @@ void GameRecorder::startDvrSession(int flags, bool autoTick) {
     }
 
     loadCachedInfo();
+    if (!isGameEnabled()) {
+        LOG_WARNING("Ignoring DVR session start since game is disabled: " << shared::gameToString(_game) << std::endl);
+        _currentId.reset(nullptr);
+        return;
+    }
 
     if (!areInputStreamsInitialized()) {
         std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
@@ -264,10 +269,11 @@ void GameRecorder::cleanDvrSession(const std::string& id) {
 }
 
 void GameRecorder::loadCachedInfo() {
+    // Just in case the user changed settings in the UI already, just sync up via the file.
+    service::system::getCurrentSettings()->reloadSettingsFromFile();
+
     if (!_cachedRecordingSettings) {
         LOG_INFO("Load cache info: Settings" << std::endl);
-        // Just in case the user changed it in the UI already, just sync up via the file.
-        service::system::getCurrentSettings()->reloadSettingsFromFile();
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
 
         // There's some things that need to be limited by what we've determined the user's limitations to be on the server side.
@@ -419,6 +425,10 @@ bool GameRecorder::initializeInputStreams(int flags) {
     return true;
 }
 
+bool GameRecorder::isGameEnabled() const {
+    return service::system::getCurrentSettings()->isGameEnabled(_game);
+}
+
 void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int flags) {
     if (!!_currentId) {
         return;
@@ -428,6 +438,12 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
 
     _currentId = createNewVodIdentifier();
     loadCachedInfo();
+
+    if (!isGameEnabled()) {
+        LOG_WARNING("Ignoring VOD start since game is disabled: " << shared::gameToString(_game) << std::endl);
+        _currentId.reset(nullptr);
+        return;
+    }
 
     try {
         initializeFileOutputPiper();
