@@ -3,6 +3,12 @@
         <div v-if="hasVideo" :style="parentDivStyle" :key="forceRedraw">
             <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video">
             </video>
+
+            <video-draw-overlay
+                v-if="enableDraw"
+                ref="overlay"
+            >
+            </video-draw-overlay>
         </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
@@ -16,12 +22,6 @@
                 </v-alert>
             </v-col>
         </v-row>
-
-        <video-draw-overlay
-            v-if="enableDraw"
-            ref="overlay"
-        >
-        </video-draw-overlay>
     </div>
 </template>
 
@@ -409,6 +409,12 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         this.player.on('pause', () => {
             if (!!this.player) {
                 this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StopVod, '', this.player.currentTime())
+            }
+        })
+
+        this.player.on('fullscreenchange', () => {
+            if (!!this.$refs.overlay) {
+                this.$refs.overlay.overlayResize()
             }
         })
 
