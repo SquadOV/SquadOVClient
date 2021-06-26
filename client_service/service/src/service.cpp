@@ -46,7 +46,7 @@
 #include <portaudio.h>
 #include <thread>
 
-#include "system/win32/hwnd_utils.h"
+#include "shared/system/win32/hwnd_utils.h"
 
 extern "C" {
 #include <libavutil/log.h>
@@ -656,7 +656,7 @@ int main(int argc, char** argv) {
         defaultMain();
 
         LOG_INFO("Setting up windows message loop..." << std::endl);
-        service::system::win32::Win32MessageLoop::singleton()->start();
+        shared::system::win32::Win32MessageLoop::singleton()->start();
     } else if (mode == "wow_test") {
         wowTest(vm["log"].as<std::string>(), vm["vod"].as<std::string>(), vm["vodTime"].as<std::string>());
     } else {

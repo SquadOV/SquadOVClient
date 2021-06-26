@@ -14,7 +14,7 @@
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "renderer/d3d11_renderer.h"
-#include "system/win32/hwnd_utils.h"
+#include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
 #include "system/win32/message_loop.h"
 #include "shared/math.h"
@@ -287,7 +287,7 @@ void GameRecorder::loadCachedInfo() {
         LOG_INFO("Load cache info: Window Information" << std::endl);
         std::future<video::VideoWindowInfo> fut = std::async(std::launch::async, [this](){
             video::VideoWindowInfo ret;
-            HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
+            HWND wnd = shared::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
             LOG_INFO("...Found Window! Detecting monitor and resolution..." << std::endl);
             if (wnd) {
                 while (true) {
@@ -302,7 +302,7 @@ void GameRecorder::loadCachedInfo() {
                         ret.width = windowRes.right - windowRes.left;
                         ret.height = windowRes.bottom - windowRes.top;
                         ret.init = true;
-                        ret.isWindowed = !service::system::win32::isFullscreen(wnd, refMonitor, 4);
+                        ret.isWindowed = !shared::system::win32::isFullscreen(wnd, refMonitor, 4);
                         break;
                     }
                     std::this_thread::sleep_for(100ms);
@@ -400,14 +400,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
         _ainRecorder->startRecording();
 
         if (_cachedRecordingSettings->usePushToTalk) {
-            _pttEnableCb = service::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
+            _pttEnableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
                 std::lock_guard guard(_ainMutex);
                 if (_ainRecorder) {
                     _ainRecorder->setVolume(_cachedRecordingSettings->inputVolume);
                 }
             });
 
-            _pttDisableCb = service::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkDisable, [this](){
+            _pttDisableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkDisable, [this](){
                 std::lock_guard guard(_ainMutex);
                 if (_ainRecorder) {
                     _ainRecorder->setVolume(0.0);
@@ -551,14 +551,14 @@ void GameRecorder::stopInputs() {
         // let that get in the way of stopping the audio input recorder.
         if (_pttEnableCb.has_value()) {
             LOG_INFO("...Remove PTT enable callback." << std::endl);
-            service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkEnable, _pttEnableCb.value());
+            shared::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkEnable, _pttEnableCb.value());
             LOG_INFO("\tOK" << std::endl);
             _pttEnableCb.reset();   
         }
 
         if (_pttDisableCb.has_value()) {
             LOG_INFO("...Remove PTT disable callback." << std::endl);
-            service::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkDisable, _pttDisableCb.value());
+            shared::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::PushToTalkDisable, _pttDisableCb.value());
             LOG_INFO("\tOK" << std::endl);
             _pttDisableCb.reset();
         }

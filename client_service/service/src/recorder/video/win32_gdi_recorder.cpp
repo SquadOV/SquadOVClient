@@ -2,7 +2,7 @@
 
 #include "recorder/image/image.h"
 #include "recorder/encoder/av_encoder.h"
-#include "system/win32/hwnd_utils.h"
+#include "shared/system/win32/hwnd_utils.h"
 #include "shared/log/log.h"
 
 #include <iostream>
@@ -153,7 +153,7 @@ bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowIn
         return false;
     }
 
-    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
+    HWND wnd = shared::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
     if (!wnd) {
         LOG_INFO("Rejecting GDI due to inability to find window." << std::endl);
         return false;

@@ -6,7 +6,7 @@
 #include "renderer/d3d11_texture.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
-#include "system/win32/hwnd_utils.h"
+#include "shared/system/win32/hwnd_utils.h"
 #include "system/settings.h"
 
 #include <iostream>
@@ -53,7 +53,7 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
 void DxgiDesktopRecorder::initialize() {
     LOG_INFO("Initialize DXGI..." << std::endl);
     // Wait for the window to become unminimized so that we can grab the correct monitor.
-    while (IsIconic(_window) || !service::system::win32::isProcessForeground(_pid)) {
+    while (IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) {
         LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
 
         TCHAR windowTitle[1024];
@@ -213,7 +213,7 @@ void DxgiDesktopRecorder::startRecording() {
 
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
-            if (IsIconic(_window) || !service::system::win32::isProcessForeground(_pid)) {
+            if (IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) {
                 // Re-use old frames here to try and prevent ourselves from grabbing the desktop.
                 // Don't just skip the frame as they may cause us to de-sync?
                 reuseOldFrame = true;
@@ -304,7 +304,7 @@ bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindo
         return false;
     }
 
-    HWND wnd = service::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
+    HWND wnd = shared::system::win32::findWindowForProcessWithMaxDelay(pid, std::chrono::milliseconds(0));
     if (!wnd) {
         LOG_INFO("Rejecting DXGI due to inability to find window." << std::endl);
         return false;

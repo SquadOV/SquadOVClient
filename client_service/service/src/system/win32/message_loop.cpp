@@ -4,7 +4,7 @@
 #include "shared/errors/error.h"
 #include <thread>
 
-namespace service::system::win32 {
+namespace shared::system::win32 {
 namespace {
 
 LRESULT WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
