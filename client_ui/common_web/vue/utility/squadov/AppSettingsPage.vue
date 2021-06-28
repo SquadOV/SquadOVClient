@@ -77,6 +77,19 @@
                 <linked-accounts-settings-item></linked-accounts-settings-item>
             </v-tab-item>
 
+            <template v-if="useRecordingSettings">
+                <v-tab>
+                    <v-icon left>
+                        mdi-palette
+                    </v-icon>
+                    Overlays
+                </v-tab>
+
+                <v-tab-item>
+                    <overlay-settings-item></overlay-settings-item>
+                </v-tab-item>
+            </template>
+
             <v-tab>
                 <v-icon left>
                     mdi-play-circle
@@ -143,6 +156,7 @@ import PlaybackSettingsItem from '@client/vue/utility/squadov/settings/PlaybackS
 import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSettingsItem.vue'
 import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/LinkedAccountsSettingsItem.vue'
 import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSettingsItem.vue'
+import OverlaySettingsItem from '@client/vue/utility/squadov/settings/OverlaySettingsItem.vue'
 
 @Component({
     components: {
@@ -152,6 +166,7 @@ import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSet
         SharingSettingsItem,
         LinkedAccountsSettingsItem,
         PerGameSettingsItem,
+        OverlaySettingsItem
     }
 })
 export default class AppSettingsPage extends Vue {

@@ -12,6 +12,7 @@ SET(SRCS
     src/wow/wow_process_handler.cpp
     src/league/league_process_handler.cpp
     src/recorder/game_recorder.cpp
+    src/recorder/game_preview_stream.cpp
     src/recorder/video/win32_gdi_recorder.cpp
     src/recorder/video/dxgi_desktop_recorder.cpp
     src/recorder/video/windows_graphics_capture.cpp
@@ -40,6 +41,7 @@ SET(SRCS
     src/renderer/d3d11_shader.cpp
     src/renderer/d3d11_video_processor.cpp
     src/renderer/d3d11_texture.cpp
+    src/renderer/d3d11_overlay_renderer.cpp
 )
 
 SET(HEADERS
@@ -56,6 +58,7 @@ SET(HEADERS
     src/wow/wow_process_handler.h
     src/league/league_process_handler.h
     src/recorder/game_recorder.h
+    src/recorder/game_preview_stream.h
     src/recorder/video/video_recorder.h
     src/recorder/video/win32_gdi_recorder.h
     src/recorder/video/dxgi_desktop_recorder.h
@@ -91,6 +94,7 @@ SET(HEADERS
     src/renderer/d3d11_shader.h
     src/renderer/d3d11_video_processor.h
     src/renderer/d3d11_texture.h
+    src/renderer/d3d11_overlay_renderer.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)

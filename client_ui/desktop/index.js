@@ -863,3 +863,73 @@ ipcMain.on('closeWindow', (event) => {
     }
     window.close()
 })
+
+// Local RTMP server control
+const NodeMediaServer = require('node-media-server')
+let nms = null
+ipcMain.handle('start-record-preview', (event, game) => {
+    if (!!nms) {
+        return
+    }
+
+    let ffmpegPath = !!process.env.FFMPEG_BINARY_PATH ? process.env.FFMPEG_BINARY_PATH : path.join(process.resourcesPath, 'service', 'ffmpeg.exe')
+    let mediaRootPath = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'HLS')
+
+    if (fs.existsSync(mediaRootPath)) {
+        fs.rmSync(mediaRootPath, {
+            recursive: true,
+            force: true,
+        })
+    }
+
+    let config = {
+        rtmp: {
+            port: 1935,
+            chunk_size: 60000,
+            gop_cache: true,
+            ping: 30,
+            ping_timeout: 60,
+        },
+        http: {
+            port: 9999,
+            allow_origin: '*',
+            mediaroot: mediaRootPath.replaceAll('\\', '/'),
+            api: false,
+        },
+        trans: {
+            ffmpeg: ffmpegPath,
+            tasks: [
+                {
+                    app: 'live',
+                    hls: true,
+                    hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
+                }
+            ]
+        }
+    }
+
+    nms = new NodeMediaServer(config)
+    nms.run()
+
+    // Tell C++ to send the game recording to the appropriate path.
+    zeromqServer.startGameRecordingStream('rtmp://localhost:1935/live/preview', game)
+})
+
+ipcMain.on('stop-record-preview', (event) => {
+    if (!nms) {
+        return
+    }
+
+    zeromqServer.stopGameRecordingStream()
+
+    nms.stop()
+    nms = null
+})
+
+ipcMain.on('reload-record-preview', (event) => {
+    zeromqServer.reloadGameRecordingStream()
+})
+
+ipcMain.on('enable-record-preview-overlays', (event, enabled) => {
+    zeromqServer.enablePreviewGameRecordingStream(enabled)
+})

@@ -9,12 +9,17 @@ export class DrawActionHistory {
     _currentState: any = {}
     _actions: BaseDrawAction[]
     _actionPtr: number = -1
+    _historyCb: (() => void) | null = null
 
     constructor(canvas: fabric.Canvas, blur: BlurDrawContainer) {
         this._canvas = canvas
-        this._currentState = this.state
+        this.reloadState()
         this._blur = blur
         this._actions = []
+    }
+
+    setOnHistoryChange(fn: () => void) {
+        this._historyCb = fn   
     }
 
     get hasCurrentAction(): boolean {
@@ -32,6 +37,10 @@ export class DrawActionHistory {
 
     get savedState(): any {
         return this._currentState
+    }
+
+    reloadState() {
+        this._currentState = this.state
     }
 
     get state(): any {
@@ -57,6 +66,9 @@ export class DrawActionHistory {
         this._actions.push(a)
         this._actionPtr += 1
         this._currentState = this.state
+        if (!!this._historyCb) {
+            this._historyCb()
+        }
     }
 
     stepBackward() {

@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
-import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings} from '@client/js/system/settings'
+import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay} from '@client/js/system/settings'
 import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
@@ -260,6 +260,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }
             state.settings.disabledGames = games
             saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeOverlayEnabled(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.overlays.enabled = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeOverlayLayers(state: RootState, v: SquadOvOverlay[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.overlays.layers = JSON.parse(JSON.stringify(v))
+            saveLocalSettings(state.settings, true)
 /// #endif
         },
     },

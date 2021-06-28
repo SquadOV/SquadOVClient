@@ -7,12 +7,12 @@
         @mouseleave="onMouseLeave"
         :style="overlayStyle"
     >
-        <div ref="canvasDiv" class="canvas-div draw-element full-width full-parent-height" :style="canvasStyle">
+        <div ref="canvasDiv" class="draw-element full-width full-parent-height" :style="canvasStyle">
             <canvas ref="canvas"></canvas>
         </div>
-        <div ref="blur" class="blur-div draw-element full-width full-parent-height"></div>
+        <div ref="blur" class="draw-element full-width full-parent-height" :style="blurStyle"></div>
 
-        <div id="toolbox" :style="toolboxStyle">
+        <div id="toolbox" :style="toolboxStyle" v-if="!inactive">
             <template v-if="!mini">
                 <div
                     class="d-flex justify-center text-subtitle-2 font-weight-bold py-2"
@@ -79,7 +79,7 @@
                                     v-bind="attrs"
                                     icon
                                     :value="1"
-                                    :disabled="mini"
+                                    :disabled="mini || disableBrush"
                                 >
                                     <v-icon>
                                         mdi-brush
@@ -117,7 +117,7 @@
                                     v-bind="attrs"
                                     icon
                                     :value="3"
-                                    :disabled="mini"
+                                    :disabled="mini || disableLine"
                                 >
                                     <v-icon>
                                         mdi-vector-line
@@ -137,7 +137,7 @@
                                     v-bind="attrs"
                                     icon
                                     :value="4"
-                                    :disabled="mini"
+                                    :disabled="mini || disableText"
                                 >
                                     <v-icon>
                                         mdi-format-textbox
@@ -155,7 +155,7 @@
                                     v-bind="attrs"
                                     icon
                                     :value="5"
-                                    :disabled="mini"
+                                    :disabled="mini || disableBlur"
                                 >
                                     <v-icon>
                                         mdi-blur
@@ -261,6 +261,7 @@
                         <shape-tool-options
                             v-else-if="selectedTool == 2"
                             :tool="shapeTool"
+                            :simple-shapes="simpleShapes"
                         >
                         </shape-tool-options>
 
@@ -398,7 +399,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Watch } from 'vue-property-decorator'
+import { Watch, Prop } from 'vue-property-decorator'
 import ColorPicker from '@client/vue/utility/draw/ColorPicker.vue'
 import { ColorA, getWhiteColor, getRedColor } from '@client/js/color'
 import { DrawCanvas } from '@client/js/draw/canvas'
@@ -452,6 +453,30 @@ export default class VideoDrawOverlay extends Vue {
     shapeTool: MultiShapeTool = new MultiShapeTool()
     blurTool: BlurTool = new BlurTool()
 
+    @Prop({type: Boolean, default: false})
+    inactive!: boolean
+
+    @Prop()
+    value!: any
+
+    @Prop({type: Number, default: 26})
+    zIndex!: number
+
+    @Prop({type: Boolean, default: false})
+    disableBrush!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableLine!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableText!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableBlur!: boolean
+
+    @Prop({type: Boolean, default: false})
+    simpleShapes!: boolean
+
     draw: DrawCanvas | null = null
     $refs!: {
         top: HTMLElement,
@@ -462,13 +487,29 @@ export default class VideoDrawOverlay extends Vue {
 
     keydownHandler: any = null
 
+    get finalVisible(): boolean {
+        return this.visible && !this.inactive
+    }
+
     get canvasStyle(): any {
-        if (this.visible) {
-            return {}
+        let base: any = {
+            'z-index': this.zIndex - 1,
+        }
+
+        if (this.finalVisible) {
+            return base
         } else {
             return {
-                visibility: 'hidden'
+                visibility: 'hidden',
+                ...base
             }
+        }
+    }
+
+    get blurStyle(): any {
+        return {
+            'z-index': this.zIndex - 2,
+            visibility: this.finalVisible ? 'visible' : 'hidden',
         }
     }
 
@@ -477,6 +518,7 @@ export default class VideoDrawOverlay extends Vue {
             left: `calc(10px + ${this.customLeft}px)`,
             top: `calc(50% + ${this.customTop}px)`,
             cursor: 'pointer',
+            'z-index': this.zIndex,
         }
         return style
     }
@@ -533,9 +575,14 @@ export default class VideoDrawOverlay extends Vue {
 
         let bb = this.$refs.canvasDiv.getBoundingClientRect()
         this.draw.setWidthHeight(bb.width, bb.height)
+        this.$emit('canvassize', this.draw._canvasWidth, this.draw._canvasHeight)
     }
 
     get activeTool(): BaseDrawTool | null {
+        if (this.inactive) {
+            return null
+        }
+
         if (this.selectedTool === undefined) {
             return null
         }
@@ -599,6 +646,19 @@ export default class VideoDrawOverlay extends Vue {
     }
 
     toggleTool(tool: number) {
+        if (this.inactive) {
+            return
+        }
+
+        if (
+            (tool == 1 && this.disableBrush) ||
+            (tool == 3 && this.disableLine) ||
+            (tool == 4 && this.disableText) ||
+            (tool == 5 && this.disableBlur)
+        ) {
+            return
+        }
+
         if (this.selectedTool === tool) {
             this.selectedTool = null
         } else {
@@ -607,6 +667,10 @@ export default class VideoDrawOverlay extends Vue {
     }
 
     handleKeypress(e: KeyboardEvent) {
+        if (this.inactive) {
+            return
+        }
+
         let cmp = e.key.toLowerCase()
         let handled = false
 
@@ -638,8 +702,27 @@ export default class VideoDrawOverlay extends Vue {
         }
     }
 
+    syncValue() {
+        if (!this.value) {
+            return
+        }
+
+        if (!!this.draw) {
+            this.draw.loadState(this.value)
+        }
+    }
+
+    onHistoryChange() {
+        if (!!this.draw) {
+            this.$emit('input', this.draw.history.state)
+        }
+    }
+
     mounted() {
         this.draw = new DrawCanvas(this.$refs.canvas, this.$refs.blur)
+        this.draw.history.setOnHistoryChange(() => {
+            this.onHistoryChange()
+        })
         this.loadFonts()
         
         this.syncActiveTool()
@@ -653,6 +736,8 @@ export default class VideoDrawOverlay extends Vue {
         Vue.nextTick(() => {
             this.overlayResize()
         })
+
+        this.syncValue()
     }
 
     beforeDestroy() {
@@ -662,11 +747,16 @@ export default class VideoDrawOverlay extends Vue {
 
     get overlayStyle(): any {
         return {
-            'pointer-events': !!this.activeTool ? 'auto' : 'none'
+            'pointer-events': !!this.activeTool ? 'auto' : 'none',
+            'z-index': this.zIndex - 3
         }
     }
 
     undo() {
+        if (this.inactive) {
+            return
+        }
+
         if (!this.draw) {
             return
         }
@@ -675,6 +765,10 @@ export default class VideoDrawOverlay extends Vue {
     }
 
     redo() {
+        if (this.inactive) {
+            return
+        }
+
         if (!this.draw) {
             return
         }
@@ -683,6 +777,10 @@ export default class VideoDrawOverlay extends Vue {
     }
 
     deleteObject() {
+        if (this.inactive) {
+            return
+        }
+
         if (!this.draw) {
             return
         }
@@ -691,6 +789,10 @@ export default class VideoDrawOverlay extends Vue {
     }
 
     clear() {
+        if (this.inactive) {
+            return
+        }
+
         if (!this.draw) {
             return
         }
@@ -704,7 +806,6 @@ export default class VideoDrawOverlay extends Vue {
 <style scoped>
 
 .overlay {
-    z-index: 24;
     position: absolute;
     top: 0;
     left: 0;
@@ -725,7 +826,6 @@ export default class VideoDrawOverlay extends Vue {
     display: inline-block;
     background-color: #121212;
     border: 2px white solid;
-    z-index: 27;
 }
 
 #expand-button {
@@ -772,14 +872,6 @@ export default class VideoDrawOverlay extends Vue {
 .revert-button {
     width: 48px;
     height: 48px;
-}
-
-.canvas-div {
-    z-index: 26;
-}
-
-.blur-div {
-    z-index: 25;
 }
 
 </style>

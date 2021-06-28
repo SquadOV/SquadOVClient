@@ -23,6 +23,7 @@
 #include "game_event_watcher/csgo/csgo_log_watcher.h"
 #include "game_event_watcher/csgo/csgo_gsi_listener.h"
 #include "vod/vod_clipper.h"
+#include "recorder/game_preview_stream.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/win32/wasapi_interface.h"
 #include "recorder/pipe/gcs_piper.h"
@@ -649,6 +650,30 @@ int main(int argc, char** argv) {
             service::zeromq::ZEROMQ_RESPOND_KEYCODE_CHAR,
             resp.toJson().dump()
         );
+    });
+
+    LOG_INFO("Initializing game preview stream handler..." << std::endl);
+    service::recorder::GamePreviewStream previewStream;
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_START_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
+        LOG_INFO("START GAME RECORDING STREAM:" << msg << std::endl);
+        const auto json = nlohmann::json::parse(msg);
+        previewStream.start(json["url"].get<std::string>(), static_cast<shared::EGame>(json["game"].get<int>()));
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_STOP_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
+        LOG_INFO("STOP GAME RECORDING STREAM:" << msg << std::endl);
+        previewStream.stop();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_ENABLE_PREVIEW_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
+        LOG_INFO("ENABLE PREVIEW GAME RECORDING STREAM:" << msg << std::endl);
+        const auto json = nlohmann::json::parse(msg);
+        previewStream.enableOverlay(json["enabled"].get<bool>());
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_RELOAD_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RELOAD GAME RECORDING STREAM:" << msg << std::endl);
+        previewStream.reload();
     });
 
     const auto mode = vm["mode"].as<std::string>();

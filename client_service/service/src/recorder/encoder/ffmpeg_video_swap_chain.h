@@ -4,6 +4,7 @@
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
 #include "renderer/d3d11_video_processor.h"
+#include "renderer/d3d11_overlay_renderer.h"
 
 #include <memory>
 #include <mutex>
@@ -27,6 +28,8 @@ public:
 
     virtual void initialize(AVCodecContext* context, AVBufferRef* hwFrameCtx) = 0;
     void initializeGpuSupport(service::renderer::D3d11SharedContext* shared) { _shared = shared; }
+    void initializeOverlay(const service::renderer::D3d11OverlayRendererPtr& overlay) { _overlay = overlay; }
+
     virtual AVFrame* getFrontBufferFrame() = 0;
     virtual service::recorder::image::Image cpuCopyFrontBuffer() const = 0;
     virtual bool hasValidFrontBuffer() const = 0;
@@ -43,6 +46,7 @@ public:
 protected:
     bool isGpuInit() const { return _shared; }
     service::renderer::D3d11SharedContext* _shared = nullptr;
+    service::renderer::D3d11OverlayRendererPtr _overlay;
 };
 using FfmpegVideoSwapChainPtr = std::unique_ptr<FfmpegVideoSwapChain>;
 

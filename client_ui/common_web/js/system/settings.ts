@@ -4,8 +4,40 @@ import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
-import { SquadOvGames } from '../squadov/game'
+import { allGames, SquadOvGames } from '@client/js/squadov/game'
 /// #endif
+
+export interface SquadOvOverlay {
+    enabled: boolean
+    name: string
+    games: SquadOvGames[]
+    fabric: any
+    width: number
+    height: number
+}
+
+export function createEmptyOverlay(name: string): SquadOvOverlay {
+    return {
+        enabled: true,
+        name,
+        games: JSON.parse(JSON.stringify(allGames)),
+        fabric: {},
+        width: 1920,
+        height: 1080,
+    }
+}
+
+export interface SquadOvOverlaySettings {
+    enabled: boolean
+    layers: SquadOvOverlay[]
+}
+
+function createDefaultOverlaySettings(): SquadOvOverlaySettings {
+    return {
+        enabled: false,
+        layers: [],
+    }
+}
 
 export interface SquadOvRecordingSettings {
     resY: number
@@ -27,6 +59,7 @@ export interface SquadOvRecordingSettings {
     useBitrate: boolean
     bitrateKbps: number
     vodEndDelaySeconds: number
+    overlays: SquadOvOverlaySettings
 }
 
 export interface SquadOvKeybindSettings {
@@ -156,9 +189,9 @@ export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = 
         window.clearTimeout(saveTimer)
     }
 
+    inProgress = true
     let fn = () => {
-        inProgress = true
-        fs.writeFileSync(getSettingsFname(), JSON.stringify(s), {
+        fs.writeFileSync(getSettingsFname(), JSON.stringify(s, null, 4), {
             encoding: 'utf-8',
         })
     
@@ -205,6 +238,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useBitrate: false,
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
+                overlays: createDefaultOverlaySettings(),
             }
         case BaselineLevel.Medium:
             record = {
@@ -227,6 +261,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useBitrate: false,
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
+                overlays: createDefaultOverlaySettings(),
             }
         case BaselineLevel.High:
             record = {
@@ -249,6 +284,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useBitrate: false,
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
+                overlays: createDefaultOverlaySettings(),
             }
     }
 
@@ -291,6 +327,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useBitrate: false,
             bitrateKbps: 6000,
             vodEndDelaySeconds: 0,
+            overlays: createDefaultOverlaySettings(),
         },
         keybinds: {
             pushToTalk: []
@@ -436,6 +473,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.disabledGames === undefined) {
         parsedData.disabledGames = []
+    }
+
+    if (parsedData.record.overlays === undefined) {
+        parsedData.record.overlays = createDefaultOverlaySettings()
     }
 
     saveLocalSettings(parsedData, true)

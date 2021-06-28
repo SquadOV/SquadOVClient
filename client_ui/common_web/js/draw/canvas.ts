@@ -26,6 +26,12 @@ export class DrawCanvas {
         this.history = new DrawActionHistory(this.canvas, this.blur)
     }
 
+    loadState(state: any) {
+        this.canvas.loadFromJSON(state, () => {})
+        this.blur.resyncAll()
+        this.history.reloadState()
+    }
+
     setWidthHeight(w: number, h: number) {
         // The dimensions of the css and the canvas should be different
         // because the display needs to adapt to the size of the container
@@ -37,7 +43,7 @@ export class DrawCanvas {
             cssOnly: true
         })
 
-        let ar = w / h
+        let ar = w * 1.0 / h
         let ch = 1080
         let cw = Math.floor(ch * ar)
 
@@ -48,6 +54,9 @@ export class DrawCanvas {
             }, {
                 backstoreOnly: true
             })
+
+            this._canvasWidth = cw
+            this._canvasHeight = ch
         }
 
         this.canvas.renderAll()

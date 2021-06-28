@@ -5,6 +5,7 @@
 #include <memory>
 #include "recorder/image/image.h"
 #include "recorder/audio/audio_packet_view.h"
+#include "renderer/d3d11_overlay_renderer.h"
 #include "shared/squadov/vod.h"
 #include "system/settings.h"
 
@@ -31,7 +32,7 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) = 0;
+    virtual void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
     
     virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;

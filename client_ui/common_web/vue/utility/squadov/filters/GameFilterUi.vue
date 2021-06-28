@@ -7,12 +7,13 @@
         deletable-chips
         chips
         multiple
-        clearable
+        :clearable="!readonly"
         outlined
         hide-details
         dense
         :loading="loading"
         v-if="value !== undefined"
+        :readonly="readonly"
     >
         <template v-slot:item="{ item }">
             <div class="d-flex full-width align-center">
@@ -58,6 +59,9 @@ export default class GameFilterUi extends Vue {
 
     @Prop({type: Boolean, default: false})
     loading!: boolean
+
+    @Prop({type: Boolean, default: false})
+    readonly!: boolean
 
     get sortedValue(): SquadOvGames[] {
         if (!this.value) {

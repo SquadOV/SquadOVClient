@@ -322,6 +322,27 @@ class ZeroMQServerClient {
             })])
         })
     }
+
+    async startGameRecordingStream(url, game) {
+        await this._pub.send(['start-game-recording-stream', JSON.stringify({
+            url,
+            game
+        })])
+    }
+
+    async stopGameRecordingStream() {
+        await this._pub.send(['stop-game-recording-stream', ''])
+    }
+
+    async enablePreviewGameRecordingStream(enabled) {
+        await this._pub.send(['enable-preview-game-recording-stream', JSON.stringify({
+            enabled
+        })])
+    }
+
+    async reloadGameRecordingStream() {
+        await this._pub.send(['reload-game-recording-stream', ''])
+    }
 }
 
 module.exports.ZeroMQServerClient = ZeroMQServerClient

@@ -46,6 +46,7 @@ void FfmpegCPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef*) 
         THROW_ERROR("Failed to get CPU frame buffer.");
     }
 
+    _overlay->initializeCpu();
     _frontBuffer = std::make_unique<service::recorder::image::Image>();
     _backBuffer = std::make_unique<service::recorder::image::Image>();
 }
@@ -125,13 +126,20 @@ void FfmpegCPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
         if (!_backSws) {
             THROW_ERROR("Failed to create SWS context.");
         }
+
+        _overlay->reinitializeRenderer(width, height);
     }
 }
 
 void FfmpegCPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
     std::lock_guard<std::mutex> guard(_backMutex);
     reinitBackBuffer(frame.width(), frame.height());
-    _backBuffer->copyFrom(frame);
+
+    if (_overlay) {
+        _overlay->render(_backBuffer, frame);
+    } else {
+        _backBuffer->copyFrom(frame);
+    }
     _backBufferDirty = true;
 }
 
@@ -147,8 +155,12 @@ void FfmpegCPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
     std::lock_guard<std::mutex> guard(_backMutex);
     reinitBackBuffer(desc.Width, desc.Height);
 
-    auto immediate = _shared->immediateContext();
-    _backBuffer->loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frame);
+    if (_overlay) {
+        _overlay->render(_backBuffer, frame, _shared);
+    } else {
+        auto immediate = _shared->immediateContext();
+        _backBuffer->loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frame);
+    }
     _backBufferDirty = true;
 }
 #endif
@@ -193,6 +205,7 @@ void FfmpegGPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef* h
         THROW_ERROR("Formats besides NV12 not supported.");
     }
 
+    _overlay->initializeGpu();
     _processor = std::make_unique<service::renderer::D3d11VideoProcessor>(_shared);
     _processor->setFfmpegColorspace(_frame->colorspace);
     _frontBuffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
@@ -264,14 +277,20 @@ size_t FfmpegGPUVideoSwapChain::frameHeight() const {
 
 void FfmpegGPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
     if (_backBuffer->width() != width || _backBuffer->height() != height) {
-        _backBuffer->initializeImage(width, height);
+        _backBuffer->initializeImage(width, height, true);
+        _overlay->reinitializeRenderer(width, height);
     }
 }
 
 void FfmpegGPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
     std::lock_guard<std::mutex> guard(_backMutex);
     reinitBackBuffer(frame.width(), frame.height());
-    _backBuffer->copyFromCpu(frame);
+
+    if (_overlay) {
+        _overlay->render(_backBuffer, frame);
+    } else {
+        _backBuffer->copyFromCpu(frame);
+    }
     _backBufferDirty = true;
 }
 
@@ -282,7 +301,11 @@ void FfmpegGPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
 
     std::lock_guard<std::mutex> guard(_backMutex);
     reinitBackBuffer(desc.Width, desc.Height);
-    _backBuffer->copyFromGpu(frame);
+    if (_overlay) {
+        _overlay->render(_backBuffer, frame, _shared);
+    } else {
+        _backBuffer->copyFromGpu(frame);
+    }
     _backBufferDirty = true;
 }
 #endif

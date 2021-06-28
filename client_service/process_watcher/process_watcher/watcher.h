@@ -3,6 +3,7 @@
 #include "shared/games.h"
 #include "process_watcher/handler.h"
 
+#include <optional>
 #include <shared_mutex>
 #include <unordered_map>
 #include <thread>
@@ -22,6 +23,6 @@ private:
     bool _running = false;
 };
 
-bool isGameRunning(shared::EGame game);
+std::optional<process::Process> isGameRunning(shared::EGame game);
 
 }
