@@ -866,6 +866,7 @@ ipcMain.on('closeWindow', (event) => {
 
 // Local RTMP server control
 const NodeMediaServer = require('node-media-server')
+let transMade = false
 let nms = null
 ipcMain.handle('start-record-preview', (event, game) => {
     if (!!nms) {
@@ -896,7 +897,12 @@ ipcMain.handle('start-record-preview', (event, game) => {
             mediaroot: mediaRootPath.replaceAll('\\', '/'),
             api: false,
         },
-        trans: {
+    }
+
+    if (!transMade) {
+        // We only want to set the 'trans' object so we only create it the first time around since the node media server
+        // doesn't clean up the trans session properly so the old translation thingy will still take effect.
+        config['trans'] = {
             ffmpeg: ffmpegPath,
             tasks: [
                 {
@@ -908,6 +914,7 @@ ipcMain.handle('start-record-preview', (event, game) => {
         }
     }
 
+    transMade = true
     nms = new NodeMediaServer(config)
     nms.run()
 

@@ -382,6 +382,11 @@ bool GameRecorder::areInputStreamsInitialized() const {
 }
 
 bool GameRecorder::initializeInputStreams(int flags) {
+#ifdef _WIN32
+    // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+#endif
+
     _streamsInit = true;
     try {
         createVideoRecorder(*_cachedWindowInfo, flags);
@@ -391,14 +396,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
         return false;
     }
     _vrecorder->startRecording();
-
-    LOG_INFO("Initialize PortAudio..." << std::endl);
+    
     {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(new audio::PortaudioInitRAII);
     }
 
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
+
     _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume, _cachedRecordingSettings->outputMono);
     if (_aoutRecorder->exists()) {
         _aoutRecorder->startRecording();
@@ -605,6 +610,10 @@ void GameRecorder::stopInputs() {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(nullptr);
     }
+
+#ifdef _WIN32
+    CoUninitialize();
+#endif
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {

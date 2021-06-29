@@ -379,6 +379,7 @@ export default class OverlaySettingsItem extends Vue {
         ipcRenderer.send('reload-record-preview')
 ///#endif
 
+        this.resetSource()
         this.editSuccess = true
     }
 
@@ -414,6 +415,18 @@ export default class OverlaySettingsItem extends Vue {
         this.$store.commit('changeOverlayEnabled', v)
     }
 
+    resetSource() {
+        if (!!this.player) {
+            this.player.reset()
+            this.player.src([])
+
+            this.player.src([{
+                src: 'http://localhost:9999/live/preview/index.m3u8',
+                type: 'application/x-mpegURL',
+            }])
+        }
+    }
+
     retryTimeout: any = null
     startPreview() {
         this.previewStarted = true
@@ -430,39 +443,31 @@ export default class OverlaySettingsItem extends Vue {
                     preload: 'auto',
                     muted: true,
                 })
-            }
 
-            this.player.reset()
-            this.player.src([{
-                src: 'http://localhost:9999/live/preview/index.m3u8',
-                type: 'application/x-mpegURL',
-            }])
+                this.player.on('canplay', () => {
+                    this.ready = true
+                })
 
-            this.player.on('canplay', () => {
-                this.ready = true
-            })
-
-            this.player.on('error', (err: any) => {
-                console.log('On VideoJS Preview Error...trying again soon')
-                if (this.retryTimeout !== null) {
-                    return
-                }
-
-                this.retryTimeout = window.setTimeout(() => {
-                    this.retryTimeout = null
-
-                    if (!this.previewStarted || !this.previewPlaying) {
+                this.player.on('error', (err: any) => {
+                    console.log('On VideoJS Preview Error...trying again soon')
+                    if (this.retryTimeout !== null) {
                         return
                     }
-                    
 
-                    this.player!.reset()
-                    this.player!.src([{
-                        src: 'http://localhost:9999/live/preview/index.m3u8',
-                        type: 'application/x-mpegURL',
-                    }])
-                }, 3000)
-            })
+                    this.retryTimeout = window.setTimeout(() => {
+                        this.retryTimeout = null
+
+                        if (!this.previewStarted || !this.previewPlaying) {
+                            return
+                        }
+                        
+
+                        this.resetSource()
+                    }, 3000)
+                })
+            }
+
+            this.resetSource()
         })
 ///#endif
     }
@@ -471,14 +476,14 @@ export default class OverlaySettingsItem extends Vue {
         this.previewStarted = false
         this.previewPlaying = false
 
-///#if DESKTOP
-        ipcRenderer.send('stop-record-preview')
-///#endif
-
         if (!!this.player) {
             this.player.src([])
             this.player.reset()
         }
+
+///#if DESKTOP
+        ipcRenderer.send('stop-record-preview')
+///#endif
     }
 
     togglePreview(v: boolean) {

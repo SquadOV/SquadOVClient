@@ -690,5 +690,9 @@ int main(int argc, char** argv) {
 
     curl_global_cleanup();
     Pa_Terminate();
+
+#ifdef _WIN32
+    CoUninitialize();
+#endif
     return 0;
 }

@@ -98,14 +98,13 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
             }
 
             factory->Release();
+            if (dxgiOutput) {
+                LOG_INFO("...Found monitor." << std::endl);
+            } else {
+                LOG_INFO("...No monitor found." << std::endl);
+            }
         }
-
-        if (dxgiOutput) {
-            LOG_INFO("...Found monitor." << std::endl);
-        } else {
-            LOG_INFO("...No monitor found." << std::endl);
-        }
-
+        
         try {
             hr = D3D11CreateDevice(
                 adapter,

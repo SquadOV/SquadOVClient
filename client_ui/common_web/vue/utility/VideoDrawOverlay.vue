@@ -488,7 +488,14 @@ export default class VideoDrawOverlay extends Vue {
     keydownHandler: any = null
 
     get finalVisible(): boolean {
-        return this.visible && !this.inactive
+        return this.visible
+    }
+
+    @Watch('inactive')
+    onToggleInactive() {
+        if (this.inactive) {
+            this.selectedTool = null
+        }
     }
 
     get canvasStyle(): any {
@@ -724,6 +731,7 @@ export default class VideoDrawOverlay extends Vue {
             this.onHistoryChange()
         })
         this.loadFonts()
+        this.selectTool.simple = this.simpleShapes
         
         this.syncActiveTool()
         this.syncToolColors()
