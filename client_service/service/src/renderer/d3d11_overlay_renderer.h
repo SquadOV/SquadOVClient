@@ -15,6 +15,7 @@
 #include "renderer/d3d11_model.h"
 #include "renderer/d3d11_context.h"
 #include "renderer/d3d11_renderer.h"
+#include "renderer/d3d11_overlay_layer.h"
 
 namespace service::renderer {
 
@@ -44,7 +45,7 @@ struct D3d11ResourceDeviceTuple {
 
 class D3d11OverlayRenderer {
 public:
-    explicit D3d11OverlayRenderer(const OverlaySettings& settings);
+    D3d11OverlayRenderer(const OverlaySettings& settings, shared::EGame game);
     void initializeCpu();
     void initializeGpu();
     void reinitializeRenderer(size_t width, size_t height);
@@ -75,7 +76,8 @@ private:
 
     void render(const D3d11ResourceDeviceTuple& output, const D3d11ResourceDeviceTuple& input) const;
 
-    service::renderer::D3d11ModelPtr _outputQuad;
+    D3d11ModelPtr _outputQuad;
+    std::vector<D3d11OverlayLayerPtr> _layers;
 };
 
 using D3d11OverlayRendererPtr = std::shared_ptr<D3d11OverlayRenderer>;

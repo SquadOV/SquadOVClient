@@ -6,13 +6,14 @@ cbuffer PsConstants : register(b0)
     float inWidth;
     float inHeight;
     uint mode;
-    float padding;
+    uint hasTexture;
 }
 
 struct PS_INPUT
 {
     float4 position : SV_POSITION;
     float2 tex : TEXCOORD0;
+    float4 color : COLOR0;
 };
 
 float4 bilinearInterpolation(float2 parentPixel, float2 diff) {
@@ -147,21 +148,25 @@ float4 lanczosInterpolation(float2 parentPixel, float2 diff) {
 
 float4 main(PS_INPUT input) : SV_Target
 {
-    float2 inPixel = input.tex * float2(inWidth - 1, inHeight - 1);
-    float2 diff = fmod(inPixel, float2(1.f, 1.f)) - float2(0.5f, 0.5f);
-    inPixel -= diff;
+    if (hasTexture) {
+        float2 inPixel = input.tex * float2(inWidth - 1, inHeight - 1);
+        float2 diff = fmod(inPixel, float2(1.f, 1.f)) - float2(0.5f, 0.5f);
+        inPixel -= diff;
 
-    if (mode == 1) {
-        // Bilinear
-        return bilinearInterpolation(inPixel, diff);
-    } else if (mode == 2) {
-        // Bicubic
-        return bicubicInterpolation(inPixel, diff);
-    } else if (mode == 3) {
-        // Lanczos
-        return lanczosInterpolation(inPixel, diff);
+        if (mode == 1) {
+            // Bilinear
+            return bilinearInterpolation(inPixel, diff);
+        } else if (mode == 2) {
+            // Bicubic
+            return bicubicInterpolation(inPixel, diff);
+        } else if (mode == 3) {
+            // Lanczos
+            return lanczosInterpolation(inPixel, diff);
+        } else {
+            // Whatever's in the sampler (naive)
+            return gTexture.Sample(gSampler, input.tex);
+        }
     } else {
-        // Whatever's in the sampler (naive)
-        return gTexture.Sample(gSampler, input.tex);
+        return input.color;
     }
 }

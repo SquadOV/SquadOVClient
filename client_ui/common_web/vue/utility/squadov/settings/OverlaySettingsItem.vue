@@ -419,8 +419,6 @@ export default class OverlaySettingsItem extends Vue {
     resetSource() {
         if (!!this.player) {
             this.player.reset()
-            this.player.src([])
-
             this.player.src([{
                 src: 'http://localhost:9999/live/preview/index.m3u8',
                 type: 'application/x-mpegURL',
@@ -496,13 +494,23 @@ export default class OverlaySettingsItem extends Vue {
         if (!this.previewPlaying) {
             this.player.pause()
         } else {
-            this.player.play()
             this.player.liveTracker.seekToLiveEdge()
+            this.player.play()
         }
+    }
+
+    _togglePreviewPlayingBind: any = null
+    togglePreviewPlaying() {
+        this.togglePreview(!this.previewPlaying)
     }
 
     mounted() {
         this.syncLayers()
+    
+///#if DESKTOP
+        this._togglePreviewPlayingBind = this.togglePreviewPlaying.bind(this)
+        ipcRenderer.on('toggle-overlay-preview-play', this._togglePreviewPlayingBind)
+///#endif
     }
 
     beforeDestroy() {
@@ -510,6 +518,12 @@ export default class OverlaySettingsItem extends Vue {
             this.player.dispose()
         }
         this.player = null
+
+///#if DESKTOP
+        if (!!this._togglePreviewPlayingBind) {
+            ipcRenderer.removeListener('toggle-overlay-preview-play', this._togglePreviewPlayingBind)
+        }
+///#endif
     }
 }
 

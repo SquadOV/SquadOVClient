@@ -42,6 +42,8 @@ SET(SRCS
     src/renderer/d3d11_video_processor.cpp
     src/renderer/d3d11_texture.cpp
     src/renderer/d3d11_overlay_renderer.cpp
+    src/renderer/d3d11_overlay_layer.cpp
+    src/renderer/d3d11_overlay_component.cpp
 )
 
 SET(HEADERS
@@ -95,6 +97,8 @@ SET(HEADERS
     src/renderer/d3d11_video_processor.h
     src/renderer/d3d11_texture.h
     src/renderer/d3d11_overlay_renderer.h
+    src/renderer/d3d11_overlay_layer.h
+    src/renderer/d3d11_overlay_component.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)

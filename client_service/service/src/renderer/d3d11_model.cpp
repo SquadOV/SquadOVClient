@@ -148,10 +148,29 @@ void D3d11Model::setZRotation(float degrees) {
 D3d11ModelPtr createFullScreenQuad(ID3D11Device* device) {
     // Top left, top right, bottom left, bottom right
     const std::vector<D3d11Vertex> vertices = {
-        D3d11Vertex{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.f, 0.f)},
-        D3d11Vertex{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.f, 0.f)},
-        D3d11Vertex{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.f, 1.f)},
-        D3d11Vertex{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.f, 1.f)}
+        D3d11Vertex{ XMFLOAT3(-1.0f, 1.0f, 1.0f), XMFLOAT2(0.f, 0.f), XMFLOAT4(1.f, 1.f, 1.f, 1.f)},
+        D3d11Vertex{ XMFLOAT3(1.0f, 1.0f, 1.0f), XMFLOAT2(1.f, 0.f), XMFLOAT4(1.f, 1.f, 1.f, 1.f)},
+        D3d11Vertex{ XMFLOAT3(-1.0f, -1.0f, 1.0f), XMFLOAT2(0.f, 1.f), XMFLOAT4(1.f, 1.f, 1.f, 1.f)},
+        D3d11Vertex{ XMFLOAT3(1.0f, -1.0f, 1.0f), XMFLOAT2(1.f, 1.f), XMFLOAT4(1.f, 1.f, 1.f, 1.f)}
+    };
+    const std::vector<unsigned int> indices = {
+        0, 1, 2,
+        1, 3, 2
+    };
+    return std::make_shared<D3d11Model>(device, vertices, indices);
+}
+
+D3d11ModelPtr createSolidColorQuad(ID3D11Device* device, DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size, DirectX::XMFLOAT4 color) {
+    const float x = -1.f + 2.f * pos.x;
+    const float y = 1.f - 2.f * pos.y;
+    const float width = 2.f * size.x;
+    const float height = -2.f * size.y;
+
+    const std::vector<D3d11Vertex> vertices = {
+        D3d11Vertex{ XMFLOAT3(x, y, 1.0f), XMFLOAT2(0.f, 0.f), color},
+        D3d11Vertex{ XMFLOAT3(x + width, y, 1.0f), XMFLOAT2(1.f, 0.f), color},
+        D3d11Vertex{ XMFLOAT3(x, y + height, 1.0f), XMFLOAT2(0.f, 1.f), color},
+        D3d11Vertex{ XMFLOAT3(x + width, y + height, 1.0f), XMFLOAT2(1.f, 1.f), color}
     };
     const std::vector<unsigned int> indices = {
         0, 1, 2,

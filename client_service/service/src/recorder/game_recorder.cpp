@@ -339,7 +339,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     EncoderDatum data;
 
     LOG_INFO("Create overlay renderer" << std::endl);
-    data.overlay = std::make_shared<service::renderer::D3d11OverlayRenderer>(_cachedRecordingSettings->overlays);
+    data.overlay = std::make_shared<service::renderer::D3d11OverlayRenderer>(_cachedRecordingSettings->overlays, _game);
 
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);

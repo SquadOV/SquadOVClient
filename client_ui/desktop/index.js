@@ -75,7 +75,7 @@ function handleSquirrel() {
 }
 */
 
-const {app, BrowserWindow, Menu, Tray, ipcMain, net} = require('electron')
+const {app, BrowserWindow, Menu, Tray, ipcMain, net, globalShortcut} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn} = require('child_process');
@@ -630,6 +630,14 @@ function startSessionHeartbeat(onBeat) {
     }
 }
 
+function registerShortcuts() {
+    globalShortcut.register('F8', () => {
+        if (!!win) {
+            win.webContents.send('toggle-overlay-preview-play')
+        }
+    })
+}
+
 app.on('ready', async () => {
     await zeromqServer.start()
     zeromqServer.run()
@@ -685,6 +693,9 @@ app.on('ready', async () => {
 
     // Set the environment variable SQUADOV_USER_APP_FOLDER to specify which folder to store *ALL* this user's data in.
     setAppDataFolderFromEnv()
+
+    // Keyboard shortucts for the app.
+    registerShortcuts()
 
     // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
     // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time

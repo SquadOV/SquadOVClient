@@ -121,7 +121,6 @@ void GamePreviewStream::internalStart(const std::string& url, shared::EGame game
 
     _recorder = std::make_unique<GameRecorder>(gameProcess.value(), game);
     _recorder->forceUrl(url);
-    LOG_INFO("start thread: " << std::this_thread::get_id() << std::endl);
     _recorder->start(shared::nowUtc(), service::recorder::RecordingMode::Normal);
     _running = true;
 
@@ -133,7 +132,6 @@ void GamePreviewStream::internalStop() {
         return;
     }
 
-    LOG_INFO("stop thread: " << std::this_thread::get_id() << std::endl);
     _recorder->stop({});
     _recorder.reset();
     _running = false;
@@ -141,7 +139,6 @@ void GamePreviewStream::internalStop() {
 
 void GamePreviewStream::internalReload() {
     std::lock_guard guard(_mutex);
-    LOG_INFO("reload thread: " << std::this_thread::get_id() << std::endl);
     _recorder->stop({});
     _recorder->start(shared::nowUtc(), service::recorder::RecordingMode::Normal);
 }

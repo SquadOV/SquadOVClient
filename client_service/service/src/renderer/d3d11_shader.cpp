@@ -58,7 +58,7 @@ void D3d11Shader::initialize(ID3D11Device* device) {
     }
 
     std::vector<D3D11_INPUT_ELEMENT_DESC> inputElementsDesc;
-    inputElementsDesc.resize(2);
+    inputElementsDesc.resize(3);
     inputElementsDesc[0].SemanticName = "POSITION";
     inputElementsDesc[0].SemanticIndex = 0;
     inputElementsDesc[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -75,7 +75,15 @@ void D3d11Shader::initialize(ID3D11Device* device) {
     inputElementsDesc[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     inputElementsDesc[1].InstanceDataStepRate = 0;
 
-    HRESULT hr = device->CreateInputLayout(inputElementsDesc.data(), 2, reinterpret_cast<const void*>(vertexBlob.data()), vertexBlob.size(), &_inputLayout);
+    inputElementsDesc[2].SemanticName = "COLOR";
+    inputElementsDesc[2].SemanticIndex = 0;
+    inputElementsDesc[2].Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    inputElementsDesc[2].InputSlot = 0;
+    inputElementsDesc[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    inputElementsDesc[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    inputElementsDesc[2].InstanceDataStepRate = 0;
+
+    HRESULT hr = device->CreateInputLayout(inputElementsDesc.data(), 3, reinterpret_cast<const void*>(vertexBlob.data()), vertexBlob.size(), &_inputLayout);
     if (hr != S_OK) {
         THROW_ERROR("Failed to create input layout: " << hr);
     }
@@ -171,6 +179,7 @@ void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
 
     D3d11PSShaderConstants psConstants;
     psConstants.mode = 0;
+    psConstants.hasTexture = model->hasTexture();
 
     if (model->hasTexture()) {
         setTexture(context, 0, model->texture());

@@ -18,7 +18,7 @@ struct D3d11PSShaderConstants {
     float inWidth;
     float inHeight;
     unsigned int mode;
-    float padding;
+    unsigned int hasTexture;
 };
 
 class D3d11Shader {

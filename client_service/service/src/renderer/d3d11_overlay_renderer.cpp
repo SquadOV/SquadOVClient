@@ -43,10 +43,27 @@ OverlayLayer OverlayLayer::fromJson(const nlohmann::json& obj) {
     return layer;
 }
 
-D3d11OverlayRenderer::D3d11OverlayRenderer(const OverlaySettings& settings):
+D3d11OverlayRenderer::D3d11OverlayRenderer(const OverlaySettings& settings, shared::EGame game):
     _settings(settings),
     _enabled(settings.enabled) {
 
+    // Force all the objects within each layers and translate them into real objects to render.
+    // We need to render them in the reverse order they show up, this way the 'first' layer shows
+    // up on top.
+    for (size_t i = 0; i < _settings.layers.size(); ++i) {
+        const auto realIdx = _settings.layers.size() - 1 - i;
+        const auto& layer = _settings.layers[i];
+
+        if (!layer.enabled) {
+            continue;
+        }
+
+        if (layer.games.find(game) == layer.games.end()) {
+            continue;
+        }
+
+        _layers.push_back(D3d11OverlayLayer::loadFromJson(layer.fabric, layer.width, layer.height));
+    }
 }
 
 void D3d11OverlayRenderer::initializeCpu() {
@@ -64,6 +81,15 @@ void D3d11OverlayRenderer::reinitializeRenderer(size_t width, size_t height) {
 
     _outputQuad = service::renderer::createFullScreenQuad(_context->device());
     _renderer->addModelToScene(_outputQuad);
+
+    for (const auto& layer: _layers) {
+        if (!layer) {
+            continue;
+        }
+
+        layer->initializeWidthHeight(width, height);
+        layer->addToRenderer(*_renderer, *_context);
+    }
 }
 
 void D3d11OverlayRenderer::enable(bool enable) {
