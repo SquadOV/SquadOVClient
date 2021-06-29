@@ -44,6 +44,7 @@ public:
 
 private:
     void onGameLogChange(const LogLinesDelta& lines);
+    void recheckRsoAccountOwnership(const GameLogState& previousState) const;
 
     std::filesystem::path _gameLogFilename;
     GameLogState _gameLogState;

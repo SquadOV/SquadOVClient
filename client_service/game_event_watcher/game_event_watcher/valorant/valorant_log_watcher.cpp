@@ -201,10 +201,11 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
                 const auto parsedMapUrl = parseValorantMapUrl(data.url);
                 _gameLogState.matchMap = shared::valorant::codenameToValorantMap(data.map);
 
-                // Technically don't have to have the check for main menu but putting this in just in case.
-                if (_gameLogState.matchMap == shared::valorant::EValorantMap::MainMenu) {
+                // I believe generally when the map is 'ready' it'll also spit out the username and tagline.
+                if (data.ready && !parsedMapUrl.username.empty() && !parsedMapUrl.tagline.empty()) {
                     _gameLogState.username = parsedMapUrl.username;
                     _gameLogState.tagline = parsedMapUrl.tagline;
+                    recheckRsoAccountOwnership(previousState);
                 }
                 _gameLogState.isInMatch = (previousState.matchId != "" && shared::valorant::isGameMap(_gameLogState.matchMap));
 
@@ -274,21 +275,26 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
         if (!parsed) {
             if (parseLoggedInChange(line, _gameLogState.puuid)) {
                 parsed = true;
+                recheckRsoAccountOwnership(previousState);
             }
-        }
-
-        // This is checking if 1) any of the user data information changes and 2) that the user data information is filed out.
-        // Only when both those conditions are met do we fire off an RSO login event.
-        if ((_gameLogState.puuid != previousState.puuid || _gameLogState.username != previousState.username || _gameLogState.tagline != previousState.tagline) &&
-            !_gameLogState.puuid.empty() && !_gameLogState.username.empty() && !_gameLogState.tagline.empty()) {
-            
-            shared::riot::RiotUser rsoUser;
-            rsoUser.username = _gameLogState.username;
-            rsoUser.tag = _gameLogState.tagline;
-            rsoUser.puuid = _gameLogState.puuid;
-            notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &rsoUser);
         }
     }
 }
-    
+
+void ValorantLogWatcher::recheckRsoAccountOwnership(const GameLogState& previousState) const {
+    // This is checking if 1) any of the user data information changes and 2) that the user data information is filed out.
+    // Only when both those conditions are met do we fire off an RSO login event. There's a world where we theoretically could
+    // fire it off with only the PUUID since that's really the only thing we need if the user has already synced their account
+    // and we've captured the raw puuid.
+    if ((_gameLogState.puuid != previousState.puuid || _gameLogState.username != previousState.username || _gameLogState.tagline != previousState.tagline) &&
+        !_gameLogState.puuid.empty() && !_gameLogState.username.empty() && !_gameLogState.tagline.empty()) {
+        
+        shared::riot::RiotUser rsoUser;
+        rsoUser.username = _gameLogState.username;
+        rsoUser.tag = _gameLogState.tagline;
+        rsoUser.puuid = _gameLogState.puuid;
+        notify(static_cast<int>(EValorantLogEvents::RSOLogin), shared::nowUtc(), &rsoUser);
+    }
+}
+
 }
