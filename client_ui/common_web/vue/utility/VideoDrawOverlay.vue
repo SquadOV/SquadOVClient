@@ -477,6 +477,9 @@ export default class VideoDrawOverlay extends Vue {
     @Prop({type: Boolean, default: false})
     simpleShapes!: boolean
 
+    @Prop({type: Boolean, default: false})
+    hidden!: boolean
+
     draw: DrawCanvas | null = null
     $refs!: {
         top: HTMLElement,
@@ -488,7 +491,7 @@ export default class VideoDrawOverlay extends Vue {
     keydownHandler: any = null
 
     get finalVisible(): boolean {
-        return this.visible
+        return this.visible && !this.hidden
     }
 
     @Watch('inactive')

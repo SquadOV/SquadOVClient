@@ -47,6 +47,7 @@
                             :key="`overlay-${idx}`"
                             :ref="`overlay-${idx}`"
                             :inactive="isLayerDisabled(layer) || selectedLayerIdx !== idx"
+                            :hidden="isLayerDisabled(layer)"
                             v-model="layer.fabric"
                             :z-index="startZIndex - 4 * idx"
                             @canvassize="onChangeCanvasSize(layer, arguments[0], arguments[1])"
