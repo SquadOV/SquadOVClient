@@ -542,16 +542,25 @@ function startAutoupdater() {
 
 let currentSessionExpiration = null
 let sessionRetryCount = 0
+
+const http = require('http')
 function startSessionHeartbeat(onBeat) {
     try {
-        const url = `${process.env.API_SQUADOV_URL}/auth/session/heartbeat`
-        log.log('Performing session heartbeat...', url)
-        const request = net.request({
+        log.log('Performing session heartbeat...')
+        const url = new URL(`${process.env.API_SQUADOV_URL}/auth/session/heartbeat`)
+        const options = {
             method: 'POST',
-            url,
-            timeout: 15,
-        })
-        request.setHeader('Content-Type', 'application/json')
+            hostname: url.hostname,
+            path: url.pathname,
+            port: url.port,
+            protocol: url.protocol,
+            timeout: 7000,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }
+
+        const request = http.request(options)
         request.write(JSON.stringify({
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
@@ -588,6 +597,16 @@ function startSessionHeartbeat(onBeat) {
 
         request.on('error', (err) => {
             log.log('Error in Sesssion Heartbeat: ', err)
+            retrySessionHeartbeat(true)
+        })
+
+        request.on('abort', (err) => {
+            log.log('Session Heartbeat Aborted: ', err)
+            retrySessionHeartbeat(true)
+        })
+
+        request.on('timeout', () => {
+            log.log('Session Heartbeat Timeout!')
             retrySessionHeartbeat(true)
         })
 
