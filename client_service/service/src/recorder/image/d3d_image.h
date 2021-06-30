@@ -52,6 +52,7 @@ public:
 
     Image cpuImage();
     ID3D11Texture2D* rawTexture() const { return _hwTexture; }
+    service::renderer::D3d11SharedContext* context() const { return _shared; }
 private:
     service::renderer::D3d11SharedContext* _shared = nullptr;
     bool _init = false;

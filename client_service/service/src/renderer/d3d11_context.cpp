@@ -25,7 +25,7 @@ D3d11ImmediateContextGuard::~D3d11ImmediateContextGuard() {
     }
 }
 
-D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor) {
+D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Device device) {
     UINT deviceFlags = 
 #ifndef NDEBUG
         D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT
@@ -98,18 +98,18 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor) {
             }
 
             factory->Release();
+            if (dxgiOutput) {
+                LOG_INFO("...Found monitor." << std::endl);
+            } else {
+                LOG_INFO("...No monitor found." << std::endl);
+            }
         }
-
-        if (dxgiOutput) {
-            LOG_INFO("...Found monitor." << std::endl);
-        } else {
-            LOG_INFO("...No monitor found." << std::endl);
-        }
-
+        
         try {
             hr = D3D11CreateDevice(
                 adapter,
-                adapter ? D3D_DRIVER_TYPE_UNKNOWN : D3D_DRIVER_TYPE_HARDWARE,
+                adapter ? D3D_DRIVER_TYPE_UNKNOWN : 
+                    (device == D3d11Device::GPU) ? D3D_DRIVER_TYPE_HARDWARE : D3D_DRIVER_TYPE_WARP,
                 nullptr,
                 deviceFlags,
                 features.data(),

@@ -6,6 +6,7 @@
 #include "recorder/video/video_recorder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/file_output_piper.h"
+#include "renderer/d3d11_overlay_renderer.h"
 #include "shared/squadov/vod.h"
 #include "shared/time.h"
 #include "system/settings.h"
@@ -56,6 +57,8 @@ public:
     void stopInputs();
     std::string stopDvrSession();
     void cleanDvrSession(const std::string& id);
+    void forceUrl(const std::string& url) { _forcedOutputUrl = url; }
+    void enableOverlay(bool enable);
 
     VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);
     void stopFromSource(const shared::TimePoint& endTm, const GameRecordEnd& end);
@@ -73,6 +76,7 @@ private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;
         std::unordered_map<audio::EAudioDeviceDirection, size_t> audioEncoderIndex;
+        service::renderer::D3d11OverlayRendererPtr overlay;
 
         bool hasEncoder() const { return !!encoder; }
     };
@@ -94,6 +98,7 @@ private:
     EncoderDatum _encoder;
     std::unique_ptr<VodIdentifier> _currentId;
     pipe::FileOutputPiperPtr _outputPiper;
+    std::optional<std::string> _forcedOutputUrl;
     shared::TimePoint _vodStartTime;
     std::mutex _stopMutex;
 

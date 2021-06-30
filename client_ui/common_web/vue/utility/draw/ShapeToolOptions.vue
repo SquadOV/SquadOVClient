@@ -11,19 +11,19 @@
                 </v-icon>
             </v-btn>
 
-            <v-btn :value="EShapeTool.Circle">
+            <v-btn :value="EShapeTool.Circle" :disabled="simpleShapes">
                 <v-icon>
                     mdi-checkbox-blank-circle
                 </v-icon>
             </v-btn>
 
-            <v-btn :value="EShapeTool.Ellipse">
+            <v-btn :value="EShapeTool.Ellipse" :disabled="simpleShapes">
                 <v-icon>
                     mdi-ellipse
                 </v-icon>
             </v-btn>
 
-            <v-btn :value="EShapeTool.Triangle">
+            <v-btn :value="EShapeTool.Triangle" :disabled="simpleShapes">
                 <v-icon>
                     mdi-triangle
                 </v-icon>
@@ -34,10 +34,11 @@
             class="mt-1"
             :value="tool.borderWidth"
             @input="tool.borderWidth = arguments[0]"
-            :min="1"
+            :min="0"
             :max="16"
             :step="1"
             label="Border Width"
+            :disabled="simpleShapes"
         >
             <template v-slot:append>
                 <div class="font-weight-bold text-subtitle-2">
@@ -61,6 +62,9 @@ export default class ShapeToolOptions extends Vue {
 
     @Prop({required: true})
     tool!: MultiShapeTool
+
+    @Prop({type: Boolean, default: false})
+    simpleShapes!: boolean
 }
 
 </script>

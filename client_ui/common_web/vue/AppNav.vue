@@ -347,12 +347,14 @@ export default class AppNav extends mixins(CommonComponent) {
                         name: 'Squads',
                         to: this.squadsTo,
                     },
+                    /*
                     {
                         name: 'Communities',
                         to: {
                             name: pi.CommunityHomePageId,
                         },
                     },
+                    */
                 ]
             },
             {

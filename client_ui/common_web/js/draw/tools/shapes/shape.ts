@@ -12,7 +12,7 @@ export enum EShapeTool {
 }
 
 export class MultiShapeTool extends MultiDrawTool {
-    _borderWidth: number = 2
+    _borderWidth: number = 0
 
     constructor() {
         super([

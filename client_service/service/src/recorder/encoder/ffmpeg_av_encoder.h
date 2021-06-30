@@ -11,7 +11,7 @@ public:
     ~FfmpegAvEncoder();
 
     const std::string& streamUrl() const override;
-    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) override;
+    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) override;
     VideoStreamContext getVideoStreamContext() const override;
     void getVideoDimensions(size_t& width, size_t& height) const override;
     void addVideoFrame(const service::recorder::image::Image& frame) override;

@@ -52,6 +52,10 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_DELETE_LOCAL_VOD_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_RELOAD_SETTINGS);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_KEYCODE_CHAR);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_START_GAME_RECORDING_STREAM);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_STOP_GAME_RECORDING_STREAM);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_ENABLE_PREVIEW_GAME_RECORDING_STREAM);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_RELOAD_GAME_RECORDING_STREAM);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 

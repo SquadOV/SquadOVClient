@@ -41,6 +41,9 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.bitrateKbps = obj["bitrateKbps"].get<int64_t>();
 
     settings.vodEndDelaySeconds = obj["vodEndDelaySeconds"].get<int32_t>();
+    if (obj.count("overlays") > 0) {
+        settings.overlays = service::renderer::OverlaySettings::fromJson(obj["overlays"]);
+    }
     return settings;
 }
 

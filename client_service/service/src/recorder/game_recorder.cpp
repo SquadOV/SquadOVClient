@@ -337,6 +337,10 @@ void GameRecorder::clearCachedInfo() {
 
 GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
     EncoderDatum data;
+
+    LOG_INFO("Create overlay renderer" << std::endl);
+    data.overlay = std::make_shared<service::renderer::D3d11OverlayRenderer>(_cachedRecordingSettings->overlays, _game);
+
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
@@ -350,7 +354,8 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     data.encoder->initializeVideoStream(
         *_cachedRecordingSettings,
         desiredWidth,
-        desiredHeight
+        desiredHeight,
+        data.overlay
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
@@ -377,6 +382,11 @@ bool GameRecorder::areInputStreamsInitialized() const {
 }
 
 bool GameRecorder::initializeInputStreams(int flags) {
+#ifdef _WIN32
+    // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+#endif
+
     _streamsInit = true;
     try {
         createVideoRecorder(*_cachedWindowInfo, flags);
@@ -386,14 +396,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
         return false;
     }
     _vrecorder->startRecording();
-
-    LOG_INFO("Initialize PortAudio..." << std::endl);
+    
     {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(new audio::PortaudioInitRAII);
     }
 
     _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
+
     _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume, _cachedRecordingSettings->outputMono);
     if (_aoutRecorder->exists()) {
         _aoutRecorder->startRecording();
@@ -465,7 +475,13 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     }
 
     LOG_INFO("Creating encoder..." << std::endl);
-    _encoder = createEncoder(_outputPiper->filePath());
+    if (_forcedOutputUrl) {
+        _encoder = createEncoder(_forcedOutputUrl.value());
+    } else if (_outputPiper) {
+        _encoder = createEncoder(_outputPiper->filePath());
+    } else {
+        THROW_ERROR("No valid URL to output video to.");
+    }
 
     // So there's two scenarios we can encounter here: 1) a DVR session is active AND we want to use it
     // or 2) no DVR session is active OR we don't particularly care for it. In the case where we want and can
@@ -476,19 +492,21 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
 
     // Note that we must pause the input recorder processing beforing switching the inputs to use the new encoder.
     // Otherwise the first frames may be of what's currently recording instead of what's recorded in the DVR.
-    if (useDvr) {
+    if (useDvr && _outputPiper) {
         _outputPiper->pauseProcessingFromPipe(true);
     }
     
     // Needs to be after the pause or else we'll wait indefinitely for the pause lock when asking for a pause
     // as it'll wait on the named pipe.
-    LOG_INFO("Start output piper..." << std::endl);
-    _outputPiper->start();
+    if (_outputPiper) {
+        LOG_INFO("Start output piper..." << std::endl);
+        _outputPiper->start();
+    }
 
     LOG_INFO("Switch to new active encoder..." << std::endl);
     switchToNewActiveEncoder(_encoder);
 
-    if (useDvr) {
+    if (useDvr && _outputPiper) {
         LOG_INFO("Stop DVR session..." << std::endl);
         // We can stop this DVR session at this point. It'll be up to the caller to re-start another DVR
         // session when/if this recording ends.
@@ -592,6 +610,10 @@ void GameRecorder::stopInputs() {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(nullptr);
     }
+
+#ifdef _WIN32
+    CoUninitialize();
+#endif
 }
 
 void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
@@ -732,7 +754,10 @@ VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath
     _currentId = createNewVodIdentifier();
     loadCachedInfo();
     initializeFileOutputPiper();
-    _outputPiper->start();
+
+    if (_outputPiper) {
+        _outputPiper->start();
+    }
 
     _manualVodPath = vodPath;
     _manualVodTimeStart = vodStart;
@@ -805,6 +830,10 @@ void GameRecorder::initializeFileOutputPiper() {
         return;
     }
 
+    if (_forcedOutputUrl) {
+        return;
+    }
+
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
@@ -846,6 +875,14 @@ shared::squadov::VodMetadata GameRecorder::getMetadata() const {
 void GameRecorder::overrideResolution(size_t width, size_t height) {
     _overrideWidth = width;
     _overrideHeight = height;
+}
+
+void GameRecorder::enableOverlay(bool enable) {
+    if (!_encoder.overlay) {
+        return;
+    }
+
+    _encoder.overlay->enable(enable);
 }
 
 }

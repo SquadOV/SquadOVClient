@@ -211,12 +211,6 @@ void D3dImage::copyFromSharedGpu(service::renderer::D3d11SharedContext* imageCon
     D3D11_TEXTURE2D_DESC textureDesc;
     _hwTexture->GetDesc(&textureDesc);
 
-    const bool canCopy = 
-        (imageDesc.Width == textureDesc.Width) &&
-        (imageDesc.Height == textureDesc.Height) &&
-        (imageDesc.Format == textureDesc.Format) &&
-        (rotation == DXGI_MODE_ROTATION_IDENTITY || rotation == DXGI_MODE_ROTATION_UNSPECIFIED);
-
     // We assume that the rendering/GPU operation must *always* happen on the input context.
     auto* bundle = getRendererBundle(imageContext);
     if (!bundle) {

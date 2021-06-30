@@ -85,7 +85,8 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height);
+    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay);
+    void setOverlayRenderer(const service::renderer::D3d11OverlayRendererPtr& renderer);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     void addVideoFrame(const service::recorder::image::Image& frame);
 #ifdef _WIN32
@@ -284,7 +285,7 @@ void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSampl
 FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
     _streamUrl(streamUrl) {
 
-    _avformat = av_guess_format("mpegts", nullptr, nullptr);
+    _avformat = av_guess_format((streamUrl.find("rtmp://") == std::string::npos) ? "mpegts" : "flv", nullptr, nullptr);
     if (!_avformat) {
         THROW_ERROR("Failed to find the MPEG-TS format.");
     }
@@ -349,7 +350,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) {
+void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -542,6 +543,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
     _videoSwapChain->initializeGpuSupport(d3d);
+    _videoSwapChain->initializeOverlay(overlay);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = settings.fps;
     _useVfr3 = settings.useVfr3;
@@ -1027,8 +1029,8 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height) {
-    _impl->initializeVideoStream(settings, width, height);
+void FfmpegAvEncoder::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) {
+    _impl->initializeVideoStream(settings, width, height, overlay);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {

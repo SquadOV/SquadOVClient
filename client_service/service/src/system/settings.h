@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "shared/games.h"
+#include "renderer/d3d11_overlay_renderer.h"
 
 namespace service::system {
 
@@ -37,6 +38,7 @@ struct RecordingSettings {
     int64_t bitrateKbps = 6000;
 
     int32_t vodEndDelaySeconds = 0;
+    service::renderer::OverlaySettings overlays;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

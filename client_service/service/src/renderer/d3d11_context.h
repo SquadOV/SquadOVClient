@@ -14,6 +14,11 @@ constexpr size_t CONTEXT_FLAG_USE_D3D11_1 = 0b001;
 constexpr size_t CONTEXT_FLAG_USE_ST = 0b010;
 constexpr size_t CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT = 0b100;
 
+enum class D3d11Device {
+    GPU,
+    CPU
+};
+
 class D3d11ImmediateContextGuard {
 public:
     friend class D3d11SharedContext;
@@ -34,7 +39,7 @@ private:
 class D3d11SharedContext {
 public:
 
-    D3d11SharedContext(size_t flags = CONTEXT_FLAG_USE_D3D11_1, HMONITOR monitor = NULL);
+    D3d11SharedContext(size_t flags = CONTEXT_FLAG_USE_D3D11_1, HMONITOR monitor = NULL, D3d11Device device = D3d11Device::GPU);
     ~D3d11SharedContext();
 
     ID3D11Device* device() const { return _device; }

@@ -5,6 +5,7 @@
 #include <d3d11.h>
 #include <directxmath.h>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace service::renderer {
@@ -12,6 +13,7 @@ namespace service::renderer {
 struct D3d11Vertex {
     DirectX::XMFLOAT3 pos;
     DirectX::XMFLOAT2 tex;
+    DirectX::XMFLOAT4 color;
 };
 
 class D3d11Model {
@@ -54,6 +56,9 @@ private:
 using D3d11ModelPtr = std::shared_ptr<D3d11Model>;
 
 D3d11ModelPtr createFullScreenQuad(ID3D11Device* device);
+
+// pos and size are given in terms of percentages assuming the screen goes from [0, 1] in both X and Y.
+D3d11ModelPtr createSolidColorQuad(ID3D11Device* device, DirectX::XMFLOAT2 pos, DirectX::XMFLOAT2 size, DirectX::XMFLOAT4 color);
 
 }
 
