@@ -75,6 +75,15 @@ export class ValorantContent {
         return this._agents[id.toUpperCase()]
     }
 
+    agentIdToFilesystemName(id : string) : string {
+        let name = this.agentIdToName(id)
+        if (name == 'KAY/O') {
+            return 'Kayo'
+        } else {
+            return name
+        }
+    }
+
     mapAssetNameToName(id: string) : string {
         return this._mapAssetNameToMap[id]
     }

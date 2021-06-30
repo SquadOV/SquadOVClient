@@ -34,7 +34,7 @@ export default class ValorantWeaponAbilityIcon extends Vue {
 
     get agentName() : string {
         let cnt = getValorantContent(null)
-        return cnt.agentIdToName(this.agent)
+        return cnt.agentIdToFilesystemName(this.agent)
     }
 
     get equipFname() : string {
