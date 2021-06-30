@@ -292,6 +292,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
 
         if (!!this.videoUri) {
             this.$emit('update:ready', false)
+            console.log('Refresh Player Source: ', this.videoUri, this.currentMimeType)
             if (this.currentMimeType == 'video/mp2t') {
                 // Need to generate a manifest to get video.js to play a mpeg-ts file.
                 const parser = new M3u8Parser();
