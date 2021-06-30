@@ -613,6 +613,12 @@ function startSessionHeartbeat(onBeat) {
                     if (!!onBeat) {
                         onBeat()
                     }
+
+                    // Need to make sure we recover from the session error page when we successfully reconnect
+                    // to the server.
+                    if (!!win && !win.webContents.getURL().includes('index.html')) {
+                        win.loadFile('index.html')
+                    }
                     
                     currentSessionExpiration = new Date(Date.now() + respBody.expiresIn * 1000)
 
