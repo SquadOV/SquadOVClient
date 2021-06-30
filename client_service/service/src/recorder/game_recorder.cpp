@@ -627,7 +627,11 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     // the VOD then it doesn't matter what delay there is.
     if (end && _cachedRecordingSettings && _cachedRecordingSettings->vodEndDelaySeconds > 0) {
         LOG_INFO("VOD Stop Delay: " << _cachedRecordingSettings->vodEndDelaySeconds << std::endl);
-        std::this_thread::sleep_for(std::chrono::seconds(_cachedRecordingSettings->vodEndDelaySeconds));
+        const auto delay = std::chrono::seconds(_cachedRecordingSettings->vodEndDelaySeconds);
+        auto modifiedEnd = end.value();
+        modifiedEnd.endTime += delay;
+        std::this_thread::sleep_for(delay);
+        end = modifiedEnd;
     }
 
     LOG_INFO("Stop Inputs..." << std::endl);
