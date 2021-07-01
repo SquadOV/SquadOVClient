@@ -544,6 +544,7 @@ let currentSessionExpiration = null
 let sessionRetryCount = 0
 
 const http = require('http')
+const https = require('https')
 function startSessionHeartbeat(onBeat) {
     try {
         log.log('Performing session heartbeat...')
@@ -560,7 +561,7 @@ function startSessionHeartbeat(onBeat) {
             }
         }
 
-        const request = http.request(options)
+        const request = (options.protocol == 'https:') ? https.request(url, options) : http.request(options)
         request.write(JSON.stringify({
             sessionId: process.env.SQUADOV_SESSION_ID
         }))
