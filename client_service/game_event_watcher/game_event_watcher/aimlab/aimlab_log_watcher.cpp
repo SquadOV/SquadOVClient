@@ -77,7 +77,7 @@ bool operator==(const AimlabLogState& a, const AimlabLogState& b) {
 }
 
 bool AimlabLogState::isInTask() const {
-    return inTask;
+    return inTask && !taskName.empty() && !taskMode.empty() && !taskMap.empty() && !gameVersion.empty();
 }
 
 AimlabLogWatcher::AimlabLogWatcher(const shared::TimePoint& timeThreshold):
