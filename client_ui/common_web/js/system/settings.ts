@@ -39,18 +39,28 @@ function createDefaultOverlaySettings(): SquadOvOverlaySettings {
     }
 }
 
+export interface AudioDeviceSettings {
+    device: string
+    volume: number
+    mono: boolean
+}
+
+export function createDefaultAudioDevice(): AudioDeviceSettings {
+    return {
+        device: 'Default Device',
+        volume: 1.0,
+        mono: false,
+    }
+}
+
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
     useVideoHw: boolean
     useHwEncoder: boolean
     useVfr3: boolean
-    outputDevice: string
-    outputVolume: number
-    outputMono: boolean
-    inputDevice: string
-    inputVolume: number
-    inputMono: boolean
+    outputDevices: AudioDeviceSettings[]
+    inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
     maxUploadSpeed: number | null
     useLocalRecording: boolean
@@ -224,12 +234,20 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
-                outputDevice: 'Default Device',
-                outputVolume: 1.0,
-                outputMono: false,
-                inputDevice: 'Default Device',
-                inputVolume: 1.0,
-                inputMono: false,
+                outputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
+                inputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -247,12 +265,20 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
-                outputDevice: 'Default Device',
-                outputVolume: 1.0,
-                outputMono: false,
-                inputDevice: 'Default Device',
-                inputVolume: 1.0,
-                inputMono: false,
+                outputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
+                inputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -270,12 +296,20 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
-                outputDevice: 'Default Device',
-                outputVolume: 1.0,
-                outputMono: false,
-                inputDevice: 'Default Device',
-                inputVolume: 1.0,
-                inputMono: false,
+                outputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
+                inputDevices: [
+                    {
+                        device: 'Default Device',
+                        volume: 1.0,
+                        mono: false,
+                    }
+                ],
                 usePushToTalk: false,
                 maxUploadSpeed: null,
                 useLocalRecording: false,
@@ -313,12 +347,20 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVideoHw: true,
             useHwEncoder: true,
             useVfr3: false,
-            outputDevice: 'Default Device',
-            outputVolume: 1.0,
-            outputMono: false,
-            inputDevice: 'Default Device',
-            inputVolume: 1.0,
-            inputMono: false,
+            outputDevices: [
+                {
+                    device: 'Default Device',
+                    volume: 1.0,
+                    mono: false,
+                }
+            ],
+            inputDevices: [
+                {
+                    device: 'Default Device',
+                    volume: 1.0,
+                    mono: false,
+                }
+            ],
             usePushToTalk: false,
             maxUploadSpeed: null,
             useLocalRecording: false,
@@ -477,6 +519,34 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.overlays === undefined) {
         parsedData.record.overlays = createDefaultOverlaySettings()
+    }
+
+    if (parsedData.record.outputDevices === undefined) {
+        parsedData.record.outputDevices = [
+            {
+                device: parsedData.record.outputDevice,
+                volume: parsedData.record.outputVolume,
+                mono: !!parsedData.record.outputMono,
+            }
+        ]
+
+        parsedData.record.outputDevice = undefined
+        parsedData.record.outputVolume = undefined
+        parsedData.record.outputMono = undefined
+    }
+
+    if (parsedData.record.inputDevices === undefined) {
+        parsedData.record.inputDevices = [
+            {
+                device: parsedData.record.inputDevice,
+                volume: parsedData.record.inputVolume,
+                mono: !!parsedData.record.inputMono,
+            }
+        ]
+
+        parsedData.record.inputDevice = undefined
+        parsedData.record.inputVolume = undefined
+        parsedData.record.inputMono = undefined
     }
 
     saveLocalSettings(parsedData, true)

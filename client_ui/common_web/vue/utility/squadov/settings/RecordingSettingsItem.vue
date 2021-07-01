@@ -154,105 +154,28 @@
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
                             <div>
-                                <v-icon small>
-                                    mdi-headphones
-                                </v-icon>
+                                <span class="text-overline font-weight-bold">Output Devices</span>
                             </div>
-
-                            <div>
-                                <span class="text-overline font-weight-bold ml-1 mr-4">Output:</span>
-                            </div>
-                            <div class="audio-select-div">
-                                <v-select
-                                    :value="selectedOutput"
-                                    @input="changeSelectedOutput"
-                                    :items="audioOutputItems"
-                                    dense
-                                    hide-details
-                                    single-line
-                                    solo
-                                >
-                                </v-select>
-                            </div>
-
-                            <v-btn icon small @click="refreshAvailableOutputs">
-                                <v-icon>
-                                    mdi-refresh
-                                </v-icon>
-                            </v-btn>
-
-                            <v-checkbox
-                                class="ma-0"
-                                :input-value="outputMono"
-                                @change="changeOutputMono"
-                                hide-details
-                                label="Mono"
-                            >
-                            </v-checkbox>
                         </div>
 
-                        <div>
-                            <v-slider
-                                :value="outputVolume"
-                                @input="changeOutputVolume"
-                                inverse-label
-                                :label="outputVolumeStr"
-                                :min="0.0"
-                                :max="2.0"
-                                :step="0.01"
-                                hide-details
-                            >
-                            </v-slider>
-                        </div>
+                        <multiple-audio-device-settings
+                            :value="$store.state.settings.record.outputDevices"
+                            @input="changeOutputDevices"
+                        >
+                        </multiple-audio-device-settings>
                     </v-col>
+
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
-                            <v-icon small>
-                                mdi-microphone
-                            </v-icon>
-                            <span class="text-overline font-weight-bold ml-1 mr-4">Input:</span>
-                            <div class="audio-select-div">
-                                <v-select
-                                    :value="selectedInput"
-                                    @input="changeSelectedInput"
-                                    :items="audioInputItems"
-                                    dense
-                                    hide-details
-                                    single-line
-                                    solo
-                                >
-                                </v-select>
-                            </div>
-
-                            <v-btn icon small @click="refreshAvailableInputs">
-                                <v-icon>
-                                    mdi-refresh
-                                </v-icon>
-                            </v-btn>
-
-                            <v-checkbox
-                                class="ma-0"
-                                :input-value="inputMono"
-                                @change="changeInputMono"
-                                hide-details
-                                label="Mono"
-                            >
-                            </v-checkbox>
+                            <span class="text-overline font-weight-bold">Input Devices</span>
                         </div>
 
-                        <div>
-                            <v-slider
-                                :value="inputVolume"
-                                @input="changeInputVolume"
-                                inverse-label
-                                :label="inputVolumeStr"
-                                :min="0.0"
-                                :max="2.0"
-                                :step="0.01"
-                                hide-details
-                            >
-                            </v-slider>
-                        </div>
+                        <multiple-audio-device-settings
+                            :value="$store.state.settings.record.inputDevices"
+                            @input="changeInputDevices"
+                            is-input
+                        >
+                        </multiple-audio-device-settings>
                     </v-col>
                 </v-row>
 
@@ -534,12 +457,12 @@ import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import LocalDiskSpaceUsageDisplay from '@client/vue/utility/squadov/local/LocalDiskSpaceUsageDisplay.vue'
+import MultipleAudioDeviceSettings from '@client/vue/utility/squadov/settings/MultipleAudioDeviceSettings.vue'
 
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
 ///#endif 
-import { AudioDeviceListingResponse } from '@client/js/system/audio'
-import { changeLocalRecordingSettings } from '@client/js/system/settings'
+import { AudioDeviceSettings, changeLocalRecordingSettings } from '@client/js/system/settings'
 import { IpcResponse } from '@client/js/system/ipc'
 import { LocalStoragePageId } from '@client/js/pages'
 
@@ -547,6 +470,7 @@ import { LocalStoragePageId } from '@client/js/pages'
     components: {
         LoadingContainer,
         LocalDiskSpaceUsageDisplay,
+        MultipleAudioDeviceSettings,
     }
 })
 export default class RecordingSettingsItem extends Vue {
@@ -557,122 +481,17 @@ export default class RecordingSettingsItem extends Vue {
         loc: LocalDiskSpaceUsageDisplay
     }
 
-    outputOptions: string[] = []
-    defaultOutput: string = ''
-    get audioOutputItems(): any[] {
-        return this.outputOptions.map((ele: string) => {
-            return {
-                text: `${ele}${(ele == this.defaultOutput) ? ' [DEFAULT]' : ''}`,
-                value: ele,
-            }
-        })
-    }
-
-    refreshAvailableOutputs() {
-///#if DESKTOP
-        ipcRenderer.send('request-output-devices')
-///#endif
-    }
-
-    inputOptions: string[] = []
-    defaultInput: string = ''
-    get audioInputItems(): any[] {
-        return this.inputOptions.map((ele: string) => {
-            return {
-                text: `${ele}${(ele == this.defaultInput) ? ' [DEFAULT]' : ''}`,
-                value: ele,
-            }
-        })
-    }
-
-    refreshAvailableInputs() {
-///#if DESKTOP
-        ipcRenderer.send('request-input-devices')
-///#endif
-    }
-
     get localManageTo(): any {
         return {
             name: LocalStoragePageId
         }
     }
-
-    get selectedOutput(): string {
-        return this.$store.state.settings.record.outputDevice
+    changeOutputDevices(val: AudioDeviceSettings[]) {
+        this.$store.commit('changeOutputDevice', val)
     }
 
-    changeSelectedOutput(val: string) {
-        this.$store.commit('changeOutputDevice', {
-            device: val,
-            volume: this.outputVolume,
-            mono: this.outputMono,
-        })
-    }
-
-    get outputVolume(): number {
-        return this.$store.state.settings.record.outputVolume
-    }
-
-    changeOutputVolume(val: number) {
-        this.$store.commit('changeOutputDevice', {
-            device: this.selectedOutput,
-            volume: val,
-            mono: this.outputMono,
-        })
-    }
-
-    get outputVolumeStr(): string {
-        return `${(this.outputVolume * 100.0).toFixed(0)}%`
-    }
-
-    get outputMono(): boolean {
-        return this.$store.state.settings.record.outputMono
-    }
-
-    changeOutputMono(v: boolean) {
-        this.$store.commit('changeOutputDevice', {
-            device: this.selectedOutput,
-            volume: this.outputVolume,
-            mono: v,
-        })
-    }
-
-    get selectedInput(): string {
-        return this.$store.state.settings.record.inputDevice
-    }
-
-    changeSelectedInput(val: string) {
-        this.$store.commit('changeInputDevice', {
-            device: val,
-            volume: this.inputVolume,
-        })
-    }
-
-    get inputVolume(): number {
-        return this.$store.state.settings.record.inputVolume
-    }
-
-    changeInputVolume(val: number) {
-        this.$store.commit('changeInputDevice', {
-            device: this.selectedInput,
-            volume: val,
-        })
-    }
-    
-    get inputVolumeStr(): string {
-        return `${(this.inputVolume * 100.0).toFixed(0)}%`
-    }
-
-    get inputMono(): boolean {
-        return this.$store.state.settings.record.inputMono
-    }
-
-    changeInputMono(v: boolean) {
-        this.$store.commit('changeInputDevice', {
-            device: this.selectedInput,
-            volume: this.inputVolume,
-            mono: v,
-        })
+    changeInputDevices(val: AudioDeviceSettings[]) {
+        this.$store.commit('changeInputDevice', val)
     }
 
     get resY(): number {
@@ -968,46 +787,10 @@ export default class RecordingSettingsItem extends Vue {
 
     mounted() {
 ///#if DESKTOP
-        this.refreshAvailableOutputs()
-        this.refreshAvailableInputs()
         this.resyncPushToTalkStr()
         this.refreshFeatureFlags()
-
-        ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
-            this.outputOptions = [
-                'Default Device',
-                ...resp.options
-            ]
-
-            if (this.selectedOutput == '') {
-                this.changeSelectedOutput('Default Device')
-            }
-
-            this.defaultOutput = resp.default
-        })
-
-        ipcRenderer.on('respond-input-devices', (e: any, resp: AudioDeviceListingResponse) => {
-            this.inputOptions = [
-                'Default Device',
-                ...resp.options
-            ]
-
-            if (this.selectedInput == '') {
-                this.changeSelectedInput('Default Device')
-            }
-
-            this.defaultInput = resp.default
-        })
 ///#endif
     }
 }
 
 </script>
-
-<style scoped>
-
-.audio-select-div {
-    min-width: 0;
-}
-
-</style>

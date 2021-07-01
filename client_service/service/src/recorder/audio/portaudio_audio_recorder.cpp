@@ -57,6 +57,7 @@ public:
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
     void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono);
+    double initialVolume() const;
     void setVolume(double volume);
 
     bool exists() const { return _exists; }
@@ -68,6 +69,7 @@ private:
     EAudioDeviceDirection _dir;
     bool _exists = false;
     std::atomic<double> _volume = 1.0;
+    double _initialVolume = 1.0;
     bool _mono = false;
 
     size_t _sampleRate = 0;
@@ -253,6 +255,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
     } else {
         _exists = true;
         _volume = volume;
+        _initialVolume = volume;
         _mono = mono;
     }
 }
@@ -335,6 +338,10 @@ void PortaudioAudioRecorderImpl::startRecording() {
     });
 }
 
+double PortaudioAudioRecorderImpl::initialVolume() const {
+    return _initialVolume;
+}
+
 void PortaudioAudioRecorderImpl::setVolume(double volume) {
     _volume = volume;
 }
@@ -380,6 +387,10 @@ bool PortaudioAudioRecorder::exists() const {
 
 void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono) {
     _impl->loadDevice(dir, selected, volume, mono);
+}
+
+double PortaudioAudioRecorder::initialVolume() const {
+    return _impl->initialVolume();
 }
 
 const AudioPacketProperties& PortaudioAudioRecorder::props() const {

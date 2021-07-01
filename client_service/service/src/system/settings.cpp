@@ -12,18 +12,33 @@ Settings* getCurrentSettings() {
     return global.get();
 }
 
+AudioDeviceSettings AudioDeviceSettings::fromJson(const nlohmann::json& obj) {
+    AudioDeviceSettings settings;
+    settings.device = obj.value("device", "Default Device");
+    settings.volume = obj.value("volume", 1.0);
+    settings.mono = obj.value("mono", false);
+    return settings;
+}
+
 RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     RecordingSettings settings;
     settings.resY = obj["resY"].get<int32_t>();
     settings.fps = obj["fps"].get<int32_t>();
     settings.useVideoHw = obj.value("useVideoHw", true);
     settings.useHwEncoder = obj.value("useHwEncoder", true);
-    settings.outputDevice = obj["outputDevice"].get<std::string>();
-    settings.outputVolume = obj["outputVolume"].get<double>();
-    settings.outputMono = obj.value("outputMono", false);
-    settings.inputDevice = obj["inputDevice"].get<std::string>();
-    settings.inputVolume = obj["inputVolume"].get<double>();
-    settings.inputMono = obj.value("inputMono", false);
+
+    if (obj.find("outputDevices") != obj.end() && obj.count("outputDevices") > 0) {
+        for (const auto& o : obj["outputDevices"]) {
+            settings.outputDevices.push_back(AudioDeviceSettings::fromJson(o));
+        }
+    }
+
+    if (obj.find("inputDevices") != obj.end() && obj.count("inputDevices") > 0) {
+        for (const auto& o : obj["inputDevices"]) {
+            settings.inputDevices.push_back(AudioDeviceSettings::fromJson(o));
+        }
+    }
+
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr3 = obj.value("useVfr3", false);
 

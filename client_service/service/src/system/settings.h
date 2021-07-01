@@ -13,6 +13,14 @@
 
 namespace service::system {
 
+struct AudioDeviceSettings {
+    std::string device;
+    double volume = 1.0;
+    bool mono = false;
+
+    static AudioDeviceSettings fromJson(const nlohmann::json& obj);
+};
+
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
@@ -20,12 +28,8 @@ struct RecordingSettings {
     bool useHwEncoder = false;
     bool useVfr3 = false;
 
-    std::string outputDevice;
-    double outputVolume = 1.0;
-    bool outputMono = false;
-    std::string inputDevice;
-    double inputVolume = 1.0;
-    bool inputMono = false;
+    std::vector<AudioDeviceSettings> outputDevices;
+    std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
 
     std::optional<size_t> maxUploadSpeed;

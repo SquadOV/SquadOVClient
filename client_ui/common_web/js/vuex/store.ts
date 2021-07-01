@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
-import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay} from '@client/js/system/settings'
+import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings} from '@client/js/system/settings'
 import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
@@ -92,25 +92,21 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeOutputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
+        changeOutputDevice(state: RootState, params: AudioDeviceSettings[]) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.outputDevice = params.device
-            state.settings.record.outputVolume = params.volume
-            state.settings.record.outputMono = params.mono
+            state.settings.record.outputDevices = JSON.parse(JSON.stringify(params))
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeInputDevice(state: RootState, params: {device: string, volume : number, mono: boolean}) {
+        changeInputDevice(state: RootState, params: AudioDeviceSettings[]) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.inputDevice = params.device
-            state.settings.record.inputVolume = params.volume
-            state.settings.record.inputMono = params.mono
+            state.settings.record.inputDevices = JSON.parse(JSON.stringify(params))
             saveLocalSettings(state.settings)
 /// #endif
         },

@@ -19,6 +19,7 @@
 #include <shared_mutex>
 #include <thread>
 #include <unordered_map>
+#include <vector>
 
 namespace service::recorder {
 
@@ -75,7 +76,12 @@ public:
 private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;
-        std::unordered_map<audio::EAudioDeviceDirection, size_t> audioEncoderIndex;
+
+        // Audio Input/Output -> Index into the appropriate vector of audio recorders -> encoder index to use.
+        std::unordered_map<
+            audio::EAudioDeviceDirection,
+            std::unordered_map<size_t, size_t>
+        > audioEncoderIndex;
         service::renderer::D3d11OverlayRendererPtr overlay;
 
         bool hasEncoder() const { return !!encoder; }
@@ -108,8 +114,9 @@ private:
     std::mutex _paInitMutex;
     audio::PortaudioInitRAIIPtr _paInit;
 
-    audio::AudioRecorderPtr _aoutRecorder;
-    audio::AudioRecorderPtr _ainRecorder;
+    std::vector<audio::AudioRecorderPtr> _aoutRecorder;
+    std::vector<audio::AudioRecorderPtr> _ainRecorder;
+
     std::mutex _ainMutex;
     bool _streamsInit = false;
 

@@ -114,15 +114,35 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
 
     {
         std::lock_guard guard(_ainMutex);
-        if (_ainRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input) != data.audioEncoderIndex.end()) {
-            LOG_INFO("\tSet audio input encoder..." << std::endl);
-            _ainRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Input));
+        LOG_INFO("\tSet audio input encoder..." << std::endl);
+        for (size_t i = 0; i < _ainRecorder.size(); ++i) {
+            const auto inputIt = data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Input);
+            if (inputIt == data.audioEncoderIndex.end()) {
+                continue;
+            }
+
+            const auto indexIt = inputIt->second.find(i);
+            if (indexIt == inputIt->second.end()) {
+                continue;
+            }
+            
+            _ainRecorder[i]->setActiveEncoder(data.encoder.get(), indexIt->second);
         }
     }
 
-    if (_aoutRecorder && data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output) != data.audioEncoderIndex.end()) {
-        LOG_INFO("\tSet audio output encoder..." << std::endl);
-        _aoutRecorder->setActiveEncoder(data.encoder.get(), data.audioEncoderIndex.at(audio::EAudioDeviceDirection::Output));
+    LOG_INFO("\tSet audio output encoder..." << std::endl);
+    for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
+        const auto outputIt = data.audioEncoderIndex.find(audio::EAudioDeviceDirection::Output);
+        if (outputIt == data.audioEncoderIndex.end()) {
+            continue;
+        }
+
+        const auto indexIt = outputIt->second.find(i);
+        if (indexIt == outputIt->second.end()) {
+            continue;
+        }
+
+        _aoutRecorder[i]->setActiveEncoder(data.encoder.get(), indexIt->second);
     }
 
     LOG_INFO("...Start new active encoder." << std::endl);
@@ -360,16 +380,16 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
 
     LOG_INFO("Initialize audio stream..." << std::endl);
     data.encoder->initializeAudioStream();
-    if (_aoutRecorder && _aoutRecorder->exists()) {
+    for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
         LOG_INFO("Adding audio output..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder->props());
-        data.audioEncoderIndex[audio::EAudioDeviceDirection::Output] = encoderIndex;
+        const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props());
+        data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
     }
 
-    if (_ainRecorder && _ainRecorder->exists()) {
+    for (size_t i = 0; i < _ainRecorder.size(); ++i) {
         LOG_INFO("Adding audio input..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder->props());
-        data.audioEncoderIndex[audio::EAudioDeviceDirection::Input] = encoderIndex;
+        const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props());
+        data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
     }
 
     LOG_INFO("Open encoder..." << std::endl);
@@ -402,34 +422,39 @@ bool GameRecorder::initializeInputStreams(int flags) {
         _paInit.reset(new audio::PortaudioInitRAII);
     }
 
-    _aoutRecorder.reset(new audio::PortaudioAudioRecorder());
-
-    _aoutRecorder->loadDevice(audio::EAudioDeviceDirection::Output, _cachedRecordingSettings->outputDevice, _cachedRecordingSettings->outputVolume, _cachedRecordingSettings->outputMono);
-    if (_aoutRecorder->exists()) {
-        _aoutRecorder->startRecording();
+    for (const auto& output : _cachedRecordingSettings->outputDevices) {
+        auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output.device, output.volume, output.mono);
+        if (recorder->exists()) {
+            recorder->startRecording();
+        }
+        _aoutRecorder.emplace_back(std::move(recorder));
     }
 
     std::lock_guard guard(_ainMutex);
-    _ainRecorder.reset(new audio::PortaudioAudioRecorder());
-    _ainRecorder->loadDevice(audio::EAudioDeviceDirection::Input, _cachedRecordingSettings->inputDevice, _cachedRecordingSettings->usePushToTalk ? 0.0 : _cachedRecordingSettings->inputVolume, _cachedRecordingSettings->inputMono);
-    if (_ainRecorder->exists()) {
-        _ainRecorder->startRecording();
-
-        if (_cachedRecordingSettings->usePushToTalk) {
-            _pttEnableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
-                std::lock_guard guard(_ainMutex);
-                if (_ainRecorder) {
-                    _ainRecorder->setVolume(_cachedRecordingSettings->inputVolume);
-                }
-            });
-
-            _pttDisableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkDisable, [this](){
-                std::lock_guard guard(_ainMutex);
-                if (_ainRecorder) {
-                    _ainRecorder->setVolume(0.0);
-                }
-            });
+    for (const auto& input : _cachedRecordingSettings->inputDevices) {
+        auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono);
+        if (recorder->exists()) {
+            recorder->startRecording();
         }
+        _ainRecorder.emplace_back(std::move(recorder));
+    }
+
+    if (_cachedRecordingSettings->usePushToTalk) {
+        _pttEnableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
+            std::lock_guard guard(_ainMutex);
+            for (auto& r : _ainRecorder) {
+                r->setVolume(r->initialVolume());
+            }
+        });
+
+        _pttDisableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkDisable, [this](){
+            std::lock_guard guard(_ainMutex);
+            for (auto& r : _ainRecorder) {
+                r->setVolume(0.0);
+            }
+        });
     }
 
     return true;
@@ -573,12 +598,13 @@ void GameRecorder::stopInputs() {
         _vrecorder.reset(nullptr);
     }
 
-    if (_aoutRecorder) {
+    for (auto& recorder : _aoutRecorder) {
         LOG_INFO("...Stop audio output recorder." << std::endl);
-        _aoutRecorder->stop();
-        LOG_INFO("\tOK" << std::endl);
-        _aoutRecorder.reset(nullptr);
+        recorder->stop();
     }
+
+    LOG_INFO("\tOK" << std::endl);
+    _aoutRecorder.clear();
 
     {
         // Remove PTT callbacks first as the callbacks will want a lock on audio input so we want to make sure we don't
@@ -598,12 +624,13 @@ void GameRecorder::stopInputs() {
         }
 
         std::lock_guard guard(_ainMutex);
-        if (_ainRecorder) {
+        for (auto& recorder : _ainRecorder) {
             LOG_INFO("...Stop audio input recorder." << std::endl);
-            _ainRecorder->stop();
-            LOG_INFO("\tOK" << std::endl);
-            _ainRecorder.reset(nullptr);
+            recorder->stop();
         }
+
+        LOG_INFO("\tOK" << std::endl);
+        _ainRecorder.clear();
     }
 
     {
