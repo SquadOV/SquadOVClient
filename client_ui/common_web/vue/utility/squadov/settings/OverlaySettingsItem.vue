@@ -91,7 +91,7 @@
                     v-if="!previewPlaying && previewStarted"
                     @click="togglePreview(true)"
                 >
-                    Resume Preview (F8)
+                    Resume Preview
                 </v-btn>
 
                 <v-btn
@@ -100,7 +100,7 @@
                     v-if="previewPlaying"
                     @click="togglePreview(false)"
                 >
-                    Pause Preview (F8)
+                    Pause Preview
                 </v-btn>
 
                 <v-btn
