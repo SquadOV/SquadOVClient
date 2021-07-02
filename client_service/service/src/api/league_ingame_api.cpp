@@ -75,7 +75,8 @@ void LeagueIngameApiPoller::start() {
     _watcher = std::thread([this](){
         bool firstAvailable = false;
         bool available = false;
-        while (_running) {
+        bool sentStart = false;
+        while (_running && !sentStart) {
             // Ping the game stats endpoint since we're going to need that data anyway.
             LeagueGameStats stats;
             const auto tm = shared::nowUtc();
@@ -106,6 +107,7 @@ void LeagueIngameApiPoller::start() {
                             const auto eventTime = tm - std::chrono::milliseconds(static_cast<long long>((stats.gameTime - event.eventTime) * 1000.0));
                             if (event.eventName == "GameStart") {
                                 notify(static_cast<int>(ELeagueInGameEvent::Start), eventTime, nullptr, false);
+                                sentStart = true;
                             }
 
                             lastEvent = event.eventId;
