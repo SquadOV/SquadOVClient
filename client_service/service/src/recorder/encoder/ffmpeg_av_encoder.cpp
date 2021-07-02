@@ -97,7 +97,7 @@ public:
     service::recorder::image::Image getFrontBuffer() const;
 
     void initializeAudioStream();
-    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps);
+    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation);
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm);
 
     void open();
@@ -155,6 +155,7 @@ private:
         uint8_t** samplesStorage = nullptr;
         int sampleLineSize = 0;
         int64_t maxSamples = 0;
+        bool useSilenceCompensation = true;
 
         // Debug Info
         uint64_t receivedSamples = 0;
@@ -604,7 +605,7 @@ AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
     return frame;
 }
 
-size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) {
+size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) {
     AudioStreamDataPtr streamDataPtr = std::make_unique<AudioStreamData>();
     AudioStreamData& streamData = *streamDataPtr;
 
@@ -635,6 +636,8 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
         _acodecContext->channels,
         _acodecContext->frame_size * 2
     );
+
+    streamData.useSilenceCompensation = useSilenceCompensation;
 
     if (!streamData.fifo) {
         THROW_ERROR("Failed to allocate fifo queue.");
@@ -761,7 +764,7 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     auto& streamData = *_astreams[encoderIdx];
 
     const auto diffTm = (tm >= streamData.nextPacketTime) ? tm - streamData.nextPacketTime : streamData.nextPacketTime - tm;
-    if (diffTm >= maxAudioDeviation) {
+    if (streamData.useSilenceCompensation && diffTm >= maxAudioDeviation) {
         if (tm > streamData.nextPacketTime) {
             // When the audio samples are coming further out into the future than we'd reasonably expect then we should
             // insert a bunch of silence in to compensate.
@@ -1069,8 +1072,8 @@ void FfmpegAvEncoder::initializeAudioStream() {
     _impl->initializeAudioStream();
 }
 
-size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) {
-    return _impl->addAudioInput(inputProps);
+size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) {
+    return _impl->addAudioInput(inputProps, useSilenceCompensation);
 }
 
 void FfmpegAvEncoder::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {

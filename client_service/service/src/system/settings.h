@@ -43,6 +43,7 @@ struct RecordingSettings {
 
     int32_t vodEndDelaySeconds = 0;
     service::renderer::OverlaySettings overlays;
+    bool useAudioDriftCompensation = false;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

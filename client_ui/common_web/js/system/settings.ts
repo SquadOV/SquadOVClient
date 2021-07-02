@@ -70,6 +70,7 @@ export interface SquadOvRecordingSettings {
     bitrateKbps: number
     vodEndDelaySeconds: number
     overlays: SquadOvOverlaySettings
+    useAudioDriftCompensation: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -257,6 +258,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
+                useAudioDriftCompensation: true,
             }
         case BaselineLevel.Medium:
             record = {
@@ -288,6 +290,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
+                useAudioDriftCompensation: true,
             }
         case BaselineLevel.High:
             record = {
@@ -319,6 +322,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
+                useAudioDriftCompensation: true,
             }
     }
 
@@ -370,6 +374,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             bitrateKbps: 6000,
             vodEndDelaySeconds: 0,
             overlays: createDefaultOverlaySettings(),
+            useAudioDriftCompensation: true,
         },
         keybinds: {
             pushToTalk: []
@@ -547,6 +552,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.record.inputDevice = undefined
         parsedData.record.inputVolume = undefined
         parsedData.record.inputMono = undefined
+    }
+
+    if (parsedData.record.useAudioDriftCompensation === undefined) {
+        parsedData.record.useAudioDriftCompensation = true
     }
 
     saveLocalSettings(parsedData, true)

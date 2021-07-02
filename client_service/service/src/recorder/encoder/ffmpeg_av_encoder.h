@@ -21,7 +21,7 @@ public:
     service::recorder::image::Image getFrontBuffer() const override;
 
     void initializeAudioStream() override;
-    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) override;
+    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) override;
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) override;
 
     void open() override;

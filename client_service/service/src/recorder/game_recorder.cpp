@@ -382,13 +382,13 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     data.encoder->initializeAudioStream();
     for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
         LOG_INFO("Adding audio output..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props());
+        const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
         data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
     }
 
     for (size_t i = 0; i < _ainRecorder.size(); ++i) {
         LOG_INFO("Adding audio input..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props());
+        const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
         data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
     }
 

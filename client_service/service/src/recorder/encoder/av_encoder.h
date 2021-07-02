@@ -44,7 +44,7 @@ public:
     virtual service::recorder::image::Image getFrontBuffer() const = 0;
 
     virtual void initializeAudioStream() = 0;
-    virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps) = 0;
+    virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) = 0;
     virtual void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) = 0;
 
     virtual void open() = 0;

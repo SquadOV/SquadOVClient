@@ -147,6 +147,30 @@
 
                 <div class="d-flex align-center mt-4" v-if="!mini">
                     <span class="text-overline mr-4">Audio</span>
+
+                    <v-spacer></v-spacer>
+
+                    <v-checkbox
+                        class="ma-0"
+                        :input-value="$store.state.settings.record.useAudioDriftCompensation"
+                        @change="$store.commit('changeAudioDriftCompensation', arguments[0])"
+                        label="Use Audio Drift Compensation"
+                        hide-details
+                        dense
+                    >
+                        <template v-slot:append>
+                            <v-tooltip bottom max-width="450px">
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-icon v-on="on" v-bind="attrs">
+                                        mdi-help-circle
+                                    </v-icon>
+                                </template>
+
+                                When enabled, SquadOV will attempt to use timestamps to prevent your audio from becoming de-synced.
+                                Turn this off if your audio sounds weird.
+                            </v-tooltip>
+                        </template>
+                    </v-checkbox>
                 </div>
                 <v-divider v-if="!mini"></v-divider>
 
