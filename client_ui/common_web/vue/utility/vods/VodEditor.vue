@@ -12,6 +12,7 @@
             :loop-clip="previewClip"
             :clip-start="previewClip ? clipStart / 1000.0 : undefined"
             :clip-end="previewClip ? clipEnd / 1000.0 : undefined"
+            :disable-shortcuts="showHideClipDialog"
         >
         </video-player>
 
@@ -181,6 +182,7 @@
                             fill
                             loop-clip
                             :override-uri="localClipPath"
+                            disable-shortcuts
                         >
                         </video-player>
 

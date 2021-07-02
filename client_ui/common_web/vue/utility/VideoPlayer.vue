@@ -99,6 +99,9 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     @Prop({default: 3000})
     goToOffset!: number
 
+    @Prop({type: Boolean, default: false})
+    disableShortcuts!: boolean
+
     player: videojs.Player | null = null
     $refs!: {
         video: HTMLVideoElement
@@ -479,6 +482,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }
 
         if (e.ctrlKey || e.altKey) {
+            return
+        }
+
+        if (this.disableShortcuts) {
             return
         }
 
