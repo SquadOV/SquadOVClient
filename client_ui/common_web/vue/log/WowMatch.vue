@@ -249,7 +249,6 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     filteredEvents: UnifiedWowEventContainer[] = []
 
     selectedTab: number = 0
-    vod: VodAssociation | null = null
     vodTime: Date | null = null
     theaterMode: boolean = false
     currentPlayerHeight : number = 0

@@ -226,7 +226,6 @@ export default class HearthstoneMatch extends mixins(CommonComponent, MatchShare
     }
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
-    vod: VodAssociation | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false
 

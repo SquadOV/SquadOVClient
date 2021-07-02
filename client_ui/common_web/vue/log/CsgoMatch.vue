@@ -172,7 +172,6 @@ export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {
     @Prop({required: true})
     matchUuid! : string
 
-    vod : VodAssociation | null = null
     theaterMode: boolean = false
     currentPlayerHeight : number = 0
     vodReady: boolean = false

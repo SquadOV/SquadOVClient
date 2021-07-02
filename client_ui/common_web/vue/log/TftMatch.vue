@@ -106,7 +106,6 @@ export default class TftMatch extends mixins(MatchShareBase) {
     userId!: number
 
     currentMatch: WrappedTftMatch | null = null
-    vod: VodAssociation | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false
 

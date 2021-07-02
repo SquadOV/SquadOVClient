@@ -101,7 +101,6 @@ export default class AimlabMatch extends mixins(MatchShareBase) {
     userId!: number
 
     // Synced from the task summary display. Kind of a yikes there...
-    vod : VodAssociation | null = null
     data : AimlabTaskData | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false

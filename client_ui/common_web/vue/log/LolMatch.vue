@@ -196,7 +196,6 @@ export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
     matchUuid! : string
 
     currentMatch: FullLolMatch | null = null
-    vod: VodAssociation | null = null
     displayEvents: LolMatchEvent[] = []
     enableDraw: boolean = false
 

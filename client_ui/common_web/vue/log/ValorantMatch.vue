@@ -178,7 +178,6 @@ export default class ValorantMatch extends mixins(CommonComponent, MatchShareBas
     userId!: number
 
     povPuuid: string | null = null
-    vod : VodAssociation | null = null
     playerMetadata: ValorantMatchPlayerMatchMetadata | null = null
 
     @Prop({required: true})

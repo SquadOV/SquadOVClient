@@ -651,12 +651,6 @@ router.beforeEach((to : Route, from : Route, next : any) => {
     console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
     
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId || to.name === pi.ForgotPasswordPageId)
-    if (to.name != pi.DashboardPageId && !mustBeInvalid && !!store.state.currentUser) {
-        apiClient.markUserActive().catch((err: any) => {
-            console.log('Failed to mark user active: ', err)
-        })
-    }
-
     // Allow OAuth requests, squad invite responses, and shared pages to always go through regardless of whether the user is signed in or not.
     if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId || to.name === pi.VerifyEmailPageId || to.name === pi.PlayerPageId) {
         next()
