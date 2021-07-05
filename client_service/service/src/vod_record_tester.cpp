@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
             recorder.startDvrSession();
             std::this_thread::sleep_for(std::chrono::seconds(delay));
             LOG_INFO("DO JOIN" << std::endl);
-            recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);

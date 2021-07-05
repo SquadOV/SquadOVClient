@@ -24,10 +24,7 @@ private:
     D3d11SharedContext* _shared = nullptr;
 
     ID3D11VideoDevice* _vdevice = nullptr;
-    // Note that this is queries off the input shared context's immediate context.
-    // Therefore when we use it we need to grab the shared context's immediate context guard first.
-    ID3D11VideoContext* _vcontext = nullptr;
-
+    
     D3D11_TEXTURE2D_DESC _inputDesc;
     D3D11_TEXTURE2D_DESC _outputDesc;
 

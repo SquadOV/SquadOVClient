@@ -203,14 +203,10 @@ void D3d11OverlayRenderer::render(const D3d11ResourceDeviceTuple& output, const 
 
     // We want to get the texture to write to. Note that we assume that the input resource is made in the same context as the renderer as we always
     // want to run in the device/context of the input resource. Thus, if the output texture's context is different then we need to use a shared
-    // texture.
-    ID3D11Texture2D* finalTextureOutput = output.texture;
-    SharedD3d11TextureHandlePtr shared = nullptr;
-
-    if (output.context != input.context) {
-        shared = std::make_unique<SharedD3d11TextureHandle>(input.context, output.texture, true);
-        finalTextureOutput = shared->texture();
-    }
+    // texture. We're pretty much going to always assume that the _context is input.context and that output.context is probably different?
+    // Only case where this isn't true is when the output is a CPU image - but whatever, should still be OK to use shared handles.
+    SharedD3d11TextureHandlePtr shared = std::make_unique<SharedD3d11TextureHandle>(_context.get(), output.texture, true);
+    ID3D11Texture2D* finalTextureOutput = shared->texture();
 
     D3D11_TEXTURE2D_DESC outputDesc;
     finalTextureOutput->GetDesc(&outputDesc);
@@ -239,22 +235,24 @@ void D3d11OverlayRenderer::render(const D3d11ResourceDeviceTuple& output, const 
             THROW_ERROR("Failed to create render target.");
         }
 
-        auto texContext = input.context->deferredContext();
-        _outputQuad->setTexture(input.context->device(), texContext, input.texture);
-        input.context->execute(texContext);
+        {
+            auto texContext = input.context->immediateContext();
+            _outputQuad->setTexture(input.context->device(), texContext.context(), input.texture);
+            texContext.context()->Flush();
+        }
 
         if (!_renderer->renderSceneToRenderTarget(rt)) {
             THROW_ERROR("Failed to render quad to target for overlay.");
         }
 
         rt->Release();
-        texContext->Release();
     }
 
-    if (output.context != input.context) {
-        auto immediate = _context->immediateContext();
-        immediate.context()->Flush();
-    }
+    // To follow MSDN's guidelines that "If a shared texture is updated on one device ID3D11DeviceContext::Flush must be called on that device."
+    // we must force the flush on the renderer's context to make sure that all the commands we put onto the
+    // rendering deferred context gets run immediately.
+    auto immediate = _context->immediateContext();
+    immediate.context()->Flush();
 }
 
 }

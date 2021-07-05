@@ -12,12 +12,6 @@ D3d11VideoProcessor::D3d11VideoProcessor(D3d11SharedContext* shared):
     if (hr != S_OK) {
         THROW_ERROR("Failed to query video device.");
     }
-
-    auto immediate = shared->immediateContext();
-    hr = immediate.context()->QueryInterface(__uuidof(ID3D11VideoContext), (void**)&_vcontext);
-    if (hr != S_OK) {
-        THROW_ERROR("Failed to query video context.");
-    }
 }
 
 D3d11VideoProcessor::~D3d11VideoProcessor() {
@@ -27,11 +21,6 @@ D3d11VideoProcessor::~D3d11VideoProcessor() {
     if (_vdevice) {
         _vdevice->Release();
         _vdevice = nullptr;
-    }
-
-    if (_vcontext) {
-        _vcontext->Release();
-        _vcontext = nullptr;
     }
 }
 
@@ -100,6 +89,15 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
     D3D11_TEXTURE2D_DESC outputDesc;
     output->GetDesc(&outputDesc);
 
+    // Note that this is queries off the input shared context's immediate context.
+    // Therefore when we use it we need to grab the shared context's immediate context guard first.
+    auto immediate = _shared->immediateContext();
+    ID3D11VideoContext* vcontext = nullptr;
+    HRESULT hr = immediate.context()->QueryInterface(__uuidof(ID3D11VideoContext), (void**)&vcontext);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to query video context.");
+    }
+
     bool needRecreate = false;
     if (_processor) {
         needRecreate =
@@ -129,11 +127,13 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
 
         HRESULT hr = _vdevice->CreateVideoProcessorEnumerator(&desc, &_processorEnum);
         if (hr != S_OK) {
+            vcontext->Release();
             THROW_ERROR("Failed to create video processor enumerator.");
         }
 
         hr = _vdevice->CreateVideoProcessor(_processorEnum, 0, &_processor);
         if (hr != S_OK) {
+            vcontext->Release();
             THROW_ERROR("Failed to create video processor.");
         }
 
@@ -144,8 +144,9 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
                 D3D11_VIDEO_PROCESSOR_COLOR_SPACE csp = { 0 };
                 csp.YCbCr_Matrix = 1;
 
-                _vcontext->VideoProcessorSetOutputColorSpace(_processor, &csp);
+                vcontext->VideoProcessorSetOutputColorSpace(_processor, &csp);
             } else {
+                vcontext->Release();
                 THROW_ERROR("Invalid YUV colorspace.");
             }
         }
@@ -161,6 +162,7 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
 
         HRESULT hr = _vdevice->CreateVideoProcessorOutputView(output, _processorEnum, &desc, &outputView);
         if (hr != S_OK) {
+            vcontext->Release();
             THROW_ERROR("Failed to create processor output view.");
         }
 
@@ -178,8 +180,9 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
     desc.Texture2D.ArraySlice = 0;
     desc.Texture2D.MipSlice = 0;
 
-    HRESULT hr = _vdevice->CreateVideoProcessorInputView(input, _processorEnum, &desc, &inputView);
+    hr = _vdevice->CreateVideoProcessorInputView(input, _processorEnum, &desc, &inputView);
     if (hr != S_OK) {
+        vcontext->Release();
         THROW_ERROR("Failed to create processor input view.");
     }
 
@@ -187,14 +190,17 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
     inputStream.Enable = true;
     inputStream.pInputSurface = inputView;
 
-    auto immediate = _shared->immediateContext();
-    hr = _vcontext->VideoProcessorBlt(_processor, outputView, 0, 1, &inputStream);
+    hr = vcontext->VideoProcessorBlt(_processor, outputView, 0, 1, &inputStream);
     if (hr != S_OK) {
         inputView->Release();
+        vcontext->Release();
         THROW_ERROR("Failed to do video processor blt.");
     }
 
     inputView->Release();
+    vcontext->Release();
+
+    immediate.context()->Flush();
 }
 
 }
