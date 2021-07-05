@@ -1,7 +1,7 @@
 <template>
     <v-tabs>
         <v-tab>
-            FFmpeg
+            FFmpeg (LGPL)
         </v-tab>
 
         <v-tab-item>

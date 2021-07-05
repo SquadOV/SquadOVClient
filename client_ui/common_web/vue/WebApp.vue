@@ -20,40 +20,6 @@
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>
-
-                <div class="d-flex justify-center ma-0 text-overline">
-                    <v-dialog v-model="showHideLicenses" persistent max-width="80%">
-                        <template v-slot:activator="{on , attrs}">
-                            <v-btn
-                                color="primary"
-                                x-small
-                                text
-                                v-on="on"
-                                v-bind="attrs"
-                            >
-                                Licenses
-                            </v-btn>
-                        </template>
-                        
-                        <v-card>
-                            <v-card-title>
-                                Licenses
-                            </v-card-title>
-                            
-                            <license-data></license-data>
-
-                            <v-card-actions>
-                                <v-spacer></v-spacer>
-                                <v-btn
-                                    color="error"
-                                    @click="showHideLicenses = false"
-                                >
-                                    Close
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
-                </div>
             </div>
         </div>
     </div>
@@ -73,8 +39,7 @@ import TopLevelComponent from '@client/vue/TopLevelComponent'
 })
 export default class WebApp extends mixins(TopLevelComponent) {
     version: string = version
-    showHideLicenses: boolean = false
-
+    
     get hasValidSession(): boolean {
         return this.$store.state.hasValidSession
     }
