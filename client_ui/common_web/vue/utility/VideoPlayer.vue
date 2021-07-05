@@ -571,10 +571,28 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }
     }
 
+    handleAppActiveChange(event: any, active: boolean) {
+        if (!this.player) {
+            return
+        }
+
+        if (!active) {
+            this.player.pause()
+        }
+    }
+
     keydownHandler: any = null
+    appActiveHandler: any = null
+
     mounted() {
         this.keydownHandler = this.handleKeypress.bind(this)
         window.addEventListener('keydown', this.keydownHandler)
+
+
+/// #if DESKTOP
+        this.appActiveHandler = this.handleAppActiveChange.bind(this)
+        ipcRenderer.on('onActiveChange', this.appActiveHandler)
+/// #endif
 
         if (!!this.overrideUri) {
             this.videoUri = this.overrideUri
@@ -588,6 +606,14 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         if (!!this.player) {
             this.player.dispose()
         }
+
+/// #if DESKTOP
+        if (!!this.appActiveHandler) {
+            ipcRenderer.removeListener('onActiveChange', this.appActiveHandler)
+            this.appActiveHandler = null
+        }
+/// #endif
+
         window.removeEventListener('keydown', this.keydownHandler)
         this.player = null
     }

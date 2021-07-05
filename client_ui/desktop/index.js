@@ -159,6 +159,8 @@ function start() {
             e.preventDefault()
             win.hide()
         }
+
+        win.webContents.send('onActiveChange', false)
     })
 
     win.on('close', (e) => {
@@ -170,6 +172,15 @@ function start() {
                 quit()
             }
         }
+        win.webContents.send('onActiveChange', false)
+    })
+
+    win.on('show', (e) => {
+        win.webContents.send('onActiveChange', true)
+    })
+
+    win.on('restore', (e) => {
+        win.webContents.send('onActiveChange', true)
     })
 
     tray = new Tray(iconPath)
