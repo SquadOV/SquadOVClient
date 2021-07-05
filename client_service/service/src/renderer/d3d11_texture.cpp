@@ -48,7 +48,7 @@ SharedD3d11TextureHandle::SharedD3d11TextureHandle(D3d11SharedContext* destConte
 
         hr = destContext->device()->OpenSharedResource(_frameHandle, __uuidof(ID3D11Texture2D), (void**)&_sTexture);
         if (hr != S_OK) {
-            THROW_ERROR("Failed to open shared resource.");
+            THROW_ERROR("Failed to open shared resource");
         }
     }
 }

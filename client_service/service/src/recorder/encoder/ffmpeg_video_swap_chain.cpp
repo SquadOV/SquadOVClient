@@ -46,7 +46,7 @@ void FfmpegCPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef*) 
         THROW_ERROR("Failed to get CPU frame buffer.");
     }
 
-    _overlay->initializeCpu();
+    _overlay->initializeGpu();
     _frontBuffer = std::make_unique<service::recorder::image::Image>();
     _backBuffer = std::make_unique<service::recorder::image::Image>();
 }
