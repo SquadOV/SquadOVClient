@@ -194,7 +194,6 @@ void DxgiDesktopRecorder::startRecording() {
             HRESULT hr = !!_dupl ? _dupl->AcquireNextFrame(100, &frameInfo, &desktopResource) : DXGI_ERROR_WAIT_TIMEOUT;
             if (hr == DXGI_ERROR_WAIT_TIMEOUT) {
                 reuseOldFrame = true;
-                ++numReused;
             } else {
                 if (hr == DXGI_ERROR_ACCESS_LOST) {
                     LOG_INFO("DXGI Access Lost." << std::endl);
@@ -225,6 +224,10 @@ void DxgiDesktopRecorder::startRecording() {
                 reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
             }
 
+            if (!reuseOldFrame && ((count % 2) == 1)) {
+                reuseOldFrame = true;
+            }
+
             const auto postAcquireTm = TickClock::now();
             
             if (!reuseOldFrame) {
@@ -245,6 +248,8 @@ void DxgiDesktopRecorder::startRecording() {
                     cpuFrame.loadFromD3d11TextureWithStaging(_self->device(), immediate.context(), tex);
                 }
                 tex->Release();
+            } else {
+                ++numReused;
             }
 
             if (desktopResource) {

@@ -13,6 +13,16 @@
 #include <optional>
 
 namespace service::renderer {
+
+enum class ComponentOriginX {
+    Left,
+    Right
+};
+
+enum class ComponentOriginY {
+    Top,
+    Bottom
+};
     
 using D3d11OverlayComponentPtr = std::shared_ptr<class D3d11OverlayComponent>;
 class D3d11OverlayComponent {
@@ -36,6 +46,8 @@ private:
         float height;
         float scaleX;
         float scaleY;
+        ComponentOriginX originX;
+        ComponentOriginY originY;
         shared::color::ColorRgba color;
     };
     std::optional<RectangleData> _rectangle;
