@@ -716,7 +716,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
             if (end.has_value()) {
                 shared::squadov::VodAssociation association;
                 association.matchUuid = end.value().matchUuid;
-                association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
+                association.userUuid = service::api::getGlobalApi()->getCurrentUserCached().uuid;
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = vodStartTime;
                 association.endTime = end.value().endTime;
@@ -840,7 +840,7 @@ void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameReco
 
     shared::squadov::VodAssociation association;
     association.matchUuid = end.matchUuid;
-    association.userUuid = service::api::getGlobalApi()->getCurrentUser().uuid;
+    association.userUuid = service::api::getGlobalApi()->getCurrentUserCached().uuid;
     association.videoUuid = vodId.videoUuid;
     association.startTime = vodStartTime;
     association.endTime = end.endTime;

@@ -48,7 +48,8 @@ public:
     KafkaInfo getKafkaInfo() const;
 
     // User
-    shared::squadov::SquadOVUser getCurrentUser() const;
+    shared::squadov::SquadOVUser getCurrentUserApi() const;
+    shared::squadov::SquadOVUser getCurrentUserCached() const;
 
     // Valorant
     std::string uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const;

@@ -60,7 +60,7 @@ KafkaInfo SquadovApi::getKafkaInfo() const {
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
 
-    const auto user = getCurrentUser();
+    const auto user = getCurrentUserApi();
 
     std::unique_lock<std::shared_mutex> guard(_sessionMutex);
     _session.sessionId = key;
@@ -100,7 +100,7 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     _features = flags;
 }
 
-shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
+shared::squadov::SquadOVUser SquadovApi::getCurrentUserApi() const {
     const std::string path = "/v1/users/me/profile";
 
     const auto result = _webClient->get(path);
@@ -119,6 +119,11 @@ shared::squadov::SquadOVUser SquadovApi::getCurrentUser() const {
     ret.verified = parsedJson["verified"].get<bool>();
     ret.uuid = parsedJson["uuid"].get<std::string>();
     return ret;
+}
+
+shared::squadov::SquadOVUser SquadovApi::getCurrentUserCached() const {
+    std::shared_lock guard(_sessionMutex);
+    return _session.user;
 }
 
 std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const {
@@ -220,7 +225,7 @@ std::string SquadovApi::createHearthstoneMatch(
 #endif
 
     std::ostringstream path;
-    path << "/v1/hearthstone/user/" << getCurrentUser().id << "/match";
+    path << "/v1/hearthstone/user/" << getCurrentUserCached().id << "/match";
 
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 200) {
@@ -237,7 +242,7 @@ void SquadovApi::uploadHearthstonePowerLogs(
     const nlohmann::json& logs
 ) const {
     std::ostringstream path;
-    path << "/v1/hearthstone/user/" << getCurrentUser().id << "/match/" << matchUuid;
+    path << "/v1/hearthstone/user/" << getCurrentUserCached().id << "/match/" << matchUuid;
 
 #if DEBUG_REQUEST_BODY_TO_DISK
     {
@@ -736,7 +741,7 @@ std::string SquadovApi::createNewCsgoMatch(const std::string& server, const shar
     };
 
     std::ostringstream path;
-    path << "/v1/csgo/user/" << getCurrentUser().id << "/view";
+    path << "/v1/csgo/user/" << getCurrentUserCached().id << "/view";
 
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 200) {
@@ -761,7 +766,7 @@ std::string SquadovApi::finishCsgoMatch(const std::string& viewUuid, const std::
     }
 
     std::ostringstream path;
-    path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid;
+    path << "/v1/csgo/user/" << getCurrentUserCached().id << "/view/" << viewUuid;
 
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 200) {
@@ -779,7 +784,7 @@ void SquadovApi::associateCsgoDemo(const std::string& viewUuid, const std::strin
     };
 
     std::ostringstream path;
-    path << "/v1/csgo/user/" << getCurrentUser().id << "/view/" << viewUuid << "/demo";
+    path << "/v1/csgo/user/" << getCurrentUserCached().id << "/view/" << viewUuid << "/demo";
 
     const auto result = _webClient->post(path.str(), body);
     if (result->status != 204) {
