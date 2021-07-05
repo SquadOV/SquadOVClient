@@ -489,6 +489,13 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             return
         }
 
+        // Two additional cases where the video player shouldn't:
+        //  1) if the user is trying to input something into a form.
+        //  2) if the user has some dialog open.
+        if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.className.includes('v-dialog')) {
+            return
+        }
+
         let cmp = e.key.toLowerCase()
         let handled = false
         if (cmp == ' ' || cmp == 'k') {
