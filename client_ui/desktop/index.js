@@ -553,6 +553,8 @@ function startAutoupdater() {
 
 let currentSessionExpiration = null
 let sessionRetryCount = 0
+let oldServerExpiration = null
+let retryTimeout = null
 
 const http = require('http')
 const https = require('https')
@@ -599,12 +601,18 @@ function startSessionHeartbeat(onBeat) {
                 }
             }
 
-            log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
-            setTimeout(() => {
-                // We need to push onBeat forward just in case this is the first session heartbeat.
-                startSessionHeartbeat(onBeat, false)
-            }, timeoutMs)
-            sessionRetryCount += 1
+            // We don't want multiple different paths of retrying. Only a singular retry loop should ever happen at the same time.
+            if (!!retryTimeout) {
+                log.log('...Ignoring session hearetbeat retry. One already exists.')
+            } else {
+                log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
+                retryTimeout = setTimeout(() => {
+                    retryTimeout = null
+                    // We need to push onBeat forward just in case this is the first session heartbeat.
+                    startSessionHeartbeat(onBeat, false)
+                }, timeoutMs)
+                sessionRetryCount += 1
+            }
         }
 
         request.on('error', (err) => {
@@ -618,6 +626,9 @@ function startSessionHeartbeat(onBeat) {
         })
 
         request.on('timeout', () => {
+            // Note that we don't want to abort the request JUST IN CASE the server
+            // actually responds later. What we want to do in that case is to be smart
+            // about whether the incoming session ID is newer than the one we have stored.
             log.log('Session Heartbeat Timeout!')
             retrySessionHeartbeat(true)
         })
@@ -637,6 +648,16 @@ function startSessionHeartbeat(onBeat) {
                 
                 resp.on('end', () => {
                     let respBody = JSON.parse(body)
+
+                    // We assume that every time we create a new session we'll get an expiration date in the future.
+                    // Thus, if we have two requests A and B that both send a session heartbeat request. The one that
+                    // last hit the server (and is thus the more authoritative one) is the one with the latest expiration
+                    // time. Therefore, we can ignore the older refresh request if it comes after a newer request.
+                    let serverExpiration = new Date(respBody.expiration)
+                    if (!!oldServerExpiration && serverExpiration < oldServerExpiration) {
+                        log.log('Found old session refresh...ignoring.')
+                        return
+                    }
 
                     updateSession(respBody.sessionId, true)
                     sessionRetryCount = 0
