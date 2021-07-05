@@ -88,14 +88,21 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
     );
 
     if (hr != S_OK) {
-        safeCleanup();
-        THROW_ERROR("Failed to get default audio endpoint: " << hr);
-    }
-
-    hr = defaultDevice->GetId(&defaultDeviceId);
-    if (hr != S_OK) {
-        safeCleanup();
-        THROW_ERROR("Failed to get default audio device ID: " << hr);
+        if (hr == E_NOT_SET) {
+            // In this case we did not find a default device. Which is fine - the rest
+            // of the code doesn't necessarily depend on finding the default device.
+            LOG_INFO("...No default device found." << std::endl);
+            defaultDevice = nullptr;
+        } else {
+            safeCleanup();
+            THROW_ERROR("Failed to get default audio endpoint: " << hr);
+        }
+    } else {
+        hr = defaultDevice->GetId(&defaultDeviceId);
+        if (hr != S_OK) {
+            safeCleanup();
+            THROW_ERROR("Failed to get default audio device ID: " << hr);
+        }
     }
 
     hr = audioEnum->EnumAudioEndpoints(
@@ -148,7 +155,7 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
         std::string sDeviceName = shared::strings::wcsToUtf8(wDeviceName);
         resp.options.push_back(sDeviceName);
 
-        if (lstrcmpW(defaultDeviceId, deviceId) == 0) {
+        if (defaultDeviceId && lstrcmpW(defaultDeviceId, deviceId) == 0) {
             resp.default = sDeviceName;
         }
 
