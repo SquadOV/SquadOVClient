@@ -381,15 +381,19 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     LOG_INFO("Initialize audio stream..." << std::endl);
     data.encoder->initializeAudioStream();
     for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
-        LOG_INFO("Adding audio output..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
-        data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
+        if (_aoutRecorder[i]->exists()) {
+            LOG_INFO("Adding audio output..." << std::endl);
+            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
+            data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
+        }
     }
 
     for (size_t i = 0; i < _ainRecorder.size(); ++i) {
-        LOG_INFO("Adding audio input..." << std::endl);
-        const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
-        data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
+        if (_ainRecorder[i]->exists()) {
+            LOG_INFO("Adding audio input..." << std::endl);
+            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
+            data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
+        }
     }
 
     LOG_INFO("Open encoder..." << std::endl);
@@ -427,8 +431,8 @@ bool GameRecorder::initializeInputStreams(int flags) {
         recorder->loadDevice(audio::EAudioDeviceDirection::Output, output.device, output.volume, output.mono);
         if (recorder->exists()) {
             recorder->startRecording();
+            _aoutRecorder.emplace_back(std::move(recorder));
         }
-        _aoutRecorder.emplace_back(std::move(recorder));
     }
 
     std::lock_guard guard(_ainMutex);
@@ -437,8 +441,8 @@ bool GameRecorder::initializeInputStreams(int flags) {
         recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono);
         if (recorder->exists()) {
             recorder->startRecording();
+            _ainRecorder.emplace_back(std::move(recorder));
         }
-        _ainRecorder.emplace_back(std::move(recorder));
     }
 
     if (_cachedRecordingSettings->usePushToTalk) {
