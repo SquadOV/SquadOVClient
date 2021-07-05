@@ -58,10 +58,13 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
             if (!quiet) {
                 LOG_INFO("Found Window for Process: " << windowTitle << std::endl);
             }
+
+            CloseHandle(pHandle);
             return window.out;
         }
 
         if (step.count() == 0) {
+            CloseHandle(pHandle);
             return NULL;
         }
 
@@ -80,6 +83,7 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
         }
     }
     
+    CloseHandle(pHandle);
     return NULL;
 }
 

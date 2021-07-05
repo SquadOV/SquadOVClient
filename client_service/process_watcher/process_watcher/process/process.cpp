@@ -37,21 +37,23 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
         // We only want to use windows that have a visible window.
         const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
         if (window == NULL) {
+            CloseHandle(hProcess);
             LOG_DEBUG("Failed to find window for process." << std::endl);
             return nullptr;
         }
     } catch (std::exception& ex) {
+        CloseHandle(hProcess);
         LOG_DEBUG("Failed to find window [exception] for process: " << ex.what() << std::endl);
         return nullptr;
     }
 
     WCHAR szProcessName[MAX_PATH] = L"<unknown>";
     if (GetModuleFileNameExW(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
+        CloseHandle(hProcess);
         LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
     }
     CloseHandle(hProcess);
-
     return std::make_unique<process_watcher::process::Process>(std::wstring(szProcessName), id);
 }
 
