@@ -76,7 +76,11 @@ export class AnalyticsContainer {
         if (!this._store.state.settings?.anonymousAnalytics) {
             return
         }
-        this._ga.pageview(route.fullPath).send()
+        this._ga.pageview({
+            dp: route.fullPath,
+            dh: 'https://app.squadov.gg',
+            dt: !!route.name ? route.name : 'Unknown',
+        }).send()
     }
 
     event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
