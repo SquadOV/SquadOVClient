@@ -25,11 +25,11 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     // PROCESS_QUERY_INFORMATION and PROCESS_QUERY_LIMITED_INFORMATION by themselves do not work on Windows 7.
     // Not that it really matters since Windows 7 not supported by Microsoft anymore but we had a couple of 
     // users who use it so...can't be picky about our users.
-    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    const DWORD access = IsWindows8Point1OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
     HANDLE hProcess = OpenProcess(access, FALSE, id);
 
     if (hProcess == NULL) {
-        LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
+        LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << " [" << id << "]" << std::endl);
         return nullptr;
     }
 
@@ -38,7 +38,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
         const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
         if (window == NULL) {
             CloseHandle(hProcess);
-            LOG_DEBUG("Failed to find window for process." << std::endl);
+            LOG_DEBUG("Failed to find window for process: " << " [" << id << "]" << std::endl);
             return nullptr;
         }
     } catch (std::exception& ex) {
@@ -50,7 +50,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     WCHAR szProcessName[MAX_PATH] = L"<unknown>";
     if (GetModuleFileNameExW(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
         CloseHandle(hProcess);
-        LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
+        LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << " [" << id << "]" << std::endl);
         return nullptr;
     }
     CloseHandle(hProcess);
