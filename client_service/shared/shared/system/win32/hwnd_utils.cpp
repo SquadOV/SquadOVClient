@@ -46,7 +46,6 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     const DWORD access = IsWindows8Point1OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
     HANDLE pHandle = OpenProcess(access, FALSE, pid);
     if (!pHandle) {
-        THROW_WIN32_ERROR("Failed to open process for window finding: " << pid);
         return NULL;
     }
 
