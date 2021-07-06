@@ -224,10 +224,6 @@ void DxgiDesktopRecorder::startRecording() {
                 reuseOldFrame |= (frameInfo.AccumulatedFrames == 0);
             }
 
-            if (!reuseOldFrame && ((count % 2) == 1)) {
-                reuseOldFrame = true;
-            }
-
             const auto postAcquireTm = TickClock::now();
             
             if (!reuseOldFrame) {
