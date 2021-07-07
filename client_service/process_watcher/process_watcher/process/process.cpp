@@ -29,7 +29,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(const PROCESSEN
         // We only want to use windows that have a visible window.
         const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(pe32.th32ProcessID, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
         if (window == NULL) {
-            LOG_DEBUG("Failed to find window for process: " << " [" << pe32.th32ProcessID << "]" << std::endl);
+            LOG_DEBUG("Failed to find window for process: " << " [" << pe32.th32ProcessID << "]: " << shared::errors::getWin32ErrorAsString() << std::endl);
             return nullptr;
         }
     } catch (std::exception& ex) {

@@ -55,6 +55,7 @@ extern "C" {
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <VersionHelpers.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -165,6 +166,11 @@ int main(int argc, char** argv) {
 #ifdef _WIN32
     LOG_INFO("Set unhandled exception filter..." << std::endl);
     SetUnhandledExceptionFilter(handleTopLevelExceptions);
+
+    LOG_INFO("Windows Version Check: " << std::endl
+        << "\t10: " << IsWindows10OrGreater() << std::endl
+        << "\t8.1: " << IsWindows8Point1OrGreater() << std::endl
+    );
 #endif
     LOG_INFO("Set atexit..." << std::endl);
     std::atexit(onSquadovExit);

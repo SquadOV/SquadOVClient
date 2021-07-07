@@ -43,8 +43,7 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     // started the game so it's still in the process of creating the window.
     auto delay = std::chrono::milliseconds(0);
 
-    const DWORD access = IsWindows8Point1OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
-    HANDLE pHandle = OpenProcess(access, FALSE, pid);
+    HANDLE pHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
     if (!pHandle) {
         return NULL;
     }
