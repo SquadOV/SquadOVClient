@@ -43,8 +43,10 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
     // started the game so it's still in the process of creating the window.
     auto delay = std::chrono::milliseconds(0);
 
-    HANDLE pHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
+    HANDLE pHandle = OpenProcess(access, FALSE, pid);
     if (!pHandle) {
+        THROW_WIN32_ERROR("Failed to open process for window finding.");
         return NULL;
     }
 
@@ -62,7 +64,8 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
         }
 
         if (step.count() == 0) {
-            break;
+            CloseHandle(pHandle);
+            return NULL;
         }
 
         std::this_thread::sleep_for(step);
@@ -72,10 +75,10 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
         DWORD exitCode = 0;
         auto success = GetExitCodeProcess(pHandle, &exitCode);
         if (!success) {
-            LOG_WARNING("Failed to obtain exit code - assuming process stopped: " << pid << std::endl);
+            LOG_WARNING("Failed to obtain exit code - assuming process stopped." << std::endl);
             break;
         } else if (exitCode != STILL_ACTIVE) {
-            LOG_WARNING("Received a non-STILL_ACTIVE exit code - assuming process stopped with exit code :: " << exitCode << " [" << pid << "]" << std::endl);
+            LOG_WARNING("Received a non-STILL_ACTIVE exit code - assuming process stopped with exit code :: " << exitCode << std::endl);
             break;
         }
     }

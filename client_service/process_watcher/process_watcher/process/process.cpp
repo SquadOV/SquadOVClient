@@ -4,70 +4,57 @@
 #include "shared/system/win32/hwnd_utils.h"
 
 #include <algorithm>
-#include <filesystem>
 #include <memory>
 #ifdef _WIN32
 #include <windows.h>
 #include <psapi.h>
 #include <tchar.h>
 #include <errhandlingapi.h>
-#include <tlhelp32.h>
 #include <winternl.h>
 #include <VersionHelpers.h>
 #endif
 
 #include <iostream>
 
-namespace fs = std::filesystem;
-
 namespace {
 
 #ifdef _WIN32
 
-std::unique_ptr<process_watcher::process::Process> createProcess(const PROCESSENTRY32& pe32) {
+std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
+    // WE MUST USE PROCESS_QUERY_INFORMATION | PROCESS_VM_READ HERE.
+    // PROCESS_QUERY_INFORMATION and PROCESS_QUERY_LIMITED_INFORMATION by themselves do not work on Windows 7.
+    // Not that it really matters since Windows 7 not supported by Microsoft anymore but we had a couple of 
+    // users who use it so...can't be picky about our users.
+    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    HANDLE hProcess = OpenProcess(access, FALSE, id);
+
+    if (hProcess == NULL) {
+        LOG_DEBUG("Failed to get open process: " << shared::errors::getWin32ErrorAsString() << std::endl);
+        return nullptr;
+    }
+
     try {
         // We only want to use windows that have a visible window.
-        const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(pe32.th32ProcessID, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
+        const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
         if (window == NULL) {
-            LOG_DEBUG("Failed to find window for process: " << " [" << pe32.th32ProcessID << "]: " << shared::errors::getWin32ErrorAsString() << std::endl);
+            CloseHandle(hProcess);
+            LOG_DEBUG("Failed to find window for process." << std::endl);
             return nullptr;
         }
     } catch (std::exception& ex) {
+        CloseHandle(hProcess);
         LOG_DEBUG("Failed to find window [exception] for process: " << ex.what() << std::endl);
         return nullptr;
     }
 
-    // Need to take a snapshot to get the first module to get the full EXE path.
-    HANDLE snapshot = INVALID_HANDLE_VALUE;
-    while (snapshot == INVALID_HANDLE_VALUE) {
-        snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE | TH32CS_SNAPMODULE32, pe32.th32ProcessID);
-
-        // According to the MSDN documentatoin, returning ERROR_BAD_LENGTH means we should retry until
-        // the function succeeds.
-        if (snapshot == INVALID_HANDLE_VALUE) {
-            const auto err = GetLastError();
-            if (err == ERROR_BAD_LENGTH) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                continue;
-            } else {
-                LOG_DEBUG("Failed to grab process snapshot: " << err << std::endl);
-                return nullptr;
-            }
-        }
-    }
-
-    MODULEENTRY32W moduleEntry;
-    moduleEntry.dwSize = sizeof(MODULEENTRY32W );
-    if (!Module32FirstW(snapshot, &moduleEntry)) {
-        LOG_DEBUG("Failed to get process first module: " << shared::errors::getWin32ErrorAsString() << std::endl);
-        CloseHandle(snapshot);
+    WCHAR szProcessName[MAX_PATH] = L"<unknown>";
+    if (GetModuleFileNameExW(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
+        CloseHandle(hProcess);
+        LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
     }
-
-    // So there's a possibility that the casing of the module isn't the same as the process EXE.
-    // So what we want to do is to combine the parent directory of the module with the EXE path of the original process.
-    const auto path = fs::path(moduleEntry.szExePath).parent_path() / fs::path(pe32.szExeFile);
-    return std::make_unique<process_watcher::process::Process>(path.native(), pe32.th32ProcessID);
+    CloseHandle(hProcess);
+    return std::make_unique<process_watcher::process::Process>(std::wstring(szProcessName), id);
 }
 
 #endif
@@ -78,32 +65,26 @@ namespace process_watcher::process {
 
 bool listRunningProcesses(std::vector<Process>& out) {
 #ifdef _WIN32
-    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (!snapshot) {
-        LOG_WARNING("Failed to create process snapshot: " << shared::errors::getWin32ErrorAsString() << std::endl);
+    DWORD aProcesses[1024], cbNeeded, cProcesses;
+    if ( !EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded) ) {
+        LOG_WARNING("Failed to enum processes: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return false;
     }
 
-    PROCESSENTRY32 pe32;
-    pe32.dwSize = sizeof(PROCESSENTRY32);
+    cProcesses = cbNeeded / sizeof(DWORD);
+    LOG_DEBUG("Detected " << cProcesses << " Processes using " << cbNeeded << " bytes out of " << sizeof(aProcesses) << std::endl);
 
-    if (!Process32First(snapshot, &pe32)) {
-        LOG_WARNING("Failed to get first process: " << shared::errors::getWin32ErrorAsString() << std::endl);
-        CloseHandle(snapshot);
-        return false;
-    }
-
-    do {
-        if (pe32.th32ProcessID == 0) {
+    for (DWORD i = 0; i < cProcesses; ++i) {
+        if (aProcesses[i] == 0) {
             continue;
         }
 
-        auto ptr = createProcess(pe32);
+        auto ptr = createProcess(aProcesses[i]);
         if (!ptr) {
             continue;
         }
         out.emplace_back(*ptr);
-    } while (Process32Next(snapshot, &pe32));
+    }
 #else
     THROW_ERROR("Unsupported OS for listing processes.");
 #endif
@@ -116,8 +97,6 @@ bool listRunningProcesses(std::vector<Process>& out) {
     for (const auto& p: out) {
         LOG_DEBUG("\tProcess: " << p.name() << std::endl);
     }
-
-    CloseHandle(snapshot);
     return true;
 }
 
