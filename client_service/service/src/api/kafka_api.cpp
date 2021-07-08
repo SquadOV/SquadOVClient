@@ -46,6 +46,24 @@ void KafkaApi::initialize() {
         return;
     }
 
+    if (conf->set("compression.codec", "zstd", kafkaErr) != RdKafka::Conf::CONF_OK) {
+        THROW_ERROR("Failed to set compression.codec [Kafka]: " << kafkaErr);
+        return;
+    }
+
+    if (conf->set("batch.num.messages", "1000", kafkaErr) != RdKafka::Conf::CONF_OK) {
+        THROW_ERROR("Failed to set batch.num.messages [Kafka]: " << kafkaErr);
+        return;
+    }
+
+    // We actually want to give it a few seconds since our primary purpose of using Kafka
+    // is for WoW combat log parsing and we want to get a few seconds of data before batching it up,
+    // compressing it, and sending it to Kafka.
+    if (conf->set("queue.buffering.max.ms", "5000", kafkaErr) != RdKafka::Conf::CONF_OK) {
+        THROW_ERROR("Failed to set queue.buffering.max.ms [Kafka]: " << kafkaErr);
+        return;
+    }
+
     _producer = std::unique_ptr<RdKafka::Producer>(RdKafka::Producer::create(conf.get(), kafkaErr));
     if (!_producer) {
         THROW_ERROR("Failed to create Kafka producer: " << kafkaErr);

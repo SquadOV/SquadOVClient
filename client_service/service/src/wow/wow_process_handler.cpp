@@ -188,7 +188,11 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     }
 
     // Send combat log line to server associated with the current combat log.
-    const auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);
+    auto log = *reinterpret_cast<const game_event_watcher::RawWoWCombatLog*>(data);
+
+    // The server doesn't need this so we don't send it to save on ingress/egress.
+    log.log.clear();
+
     if (inMatch()) {
         const auto flags = service::api::getGlobalApi()->getSessionFeatures();
         if (flags.allowWowCombatLogUpload) {

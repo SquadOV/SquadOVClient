@@ -67,7 +67,10 @@ void GamePreviewStreamThreadWorker::handlePacket(const GamePreviewTaskPacket& pa
 }
 
 GamePreviewStreamThreadWorker::~GamePreviewStreamThreadWorker() {
-
+    _running = false;
+    if (_workerThread.joinable()) {
+        _workerThread.join();
+    }
 }
 
 GamePreviewStream::GamePreviewStream():
