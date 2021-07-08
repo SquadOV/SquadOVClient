@@ -350,7 +350,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
     if (_instanceIdIsMatchEnd.find(zoneData.instanceId) == _instanceIdIsMatchEnd.end()) {
         try {
             std::ostringstream path;
-            path << "/wow/9.0.5/instances/" << zoneData.instanceId << "/data.json";
+            path << "/wow/9.1.0/instances/" << zoneData.instanceId << "/data.json";
 
             shared::http::HttpClient client("https://us-central1.content.squadov.gg");
             client.setTimeout(30);

@@ -1,9 +1,10 @@
 const STATIC_CONTENT_BASE_URL = 'https://us-central1.content.squadov.gg'
 const SUPPORTED_WOW_PATCHES = new Set([
     '9.0.2',
-    '9.0.5'
+    '9.0.5',
+    '9.1.0',
 ])
-const LATEST_WOW_PATCH = '9.0.5'
+const LATEST_WOW_PATCH = '9.1.0'
 
 export function getSupportedWowPatch(p: string): string {
     if (SUPPORTED_WOW_PATCHES.has(p)) {

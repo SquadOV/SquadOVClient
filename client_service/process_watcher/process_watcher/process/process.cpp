@@ -25,7 +25,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     // PROCESS_QUERY_INFORMATION and PROCESS_QUERY_LIMITED_INFORMATION by themselves do not work on Windows 7.
     // Not that it really matters since Windows 7 not supported by Microsoft anymore but we had a couple of 
     // users who use it so...can't be picky about our users.
-    const DWORD access = IsWindows10OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ);
+    const DWORD access = IsWindows8Point1OrGreater() ? PROCESS_QUERY_LIMITED_INFORMATION : PROCESS_QUERY_INFORMATION;
     HANDLE hProcess = OpenProcess(access, FALSE, id);
 
     if (hProcess == NULL) {
@@ -48,7 +48,9 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
     }
 
     WCHAR szProcessName[MAX_PATH] = L"<unknown>";
-    if (GetModuleFileNameExW(hProcess, NULL, szProcessName, sizeof(szProcessName)/sizeof(TCHAR)) == 0) {
+    DWORD processNameSize = sizeof(szProcessName)/sizeof(WCHAR);
+
+    if (QueryFullProcessImageNameW(hProcess, 0, szProcessName, &processNameSize) == 0) {
         CloseHandle(hProcess);
         LOG_DEBUG("Failed to get module filename: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return nullptr;
