@@ -42,20 +42,39 @@ LogWatcher::~LogWatcher() {
 
 void LogWatcher::watchWorker() {
     const bool isCompletelyNewFile = !fs::exists(_path);
+    LOG_INFO("Starting watch for: " << _path << " [new: " << isCompletelyNewFile << "]" << std::endl);
+
+    size_t lastFileSize = 0;
     if (_waitForNewFile || isCompletelyNewFile) {
         while (!_isFinished) {
-            if (fs::exists(_path)) {
-                const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(_path);
-                if (lastWriteTime > _timeThreshold) {
-                    break;
+            try {
+                if (fs::exists(_path)) {
+                    {
+                        // This needs to be here for the same reason the polling thread exists later on.
+                        std::ifstream tmp(_path);
+                        tmp.seekg(0, tmp.end);
+                    }
+
+                    const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(_path);
+                    const auto fileSize = fs::file_size(_path);
+                    if (lastWriteTime > _timeThreshold || (lastFileSize > 0 && fileSize != lastFileSize)) {
+                        break;
+                    } else {
+                        LOG_INFO("...File has not yet been updated Time: [" << lastWriteTime << " vs " << _timeThreshold << "] Size: [" << lastFileSize << " vs " << fileSize << "]" << std::endl);
+                    }
+                    lastFileSize = fileSize;
+                } else {
+                    LOG_INFO("...File does not yet exist." << std::endl);
                 }
+            } catch (std::exception& ex) {
+                LOG_WARNING("...Log detection exception: " << ex.what() << std::endl);
             }
             std::this_thread::sleep_for(100ms);
         }
     }
 
     if (_isFinished) {
-        LOG_INFO("Exiting out of log watcher before log was found: " << _path.string() << std::endl);
+        LOG_INFO("Exiting out of log watcher before log was found: " << _path << std::endl);
         // An early out here just in case we want to stop while still waiting for the log.
         return;
     }

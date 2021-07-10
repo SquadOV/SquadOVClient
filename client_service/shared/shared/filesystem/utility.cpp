@@ -1,11 +1,43 @@
 #pragma warning(disable: 4996)
 
 #include "shared/filesystem/utility.h"
+#include "shared/errors/error.h"
 #include <codecvt>
 #include <fstream>
 #include <iterator>
+
+#ifdef _WIN32
+#include <Windows.h>
+#include <VersionHelpers.h>
+#endif
+
 namespace fs = std::filesystem;
 namespace shared::filesystem {
+namespace {
+
+#ifdef _WIN32
+fs::file_time_type::clock::time_point win32LastWriteTime(const std::filesystem::path& path) {
+    const auto nativePath = path.native();
+
+    WIN32_FILE_ATTRIBUTE_DATA data;
+    if (!GetFileAttributesExW(nativePath.c_str(), GetFileExInfoStandard, &data)) {
+        THROW_ERROR("Failed to get file attributes: " << shared::errors::getWin32ErrorAsString());
+        return fs::file_time_type::clock::now();
+    }
+
+    SYSTEMTIME st;
+    if (!FileTimeToSystemTime(&data.ftLastWriteTime, &st)) {
+        THROW_ERROR("Failed to convert to system time: " << shared::errors::getWin32ErrorAsString());
+        return fs::file_time_type::clock::now();
+    }
+
+    const auto sysTime = date::sys_days(date::year(st.wYear)/date::month(st.wMonth)/date::day(st.wDay))
+        + std::chrono::hours(st.wHour) + std::chrono::minutes(st.wMinute) + std::chrono::seconds(st.wSecond) + std::chrono::milliseconds(st.wMilliseconds);
+    return shared::convertClockTime<decltype(sysTime), fs::file_time_type>(sysTime);
+}
+#endif
+
+}
 
 std::filesystem::path getNewestFileInFolder(const std::filesystem::path& folder, const PathFilter& filter) {
     auto latestWriteTime = fs::file_time_type::min();
@@ -29,7 +61,9 @@ std::filesystem::path getNewestFileInFolder(const std::filesystem::path& folder,
 
 std::chrono::seconds secondsSinceLastFileWrite(const std::filesystem::path& pth) {
     const auto now = fs::file_time_type::clock::now();
-    const auto lastWriteTime = fs::last_write_time(pth);
+#ifdef _WIN32
+    const auto lastWriteTime = IsWindows10OrGreater() ? fs::last_write_time(pth) : win32LastWriteTime(pth);
+#endif
     return std::chrono::duration_cast<std::chrono::seconds>(now - lastWriteTime);
 }
 

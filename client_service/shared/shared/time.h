@@ -49,4 +49,10 @@ TimePoint convertTime(const T& tm) {
               + TimePoint::clock::now());
 }
 
+template<typename TSrc, typename TDst>
+TDst convertClockTime(const TSrc& tm) {
+    return std::chrono::time_point_cast<TDst::duration>(tm - TSrc::clock::now()
+              + TDst::clock::now());
+}
+
 }

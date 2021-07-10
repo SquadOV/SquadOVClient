@@ -112,4 +112,5 @@ target_include_directories(squadov_process_watcher
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/client_service/process_watcher
     ${CMAKE_SOURCE_DIR}/deps/json/single_include
+    ${CMAKE_SOURCE_DIR}/deps/date/include
 )

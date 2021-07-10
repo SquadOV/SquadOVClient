@@ -1,6 +1,8 @@
 #pragma once
 #pragma warning(disable: 4996)
 
+#include "shared/time.h"
+
 #include <deque>
 #include <filesystem>
 #include <iostream>
@@ -60,6 +62,12 @@ public:
     template<>
     LogItemBuilder& operator<<(const std::filesystem::path& p) {
         *this << p.native();
+        return *this;
+    }
+
+    template<>
+    LogItemBuilder& operator<<(const shared::TimePoint& t) {
+        *this << shared::timeToStr(t);
         return *this;
     }
 
