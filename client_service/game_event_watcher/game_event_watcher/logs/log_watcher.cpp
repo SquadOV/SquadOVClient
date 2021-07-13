@@ -59,12 +59,8 @@ void LogWatcher::watchWorker() {
                     const auto fileSize = fs::file_size(_path);
                     if (lastWriteTime > _timeThreshold || (lastFileSize > 0 && fileSize != lastFileSize)) {
                         break;
-                    } else {
-                        LOG_INFO("...File has not yet been updated Time: [" << lastWriteTime << " vs " << _timeThreshold << "] Size: [" << lastFileSize << " vs " << fileSize << "]" << std::endl);
                     }
                     lastFileSize = fileSize;
-                } else {
-                    LOG_INFO("...File does not yet exist." << std::endl);
                 }
             } catch (std::exception& ex) {
                 LOG_WARNING("...Log detection exception: " << ex.what() << std::endl);
