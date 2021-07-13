@@ -1,6 +1,7 @@
 #pragma once
 
 #include "recorder/pipe/pipe.h"
+#include "vod/vod.h"
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -32,6 +33,7 @@ public:
     void sendNullBuffer() { handleBuffer(nullptr, 0); }
 
     virtual std::optional<std::filesystem::path> localFile() const { return {}; }
+    virtual const std::vector<std::string>& segmentIds() const = 0;
 
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
@@ -49,6 +51,6 @@ private:
 
 using FileOutputPiperPtr = std::unique_ptr<FileOutputPiper>;
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const std::string& destination);
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination);
 
 }

@@ -464,7 +464,6 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
     const auto isRecording = _recorder->isRecording();
     if (isRecording) {
         const auto vodId = _recorder->currentId();
-        const auto metadata = _recorder->getMetadata();
         const auto sessionId = _recorder->sessionId();
         const auto vodStartTime = _recorder->vodStartTime();
 

@@ -724,7 +724,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
                 association.isLocal = wasLocal;
 
                 try {
-                    service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+                    service::api::getGlobalApi()->associateVod(association, metadata, sessionId, outputPiper->segmentIds());
                     if (wasLocal && outputPiper->localFile().has_value()) {
                         const auto rawPath = outputPiper->localFile().value();
                         const auto processedPath = shared::filesystem::getSquadOvTempFolder() / fs::path(association.videoUuid) / fs::path("video.mp4");
@@ -836,7 +836,6 @@ void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameReco
     _manualVodTimeStart = shared::zeroTime();
     _currentId.reset(nullptr);
     _outputPiper->wait();
-    _outputPiper.reset(nullptr);
 
     shared::squadov::VodAssociation association;
     association.matchUuid = end.matchUuid;
@@ -847,11 +846,13 @@ void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameReco
     association.rawContainerFormat = "mpegts";
 
     try {
-        service::api::getGlobalApi()->associateVod(association, metadata, sessionId);
+        service::api::getGlobalApi()->associateVod(association, metadata, sessionId, _outputPiper->segmentIds());
     } catch (std::exception& ex) {
         LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
         service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
     }
+
+    _outputPiper.reset(nullptr);
 }
 
 std::unique_ptr<VodIdentifier> GameRecorder::createNewVodIdentifier() const {
@@ -872,27 +873,41 @@ void GameRecorder::initializeFileOutputPiper() {
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
-    const auto cloudUri = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
+    const auto cloudDestination = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
     const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
-    const std::string outputUri = _cachedRecordingSettings->useLocalRecording ? shared::filesystem::pathUtf8(localTmpRecord) : cloudUri;
-    setFileOutputFromUri(_currentId->videoUuid, outputUri);
+    const auto finalDestination = _cachedRecordingSettings->useLocalRecording ? service::vod::VodDestination::local(localTmpRecord) : cloudDestination;
+    setFileOutputFromDestination(_currentId->videoUuid, finalDestination);
 }
 
-void GameRecorder::setFileOutputFromUri(const std::string& videoUuid, const std::string& uri) {
-    LOG_INFO("Output URI: " << uri << std::endl);
-    _outputPiper = pipe::createFileOutputPiper(videoUuid, uri);
+void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, const service::vod::VodDestination& destination) {
+    LOG_INFO("Output Destination: " << destination << std::endl);
+    _outputDestination = destination;
+    _outputPiper = pipe::createFileOutputPiper(videoUuid, destination);
     _outputPiper->setMaxUploadSpeed(_cachedRecordingSettings->maxUploadSpeed);
 }
 
 shared::squadov::VodMetadata GameRecorder::getMetadata() const {
+    std::string bucket = "";
+    std::optional<std::string> session = std::nullopt;
+
+    if (_outputDestination) {
+        const auto dest = _outputDestination.value();
+        bucket = _outputDestination->bucket;
+        session = _outputDestination->session;
+    }
+
     if (_encoder.encoder) {
         auto metadata = _encoder.encoder->getMetadata();
         metadata.videoUuid = _currentId->videoUuid;
+        metadata.bucket = bucket;
+        metadata.sessionId = session;
         return metadata;
     } else {
         shared::squadov::VodMetadata metadata;
         metadata.id = "source";
         metadata.videoUuid = _currentId ? _currentId->videoUuid : "";
+        metadata.bucket = bucket;
+        metadata.sessionId = session;
         
         // TODO: Need to read in data from the file to get this information properly
         // instead of just randomly hard-coded numbers.

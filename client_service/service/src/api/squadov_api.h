@@ -7,6 +7,7 @@
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "api/kafka_api.h"
+#include "vod/vod.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
@@ -100,8 +101,9 @@ public:
     void associateCsgoDemo(const std::string& viewUuid, const std::string& demoUrl, const shared::TimePoint& demoTimestamp);
 
     // VOD
-    std::string createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
-    void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const;
+    service::vod::VodDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
+    service::vod::VodDestination getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const;
+    void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const;
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
     std::string getVodUri(const std::string& videoUuid) const;

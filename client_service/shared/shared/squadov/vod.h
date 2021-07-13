@@ -3,6 +3,7 @@
 #include "shared/time.h"
 #include <string>
 #include <nlohmann/json.hpp>
+#include <optional>
 
 namespace shared::squadov {
 
@@ -30,6 +31,8 @@ struct VodMetadata {
     int64_t maxBitrate;
 
     int fps;
+    std::string bucket;
+    std::optional<std::string> sessionId;
 
     std::string id;
     nlohmann::json toJson() const;

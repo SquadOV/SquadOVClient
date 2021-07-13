@@ -2,7 +2,7 @@
 
 #include "shared/errors/error.h"
 #include "recorder/pipe/filesystem_piper.h"
-#include "recorder/pipe/gcs_piper.h"
+#include "recorder/pipe/cloud_storage_piper.h"
 
 #include <boost/algorithm/string.hpp>
 #include <chrono>
@@ -60,13 +60,18 @@ void FileOutputPiper::wait() {
     }
 }
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const std::string& destination) {
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination) {
     auto pipe = std::make_unique<Pipe>(id);
-    if (boost::starts_with(destination, "https://storage.googleapis.com")) {
-        return std::make_unique<GCSPiper>(destination, std::move(pipe));
-    } else {
-        return std::make_unique<FilesystemPiper>(destination, std::move(pipe));
+
+    switch (destination.loc) {
+        case service::vod::VodManagerType::FileSystem:
+            return std::make_unique<FilesystemPiper>(destination.url, std::move(pipe));
+        default:
+            return std::make_unique<CloudStoragePiper>(id, destination, std::move(pipe));
     }
+
+    THROW_ERROR("Unsupported location for output: " << destination);
+    return nullptr;
 }
 
 void FileOutputPiper::appendFromFile(const std::filesystem::path& path) {

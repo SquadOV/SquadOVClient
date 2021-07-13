@@ -26,7 +26,7 @@
 #include "recorder/game_preview_stream.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/win32/wasapi_interface.h"
-#include "recorder/pipe/gcs_piper.h"
+#include "recorder/pipe/cloud_storage_piper.h"
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
@@ -342,6 +342,7 @@ int main(int argc, char** argv) {
     LOG_INFO("Add Clip upload handler..." << std::endl);
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC, [&zeroMqServerClient](const std::string& msg){
         LOG_INFO("RECEIVE GCS UPLOAD REQUEST: " << msg << std::endl);
+        /*
         std::thread t([&zeroMqServerClient, msg](){
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::recorder::pipe::GCSUploadRequest::fromJson(json);
@@ -386,6 +387,7 @@ int main(int argc, char** argv) {
             );
         });
         t.detach();
+        */
     });
 
     LOG_INFO("Add local recording handlers..." << std::endl);

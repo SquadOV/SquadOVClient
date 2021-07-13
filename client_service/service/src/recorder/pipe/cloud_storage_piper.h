@@ -2,6 +2,8 @@
 
 #include "recorder/pipe/file_output_piper.h"
 #include "shared/http/http_client.h"
+#include "recorder/pipe/cloud/cloud_storage_client.h"
+#include "vod/vod.h"
 
 #include <deque>
 #include <mutex>
@@ -11,8 +13,8 @@
 #include <thread>
 #include <vector>
 
-#define DUMP_GCS_REF_VIDEO 0
-#if DUMP_GCS_REF_VIDEO
+#define DUMP_CLOUD_REF_VIDEO 0
+#if DUMP_CLOUD_REF_VIDEO
 #include <fstream>
 #endif
 
@@ -28,9 +30,9 @@ struct GCSUploadRequest {
 
 std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::DownloadProgressFn& progressFn);
 
-class GCSPacket {
+class CloudStoragePacket {
 public:
-    GCSPacket(const char* data, size_t dataSize):
+    CloudStoragePacket(const char* data, size_t dataSize):
         _data(data, data + dataSize)
     {}
 
@@ -41,41 +43,42 @@ private:
     std::vector<char> _data;
 };
 
-class GCSPiper : public FileOutputPiper {
+class CloudStoragePiper : public FileOutputPiper {
 public:
-    GCSPiper(const std::string& destination, PipePtr&& pipe);
-    ~GCSPiper();
+    CloudStoragePiper(const std::string& videoUuid, const service::vod::VodDestination& destination, PipePtr&& pipe);
+    ~CloudStoragePiper();
 
-    std::string sessionId() const override { return _sessionUri; }
+    std::string sessionId() const override { return _destination.session; }
     void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
     void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
+    const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
 
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
     void flush() override;
 
 private:
-    void tickGcsThread();
+    void tickUploadThread();
 
-    void sendDataFromBufferToGcsWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast);
-    size_t sendDataFromBufferToGcs(const char* buffer, size_t numBytes, bool isLast);
+    void sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast);
     void copyDataIntoInternalBuffer(std::vector<char>& buffer);
 
-    // URL returned by GCS to upload to.
-    std::string _sessionUri;
+    std::string _videoUuid;
+    service::vod::VodDestination _destination;
     size_t _uploadedBytes = 0;
 
-    shared::http::HttpClientPtr _httpClient;
-    std::mutex _gcsMutex;
-    std::deque<GCSPacket> _gcsBuffer;
-    std::thread _gcsThread;
+    cloud::CloudStorageClientPtr _client;
+    std::mutex _cloudMutex;
+    std::deque<CloudStoragePacket> _cloudBuffer;
+    std::thread _cloudThread;
+    std::vector<std::string> _allSegmentsIds;
     bool _finished = false;
 
     // Random number generator for backoff
     std::random_device _rd;
     std::mt19937 _gen;
 
-#if DUMP_GCS_REF_VIDEO
+#if DUMP_CLOUD_REF_VIDEO
     std::ofstream _refVideo;
 #endif 
 

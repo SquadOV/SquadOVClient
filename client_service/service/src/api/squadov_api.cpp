@@ -2,6 +2,7 @@
 
 #include "shared/env.h"
 #include "shared/errors/error.h"
+#include "shared/url.h"
 
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -302,7 +303,7 @@ void SquadovApi::uploadHearthstoneArenaDeck(const process_watcher::memory::games
     }
 }
 
-std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const {
+service::vod::VodDestination SquadovApi::createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const {
     const std::string path = "/v1/vod";
 
     const nlohmann::json body = {
@@ -313,20 +314,21 @@ std::string SquadovApi::createVodDestinationUri(const std::string& videoUuid, co
 
     if (result->status != 200) {
         THROW_ERROR("Failed to create VOD: " << result->status);
-        return "";
+        return service::vod::VodDestination{};
     }
 
     const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson.get<std::string>();
+    return service::vod::VodDestination::fromJson(parsedJson);
 }
 
-void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri) const {
+void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const {
     std::ostringstream path;
     path << "/v1/vod/" << association.videoUuid;
 
     nlohmann::json body = {
         { "association", association.toJson() },
         { "metadata", metadata.toJson() },
+        { "parts", nlohmann::json::array() }
     };
 
     if (sessionUri.empty()) {
@@ -335,12 +337,30 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
         body["sessionUri"] = sessionUri;
     }
 
+    for (const auto& p : parts) {
+        body["parts"].push_back(p);
+    }
+
     const auto result = _webClient->post(path.str(), body);
 
     if (result->status != 200) {
         THROW_ERROR("Failed to associate VOD: " << result->status);
         return;
     }
+}
+
+service::vod::VodDestination SquadovApi::getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << videoUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+
+    const auto result = _webClient->get(path.str());
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get VOD part upload URI: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return service::vod::VodDestination::fromJson(parsedJson);
 }
 
 void SquadovApi::deleteVod(const std::string& videoUuid) const {

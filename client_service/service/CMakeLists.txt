@@ -27,7 +27,9 @@ SET(SRCS
     src/recorder/pipe/pipe.cpp
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
-    src/recorder/pipe/gcs_piper.cpp
+    src/recorder/pipe/cloud_storage_piper.cpp
+    src/recorder/pipe/cloud/gcs_storage_client.cpp
+    src/recorder/pipe/cloud/s3_storage_client.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
@@ -35,6 +37,7 @@ SET(SRCS
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
     src/vod/process.cpp
+    src/vod/vod.cpp
     src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
@@ -81,7 +84,10 @@ SET(HEADERS
     src/recorder/pipe/pipe.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
-    src/recorder/pipe/gcs_piper.h
+    src/recorder/pipe/cloud/cloud_storage_client.h
+    src/recorder/pipe/cloud/gcs_storage_client.h
+    src/recorder/pipe/cloud/s3_storage_client.h
+    src/recorder/pipe/cloud_storage_piper.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
@@ -90,6 +96,7 @@ SET(HEADERS
     src/local/local_data.h
     src/vod/vod_clipper.h
     src/vod/process.h
+    src/vod/vod.h
     src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h

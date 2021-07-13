@@ -15,11 +15,13 @@ public:
     void flush() override {}
 
     std::optional<std::filesystem::path> localFile() const override { return _outputFile; }
+    const std::vector<std::string>& segmentIds() const override { return _segmentIds; };
     
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
 private:
     std::filesystem::path _outputFile;
+    std::vector<std::string> _segmentIds;
     std::ofstream _output;
 };
 

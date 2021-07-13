@@ -30,16 +30,23 @@ VodAssociation VodAssociation::fromJson(const nlohmann::json& j) {
 }
 
 nlohmann::json VodMetadata::toJson() const {
-    return {
+    nlohmann::json body = {
         { "videoUuid", videoUuid },
         { "resX", resX },
         { "resY", resY },
         { "minBitrate", minBitrate },
         { "avgBitrate", avgBitrate },
         { "maxBitrate", maxBitrate },
+        { "bucket", bucket },
         { "id", id },
         { "fps", fps },
     };
+
+    if (sessionId) {
+        body["sessionId"] = sessionId.value();
+    }
+
+    return body;
 }
 
 }
