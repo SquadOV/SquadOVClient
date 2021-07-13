@@ -67,7 +67,7 @@ import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { AimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { apiClient, ApiData } from '@client/js/api'
-import { VodAssociation } from '@client/js/squadov/vod'
+import { cleanVodAssocationData } from '@client/js/squadov/vod'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 
@@ -79,6 +79,7 @@ import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -91,7 +92,7 @@ import MatchShareBase from '@client/vue/log/MatchShareBase'
         MatchFavoriteButton
     }
 })
-export default class AimlabMatch extends mixins(MatchShareBase) {
+export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase) {
     SquadOvGames: any = SquadOvGames
 
     @Prop({required: true})
@@ -100,7 +101,6 @@ export default class AimlabMatch extends mixins(MatchShareBase) {
     @Prop({required: true})
     userId!: number
 
-    // Synced from the task summary display. Kind of a yikes there...
     data : AimlabTaskData | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false

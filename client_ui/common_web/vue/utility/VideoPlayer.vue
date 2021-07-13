@@ -146,7 +146,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     onActiveChange() {
         if (this.isActive && !!this.player && !!this.vod) {
             this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
-            this.player.reset()
+            this.setNoVideo()
         }
 
         this.forceRedraw += 1
@@ -594,7 +594,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     mounted() {
         this.keydownHandler = this.handleKeypress.bind(this)
         window.addEventListener('keydown', this.keydownHandler)
-
 
 /// #if DESKTOP
         this.appActiveHandler = this.handleAppActiveChange.bind(this)
