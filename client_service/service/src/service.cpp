@@ -340,20 +340,19 @@ int main(int argc, char** argv) {
     });
 
     LOG_INFO("Add Clip upload handler..." << std::endl);
-    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC, [&zeroMqServerClient](const std::string& msg){
-        LOG_INFO("RECEIVE GCS UPLOAD REQUEST: " << msg << std::endl);
-        /*
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_CLOUD_UPLOAD_TOPIC, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("RECEIVE CLOUD UPLOAD REQUEST: " << msg << std::endl);
         std::thread t([&zeroMqServerClient, msg](){
             const auto json = nlohmann::json::parse(msg);
-            const auto request = service::recorder::pipe::GCSUploadRequest::fromJson(json);
+            const auto request = service::recorder::pipe::CloudUploadRequest::fromJson(json);
 
             shared::TimePoint lastProgressTm = shared::nowUtc();
-            const auto resp = service::recorder::pipe::uploadToGcs(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dl, size_t total){
+            const auto resp = service::recorder::pipe::uploadToCloud(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dl, size_t total){
                 const auto now = shared::nowUtc();
                 const auto threshold = lastProgressTm + std::chrono::seconds(1);
                 if (now > threshold) {
                     zeroMqServerClient.sendMessage(
-                        service::zeromq::ZEROMQ_GCS_UPLOAD_PROGRESS_TOPIC,
+                        service::zeromq::ZEROMQ_CLOUD_UPLOAD_PROGRESS_TOPIC,
                         nlohmann::json{
                             {"task", request.task},
                             {"download", dl},
@@ -366,28 +365,37 @@ int main(int argc, char** argv) {
                 }
             });
 
+            const auto session = resp.first;
+            const auto& parts = resp.second;
+
             nlohmann::json retData;
             retData["task"] = request.task;
-            retData["success"] = !resp.empty();
-            retData["session"] = resp;
+            retData["success"] = !session.empty();
+            retData["session"] = session;
+
+            if (!parts.empty()) {
+                retData["parts"] = nlohmann::json::array();
+                for (const auto& p: parts) {
+                    retData["parts"].push_back(p);
+                }
+            }
 
             zeroMqServerClient.sendMessage(
-                service::zeromq::ZEROMQ_GCS_UPLOAD_PROGRESS_TOPIC,
+                service::zeromq::ZEROMQ_CLOUD_UPLOAD_PROGRESS_TOPIC,
                 nlohmann::json{
                     {"task", request.task},
                     {"done", true},
-                    {"success", !resp.empty()}
+                    {"success", !session.empty()}
                 }.dump(),
                 true
             );
 
             zeroMqServerClient.sendMessage(
-                service::zeromq::ZEROMQ_RESPOND_GCS_UPLOAD_TOPIC,
+                service::zeromq::ZEROMQ_RESPOND_CLOUD_UPLOAD_TOPIC,
                 retData.dump()
             );
         });
         t.detach();
-        */
     });
 
     LOG_INFO("Add local recording handlers..." << std::endl);

@@ -133,21 +133,24 @@ class ZeroMQServerClient {
         })
     }
 
-    performGcsUpload(task, file, uri) {
+    performCloudUpload(task, file, destination) {
         return new Promise(async (resolve, reject) => {
-            let handlerId = this.on('respond-gcs-upload', (resp) => {
+            let handlerId = this.on('respond-cloud-upload', (resp) => {
                 let parsedResp = JSON.parse(resp)
                 if (parsedResp.task === task) {
-                    this.remove('respond-gcs-upload', handlerId)
+                    this.remove('respond-cloud-upload', handlerId)
                     if (parsedResp.success) {
-                        resolve(parsedResp.session)
+                        resolve({
+                            session: parsedResp.session,
+                            parts: parsedResp.parts,
+                        })
                     } else {
-                        reject('Failure in VOD clip upload.')
+                        reject('Failure in VOD upload to cloud.')
                     }
                 }
             })
             
-            await this._pub.send(['request-gcs-upload', JSON.stringify({task, file, uri})])
+            await this._pub.send(['request-cloud-upload', JSON.stringify({task, file, destination})])
         })
     }
 

@@ -7,7 +7,7 @@ import { DownloadProgress } from '@client/js/system/download'
 import { VodAssociation, VodMetadata, cleanVodAssocationData } from '@client/js/squadov/vod'
 import { apiClient } from '@client/js/api'
 import { v4 as uuidv4 } from 'uuid'
-import { uploadLocalFileToGcs } from '@client/js/gcs'
+import { uploadLocalFileToCloud } from '@client/js/cloud'
 import { IpcResponse } from '../system/ipc'
 import { response } from 'express'
 
@@ -169,11 +169,11 @@ class LocalVodManager {
                 }
 
                 const metadata: VodMetadata = JSON.parse(fs.readFileSync(metadataFname, 'utf8'))
-                const uploadPath = await apiClient.getVodUploadPath(vod.videoUuid)
+                const uploadDestination = await apiClient.getVodUploadDestination(vod.videoUuid)
 
                 let progressNotif = async (e: any, info: DownloadProgress) => {
                     if (info.done) {
-                        ipcRenderer.removeListener('gcs-upload-progress', progressNotif)
+                        ipcRenderer.removeListener('cloud-upload-progress', progressNotif)
                         if (info.success === false) {
                             throw 'Failed to finish upload: ' + vod.videoUuid
                         }
@@ -185,12 +185,15 @@ class LocalVodManager {
                         }
                     }
                 }
-                ipcRenderer.on('gcs-upload-progress', progressNotif)
+                ipcRenderer.on('cloud-upload-progress', progressNotif)
 
-                const sessionUri = await uploadLocalFileToGcs(localLoc, uploadPath.data, vod.videoUuid)
+                const uploadData = await uploadLocalFileToCloud(localLoc, uploadDestination.data, vod.videoUuid)
                 let newAssociation: VodAssociation = cleanVodAssocationData(JSON.parse(JSON.stringify(vod)))
                 newAssociation.isLocal = false
-                await apiClient.associateVod(newAssociation, metadata, sessionUri)
+
+                metadata.bucket = uploadDestination.data.bucket
+                metadata.sessionId = uploadDestination.data.session
+                await apiClient.associateVod(newAssociation, metadata, uploadData.session, uploadData.parts)
                 this.uploads.finish(vod.videoUuid)
             } catch (ex) {
                 console.log('Failed to complete upload: ', ex)

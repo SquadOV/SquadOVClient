@@ -95,6 +95,9 @@ export interface VodMetadata {
     id: string
     dataType: string
     fname: string
+
+    bucket: string
+    sessionId: string | null
 }
 
 export interface VodTrack {

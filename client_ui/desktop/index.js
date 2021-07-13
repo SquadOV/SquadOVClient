@@ -336,13 +336,11 @@ ipcMain.on('request-restart', () => {
 })
 
 ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => {
-    let retPath = await zeromqServer.performVodClip(task, source, start, end)
-    return retPath
+    return await zeromqServer.performVodClip(task, source, start, end)
 })
 
-ipcMain.handle('request-gcs-upload', async (event, {task, file, uri}) => {
-    let retSession = await zeromqServer.performGcsUpload(task, file, uri)
-    return retSession
+ipcMain.handle('request-cloud-upload', async (event, {task, file, destination}) => {
+    return await zeromqServer.performCloudUpload(task, file, destination)
 })
 
 ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
@@ -882,10 +880,10 @@ zeromqServer.on('vod-download-progress', (resp) => {
     }
 })
 
-zeromqServer.on('gcs-upload-progress', (resp) => {
+zeromqServer.on('cloud-upload-progress', (resp) => {
     let parsedResp = JSON.parse(resp)
     if (!!win) {
-        win.webContents.send('gcs-upload-progress', parsedResp)
+        win.webContents.send('cloud-upload-progress', parsedResp)
     }
 })
 

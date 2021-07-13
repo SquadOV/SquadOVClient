@@ -34,10 +34,10 @@ public:
 
     virtual std::optional<std::filesystem::path> localFile() const { return {}; }
     virtual const std::vector<std::string>& segmentIds() const = 0;
-
+    virtual void flush() = 0;
+    
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
-    virtual void flush() = 0;
 
 private:
     bool _running = true;

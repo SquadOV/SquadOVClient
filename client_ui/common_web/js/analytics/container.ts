@@ -18,7 +18,7 @@ import { Route } from 'vue-router'
 export class AnalyticsContainer {
     _isInit: boolean = false
     _store: Store<RootState>
-    _ga: ua.Visitor
+    _ga: ua.Visitor | null = null
 
     get platform(): string {
 ///#if DESKTOP
@@ -60,6 +60,10 @@ export class AnalyticsContainer {
     constructor(store: Store<RootState>) {
         this._store = store
 
+        if (!SQUADOV_USE_ANALYTICS) {
+            return
+        }
+
         let anonId = this.generateOrLoadClientId()
         // Generate or load a uuid for this [anonymous] user.
         this._ga = ua('UA-185942570-1', anonId)
@@ -73,6 +77,10 @@ export class AnalyticsContainer {
     }
 
     pageView(route: Route) {
+        if (!SQUADOV_USE_ANALYTICS || !this._ga) {
+            return
+        }
+
         if (!this._store.state.settings?.anonymousAnalytics) {
             return
         }
@@ -84,6 +92,10 @@ export class AnalyticsContainer {
     }
 
     event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
+        if (!SQUADOV_USE_ANALYTICS) {
+            return
+        }
+
         if (!this._store.state.settings?.anonymousAnalytics) {
             return
         }
@@ -98,7 +110,10 @@ export class AnalyticsContainer {
             ev: value,
         }
 
-        this._ga.event(params).send()
+        if (!!this._ga) {
+            this._ga.event(params).send()
+        }
+        
         mixpanel.track(`${params.ec}-${params.ea}`, {
             path: route.fullPath,
             route: routeName,

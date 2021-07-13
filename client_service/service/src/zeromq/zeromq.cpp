@@ -43,7 +43,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_VOD_CLIP_TOPIC);
-    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_GCS_UPLOAD_TOPIC);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CLOUD_UPLOAD_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_FOLDER_SIZE_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CHANGE_RECORDING_FOLDER_TOPIC);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_CLEANUP_RECORDING_FOLDER_TOPIC);

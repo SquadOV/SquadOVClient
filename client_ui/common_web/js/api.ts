@@ -97,7 +97,7 @@ import {
 import { SquadOvGames } from '@client/js/squadov/game'
 import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
-import { uploadLocalFileToGcs } from '@client/js/gcs'
+import { uploadLocalFileToCloud } from '@client/js/cloud'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -167,6 +167,7 @@ import { LocalVodsDto } from '@client/js/local/types'
 import { SquadOvCommunity, CommunityFilter, cleanCommunityFromJson, CommunityRole } from '@client/js/squadov/community'
 import { cleanUser2UserSubscriptionFromJson, User2UserSubscription } from './squadov/subscription'
 import { LinkedAccounts, TwitchAccount } from './squadov/accounts'
+import { VodDestination } from './vods/destination'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -1116,14 +1117,14 @@ class ApiClient {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
     }
 
-    getVodUploadPath(vodUuid: string): Promise<ApiData<string>> {
+    getVodUploadDestination(vodUuid: string): Promise<ApiData<VodDestination>> {
         return axios.get(`v1/vod/${vodUuid}/upload`, this.createWebAxiosConfig())
     }
 
     createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {
         interface ClipResponse {
             uuid: string
-            uploadPath: string
+            destination: VodDestination
         }
         // First post responds with the clip uuid and upload path.
         return axios.post(`v1/vod/${parentVodUuid}/clip`, {
@@ -1134,22 +1135,25 @@ class ApiClient {
             // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
             // doing a resumable upload here but I think the clip should be small enough to just upload it
             // all in one go.
-            let sessionUri = await uploadLocalFileToGcs(clipPath, resp.data.uploadPath, resp.data.uuid)
+            let uploadData = await uploadLocalFileToCloud(clipPath, resp.data.destination, resp.data.uuid)
 
             association.videoUuid = resp.data.uuid
             metadata.videoUuid = resp.data.uuid
-            await this.associateVod(association, metadata, sessionUri)
+            metadata.bucket = resp.data.destination.bucket
+            metadata.sessionId = resp.data.destination.session
+            await this.associateVod(association, metadata, uploadData.session, uploadData.parts)
             return {
                 data: resp.data.uuid
             }
         })
     }
 
-    associateVod(association: VodAssociation, metadata: VodMetadata, sessionUri: string): Promise<void> {
+    associateVod(association: VodAssociation, metadata: VodMetadata, sessionUri: string, parts: string[] | undefined): Promise<void> {
         return axios.post(`v1/vod/${association.videoUuid}`, {
             association,
             metadata,
             sessionUri,
+            parts
         }, this.createWebAxiosConfig())
     }
 

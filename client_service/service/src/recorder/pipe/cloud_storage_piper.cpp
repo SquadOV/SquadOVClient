@@ -18,15 +18,15 @@ constexpr int CLOUD_MAX_BACKOFF_TIME_MS = 32000;
 
 #define LOG_TIME 0
 
-GCSUploadRequest GCSUploadRequest::fromJson(const nlohmann::json& json) {
-    GCSUploadRequest ret;
+CloudUploadRequest CloudUploadRequest::fromJson(const nlohmann::json& json) {
+    CloudUploadRequest ret;
     ret.file = json["file"].get<std::string>();
     ret.task = json["task"].get<std::string>();
-    ret.uri = json["uri"].get<std::string>();
+    ret.destination = service::vod::VodDestination::fromJson(json["destination"]);
     return ret;
 }
 
-std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::DownloadProgressFn& progressFn) {
+std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadProgressFn& progressFn) {
     // It's a bit of a roundabout way to do it but create a local system pipe to write the file data to
     // and then just wait for the pipe to finish.
     auto pipe = std::make_unique<Pipe>(req.task);
@@ -40,14 +40,12 @@ std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::Downloa
     }
 
     const auto inputPath = fs::path(inputFname);
-    /*
-    CloudStoragePiper output(req.uri, std::move(pipe));
+    CloudStoragePiper output(req.task, req.destination, std::move(pipe));
     output.setProgressCallback(progressFn, fs::file_size(inputPath));
     output.appendFromFile(inputPath);
     output.sendNullBuffer();
-    return output.sessionId();
-    */
-    return "";
+    output.flush();
+    return std::make_pair(output.sessionId(), output.segmentIds());
 }
 
 CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::vod::VodDestination& destination, PipePtr&& pipe):

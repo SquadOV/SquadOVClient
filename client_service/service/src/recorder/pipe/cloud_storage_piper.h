@@ -11,6 +11,7 @@
 #include <random>
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #define DUMP_CLOUD_REF_VIDEO 0
@@ -20,15 +21,16 @@
 
 namespace service::recorder::pipe {
 
-struct GCSUploadRequest {
+struct CloudUploadRequest {
     std::string task;
     std::string file;
-    std::string uri;
+    service::vod::VodDestination destination;
 
-    static GCSUploadRequest fromJson(const nlohmann::json& json);
+    static CloudUploadRequest fromJson(const nlohmann::json& json);
 };
 
-std::string uploadToGcs(const GCSUploadRequest& req, const shared::http::DownloadProgressFn& progressFn);
+// (session, parts)
+std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadProgressFn& progressFn);
 
 class CloudStoragePacket {
 public:
@@ -52,10 +54,10 @@ public:
     void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
     void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
-
+    void flush() override;
+    
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
-    void flush() override;
 
 private:
     void tickUploadThread();
