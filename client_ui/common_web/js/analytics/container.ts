@@ -59,7 +59,6 @@ export class AnalyticsContainer {
 
     constructor(store: Store<RootState>) {
         this._store = store
-
         if (!SQUADOV_USE_ANALYTICS) {
             return
         }
