@@ -7,6 +7,7 @@ target_include_directories(csgo_demo_retriever
     PUBLIC
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/client_service/steamworks_interface
+    ${CMAKE_SOURCE_DIR}/deps/date/include
     ${Boost_INCLUDE_DIRS}
 )
 
