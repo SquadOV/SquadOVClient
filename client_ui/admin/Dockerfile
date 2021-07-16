@@ -12,7 +12,7 @@ RUN apt-get update && apt-get -y install yarn && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /squadov
 RUN mkdir -p /squadov/config
 COPY assets /squadov/assets
-COPY config/squadov.json /squadov/config/config.json
+COPY config/${DEPLOYMENT_ENVIRONMENT}.json /squadov/config/config.json
 COPY js /squadov/js
 COPY ui /squadov/ui
 COPY views /squadov/views
