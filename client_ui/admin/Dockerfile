@@ -35,7 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends nodejs && rm -r
 RUN mkdir -p /squadov
 RUN mkdir -p /squadov/config
 COPY assets /squadov/assets
-COPY config/squadov.json /squadov/config/config.json
+COPY config/${DEPLOYMENT_ENVIRONMENT}.json /squadov/config/config.json
 COPY js /squadov/js
 COPY views /squadov/views
 COPY index.js /squadov
