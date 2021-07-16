@@ -1,5 +1,5 @@
 FROM debian:buster-20200908-slim AS builder
-ARG GCP_PROJECT
+ARG DEPLOYMENT_ENVIRONMENT
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     ca-certificates \
     build-essential \
@@ -29,7 +29,7 @@ COPY common_web/yarn.lock /squadov/common_web
 WORKDIR /squadov
 
 RUN cd common_web && yarn install \
-    && yarn run webpack --config ./webpack/${GCP_PROJECT}.config.js --env target=web \
+    && yarn run webpack --config ./webpack/${DEPLOYMENT_ENVIRONMENT}.config.js --env target=web \
     && rm -rf node_modules \
     && yarn install --production
 RUN cp -r assets /squadov/web/assets && cp -r /squadov/common_web/dist/production/web /squadov/web/dist

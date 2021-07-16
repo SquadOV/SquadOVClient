@@ -1,5 +1,5 @@
 FROM debian:buster-20200908-slim AS builder
-ARG GCP_PROJECT
+ARG DEPLOYMENT_ENVIRONMENT
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     ca-certificates \
     build-essential \
@@ -22,7 +22,7 @@ COPY package.json /squadov
 COPY tsconfig.json /squadov
 
 WORKDIR /squadov
-RUN yarn install && yarn webpack --config ./webpack/squadov.config.js
+RUN yarn install && yarn webpack --config ./webpack/${DEPLOYMENT_ENVIRONMENT}.config.js
 RUN rm -r node_modules && yarn install --production
 
 FROM debian:buster-20200908-slim
