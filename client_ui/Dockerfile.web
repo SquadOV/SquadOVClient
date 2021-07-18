@@ -36,6 +36,7 @@ RUN cp -r assets /squadov/web/assets && cp -r /squadov/common_web/dist/productio
 RUN cd web && yarn install --production
 
 FROM debian:buster-20200908-slim
+ARG DEPLOYMENT_ENVIRONMENT
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
@@ -50,5 +51,5 @@ COPY --from=builder /squadov/web/dist ./dist
 COPY --from=builder /squadov/web/views ./views
 COPY --from=builder /squadov/web/node_modules ./node_modules
 COPY --from=builder /squadov/web/index.js .
-COPY web/config/squadov.json /squadov/config/config.json
+COPY web/config/${DEPLOYMENT_ENVIRONMENT}.json /squadov/config/config.json
 ENTRYPOINT ["node" , "index.js", "config/config.json"]

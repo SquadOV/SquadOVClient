@@ -26,6 +26,7 @@ RUN yarn install && yarn webpack --config ./webpack/${DEPLOYMENT_ENVIRONMENT}.co
 RUN rm -r node_modules && yarn install --production
 
 FROM debian:buster-20200908-slim
+ARG DEPLOYMENT_ENVIRONMENT
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
