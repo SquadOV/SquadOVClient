@@ -12,7 +12,7 @@ class ApiServer {
             port: config.database.port,
             ssl: !!config.database.ssl ? {
                 rejectUnauthorized: false,
-                ca: fs.readFileSync(config.database.ca).toString()
+                ca: fs.readFileSync(config.database.ssl.ca).toString()
             }: false
         })
     }
