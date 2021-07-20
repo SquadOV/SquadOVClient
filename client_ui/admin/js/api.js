@@ -8,6 +8,7 @@ class ApiServer {
             host: config.database.host,
             database: config.database.db,
             port: config.database.port,
+            ssl: config.database.ssl
         })
     }
 
