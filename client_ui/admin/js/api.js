@@ -1,4 +1,6 @@
 const { Pool, Client } = require('pg')
+const fs = require('fs')
+
 
 class ApiServer {
     constructor(config) {
@@ -8,7 +10,10 @@ class ApiServer {
             host: config.database.host,
             database: config.database.db,
             port: config.database.port,
-            ssl: config.database.ssl
+            ssl: !!config.database.ssl ? {
+                rejectUnauthorized: false,
+                ca: fs.readFileSync(config.database.ca).toString()
+            }: false
         })
     }
 

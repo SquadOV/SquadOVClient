@@ -41,6 +41,7 @@ COPY js /squadov/js
 COPY views /squadov/views
 COPY index.js /squadov
 COPY package.json /squadov
+COPY us-east-2-bundle.pem /squadov/us-east-2-bundle.pem
 COPY --from=builder /squadov/dist /squadov/dist
 COPY --from=builder /squadov/node_modules /squadov/node_modules
 
