@@ -39,7 +39,7 @@ import { HearthstoneGameAction, cleanHearthstoneGameActionFromJson } from '@clie
 import {
     Squad, cleanSquadFromJson,
     SquadMembership, cleanSquadMembershipFromJson
-    SquadInvite, cleanSquadInviteFromJson
+    SquadInvite, cleanSquadInviteFromJson, SquadInviteLink, cleanSquadInviteLinkFromJson, SquadInviteLinkData
 } from '@client/js/squadov/squad'
 import {
     SquadOvHeartbeatResponse,
@@ -1404,6 +1404,36 @@ class ApiClient {
     
     getGlobalAppFeatures(): Promise<ApiData<GlobalFlags>> {
         return axios.get('/public/flags', this.createWebAxiosConfig())
+    }
+
+    getSquadInviteLinksForUser(squadId: number, userId: number): Promise<ApiData<SquadInviteLink[]>> {
+        return axios.get(`v1/users/${userId}/squads/${squadId}/links`, this.createWebAxiosConfig()).then((resp: ApiData<SquadInviteLink[]>) => {
+            resp.data.forEach(cleanSquadInviteLinkFromJson)
+            return resp
+        })
+    }
+
+    createSquadInviteLinkForUser(squadId: number, userId: number): Promise<ApiData<SquadInviteLink>> {
+        return axios.post(`v1/users/${userId}/squads/${squadId}/links`, {}, this.createWebAxiosConfig()).then((resp: ApiData<SquadInviteLink>) => {
+            cleanSquadInviteLinkFromJson(resp.data)
+            return resp
+        })
+    }
+
+    modifySquadInviteLink(link: SquadInviteLink): Promise<void> {
+        return axios.put(`v1/users/${link.userId}/squads/${link.squadId}/links/${link.id}`, link, this.createWebAxiosConfig())
+    }
+
+    deleteSquadInviteLink(squadId: number, userId: number, id: string): Promise<void> {
+        return axios.delete(`v1/users/${userId}/squads/${squadId}/links/${id}`, this.createWebAxiosConfig())
+    }
+
+    getSquadInviteLinkData(id: string): Promise<ApiData<SquadInviteLinkData>> {
+        return axios.get(`public/link/${id}`, this.createWebAxiosConfig())
+    }
+
+    acceptSquadInviteLink(id: string): Promise<void> {
+        return axios.post(`v1/link/${id}/accept`, {}, this.createWebAxiosConfig())
     }
 
     // Local API

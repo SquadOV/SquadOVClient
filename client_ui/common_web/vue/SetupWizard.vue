@@ -193,7 +193,7 @@ con_timestamp 1
                         </div>
 
                         <div class="d-flex justify-center mt-4">
-                            <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
+                            <v-dialog max-width="40%" v-model="showHideInviteSquad">
                                 <template v-slot:activator="{on, attrs}">
                                     <v-btn
                                         v-on="on"
@@ -208,7 +208,6 @@ con_timestamp 1
 
                                 <squad-invite-create-card
                                     :squad-id="defaultSquad.squad.id"
-                                    @on-cancel-invite="showHideInviteSquad = false"
                                     @on-send-invite="showHideInviteSquad = false"
                                 >
                                 </squad-invite-create-card>

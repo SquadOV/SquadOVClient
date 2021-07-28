@@ -120,6 +120,9 @@ export default class Login extends Vue {
     @Prop({default: ''})
     reg!: string
 
+    @Prop({default: undefined})
+    redirect!: string | undefined
+
     showRegistrationBanner: boolean = false
     showHideGenericError: boolean = false
     showHideAuthError: boolean = false
@@ -160,7 +163,10 @@ export default class Login extends Vue {
 
     get registerTo() : any {
         return {
-            name: 'register'
+            name: 'register',
+            query: {
+                redirect: this.redirect,
+            }
         }
     }
 
@@ -181,9 +187,13 @@ export default class Login extends Vue {
 /// #if DESKTOP
         ipcRenderer.send('finish-login')
 /// #else
-        this.$router.replace({
-            name: pi.DashboardPageId,
-        })
+        if (!!this.redirect) {
+            this.$router.replace(this.redirect)
+        } else {
+            this.$router.replace({
+                name: pi.DashboardPageId,
+            })
+        }
 /// #endif
     }
 

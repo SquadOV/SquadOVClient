@@ -110,7 +110,7 @@
                         </v-tab>
                     </v-tabs>
                     
-                    <v-dialog persistent width="40%" v-model="showHideInvite">
+                    <v-dialog width="40%" v-model="showHideInvite">
                         <template v-slot:activator="{on, attrs}">
                             <v-btn class="ml-4" color="primary" v-on="on" v-bind="attrs">
                                 <v-icon class="mr-2">
@@ -122,7 +122,6 @@
 
                         <squad-invite-create-card
                             :squad-id="squadId"
-                            @on-cancel-invite="showHideInvite = false"
                             @on-send-invite="onSendInvite"
                         >
                         </squad-invite-create-card>

@@ -89,6 +89,7 @@ const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue
 const TwitchOauthHandler = () => import('@client/vue/auth/oauth/TwitchOauthHandler.vue')
 
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
+const SquadLinkResponsePage = () => import('@client/vue/squads/SquadLinkResponsePage.vue')
 const ShareRedirect = () => import('@client/vue/ShareRedirect.vue')
 const VodEditor = () => import('@client/vue/utility/vods/VodEditor.vue')
 const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPage.vue')
@@ -152,6 +153,7 @@ const baseRoutes : any[] = [
                 component: Login,
                 props: (route : any) => ({
                     reg: route.query.reg,
+                    redirect: route.query.redirect,
                 })
             },
             {
@@ -162,6 +164,7 @@ const baseRoutes : any[] = [
                     inviteUuid: route.query.inviteUuid,
                     squadId: parseInt(route.query.squadId),
                     sig: route.query.sig,
+                    redirect: route.query.redirect,
                 })
             },
             {
@@ -620,7 +623,15 @@ const baseRoutes : any[] = [
                         })
                     }
                 ]
-            }
+            },
+            {
+                path: 'link/:linkId',
+                component: SquadLinkResponsePage,
+                name: pi.LinkResponsePageId,
+                props: (route: any) => ({
+                    linkId: route.params.linkId
+                })
+            },
         ]
     }
 ]
@@ -684,7 +695,10 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         }, () => {
             if (!mustBeInvalid && !isTmpSession) {
                 next({
-                    name: pi.LoginPageId
+                    name: pi.LoginPageId,
+                    query: {
+                        redirect: to.fullPath,
+                    }
                 })
             } else {
                 next()
@@ -699,7 +713,10 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             })
         } else if (!mustBeInvalid && !hasCookie) {
             next({
-                name: pi.LoginPageId
+                name: pi.LoginPageId,
+                query: {
+                    redirect: to.fullPath,
+                }
             })
         } else {
             next()

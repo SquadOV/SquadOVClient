@@ -1,3 +1,5 @@
+import { SquadOVUserHandle } from "@client/js/squadov/user"
+
 export interface Squad {
     id: number
     squadName: string
@@ -53,5 +55,34 @@ export function cleanSquadInviteFromJson(s : SquadInvite) : SquadInvite {
     if (!!s.inviteTime) {
         s.inviteTime = new Date(s.inviteTime)
     }
+    return s
+}
+
+export interface SquadInviteLink {
+    id: string
+    squadId: number
+    userId: number
+    createTime: Date
+    expireTime: Date | null
+    useCount: number
+    maxUses: number | null
+    link: string
+}
+
+export function cleanSquadInviteLinkFromJson(s: SquadInviteLink) : SquadInviteLink {
+    s.createTime = new Date(s.createTime)
+    if (!!s.expireTime) {
+        s.expireTime = new Date(s.expireTime)
+    }
+    return s
+}
+
+export interface SquadInviteLinkData {
+    squad: Squad
+    inviter: SquadOVUserHandle
+}
+
+export function cleanSquadInviteLinkDataFromJson(s: SquadInviteLinkData) : SquadInviteLinkData {
+    cleanSquadFromJson(s.squad)
     return s
 }

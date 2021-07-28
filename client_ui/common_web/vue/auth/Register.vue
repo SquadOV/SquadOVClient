@@ -114,6 +114,9 @@ export default class Register extends Vue {
     @Prop()
     sig!: string | undefined
 
+    @Prop({default: undefined})
+    redirect!: string | undefined
+
     canRegister: boolean | null = null
     formValid: boolean = false
     inProgress: boolean = false
@@ -172,7 +175,10 @@ export default class Register extends Vue {
 
     get loginTo() : any {
         return {
-            name: 'login'
+            name: 'login',
+            query: {
+                redirect: this.redirect,
+            }
         }
     }
 
@@ -193,6 +199,7 @@ export default class Register extends Vue {
                 name: 'login',
                 query: {
                     reg: this.email,
+                    redirect: this.redirect,
                 }
             })
         }).catch((err : any) => {

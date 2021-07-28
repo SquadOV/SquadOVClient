@@ -57,7 +57,7 @@
                         </div>
 
                         <div class="mt-2" v-if="!!selectedSquad">
-                            <v-dialog persistent max-width="60%" v-model="showHideInviteSquad">
+                            <v-dialog max-width="40%" v-model="showHideInviteSquad">
                                 <template v-slot:activator="{on, attrs}">
                                     <v-btn
                                         v-on="on"
@@ -72,7 +72,6 @@
 
                                 <squad-invite-create-card
                                     :squad-id="selectedSquad.squad.id"
-                                    @on-cancel-invite="showHideInviteSquad = false"
                                     @on-send-invite="showHideInviteSquad = false"
                                 >
                                 </squad-invite-create-card>

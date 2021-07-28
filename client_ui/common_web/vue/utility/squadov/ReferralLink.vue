@@ -72,3 +72,11 @@ export default class ReferralLink extends mixins(CommonComponent) {
 }
 
 </script>
+
+<style scoped>
+
+>>>.v-input__append-outer {
+    margin-top: 4px;
+}
+
+</style>
