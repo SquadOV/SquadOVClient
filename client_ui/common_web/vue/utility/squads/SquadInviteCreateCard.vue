@@ -17,7 +17,7 @@
                             <div v-if="!loading">
                                 <div
                                     class="d-flex align-center mb-2"
-                                    v-for="(link, idx) in inviteLinks"
+                                    v-for="(link, idx) in sortedInviteLinks"
                                     :key="idx"
                                 >
                                     <v-text-field
@@ -140,7 +140,7 @@
                         >
                         </v-select>
 
-                        <div class="text-overline ">
+                        <div class="text-caption ml-2">
                             <div class="font-weight-bold">
                                 Current Expiration:
                             </div>
