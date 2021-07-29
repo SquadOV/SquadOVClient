@@ -128,7 +128,7 @@
 
 import Component, {mixins} from 'vue-class-component'
 import CommonComponent from '@client/vue/CommonComponent'
-import { Watch } from 'vue-property-decorator'
+import { Watch, Prop } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { SquadMembership } from '@client/js/squadov/squad'
 import { apiClient, ApiData } from '@client/js/api'
@@ -280,9 +280,8 @@ export default class Dashboard extends mixins(CommonComponent) {
     }
 
     redirectToSetupWizardOnFirstTime() {
-///#if DESKTOP
-        // This will re-direct the user to the setup wizard the first time they start up SquadOV.
-        if (!this.$store.state.settings.setupWizardRun) {
+///#if !DESKTOP
+        if (!localStorage.getItem('squadovSetup')) {
             this.$router.push({
                 name: pi.SetupWizardPageId
             })

@@ -143,10 +143,22 @@ const baseRoutes : any[] = [
         })
     },
     {
+        path: '/setupwizard',
+        name: pi.SetupWizardPageId,
+        component: SetupWizard,
+    },
+    {
         path: '/',
         component: isDesktop() ? PrimaryApp : WebApp,
         children: [
-            { path: '', name: pi.DashboardPageId, component: Dashboard },
+            {
+                path: '',
+                name: pi.DashboardPageId,
+                component: Dashboard,
+                props: (route : any) => ({
+                    needSetup: parseInt(route.query.needSetup),
+                })
+            },
             { 
                 path: 'login',
                 name: pi.LoginPageId,
@@ -154,6 +166,8 @@ const baseRoutes : any[] = [
                 props: (route : any) => ({
                     reg: route.query.reg,
                     redirect: route.query.redirect,
+                    referral: route.query.ref,
+                    needSetup: parseInt(route.query.needSetup),
                 })
             },
             {
@@ -165,6 +179,7 @@ const baseRoutes : any[] = [
                     squadId: parseInt(route.query.squadId),
                     sig: route.query.sig,
                     redirect: route.query.redirect,
+                    referral: route.query.ref,
                 })
             },
             {
@@ -208,11 +223,6 @@ const baseRoutes : any[] = [
                 props: (route: any) => ({
                     squadId: parseInt(route.params.squadId)
                 })
-            },
-            {
-                path: 'setupwizard',
-                name: pi.SetupWizardPageId,
-                component: SetupWizard,
             },
             {
                 path: 'localstorage',

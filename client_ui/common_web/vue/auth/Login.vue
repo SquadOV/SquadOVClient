@@ -123,6 +123,9 @@ export default class Login extends Vue {
     @Prop({default: undefined})
     redirect!: string | undefined
 
+    @Prop()
+    referral!: string | undefined
+
     showRegistrationBanner: boolean = false
     showHideGenericError: boolean = false
     showHideAuthError: boolean = false
@@ -166,6 +169,7 @@ export default class Login extends Vue {
             name: 'register',
             query: {
                 redirect: this.redirect,
+                ref: this.referral,
             }
         }
     }

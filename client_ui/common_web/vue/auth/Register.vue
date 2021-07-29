@@ -117,6 +117,9 @@ export default class Register extends Vue {
     @Prop({default: undefined})
     redirect!: string | undefined
 
+    @Prop()
+    referral!: string | undefined
+
     canRegister: boolean | null = null
     formValid: boolean = false
     inProgress: boolean = false
@@ -178,6 +181,7 @@ export default class Register extends Vue {
             name: 'login',
             query: {
                 redirect: this.redirect,
+                ref: this.referral,
             }
         }
     }
@@ -188,6 +192,7 @@ export default class Register extends Vue {
             username: this.username,
             password: this.password,
             email: this.email,
+            ref: this.referral,
         }, {
             inviteUuid: this.inviteUuid,
             squadId: !!this.squadId ? this.squadId.toString() : undefined,

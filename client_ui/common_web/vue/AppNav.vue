@@ -40,12 +40,7 @@
 
         <v-spacer></v-spacer>
 
-        <v-btn v-if="!isDesktop" class="mr-2" color="primary" :href="downloadUrl">
-            <v-icon class="mr-1">
-                mdi-microsoft-windows
-            </v-icon>
-            Windows Client
-        </v-btn>
+        <download-button v-if="!isDesktop" class="mr-2"></download-button>
 
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y class="mr-4">
@@ -173,6 +168,8 @@ import { apiClient, ApiData } from '@client/js/api'
 import { clearSessionCookie } from '@client/js/session'
 import { openUrlInBrowser } from '@client/js/external'
 import CommonComponent from '@client/vue/CommonComponent'
+import DownloadButton from '@client/vue/utility/DownloadButton.vue'
+
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -181,7 +178,11 @@ import { ipcRenderer } from 'electron'
 import { NotificationSummary } from '@client/js/squadov/notification'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 
-@Component
+@Component({
+    components: {
+        DownloadButton,
+    }
+})
 export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
     showEmailVerification: boolean = false

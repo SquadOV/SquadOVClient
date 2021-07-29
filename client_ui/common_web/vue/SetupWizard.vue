@@ -1,280 +1,358 @@
 <template>
-    <div class="d-flex flex-column full-parent-height pa-4">
-        <v-stepper v-model="step" class="flex-grow-1" non-linear v-if="ready">
-            <v-stepper-header>
-                <v-stepper-step
-                    :complete="step > 1"
-                    :step="1"
-                    editable
-                >
-                    Welcome
-                </v-stepper-step>
+    <div class="d-flex flex-column full-parent-height pa-4 outer-content">
+        <div class="inner-content">
+            <v-stepper v-model="step" class="flex-grow-1" non-linear v-if="ready">
+                <v-stepper-header>
+                    <v-stepper-step
+                        :complete="step > 1"
+                        :step="1"
+                    >
+                        Welcome
+                    </v-stepper-step>
 
-                <v-stepper-step
-                    v-for="(st, idx) in dynamicSteps"
-                    :key="`header-${idx}`"
-                    :complete="step > (idx + 2)"
-                    :step="idx + 2"
-                    editable
-                >
-                    {{ stepToString(st) }}
-                </v-stepper-step>
+                    <v-stepper-step
+                        v-for="(st, idx) in dynamicSteps"
+                        :key="`header-${idx}`"
+                        :complete="step > (idx + 2)"
+                        :step="idx + 2"
+                    >
+                        {{ stepToString(st) }}
+                    </v-stepper-step>
 
-                <v-stepper-step
-                    :complete="false"
-                    :step="totalSteps"
-                    editable
-                >
-                    Finish
-                </v-stepper-step>
-            </v-stepper-header>
+                    <v-stepper-step
+                        :complete="false"
+                        :step="totalSteps"
+                    >
+                        Finish
+                    </v-stepper-step>
+                </v-stepper-header>
 
-            <v-stepper-items>
-                <v-stepper-content step="1">
-                    <h1>Welcome to SquadOV!</h1>
-                    <p>
-                        Thanks for joining us, we're ecstatic to have you here!
-                        This setup wizard will help you get started with recording your VODs complete with match history details ASAP!
-                    </p>
+                <v-stepper-items>
+                    <v-stepper-content step="1">
+                        <h1>Welcome to SquadOV!</h1>
+                        <p>
+                            Thanks for joining us, we're ecstatic to have you here!
+                            This setup wizard will help you get started with recording your VODs complete with match history details ASAP!
+                        </p>
 
-                    <div class="d-flex flex-column justify-center align-center">
-                        <div class="text-h6">
-                            Select the games you want to setup SquadOV for (all Riot games will be selected if you select one of them)!
-                        </div>
+                        <div class="d-flex flex-column justify-center align-center">
+                            <div class="text-h6">
+                                Select the games you want to setup SquadOV for (all Riot games will be selected if you select one of them)!
+                            </div>
 
-                        <v-item-group class="d-flex flex-wrap" multiple v-model="gameSteps">
-                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Csgo">
-                                <v-img
-                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                    width="256px"
-                                    max-width="256px"
-                                    :src="$root.generateAssetUri('assets/csgo_box.jpg')"
-                                    contain
-                                    @click="toggle"
-                                >
-                                </v-img>
-                            </v-item>
-
-                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                <v-img
-                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                    width="256px"
-                                    max-width="256px"
-                                    :src="$root.generateAssetUri('assets/lol_box.jpg')"
-                                    contain
-                                    @click="toggle"
-                                >
-                                </v-img>
-                            </v-item>
-
-                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                <v-img
-                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                    width="256px"
-                                    max-width="256px"
-                                    :src="$root.generateAssetUri('assets/tft_box.jpg')"
-                                    contain
-                                    @click="toggle"
-                                >
-                                </v-img>
-                            </v-item>
-
-                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                <v-img
-                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                    width="256px"
-                                    max-width="256px"
-                                    :src="$root.generateAssetUri('assets/valorant_box.jpg')"
-                                    contain
-                                    @click="toggle"
-                                >
-                                </v-img>
-                            </v-item>
-
-                            <v-item v-slot="{active, toggle}" :value="DynamicSteps.Wow">
-                                <v-img
-                                    :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                    width="256px"
-                                    max-width="256px"
-                                    :src="$root.generateAssetUri('assets/wow_box.jpg')"
-                                    contain
-                                    @click="toggle"
-                                >
-                                </v-img>
-                            </v-item>
-                        </v-item-group>
-
-                        <div class="text-subtitle-2">
-                            If you don't see a supported game here, it means that SquadOV does not require any additional setup to record it!
-                        </div>
-                    </div>
-                </v-stepper-content>
-
-                <v-stepper-content
-                    v-for="(st, idx) in dynamicSteps"
-                    :key="`content-${idx}`"
-                    :step="idx + 2"
-                >
-                    <template v-if="st == DynamicSteps.Riot">
-                        SquadOV uses Riot's official API to obtain details about your matches.
-                        To best ensure your privacy, we require that all users link their Riot account to SquadOV before we automatically record matches for any Riot game.
-
-                        <div class="d-flex justify-center mt-4">
-                            <riot-account-chooser
-                                v-if="!!riotAccounts"
-                                v-model="selectedRiotAccount"
-                                @on-account-change="refreshRiotAccounts"
-                                :options.sync="riotAccounts"
-                            >
-                            </riot-account-chooser>
-
-                            <v-progress-circular size="64" indeterminate v-else></v-progress-circular>
-                        </div>
-
-                        <div class="mt-4">
-                            You can always come back to this later by going to the game logs page for any supported Riot Games game. 
-                            You can also see these instructions in more details in our <a href="#" @click="goToRiotAccountUserManual">user manual</a>.
-                        </div>
-                    </template>
-
-                    <template v-else-if="st == DynamicSteps.Wow">
-                        SquadOV depends on World of Warcraft's combat logs to determine when you are raiding, running keystones, or competing in the arena.
-                        To ensure World of Warcraft is properly setup, ensure:
-
-                        <ol class="mt-4">
-                            <li>
-                                You have an automatic combat logger addon installed.
-                                We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
-                            </li>
-                            <li>
-                                In your World of Warcraft settings menu, enable the <b>Advanced Combat Logging</b> option under the "System" and "Network" submenus.
-                            </li>
-                        </ol>
-                        
-                        <div class="mt-4">
-                            You can see these instructions in more details in our <a href="#" @click="goToWowUserManual">user manual</a>.
-                        </div>
-                    </template>
-
-                    <template v-else-if="st == DynamicSteps.Csgo">
-                        SquadOV works out of the box with CS:GO.
-                        <b>However</b>, you should be aware that we do modify your autoexec file to achieve our automatic recording and squad sync.
-                        In particular we add these lines to your autoexec.cfg:
-
-                        <pre>
-con_logfile squadov.log
-con_timestamp 1
-                        </pre>
-                        If these settings already existed in your autoexec, they have been overwritten.
-                        These settings are crucial for getting SquadOV to work with CS:GO.
-
-                        Don't know what we're talking about? You can ignore everything we just said! Enjoy!
-                    </template>
-
-                    <template v-else-if="st == DynamicSteps.Squad">
-                        SquadOV is all about squads which lets you easily sync VODs and view each other's recorded footage.
-                        To get you started, we created you a default squad with Derek and Mike (co-founders of SquadOV) in them so your recent match feed isn't empty to start with.
-                        Feel free to remove them whenever you want!
-
-                        <div class="d-flex justify-center mt-4">
-                            <squad-member-table
-                                v-if="!!squadMembers"
-                                v-model="squadMembers"
-                                :is-owner="true"
-                            >
-                            </squad-member-table>
-
-                            <v-progress-circular size="64" indeterminate v-else></v-progress-circular>
-                        </div>
-
-                        <div class="mt-4">
-                            It's also super easy to invite your friend! Click the button below to invite your friend to your squad by username or by email!
-                            If they're not already registered, they'll receive an email to sign up and join your squad! Simple!
-                        </div>
-
-                        <div class="d-flex justify-center mt-4">
-                            <v-dialog max-width="40%" v-model="showHideInviteSquad">
-                                <template v-slot:activator="{on, attrs}">
-                                    <v-btn
-                                        v-on="on"
-                                        v-bind="attrs"
-                                        large
-                                        small
-                                        color="primary"
+                            <v-item-group class="d-flex flex-wrap justify-center align-center" multiple v-model="gameSteps">
+                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Csgo">
+                                    <v-img
+                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                        :width="imageWidth"
+                                        :max-width="imageWidth"
+                                        :src="$root.generateAssetUri('assets/csgo_box.jpg')"
+                                        contain
+                                        @click="toggle"
                                     >
-                                        Invite
+                                    </v-img>
+                                </v-item>
+
+                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
+                                    <v-img
+                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                        :width="imageWidth"
+                                        :max-width="imageWidth"
+                                        :src="$root.generateAssetUri('assets/lol_box.jpg')"
+                                        contain
+                                        @click="toggle"
+                                    >
+                                    </v-img>
+                                </v-item>
+
+                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
+                                    <v-img
+                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                        :width="imageWidth"
+                                        :max-width="imageWidth"
+                                        :src="$root.generateAssetUri('assets/tft_box.jpg')"
+                                        contain
+                                        @click="toggle"
+                                    >
+                                    </v-img>
+                                </v-item>
+
+                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
+                                    <v-img
+                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                        :width="imageWidth"
+                                        :max-width="imageWidth"
+                                        :src="$root.generateAssetUri('assets/valorant_box.jpg')"
+                                        contain
+                                        @click="toggle"
+                                    >
+                                    </v-img>
+                                </v-item>
+
+                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Wow">
+                                    <v-img
+                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
+                                        :width="imageWidth"
+                                        :max-width="imageWidth"
+                                        :src="$root.generateAssetUri('assets/wow_box.jpg')"
+                                        contain
+                                        @click="toggle"
+                                    >
+                                    </v-img>
+                                </v-item>
+                            </v-item-group>
+
+                            <div class="text-subtitle-2">
+                                If you don't see a supported game here, it means that SquadOV does not require any additional setup to record it!
+                            </div>
+
+                            <v-checkbox
+                                class="mt-4"
+                                v-model="doneSelect"
+                                label="I've selected the games I want SquadOV to record going forward (and I know that games I played in the past won't have VODs)!"
+                                color="success"
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
+                        </div>
+                    </v-stepper-content>
+
+                    <v-stepper-content
+                        v-for="(st, idx) in dynamicSteps"
+                        :key="`content-${idx}`"
+                        :step="idx + 2"
+                    >
+                        <template v-if="st == DynamicSteps.Riot">
+                            SquadOV uses Riot's official API to obtain details about your matches.
+                            To best ensure your privacy, we require that all users link their Riot account to SquadOV before we automatically record matches for any Riot game.
+
+                            <div class="d-flex justify-center mt-4">
+                                <div class="d-flex align-center" v-if="!!riotAccounts">
+                                    <riot-account-chooser
+                                        v-model="selectedRiotAccount"
+                                        @on-account-change="refreshRiotAccounts"
+                                        :options.sync="riotAccounts"
+                                    >
+                                    </riot-account-chooser>
+
+                                    <v-btn icon @click="refreshRiotAccounts">
+                                        <v-icon>
+                                            mdi-refresh
+                                        </v-icon>
                                     </v-btn>
-                                </template>
+                                </div>
 
-                                <squad-invite-create-card
-                                    :squad-id="defaultSquad.squad.id"
-                                    @on-send-invite="showHideInviteSquad = false"
+                                <v-progress-circular size="64" indeterminate v-else></v-progress-circular>
+                            </div>
+
+                            <div class="mt-4">
+                                You can always come back to this later by going to the game logs page for any supported Riot Games game. 
+                            </div>
+
+                            <div class="mt-4 d-flex justify-center">
+                                <v-checkbox
+                                    v-model="doneRiot"
+                                    label="I've linked my Riot account because if I don't, SquadOV won't record anything (for real)!"
+                                    color="success"
+                                    hide-details
                                 >
-                                </squad-invite-create-card>
-                            </v-dialog>
+                                </v-checkbox>
+                            </div>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
+                        </template>
+
+                        <template v-else-if="st == DynamicSteps.Wow">
+                            SquadOV depends on World of Warcraft's combat logs to determine when you are raiding, running keystones, or competing in the arena.
+                            To ensure World of Warcraft is properly setup, ensure:
+
+                            <ol class="mt-4">
+                                <li>
+                                    You have an automatic combat logger addon installed.
+                                    We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
+                                </li>
+                                <li>
+                                    In your World of Warcraft settings menu, enable the <b>Advanced Combat Logging</b> option under the "System" and "Network" submenus.
+                                </li>
+                            </ol>
+
+                            <div class="mt-4">
+                                You must also disable any other addons (or their features) that may enable the combat log (Method Raid Tools, LoggerHead, Arena Combat Logger, etc.).
+                            </div>
+
+                            <div class="mt-4 d-flex justify-center">
+                                <v-checkbox
+                                    v-model="doneWow"
+                                    label="I've installed the Simple Combat Logger addon and enabled Advanced Combat Logging. I'm all good to go!"
+                                    color="success"
+                                    hide-details
+                                >
+                                </v-checkbox>
+                            </div>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
+                        </template>
+
+                        <template v-else-if="st == DynamicSteps.Csgo">
+                            SquadOV works out of the box with CS:GO.
+                            <b>However</b>, you should be aware that we do modify your autoexec file to achieve our automatic recording and squad sync.
+                            In particular we add these lines to your autoexec.cfg:
+
+                            <pre>
+    con_logfile squadov.log
+    con_timestamp 1
+                            </pre>
+                            If these settings already existed in your autoexec, they have been overwritten.
+                            These settings are crucial for getting SquadOV to work with CS:GO.
+
+                            Don't know what we're talking about? You can ignore everything we just said! Enjoy!
+                            <b>Note that we do not currently support FaceIT or ESEA.</b>
+
+                            <div class="mt-4 d-flex justify-center">
+                                <v-checkbox
+                                    v-model="doneCsgo"
+                                    label="Yup, read all that and I know that my autoexec is going to change!"
+                                    color="success"
+                                    hide-details
+                                >
+                                </v-checkbox>
+                            </div>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
+                        </template>
+
+                        <template v-else-if="st == DynamicSteps.Squad">
+                            SquadOV is all about squads which lets you easily sync VODs and view each other's recorded footage.
+                            SquadOV is better with friends!
+
+                            <div class="d-flex justify-center mt-4">
+                                <squad-member-table
+                                    v-if="!!squadMembers"
+                                    v-model="squadMembers"
+                                    :is-owner="true"
+                                >
+                                </squad-member-table>
+
+                                <v-progress-circular size="64" indeterminate v-else></v-progress-circular>
+                            </div>
+
+                            <div class="mt-4">
+                                It's also super easy to invite your friend! Click the button below to invite your friend to your squad.
+                                You can either send them a link or invite them directly by username or email. Easy!
+                            </div>
+
+                            <div class="d-flex justify-center mt-4">
+                                <v-dialog max-width="40%" v-model="showHideInviteSquad">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-btn
+                                            v-on="on"
+                                            v-bind="attrs"
+                                            large
+                                            small
+                                            color="primary"
+                                        >
+                                            Invite
+                                        </v-btn>
+                                    </template>
+
+                                    <squad-invite-create-card
+                                        :squad-id="defaultSquad.squad.id"
+                                        @on-send-invite="showHideInviteSquad = false"
+                                    >
+                                    </squad-invite-create-card>
+                                </v-dialog>
+                            </div>
+                            
+                            <div class="mt-4 d-flex justify-center">
+                                <v-checkbox
+                                    v-model="doneSquad"
+                                    label="I've invited my friends to SquadOV because this is going to be awesome!"
+                                    color="success"
+                                    hide-details
+                                >
+                                </v-checkbox>
+                            </div>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
+                        </template>
+                    </v-stepper-content>
+
+                    <v-stepper-content :step="totalSteps">
+                        <div class="d-flex flex-column justify-center align-center full-parent-height">
+                            <div class="text-h6">
+                                One last step! Download SquadOV and login to our desktop app to start recording your VODs.
+                            </div>
+
+                            <download-button class="mt-4" large></download-button>
+
+                            <div class="mt-4">
+                                Also, join our Discord! We're super active there and bug reports and feature requests there generally get answered quicker.
+                            </div>
+
+                            <v-btn
+                                class="mt-4"
+                                :href="discordUrl"
+                                color="primary"
+                            >
+                                Discord
+                            </v-btn>
+
+                            <v-checkbox
+                                class="mt-4"
+                                v-model="doneDownload"
+                                label="I've downloaded SquadOV because I can't record without downloading and installing it! I've also joined Discord because I'm awesome."
+                                color="success"
+                                hide-details
+                            >
+                            </v-checkbox>
+
+                            <setup-wizard-stepper
+                                class="mt-4"
+                                v-model="step"
+                                :total-steps="totalSteps"
+                                :can-go-next="canGoNext"
+                            >
+                            </setup-wizard-stepper>
                         </div>
+                    </v-stepper-content>
+                </v-stepper-items>
+            </v-stepper>
 
-                        <div class="mt-4">
-                            You can read more about managing squads in our <a href="#" @click="goToSquadUserManual">user manual</a>.
-                        </div>
-                    </template>
-                </v-stepper-content>
-
-                <v-stepper-content :step="totalSteps">
-                    <div class="d-flex flex-column justify-center align-center full-parent-height">
-                        <div class="text-h6">
-                            That's it! You're good to go, welcome to SquadOV.
-                        </div>
-
-                        <v-btn :to="dashboardTo" color="success" class="mt-4" large>
-                            Exit Wizard
-                        </v-btn>
-                    </div>
-                </v-stepper-content>
-            </v-stepper-items>
-        </v-stepper>
-
-        <div class="d-flex justify-center" v-else>
-            <v-progress-circular size="64" indeterminate></v-progress-circular>
-        </div>
-
-        <div class="d-flex align-center mt-2">
-            <v-btn
-                :to="dashboardTo"
-                large
-            >
-                Exit Wizard
-            </v-btn>
-
-            <v-spacer></v-spacer>
-
-            <v-btn
-                class="mr-4"
-                color="warning"
-                @click="step -= 1"
-                v-if="step > 1"
-                large
-            >
-                Previous
-            </v-btn>
-
-            <v-btn
-                color="primary"
-                @click="step += 1"
-                v-if="step != totalSteps"
-                large
-            >
-                Next
-            </v-btn>
-
-            <v-btn
-                color="success"
-                :to="dashboardTo"
-                large
-                v-else
-            >
-                Finish
-            </v-btn>
+            <div class="d-flex justify-center" v-else>
+                <v-progress-circular size="64" indeterminate></v-progress-circular>
+            </div>
         </div>
     </div>
 </template>
@@ -284,7 +362,6 @@ con_timestamp 1
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import * as pi from '@client/js/pages'
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadMembership } from '@client/js/squadov/squad'
 import { openUrlInBrowser } from '@client/js/external'
@@ -292,6 +369,8 @@ import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import RiotAccountChooser from '@client/vue/utility/riot/RiotAccountChooser.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
+import DownloadButton from '@client/vue/utility/DownloadButton.vue'
+import SetupWizardStepper from '@client/vue/utility/SetupWizardStepper.vue'
 
 enum DynamicSteps {
     Riot,
@@ -304,7 +383,9 @@ enum DynamicSteps {
     components: {
         RiotAccountChooser,
         SquadMemberTable,
-        SquadInviteCreateCard
+        SquadInviteCreateCard,
+        DownloadButton,
+        SetupWizardStepper,
     }
 })
 export default class SetupWizard extends Vue {
@@ -318,6 +399,13 @@ export default class SetupWizard extends Vue {
     ready: boolean = false
 
     gameSteps: DynamicSteps[] = []
+
+    doneSelect: boolean = false
+    doneRiot: boolean = false
+    doneWow: boolean = false
+    doneSquad: boolean = false
+    doneCsgo: boolean = false
+    doneDownload: boolean = false
 
     // Riot Account Data
     selectedRiotAccount: RiotAccountData | null = null
@@ -336,15 +424,39 @@ export default class SetupWizard extends Vue {
         }
     }
 
+    get canGoNext(): boolean {
+        if (this.step == 1) {
+            return this.doneSelect
+        } else if (this.step == this.totalSteps) {
+            return this.doneDownload
+        } else {
+            let idx = this.step - 2
+            if (idx < this.gameSteps.length) {
+                let realStep = this.gameSteps[idx]
+                switch(realStep) {
+                    case DynamicSteps.Riot:
+                        return this.doneRiot
+                    case DynamicSteps.Wow:
+                        return this.doneWow
+                    case DynamicSteps.Csgo:
+                        return this.doneCsgo
+                }
+            } else {
+                return this.doneSquad
+            }
+        }
+
+        return false
+    }
+
+    get imageWidth(): number {
+        return 128;
+    }
+
     get totalSteps(): number {
         return 2 + this.dynamicSteps.size
     }
 
-    get dashboardTo(): any {
-        return {
-            name: pi.DashboardPageId
-        }
-    }
 
     @Watch('gameSteps')
     onChangeGameSteps() {
@@ -356,21 +468,22 @@ export default class SetupWizard extends Vue {
         this.dynamicSteps = gs
     }
 
-    goToWowUserManual() {
-        openUrlInBrowser('https://support.squadov.gg/user-manual/games/wow#combatlog')
+    @Watch('step')
+    onChangeSteps() {
+        if (this.step === this.totalSteps) {
+///#if !DESKTOP
+            localStorage.setItem('squadovSetup', 'yes')
+///#endif
+        }
     }
 
-    goToRiotAccountUserManual() {
-        openUrlInBrowser('https://support.squadov.gg/user-manual/games/valorant#account')
+    get discordUrl(): string {
+        return 'https://discord.gg/jVyfv9ZHHV'
     }
 
     goToScl() {
         const url = 'https://www.curseforge.com/wow/addons/simplecombatlogger'
         openUrlInBrowser(url)
-    }
-
-    goToSquadUserManual() {
-        openUrlInBrowser('https://support.squadov.gg/user-manual/squads')
     }
 
     refreshRiotAccounts() {
@@ -427,6 +540,8 @@ export default class SetupWizard extends Vue {
 .game {
     transition: opacity 0.5s linear 0s;
     cursor: pointer;
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 .chosen-game {
@@ -435,6 +550,16 @@ export default class SetupWizard extends Vue {
 
 .not-chosen-game {
     opacity: 0.3;
+}
+
+.outer-content {
+    overflow: auto;
+}
+
+.inner-content {
+    width: 60%;
+    max-width: 60%;
+    margin: auto;
 }
 
 </style>

@@ -140,6 +140,7 @@ interface RegisterInput {
     username: string
     password: string
     email: string
+    ref: string | undefined
 }
 
 export interface CheckVerificationOutput {
@@ -1003,6 +1004,10 @@ class ApiClient {
 
     markUserActive(): Promise<void> {
         return axios.post(`v1/users/me/active`, {}, this.createWebAxiosConfig())
+    }
+
+    markUserDownload(): Promise<void> {
+        return axios.post(`v1/users/me/download`, {}, this.createWebAxiosConfig())
     }
 
     getRiotRsoAuthorizeUrl(userId: number): Promise<ApiData<string>> {
