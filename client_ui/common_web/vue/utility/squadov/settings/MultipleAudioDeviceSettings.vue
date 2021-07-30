@@ -40,7 +40,7 @@
                     </v-checkbox>
 
                     <v-spacer></v-spacer>
-                    <v-btn icon color="error" @click="deleteDevice(index)" v-if="index > 0">
+                    <v-btn icon color="error" @click="deleteDevice(index)">
                         <v-icon>
                             mdi-delete
                         </v-icon>
@@ -105,7 +105,7 @@ export default class MultipleAudioDeviceSettings extends Vue {
     }
     
     deleteDevice(idx: number) {
-        if (idx <= 0 || idx >= this.internalValue.length || this.internalValue.length <= 1) {
+        if (idx < 0 || idx >= this.internalValue.length) {
             return
         }
         

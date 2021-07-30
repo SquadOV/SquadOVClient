@@ -82,7 +82,11 @@ int main(int argc, char** argv) {
     // Doesn't really matter what game we stick in here yolo.
     service::recorder::GameRecorder recorder(finalProcess, shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
-    recorder.setFileOutputFromUri("bobbothebuilder", outputFname);
+
+    service::vod::VodDestination destination;
+    destination.loc = service::vod::VodManagerType::FileSystem;
+    destination.url = outputFname;
+    recorder.setFileOutputFromDestination("bobbothebuilder", destination);
     // Wait for it to grab window info
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
