@@ -62,7 +62,6 @@ export interface SquadOvRecordingSettings {
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
-    maxUploadSpeed: number | null
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
@@ -250,7 +249,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -282,7 +280,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -314,7 +311,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                maxUploadSpeed: null,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -366,7 +362,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 }
             ],
             usePushToTalk: false,
-            maxUploadSpeed: null,
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
@@ -455,10 +450,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVfr3 === undefined) {
         parsedData.record.useVfr3 = false
-    }
-
-    if (parsedData.record.maxUploadSpeed === undefined) {
-        parsedData.record.maxUploadSpeed = null
     }
     
     if (parsedData.record.useLocalRecording === undefined) {

@@ -51,7 +51,6 @@ public:
     ~CloudStoragePiper();
 
     std::string sessionId() const override { return _destination.session; }
-    void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
     void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
     void flush() override;

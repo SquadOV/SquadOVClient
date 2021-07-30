@@ -42,12 +42,6 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr3 = obj.value("useVfr3", false);
 
-    if (obj.count("maxUploadSpeed") != 0 && !obj["maxUploadSpeed"].is_null()) {
-        settings.maxUploadSpeed = obj["maxUploadSpeed"].get<size_t>();
-    } else {
-        settings.maxUploadSpeed = {};
-    }
-
     settings.useLocalRecording = obj.value("useLocalRecording", false);
     settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
     settings.maxLocalRecordingSizeGb = obj["maxLocalRecordingSizeGb"].get<double>();

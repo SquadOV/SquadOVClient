@@ -883,7 +883,6 @@ void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, co
     LOG_INFO("Output Destination: " << destination << std::endl);
     _outputDestination = destination;
     _outputPiper = pipe::createFileOutputPiper(videoUuid, destination);
-    _outputPiper->setMaxUploadSpeed(_cachedRecordingSettings->maxUploadSpeed);
 }
 
 shared::squadov::VodMetadata GameRecorder::getMetadata() const {

@@ -87,12 +87,6 @@ void CloudStoragePiper::setProgressCallback(const shared::http::DownloadProgress
     _totalProgressBytes = totalBytes;
 }
 
-void CloudStoragePiper::setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {
-    if (bytesPerSec.has_value()) {
-        _client->setMaxUploadSpeed(bytesPerSec.value());
-    }
-}
-
 void CloudStoragePiper::copyDataIntoInternalBuffer(std::vector<char>& buffer) {
     std::unique_lock<std::mutex> guard(_cloudMutex);
     if (_cloudBuffer.size() >= 0) {

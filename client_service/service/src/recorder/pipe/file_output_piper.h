@@ -18,8 +18,6 @@ public:
     explicit FileOutputPiper(PipePtr&& pipe);
     virtual ~FileOutputPiper();
 
-    virtual void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {}
-
     void start();
     void wait();
     void stop();

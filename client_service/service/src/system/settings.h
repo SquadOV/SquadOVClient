@@ -32,8 +32,6 @@ struct RecordingSettings {
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
 
-    std::optional<size_t> maxUploadSpeed;
-
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;
     double maxLocalRecordingSizeGb = 1.0;

@@ -12,10 +12,6 @@ void GCSStorageClient::initializeDestination(const service::vod::VodDestination&
     _destination = destination;
 }
 
-void GCSStorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
-    _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
-}
-
 void GCSStorageClient::startNewSegment() {
 }
 

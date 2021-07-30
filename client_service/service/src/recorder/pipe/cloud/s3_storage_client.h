@@ -10,7 +10,6 @@ public:
     explicit S3StorageClient(const std::string& videoUuid);
 
     void initializeDestination(const service::vod::VodDestination& destination) override;
-    void setMaxUploadSpeed(size_t bytesPerSec) override;
 
     void startNewSegment() override;
     std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) override;

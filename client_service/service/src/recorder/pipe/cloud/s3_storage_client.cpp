@@ -19,10 +19,6 @@ void S3StorageClient::initializeDestination(const service::vod::VodDestination& 
     _destination = destination;
 }
 
-void S3StorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
-    _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
-}
-
 void S3StorageClient::startNewSegment() {
     // Get the next destination to upload to.
     ++_currentPart;
