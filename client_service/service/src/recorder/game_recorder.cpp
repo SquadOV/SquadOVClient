@@ -426,9 +426,11 @@ bool GameRecorder::initializeInputStreams(int flags) {
         _paInit.reset(new audio::PortaudioInitRAII);
     }
 
+    service::recorder::audio::AudioDeviceSet deviceSet;
+
     for (const auto& output : _cachedRecordingSettings->outputDevices) {
         auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
-        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output.device, output.volume, output.mono);
+        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output.device, output.volume, output.mono, deviceSet);
         if (recorder->exists()) {
             recorder->startRecording();
             _aoutRecorder.emplace_back(std::move(recorder));
@@ -438,7 +440,7 @@ bool GameRecorder::initializeInputStreams(int flags) {
     std::lock_guard guard(_ainMutex);
     for (const auto& input : _cachedRecordingSettings->inputDevices) {
         auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
-        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono);
+        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono, deviceSet);
         if (recorder->exists()) {
             recorder->startRecording();
             _ainRecorder.emplace_back(std::move(recorder));

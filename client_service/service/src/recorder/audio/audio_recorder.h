@@ -4,6 +4,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <unordered_set>
 
 namespace service::recorder::encoder {
 class AvEncoder;
@@ -26,13 +27,15 @@ inline std::string audioDeviceDirectionToStr(EAudioDeviceDirection dir) {
     return "";
 }
 
+using AudioDeviceSet = std::unordered_set<int>;
+
 class AudioRecorder {
 public:
     virtual ~AudioRecorder() {}
     virtual void startRecording() = 0;
     virtual void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) = 0;
     virtual void stop() = 0;
-    virtual void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono) = 0;
+    virtual void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet) = 0;
     virtual double initialVolume() const = 0;
     virtual void setVolume(double volume) = 0;
 

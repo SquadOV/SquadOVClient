@@ -23,7 +23,7 @@ public:
     void startRecording() override;
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) override;
     void stop() override;
-    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono) override;
+    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet) override;
     double initialVolume() const override;
     void setVolume(double volume) override;
 
