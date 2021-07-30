@@ -1,5 +1,6 @@
 #include "game_event_watcher/league/league_log_watcher.h"
 #include "shared/filesystem/utility.h"
+#include "shared/time/ntp_client.h"
 #include <regex>
 
 namespace fs = std::filesystem;
@@ -89,10 +90,10 @@ void LeagueLogWatcher::loadFromExecutable(const std::filesystem::path& exePath) 
                 // YEAR-MONTH-DATETHOUR-MINUTES-SECONDS. So parse that to figure out
                 // which folder was made the latest.
                 const auto fname = shared::filesystem::pathUtf8(gameFolder.filename());
-                const auto tm = date::make_zoned(
+                const auto tm = shared::time::NTPClient::singleton()->adjustTime(date::make_zoned(
                     date::current_zone(),
                     shared::strToLocalTime(fname, "%FT%H-%M-%S")
-                ).get_sys_time();
+                ).get_sys_time());
                 if (tm > latestTime) {
                     latestTime = tm;
                     latestFolder = gameFolder;
