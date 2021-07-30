@@ -118,13 +118,23 @@ export default class SquadMemberTable extends Vue {
         if (!this.value) {
             return []
         }
-        return this.value.map((ele : SquadMembership) => {
-            return {
-                username: ele.username,
-                role: SquadRole[ele.role],
-                value: ele,
-            }
-        })
+        return [...this.value]
+            .sort((a: SquadMembership, b: SquadMembership) => {
+                if (a.username < b.username) {
+                    return -1
+                } else if (a.username > b.username) {
+                    return 1
+                } else {
+                    return 0
+                }
+            })
+            .map((ele : SquadMembership) => {
+                return {
+                    username: ele.username,
+                    role: SquadRole[ele.role],
+                    value: ele,
+                }
+            })
     }
 
     cancelKick() {

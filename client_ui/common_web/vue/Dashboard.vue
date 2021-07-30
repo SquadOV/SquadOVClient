@@ -197,7 +197,17 @@ export default class Dashboard extends mixins(CommonComponent) {
     }
 
     get filteredSquadMembers(): SquadMembership[] {
-        return this.squadMembers.filter((ele: SquadMembership) => ele.userId !== this.$store.state.currentUser.id)
+        return this.squadMembers
+            .filter((ele: SquadMembership) => ele.userId !== this.$store.state.currentUser.id)
+            .sort((a: SquadMembership, b: SquadMembership) => {
+                if (a.username < b.username) {
+                    return -1
+                } else if (a.username > b.username) {
+                    return 1
+                } else {
+                    return 0
+                }
+            })
     }
 
     @Watch('filteredSquadMembers')
