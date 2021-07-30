@@ -154,7 +154,8 @@
                             </div>
 
                             <div class="mt-4">
-                                You can always come back to this later by going to the game logs page for any supported Riot Games game. 
+                                You can always come back to this later by going to the game logs page for any supported Riot Games game.
+                                <b>Recordings for League of Legends and Teamfight Tactics do not work for SEA (Garena).</b>
                             </div>
 
                             <div class="mt-4 d-flex justify-center">
