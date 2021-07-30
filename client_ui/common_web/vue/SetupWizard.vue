@@ -311,11 +311,13 @@
 
                     <v-stepper-content :step="totalSteps">
                         <div class="d-flex flex-column justify-center align-center full-parent-height">
-                            <div class="text-h6">
-                                One last step! Download SquadOV and login to our desktop app to start recording your VODs.
-                            </div>
+                            <template v-if="!isDesktop">
+                                <div class="text-h6">
+                                    One last step! Download SquadOV and login to our desktop app to start recording your VODs.
+                                </div>
 
-                            <download-button class="mt-4" large></download-button>
+                                <download-button class="mt-4" large></download-button>
+                            </template>
 
                             <div class="mt-4">
                                 Also, join our Discord! We're super active there and bug reports and feature requests there generally get answered quicker.
@@ -324,7 +326,18 @@
                             <v-btn
                                 class="mt-4"
                                 :href="discordUrl"
+                                target="_blank"
                                 color="primary"
+                                v-if="!isDesktop"
+                            >
+                                Discord
+                            </v-btn>
+
+                            <v-btn
+                                class="mt-4"
+                                @click="goToUrl(discordUrl)"
+                                color="primary"
+                                v-else
                             >
                                 Discord
                             </v-btn>
@@ -410,6 +423,14 @@ export default class SetupWizard extends Vue {
     // Riot Account Data
     selectedRiotAccount: RiotAccountData | null = null
     riotAccounts: RiotAccountData[] | null = null
+
+    get isDesktop(): boolean {
+/// #if DESKTOP
+        return true
+/// #else
+        return false
+/// #endif
+    }
 
     stepToString(s: DynamicSteps): string {
         switch(s) {
@@ -530,6 +551,10 @@ export default class SetupWizard extends Vue {
         })
 
         this.refreshRiotAccounts()
+    }
+
+    goToLink(url: string) {
+        openUrlInBrowser(url)
     }
 }
 
