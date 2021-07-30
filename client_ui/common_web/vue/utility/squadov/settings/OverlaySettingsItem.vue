@@ -221,16 +221,49 @@
 
                     <v-col cols="8">
                         <div v-if="!!selectedLayer">
-                            <v-text-field
-                                v-model="selectedLayer.name"
-                                hide-details
-                                outlined
-                                single-line
-                                dense
-                                label="Name"
-                                :readonly="!canEdit"
-                            >
-                            </v-text-field>
+
+                            <div class="d-flex align-center">
+                                <v-text-field
+                                    v-model="selectedLayer.name"
+                                    hide-details
+                                    outlined
+                                    single-line
+                                    dense
+                                    label="Name"
+                                    :readonly="!canEdit"
+                                >
+                                </v-text-field>
+
+                                <template v-if="canEdit">
+                                    <v-btn icon color="error" v-if="!confirmDelete" @click="confirmDelete = true">
+                                        <v-icon>
+                                            mdi-delete
+                                        </v-icon>
+                                    </v-btn>
+
+                                    <template v-else>
+                                        <v-btn
+                                            color="error"
+                                            icon
+                                            @click="confirmDelete = false"
+                                        >
+                                            <v-icon>
+                                                mdi-close
+                                            </v-icon>
+                                        </v-btn>
+
+                                        <v-btn
+                                            color="success"
+                                            icon
+                                            @click="deleteLayer(selectedLayer)"
+                                        >
+                                            <v-icon>
+                                                mdi-check
+                                            </v-icon>
+                                        </v-btn>
+                                    </template>
+                                </template>
+                            </div>
 
                             <game-filter-ui
                                 v-model="selectedLayer.games"
@@ -306,6 +339,18 @@ export default class OverlaySettingsItem extends Vue {
     editSuccess: boolean = false
     previewStartMsg: boolean = false
     ready: boolean = false
+
+    confirmDelete = false
+
+    deleteLayer(layer: SquadOvOverlay) {
+        let idx = this.editableLayers.findIndex((ele: SquadOvOverlay) => ele === layer)
+        if (idx == -1) {
+            return
+        }
+        this.editableLayers.splice(idx, 1)
+        this.selectedLayerIdx = null
+        this.confirmDelete = false
+    }
 
     layerUp(idx: number) {
         if (idx <= 0 || idx >= this.editableLayers.length) {
