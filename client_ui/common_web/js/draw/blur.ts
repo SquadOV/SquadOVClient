@@ -67,6 +67,9 @@ export class BlurDrawContainer {
         //@ts-ignore
         let blurAmount = o.blurAmount
 
+        let originX = o.originX || 'left'
+        let originY = o.originY || 'top'
+
         if (!blurId || blurAmount === undefined) {
             return
         }
@@ -89,10 +92,13 @@ export class BlurDrawContainer {
         let canvasWidth = this._canvas.getElement().width
         let canvasHeight = this._canvas.getElement().height
 
-        let left = o.left! / canvasWidth * 100
-        let top = o.top! / canvasHeight * 100
-        let width = o.width! * o.scaleX! / canvasWidth * 100
-        let height = o.height! * o.scaleY! / canvasHeight * 100
+        let realWidth = o.width! * o.scaleX!
+        let realHeight = o.height! * o.scaleY!
+
+        let width = realWidth / canvasWidth * 100
+        let height = realHeight / canvasHeight * 100
+        let left = ((originX == 'left') ? o.left! : o.left! - realWidth) / canvasWidth * 100
+        let top = ((originY == 'top') ? o.top! : o.top! - realHeight) / canvasHeight * 100
 
         blurEle.style.left = `${left}%`
         blurEle.style.top = `${top}%`
