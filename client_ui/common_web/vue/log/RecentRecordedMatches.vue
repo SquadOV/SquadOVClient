@@ -131,6 +131,7 @@
                                                 :match="match"
                                                 :disable-click="inSelectMode"
                                                 :disable-preview="match.base.isLocal"
+                                                :disable-mini="disableMini"
                                             >
                                             </recent-match-display>
                                         </div>
@@ -206,6 +207,9 @@ export default class RecentRecordedMatches extends Vue {
 
     @Prop({type: Boolean, default: false})
     onlyWatchlist!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableMini!: boolean
 
     recentMatches: RecentMatch[] | null = null
     lastIndex: number = 0

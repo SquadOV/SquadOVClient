@@ -15,10 +15,18 @@
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
                 <template v-slot:activator="{on, attrs}">
                     <v-btn text v-bind="attrs" v-on="on">
-                        {{ m.name }}
-                        <v-icon small>
-                            mdi-chevron-down
-                        </v-icon> 
+                        <v-badge
+                            inline
+                            left
+                            :value="m.notifications > 0"
+                            :content="`${m.notifications}`"
+                            color="error"
+                        >
+                            {{ m.name }}
+                            <v-icon small>
+                                mdi-chevron-down
+                            </v-icon> 
+                        </v-badge>
                     </v-btn>
                 </template>
 
@@ -26,11 +34,27 @@
                     <template v-for="c in m.children">
                         <template v-if="!c.disabled">
                             <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
-                                <v-list-item-title>{{ c.name }}</v-list-item-title>
+                                <v-badge
+                                    inline
+                                    right
+                                    :value="c.notifications > 0"
+                                    :content="`${c.notifications}`"
+                                    color="error"
+                                >
+                                    <v-list-item-title>{{ c.name }}</v-list-item-title>
+                                </v-badge>
                             </v-list-item>
 
                             <v-list-item :key="c.name" @click="goToLink(c.to)" v-else>
-                                <v-list-item-title>{{ c.name }}</v-list-item-title>
+                                <v-badge
+                                    inline
+                                    right
+                                    :value="c.notifications > 0"
+                                    :content="`${c.notifications}`"
+                                    color="error"
+                                >
+                                    <v-list-item-title>{{ c.name }}</v-list-item-title>
+                                </v-badge>
                             </v-list-item>
                         </template>
                     </template>
@@ -42,22 +66,35 @@
 
         <download-button v-if="!isDesktop" class="mr-2"></download-button>
 
+        <v-menu bottom left offset-y :close-on-content-click="false" class="mr-4">
+            <template v-slot:activator="{on, attrs}">
+                <v-btn icon v-bind="attrs" v-on="on">
+                    <v-icon>
+                        mdi-history
+                    </v-icon>
+                </v-btn>
+            </template>
+
+            <div class="news-div">
+                <news-display></news-display>
+            </div>
+        </v-menu>
+
         <template v-if="isLoggedIn">
-            <v-menu bottom offset-y class="mr-4">
+            <v-toolbar-title>
+                <v-btn icon :to="settingsTo" v-if="settingsEnabled">
+                    <v-icon>
+                        mdi-cog
+                    </v-icon>
+                </v-btn>
+            </v-toolbar-title>
+
+            <v-menu bottom left offset-y class="mr-4">
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn text v-bind="attrs" v-on="on">
-                        <v-badge
-                            inline
-                            left
-                            :value="totalNotifications > 0"
-                            :content="`${totalNotifications}`"
-                            color="error"
-                        >
-                            {{ currentUserName }}
-                            <v-icon small>
-                                mdi-chevron-down
-                            </v-icon> 
-                        </v-badge>
+                    <v-btn icon v-bind="attrs" v-on="on">
+                        <v-icon>
+                            mdi-account
+                        </v-icon>
                     </v-btn>
                 </template>
 
@@ -66,33 +103,11 @@
                         <v-list-item-title>Profile</v-list-item-title>
                     </v-list-item>
 
-                    <v-list-item :to="squadsTo">
-                        <v-list-item-title>
-                            <v-badge
-                                class="inner-badge"
-                                inline
-                                :value="totalSquadInvites > 0"
-                                :content="`${totalSquadInvites}`"
-                                color="error"
-                            >
-                                Squads
-                            </v-badge>
-                        </v-list-item-title>
-                    </v-list-item>
-
                     <v-list-item @click="logout">
                         <v-list-item-title>Logout</v-list-item-title>
                     </v-list-item>
                 </v-list>
             </v-menu>
-
-            <v-toolbar-title>
-                <v-btn icon :to="settingsTo" v-if="settingsEnabled">
-                    <v-icon>
-                        mdi-cog
-                    </v-icon>
-                </v-btn>
-            </v-toolbar-title>
         </template>
 
         <template v-else>
@@ -169,7 +184,7 @@ import { clearSessionCookie } from '@client/js/session'
 import { openUrlInBrowser } from '@client/js/external'
 import CommonComponent from '@client/vue/CommonComponent'
 import DownloadButton from '@client/vue/utility/DownloadButton.vue'
-
+import NewsDisplay from '@client/vue/utility/squadov/NewsDisplay.vue'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -181,6 +196,7 @@ import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 @Component({
     components: {
         DownloadButton,
+        NewsDisplay,
     }
 })
 export default class AppNav extends mixins(CommonComponent) {
@@ -250,10 +266,6 @@ export default class AppNav extends mixins(CommonComponent) {
 
     get isLoggedIn(): boolean {
         return !!this.$store.state.currentUser
-    }
-
-    get totalNotifications(): number {
-        return this.totalSquadInvites
     }
 
     get totalSquadInvites(): number {
@@ -347,6 +359,7 @@ export default class AppNav extends mixins(CommonComponent) {
                     {
                         name: 'Squads',
                         to: this.squadsTo,
+                        notifications: this.totalSquadInvites,
                     },
                     /*
                     {
@@ -356,7 +369,8 @@ export default class AppNav extends mixins(CommonComponent) {
                         },
                     },
                     */
-                ]
+                ],
+                notifications: this.totalSquadInvites,
             },
             {
                 name: 'Performance',
@@ -534,6 +548,14 @@ export default class AppNav extends mixins(CommonComponent) {
 >>>.v-toolbar__extension {
     padding: 0;
     margin: 0;
+}
+
+.news-div {
+    max-height: 70vh;
+    width: 33vw;
+    background-color: #121212;
+    border: 1px white solid;
+    overflow: auto;
 }
 
 </style>

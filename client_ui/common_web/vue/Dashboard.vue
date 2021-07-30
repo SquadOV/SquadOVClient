@@ -4,6 +4,8 @@
             <v-container fluid v-if="!loading">
                 <v-row>
                     <v-col cols="3">
+                        <status-display class="mb-4"></status-display>
+
                         <!-- User and squad -->
                         <div class="text-h6 font-weight-bold">
                             Welcome back, {{ $store.state.currentUser.username }}!
@@ -103,20 +105,14 @@
                             </div>
                             <referral-link></referral-link>
                         </div>
-
-                        <!-- Recent recorded play time -->
-                        <total-recorded-playtime-widget class="mt-2"></total-recorded-playtime-widget>
                     </v-col>
 
-                    <v-col cols="6">
+                    <v-col cols="9">
                         <!-- Recent recorded games -->
-                        <recent-recorded-matches></recent-recorded-matches>
-                    </v-col>
-
-                    <v-col cols="3">
-                        <!-- News and updates -->
-                        <status-display class="mb-4"></status-display>
-                        <news-display></news-display>
+                        <recent-recorded-matches
+                            disable-mini
+                        >
+                        </recent-recorded-matches>
                     </v-col>
                 </v-row>
             </v-container>
