@@ -38,8 +38,27 @@ OverlayLayer OverlayLayer::fromJson(const nlohmann::json& obj) {
         }
     }
     layer.fabric = obj["fabric"];
-    layer.width = obj.value("width", 0);
-    layer.height = obj.value("height", 0);
+
+    {
+        const auto it = obj.find("width");
+        if (it != obj.end() && !it->is_null()) {
+            layer.width = it->get<size_t>();
+        } else {
+            layer.width = 1920;
+        }
+        layer.width = obj.value("width", 0);
+    }
+
+    {
+        const auto it = obj.find("height");
+        if (it != obj.end() && !it->is_null()) {
+            layer.height = it->get<size_t>();
+        } else {
+            layer.height = 1080;
+        }
+        layer.height = obj.value("height", 0);
+    }
+
     return layer;
 }
 

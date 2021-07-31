@@ -373,8 +373,13 @@ export default class OverlaySettingsItem extends Vue {
     }
 
     onChangeCanvasSize(layer: SquadOvOverlay, width: number, height: number) {
-        layer.width = width
-        layer.height = height
+        if (!!width) {
+            layer.width = width
+        }
+
+        if (!!height) {
+            layer.height = height
+        }
     }
 
     get isLayerDisabled(): (layer: SquadOvOverlay) => boolean {

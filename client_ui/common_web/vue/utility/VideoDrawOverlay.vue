@@ -584,8 +584,10 @@ export default class VideoDrawOverlay extends Vue {
         }
 
         let bb = this.$refs.canvasDiv.getBoundingClientRect()
-        this.draw.setWidthHeight(bb.width, bb.height)
-        this.$emit('canvassize', this.draw._canvasWidth, this.draw._canvasHeight)
+        if (!!bb.width && !!bb.height) {
+            this.draw.setWidthHeight(bb.width, bb.height)
+            this.$emit('canvassize', this.draw._canvasWidth, this.draw._canvasHeight)
+        }
     }
 
     get activeTool(): BaseDrawTool | null {
