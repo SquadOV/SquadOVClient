@@ -11,7 +11,6 @@
 #endif
 
 #include <chrono>
-#include <fstream>
 #include <malloc.h>
 #include <memory>
 #include <iostream>
@@ -23,14 +22,24 @@ using namespace std::chrono_literals;
 
 namespace game_event_watcher {
 
-LogWatcher::LogWatcher(const fs::path& path, const LogChangeCallback& cb, const shared::TimePoint& timeThreshold, bool waitForNewFile, bool immediatelyGoToEnd, bool loop):
+LogWatcher::LogWatcher(
+    const fs::path& path,
+    const LogChangeCallback& cb,
+    const shared::TimePoint& timeThreshold,
+    bool waitForNewFile,
+    bool immediatelyGoToEnd,
+    bool loop,
+    std::optional<std::ifstream::pos_type> initialPosition
+):
     _path(path),
     _cb(cb),
     _timeThreshold(timeThreshold),
-    _changeThread(&LogWatcher::watchWorker, this),
     _waitForNewFile(waitForNewFile),
     _immediatelyGoToEnd(immediatelyGoToEnd),
-    _loop(loop) {
+    _loop(loop),
+    _initialPosition(initialPosition)
+{
+    _changeThread = std::thread(&LogWatcher::watchWorker, this);
 }
 
 LogWatcher::~LogWatcher() {
@@ -78,6 +87,7 @@ void LogWatcher::watchWorker() {
     LOG_INFO("Found Log File: " << _path << std::endl);
     // Open file for reading via the C++ STDLIB.
     std::ifstream logStream;
+    bool isInitialOpen = true;
     LogLinesDelta lineBuffer;
 
     // Open the file (if necessary) for the OS-specific way of watching for changes.
@@ -138,11 +148,16 @@ void LogWatcher::watchWorker() {
             // We don't want to set the std::ios_base::ate flag if we detected the contents of the file were wiped as we actually
             // do want to read in what was already written into the file.
             LOG_INFO("Open Log File for Reading: " << _path << " " << _immediatelyGoToEnd << " " << hasReset << " " << isCompletelyNewFile << std::endl);
-            logStream.open(_path, (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile) ? std::ios_base::ate : std::ios_base::in);
+            logStream.open(_path, (_immediatelyGoToEnd && !hasReset && !isCompletelyNewFile && (!isInitialOpen || !_initialPosition)) ? std::ios_base::ate : std::ios_base::in);
             if (!logStream.is_open()) {
                 LOG_WARNING("\tFailed to open log file: " << _path << std::endl);
             } else {
                 LOG_INFO("\tSuccessfully opened log file." << std::endl);
+                if (isInitialOpen && _initialPosition) {
+                    LOG_INFO("\t...Navigating to initial position." << std::endl);
+                    logStream.seekg(_initialPosition.value());
+                }
+                isInitialOpen = false;
             }
         } 
         previousFilesize = currentFilesize;

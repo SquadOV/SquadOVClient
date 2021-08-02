@@ -38,14 +38,16 @@ protected:
         
         // Discard events that came before the time threshold. The time threshold is generally when we
         // detect that the game has opened - this prevents us from reading old log events.
-        if (checkTime && isTimeBeforeThreshold(eventTime)) {
-            LOG_WARNING("\tDiscarding event due to time threshold: " << shared::timeToStr(_timeThreshold) << std::endl);
-            return;
-        }
+        if (_useTimeChecks) {
+            if (checkTime && isTimeBeforeThreshold(eventTime)) {
+                LOG_WARNING("\tDiscarding event due to time threshold: " << shared::timeToStr(_timeThreshold) << std::endl);
+                return;
+            }
 
-        if (checkTime && shared::isTimeInFuture(eventTime)) {
-            LOG_WARNING("\tDiscarding event due to future time: " << shared::timeToStr(eventTime) << std::endl);
-            return;
+            if (checkTime && shared::isTimeInFuture(eventTime)) {
+                LOG_WARNING("\tDiscarding event due to future time: " << shared::timeToStr(eventTime) << std::endl);
+                return;
+            }
         }
 
         const auto it = _callbacks.find(event);

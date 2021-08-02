@@ -3,7 +3,9 @@
 #include <chrono>
 #include <filesystem>
 #include <functional>
+#include <fstream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <thread>
 #include <vector>
@@ -26,7 +28,8 @@ public:
         const shared::TimePoint& timeThreshold,
         bool waitForNewFile = false,
         bool immediatelyGoToEnd = false,
-        bool loop = true
+        bool loop = true,
+        std::optional<typename std::ifstream::pos_type> initialPosition = std::nullopt 
     );
     ~LogWatcher();
 
@@ -47,6 +50,7 @@ private:
     bool _batchingEnabled = true;
     bool _immediatelyGoToEnd = false;
     bool _loop = true;
+    std::optional<std::ifstream::pos_type> _initialPosition = std::nullopt;
 };
 
 using LogWatcherPtr = std::unique_ptr<LogWatcher>;

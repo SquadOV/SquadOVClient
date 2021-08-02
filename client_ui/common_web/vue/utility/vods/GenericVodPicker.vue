@@ -341,7 +341,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
             return
         }
 
-        console.log('refresh permissions')
         apiClient.getGenericSharePermissions(undefined, this.value.videoUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.permissions = resp.data
         }).catch((err: any) => {

@@ -202,19 +202,23 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
         LOG_INFO("...Legacy combat log detected." << std::endl);
         // Older WoW - load WoWCombatLog.txt.
         const auto combatLogPath = combatLogFolder / fs::path("WoWCombatLog.txt");
-        loadFromPath(combatLogPath, true, true);
+        loadFromPath(combatLogPath, true, true, true);
     } else {
         LOG_INFO("...Timestamped combat log detected." << std::endl);
         // Newer WoW - file will be of the form WoWCombatLog-DATE-TIME.txt.
         _timestampLogThread = std::thread([this, combatLogFolder](){
             std::filesystem::path logFile;
             bool found = false;
+            size_t iterations = 0;
+            bool isOldFile = true;
+            std::optional<typename std::ifstream::pos_type> position = std::nullopt;
             // This loop needs to constantly run until WoW exits to catch each subsequent WoW combat log.
             while (_running) {
                 // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
                 // continue on in the while loop all at once.
                 try {
                     if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold()) || (shared::filesystem::timeOfLastFileWrite(logFile) < _lastLogTime)) {
+                        const auto oldLogFile = logFile;
                         logFile = shared::filesystem::getNewestFileInFolder(combatLogFolder, [](const fs::path& path){
                             if (path.extension() != ".txt") {
                                 return false;
@@ -226,13 +230,38 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
 
                             return true;
                         });
+
+                        if (oldLogFile != logFile) {
+                            iterations = 0;
+                        }
+
+                        try {
+                            if (fs::exists(logFile)) {
+                                std::ifstream file(logFile);
+                                if (file.is_open()) {
+                                    file.seekg(0, std::ios_base::end);
+                                    position = file.tellg();
+                                }
+                                file.close();
+                            }
+                        } catch (std::exception& ex) {
+                            LOG_WARNING("Failed to get log file position: " << ex.what() << std::endl);
+                        }
+
+                        isOldFile = iterations++ > 0;
                     } else {
                         const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(logFile);
                         found = ((lastWriteTime >= timeThreshold()) && (lastWriteTime >= _lastLogTime));
                         if (found && _running) {
                             _lastLogTime = lastWriteTime;
                             found = false;
-                            loadFromPath(logFile, true, false);
+                            loadFromPath(
+                                logFile,
+                                true,
+                                logFile.filename() == fs::path("WoWCombatLog.txt"),
+                                isOldFile,
+                                position
+                            );
                         }
                     }
                 } catch (std::exception& ex) {
@@ -245,21 +274,45 @@ void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
     }
 }
 
-void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop, bool legacy) {
+void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop, bool legacy, bool isOldFile, std::optional<typename std::ifstream::pos_type> position) {
     if (_logPath == combatLogPath) {
         return;
     }
 
+    const auto oldExists = fs::exists(_logPath);
+    const auto newExists = fs::exists(combatLogPath);
+
     _logPath = combatLogPath;
+
     using std::placeholders::_1;
 
     _legacy = legacy || (combatLogPath.filename().native().find(L"WoWCombatLog-"s) == std::string::npos);
     LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << " [Legacy: " << _legacy << "]" << std::endl);
-    _watcher = std::make_unique<LogWatcher>(combatLogPath, std::bind(&WoWLogWatcher::onCombatLogChange, this, _1), timeThreshold(), useTimeChecks() && !_legacy, false, loop);
+    _watcher = std::make_unique<LogWatcher>(
+        combatLogPath,                                                                  // path
+        std::bind(&WoWLogWatcher::onCombatLogChange, this, _1),                         // cb
+        timeThreshold(),                                                                // timeThreshold
+        // We never want to use the log watcher's waitForNewFile feature here because we're doing
+        // effectively the same thing in our own thread.
+        // 
+        // In the legacy case, if the file doesn't already exists then the log watcher will wait for it to
+        // exist anwyay. In the non-legacy case, we know that the file is fine since it passed our own time threshold check.
+        false,                                                                          // waitForNewFile
+        // Legacy should always go to the end as long as that file already exists because that file would be
+        // detectable as soon as the game starts.
+        //
+        // In the case of non legacy, we want to immediately go to the end only if we're reading in the first log file (!oldExists) and it was detected instantly (isOldFile).
+        (legacy && newExists) || (!legacy && isOldFile && !oldExists),                  // immediatelyGoToEnd
+    loop,                                                                               // loop,
+        (!legacy && !oldExists && newExists && isOldFile) ? position : std::nullopt     // initialPosition
+    );
     _watcher->disableBatching();
 }
 
 void WoWLogWatcher::wait() {
+    if (_timestampLogThread.joinable()) {
+        _timestampLogThread.join();
+    }
     _watcher->wait();
 }
 

@@ -116,7 +116,7 @@ public:
     WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold);
     ~WoWLogWatcher();
     void loadFromExecutable(const std::filesystem::path& exePath);
-    void loadFromPath(const std::filesystem::path& logPath, bool loop = true, bool legacy = false);
+    void loadFromPath(const std::filesystem::path& logPath, bool loop = true, bool legacy = false, bool isOldFile = false, std::optional<typename std::ifstream::pos_type> position = std::nullopt);
     void moveLogToBackup();
 
     bool legacy() const { return _legacy; }
