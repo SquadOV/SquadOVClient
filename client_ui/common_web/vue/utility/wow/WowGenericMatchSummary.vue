@@ -26,9 +26,11 @@
                                 :char="char"
                                 :friendly-team="friendlyTeam"
                                 armory-link
+                                :player-section="linkToPlayerSection"
                                 :key="`friendly-icon-${idx}`"
                                 :width-height="mini ? 24 : 32"
                                 :patch="match.build"
+                                @go-to-character="$emit('go-to-character', arguments[0])"
                             >
                             </wow-character-icon>
 
@@ -44,9 +46,11 @@
                                 :char="char"
                                 :friendly-team="friendlyTeam"
                                 armory-link
+                                :player-section="linkToPlayerSection"
                                 :key="`enemy-icon-${idx}`"
                                 :width-height="mini ? 24 : 32"
                                 :patch="match.build"
+                                @go-to-character="$emit('go-to-character', arguments[0])"
                             >
                             </wow-character-icon>
                         </div>
@@ -90,8 +94,6 @@ import { staticClient } from '@client/js/staticData'
 import { WowCharacter } from '@client/js/wow/character'
 import { WowInstanceData } from '@client/js/wow/instance'
 import { standardFormatTime } from '@client/js/time'
-import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
-import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import WowExpansionIcon from '@client/vue/utility/wow/WowExpansionIcon.vue'
 import WowCharacterIcon from '@client/vue/utility/wow/WowCharacterIcon.vue'
 import axios from 'axios'
@@ -127,6 +129,9 @@ export default class WowGenericMatchSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableLink!: boolean
+
+    @Prop({type: Boolean, default: false})
+    linkToPlayerSection!: boolean
 
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null

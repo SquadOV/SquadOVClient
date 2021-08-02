@@ -8,6 +8,8 @@
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
                         disable-link
+                        link-to-player-section
+                        @go-to-character="viewPlayerGuid = arguments[0]"
                     >
                     </wow-keystone-summary>
 
@@ -16,6 +18,8 @@
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
                         disable-link
+                        link-to-player-section
+                        @go-to-character="viewPlayerGuid = arguments[0]"
                     >
                     </wow-encounter-summary>
 
@@ -24,6 +28,8 @@
                         :user-id="userId"
                         class="flex-grow-1 mb-4"
                         disable-link
+                        link-to-player-section
+                        @go-to-character="viewPlayerGuid = arguments[0]"
                     >
                     </wow-arena-summary>
 
@@ -88,7 +94,7 @@
                     </v-col>
                 </v-row>
 
-                <v-row>
+                <v-row ref="analysis">
                     <v-tabs v-model="selectedTab">
                         <v-tab>
                             Timeline
@@ -142,11 +148,13 @@
 
                         <v-tab-item>
                             <wow-players-analysis
+                                ref="players"
                                 :match-uuid="matchUuid"
                                 :user-id="userId"
                                 :match-characters="matchCharacters"
                                 :friendly-team="friendlyTeam"
                                 :patch="patch"
+                                :initial-character-guid="viewPlayerGuid"
                             >
                             </wow-players-analysis>
                         </v-tab-item>
@@ -178,6 +186,7 @@
 
 <script lang="ts">
 
+import Vue from 'vue'
 import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { GenericWowMatchContainer, getOppositeWowArenaTeam } from '@client/js/wow/matches'
@@ -233,10 +242,13 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     @Prop({required: true})
     matchUuid!: string
 
+    viewPlayerGuid: string | null = null
+
     $refs!: {
         player: VideoPlayer
         timeline: WowTimeline,
         spells: WowSpellAnalysis
+        analysis: HTMLElement
     }
     
     matchCharacters: WowCharacter[] = []
@@ -447,11 +459,26 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
         })
     }
 
+    @Watch('viewPlayerGuid')
+    resyncPlayerView() {
+        if (!this.viewPlayerGuid) {
+            return
+        }
+
+        this.selectedTab = 2
+        if (!this.$refs.analysis) {
+            return
+        }
+
+        this.$refs.analysis.scrollIntoView()
+    }
+
     mounted() {
         this.refreshMatch()
         this.refreshCharacters()
         this.refreshCharacterAssociations()
         this.refreshEvents()
+        this.resyncPlayerView()
     }
 }
 

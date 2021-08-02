@@ -53,6 +53,9 @@ export default class WowCharacterIcon extends Vue {
     @Prop({type: Boolean, default: false})
     armoryLink!: boolean
 
+    @Prop({type: Boolean, default: false})
+    playerSection!: boolean
+
     @Prop({default: 0})
     friendlyTeam!: number
 
@@ -70,13 +73,17 @@ export default class WowCharacterIcon extends Vue {
         e.preventDefault()
         e.stopPropagation()
 
-        // Use the api client to get the proper URL to redirect to as the server will know how to map
-        // the character GUID to an armory link.
-        apiClient.getWoWCharacterArmoryLink(this.char.name, this.char.guid).then((resp: ApiData<string>) => {
-            openUrlInBrowser(resp.data)
-        }).catch((err: any) => {
-            console.log('Failed to get WoW character armory link: ', err)
-        })
+        if (!this.playerSection) {
+            // Use the api client to get the proper URL to redirect to as the server will know how to map
+            // the character GUID to an armory link.
+            apiClient.getWoWCharacterArmoryLink(this.char.name, this.char.guid).then((resp: ApiData<string>) => {
+                openUrlInBrowser(resp.data)
+            }).catch((err: any) => {
+                console.log('Failed to get WoW character armory link: ', err)
+            })
+        } else {
+            this.$emit('go-to-character', this.char.guid)
+        }
     }
 
     divStyle(): any {

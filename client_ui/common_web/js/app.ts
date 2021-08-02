@@ -526,7 +526,7 @@ const baseRoutes : any[] = [
                 component: WowMatch,
                 props: (route : any) => ({
                     userId: parseInt(route.query.userId),
-                    matchUuid: route.params.matchUuid
+                    matchUuid: route.params.matchUuid,
                 }),
             },
             { 

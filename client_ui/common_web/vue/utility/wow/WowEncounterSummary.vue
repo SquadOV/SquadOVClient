@@ -6,6 +6,8 @@
         :mini="mini"
         :fill="fill"
         :disable-link="disableLink"
+        :link-to-player-section="linkToPlayerSection"
+        @go-to-character="$emit('go-to-character', arguments[0])"
     >
         <template v-slot="{ instanceName }">
             <div class="text-subtitle-1 font-weight-bold">
@@ -53,6 +55,9 @@ export default class WowEncounterSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableLink!: boolean
+
+    @Prop({type: Boolean, default: false})
+    linkToPlayerSection!: boolean
 
     difficultyData: WowDifficultyData | null = null
     instanceData: WowInstanceData | null = null
