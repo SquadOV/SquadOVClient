@@ -100,6 +100,10 @@
                         </v-card>
                     </v-dialog>
 
+                    <v-btn color="primary" v-if="inSelectMode" @click="toggleSelectAll">
+                        {{ hasSelectedAll ? 'Select None' : 'Select All' }}
+                    </v-btn>
+
                     <v-btn color="success" icon @click="inSelectMode = true" v-if="!inSelectMode">
                         <v-icon>
                             mdi-cursor-default
@@ -234,6 +238,26 @@ export default class LocalStorageManager extends Vue {
     deleteError: boolean = false
 
     showUploadConfirm: boolean = false
+
+    get hasSelectedAll(): boolean {
+        if (!this.localVods) {
+            return false
+        }
+
+        return this.selected.length === this.localVods.length
+    }
+
+    toggleSelectAll() {
+        if (!this.localVods) {
+            return
+        }
+
+        if (this.hasSelectedAll) {
+            this.selected = []
+        } else {
+            this.selected = [...this.localVods]
+        }
+    }
 
     deleteLocalVods() {
         this.deleteInProgress = true
