@@ -306,6 +306,7 @@ import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 
 /// #if DESKTOP
+import path from 'path'
 import { ipcRenderer } from 'electron'
 /// #endif
 
@@ -426,9 +427,11 @@ export default class OverlaySettingsItem extends Vue {
         this.$store.commit('changeOverlayLayers', this.editableLayers)
 
         // Reload preview so that we get the new overlay layers.
-///#if DESKTOP
-        ipcRenderer.send('reload-record-preview')
-///#endif
+        this.stopPreview()
+
+        setTimeout(() => {
+            this.startPreview()
+        }, 500)
 
         this.resetSource()
         this.editSuccess = true
@@ -470,7 +473,7 @@ export default class OverlaySettingsItem extends Vue {
         if (!!this.player) {
             this.player.reset()
             this.player.src([{
-                src: 'http://localhost:9999/live/preview/index.m3u8',
+                src: `file:///${path.join(process.env.SQUADOV_USER_APP_FOLDER!, 'HLS', 'index.m3u8')}`,
                 type: 'application/x-mpegURL',
             }])
         }

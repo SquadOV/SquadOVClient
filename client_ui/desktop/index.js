@@ -920,16 +920,7 @@ ipcMain.on('closeWindow', (event) => {
     window.close()
 })
 
-// Local RTMP server control
-const NodeMediaServer = require('node-media-server')
-let transMade = false
-let nms = null
 ipcMain.handle('start-record-preview', (event, game) => {
-    if (!!nms) {
-        return
-    }
-
-    let ffmpegPath = !!process.env.FFMPEG_BINARY_PATH ? process.env.FFMPEG_BINARY_PATH : path.join(process.resourcesPath, 'service', 'ffmpeg.exe')
     let mediaRootPath = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'HLS')
 
     if (fs.existsSync(mediaRootPath)) {
@@ -938,55 +929,15 @@ ipcMain.handle('start-record-preview', (event, game) => {
             force: true,
         })
     }
-
-    let config = {
-        rtmp: {
-            port: 1935,
-            chunk_size: 60000,
-            gop_cache: true,
-            ping: 30,
-            ping_timeout: 60,
-        },
-        http: {
-            port: 9999,
-            allow_origin: '*',
-            mediaroot: mediaRootPath.replaceAll('\\', '/'),
-            api: false,
-        },
-    }
-
-    if (!transMade) {
-        // We only want to set the 'trans' object so we only create it the first time around since the node media server
-        // doesn't clean up the trans session properly so the old translation thingy will still take effect.
-        config['trans'] = {
-            ffmpeg: ffmpegPath,
-            tasks: [
-                {
-                    app: 'live',
-                    hls: true,
-                    hlsFlags: '[hls_time=2:hls_list_size=3:hls_flags=delete_segments]',
-                }
-            ]
-        }
-    }
-
-    transMade = true
-    nms = new NodeMediaServer(config)
-    nms.run()
+    
+    fs.mkdirSync(mediaRootPath)
 
     // Tell C++ to send the game recording to the appropriate path.
-    zeromqServer.startGameRecordingStream('rtmp://localhost:1935/live/preview', game)
+    zeromqServer.startGameRecordingStream(path.join(mediaRootPath, 'index.m3u8'), game)
 })
 
 ipcMain.on('stop-record-preview', (event) => {
-    if (!nms) {
-        return
-    }
-
     zeromqServer.stopGameRecordingStream()
-
-    nms.stop()
-    nms = null
 })
 
 ipcMain.on('reload-record-preview', (event) => {

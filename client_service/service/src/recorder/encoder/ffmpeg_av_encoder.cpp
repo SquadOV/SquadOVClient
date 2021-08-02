@@ -286,10 +286,18 @@ void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSampl
 FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
     _streamUrl(streamUrl) {
 
-    _avformat = av_guess_format((streamUrl.find("rtmp://") == std::string::npos) ? "mpegts" : "flv", nullptr, nullptr);
+    _avformat = av_guess_format(
+        (streamUrl.find("rtmp://") != std::string::npos) ? "flv" :
+            (streamUrl.find(".m3u8") != std::string::npos) ? "hls" : "mpegts",
+        nullptr,
+        nullptr
+    );
+
     if (!_avformat) {
         THROW_ERROR("Failed to find the MPEG-TS format.");
     }
+
+    LOG_INFO("Using AV Format: " << _avformat->name << std::endl);
 
     if (avformat_alloc_output_context2(&_avcontext, _avformat, nullptr, nullptr) < 0) {
         THROW_ERROR("Failed to allocate AV context.");
@@ -336,6 +344,10 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
         if (packet.dts > packet.pts) {
             // Possible if there's a jump in the pts.
             packet.pts = packet.dts;
+        }
+
+        if (!packet.duration && frame && frame->pkt_duration) {
+            packet.duration = frame->pkt_duration;
         }
 
         {
@@ -462,7 +474,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
 
             // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
             // if the GOP size is too small.
-            _vcodecContext->gop_size = static_cast<int>(settings.fps * 5);
+            if (strcmp(_avformat->name, "hls") == 0) {
+                _vcodecContext->gop_size = static_cast<int>(settings.fps * 1);
+            } else {
+                _vcodecContext->gop_size = static_cast<int>(settings.fps * 5);
+            }
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
                 _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
@@ -729,6 +745,7 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     }
 
     bool forceFrame0 = false;
+    const int64_t duration = desiredFrameNum - _vFrameNum;
     if (_useVfr3) {
         forceFrame0 = (_vFrameNum == 0 && desiredFrameNum > 1);
         _vFrameNum = desiredFrameNum - 1;
@@ -739,11 +756,13 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
 
     if (forceFrame0) {
         frame->pts = 0;
+        frame->pkt_duration = 1;
         encode(_vcodecContext, frame, _vstream);
     }
 
     for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
         frame->pts = _vFrameNum;
+        frame->pkt_duration = duration;
         encode(_vcodecContext, frame, _vstream);
     }
 }
@@ -841,13 +860,27 @@ service::recorder::image::Image FfmpegAvEncoderImpl::getFrontBuffer() const {
 
 void FfmpegAvEncoderImpl::open() {
     // This is what actually gets us to write to a file.
-    if (avio_open2(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr) < 0) {
-        THROW_ERROR("Failed to open video for output: " << _streamUrl);
+    if (!(_avcontext->oformat->flags & AVFMT_NOFILE)) {
+        if (avio_open2(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr) < 0) {
+            THROW_ERROR("Failed to open video for output: " << _streamUrl);
+        }
     }
 
-    if (avformat_write_header(_avcontext, nullptr) < 0) {
+    AVDictionary* headerOptions = nullptr;
+
+    if (strcmp(_avformat->name, "hls") == 0) {
+        _avcontext->url = av_strdup(_streamUrl.c_str());
+
+        av_dict_set(&headerOptions, "hls_time", "3.0", 0);
+        av_dict_set_int(&headerOptions, "hls_list_size", 12, 0);
+        av_dict_set(&headerOptions, "hls_flags", "delete_segments", 0);
+        av_dict_set(&headerOptions, "hls_segment_type", "mpegts", 0);
+    }
+
+    if (avformat_write_header(_avcontext, &headerOptions) < 0) {
         THROW_ERROR("Failed to write header");
     }
+    av_dict_free(&headerOptions);
     av_dump_format(_avcontext, 0, _streamUrl.c_str(), 1);
 }
 
