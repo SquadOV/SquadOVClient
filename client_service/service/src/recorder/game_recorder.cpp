@@ -448,6 +448,13 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
 
     if (_cachedRecordingSettings->usePushToTalk) {
+        {
+            // If we're using PTT then we have to disable the voices by default.
+            for (auto& r : _ainRecorder) {
+                r->setVolume(0.0);
+            }
+        }
+
         _pttEnableCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::PushToTalkEnable, [this](){
             std::lock_guard guard(_ainMutex);
             for (auto& r : _ainRecorder) {

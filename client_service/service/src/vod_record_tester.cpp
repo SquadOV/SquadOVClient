@@ -14,6 +14,7 @@ extern "C" {
 #include "shared/log/log.h"
 #include "api/squadov_api.h"
 #include "shared/env.h"
+#include "system/win32/message_loop.h"
 
 namespace po = boost::program_options;
 using namespace process_watcher;
@@ -179,10 +180,7 @@ int main(int argc, char** argv) {
         recorder.stop({});
     }
 
-    if (workerThread.joinable()) {
-        workerThread.join();
-    }
     std::cout << "Output VOD to: " << outputFname << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    shared::system::win32::Win32MessageLoop::singleton()->start();
     return 0;
 }
