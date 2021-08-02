@@ -283,6 +283,14 @@
         >
             Failed to generate a URL for sharing the clip.
         </v-snackbar>
+
+        <v-snackbar
+            v-model="badClipState"
+            :timeout="5000"
+            color="error"
+        >
+            Invalid clip parameters. Please try again (and submit a bug report!).
+        </v-snackbar>
     </div>
 </template>
 
@@ -356,6 +364,7 @@ export default class VodEditor extends mixins(CommonComponent) {
     clipShareUrl: string | null = null
     shareMessages: string[] = []
     shareError: boolean = false
+    badClipState: boolean = false
 
     $refs!: {
         player: VideoPlayer
@@ -626,12 +635,25 @@ export default class VodEditor extends mixins(CommonComponent) {
             return
         }
 
+        
+        let clipStart = this.clipStart
+        let clipEnd = this.clipEnd + 1000
+
+        if (clipStart === null || clipEnd === null) {
+            console.log(`Encountered a bad clip state [Start: ${clipStart} to End: ${clipEnd}]`)
+            console.log(`\tClip Duration: ${this.clipDuration}`)
+            console.log(`\tVod Start ${this.start} End ${this.end}`)
+            console.log('\tFull VOD Info: ', this.vod, this.metadata)
+            this.badClipState = true
+            return
+        }
+
         this.clipInProgress = true
         this.showHideClipDialog = true
 
         this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', this.clipEnd - this.clipStart)
         // Add a second to the end of the video to ensure that we capture that last second completely.
-        requestVodClip(videoUri, this.clipStart, this.clipEnd + 1000).then((resp: {
+        requestVodClip(videoUri, clipStart, clipEnd).then((resp: {
             path: string,
             metadata: VodMetadata,
         }) => {
