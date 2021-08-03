@@ -551,7 +551,16 @@ function startAutoupdater() {
 
 let currentSessionExpiration = null
 let sessionRetryCount = 0
-let oldServerExpiration = null
+let oldServerTimestamp = null
+
+function getServerTimestamp() {
+    return oldServerTimestamp
+}
+
+function setServerTimestamp(d) {
+    oldServerTimestamp = d
+}
+
 let retryTimeout = null
 
 const http = require('http')
@@ -573,8 +582,9 @@ function startSessionHeartbeat(onBeat) {
         }
 
         const request = (options.protocol == 'https:') ? https.request(url, options) : http.request(options)
+        const sentSessionId = process.env.SQUADOV_SESSION_ID
         request.write(JSON.stringify({
-            sessionId: process.env.SQUADOV_SESSION_ID
+            sessionId: sentSessionId
         }))
 
         let retrySessionHeartbeat = (connError) => {
@@ -601,10 +611,11 @@ function startSessionHeartbeat(onBeat) {
 
             // We don't want multiple different paths of retrying. Only a singular retry loop should ever happen at the same time.
             if (!!retryTimeout) {
-                log.log('...Ignoring session hearetbeat retry. One already exists.')
+                log.log('...Ignoring session heartbeat retry. One already exists.')
             } else {
                 log.log(`\tRetrying heartbeat in ${timeoutMs}ms`)
                 retryTimeout = setTimeout(() => {
+                    log.log('...Retry Heartbeat')
                     retryTimeout = null
                     // We need to push onBeat forward just in case this is the first session heartbeat.
                     startSessionHeartbeat(onBeat, false)
@@ -652,10 +663,14 @@ function startSessionHeartbeat(onBeat) {
                     // last hit the server (and is thus the more authoritative one) is the one with the latest expiration
                     // time. Therefore, we can ignore the older refresh request if it comes after a newer request.
                     let serverExpiration = new Date(respBody.expiration)
-                    if (!!oldServerExpiration && serverExpiration < oldServerExpiration) {
+                    let serverTimestamp = new Date(respBody.serverTime)
+
+                    let oldTimestamp = getServerTimestamp()
+                    if (!!oldTimestamp && serverExpiration < oldTimestamp) {
                         log.log('Found old session refresh...ignoring.')
                         return
                     }
+                    setServerTimestamp(serverTimestamp)
 
                     updateSession(respBody.sessionId, true)
                     sessionRetryCount = 0
