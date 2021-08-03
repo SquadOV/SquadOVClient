@@ -145,7 +145,11 @@ std::pair<fs::path, fs::path> LocalRecordingIndexDb::migrateLocalEntry(const Loc
     if (fs::exists(dest.parent_path())) {
         fs::remove_all(dest.parent_path());
     }
-    fs::copy(source.parent_path(), dest.parent_path());
+
+    if (fs::exists(source.parent_path())) {
+        fs::copy(source.parent_path(), dest.parent_path());
+    }
+    
     return std::make_pair(source.parent_path(), dest.parent_path());
 }
 
