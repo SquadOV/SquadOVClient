@@ -282,7 +282,8 @@ export default class LinkedAccountsSettingsItem extends Vue {
 
     linkRiot() {
         this.pendingOauthLink = true
-        redirectToRsoLogin(this.$store.state.currentUser.id).then(() => {
+        redirectToRsoLogin(this.$store.state.currentUser.id).then((url: string) => {
+            this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
             console.log('Failed to redirect to RSO: ', err)
@@ -293,7 +294,8 @@ export default class LinkedAccountsSettingsItem extends Vue {
 
     linkTwitch() {
         this.pendingOauthLink = true
-        redirectToTwitchLogin().then(() => {
+        redirectToTwitchLogin().then((url: string) => {
+            this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
             console.log('Failed to redirect to Twitch: ', err)
@@ -308,7 +310,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
 <style scoped>
 
 .account-div {
-    width: 300px;
+    min-width: 300px;
     min-height: 100px;
     padding: 16px;
     border: 1px solid #6E6E6E;

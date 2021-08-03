@@ -6,6 +6,7 @@ import { SquadOVUser } from '@client/js/squadov/user'
 
 export interface RootState {
     currentUser: SquadOVUser | null
+    redirectUrl: string | null
     hasValidSession: boolean
     features: FeatureFlags
 /// #if DESKTOP

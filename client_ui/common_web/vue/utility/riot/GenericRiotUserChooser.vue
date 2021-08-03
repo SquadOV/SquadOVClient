@@ -148,7 +148,8 @@ export default class GenericRiotUserChooser extends Vue {
 
     addAccount() {
         this.loadingAdd = true
-        redirectToRsoLogin(this.$store.state.currentUser.id).then(() => {
+        redirectToRsoLogin(this.$store.state.currentUser.id).then((url: string) => {
+            this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
             console.log('Failed to redirect to RSO: ', err)

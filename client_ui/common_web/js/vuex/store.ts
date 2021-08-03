@@ -13,6 +13,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
+        redirectUrl: null,
         hasValidSession: true,
         features: {
             maxRecordPixelY: 0,
@@ -29,6 +30,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     mutations: {
         setUser(state : RootState, user : SquadOVUser) {
             state.currentUser = user
+        },
+        setRedirectUrl(state: RootState, url: string) {
+            state.redirectUrl = url
         },
         setSettings(state: RootState, settings: SquadOvLocalSettings) {
 /// #if DESKTOP
