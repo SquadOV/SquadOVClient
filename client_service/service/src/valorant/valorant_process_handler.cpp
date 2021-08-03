@@ -106,17 +106,12 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
     }
 
     // In the case where we're starting a match again without clearing out the current match
-    // we *may* be dealing with a case of a custom game restart. In that case we should just completely restart EVERYTHING
-    // and just pretend that the old match never happened.
+    // we *may* be dealing with a case of a custom game restart or some other weird case where the
+    // logs print out another match start (insta reconnect? no idea - see issue SquadOVClient#1068).
+    // Either way, let's not stop recording and just ignore that this happened.
     if (!!_currentMatch && _currentMatch->matchId() == state->matchId) {
-        service::recorder::VodIdentifier id = _recorder->currentId();
-        _recorder->stop({});
-        _currentMatch.reset(nullptr);
-        try {
-            service::api::getGlobalApi()->deleteVod(id.videoUuid);
-        } catch (std::exception& ex) {
-            LOG_WARNING("Failed to delete VOD: " << ex.what());            
-        }
+        LOG_INFO("\tDetected a duplicate match start...ignoring." << std::endl);
+        return;
     }
 
     _currentMatch = std::make_unique<ValorantMatch>(eventTime, state->matchMap, state->matchId);
