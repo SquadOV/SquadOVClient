@@ -1,9 +1,8 @@
 <template>
-    <div>
+    <div id="rootApp">
         <keep-alive :max="3">
             <router-view :key="key"></router-view>
         </keep-alive>
-
         <!-- Manual URL display dialog -->
         <v-dialog v-model="showUrl" max-width="40%">
             <v-card>
@@ -101,3 +100,13 @@ export default class App extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+#rootApp {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+</style>
