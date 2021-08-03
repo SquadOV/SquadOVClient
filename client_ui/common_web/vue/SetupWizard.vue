@@ -192,7 +192,7 @@
                             </ol>
 
                             <div class="mt-4">
-                                You must also disable any other addons (or their features) that may enable the combat log (Method Raid Tools, LoggerHead, Arena Combat Logger, etc.).
+                                <b>You must also disable any other addons (or their features) that may enable the combat log (Method Raid Tools, LoggerHead, Arena Combat Logger, etc.).</b>
                             </div>
 
                             <div class="mt-4 d-flex justify-center">
