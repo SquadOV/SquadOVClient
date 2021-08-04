@@ -181,6 +181,9 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Output VOD to: " << outputFname << std::endl;
-    shared::system::win32::Win32MessageLoop::singleton()->start();
+    //shared::system::win32::Win32MessageLoop::singleton()->start();
+    if (workerThread.joinable()) {
+        workerThread.join();
+    }
     return 0;
 }

@@ -383,7 +383,13 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
         if (_aoutRecorder[i]->exists()) {
             LOG_INFO("Adding audio output..." << std::endl);
-            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
+
+            service::recorder::encoder::AudioInputSettings settings;
+            settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
+            settings.useNoiseThreshold = false;
+            settings.useSpeechNoiseReduction = false;
+
+            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), settings);
             data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
         }
     }
@@ -391,7 +397,14 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     for (size_t i = 0; i < _ainRecorder.size(); ++i) {
         if (_ainRecorder[i]->exists()) {
             LOG_INFO("Adding audio input..." << std::endl);
-            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), _cachedRecordingSettings->useAudioDriftCompensation);
+
+            service::recorder::encoder::AudioInputSettings settings;
+            settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
+            settings.useNoiseThreshold =  _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceBasicNoiseFilter : false;
+            settings.noiseThresholDb = _cachedRecordingSettings->voiceFilterThresholdDb;
+            settings.useSpeechNoiseReduction = _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceSpeechNoiseReduction : false;
+
+            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), settings);
             data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
         }
     }
@@ -442,6 +455,10 @@ bool GameRecorder::initializeInputStreams(int flags) {
         auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
         recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono, deviceSet);
         if (recorder->exists()) {
+            if (input.voice) {
+                recorder->markVoice();
+            }
+
             recorder->startRecording();
             _ainRecorder.emplace_back(std::move(recorder));
         }

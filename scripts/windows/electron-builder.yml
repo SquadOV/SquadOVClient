@@ -61,6 +61,7 @@ extraResources:
       - "advanced_crash_dump_enabler.exe"
       - "ffmpeg.exe"
       - "shaders/*"
+      - "models/*"
       - "csgo/csgo_demo_retriever.exe"
       - "csgo/steam_api64.dll"
       - "csgo/steam_appid.txt"

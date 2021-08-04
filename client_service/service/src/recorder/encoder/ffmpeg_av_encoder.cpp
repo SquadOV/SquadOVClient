@@ -6,6 +6,7 @@
 #include "shared/log/log.h"
 #include "shared/timer.h"
 #include "shared/filesystem/utility.h"
+#include "shared/filesystem/common_paths.h"
 #include "shared/audio/timing.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
@@ -28,6 +29,8 @@
 extern "C" {
 #include <libavutil/audio_fifo.h>
 #include <libavcodec/avcodec.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 #include <libavutil/opt.h>
@@ -44,6 +47,11 @@ using namespace std::chrono_literals;
 
 namespace service::recorder::encoder {
 namespace {
+std::string ffmpegErrorString(int ret) {
+    char buffer[512];
+    av_make_error_string(buffer, 512, ret);
+    return std::string(buffer);
+}
 
 int64_t packetPropsToFFmpegChannelLayout(const service::recorder::audio::AudioPacketProperties& props) {
     if (props.numChannels == 8) {
@@ -65,10 +73,15 @@ int64_t packetPropsToFFmpegChannelLayout(const service::recorder::audio::AudioPa
     }
 }
 
+std::string ffmpegChannelLayoutToAformatString(int64_t layout) {
+    char buffer[512];
+    av_get_channel_layout_string(buffer, 512, 0, layout);
+    return std::string(buffer);
+}
+
 AVSampleFormat packetPropsToFFmpegSampleFmt(const service::recorder::audio::AudioPacketProperties& props) {
     return props.isPlanar ? AV_SAMPLE_FMT_FLTP : AV_SAMPLE_FMT_FLT;
 }
-
 int packetPropsToFFmpegSampleRate(const service::recorder::audio::AudioPacketProperties& props) {
     return static_cast<int>(props.samplingRate);
 }
@@ -97,7 +110,7 @@ public:
     service::recorder::image::Image getFrontBuffer() const;
 
     void initializeAudioStream();
-    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation);
+    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm);
 
     void open();
@@ -136,8 +149,6 @@ private:
     AVCodecContext* _acodecContext = nullptr;
     AVStream* _astream = nullptr;
     AVFrame* _aframe = nullptr;
-    // We need to use a tmp frame to read from the FIFO queue for each stream input.
-    AVFrame* _aTmpFrame = nullptr;
     int64_t _aFrameNum = 0;
 
     struct AudioStreamData {
@@ -146,16 +157,19 @@ private:
         // is needed for output and store it in this queue.
         // Once the queue reaches the size of an actual frame,
         // we'll send that to the encoder to be written out.
-        AVAudioFifo* fifo = nullptr;
         AVSyncClock::time_point nextPacketTime;
-        std::shared_mutex fifoMutex;
+        std::shared_mutex graphMutex;
 
-        // samplesStorage is the place where we'll use swr to convert the
-        // input audio packet into the output format.
-        uint8_t** samplesStorage = nullptr;
-        int sampleLineSize = 0;
-        int64_t maxSamples = 0;
+        // Filter Graph
+        AVFilterGraph* filterGraph = nullptr;
+        AVFilterContext* sourceCtx = nullptr;
+        AVFilterContext* sinkCtx = nullptr;
         bool useSilenceCompensation = true;
+
+        AVFrame* sourceFrame = nullptr;
+        std::deque<AVFrame*> sinkFrames;
+
+        void initializeSourceFrame(size_t numSamples, const service::recorder::audio::AudioPacketProperties& props);
 
         // Debug Info
         uint64_t receivedSamples = 0;
@@ -163,15 +177,11 @@ private:
         uint64_t convertedSamples = 0;
         uint64_t encodedSamples = 0;
 
-        SwrContext* swr = nullptr;
-
         AudioStreamData() = default;
         AudioStreamData(const AudioStreamData&) = delete;
         AudioStreamData(AudioStreamData&&) = delete;
 
         size_t addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t offset);
-        void reinitSampleStorage(int inputSamples);
-        void writeStoredSamplesToFifo(int numSamples);
 
         ~AudioStreamData();
     };
@@ -205,83 +215,85 @@ private:
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
-    av_freep(&samplesStorage[0]);
-    av_audio_fifo_free(fifo);
-    swr_free(&swr);
+    avfilter_graph_free(&filterGraph);
+    av_frame_free(&sourceFrame);
+    
+    for (auto& f : sinkFrames) {
+        av_frame_free(&f);
+    }
+    sinkFrames.clear();
 }
 
 size_t FfmpegAvEncoderImpl::AudioStreamData::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t offset) {
     const auto numSamplesToUse = view.props().numSamples - offset;
+    auto ret = 0;
 
     if (numSamplesToUse > 0) {
         receivedSamples += numSamplesToUse;
+        
+        // Copy data into a newly allocated frame.
+        initializeSourceFrame(numSamplesToUse, view.props());
 
-        // Immediately process input audio packets to try to best achieve real-time processing.
-        reinitSampleStorage(static_cast<int>(numSamplesToUse));
+        if (av_frame_get_buffer(sourceFrame, 0) < 0) {
+            THROW_ERROR("Failed to get audio buffer.");
+        }
 
-        const auto* inputByteBuffer = reinterpret_cast<const uint8_t*>(view.offsetBuffer(offset));                    
-        const auto numConverted = swr_convert(
-            swr,
-            samplesStorage,
-            static_cast<int>(maxSamples),
-            &inputByteBuffer,
-            static_cast<int>(numSamplesToUse));
+        if (!view.props().isPlanar) {
+            memcpy(sourceFrame->data[0], view.offsetBuffer(offset), numSamplesToUse * view.props().numChannels * sizeof(float));
+        } else {
+            THROW_ERROR("Planar audio input is not supported.");
+        }
 
-        processedSamples += numSamplesToUse;
-        convertedSamples += numConverted;
-        writeStoredSamplesToFifo(numConverted);
+        // Pass this frame to the filter graph.
+        std::lock_guard guard(graphMutex);
+        ret = av_buffersrc_add_frame_flags(sourceCtx, sourceFrame, AV_BUFFERSRC_FLAG_KEEP_REF);
+        if (ret < 0) {
+            LOG_ERROR("Failed to add audio data to filter graph source [" << ffmpegErrorString(ret) << "]" << std::endl);
+            return 0;
+        }
+
+        // Retrieve filtered audio from the filter graph (if any)
+        // and make it available for use.
+        AVFrame* tmpFrame = av_frame_alloc();
+        while (true) {
+            ret = av_buffersink_get_frame(sinkCtx, tmpFrame);
+            if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                break;
+            }
+
+            if (ret < 0) {
+                LOG_ERROR("Failed to retrieve audio data from filter graph sink." << std::endl);
+                return 0;
+            }
+
+            sinkFrames.push_back(av_frame_clone(tmpFrame));
+            av_frame_unref(tmpFrame);
+        }
+        av_frame_free(&tmpFrame);
+        av_frame_unref(sourceFrame);
     }
     return numSamplesToUse;
 }
 
-void FfmpegAvEncoderImpl::AudioStreamData::reinitSampleStorage(int inputSamples) {
-    int64_t outputSampleRate = 0;
-    AVSampleFormat outputFormat;
-    int64_t outputChannelLayout = 0;
-    av_opt_get_int(swr, "out_sample_rate", 0, &outputSampleRate);
-    av_opt_get_sample_fmt(swr, "out_sample_fmt", 0, &outputFormat);
-    av_opt_get_channel_layout(swr, "out_channel_layout", 0, &outputChannelLayout);
-
-    int64_t inputSampleRate = 0;
-    av_opt_get_int(swr, "in_sample_rate", 0, &inputSampleRate);
-
-    const int64_t newMaxSamples = 
-        (inputSamples > 0) ? 
-            av_rescale_rnd(inputSamples, outputSampleRate, inputSampleRate, AV_ROUND_UP): 
-            static_cast<int64_t>(audioSamplesPerFrame);
-
-    if (newMaxSamples < maxSamples) {
+void FfmpegAvEncoderImpl::AudioStreamData::initializeSourceFrame(size_t numSamples, const service::recorder::audio::AudioPacketProperties& props) {
+    if (sourceFrame && sourceFrame->nb_samples == numSamples) {
         return;
     }
 
-    maxSamples = newMaxSamples;
-    if (samplesStorage) {
-        av_freep(&samplesStorage[0]);
-        samplesStorage = nullptr;
+    if (sourceFrame) {
+        av_frame_free(&sourceFrame);
+        sourceFrame = nullptr;
     }
 
-    if (av_samples_alloc_array_and_samples(
-        &samplesStorage,
-        &sampleLineSize,
-        av_get_channel_layout_nb_channels(static_cast<uint64_t>(outputChannelLayout)),
-        static_cast<int>(maxSamples),
-        outputFormat, 0) < 0) {
-        THROW_ERROR("Failed to allocate converted samples.");
-    }
+    sourceFrame = av_frame_alloc();
+    sourceFrame->nb_samples = numSamples;
+    sourceFrame->format = packetPropsToFFmpegSampleFmt(props);
+    sourceFrame->channel_layout = packetPropsToFFmpegChannelLayout(props);
+    sourceFrame->channels = static_cast<int>(props.numChannels);
+    sourceFrame->sample_rate = packetPropsToFFmpegSampleRate(props);
+    sourceFrame->pts = 0;
 }
 
-void FfmpegAvEncoderImpl::AudioStreamData::writeStoredSamplesToFifo(int numSamples) {
-    std::unique_lock<std::shared_mutex> guard(fifoMutex);
-
-    const auto newNumSamples = av_audio_fifo_space(fifo) + numSamples;
-    if (av_audio_fifo_realloc(fifo, newNumSamples) < 0) {
-        THROW_ERROR("Failed to reallocate FIFO queue.");
-    }
-
-    if (av_audio_fifo_write(fifo, (void**)samplesStorage, numSamples) < numSamples) {
-        THROW_ERROR("Failed to write to FIFO queue.");
-    }
-}
 
 FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
     _streamUrl(streamUrl) {
@@ -312,7 +324,6 @@ FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
 
     avcodec_free_context(&_vcodecContext);
     av_frame_free(&_aframe);
-    av_frame_free(&_aTmpFrame);
     avcodec_free_context(&_acodecContext);
 
     if (_avcontext->pb) {
@@ -603,7 +614,6 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
     avcodec_parameters_from_context(_astream->codecpar, _acodecContext);
 
     _aframe = createAudioFrame();
-    _aTmpFrame = createAudioFrame();
 }
 
 AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
@@ -621,45 +631,108 @@ AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
     return frame;
 }
 
-size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) {
+size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
     AudioStreamDataPtr streamDataPtr = std::make_unique<AudioStreamData>();
     AudioStreamData& streamData = *streamDataPtr;
 
-    streamData.swr = swr_alloc_set_opts(nullptr,
-        _acodecContext->channel_layout, // out_ch_layout
-        _acodecContext->sample_fmt, // out_sample_fmt
-        _acodecContext->sample_rate, // out_sample_rate
-        packetPropsToFFmpegChannelLayout(inputProps), // in_ch_layout
-        packetPropsToFFmpegSampleFmt(inputProps), // in_sample_fmt
-        packetPropsToFFmpegSampleRate(inputProps), // in_sample_rate,
-        0, // log_offset,
-        nullptr // log_ctx
-    );
-    if (!streamData.swr) {
-        THROW_ERROR("Failed to alloc swr and set options.");
+    // Setup audio filter graph. We need to setup a buffer and buffer sink programatically
+    // to denote the start and end of the graph.
+    streamData.filterGraph = avfilter_graph_alloc();
+
+    if (!streamData.filterGraph) {
+        THROW_ERROR("Failed to create audio filter graph.");
     }
 
-    if (swr_init(streamData.swr) < 0) {
-        THROW_ERROR("Failed to init swr.");
+    // Need to manually create two filters and set what the expected input/output data formats are.
+    {
+        std::ostringstream bufferDesc;
+        bufferDesc << "sample_rate=" << packetPropsToFFmpegSampleRate(inputProps)
+            << ":sample_fmt=" << av_get_sample_fmt_name(packetPropsToFFmpegSampleFmt(inputProps))
+            << ":channel_layout=" << ffmpegChannelLayoutToAformatString(packetPropsToFFmpegChannelLayout(inputProps));
+
+        const AVFilter* abuffersrc = avfilter_get_by_name("abuffer");
+        if (avfilter_graph_create_filter(&streamData.sourceCtx, abuffersrc, "in", bufferDesc.str().c_str(), nullptr, streamData.filterGraph) < 0) {
+            THROW_ERROR("Failed to create audio filter graph buffer source.");
+        }
     }
 
-    // Create samples array.
-    streamData.reinitSampleStorage(static_cast<int>(inputProps.numSamples));
+    {
+        const AVFilter* abuffersink = avfilter_get_by_name("abuffersink");
+        if (avfilter_graph_create_filter(&streamData.sinkCtx, abuffersink, "out", nullptr, nullptr, streamData.filterGraph) < 0) {
+            THROW_ERROR("Failed to create audio filter graph buffer sink.");
+        }
 
-    // Create fifo queue. 2x the frame size should be plenty
-    streamData.fifo = av_audio_fifo_alloc(
-        _acodecContext->sample_fmt,
-        _acodecContext->channels,
-        _acodecContext->frame_size * 2
-    );
+        const AVSampleFormat outSampleFormats[] = { _acodecContext->sample_fmt, static_cast<AVSampleFormat>(-1) };
+        const int64_t outChannelLayouts[] = { static_cast<int64_t>(_acodecContext->channel_layout), -1 };
+        const int outSampleRates[] = { _acodecContext->sample_rate, -1 };
 
-    streamData.useSilenceCompensation = useSilenceCompensation;
+        if (av_opt_set_int_list(streamData.sinkCtx, "sample_fmts", outSampleFormats, -1, AV_OPT_SEARCH_CHILDREN) < 0) {
+            THROW_ERROR("Failed to set sink sample format.");
+        }
 
-    if (!streamData.fifo) {
-        THROW_ERROR("Failed to allocate fifo queue.");
+        if (av_opt_set_int_list(streamData.sinkCtx, "channel_layouts", outChannelLayouts, -1, AV_OPT_SEARCH_CHILDREN) < 0) {
+            THROW_ERROR("Failed to set sink channel layout.");
+        }
+
+        if (av_opt_set_int_list(streamData.sinkCtx, "sample_rates", outSampleRates, -1, AV_OPT_SEARCH_CHILDREN) < 0) {
+            THROW_ERROR("Failed to set sink sample rate.");
+        }
     }
+
+    // Create the endpoints on the graph - ffmpeg will be able to connect to the
+    // endpoints from the parsed graph description automatically.
+    AVFilterInOut* outputs = avfilter_inout_alloc();
+    AVFilterInOut* inputs  = avfilter_inout_alloc();
+
+    if (!inputs || !outputs) {
+        THROW_ERROR("Failed to create filter graph inputs/outputs.");
+    }
+
+    outputs->name = av_strdup("in");
+    outputs->filter_ctx = streamData.sourceCtx;
+    outputs->pad_idx = 0;
+    outputs->next = nullptr;
+
+    inputs->name = av_strdup("out");
+    inputs->filter_ctx = streamData.sinkCtx;
+    inputs->pad_idx = 0;
+    inputs->next = nullptr;
+
+    // We need to construct these two filters always:
+    // - aresample: Needed to get to the desired output sample rate
+    // - aformat: Needed to get to the desired output channel layout and sample format
+    std::ostringstream graphDescription;
+
+    // aresample
+    graphDescription << "aresample=" << _acodecContext->sample_rate;
+
+    // aformat
+    graphDescription << ",aformat=sample_fmts=" << av_get_sample_fmt_name(_acodecContext->sample_fmt) << ":channel_layouts=" << ffmpegChannelLayoutToAformatString(_acodecContext->channel_layout);
+    
+    // compand
+    if (settings.useNoiseThreshold) {
+        graphDescription << ",compand=.3:.8:-900/-900|" << settings.noiseThresholDb << ".1/-900|" << settings.noiseThresholDb << "/" << settings.noiseThresholDb << ":.01:0:-90:.1";
+    }
+
+    // arnndn
+    if (settings.useSpeechNoiseReduction) {
+        graphDescription << ",arnndn=m=models/sh.rnnn";
+    }
+
+    if (avfilter_graph_parse_ptr(streamData.filterGraph, graphDescription.str().c_str(), &inputs, &outputs, nullptr) < 0) {
+        THROW_ERROR("Failed to parse audio graph.");
+    }
+
+    if (avfilter_graph_config(streamData.filterGraph, nullptr) < 0) {
+        THROW_ERROR("Failed to validate graph.");
+    }
+
+    streamData.useSilenceCompensation = settings.useSilenceCompensation;
+    av_buffersink_set_frame_size(streamData.sinkCtx, _acodecContext->frame_size);
 
     _astreams.emplace_back(std::move(streamDataPtr));
+    avfilter_inout_free(&inputs);
+    avfilter_inout_free(&outputs);
     return _astreams.size() - 1;
 }
 
@@ -818,28 +891,30 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
         while (hasAudioFrameAvailable()) {
             for (size_t s = 0; s < _astreams.size(); ++s) {
                 const auto numChannels = _acodecContext->channels;
-
-                {
-                    std::shared_lock<std::shared_mutex> guard(_astreams[s]->fifoMutex);
-                    if (av_audio_fifo_read(_astreams[s]->fifo, (void**)_aTmpFrame->data, frameSize) < frameSize) {
-                        THROW_ERROR("Failed to read from FIFO queue.");
-                    }
-                }
                 _astreams[s]->encodedSamples += frameSize;
 
-                // Copy from the tmp frame into the encoding frame.
+                // Copy from the sink frame into the encoding frame.
                 // We are very much assuming a planar output right now.
-                for (auto c = 0; c < _acodecContext->channels; ++c) {
-                    const float* input = (const float*)_aTmpFrame->data[c];
-                    float* output = (float*)_aframe->data[c];
+                {
+                    std::lock_guard guard(_astreams[s]->graphMutex);
 
-                    for (auto i = 0; i < frameSize; ++i) {
-                        if (s == 0) {
-                            output[i] = input[i];
-                        } else {
-                            output[i] += input[i];
+                    auto* frame = _astreams[s]->sinkFrames.front();
+                    _astreams[s]->sinkFrames.pop_front();
+
+                    for (auto c = 0; c < _acodecContext->channels; ++c) {
+                        const float* input = (const float*)frame->data[c];
+                        float* output = (float*)_aframe->data[c];
+
+                        for (auto i = 0; i < frameSize; ++i) {
+                            if (s == 0) {
+                                output[i] = input[i];
+                            } else {
+                                output[i] += input[i];
+                            }
                         }
                     }
+
+                    av_frame_free(&frame);
                 }
             }
 
@@ -956,8 +1031,8 @@ void FfmpegAvEncoderImpl::flushPacketQueue() {
 
 bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
     for (const auto& stream : _astreams) {
-        std::shared_lock<std::shared_mutex> guard(stream->fifoMutex);
-        if (av_audio_fifo_size(stream->fifo) < _acodecContext->frame_size) {
+        std::shared_lock<std::shared_mutex> guard(stream->graphMutex);
+        if (stream->sinkFrames.empty()) {
             return false;
         }
     }
@@ -1105,8 +1180,8 @@ void FfmpegAvEncoder::initializeAudioStream() {
     _impl->initializeAudioStream();
 }
 
-size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, bool useSilenceCompensation) {
-    return _impl->addAudioInput(inputProps, useSilenceCompensation);
+size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
+    return _impl->addAudioInput(inputProps, settings);
 }
 
 void FfmpegAvEncoder::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {

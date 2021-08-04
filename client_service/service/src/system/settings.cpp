@@ -17,6 +17,7 @@ AudioDeviceSettings AudioDeviceSettings::fromJson(const nlohmann::json& obj) {
     settings.device = obj.value("device", "Default Device");
     settings.volume = obj.value("volume", 1.0);
     settings.mono = obj.value("mono", false);
+    settings.voice = obj.value("voice", false);
     return settings;
 }
 
@@ -54,6 +55,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
         settings.overlays = service::renderer::OverlaySettings::fromJson(obj["overlays"]);
     }
     settings.useAudioDriftCompensation = obj.value("useAudioDriftCompensation", true);
+
+    settings.useVoiceBasicNoiseFilter = obj.value("useVoiceBasicNoiseFilter", false);
+    settings.voiceFilterThresholdDb = obj.value("voiceFilterThresholdDb", -60);
+    settings.useVoiceSpeechNoiseReduction = obj.value("useVoiceSpeechNoiseReduction", false);
     return settings;
 }
 

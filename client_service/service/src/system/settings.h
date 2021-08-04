@@ -17,6 +17,7 @@ struct AudioDeviceSettings {
     std::string device;
     double volume = 1.0;
     bool mono = false;
+    bool voice = false;
 
     static AudioDeviceSettings fromJson(const nlohmann::json& obj);
 };
@@ -42,6 +43,10 @@ struct RecordingSettings {
     int32_t vodEndDelaySeconds = 0;
     service::renderer::OverlaySettings overlays;
     bool useAudioDriftCompensation = false;
+
+    bool useVoiceBasicNoiseFilter = false;
+    int32_t voiceFilterThresholdDb = -60;
+    bool useVoiceSpeechNoiseReduction = false;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

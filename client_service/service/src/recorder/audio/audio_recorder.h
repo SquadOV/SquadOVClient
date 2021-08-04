@@ -39,8 +39,14 @@ public:
     virtual double initialVolume() const = 0;
     virtual void setVolume(double volume) = 0;
 
+    bool isVoice() const { return _isVoice; }
+    void markVoice() { _isVoice = true; }
+
     virtual bool exists() const = 0;
     virtual const AudioPacketProperties& props() const = 0;
+
+private:
+    bool _isVoice = false;
 };
 
 using AudioRecorderPtr = std::unique_ptr<AudioRecorder>;

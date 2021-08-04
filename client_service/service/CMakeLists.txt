@@ -183,6 +183,15 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             COMMENT "Copying Shaders...\n"
         )
 
+        file(GLOB MODEL_FILES "${CMAKE_SOURCE_DIR}/resources/models/*")
+        add_custom_command(
+            TARGET ${EXE_NAME}
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${EXE_NAME}>/models
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MODEL_FILES} $<TARGET_FILE_DIR:${EXE_NAME}>/models
+            COMMENT "Copying Models...\n"
+        )
+
         target_link_libraries(${EXE_NAME}
             d3d11
             dxgi

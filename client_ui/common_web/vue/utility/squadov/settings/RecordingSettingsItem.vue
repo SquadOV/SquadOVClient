@@ -248,6 +248,72 @@
                                 </template>
                             </v-text-field>
                         </div>
+
+                        <div class="d-flex align-center">
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="$store.state.settings.record.useVoiceBasicNoiseFilter"
+                                @change="$store.commit('changeVoiceBasicNoiseThreshold', {use: arguments[0], threshold: $store.state.settings.record.voiceFilterThresholdDb})"
+                                hide-details
+                                label="Use Basic Noise Volume Threshold [Voice]"
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        Applies a threshold to your voice inputs.
+                                        Only sounds above the specified volume threshold will be recorded.
+                                    </v-tooltip>
+                                </template>
+                            </v-checkbox>
+
+                            <v-slider
+                                class="ml-4"
+                                :value="$store.state.settings.record.voiceFilterThresholdDb"
+                                @input="$store.commit('changeVoiceBasicNoiseThreshold', {use: $store.state.settings.record.useVoiceBasicNoiseFilter, threshold: arguments[0]})"
+                                :min="-100"
+                                :max="0"
+                                :step="1"
+                                label="Threshold"
+                                color="warning"
+                                track-color="success"
+                                :disabled="!$store.state.settings.record.useVoiceBasicNoiseFilter"
+                                style="max-width: 450px"
+                                hide-details
+                            >
+                            </v-slider>
+
+                            <div class="ml-2 font-weight-bold text-subtitle-2">
+                                {{ $store.state.settings.record.voiceFilterThresholdDb }} dB
+                            </div>
+                        </div>
+
+                        <div class="d-flex align-center">
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="$store.state.settings.record.useVoiceSpeechNoiseReduction"
+                                @change="$store.commit('changeVoiceNoiseSuppression', arguments[0])"
+                                hide-details
+                                label="Use Advanced Speech Noise Reduction [Voice]"
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        Whether to use advanced, super fancy, machine learning algorithms to reduce noise from your voice inputs.
+                                        This may be CPU intensive.
+                                    </v-tooltip>
+                                </template>
+                            </v-checkbox>
+                        </div>
                     </v-col>
                 </v-row>
 

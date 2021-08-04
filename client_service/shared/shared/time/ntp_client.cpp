@@ -115,6 +115,10 @@ void NTPClient::initialize() {
 }
 
 void NTPClient::enable(bool enabled, bool doTick) {
+    if (_enabled == enabled) {
+        return;
+    }
+
     _enabled = enabled;
     if (doTick) {
         tick();

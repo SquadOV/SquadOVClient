@@ -43,6 +43,7 @@ export interface AudioDeviceSettings {
     device: string
     volume: number
     mono: boolean
+    voice: boolean
 }
 
 export function createDefaultAudioDevice(): AudioDeviceSettings {
@@ -50,6 +51,7 @@ export function createDefaultAudioDevice(): AudioDeviceSettings {
         device: 'Default Device',
         volume: 1.0,
         mono: false,
+        voice: false,
     }
 }
 
@@ -70,6 +72,9 @@ export interface SquadOvRecordingSettings {
     vodEndDelaySeconds: number
     overlays: SquadOvOverlaySettings
     useAudioDriftCompensation: boolean
+    useVoiceBasicNoiseFilter: boolean
+    voiceFilterThresholdDb: number
+    useVoiceSpeechNoiseReduction: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -262,6 +267,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: false,
                     }
                 ],
                 inputDevices: [
@@ -269,6 +275,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: true,
                     }
                 ],
                 usePushToTalk: false,
@@ -280,6 +287,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
+                useVoiceBasicNoiseFilter: false,
+                voiceFilterThresholdDb: -60,
+                useVoiceSpeechNoiseReduction: false,
             }
         case BaselineLevel.Medium:
             record = {
@@ -293,6 +303,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: false,
                     }
                 ],
                 inputDevices: [
@@ -300,6 +311,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: true,
                     }
                 ],
                 usePushToTalk: false,
@@ -311,6 +323,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
+                useVoiceBasicNoiseFilter: false,
+                voiceFilterThresholdDb: -60,
+                useVoiceSpeechNoiseReduction: false,
             }
         case BaselineLevel.High:
             record = {
@@ -324,6 +339,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: false,
                     }
                 ],
                 inputDevices: [
@@ -331,6 +347,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                         device: 'Default Device',
                         volume: 1.0,
                         mono: false,
+                        voice: true,
                     }
                 ],
                 usePushToTalk: false,
@@ -342,6 +359,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
+                useVoiceBasicNoiseFilter: false,
+                voiceFilterThresholdDb: -60,
+                useVoiceSpeechNoiseReduction: false,
             }
     }
 
@@ -376,6 +396,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     device: 'Default Device',
                     volume: 1.0,
                     mono: false,
+                    voice: false,
                 }
             ],
             inputDevices: [
@@ -383,6 +404,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     device: 'Default Device',
                     volume: 1.0,
                     mono: false,
+                    voice: true,
                 }
             ],
             usePushToTalk: false,
@@ -394,6 +416,9 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             vodEndDelaySeconds: 0,
             overlays: createDefaultOverlaySettings(),
             useAudioDriftCompensation: true,
+            useVoiceBasicNoiseFilter: false,
+            voiceFilterThresholdDb: -60,
+            useVoiceSpeechNoiseReduction: false,
         },
         keybinds: {
             pushToTalk: []
@@ -576,6 +601,30 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.games === undefined) {
         parsedData.games = createEmptyPerGameSettings()
+    }
+
+    for (let d of parsedData.record.outputDevices) {
+        if (d.voice === undefined) {
+            d.voice = false
+        }
+    }
+
+    for (let d of parsedData.record.inputDevices) {
+        if (d.voice === undefined) {
+            d.voice = true
+        }
+    }
+    
+    if (parsedData.record.useVoiceBasicNoiseFilter === undefined) {
+        parsedData.record.useVoiceBasicNoiseFilter = false
+    }
+
+    if (parsedData.record.voiceFilterThresholdDb === undefined) {
+        parsedData.record.voiceFilterThresholdDb = -60
+    }
+
+    if (parsedData.record.useVoiceSpeechNoiseReduction === undefined) {
+        parsedData.record.useVoiceSpeechNoiseReduction = false
     }
 
     saveLocalSettings(parsedData, true)

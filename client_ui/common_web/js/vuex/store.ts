@@ -289,6 +289,25 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.games.wow.timeoutSeconds = params.seconds
             saveLocalSettings(state.settings)
 /// #endif  
+        },
+        changeVoiceBasicNoiseThreshold(state: RootState, params: {use: boolean, threshold: number}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useVoiceBasicNoiseFilter = params.use
+            state.settings.record.voiceFilterThresholdDb = params.threshold
+            saveLocalSettings(state.settings)
+/// #endif  
+        },
+        changeVoiceNoiseSuppression(state: RootState, use: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useVoiceSpeechNoiseReduction = use
+            saveLocalSettings(state.settings)
+/// #endif        
         }
     },
     actions: {

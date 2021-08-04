@@ -39,6 +39,16 @@
                     >
                     </v-checkbox>
 
+                    <v-checkbox
+                        v-if="isInput"
+                        class="my-0 mr-0 ml-4"
+                        v-model="device.voice"
+                        @change="syncToValue"
+                        hide-details
+                        label="Voice"
+                    >
+                    </v-checkbox>
+
                     <v-spacer></v-spacer>
                     <v-btn icon color="error" @click="deleteDevice(index)">
                         <v-icon>
@@ -100,7 +110,9 @@ export default class MultipleAudioDeviceSettings extends Vue {
     }
 
     addNewDevice() {
-        this.internalValue.push(createDefaultAudioDevice())
+        let device = createDefaultAudioDevice()
+        device.voice = this.isInput
+        this.internalValue.push(device)
         this.syncToValue()
     }
     
