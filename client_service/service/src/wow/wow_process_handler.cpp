@@ -6,6 +6,8 @@
 #include "recorder/game_recorder.h"
 #include "system/state.h"
 #include "shared/http/http_client.h"
+
+#include <atomic>
 #include <VersionHelpers.h>
 #include <unordered_map>
 
@@ -74,15 +76,28 @@ private:
 
     void genericMatchStart(const shared::TimePoint& tm);
     void genericMatchEnd(const std::string& matchUuid, const shared::TimePoint& tm);
+    void prematurelyEndMatch(const shared::TimePoint& tm, bool isZoneChange, bool isTimeout);
 
     bool _combatLogActive = false;
     game_event_watcher::WoWCombatLogState _combatLog;
-    std::string _currentMatchViewUuid;
     shared::TimePoint _matchStartTime;
 
+    void logTimeoutHandler();
+    void markCombatLogActive();
+
+    std::mutex _lastLogMutex;
+    shared::TimePoint _lastLogTime;
+    std::thread _lastLogTimeoutThread;
+    std::atomic<bool> _lastLogTimeoutRunning = false;
+
+    void forceKillLogTimeoutThread();
+
+    std::recursive_mutex _currentMatchMutex;
+    std::string _currentMatchViewUuid;
     game_event_watcher::WoWChallengeModeStart _currentChallenge;
     game_event_watcher::WoWEncounterStart _currentEncounter;
     game_event_watcher::WoWArenaStart _currentArena;
+
     std::vector<game_event_watcher::WoWCombatantInfo> _combatants;
     bool _expectingCombatants = false;
 
@@ -98,8 +113,9 @@ private:
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
     _process(p),
-    _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())) {
-
+    _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())),
+    _lastLogTime(shared::nowUtc())
+{
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
     if (!_process.empty()) {
         _recorder->startDvrSession(getWowRecordingFlags());
@@ -125,7 +141,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 }
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
-    
+    forceKillLogTimeoutThread();
 }
 
 void WoWProcessHandlerInstance::overrideCombatLogPosition(const std::filesystem::path& path) {
@@ -178,7 +194,14 @@ void WoWProcessHandlerInstance::onCombatLogStart(const shared::TimePoint& tm, co
     _combatLog = *log;
 }
 
+void WoWProcessHandlerInstance::markCombatLogActive() {
+    std::lock_guard guard(_lastLogMutex);
+    _lastLogTime = shared::nowUtc();
+}
+
 void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, const void* data) {
+    markCombatLogActive();
+
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -205,7 +228,38 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     }
 }
 
+void WoWProcessHandlerInstance::forceKillLogTimeoutThread() {
+    _lastLogTimeoutRunning = false;
+    if (_lastLogTimeoutThread.joinable()) {
+        _lastLogTimeoutThread.join();
+    }
+}
+
+void WoWProcessHandlerInstance::logTimeoutHandler() {
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    if (!wowSettings.useCombatLogTimeout) {
+        return;
+    }
+    LOG_INFO("Using WoW combat log timeout of " << wowSettings.timeoutSeconds << " seconds..." << std::endl);
+    
+    while (_lastLogTimeoutRunning) {
+        std::lock_guard guard(_lastLogMutex);
+        const auto elapsed = shared::nowUtc() - _lastLogTime;
+        const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+
+        if (elapsedSeconds > wowSettings.timeoutSeconds) {
+            LOG_INFO("!!! WoW Combat Log Timeout !!!" << std::endl);
+            prematurelyEndMatch(shared::nowUtc(), false, true);
+            break;
+        }
+
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+}
+
 void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
+
     if (inChallenge() && _combatants.empty()) {
         _expectingCombatants = true;
     }
@@ -226,6 +280,7 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
 }
 
 void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -253,6 +308,7 @@ void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, cons
 }
 
 void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -269,6 +325,7 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
 }
 
 void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -297,6 +354,7 @@ void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, 
 }
 
 void WoWProcessHandlerInstance::onArenaStart(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -313,6 +371,7 @@ void WoWProcessHandlerInstance::onArenaStart(const shared::TimePoint& tm, const 
 }
 
 void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     if (service::system::getGlobalState()->isPaused()) {
         return;
     }
@@ -340,7 +399,36 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
     genericMatchEnd(matchUuid, tm);
 }
 
+void WoWProcessHandlerInstance::prematurelyEndMatch(const shared::TimePoint& tm, bool isZoneChange, bool isTimeout) {
+    std::lock_guard guard(_currentMatchMutex);
+    if (inArena()) {
+        game_event_watcher::WoWArenaEnd end;
+        end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
+        end.matchDurationSeconds = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(tm - _matchStartTime).count());
+        end.newRatings[0] = 0;
+        end.newRatings[1] = 0;
+        onArenaEnd(tm, &end);
+    } else if (inChallenge() && (isZoneChange || isTimeout)) {
+        game_event_watcher::WoWChallengeModeEnd end;
+        end.instanceId = _currentChallenge.instanceId;
+        end.keystoneLevel = _currentChallenge.keystoneLevel;
+        end.success = false;
+        end.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(tm - _matchStartTime).count();
+        onChallengeModeEnd(tm, &end);
+    } else if (inEncounter() && isTimeout) {
+        // I'm not aware of any encounters that do a zoneout so no need to handle that.
+        game_event_watcher::WoWEncounterEnd end;
+        end.encounterId = _currentEncounter.encounterId;
+        end.encounterName = _currentEncounter.encounterName;
+        end.difficulty = _currentEncounter.difficulty;
+        end.numPlayers = _currentEncounter.numPlayers;
+        end.success = false;
+        onEncounterEnd(tm, &end);
+    }
+}
+
 void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const void* data) {
+    std::lock_guard guard(_currentMatchMutex);
     bool isMatchEnd = hasValidCombatLog() && (inArena() || inChallenge() || inEncounter());
 
     if (!isMatchEnd || !data) {
@@ -369,23 +457,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
 
     const auto isMatchEnder = _instanceIdIsMatchEnd[zoneData.instanceId];
     LOG_INFO("Using Zone Change as Match End: " << isMatchEnder << std::endl);
-
-    if (inArena()) {
-        game_event_watcher::WoWArenaEnd end;
-        end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
-        end.matchDurationSeconds = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(tm - _matchStartTime).count());
-        end.newRatings[0] = 0;
-        end.newRatings[1] = 0;
-        onArenaEnd(tm, &end);
-    } else if (inChallenge() && isMatchEnder) {
-        game_event_watcher::WoWChallengeModeEnd end;
-        end.instanceId = _currentChallenge.instanceId;
-        end.keystoneLevel = _currentChallenge.keystoneLevel;
-        end.success = false;
-        end.timeMs = std::chrono::duration_cast<std::chrono::milliseconds>(tm - _matchStartTime).count();
-        onChallengeModeEnd(tm, &end);
-    }
-
+    prematurelyEndMatch(tm, isMatchEnder, false);
 }
 
 void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
@@ -453,6 +525,12 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
             << "\tCombatants: " << _combatants << std::endl);
         return;
     }
+
+    markCombatLogActive();
+
+    forceKillLogTimeoutThread();
+    LOG_INFO("Start Combat Log Timeout" << std::endl);
+    _lastLogTimeoutThread = std::thread(std::bind(&WoWProcessHandlerInstance::logTimeoutHandler, this));
 }
 
 void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, const shared::TimePoint& tm) {
@@ -498,6 +576,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
     onCombatLogLine(endLog.timestamp, (void*)&endLog);
 
     _currentMatchViewUuid = "";
+    forceKillLogTimeoutThread();
 }
 
 WoWProcessHandler::WoWProcessHandler() = default;

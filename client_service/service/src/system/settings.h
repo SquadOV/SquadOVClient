@@ -51,9 +51,23 @@ struct KeybindSettings {
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 
+struct WowSettings {
+    bool useCombatLogTimeout = true;
+    int32_t timeoutSeconds = 20;
+
+    static WowSettings fromJson(const nlohmann::json& obj);
+};
+
+struct PerGameSettings {
+    WowSettings wow;
+
+    static PerGameSettings fromJson(const nlohmann::json& obj);
+};
+
 struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
+    PerGameSettings games;
     bool enableNtp = true;
     std::unordered_set<shared::EGame> disabledGames;
 
@@ -68,6 +82,9 @@ public:
 
     RecordingSettings recording();
     KeybindSettings keybinds();
+
+    WowSettings wowSettings();
+
     bool enableNtp();
     bool isGameEnabled(shared::EGame);
     

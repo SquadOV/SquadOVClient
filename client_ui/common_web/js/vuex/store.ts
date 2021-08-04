@@ -280,6 +280,16 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeWowLogTimeout(state: RootState, params: {use: boolean, seconds: number}) {
+/// #if DESKTOP
+            if (!state.settings || params.seconds === null) {
+                return
+            }
+            state.settings.games.wow.useCombatLogTimeout = params.use
+            state.settings.games.wow.timeoutSeconds = params.seconds
+            saveLocalSettings(state.settings)
+/// #endif  
+        }
     },
     actions: {
         async reloadLocalSettings(context) {

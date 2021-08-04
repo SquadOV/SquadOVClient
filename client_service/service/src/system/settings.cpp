@@ -65,11 +65,25 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     return settings;
 }
 
+WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
+    WowSettings settings;
+    settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
+    settings.timeoutSeconds = obj.value("timeoutSeconds", 20);
+    return settings;
+}
+
+PerGameSettings PerGameSettings::fromJson(const nlohmann::json& obj) {
+    PerGameSettings settings;
+    settings.wow = WowSettings::fromJson(obj["wow"]);
+    return settings;
+}
+
 LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     LocalSettings settings;
     settings.record = RecordingSettings::fromJson(obj["record"]);
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
     settings.enableNtp = obj.value("enableNtp", false);
+    settings.games = PerGameSettings::fromJson(obj["games"]);
 
     if (obj.count("disabledGames") > 0) {
         for (const auto& val : obj["disabledGames"]) {
@@ -106,6 +120,11 @@ RecordingSettings Settings::recording() {
 KeybindSettings Settings::keybinds() {
     std::shared_lock lock(_mutex);
     return _settings.keybinds;
+}
+
+WowSettings Settings::wowSettings() {
+    std::shared_lock lock(_mutex);
+    return _settings.games.wow;
 }
 
 bool Settings::enableNtp() {

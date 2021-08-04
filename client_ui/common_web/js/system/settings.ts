@@ -158,6 +158,28 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
     }    
 }
 
+export interface WowSettings {
+    useCombatLogTimeout: boolean
+    timeoutSeconds: number
+}
+
+function createEmptyWowSettings(): WowSettings {
+    return {
+        useCombatLogTimeout: true,
+        timeoutSeconds: 30,
+    }
+}
+
+export interface PerGameSettings {
+    wow: WowSettings
+}
+
+function createEmptyPerGameSettings(): PerGameSettings {
+    return {
+        wow: createEmptyWowSettings()
+    }
+}
+
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
     keybinds: SquadOvKeybindSettings
@@ -169,6 +191,7 @@ export interface SquadOvLocalSettings {
     enableNtp: boolean
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
+    games: PerGameSettings
 }
 
 function getSettingsFname() : string {
@@ -338,6 +361,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         enableNtp: true,
         anonymousAnalytics: true,
         disabledGames: [],
+        games: createEmptyPerGameSettings(),
     }
 /// #else
     return {
@@ -385,6 +409,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         enableNtp: true,
         anonymousAnalytics: true,
         disabledGames: [],
+        games: createEmptyPerGameSettings(),
     }
 /// #endif
 }
@@ -547,6 +572,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useAudioDriftCompensation === undefined) {
         parsedData.record.useAudioDriftCompensation = true
+    }
+
+    if (parsedData.games === undefined) {
+        parsedData.games = createEmptyPerGameSettings()
     }
 
     saveLocalSettings(parsedData, true)
