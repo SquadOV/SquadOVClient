@@ -21,6 +21,7 @@ export class AnalyticsContainer {
     _anonId: string
     _analytics: Analytics | null = null
     _identified: boolean = false
+    _ip: string | undefined = undefined
 
     get platform(): string {
 ///#if DESKTOP
@@ -69,11 +70,23 @@ export class AnalyticsContainer {
         this._analytics = new Analytics(SQUADOV_SEGMENT_KEY)
     }
 
-    identify() {
+    get context(): any {
+        return {
+            app: {
+                name: 'SquadOV',
+                version: rawData.version,
+                build: 'Release'
+            },
+            ip: this._ip,
+        }
+    }
+
+    identify(ip: string) {
         if (!this._analytics) {
             return
         }
 
+        this._ip = ip
         this._analytics.identify({
             userId: this._store.state.currentUser?.uuid,
             anonymousId: this._anonId,
@@ -81,13 +94,7 @@ export class AnalyticsContainer {
                 isLoggedIn: (!!this._store.state.currentUser).toString(),
                 email: this._store.state.currentUser?.email,
             },
-            context: {
-                app: {
-                    name: 'SquadOV',
-                    version: rawData.version,
-                    build: 'Release'
-                }
-            },
+            context: this.context,
             integrations: {
                 'Google Analytics': {
                     clientId: this._anonId,
@@ -117,6 +124,7 @@ export class AnalyticsContainer {
                     clientId: this._anonId,
                 },
             },
+            context: this.context,
         })
     }
 
@@ -145,7 +153,8 @@ export class AnalyticsContainer {
                 page: {
                     path: route.fullPath,
                     title: !!route.name ? route.name : 'Unknown',
-                }
+                },
+                ...this.context,
             }
         })
     }

@@ -760,7 +760,12 @@ ipcRenderer.invoke('request-session').then((session : {
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
         store.commit('setUser' , resp.data)
         store.dispatch('loadUserFeatureFlags')
-        getAnalyticsContainer()?.identify()
+
+        apiClient.getIpAddress().then((resp: ApiData<string>) => {
+            getAnalyticsContainer()?.identify(resp.data)
+        }).catch((err: any) => {
+            console.log('Failed to get IP address: ', err)
+        })
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover
