@@ -5,8 +5,8 @@ import {
     AnalyticsCategory,
     AnalyticsAction
 } from '@client/js/analytics/events'
-import ua from 'universal-analytics'
-import mixpanel from 'mixpanel-browser'
+import Analytics from 'analytics-node'
+import rawData from '@client/package.json'
 
 ///#if DESKTOP
 import fs from 'fs'
@@ -18,7 +18,9 @@ import { Route } from 'vue-router'
 export class AnalyticsContainer {
     _isInit: boolean = false
     _store: Store<RootState>
-    _ga: ua.Visitor | null = null
+    _anonId: string
+    _analytics: Analytics | null = null
+    _identified: boolean = false
 
     get platform(): string {
 ///#if DESKTOP
@@ -59,67 +61,81 @@ export class AnalyticsContainer {
 
     constructor(store: Store<RootState>) {
         this._store = store
-        if (!SQUADOV_USE_ANALYTICS) {
+
+        // Generate or load a uuid for this [anonymous] user.
+        this._anonId = this.generateOrLoadClientId()
+
+        // Initialize Segment
+        this._analytics = new Analytics(SQUADOV_SEGMENT_KEY)
+    }
+
+    identify() {
+        if (!this._analytics) {
             return
         }
 
-        let anonId = this.generateOrLoadClientId()
-        // Generate or load a uuid for this [anonymous] user.
-        this._ga = ua('UA-185942570-1', anonId)
-        this._ga.set('ds', this.platform)
-        this._ga.set('aip', true)
-        // isLoggedIn
-        this._ga.set('cd[1]', (!!this._store.state.currentUser).toString())
-
-        mixpanel.init('68b7bcde2b8c2ae564daf927e46d391f')
-        mixpanel.identify(anonId)
+        this._analytics.identify({
+            userId: this._store.state.currentUser?.uuid,
+            anonymousId: this._anonId,
+            traits: {
+                isLoggedIn: (!!this._store.state.currentUser).toString(),
+                email: this._store.state.currentUser?.email,
+            },
+            context: {
+                app: {
+                    name: 'SquadOV',
+                    version: rawData.version,
+                    build: 'Release'
+                }
+            }
+        })
+        this._identified = true
     }
 
     pageView(route: Route) {
-        if (!SQUADOV_USE_ANALYTICS || !this._ga) {
+        if (!this._analytics || !this._store.state.settings?.anonymousAnalytics || !this._identified) {
             return
         }
 
-        if (!this._store.state.settings?.anonymousAnalytics) {
-            return
-        }
-        this._ga.pageview({
-            dp: route.fullPath,
-            dh: 'https://app.squadov.gg',
-            dt: !!route.name ? route.name : 'Unknown',
-        }).send()
+        this._analytics.page({
+            userId: this._store.state.currentUser?.uuid,
+            anonymousId: this._anonId,
+            name: !!route.name ? route.name : 'Unknown',
+            properties: {
+                url: `https://app.squadov.gg${route.fullPath}`,
+                path: route.fullPath,
+            },
+            integrations: {
+                All: true,
+                Vero: false,
+            },
+        })
     }
 
     event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
-        if (!SQUADOV_USE_ANALYTICS) {
+        if (!this._analytics || !this._store.state.settings?.anonymousAnalytics || !this._identified) {
             return
         }
 
-        if (!this._store.state.settings?.anonymousAnalytics) {
-            return
-        }
-        
-        let routeName = !!route.name ? route.name : 'Unknown'
-        let params = {
-            ec: AnalyticsCategory[category],
-            ea: AnalyticsAction[action],
-            el: label,
-            dp: route.fullPath,
-            dt: routeName,
-            ev: value,
-        }
-
-        if (!!this._ga) {
-            this._ga.event(params).send()
-        }
-        
-        mixpanel.track(`${params.ec}-${params.ea}`, {
-            path: route.fullPath,
-            route: routeName,
-            loggedIn: !!this._store.state.currentUser,
-            label,
-            value,
-            platform: this.platform,
+        this._analytics.track({
+            userId: this._store.state.currentUser?.uuid,
+            anonymousId: this._anonId,
+            event: AnalyticsAction[action],
+            properties: {
+                category: AnalyticsCategory[category],
+                label,
+                value,
+            },
+            integrations: {
+                All: true,
+                Vero: false,
+            },
+            context: {
+                page: {
+                    path: route.fullPath,
+                    title: !!route.name ? route.name : 'Unknown',
+                }
+            }
         })
     }
 }

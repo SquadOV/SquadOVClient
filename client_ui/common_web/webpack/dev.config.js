@@ -11,7 +11,7 @@ module.exports = (env, argv) => {
         plugins: [
             new webpack.DefinePlugin({
                 SQUADOV_API_URL: "'http://127.0.0.1:8080'",
-                SQUADOV_USE_ANALYTICS: "false",
+                SQUADOV_SEGMENT_KEY: "'IgCsglx2jaMD2JctrgioQ7tQLMWjXw8I'",
             })
         ],
     })
