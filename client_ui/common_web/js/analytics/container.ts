@@ -87,6 +87,11 @@ export class AnalyticsContainer {
                     version: rawData.version,
                     build: 'Release'
                 }
+            },
+            integrations: {
+                'Google Analytics': {
+                    clientId: this._anonId,
+                }
             }
         })
         this._identified = true
@@ -108,6 +113,9 @@ export class AnalyticsContainer {
             integrations: {
                 All: true,
                 Vero: false,
+                'Google Analytics': {
+                    clientId: this._anonId,
+                },
             },
         })
     }
@@ -129,6 +137,9 @@ export class AnalyticsContainer {
             integrations: {
                 All: true,
                 Vero: false,
+                'Google Analytics': {
+                    clientId: this._anonId,
+                }
             },
             context: {
                 page: {
