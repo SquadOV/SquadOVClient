@@ -11,6 +11,8 @@
 #include <VersionHelpers.h>
 #include <unordered_map>
 
+#define TEST_DUMP 0
+
 namespace service::wow {
 namespace {
 
@@ -109,6 +111,12 @@ private:
 
     // Set of known zones and whether zoning there should quality as a map change.
     std::unordered_map<int, bool> _instanceIdIsMatchEnd;
+
+#ifndef NDEBUG
+#if TEST_DUMP
+    nlohmann::json _debugSendLog;
+#endif
+#endif
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -221,6 +229,12 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
         if (flags.allowWowCombatLogUpload) {
             try {
                 service::api::getKafkaApi()->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
+
+#ifndef NDEBUG
+#if TEST_DUMP
+                _debugSendLog.push_back(log.toJson());
+#endif
+#endif
             } catch (std::exception& ex) {
                 LOG_WARNING("Failed to upload combat log line: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
             }
@@ -563,6 +577,15 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
             _recorder->stopFromSource(tm, end);
         }
     }
+
+#ifndef NDEBUG
+#if TEST_DUMP
+    {
+        std::ofstream outputFile("output.json");
+        outputFile << _debugSendLog;
+    }
+#endif
+#endif
 
     // Tell the server that the combat log is finished. I don't think this is *technically*
     // needed but a nice marker to have to force a flush out of events.
