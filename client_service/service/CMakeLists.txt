@@ -47,6 +47,10 @@ SET(SRCS
     src/renderer/d3d11_overlay_renderer.cpp
     src/renderer/d3d11_overlay_layer.cpp
     src/renderer/d3d11_overlay_component.cpp
+    src/hardware/hardware.cpp
+    src/hardware/os.cpp
+    src/hardware/cpu.cpp
+    src/hardware/display.cpp
 )
 
 SET(HEADERS
@@ -106,6 +110,10 @@ SET(HEADERS
     src/renderer/d3d11_overlay_renderer.h
     src/renderer/d3d11_overlay_layer.h
     src/renderer/d3d11_overlay_component.h
+    src/hardware/hardware.h
+    src/hardware/os.h
+    src/hardware/cpu.h
+    src/hardware/display.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
@@ -129,6 +137,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/portaudio/include
         ${CMAKE_SOURCE_DIR}/deps/cppzmq
         ${CMAKE_SOURCE_DIR}/deps/libzmq/include
+        ${CMAKE_SOURCE_DIR}/deps/libcpuid/libcpuid
         ${OPENSSL_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
@@ -149,6 +158,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ZLIB::ZLIB
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
+        cpuid 
         ${Boost_LIBRARIES}
         ${OPENSSL_LIBRARIES}
         ${FFMPEG_LIBRARIES}
@@ -197,6 +207,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
             dxgi
             dbghelp
             Advapi32
+            Setupapi
         )
     endif()
 

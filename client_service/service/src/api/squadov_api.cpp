@@ -78,6 +78,18 @@ std::string SquadovApi::getSessionUserUuid() const {
     return _session.user.uuid;
 }
 
+void SquadovApi::syncHardware(const service::hardware::Hardware& data) const {
+    std::ostringstream path;
+    path << "/v1/users/me/hw";
+
+    const auto result = _webClient->post(path.str(), data.toJson());
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to get sync specs: " << result->status);
+        return;
+    }
+}
+
 void SquadovApi::retrieveSessionFeatureFlags() {
     std::ostringstream path;
     path << "/v1/users/" << getSessionUserId() << "/features";

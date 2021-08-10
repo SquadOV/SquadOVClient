@@ -30,6 +30,7 @@
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
+#include "hardware/hardware.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -161,6 +162,9 @@ int main(int argc, char** argv) {
         enablePaDebugLogs = true;
     }
 
+    const auto sysHw = service::hardware::getSystemHardware();
+    LOG_INFO(sysHw << std::endl);
+
     LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
     LOG_INFO("Set unhandled exception filter..." << std::endl);
@@ -238,6 +242,12 @@ int main(int argc, char** argv) {
         // Maybe use a specific failure message?
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
         std::exit(1);
+    }
+
+    try {
+        service::api::getGlobalApi()->syncHardware(sysHw);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to sync HW info: " << ex.what() << std::endl);
     }
 
     LOG_INFO("Cleaning up temporary files..." << std::endl);

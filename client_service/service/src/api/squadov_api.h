@@ -8,6 +8,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "api/kafka_api.h"
 #include "vod/vod.h"
+#include "hardware/hardware.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
@@ -51,6 +52,7 @@ public:
     // User
     shared::squadov::SquadOVUser getCurrentUserApi() const;
     shared::squadov::SquadOVUser getCurrentUserCached() const;
+    void syncHardware(const service::hardware::Hardware& data) const;
 
     // Valorant
     std::string uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const;

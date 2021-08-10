@@ -270,6 +270,13 @@ class ApiClient {
         })
     }
 
+    secondaryIdentify(ip: string, anonId: string): Promise<void> {
+        return axios.post('v1/users/me/identify', {
+            ip,
+            anonId,
+        }, this.createWebAxiosConfig())
+    }
+
     //
     // WebSocket
     //

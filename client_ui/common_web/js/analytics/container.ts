@@ -12,6 +12,7 @@ import rawData from '@client/package.json'
 import fs from 'fs'
 import path from 'path'
 import { Route } from 'vue-router'
+import { apiClient } from '../api'
 ///#else
 ///#endif
 
@@ -22,14 +23,6 @@ export class AnalyticsContainer {
     _analytics: Analytics | null = null
     _identified: boolean = false
     _ip: string | undefined = undefined
-
-    get platform(): string {
-///#if DESKTOP
-        return 'app'
-///#else
-        return 'web'
-///#endif
-    }
 
     generateOrLoadClientId(): string {
         console.log('Checking for anonymous analytics ID...')
@@ -91,8 +84,8 @@ export class AnalyticsContainer {
             userId: this._store.state.currentUser?.uuid,
             anonymousId: this._anonId,
             traits: {
-                isLoggedIn: (!!this._store.state.currentUser).toString(),
                 email: this._store.state.currentUser?.email,
+                username: this._store.state.currentUser?.username,
             },
             context: this.context,
             integrations: {
@@ -101,6 +94,14 @@ export class AnalyticsContainer {
                 }
             }
         })
+
+///#if DESKTOP
+        if (!!this._store.state.currentUser) {
+            apiClient.secondaryIdentify(this._ip, this._anonId).catch((err: any) => {
+                console.log('Failed to do secondary identify.')
+            })
+        }
+///#endif
         this._identified = true
     }
 
@@ -122,7 +123,7 @@ export class AnalyticsContainer {
                 Vero: false,
                 'Google Analytics': {
                     clientId: this._anonId,
-                },
+                }
             },
             context: this.context,
         })

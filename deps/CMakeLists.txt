@@ -32,3 +32,5 @@ set(BUILD_SHARED_LIBS_SAVED "${BUILD_SHARED_LIBS}")
 set(BUILD_SHARED_LIBS OFF)
 add_subdirectory(oatpp)
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
+
+add_subdirectory(libcpuid)

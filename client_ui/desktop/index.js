@@ -429,7 +429,7 @@ zeromqServer.on('respond-input-devices', (r) => {
 totalCloseCount = 0
 function startClientService() {
     if (totalCloseCount > 5) {
-        console.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
+        log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
         if (!!win) {
             win.webContents.send('service-error')
         }
