@@ -19,6 +19,7 @@ target_include_directories(steamworks_interface
     ${CMAKE_SOURCE_DIR}/client_service/steamworks_interface
     ${CMAKE_SOURCE_DIR}/client_service/shared
     ${CMAKE_SOURCE_DIR}/deps/steamworks_sdk/public
+    ${CMAKE_SOURCE_DIR}/deps/date/include
     ${Protobuf_INCLUDE_DIRS}
 )
 

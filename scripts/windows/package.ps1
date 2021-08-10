@@ -15,7 +15,7 @@ Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK"
 Set-Location -Path ..\..\..\..\client_ui\common_web
 yarn install --check-files
 Remove-Item .\dist\production -Recurse
-yarn run webpack --config ./webpack/squadov.config.js --env target=electron-renderer
+yarn run webpack --config ./webpack/production.config.js --env target=electron-renderer
 
 Set-Location -Path ..\desktop
 yarn install --check-files
