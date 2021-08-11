@@ -89,10 +89,10 @@ const config = JSON.parse(fs.readFileSync(configFile))
 process.env.API_SQUADOV_URL = config["API_URL"]
 process.env.SQUADOV_TZDATA = !!process.env.SQUADOV_TZDATA ?
     process.env.SQUADOV_TZDATA :
-    app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : '../../resources/tzdata'
+    app.isPackaged ? path.join(process.resourcesPath, 'tzdata') : path.join(__dirname, '../../resources/tzdata')
 process.env.SQUADOV_CSGO_RESOURCES = !!process.env.SQUADOV_CSGO_RESOURCES ?
     process.env.SQUADOV_CSGO_RESOURCES :
-    app.isPackaged ? path.join(process.resourcesPath, 'csgo') : '../../resources/csgo'
+    app.isPackaged ? path.join(process.resourcesPath, 'csgo') : path.join(__dirname, '../../resources/csgo')
 const iconPath = path.join(__dirname, 'assets/icon.ico')
 
 let win
@@ -462,7 +462,10 @@ function startClientService() {
     }
 
     log.log("SPAWN PROCESS: " + exePath);
-    let child = spawn(exePath)
+    let child = spawn(exePath, {
+        cwd: path.dirname(exePath)
+    })
+
     child.stdout.on('data', (data) => {
         console.log(`SERVICE: ${data}`)
     })
