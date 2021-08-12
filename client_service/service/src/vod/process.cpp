@@ -6,6 +6,7 @@
 #include "shared/filesystem/utility.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/log/log.h"
+#include "shared/env.h"
 #include "shared/errors/error.h"
 
 #include <cstdlib>
@@ -17,24 +18,29 @@ namespace service::vod {
 
 void processRawLocalVod(const fs::path& from, const fs::path& to) {
     // It's easier to just use the ffmpeg exe directly.
-    const fs::path ffmpegPath = shared::filesystem::getCurrentExeFolder() / fs::path("ffmpeg.exe");
+    fs::path ffmpegPath = std::filesystem::path(shared::getEnv("FFMPEG_BINARY_PATH", ""));
+    if (!fs::exists(ffmpegPath)) {
+        ffmpegPath = shared::filesystem::getCurrentExeFolder() / fs::path("ffmpeg.exe");
+    }
+    
     if (!fs::exists(ffmpegPath)) {
         THROW_ERROR("FFmpeg executable does not exist - reinstallation may be required.");
     }
 
+    LOG_INFO("Launching FFmpeg: " << ffmpegPath << std::endl);
     boost::asio::io_service ios;
     std::future<std::string> stdoutBuf;
     std::future<std::string> stderrBuf;
     
     bp::child c(
-        shared::filesystem::pathUtf8(ffmpegPath),
+        ffmpegPath.native(),
         "-y",
-        "-i", shared::filesystem::pathUtf8(from),
+        "-i", from.native(),
         "-c:v", "copy",
         "-c:a", "copy",
         "-max_muxing_queue_size", "9999",
         "-movflags", "+faststart",
-        shared::filesystem::pathUtf8(to),
+        to.native(),
         bp::std_out > stdoutBuf,
         bp::std_err > stderrBuf,
         ios

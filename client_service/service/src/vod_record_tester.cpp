@@ -1,6 +1,7 @@
 #pragma warning(disable: 4996)
 
 #include <boost/program_options.hpp>
+#include <filesystem>
 #include <iostream>
 #include <codecvt>
 #include <condition_variable>
@@ -15,8 +16,10 @@ extern "C" {
 #include "api/squadov_api.h"
 #include "shared/env.h"
 #include "system/win32/message_loop.h"
+#include "vod/process.h"
 
 namespace po = boost::program_options;
+namespace fs = std::filesystem;
 using namespace process_watcher;
 void ffmpegLogCallback(void* ptr, int level, const char* fmt, va_list v1) {
     if (level > av_log_get_level()) {
@@ -37,6 +40,7 @@ int main(int argc, char** argv) {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
+    bool fastify = false;
     po::options_description desc("Options");
     desc.add_options()
         ("process", po::value<std::string>()->required(), "Process to record.")
@@ -46,7 +50,8 @@ int main(int argc, char** argv) {
         ("offset", po::value<int>()->default_value(15), "How many seconds into the DVR we should use in the output VOD")
         ("width", po::value<size_t>()->default_value(1920), "width of output")
         ("height", po::value<size_t>()->default_value(1080), "height of output")
-        ("output", po::value<std::string>()->required(), "VOD output file.");
+        ("output", po::value<std::string>()->required(), "VOD output file.")
+        ("fastify", po::bool_switch(&fastify), "Do fastify");
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -181,9 +186,17 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "Output VOD to: " << outputFname << std::endl;
-    shared::system::win32::Win32MessageLoop::singleton()->start();
-    //if (workerThread.joinable()) {
-    //    workerThread.join();
-    //}
+    //shared::system::win32::Win32MessageLoop::singleton()->start();
+    if (workerThread.joinable()) {
+        workerThread.join();
+    }
+
+    if (fastify) {
+        const auto fromPath = fs::path(outputFname);
+        auto toPath = fromPath;
+        toPath.replace_extension(fs::path("mp4"));
+        service::vod::processRawLocalVod(fromPath, toPath);
+    }
+
     return 0;
 }
