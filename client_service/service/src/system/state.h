@@ -15,6 +15,9 @@ public:
     void setPause(bool p) {_paused = p; };
     bool isPaused() const { return _paused; };
 
+    void setIsNvidiaGPU(bool p) { _nvidiaGpu = p; }
+    bool isNvidiaGPU() const { return _nvidiaGpu; }
+
     void addGameRunningCallback(const GameStateChangeCallback& cb) { _runningCbs.push_back(cb); }
     void addGameRecordingCallback(const GameStateChangeCallback& cb) { _recordingCbs.push_back(cb); }
 
@@ -23,6 +26,7 @@ public:
 
 private:
     bool _paused = false;
+    bool _nvidiaGpu = false;
     shared::EGameSet _runningSet;
     std::vector<GameStateChangeCallback> _runningCbs;
 

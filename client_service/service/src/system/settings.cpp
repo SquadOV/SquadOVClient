@@ -2,6 +2,7 @@
 #include "shared/filesystem/common_paths.h"
 #include "shared/errors/error.h"
 #include "shared/strings/strings.h"
+#include "system/state.h"
 #include <fstream>
 
 namespace fs = std::filesystem;
@@ -25,7 +26,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     RecordingSettings settings;
     settings.resY = obj["resY"].get<int32_t>();
     settings.fps = obj["fps"].get<int32_t>();
-    settings.useVideoHw = obj.value("useVideoHw", true);
+
+    // TEMPORARY MEASURE FOR NVIDIA GPUS DUE TO #1260.
+    settings.useVideoHw = obj.value("useVideoHw", true) && !service::system::getGlobalState()->isNvidiaGPU();
+
     settings.useHwEncoder = obj.value("useHwEncoder", true);
 
     if (obj.find("outputDevices") != obj.end() && obj.count("outputDevices") > 0) {

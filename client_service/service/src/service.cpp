@@ -165,6 +165,22 @@ int main(int argc, char** argv) {
     const auto sysHw = service::hardware::getSystemHardware();
     LOG_INFO(sysHw << std::endl);
 
+    // Initialize global state and start to listen to messages coming via ZeroMQ about
+    // how to update certain state.
+    service::system::getGlobalState();
+
+    // Need to detect NVIDIA GPUs here to deal with #1260. We need to disable use gpu pipeline for nvidia users because
+    // what the fuck MSI.
+    for (const auto& g : sysHw.display.gpus) {
+        if (g.name.find("NVIDIA") != std::string::npos) {
+            LOG_INFO("Marking NVIDIA GPU..." << std::endl);
+            service::system::getGlobalState()->setIsNvidiaGPU(true);
+        }
+    }
+
+    // Need to refresh the settings again here just in case we marked the NVIDIA GPU
+    service::system::getCurrentSettings()->reloadSettingsFromFile();
+
     LOG_INFO("Start SquadOV" << std::endl);
 #ifdef _WIN32
     LOG_INFO("Set unhandled exception filter..." << std::endl);
@@ -261,10 +277,6 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Initialize Kafka API" << std::endl);
     service::api::getKafkaApi()->initialize();
-
-    // Initialize global state and start to listen to messages coming via ZeroMQ about
-    // how to update certain state.
-    service::system::getGlobalState();
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_CHANGE_PAUSE_TOPIC, [](const std::string& msg) {
         const auto json = nlohmann::json::parse(msg);
