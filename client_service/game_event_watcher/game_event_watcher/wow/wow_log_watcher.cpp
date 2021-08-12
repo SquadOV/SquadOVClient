@@ -283,11 +283,40 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
     const auto newExists = fs::exists(combatLogPath);
 
     _logPath = combatLogPath;
+    _logLine = 0;
 
     using std::placeholders::_1;
 
     _legacy = legacy || (combatLogPath.filename().native().find(L"WoWCombatLog-"s) == std::string::npos);
-    LOG_INFO("WoW Combat Log Path: " << combatLogPath.string() << " " << loop << " [Legacy: " << _legacy << "]" << std::endl);
+    LOG_INFO("WoW Combat Log Path: " << combatLogPath << " " << loop << " [Legacy: " << _legacy << "]" << std::endl
+        << "\tOld Exists: " << oldExists << "\tNew Exists: " << newExists << "\tIs Old: " << isOldFile << std::endl);
+
+    const auto isLoadingExisting = !legacy && !oldExists && newExists && isOldFile;
+    if (isLoadingExisting) {
+        LOG_INFO("...Loading a potentially large pre-existing combat log -- searching for combat log start." << std::endl);
+        // In the very special scenario where we're loading a combat log that already existed with data, then we want to do a preliminary
+        // parse to get the combat log start event since this event isn't necessarily repeated.
+        std::ifstream iff(_logPath);
+        std::string line;
+        int64_t logLine = 0; 
+        while (std::getline(iff, line)) {
+            RawWoWCombatLog log;
+            log.logLine = logLine++;
+
+            if (!parseRawCombatLogLine(line, log, _logPath)) {
+                LOG_WARNING("Failed to parse WoW combat log line [prelim]: " << line << std::endl);
+                continue;
+            }
+
+            WoWCombatLogState state;
+            if (parseCombatLogStart(log, state)) {
+                LOG_INFO("...Found first instance of combat log start. Using as definitive." << std::endl);
+                notify(static_cast<int>(EWoWLogEvents::CombatLogStart), log.timestamp, (void*)&state, false);
+                break;
+            }
+        }
+    }
+
     _watcher = std::make_unique<LogWatcher>(
         combatLogPath,                                                                  // path
         std::bind(&WoWLogWatcher::onCombatLogChange, this, _1),                         // cb
@@ -303,8 +332,8 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
         //
         // In the case of non legacy, we want to immediately go to the end only if we're reading in the first log file (!oldExists) and it was detected instantly (isOldFile).
         (legacy && newExists) || (!legacy && isOldFile && !oldExists),                  // immediatelyGoToEnd
-    loop,                                                                               // loop,
-        (!legacy && !oldExists && newExists && isOldFile) ? position : std::nullopt     // initialPosition
+        loop,                                                                           // loop,
+        isLoadingExisting ? position : std::nullopt                                     // initialPosition
     );
     _watcher->disableBatching();
 }

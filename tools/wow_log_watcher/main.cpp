@@ -33,6 +33,11 @@ int main(int argc, char** argv) {
         std::cout << "DETECT WOW LOG LINE:" << logLine->rawLog << std::endl;
     });
 
+    watcher.notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), [](const shared::TimePoint& eventTime, const void* rawData){
+        const auto* logLine = reinterpret_cast<const game_event_watcher::WoWCombatLogState*>(rawData);
+        std::cout << "DETECT WOW COMBAT LOG:" << logLine->toJson().dump() << std::endl;
+    });
+
     watcher.loadFromExecutable(fs::path(vm["exe"].as<std::string>()));
     watcher.wait();
     return 0;
