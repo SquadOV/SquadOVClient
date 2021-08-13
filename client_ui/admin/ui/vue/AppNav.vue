@@ -43,7 +43,11 @@ export default class AppNav extends Vue {
         {
             text: 'KPI Dashboard',
             to: '/'
-        }
+        },
+        {
+            text: 'Funnel',
+            to: '/funnel'
+        },
         {
             text: 'Metrics',
             open: true,

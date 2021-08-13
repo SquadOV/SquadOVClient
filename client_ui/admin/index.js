@@ -108,6 +108,15 @@ apiRouter.get('/referrals/:referral', async function(request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/funnel', async function (request, response) {
+    start = new Date(parseInt(request.query.start))
+    end = new Date(parseInt(request.query.end))
+    codes = JSON.parse(request.query.codes)
+
+    data = await apiServer.getFunnelData(start, end, codes)
+    response.status(200).json(data)
+})
+
 app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
     // No auth cookie? Go to login page otherwise grant access to the SPA.

@@ -1197,6 +1197,82 @@ class ApiServer {
 
         return rows.map((ele) => ele.code)
     }
+
+    async getFunnelData(start, end, codes) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT (
+                SELECT COUNT(rv.code)
+                FROM squadov.referral_visits AS rv
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rv.code
+                WHERE rc.code = ANY($3)
+                    AND rv.tm >= $1::TIMESTAMPTZ AND rv.tm < $2::TIMESTAMPTZ
+            ) AS "view", (
+                SELECT COUNT(DISTINCT rcu.email)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+            ) AS "reg", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+            ) AS "login", (
+                SELECT COUNT(rv.code)
+                FROM squadov.referral_downloads AS rv
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rv.code
+                WHERE rc.code = ANY($3)
+                    AND rv.tm >= $1::TIMESTAMPTZ AND rv.tm < $2::TIMESTAMPTZ
+            ) AS "download", (
+                SELECT COUNT(DISTINCT uhs.user_id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.user_hardware_specs AS uhs
+                    ON uhs.user_id = u.id
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+            ) AS "install", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.vods AS v
+                    ON v.user_uuid = u.uuid
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND v.is_clip = FALSE
+                    AND v.end_time IS NOT NULL
+            ) AS "record", (
+                SELECT COUNT(DISTINCT u.id) AS "count"
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.daily_active_endpoint AS dae
+                    ON dae.user_id = u.id
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+            ) AS "active"
+            `,
+            [start, end, codes]
+        )
+
+        return rows[0]
+    }
 }
 
 exports.ApiServer = ApiServer

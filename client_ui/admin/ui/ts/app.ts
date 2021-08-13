@@ -33,11 +33,16 @@ const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
 const CohortInstalledUsers = () => import('@client/vue/cohorts/CohortInstalledUsers.vue')
 const CohortActiveUsers = () => import('@client/vue/cohorts/CohortActiveUsers.vue')
 const CohortRecordingUsers = () => import('@client/vue/cohorts/CohortRecordingUsers.vue')
+const Funnel = () => import('@client/vue/Funnel.vue')
 
 const baseRoutes : any[] = [
     {
         path: '/',
         component: KpiDashboard,
+    },
+    {
+        path: '/funnel',
+        component: Funnel,
     },
     {
         path: '/metrics/active-users',
