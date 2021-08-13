@@ -31,8 +31,8 @@ class ApiServer {
             WITH series(tm) AS (
                 SELECT *
                 FROM generate_series(
-                    DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                    DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $2::TIMESTAMPTZ),
                     INTERVAL '1 ${pgInterval}'
                 )
             )
@@ -89,8 +89,8 @@ class ApiServer {
             WITH series(tm) AS (
                 SELECT *
                 FROM generate_series(
-                    DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                    DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $2::TIMESTAMPTZ),
                     INTERVAL '1 ${pgInterval}'
                 )
             )
@@ -160,8 +160,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -205,8 +205,8 @@ class ApiServer {
             WITH series(tm) AS (
                 SELECT *
                 FROM generate_series(
-                    DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                    DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                    DATE_TRUNC('day', $2::TIMESTAMPTZ),
                     INTERVAL '1 ${pgInterval}'
                 )
             )
@@ -282,8 +282,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -376,8 +376,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -468,8 +468,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -513,8 +513,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -558,8 +558,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -603,8 +603,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -648,8 +648,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -693,8 +693,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -738,8 +738,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -797,8 +797,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -843,8 +843,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
@@ -1011,8 +1011,8 @@ class ApiServer {
         WITH series(tm) AS (
             SELECT *
             FROM generate_series(
-                DATE_TRUNC('${pgInterval}', $1::TIMESTAMPTZ),
-                DATE_TRUNC('${pgInterval}', $2::TIMESTAMPTZ),
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
                 INTERVAL '1 ${pgInterval}'
             )
         )
