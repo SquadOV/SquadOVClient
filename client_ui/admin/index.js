@@ -125,6 +125,13 @@ apiRouter.get('/funnel', async function (request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/search/user', async function (request, response) {
+    search = request.query.search
+    data = await apiServer.searchForUser(search)
+    response.status(200).json(data)
+})
+
+
 app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
     // No auth cookie? Go to login page otherwise grant access to the SPA.

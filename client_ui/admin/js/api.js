@@ -1294,6 +1294,88 @@ class ApiServer {
             [code, desc]
         )
     }
+
+    async searchForUser(search) {
+        let userCondition =  isNaN(search) ? `
+            u.username = $1 OR u.email = $1 OR u.uuid::VARCHAR = $1
+        ` : `
+            u.id = $1
+        `
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                u.id,
+                u.username,
+                u.email,
+                u.verified,
+                u.registration_time AS "registrationTime",
+                MAX(dae.tm) AS "lastActive",
+                MAX(us.issue_tm) AS "lastSession",
+                MAX(v.end_time) AS "lastVod"
+            FROM squadov.users AS u
+            LEFT JOIN squadov.user_sessions AS us
+                ON us.user_id = u.id
+            LEFT JOIN squadov.daily_active_endpoint AS dae
+                ON dae.user_id = u.id
+            LEFT JOIN squadov.vods AS v
+                ON v.user_uuid = u.uuid
+            WHERE ${userCondition}
+            GROUP BY u.id, u.username, u.email, u.verified, u.registration_time
+            `,
+            [isNaN(search) ? search : parseInt(search)]
+        )
+
+        if (rows.length > 0) {
+            return {
+                accounts: {
+                    linkedRiot: (await this.pool.query(
+                        `
+                        SELECT DISTINCT CONCAT(ra.game_name, '#', ra.tag_line) AS "name"
+                        FROM squadov.riot_account_links AS ral
+                        INNER JOIN squadov.riot_accounts AS ra
+                            ON ra.puuid = ral.puuid
+                        WHERE ral.user_id = $1
+                        `,
+                        [rows[0].id]
+                    )).rows.map((ele) => ele.name),
+                    linkedTwitch: (await this.pool.query(
+                        `
+                        SELECT DISTINCT lta.twitch_name AS "name"
+                        FROM squadov.linked_twitch_accounts AS lta
+                        WHERE lta.user_id = $1
+                        `,
+                        [rows[0].id]
+                    )).rows.map((ele) => ele.name),
+                    wowChars: (await this.pool.query(
+                        `
+                        SELECT DISTINCT wcp.unit_name AS "name"
+                        FROM squadov.wow_user_character_cache AS wucc
+                        INNER JOIN squadov.wow_match_view_combatants AS wvc
+                            ON wvc.event_id = wucc.event_id
+                        INNER JOIN squadov.wow_match_view_character_presence AS wcp
+                            ON wcp.character_id = wvc.character_id
+                        WHERE wucc.user_id = $1
+                        `,
+                        [rows[0].id]
+                    )).rows.map((ele) => ele.name),
+                    steamAccounts: (await this.pool.query(
+                        `
+                        SELECT DISTINCT suc.steam_name AS "name"
+                        FROM squadov.steam_user_links AS sul
+                        INNER JOIN squadov.steam_users_cache AS suc
+                            ON suc.steam_id = sul.steam_id
+                        WHERE sul.user_id = $1
+                        `,
+                        [rows[0].id]
+                    )).rows.map((ele) => ele.name)
+                },
+                ...rows[0]
+            }
+        } else {
+            return null
+        }
+    }
 }
 
 exports.ApiServer = ApiServer

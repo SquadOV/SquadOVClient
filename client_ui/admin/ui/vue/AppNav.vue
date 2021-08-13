@@ -125,6 +125,24 @@ export default class AppNav extends Vue {
                     to: '/referrals/users'
                 },
             ]
+        },
+        {
+            text: 'Search',
+            open: true,
+            children: [
+                {
+                    text: 'Users',
+                    to: '/search/users'
+                },
+                {
+                    text: 'Matches',
+                    to: '/search/matches'
+                },
+                {
+                    text: 'VODs',
+                    to: '/search/vod'
+                },
+            ]
         }
     ]
 }

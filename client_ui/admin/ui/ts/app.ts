@@ -35,6 +35,10 @@ const CohortActiveUsers = () => import('@client/vue/cohorts/CohortActiveUsers.vu
 const CohortRecordingUsers = () => import('@client/vue/cohorts/CohortRecordingUsers.vue')
 const Funnel = () => import('@client/vue/Funnel.vue')
 
+const SearchUser = () => import('@client/vue/search/SearchUser.vue')
+const SearchMatch = () => import('@client/vue/search/SearchMatch.vue')
+const SearchVod = () => import('@client/vue/search/SearchVod.vue')
+
 const baseRoutes : any[] = [
     {
         path: '/',
@@ -103,6 +107,18 @@ const baseRoutes : any[] = [
     {
         path: '/cohorts/recording-users',
         component: CohortRecordingUsers,
+    },
+    {
+        path: '/search/users',
+        component: SearchUser,
+    },
+    {
+        path: '/search/matches',
+        component: SearchMatch,
+    },
+    {
+        path: '/search/vod',
+        component: SearchVod,
     }
 ]
 
