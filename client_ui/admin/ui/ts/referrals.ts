@@ -24,3 +24,16 @@ export function getReferralBreakdown(r: Referral): Promise<ReferralDatum[]> {
         })
     })
 }
+
+export function getAvailableReferralCodes() : Promise<string[]> {
+    let req = bent('GET', 'json', 200, window.location.origin)
+    return new Promise((resolve, reject) => {
+        req(`/api/referrals`).then((resp: any) => {
+            const data: string[] = resp
+            resolve(data)
+        }).catch((err: any) => {
+            const txt = err.text()
+            reject(txt)
+        })
+    })
+}

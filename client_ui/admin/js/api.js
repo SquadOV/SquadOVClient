@@ -146,7 +146,7 @@ class ApiServer {
         })
     }
 
-    async getNewlyRegisteredUsers(interval, start, end) {
+    async getNewlyRegisteredUsers(interval, start, end, referralCodes) {
         let pgInterval
         if (interval == 0) {
             pgInterval = 'day'
@@ -167,12 +167,19 @@ class ApiServer {
         )
         SELECT
             s.tm AS "tm",
-            COALESCE((
-                SELECT COUNT(DISTINCT id)
-                FROM squadov.users AS u
-                WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
-            ), 0) AS "users"
+            g.code AS "code",
+            g.cnt AS "count"
         FROM series AS s
+        CROSS JOIN LATERAL (
+            SELECT rc.code, COUNT(DISTINCT u.id)
+            FROM squadov.users AS u
+            LEFT JOIN squadov.user_referral_code_usage AS rcu
+                ON rcu.email = u.email
+            LEFT JOIN squadov.referral_codes AS rc
+                ON rc.id = rcu.code_id
+            WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 day'
+            GROUP BY rc.code
+        ) AS g(code, cnt)
             `
 
         const { rows } = await this.pool.query(
@@ -180,14 +187,41 @@ class ApiServer {
             [start, end]
         )
 
-        return rows.map((r) => {
-            return {
-                tm: r.tm,
-                data: {
-                    'Users': parseInt(r.users),
-                },
-                sub: ['Users']
+        let retData = new Map()
+
+        for (let r of rows) {
+            let tmKey = new Date(r.tm).getTime()
+            if (!retData.has(tmKey)) {
+                let d = {
+                    tm: r.tm,
+                    data: {
+                        'Users': 0,
+                        'Organic': 0,
+                    },
+                    sub: ['Users', 'Organic', ...referralCodes]
+                }
+
+                for (let r of referralCodes) {
+                    d.data[r] = 0
+                }
+                retData.set(tmKey, d)
             }
+            
+            let d = retData.get(tmKey)
+            let cnt = parseInt(r.count)
+            if (!r.code) {
+                d.data['Organic'] = cnt
+            } else {
+                if (r.code in d.data) {
+                    d.data[r.code] = cnt
+                }
+            }
+
+            d.data['Users'] += cnt
+        }
+
+        return Array.from(retData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
         })
     }
 
@@ -252,7 +286,7 @@ class ApiServer {
         // at the end of the period, and the number of users that
         // were new in each time interval.
         let activeUsers = await this.getActiveUsers(interval, start, end)
-        let registeredUsers = await this.getNewlyRegisteredUsers(interval, start, end)
+        let registeredUsers = await this.getNewlyRegisteredUsers(interval, start, end, [])
         let lostUsers = await this.getLostUsers(interval, start, end)
 
         let ret = []
@@ -854,7 +888,7 @@ class ApiServer {
             case 4: // Games
                 return await this.getGames(interval, start, end)
             case 5: // Registrations
-                return await this.getNewlyRegisteredUsers(interval, start, end)
+                return await this.getNewlyRegisteredUsers(interval, start, end, !!extra.referralCodes ? JSON.parse(extra.referralCodes) : [])
             case 6: // Squad Invites
                 return await this.getSquadInvites(interval, start, end)
             case 7: // Squads
@@ -1149,6 +1183,19 @@ class ApiServer {
             case 1:
                 return await this.getReferralUsersBreakdown()
         }
+    }
+
+    async getAvailableReferrals() {
+        const query = `
+            SELECT code
+            FROM squadov.referral_codes
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+        )
+
+        return rows.map((ele) => ele.code)
     }
 }
 
