@@ -23,6 +23,7 @@ const MetricSquads = () => import('@client/vue/metrics/MetricSquads.vue')
 const MetricSquadInvites = () => import('@client/vue/metrics/MetricSquadInvites.vue')
 const MetricGames = () => import('@client/vue/metrics/MetricGames.vue')
 const MetricVods = () => import('@client/vue/metrics/MetricVods.vue')
+const MetricClips = () => import('@client/vue/metrics/MetricClips.vue')
 const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
 const MetricAverageAge = () => import('@client/vue/metrics/MetricAverageAge.vue')
 
@@ -73,6 +74,10 @@ const baseRoutes : any[] = [
     {
         path: '/metrics/vods',
         component: MetricVods,
+    },
+    {
+        path: '/metrics/clips',
+        component: MetricClips,
     },
     {
         path: '/referrals/users',

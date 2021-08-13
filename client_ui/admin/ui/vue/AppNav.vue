@@ -84,6 +84,10 @@ export default class AppNav extends Vue {
                     text: 'VODs',
                     to: '/metrics/vods',
                 },
+                {
+                    text: 'Clips',
+                    to: '/metrics/clips',
+                },
             ]
         },
         {

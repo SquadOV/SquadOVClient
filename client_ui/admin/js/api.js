@@ -657,7 +657,7 @@ class ApiServer {
         })
     }
 
-    async getVods(interval, start, end, useTimeHours) {
+    async getVods(interval, start, end, useTimeHours, clips) {
         let pgInterval
         if (interval == 0) {
             pgInterval = 'day'
@@ -686,7 +686,7 @@ class ApiServer {
             FROM squadov.vods AS v
             INNER JOIN squadov.matches AS m
                 ON m.uuid = v.match_uuid
-            WHERE v.is_clip = FALSE
+            WHERE v.is_clip = $3
                 AND v.end_time IS NOT NULL
                 AND v.start_time >= s.tm AND v.end_time < s.tm + INTERVAL '1 ${pgInterval}'
             GROUP BY m.game
@@ -695,7 +695,7 @@ class ApiServer {
 
         const { rows } = await this.pool.query(
             query,
-            [start, end]
+            [start, end, clips]
         )
 
         // Each row has 'tm', 'game', 'count'.
@@ -860,11 +860,13 @@ class ApiServer {
             case 7: // Squads
                 return await this.getSquads(interval, start, end)
             case 8: // VODs
-                return await this.getVods(interval, start, end, extra.useTimeHours === 'true')
+                return await this.getVods(interval, start, end, extra.useTimeHours === 'true', false)
             case 9: // Lost Users
                 return await this.getLostUsers(interval, start, end)
             case 10: // Average Age
                 return await this.getAverageAgeKpi(interval, start, end)
+            case 11: // Clips
+                return await this.getVods(interval, start, end, extra.useTimeHours === 'true', true)
         }
     }
 
