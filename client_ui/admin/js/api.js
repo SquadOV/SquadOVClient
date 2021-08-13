@@ -505,6 +505,7 @@ class ApiServer {
                 retData.set(tmKey, {
                     tm: r.tm,
                     data: {
+                        'Total': 0,
                         'Aim Lab': 0,
                         'CS:GO': 0,
                         'Hearthstone': 0,
@@ -513,7 +514,7 @@ class ApiServer {
                         'Valorant': 0,
                         'WoW': 0,
                     },
-                    sub: ['Aim Lab', 'CS:GO', 'Hearthstone', 'LoL', 'TFT', 'Valorant', 'WoW']
+                    sub: ['Total', 'Aim Lab', 'CS:GO', 'Hearthstone', 'LoL', 'TFT', 'Valorant', 'WoW']
                 })
             }
             
@@ -542,6 +543,8 @@ class ApiServer {
                     d.data['CS:GO'] = cnt
                     break
             }
+
+            d.data['Total'] += cnt
         }
 
         return Array.from(retData.values()).sort((a, b) => {
@@ -654,7 +657,7 @@ class ApiServer {
         })
     }
 
-    async getVods(interval, start, end) {
+    async getVods(interval, start, end, useTimeHours) {
         let pgInterval
         if (interval == 0) {
             pgInterval = 'day'
@@ -675,12 +678,19 @@ class ApiServer {
         )
         SELECT
             s.tm AS "tm",
-            COALESCE((
-                SELECT COUNT(1)
-                FROM squadov.vods AS m
-                WHERE m.end_time >= s.tm AND m.end_time < s.tm + INTERVAL '1 ${pgInterval}'
-            ), 0) AS "squads"
+            g.game AS "game",
+            g.cnt AS "count"
         FROM series AS s
+        CROSS JOIN LATERAL (
+            SELECT m.game, ${ useTimeHours ? 'SUM(EXTRACT(EPOCH FROM v.end_time) - EXTRACT(EPOCH FROM v.start_time))::FLOAT / 3600.0' : 'COUNT(DISTINCT v.video_uuid)'}
+            FROM squadov.vods AS v
+            INNER JOIN squadov.matches AS m
+                ON m.uuid = v.match_uuid
+            WHERE v.is_clip = FALSE
+                AND v.end_time IS NOT NULL
+                AND v.start_time >= s.tm AND v.end_time < s.tm + INTERVAL '1 ${pgInterval}'
+            GROUP BY m.game
+        ) AS g(game, cnt)
         `
 
         const { rows } = await this.pool.query(
@@ -688,14 +698,60 @@ class ApiServer {
             [start, end]
         )
 
-        return rows.map((r) => {
-            return {
-                tm: r.tm,
-                data: {
-                    'VODs': parseInt(r.squads),
-                },
-                sub: ['VODs']
+        // Each row has 'tm', 'game', 'count'.
+        // To return from the API, we want to group all the games in a single row for each instance of 'tm'.
+        let retData = new Map()
+
+        for (let r of rows) {
+            let tmKey = new Date(r.tm).getTime()
+            if (!retData.has(tmKey)) {
+                retData.set(tmKey, {
+                    tm: r.tm,
+                    data: {
+                        'Total': 0,
+                        'Aim Lab': 0,
+                        'CS:GO': 0,
+                        'Hearthstone': 0,
+                        'LoL': 0,
+                        'TFT': 0,
+                        'Valorant': 0,
+                        'WoW': 0,
+                    },
+                    sub: ['Total', 'Aim Lab', 'CS:GO', 'Hearthstone', 'LoL', 'TFT', 'Valorant', 'WoW']
+                })
             }
+            
+            let d = retData.get(tmKey)
+            let cnt = useTimeHours ? parseFloat(parseFloat(r.count).toFixed(2)) : parseInt(r.count)
+            switch (parseInt(r.game)) {
+                case 0:
+                    d.data['Aim Lab'] = cnt
+                    break
+                case 1:
+                    d.data['Hearthstone'] = cnt
+                    break
+                case 2:
+                    d.data['LoL'] = cnt
+                    break
+                case 3:
+                    d.data['TFT'] = cnt
+                    break
+                case 4:
+                    d.data['Valorant'] = cnt
+                    break
+                case 5:
+                    d.data['WoW'] = cnt
+                    break
+                case 6:
+                    d.data['CS:GO'] = cnt
+                    break
+            }
+
+            d.data['Total'] += cnt
+        }
+
+        return Array.from(retData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
         })
     }
 
@@ -785,7 +841,7 @@ class ApiServer {
         }
     }
 
-    async getMetrics(metric, interval, start, end) {
+    async getMetrics(metric, interval, start, end, extra) {
         switch (metric) {
             case 0:
                 return await this.getActiveUsers(interval, start, end)
@@ -804,7 +860,7 @@ class ApiServer {
             case 7: // Squads
                 return await this.getSquads(interval, start, end)
             case 8: // VODs
-                return await this.getVods(interval, start, end)
+                return await this.getVods(interval, start, end, extra.useTimeHours === 'true')
             case 9: // Lost Users
                 return await this.getLostUsers(interval, start, end)
             case 10: // Average Age

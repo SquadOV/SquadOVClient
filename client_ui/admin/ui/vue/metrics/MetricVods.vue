@@ -2,7 +2,15 @@
     <generic-metric-container
         title="VODs"
         :metric="metric"
+        :extra="extra"
     >
+        <v-checkbox
+            v-model="useTimeHours"
+            dense
+            hide-details
+            label="Show Time (hours)"
+        >
+        </v-checkbox>
     </generic-metric-container>
 </template>
 
@@ -19,6 +27,14 @@ import { Metrics } from '@client/ts/metrics'
     }
 })
 export default class MetricVods extends Vue {
+    useTimeHours: boolean = false
+
+    get extra(): any {
+        return {
+            'useTimeHours': this.useTimeHours.toString(),
+        }
+    }
+
     get metric(): Metrics {
         return Metrics.Vods
     }

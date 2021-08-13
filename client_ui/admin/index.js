@@ -74,7 +74,7 @@ apiRouter.get('/metrics/:metric', async function(request, response) {
     start = new Date(parseInt(request.query.start))
     end = new Date(parseInt(request.query.end))
 
-    data = await apiServer.getMetrics(metric, interval, start, end)
+    data = await apiServer.getMetrics(metric, interval, start, end, request.query)
     response.status(200).json(data)
 })
 

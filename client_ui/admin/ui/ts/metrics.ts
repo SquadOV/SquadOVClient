@@ -21,10 +21,21 @@ export interface MetricDatum {
 import bent from 'bent'
 import { Interval } from '@client/ts/interval'
 
-export function getMetricData(m: Metrics, interval: Interval, start: Date, end: Date): Promise<MetricDatum[]> {
-    let req = bent('GET', 'json', 200, window.location.origin)
+export function getMetricData(m: Metrics, interval: Interval, start: Date, end: Date, extra: any): Promise<MetricDatum[]> {
+    let req = bent('GET', 'json', 200)
     return new Promise((resolve, reject) => {
-        req(`/api/metrics/${m}?interval=${interval}&start=${start.getTime()}&end=${end.getTime()}`).then((resp: any) => {
+        let url = new URL(`${window.location.origin}/api/metrics/${m}`)
+        url.searchParams.append('interval', `${interval}`)
+        url.searchParams.append('start', `${start.getTime()}`)
+        url.searchParams.append('end', `${end.getTime()}`)
+
+        if (!!extra) {
+            for (const [key, value] of Object.entries(extra)) {
+                url.searchParams.append(key, `${value}`)
+            }
+        }
+
+        req(url.href).then((resp: any) => {
             const data: MetricDatum[] = resp
             data.forEach((ele: MetricDatum) => {
                 ele.tm = new Date(ele.tm)

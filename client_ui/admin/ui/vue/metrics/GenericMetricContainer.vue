@@ -2,6 +2,7 @@
     <v-container fluid>
         <div class="d-flex align-center">
             <h1>{{ title }}</h1>
+            <slot></slot>
             <v-spacer></v-spacer>
             <time-interval-select v-model="interval" class="mr-4"></time-interval-select>
             <date-range-picker
@@ -70,6 +71,9 @@ export default class GenericMetricContainer extends Vue {
     @Prop({required: true})
     metric!: Metrics
 
+    @Prop()
+    extra!: any
+
     $refs!: {
         graphDiv: HTMLElement
     }
@@ -89,10 +93,11 @@ export default class GenericMetricContainer extends Vue {
     @Watch('interval')
     @Watch('startDate')
     @Watch('endDate')
+    @Watch('extra')
     refreshData() {
         this.data = null
 
-        getMetricData(this.metric, this.interval, this.startDate, this.endDate).then((resp: MetricDatum[]) => {
+        getMetricData(this.metric, this.interval, this.startDate, this.endDate, this.extra).then((resp: MetricDatum[]) => {
             this.data = resp
         }).catch((err: any) => {
             console.log('Failed to get metric data: ', err)
