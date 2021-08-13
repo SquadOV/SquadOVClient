@@ -18,6 +18,7 @@ let apiServer = new api.ApiServer(parsedConfig)
 
 app.set('view engine', 'ejs')
 app.use(cookieParser())
+app.use(express.json())
 app.get('/robots.txt', function (req, res) {
     res.type('text/plain');
     res.send("User-agent: *\nDisallow: /")
@@ -106,6 +107,13 @@ apiRouter.get('/referrals/:referral', async function(request, response) {
     referral = parseInt(request.params.referral)
     data = await apiServer.getReferralBreakdown(referral)
     response.status(200).json(data)
+})
+
+apiRouter.post('/campaign', async function(request, response) {
+    code = request.body.code
+    desc = request.body.desc
+    await apiServer.createCampaign(code, desc)
+    response.status(204).send()
 })
 
 apiRouter.get('/funnel', async function (request, response) {

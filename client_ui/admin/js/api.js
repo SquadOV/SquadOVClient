@@ -1273,6 +1273,27 @@ class ApiServer {
 
         return rows[0]
     }
+
+    async createCampaign(code, desc) {
+        await this.pool.query(
+            `
+            INSERT INTO squadov.referral_codes (
+                id,
+                code,
+                description,
+                user_id,
+                tm
+            ) VALUES (
+                gen_random_uuid(),
+                $1,
+                $2,
+                NULL,
+                NOW()
+            )
+            `,
+            [code, desc]
+        )
+    }
 }
 
 exports.ApiServer = ApiServer

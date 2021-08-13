@@ -37,3 +37,15 @@ export function getAvailableReferralCodes() : Promise<string[]> {
         })
     })
 }
+
+export function createCampaign(code: string, desc: string): Promise<void> {
+    let req = bent('POST', 'json', 200, window.location.origin)
+    return new Promise((resolve, reject) => {
+        req(`/api/campaign`, { code, desc }).then(() => {
+            resolve()
+        }).catch((err: any) => {
+            const txt = err.text()
+            reject(txt)
+        })
+    })
+}
