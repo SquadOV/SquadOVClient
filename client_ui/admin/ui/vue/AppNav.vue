@@ -78,33 +78,7 @@ export default class AppNav extends Vue {
                 },
                 {
                     text: 'Games',
-                    open: true,
-                    children: [
-                        {
-                            text: 'Aim Lab',
-                            to: '/metrics/games/aimlab'
-                        },
-                        {
-                            text: 'Hearthstone',
-                            to: '/metrics/games/hs'
-                        },
-                        {
-                            text: 'League of Legends',
-                            to: '/metrics/games/lol'
-                        },
-                        {
-                            text: 'Teamfight Tactics',
-                            to: '/metrics/games/tft'
-                        },
-                        {
-                            text: 'Valorant',
-                            to: '/metrics/games/val'
-                        },
-                        {
-                            text: 'World of Warcraft',
-                            to: '/metrics/games/wow'
-                        },
-                    ]
+                    to: '/metrics/games',
                 },
                 {
                     text: 'VODs',

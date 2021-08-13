@@ -1,6 +1,6 @@
 <template>
     <generic-metric-container
-        title="TFT Matches"
+        title="Matches (with VODs)"
         :metric="metric"
     >
     </generic-metric-container>
@@ -18,9 +18,9 @@ import { Metrics } from '@client/ts/metrics'
         GenericMetricContainer,
     }
 })
-export default class MetricGameTft extends Vue {
+export default class MetricGames extends Vue {
     get metric(): Metrics {
-        return Metrics.GameTft
+        return Metrics.Games
     }
 }
 

@@ -21,12 +21,7 @@ const MetricChurn = () => import('@client/vue/metrics/MetricChurn.vue')
 const MetricRegistrations = () => import('@client/vue/metrics/MetricRegistrations.vue')
 const MetricSquads = () => import('@client/vue/metrics/MetricSquads.vue')
 const MetricSquadInvites = () => import('@client/vue/metrics/MetricSquadInvites.vue')
-const MetricGameAimLab = () => import('@client/vue/metrics/MetricGameAimLab.vue')
-const MetricGameHearthstone = () => import('@client/vue/metrics/MetricGameHearthstone.vue')
-const MetricGameLol = () => import('@client/vue/metrics/MetricGameLol.vue')
-const MetricGameTft = () => import('@client/vue/metrics/MetricGameTft.vue')
-const MetricGameValorant = () => import('@client/vue/metrics/MetricGameValorant.vue')
-const MetricGameWow = () => import('@client/vue/metrics/MetricGameWow.vue')
+const MetricGames = () => import('@client/vue/metrics/MetricGames.vue')
 const MetricVods = () => import('@client/vue/metrics/MetricVods.vue')
 const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
 const MetricAverageAge = () => import('@client/vue/metrics/MetricAverageAge.vue')
@@ -72,28 +67,8 @@ const baseRoutes : any[] = [
         component: MetricSquadInvites,
     },
     {
-        path: '/metrics/games/aimlab',
-        component: MetricGameAimLab,
-    },
-    {
-        path: '/metrics/games/hs',
-        component: MetricGameHearthstone,
-    },
-    {
-        path: '/metrics/games/lol',
-        component: MetricGameLol,
-    },
-    {
-        path: '/metrics/games/tft',
-        component: MetricGameTft,
-    },
-    {
-        path: '/metrics/games/val',
-        component: MetricGameValorant,
-    },
-    {
-        path: '/metrics/games/wow',
-        component: MetricGameWow,
+        path: '/metrics/games',
+        component: MetricGames,
     },
     {
         path: '/metrics/vods',
