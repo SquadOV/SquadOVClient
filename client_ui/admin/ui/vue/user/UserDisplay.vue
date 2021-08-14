@@ -120,6 +120,62 @@
                     {{ user.accounts.steamAccounts.join(', ') }}
                 </v-col>
             </v-row>
+
+            <v-row>
+                <v-col cols="2">
+                    <b>Hardware</b>
+                </v-col>
+
+                <v-col cols="10">
+                    <template v-if="!!user.hw">
+                        <v-list>
+                            <v-list-item>
+                                <v-list-item-content>
+                                    <b>CPU</b>
+
+                                    {{ user.hw.cpu }}
+                                </v-list-item-content>
+                            </v-list-item>
+
+                            <v-list-item>
+                                <v-list-item-content>
+                                    <b>OS</b>
+
+                                    {{ user.hw.os }}
+                                </v-list-item-content>
+                            </v-list-item>
+
+                            <v-list-item>
+                                <v-list-item-content>
+                                    <b>RAM</b>
+
+                                    {{ user.hw.ramKb }} Kb
+                                </v-list-item-content>
+                            </v-list-item>
+
+                            <v-list-item>
+                                <v-list-item-content>
+                                    <b>GPU 0</b>
+
+                                    {{ user.hw.gpu0 }}
+                                </v-list-item-content>
+                            </v-list-item>
+
+                            <v-list-item>
+                                <v-list-item-content>
+                                    <b>GPU 1</b>
+
+                                    {{ user.hw.gpu1 }}
+                                </v-list-item-content>
+                            </v-list-item>
+                        </v-list>
+                    </template>
+
+                    <span v-else>
+                        No hardware on file.
+                    </span>
+                </v-col>
+            </v-row>
         </v-container>
     </v-card>
 </template>

@@ -1370,6 +1370,27 @@ class ApiServer {
                         [rows[0].id]
                     )).rows.map((ele) => ele.name)
                 },
+                hw: await (async (id) => {
+                    const { rows } = await this.pool.query(
+                        `
+                        SELECT
+                            CONCAT(os->>'name', ' ', os->>'majorVersion', ' ', os->>'minorVersion', ' ', os->>'edition') AS "os",
+                            CONCAT(cpu->>'brand', ' ', cpu->>'clock', 'MHz ', cpu->>'cores', ' Cores') AS "cpu",
+                            ram_kb AS "ramKb",
+                            display#>>'{gpus, 0, name}' AS "gpu0",
+                            display#>>'{gpus, 1, name}' AS "gpu1"
+                        FROM squadov.user_hardware_specs
+                        WHERE user_id = $1
+                        `,
+                        [id]
+                    )
+
+                    if (rows.length > 0) {
+                        return rows[0]
+                    } else {
+                        return null
+                    }
+                })(rows[0].id),
                 ...rows[0]
             }
         } else {
@@ -1386,7 +1407,7 @@ class ApiServer {
 
         const { rows } = await this.pool.query(
             `
-            SELECT
+            SELECT DISTINCT ON (v.video_uuid, v.start_time)
                 v.video_uuid AS "videoUuid",
                 v.user_uuid AS "userUuid",
                 v.match_uuid AS "matchUuid",
@@ -1407,7 +1428,7 @@ class ApiServer {
             LEFT JOIN squadov.share_tokens AS st
                 ON st.match_uuid = v.match_uuid OR st.clip_uuid = v.video_uuid
             WHERE ${condition}
-            ORDER BY v.start_time DESC
+            ORDER BY v.start_time DESC, v.video_uuid
             LIMIT 20
             `,
             [(video !== '') ? video : parseInt(user)]

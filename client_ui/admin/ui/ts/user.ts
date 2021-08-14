@@ -12,7 +12,14 @@ export interface User {
         linkedTwitch: string[]
         wowChars: string[]
         steamAccounts: string[]
-    }
+    },
+    hw: {
+        os: string
+        cpu: string
+        ramKb: number
+        gpu0: string
+        gpu1: string
+    } | null
 }
 
 
