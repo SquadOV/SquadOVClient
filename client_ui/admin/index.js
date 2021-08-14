@@ -138,6 +138,28 @@ apiRouter.get('/search/vod', async function (request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/search/game/:game', async function (request, response) {
+    game = request.params.game
+    data = undefined
+    if (game == 'aimlab') {
+        data = await apiServer.searchAimLab(request.query)
+    } else if (game == 'csgo') {
+        data = await apiServer.searchCsgo(request.query)
+    } else if (game == 'hearthstone') {
+        data = await apiServer.searchHearthstone(request.query)
+    } else if (game == 'lol') {
+        data = await apiServer.searchLol(request.query)
+    } else if (game == 'tft') {
+        data = await apiServer.searchTft(request.query)
+    } else if (game == 'valorant') {
+        data = await apiServer.searchValorant(request.query)
+    } else if (game == 'wow') {
+        data = await apiServer.searchWow(request.query)
+    }
+    response.status(200).json(data)
+})
+
+
 app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
     // No auth cookie? Go to login page otherwise grant access to the SPA.

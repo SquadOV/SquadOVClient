@@ -1448,6 +1448,354 @@ class ApiServer {
 
         return rows
     }
+
+    async searchAimLab(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`at.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                at.create_date AS "time",
+                at.task_name AS "task",
+                at.score AS "score",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.aimlab_tasks AS at
+                ON at.match_uuid = m.uuid
+            INNER JOIN squadov.users AS u
+                ON u.id = at.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY at.create_date DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchCsgo(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`cmv.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                cmv.start_time AS "time",
+                cmv.map AS "map",
+                cmv.mode AS "mode",
+                cmv.has_demo AS "hasDemo"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.csgo_match_views AS cmv
+                ON cmv.match_uuid = m.uuid
+            INNER JOIN squadov.users AS u
+                ON u.id = cmv.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY cmv.start_time DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchHearthstone(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`hmv.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                hm.match_time AS "time"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.hearthstone_matches AS hm
+                ON hm.match_uuid = m.uuid
+            INNER JOIN squadov.hearthstone_match_view AS hmv
+                ON hmv.match_uuid = m.uuid
+            INNER JOIN squadov.users AS u
+                ON u.id = hmv.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY hm.match_time DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchLol(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`ral.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                lm.game_creation AS "time",
+                lm.game_id AS "riotId"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.lol_match_info AS lm
+                ON lm.match_uuid = m.uuid
+            LEFT JOIN squadov.lol_match_participant_identities AS lmpi
+                ON lmpi.match_uuid = lm.match_uuid
+            LEFT JOIN squadov.riot_accounts AS ra
+                ON ra.summoner_id = lmpi.summoner_id
+            LEFT JOIN squadov.riot_account_links AS ral
+                ON ral.puuid = ra.puuid
+            INNER JOIN squadov.users AS u
+                ON u.id = ral.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY lm.game_creation DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchTft(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`ral.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                tmi.game_datetime AS "time",
+                tm.match_id AS "riotId"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.tft_matches AS tm
+                ON tm.match_uuid = m.uuid
+            INNER JOIN squadov.tft_match_info AS tmi
+                ON tmi.match_uuid = tm.match_uuid
+            LEFT JOIN squadov.tft_match_participants AS tmp
+                ON tmp.match_uuid = tm.match_uuid
+            LEFT JOIN squadov.riot_account_links AS ral
+                ON ral.puuid = tmp.puuid
+            INNER JOIN squadov.users AS u
+                ON u.id = ral.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY tmi.game_datetime DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchValorant(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`ral.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                vm.server_start_time_utc AS "time",
+                vmul.match_id AS "riotId",
+                vm.map_id AS "map",
+                vm.game_mode AS "mode",
+                vm.is_ranked AS "isRanked"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.valorant_matches AS vm
+                ON vm.match_uuid = m.uuid
+            INNER JOIN squadov.valorant_match_uuid_link AS vmul
+                ON vmul.match_uuid = vm.match_uuid
+            LEFT JOIN squadov.valorant_match_players AS vmp
+                ON vmp.match_uuid = vmul.match_uuid
+            LEFT JOIN squadov.riot_account_links AS ral
+                ON ral.puuid = vmp.puuid
+            INNER JOIN squadov.users AS u
+                ON u.id = ral.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY vm.server_start_time_utc DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows
+    }
+
+    async searchWow(params) {
+        let conditions = []
+        let bind = []
+
+        if (params.match.trim().length > 0) {
+            conditions.push(`m.uuid = $1`)
+            bind.push(params.match.trim())
+        }
+
+        if (!isNaN(params.user)) {
+            conditions.push(`wmv.user_id = $${conditions.length+1}`)
+            bind.push(parseInt(params.user))
+        }
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                m.uuid AS "matchUuid",
+                u.uuid AS "userUuid",
+                v.video_uuid AS "videoUuid",
+                wmv.start_tm AS "time",
+                wmv.build_version AS "gameVersion",
+                wav.arena_type AS "arenaType",
+                wev.encounter_name AS "encounterName",
+                wev.difficulty AS "encounterDifficulty",
+                wev.success AS "encounterSuccess",
+                wcv.challenge_name AS "challengeName",
+                wcv.keystone_level AS "challengeKeystone",
+                wcv.success AS "challengeSuccess"
+            FROM squadov.matches AS m
+            INNER JOIN squadov.wow_match_view AS wmv
+                ON wmv.match_uuid = m.uuid
+            LEFT JOIN squadov.wow_arena_view AS wav
+                ON wav.view_id = wmv.id
+            LEFT JOIN squadov.wow_encounter_view AS wev
+                ON wev.view_id = wmv.id
+            LEFT JOIN squadov.wow_challenge_view AS wcv
+                ON wcv.view_id = wmv.id
+            INNER JOIN squadov.users AS u
+                ON u.id = wmv.user_id
+            LEFT JOIN squadov.vods AS v
+                ON v.match_uuid = m.uuid
+                    AND v.user_uuid = u.uuid
+                    AND v.is_clip = FALSE
+            WHERE ${conditions.join(' AND ')}
+            ORDER BY wmv.start_tm DESC
+            LIMIT 20
+            `,
+            bind
+        )
+
+        return rows.map((ele) => {
+            if (!!ele.arenaType) {
+                ele.arena = {
+                    type: ele.arenaType
+                }
+            }
+
+            if (!!ele.encounterName) {
+                ele.encounter = {
+                    name: ele.encounterName,
+                    difficulty: ele.encounterDifficulty,
+                    success: ele.encounterSuccess
+                }
+            }
+
+            if (!!ele.challengeName) {
+                ele.challenge = {
+                    name: ele.challengeName,
+                    keystone: ele.challengeKeystone,
+                    success: ele.challengeSuccess
+                }
+            }
+            return ele
+        })
+    }
 }
 
 exports.ApiServer = ApiServer
