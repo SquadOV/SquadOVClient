@@ -1,6 +1,6 @@
 const { Pool, Client } = require('pg')
 const fs = require('fs')
-
+const bent = require('bent')
 
 class ApiServer {
     constructor(config) {
@@ -1375,6 +1375,57 @@ class ApiServer {
         } else {
             return null
         }
+    }
+
+    async searchForVod(video, user) {
+        let condition =  video !== '' ? `
+            v.video_uuid = $1::UUID
+        ` : `
+            u.id = $1
+        `
+
+        const { rows } = await this.pool.query(
+            `
+            SELECT
+                v.video_uuid AS "videoUuid",
+                v.user_uuid AS "userUuid",
+                v.match_uuid AS "matchUuid",
+                v.is_clip AS "isClip",
+                v.is_local AS "isLocal",
+                v.start_time AS "startTime",
+                v.end_time AS "endTime",
+                vm.has_fastify AS "isProcessed",
+                vm.res_x AS "resX",
+                vm.res_y AS "resY",
+                vm.fps AS "fps",
+                st.friendly_name AS "shareToken"
+            FROM squadov.vods AS v
+            INNER JOIN squadov.users AS u
+                ON u.uuid = v.user_uuid
+            INNER JOIN squadov.vod_metadata AS vm
+                ON vm.video_uuid = v.video_uuid
+            LEFT JOIN squadov.share_tokens AS st
+                ON st.match_uuid = v.match_uuid OR st.clip_uuid = v.video_uuid
+            WHERE ${condition}
+            ORDER BY v.start_time DESC
+            LIMIT 20
+            `,
+            [(video !== '') ? video : parseInt(user)]
+        )
+
+        for (let r of rows) {
+            r.oembed = null
+
+            if (!!r.shareToken) {
+                let req = bent('GET', 'json', 200)
+                let url = new URL(`https://api.squadov.gg/oembed`)
+                url.searchParams.append('url', `https://app.squadov.gg/share/${r.shareToken}`)
+                url.searchParams.append('format', 'json')
+                r.oembed = await req(url.href)
+            }
+        }
+
+        return rows
     }
 }
 

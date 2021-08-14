@@ -131,6 +131,12 @@ apiRouter.get('/search/user', async function (request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/search/vod', async function (request, response) {
+    video = request.query.video.trim()
+    user = request.query.user.trim()
+    data = await apiServer.searchForVod(video, user)
+    response.status(200).json(data)
+})
 
 app.use('/api', apiRouter)
 app.get('*', async function (request, response) {
