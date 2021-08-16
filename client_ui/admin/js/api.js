@@ -1225,12 +1225,16 @@ class ApiServer {
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
             ) AS "login", (
-                SELECT COUNT(rv.code)
-                FROM squadov.referral_downloads AS rv
+                SELECT COUNT(DISTINCT ud.user_id)
+                FROM squadov.user_referral_code_usage AS rcu
                 INNER JOIN squadov.referral_codes AS rc
-                    ON rc.id = rv.code
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.user_downloads AS ud
+                    ON ud.user_id = u.id
                 WHERE rc.code = ANY($3)
-                    AND rv.tm >= $1::TIMESTAMPTZ AND rv.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
             ) AS "download", (
                 SELECT COUNT(DISTINCT uhs.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
