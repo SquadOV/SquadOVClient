@@ -3,6 +3,7 @@ export enum AnalyticsCategory {
     MatchVod,
     MatchInfo,
     Share,
+    SetupWizard,
 }
 
 export enum AnalyticsAction {
@@ -34,4 +35,15 @@ export enum AnalyticsAction {
     DeleteSharePublic,
     CopySharePublic,
     ShareSocialMedia,
+    // Setup Wizard
+    StartSetupWizard,
+    SetupStartSelectGames,
+    SetupStartRiot,
+    SetupStartCsgo,
+    SetupStartWow,
+    SetupStartSquads,
+    SetupStartDownloadDiscord,
+    SetupDoDownload,
+    SetupJoinDiscord,
+    FinishSetupWizard,
 }

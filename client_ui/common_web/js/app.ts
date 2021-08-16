@@ -694,6 +694,13 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         // If we have a cookie and the current user isn't set, then send out a request
         // to verify the session cookie.
         loadInitialSessionFromCookies(store, () => {
+            initializeAnalyticsContainer(store)
+            apiClient.getIpAddress().then((resp: ApiData<string>) => {
+                getAnalyticsContainer()?.identify(resp.data)
+            }).catch((err: any) => {
+                console.log('Failed to get IP address: ', err)
+            })
+            
             // Note that in the web case, the renderer code is responsible for the doing the session
             // heartbeat as well.
             if (mustBeInvalid) {

@@ -22,7 +22,7 @@
 
         <v-btn
             color="success"
-            :to="dashboardTo"
+            @click="finish"
             :disabled="!canGoNext"
             large
             v-else
@@ -34,13 +34,14 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
+import CommonComponent from '@client/vue/CommonComponent'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
+import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 @Component
-export default class SetupWizardStepper extends Vue {
+export default class SetupWizardStepper extends CommonComponent {
     @Prop({required: true})
     value!: number
 
@@ -54,6 +55,11 @@ export default class SetupWizardStepper extends Vue {
         return {
             name: pi.DashboardPageId
         }
+    }
+
+    finish() {
+        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.FinishSetupWizard, '', 0)
+        this.$router.push(this.dashboardTo)
     }
 }
 

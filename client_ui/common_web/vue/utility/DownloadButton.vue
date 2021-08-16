@@ -6,15 +6,19 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
+import CommonComponent from '@client/vue/CommonComponent'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { apiClient } from '@client/js/api'
+import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 @Component
-export default class DownloadButton extends Vue {
+export default class DownloadButton extends CommonComponent {
     @Prop({type: Boolean, default: false})
     large!: boolean
+
+    @Prop({type: Boolean, default: false})
+    setupWizard!: boolean
 
     get downloadHref(): string {
         return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe'
@@ -27,6 +31,10 @@ export default class DownloadButton extends Vue {
             }).catch((err: any) => {
                 console.log('Failed to mark user download: ', err)
             })
+        }
+
+        if (this.setupWizard) {
+            this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupDoDownload, '', 0)
         }
     }
 }

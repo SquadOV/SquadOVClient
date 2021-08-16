@@ -88,10 +88,15 @@ export class AnalyticsContainer {
                 username: this._store.state.currentUser?.username,
             },
             context: this.context,
-            integrations: {
-                'Google Analytics': {
+            integrations: {                                
+                'Google Analytics': 
+///#if DESKTOP                
+                {
                     clientId: this._anonId,
                 }
+///#else
+                false
+///#endif
             }
         })
 
@@ -106,7 +111,11 @@ export class AnalyticsContainer {
     }
 
     pageView(route: Route) {
-        if (!this._analytics || !this._store.state.settings?.anonymousAnalytics || !this._identified) {
+        if (!this._analytics ||
+///#if DESKTOP
+            !this._store.state.settings?.anonymousAnalytics ||
+///#endif
+            !this._identified) {
             return
         }
 
@@ -121,16 +130,25 @@ export class AnalyticsContainer {
             integrations: {
                 All: true,
                 Vero: false,
-                'Google Analytics': {
+                'Google Analytics': 
+///#if DESKTOP                
+                {
                     clientId: this._anonId,
                 }
+///#else
+                false
+///#endif
             },
             context: this.context,
         })
     }
 
     event(route: Route, category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
-        if (!this._analytics || !this._store.state.settings?.anonymousAnalytics || !this._identified) {
+        if (!this._analytics||
+///#if DESKTOP
+            !this._store.state.settings?.anonymousAnalytics ||
+///#endif
+            !this._identified) {
             return
         }
 
@@ -146,9 +164,14 @@ export class AnalyticsContainer {
             integrations: {
                 All: true,
                 Vero: false,
-                'Google Analytics': {
+                'Google Analytics':
+///#if DESKTOP                
+                {
                     clientId: this._anonId,
                 }
+///#else
+                false
+///#endif
             },
             context: {
                 page: {

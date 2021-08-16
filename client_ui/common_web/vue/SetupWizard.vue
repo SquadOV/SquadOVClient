@@ -317,7 +317,7 @@
                                     One last step! Download SquadOV and login to our desktop app to start recording your VODs.
                                 </div>
 
-                                <download-button class="mt-4" large></download-button>
+                                <download-button class="mt-4" large setup-wizard></download-button>
                             </template>
 
                             <div class="mt-4">
@@ -328,6 +328,7 @@
                                 class="mt-4"
                                 :href="discordUrl"
                                 target="_blank"
+                                @click="onGoToDiscord"
                                 color="primary"
                                 v-if="!isDesktop"
                             >
@@ -336,7 +337,7 @@
 
                             <v-btn
                                 class="mt-4"
-                                @click="goToUrl(discordUrl)"
+                                @click="goToLink(discordUrl)"
                                 color="primary"
                                 v-else
                             >
@@ -373,7 +374,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
+import CommonComponent from '@client/vue/CommonComponent'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
@@ -385,6 +386,7 @@ import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
 import DownloadButton from '@client/vue/utility/DownloadButton.vue'
 import SetupWizardStepper from '@client/vue/utility/SetupWizardStepper.vue'
+import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 enum DynamicSteps {
     Riot,
@@ -402,7 +404,7 @@ enum DynamicSteps {
         SetupWizardStepper,
     }
 })
-export default class SetupWizard extends Vue {
+export default class SetupWizard extends CommonComponent {
     DynamicSteps: any = DynamicSteps
 
     step: number = 1
@@ -479,7 +481,6 @@ export default class SetupWizard extends Vue {
         return 2 + this.dynamicSteps.size
     }
 
-
     @Watch('gameSteps')
     onChangeGameSteps() {
         let gs = new Set(this.gameSteps)
@@ -492,10 +493,28 @@ export default class SetupWizard extends Vue {
 
     @Watch('step')
     onChangeSteps() {
-        if (this.step === this.totalSteps) {
+        if (this.step == 1) {
+            this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartSelectGames, '', 0)
+        } else if (this.step === this.totalSteps) {
+            this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartDownloadDiscord, '', 0)
 ///#if !DESKTOP
             localStorage.setItem('squadovSetup', 'yes')
 ///#endif
+        } else {
+            let idx = this.step - 2
+            if (idx < this.gameSteps.length) {
+                let realStep = this.gameSteps[idx]
+                switch(realStep) {
+                    case DynamicSteps.Riot:
+                        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartRiot, '', 0)
+                    case DynamicSteps.Wow:
+                        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartWow, '', 0)
+                    case DynamicSteps.Csgo:
+                        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartCsgo, '', 0)
+                }
+            } else {
+                this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartSquads, '', 0)
+            }
         }
     }
 
@@ -531,7 +550,8 @@ export default class SetupWizard extends Vue {
         })
     }
 
-    mounted() {
+    startSetupWizard() {
+        console.log('Starting Setup Wizard...')
         this.$store.commit('setSetupWizardRun', true)
         // Get a list of the user squads - find the default squad if it exists
         // and present it to the users during the setup wizard as the squad to mange.
@@ -552,10 +572,30 @@ export default class SetupWizard extends Vue {
         })
 
         this.refreshRiotAccounts()
+
+        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.StartSetupWizard, '', 0)
+    }
+
+    @Watch('isActive')
+    onActiveChange() {
+        if (this.isActive) {
+            this.startSetupWizard()
+        }
+    }
+
+    mounted() {
+        this.startSetupWizard()
     }
 
     goToLink(url: string) {
         openUrlInBrowser(url)
+        if (url == this.discordUrl) {
+            this.onGoToDiscord()
+        }
+    }
+
+    onGoToDiscord() {
+        this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupJoinDiscord, '', 0)
     }
 }
 

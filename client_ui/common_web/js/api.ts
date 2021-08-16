@@ -264,7 +264,7 @@ class ApiClient {
     }
 
     getIpAddress(): Promise<ApiData<string>> {
-        return axios.get('https://checkip.amazonaws.com').then((resp: ApiData<string>) => {
+        return axios.get('https://api.ipify.org').then((resp: ApiData<string>) => {
             resp.data = resp.data.trim()
             return resp
         })
