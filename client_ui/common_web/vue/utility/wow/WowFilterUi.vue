@@ -1,12 +1,44 @@
 <template>
     <generic-match-filter-ui>
-        <div class="d-flex align-center">
+        <div class="d-flex align-center">       
+            <v-select
+                v-if="forRaids"
+                label="Raids"
+                v-model="internalValue.raids"
+                @input="syncToValue"
+                :items="raidItems"
+                :loading="raidItems === null"
+                deletable-chips
+                chips
+                multiple
+                clearable
+                outlined
+                hide-details
+                dense
+                style="max-width: 500px;"
+            >
+                <template v-slot:item="{ item }">
+                    <div class="d-flex full-width align-center">
+                        <v-checkbox
+                            class="selection-checkbox"
+                            dense
+                            hide-details
+                            :input-value="internalValue.raids.includes(item.value)"
+                            readonly
+                        >
+                        </v-checkbox>
+
+                        {{ item.text }}
+                    </div>
+                </template>
+            </v-select>
+
             <v-select
                 v-if="forRaids"
                 label="Encounters"
                 v-model="internalValue.encounters"
                 @input="syncToValue"
-                :items="encounterItems"
+                :items="filteredEncounteredItems"
                 :loading="encounterItems === null"
                 deletable-chips
                 chips
@@ -56,38 +88,6 @@
                             dense
                             hide-details
                             :input-value="internalValue.dungeons.includes(item.value)"
-                            readonly
-                        >
-                        </v-checkbox>
-
-                        {{ item.text }}
-                    </div>
-                </template>
-            </v-select>
-
-            <v-select
-                v-if="forRaids"
-                label="Raids"
-                v-model="internalValue.raids"
-                @input="syncToValue"
-                :items="raidItems"
-                :loading="raidItems === null"
-                deletable-chips
-                chips
-                multiple
-                clearable
-                outlined
-                hide-details
-                dense
-                style="max-width: 500px;"
-            >
-                <template v-slot:item="{ item }">
-                    <div class="d-flex full-width align-center">
-                        <v-checkbox
-                            class="selection-checkbox"
-                            dense
-                            hide-details
-                            :input-value="internalValue.raids.includes(item.value)"
                             readonly
                         >
                         </v-checkbox>
@@ -266,6 +266,27 @@ export default class WowFilterUi extends Vue {
         ]
     }
 
+    encounterToRaid: Map<number, number> = new Map()
+
+    get filteredEncounteredItems(): any[] {
+        if (!this.encounterItems) {
+            return []
+        }
+
+        if (this.internalValue.raids.length > 0) {
+            let raidSet = new Set(this.internalValue.raids)
+            return this.encounterItems.filter((ele: any) => {
+                let raidId = this.encounterToRaid.get(ele.value)
+                if (raidId === undefined) {
+                    return false
+                }
+                return raidSet.has(raidId)
+            })
+        } else {
+            return this.encounterItems
+        }
+    }
+
     mounted() {
         wowCache.getEncounters().then((resp: WowContentDatum[]) => {
             this.encounterItems = resp.map((ele: WowContentDatum) => {
@@ -281,6 +302,14 @@ export default class WowFilterUi extends Vue {
                 } else {
                     return 0
                 }
+            })
+
+            resp.forEach((ele: WowContentDatum) => {
+                if (ele.parent === null) {
+                    return
+                }
+
+                this.encounterToRaid.set(ele.id, ele.parent)
             })
         })
 
