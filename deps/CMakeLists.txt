@@ -2,7 +2,8 @@ add_subdirectory(steam_protobuf)
 add_subdirectory(zlib)
 add_subdirectory(tinyxml2)
 
-set (CMAKE_USE_SCHANNEL ON CACHE BOOL "")
+set(CMAKE_USE_SCHANNEL ON CACHE BOOL "")
+set(ENABLE_ARES ON CACHE BOOL "")
 add_subdirectory(curl)
 
 set(BUILD_TZ_LIB ON CACHE BOOL "")

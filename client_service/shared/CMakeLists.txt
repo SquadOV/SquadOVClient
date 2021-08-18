@@ -20,6 +20,7 @@ SET(SRCS
     shared/version.cpp
     shared/http/http_client.cpp
     shared/http/civetweb_utility.cpp
+    shared/http/dns_manager.cpp
     shared/ipc/shared_memory.cpp
     shared/process.cpp
     shared/time/ntp_client.cpp
@@ -54,6 +55,7 @@ SET(HEADERS
     shared/version.h
     shared/http/http_client.h
     shared/http/civetweb_utility.h
+    shared/http/dns_manager.h
     shared/ipc/shared_memory.h
     shared/process.h
     shared/time/ntp_client.h

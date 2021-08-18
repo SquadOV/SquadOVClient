@@ -75,6 +75,7 @@ struct LocalSettings {
     PerGameSettings games;
     bool enableNtp = true;
     std::unordered_set<shared::EGame> disabledGames;
+    bool enableDnsOverride = true;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -91,6 +92,7 @@ public:
     WowSettings wowSettings();
 
     bool enableNtp();
+    bool enableDns();
     bool isGameEnabled(shared::EGame);
     
     bool loaded() const { return _loaded; }

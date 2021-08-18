@@ -43,7 +43,7 @@ std::pair<std::string, size_t> S3StorageClient::uploadBytes(const char* buffer, 
     // a static timeout when the http client is made because uploading a bigger chunk of data
     // inherently needs a longer time to upload; hence it's more reasonable to dynamically choose
     // a timeout based on how many bytes we want to send.
-    _httpClient->setTimeout(std::max(numBytes / (100 * 1024), 30));
+    _httpClient->setTimeout(std::max(static_cast<long>(numBytes / (100 * 1024)), 30L));
 
     // Need to upload the buffer into the current destination (AWS S3 part) using the signed URL
     // stored in the _destination variable. Afterwards, we return the number of bytes we uploaded

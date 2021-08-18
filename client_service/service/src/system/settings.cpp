@@ -93,6 +93,7 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
     settings.enableNtp = obj.value("enableNtp", false);
     settings.games = PerGameSettings::fromJson(obj["games"]);
+    settings.enableDnsOverride = obj.value("enableDnsOverride", true);
 
     if (obj.count("disabledGames") > 0) {
         for (const auto& val : obj["disabledGames"]) {
@@ -139,6 +140,11 @@ WowSettings Settings::wowSettings() {
 bool Settings::enableNtp() {
     std::shared_lock lock(_mutex);
     return _settings.enableNtp;
+}
+
+bool Settings::enableDns() {
+    std::shared_lock lock(_mutex);
+    return _settings.enableDnsOverride;
 }
 
 bool Settings::isGameEnabled(shared::EGame game) {

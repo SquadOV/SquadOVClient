@@ -31,6 +31,7 @@
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
 #include "hardware/hardware.h"
+#include "shared/http/dns_manager.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -140,6 +141,7 @@ int main(int argc, char** argv) {
     shared::log::Log::initializeGlobalLogger("squadov.log");
 
     // NTP can't be init before the logger since we log stuff inside the NTP client.
+    shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
     shared::time::NTPClient::singleton()->enable(service::system::getCurrentSettings()->enableNtp());
     shared::time::NTPClient::singleton()->initialize();
 
@@ -623,6 +625,7 @@ int main(int argc, char** argv) {
         LOG_INFO("RECEIVE RELOAD SETTINGS REQUEST." << std::endl);
         service::system::getCurrentSettings()->reloadSettingsFromFile();
         shared::time::NTPClient::singleton()->enable(service::system::getCurrentSettings()->enableNtp(), true);
+        shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
     });
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_KEYCODE_CHAR, [&zeroMqServerClient](const std::string& msg){

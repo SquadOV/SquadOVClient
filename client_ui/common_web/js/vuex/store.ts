@@ -217,6 +217,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        setEnableDnsOverride(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.enableDnsOverride = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeSmallStep(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {

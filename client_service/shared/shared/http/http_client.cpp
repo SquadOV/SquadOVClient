@@ -3,6 +3,7 @@
 #include "shared/constants.h"
 #include "shared/log/log.h"
 #include "shared/filesystem/utility.h"
+#include "shared/http/dns_manager.h"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -132,6 +133,11 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
 
     // Time in seconds CURL will try to connect to the server for.
     curl_easy_setopt(_curl, CURLOPT_CONNECTTIMEOUT, 15L);
+
+    const auto* dns = shared::http::getDnsManager();
+    if (dns->isActive()) {
+        curl_easy_setopt(_curl, CURLOPT_DNS_SERVERS, dns->getDnsServers().c_str());
+    }
 }
 
 void HttpRequest::setTimeout(long timeoutSeconds) {

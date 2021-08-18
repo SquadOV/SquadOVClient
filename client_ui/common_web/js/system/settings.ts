@@ -197,6 +197,7 @@ export interface SquadOvLocalSettings {
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
+    enableDnsOverride: boolean
 }
 
 function getSettingsFname() : string {
@@ -379,6 +380,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -432,6 +434,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         enableNtp: true,
+        enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -625,6 +628,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVoiceSpeechNoiseReduction === undefined) {
         parsedData.record.useVoiceSpeechNoiseReduction = false
+    }
+
+    if (parsedData.enableDnsOverride === undefined) {
+        parsedData.enableDnsOverride = true
     }
 
     saveLocalSettings(parsedData, true)
