@@ -131,7 +131,7 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
     }
 
     // Time in seconds CURL will try to connect to the server for.
-    curl_easy_setopt(_curl, CURLOPT_CONNECTTIMEOUT, 60L);
+    curl_easy_setopt(_curl, CURLOPT_CONNECTTIMEOUT, 15L);
 }
 
 void HttpRequest::setTimeout(long timeoutSeconds) {
