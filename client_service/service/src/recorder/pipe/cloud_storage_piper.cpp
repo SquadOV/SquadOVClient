@@ -14,7 +14,7 @@ namespace service::recorder::pipe {
 constexpr size_t CLOUD_BUFFER_SIZE_BYTES = 8 * 1024 * 1024;
 constexpr size_t CLOUD_CHUNK_SIZE_MULTIPLE = 256 * 1024;
 constexpr int CLOUD_MAX_RETRIES = 10;
-constexpr int CLOUD_MAX_BACKOFF_TIME_MS = 32000;
+constexpr int CLOUD_MAX_BACKOFF_TIME_MS = 96000;
 
 #define LOG_TIME 0
 
@@ -160,7 +160,7 @@ void CloudStoragePiper::tickUploadThread() {
 //     that we successfully upload all the bytes so we make sure to keep only the bytes
 //     we successfully sent.
 void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast) {
-    static std::uniform_int_distribution<> backoffDist(0 , 1000);
+    static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
 
     for (auto i = 0; i < CLOUD_MAX_RETRIES; ++i) {
@@ -190,7 +190,7 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
         } catch(std::exception& ex) {
             LOG_WARNING("Cloud Upload Failure: " << ex.what() << std::endl);
 
-            const auto backoffMs = std::min(static_cast<int>(std::pow(2, i)) +  backoffDist(_gen), CLOUD_MAX_BACKOFF_TIME_MS);
+            const auto backoffMs = std::min(1000 + static_cast<int>(std::pow(2, i)) +  backoffDist(_gen), CLOUD_MAX_BACKOFF_TIME_MS);
             std::this_thread::sleep_for(std::chrono::milliseconds(backoffMs));
         }
     }
