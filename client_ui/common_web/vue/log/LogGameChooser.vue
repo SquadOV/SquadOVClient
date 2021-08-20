@@ -1,22 +1,28 @@
 <template>
+    <recent-recorded-matches
+        title="All Games (with VODs)"
+        :user-id="userId"
+        disable-mini
+    >
+    </recent-recorded-matches>
 </template>
 
 <script lang="ts">
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import * as pi from '@client/js/pages'
+import { Prop } from 'vue-property-decorator'
+import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 
-@Component
-export default class LogGameChooser extends Vue {
-    mounted() {
-        // TODO: Maybe have a way to select the user's preferred game or something?
-        this.$router.replace({
-            name: pi.AimlabLogPageId,
-            params: this.$route.params,
-            query: this.$route.query
-        })
+
+@Component({
+    components: {
+        RecentRecordedMatches
     }
+})
+export default class LogGameChooser extends Vue {
+    @Prop({required: true})
+    userId!: number
 }
 
 </script>

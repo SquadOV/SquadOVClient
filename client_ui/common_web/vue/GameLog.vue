@@ -73,6 +73,20 @@
             <v-divider vertical></v-divider>
 
             <template v-if="!isLoadingCurrentUser">
+                <router-link :to="homePageTo">
+                    <v-tooltip bottom :open-delay="1000">
+                        <template v-slot:activator="{on, attrs}">
+                            <div :class="`ml-2 pa-2 d-flex align-center justify-center home-game game-div ${isOnHome ? 'selected-game' : ''}`" v-on="on" v-bind="attrs">
+                                <v-icon large>
+                                    mdi-all-inclusive
+                                </v-icon>
+                            </div>
+                        </template>
+
+                        <span>All Games</span>
+                    </v-tooltip>
+                </router-link>
+
                 <template v-for="(game, idx) in supportedGames">
                     <div
                         :class="`pa-2 game-div ${$route.path.startsWith(game.route.path) ? 'selected-game' : ''}`"
@@ -144,6 +158,7 @@ export default class GameLog extends Vue {
 
     get routerKey(): string {
         let key = routeLevelToKey(this.$route, 2)
+        console.log('router key: ', key)
         return `${key}.${this.forceUpdateKey}`
     }
 
@@ -171,6 +186,14 @@ export default class GameLog extends Vue {
         return this.allSquads.some((ele: Squad) => {
             return (this.perSquadMembers![ele.id] === undefined)
         })
+    }
+
+    get homePageTo(): any {
+        return this.constructPageTo(pi.LogPageId)
+    }
+
+    get isOnHome(): boolean {
+        return this.$route.name === pi.LogPageId
     }
 
     get supportedGames(): any[] {
@@ -387,6 +410,11 @@ export default class GameLog extends Vue {
 .username-text {
     font-weight: 700;
     color: white;
+}
+
+.home-game {
+    width: 50px;
+    height: 50px;
 }
 
 </style>

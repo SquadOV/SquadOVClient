@@ -238,9 +238,12 @@ const baseRoutes : any[] = [
                 }),
                 children: [
                     {
-                        path: '',
+                        path: 'all',
                         name: pi.LogPageId,
-                        component: LogGameChooser
+                        component: LogGameChooser,
+                        props: (route : any) => ({
+                            userId: parseInt(route.params.userId),
+                        })
                     },
                     {
                         path: 'csgo',

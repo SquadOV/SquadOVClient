@@ -14,7 +14,7 @@
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn text v-bind="attrs" v-on="on">
+                    <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact>
                         <v-badge
                             inline
                             left
@@ -23,14 +23,14 @@
                             color="error"
                         >
                             {{ m.name }}
-                            <v-icon small>
+                            <v-icon small v-if="!!m.children">
                                 mdi-chevron-down
                             </v-icon> 
                         </v-badge>
                     </v-btn>
                 </template>
 
-                <v-list dense>
+                <v-list dense v-if="!!m.children">
                     <template v-for="c in m.children">
                         <template v-if="!c.disabled">
                             <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
@@ -294,64 +294,11 @@ export default class AppNav extends mixins(CommonComponent) {
         return [
             {
                 name: 'Game Logs',
-                children: [
-                    {
-                        name: 'Aim Lab',
-                        to: {
-                            name: pi.AimlabLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'CS:GO',
-                        to: {
-                            name: pi.CsgoLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'Hearthstone',
-                        to: {
-                            name: pi.HearthstoneLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'League of Legends',
-                        to: {
-                            name: pi.LolLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'Teamfight Tactics',
-                        to: {
-                            name: pi.TftLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'Valorant',
-                        to: {
-                            name: pi.ValorantLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                    {
-                        name: 'World of Warcraft',
-                        to: {
-                            name: pi.WowLogPageId,
-                            params: this.gameLogParams,
-                            query: this.gameLogQuery
-                        },
-                    },
-                ]
+                to: {
+                    name: pi.LogPageId,
+                    params: this.gameLogParams,
+                    query: this.gameLogQuery
+                },
             },
             {
                 name: 'Social',
