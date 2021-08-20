@@ -11,6 +11,8 @@
 namespace shared::system::win32 {
 namespace {
 
+constexpr int MINIMUM_WINDOW_RESOLUTION_XY = 100;
+
 struct EnumData {
     DWORD pid;
     HWND out;
@@ -23,9 +25,21 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
     GetWindowThreadProcessId(hwnd, &refPid);
 
     if (refPid == data->pid && IsWindowEnabled(hwnd) && IsWindowVisible(hwnd)) {
-        data->out = hwnd;
-        data->found = true;
-        return FALSE;
+        RECT windowRes;
+        if (!GetClientRect(hwnd, &windowRes)) {
+            return TRUE;
+        }
+
+        const auto width = windowRes.right - windowRes.left;
+        const auto height = windowRes.bottom - windowRes.top;
+
+        if (width >= MINIMUM_WINDOW_RESOLUTION_XY && height >= MINIMUM_WINDOW_RESOLUTION_XY) {
+            data->out = hwnd;
+            data->found = true;
+            return FALSE;
+        } else {
+            return TRUE;
+        }
     } else {
         return TRUE;
     }
