@@ -11,6 +11,7 @@ directories:
 win:
   target: "nsis"
   icon: "nsis/icon.ico"
+  certificateSubjectName: "GRCHive, Inc."
   publish: 
     - provider: generic
       url: https://us-central1.content.squadov.gg/builds

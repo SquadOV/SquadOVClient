@@ -7,11 +7,6 @@ cmake --build build --config Release --target advanced_crash_dump_enabler
 cmake --build build --config Release --target csgo_demo_retriever
 
 Set-Location -Path .\build\bin\x64\Release
-Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","squadov_client_service.exe" -Wait -NoNewWindow
-Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","advanced_crash_dump_enabler.exe" -Wait -NoNewWindow
-Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","ffmpeg.exe" -Wait -NoNewWindow
-Start-Process -FilePath "signtool.exe" -ArgumentList "sign","/f","$env:CSC_LINK","/p","$env:CSC_KEY_PASSWORD","csgo/csgo_demo_retriever.exe" -Wait -NoNewWindow
-
 Set-Location -Path ..\..\..\..\client_ui\common_web
 yarn install --check-files
 Remove-Item .\dist\production -Recurse
