@@ -97,6 +97,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
     const auto* state = reinterpret_cast<const game_event_watcher::GameLogState*>(rawData);
     LOG_INFO("[" << shared::timeToStr(eventTime) << "] Valorant Match Start" << std::endl
         << "\tMap: " << shared::valorant::mapToName(state->matchMap) << std::endl
+        << "\tGame Mode: " << shared::valorant::gameModeToName(state->gameMode) << std::endl
         << "\tMatchID: " << state->matchId << std::endl
         << "\tAPI Server: " << state->apiServer << std::endl);
 

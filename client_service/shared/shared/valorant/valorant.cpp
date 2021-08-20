@@ -80,5 +80,27 @@ bool isGameMap(EValorantMap map) {
     return false;
 }
 
+EValorantGameMode gameIdToValorantMode(const std::string& id) {
+    if (id.rfind("/Game/GameModes/Bomb/BombGameMode", 0) != std::string::npos) {
+        return EValorantGameMode::Standard;
+    } else if (id.rfind("/Game/GameModes/QuickBomb/QuickBombGameMode", 0) != std::string::npos) {
+        return EValorantGameMode::SpikeRush;
+    } else if (id.rfind("/Game/GameModes/Deathmatch/DeathmatchGameMode", 0) != std::string::npos) {
+        return EValorantGameMode::Deathmatch;
+    }
+    return EValorantGameMode::Unknown;
+}
+
+std::string gameModeToName(EValorantGameMode mode) {
+    switch (mode) {
+        case EValorantGameMode::Standard:
+            return "Standard";
+        case EValorantGameMode::SpikeRush:
+            return "Spike Rush";
+        case EValorantGameMode::Deathmatch:
+            return "Deathmatch";
+    }
+    return "Unknown";
+}
 
 }

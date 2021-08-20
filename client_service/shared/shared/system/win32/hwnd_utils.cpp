@@ -17,6 +17,7 @@ struct EnumData {
     DWORD pid;
     HWND out;
     bool found = false;
+    bool checkWindowSize = false;
 };
 
 BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
@@ -33,7 +34,7 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
         const auto width = windowRes.right - windowRes.left;
         const auto height = windowRes.bottom - windowRes.top;
 
-        if (width >= MINIMUM_WINDOW_RESOLUTION_XY && height >= MINIMUM_WINDOW_RESOLUTION_XY) {
+        if (!data->checkWindowSize || (width >= MINIMUM_WINDOW_RESOLUTION_XY && height >= MINIMUM_WINDOW_RESOLUTION_XY)) {
             data->out = hwnd;
             data->found = true;
             return FALSE;
@@ -47,10 +48,11 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
 
 }
 
-HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds& maxDelayMs, const std::chrono::milliseconds& step, bool quiet) {
+HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds& maxDelayMs, const std::chrono::milliseconds& step, bool quiet, bool checkWindowSize) {
     // Need to first find the window associated with the process.
     EnumData window;
     window.pid = pid;
+    window.checkWindowSize = checkWindowSize;
 
     // If we don't find the window, we can afford to wait a little bit before
     // determining the window can't be found as the user might have just

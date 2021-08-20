@@ -115,6 +115,7 @@ struct ValorantMapUrl {
     std::string username;
     std::string tagline;
     std::string map;
+    std::string game;
 };
 
 ValorantMapUrl parseValorantMapUrl(const std::string& url) {
@@ -158,6 +159,8 @@ ValorantMapUrl parseValorantMapUrl(const std::string& url) {
 
         if (tokens[0] == "Name") {
             retUrl.username = boost::trim_copy(tokens[1]);
+        } else if (tokens[0] == "game") {
+            retUrl.game = boost::trim_copy(tokens[1]);
         }
     }
 
@@ -200,6 +203,7 @@ void ValorantLogWatcher::onGameLogChange(const LogLinesDelta& lines) {
             if (parseGameLogMapChange(line, data) && data.ready) {
                 const auto parsedMapUrl = parseValorantMapUrl(data.url);
                 _gameLogState.matchMap = shared::valorant::codenameToValorantMap(data.map);
+                _gameLogState.gameMode = shared::valorant::gameIdToValorantMode(parsedMapUrl.game);
 
                 // I believe generally when the map is 'ready' it'll also spit out the username and tagline.
                 if (data.ready && !parsedMapUrl.username.empty() && !parsedMapUrl.tagline.empty()) {

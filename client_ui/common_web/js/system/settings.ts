@@ -166,22 +166,46 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
 export interface WowSettings {
     useCombatLogTimeout: boolean
     timeoutSeconds: number
+    recordArenas: boolean
+    recordKeystones: boolean
+    recordEncounters: boolean
 }
 
 function createEmptyWowSettings(): WowSettings {
     return {
         useCombatLogTimeout: true,
         timeoutSeconds: 30,
+        recordArenas: true,
+        recordKeystones: true,
+        recordEncounters: true,
+    }
+}
+
+export interface ValorantSettings {
+    recordStandard: boolean
+    recordSpikeRush: boolean
+    recordDeathmatch: boolean
+    recordOther: boolean
+}
+
+function createEmptyValorantSettings(): ValorantSettings {
+    return {
+        recordStandard: true,
+        recordSpikeRush: true,
+        recordDeathmatch: true,
+        recordOther: true,
     }
 }
 
 export interface PerGameSettings {
     wow: WowSettings
+    valorant: ValorantSettings,
 }
 
 function createEmptyPerGameSettings(): PerGameSettings {
     return {
-        wow: createEmptyWowSettings()
+        wow: createEmptyWowSettings(),
+        valorant: createEmptyValorantSettings(),
     }
 }
 
@@ -632,6 +656,16 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.enableDnsOverride === undefined) {
         parsedData.enableDnsOverride = true
+    }
+
+    if (parsedData.games.wow.recordArenas === undefined) {
+        parsedData.games.wow.recordArenas = true
+        parsedData.games.wow.recordKeystones = true
+        parsedData.games.wow.recordEncounters = true
+    }
+
+    if (parsedData.games.valorant === undefined) {
+        parsedData.games.valorant = createEmptyValorantSettings()
     }
 
     saveLocalSettings(parsedData, true)

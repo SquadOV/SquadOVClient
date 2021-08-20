@@ -286,6 +286,12 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
         return;
     }
 
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    if (!wowSettings.recordEncounters) {
+        LOG_INFO("...WoW Encounter Recording Disabled." << std::endl);
+        return;
+    }
+
     _currentEncounter = *reinterpret_cast<const game_event_watcher::WoWEncounterStart*>(data);
     _matchStartTime = tm;
     LOG_INFO("WoW Encounter Start [" <<  shared::timeToStr(tm) << "]: " << _currentEncounter << std::endl);
@@ -328,6 +334,12 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
     }
 
     if (!hasValidCombatLog() || inMatch()) {
+        return;
+    }
+
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    if (!wowSettings.recordKeystones) {
+        LOG_INFO("...WoW Challenge Recording Disabled." << std::endl);
         return;
     }
 
@@ -374,6 +386,12 @@ void WoWProcessHandlerInstance::onArenaStart(const shared::TimePoint& tm, const 
     }
 
     if (!hasValidCombatLog() || inMatch()) {
+        return;
+    }
+
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    if (!wowSettings.recordArenas) {
+        LOG_INFO("...WoW Arenas Recording Disabled." << std::endl);
         return;
     }
 

@@ -78,12 +78,28 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     WowSettings settings;
     settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
     settings.timeoutSeconds = obj.value("timeoutSeconds", 20);
+    settings.recordArenas = obj.value("recordArenas", true);
+    settings.recordKeystones = obj.value("recordKeystones", true);
+    settings.recordEncounters = obj.value("recordEncounters", true);
+    return settings;
+}
+
+ValorantSettings ValorantSettings::fromJson(const nlohmann::json& obj) {
+    ValorantSettings settings;
+    settings.recordStandard = obj.value("recordStandard", true);
+    settings.recordSpikeRush = obj.value("recordSpikeRush", true);
+    settings.recordDeathmatch = obj.value("recordDeathmatch", true);
+    settings.recordOther = obj.value("recordOther", true);
     return settings;
 }
 
 PerGameSettings PerGameSettings::fromJson(const nlohmann::json& obj) {
     PerGameSettings settings;
     settings.wow = WowSettings::fromJson(obj["wow"]);
+
+    if (obj.find("valorant") != obj.end()) {
+        settings.valorant = ValorantSettings::fromJson(obj["valorant"]);
+    }
     return settings;
 }
 
@@ -135,6 +151,11 @@ KeybindSettings Settings::keybinds() {
 WowSettings Settings::wowSettings() {
     std::shared_lock lock(_mutex);
     return _settings.games.wow;
+}
+
+ValorantSettings Settings::valorantSettings() {
+    std::shared_lock lock(_mutex);
+    return _settings.games.valorant;
 }
 
 bool Settings::enableNtp() {

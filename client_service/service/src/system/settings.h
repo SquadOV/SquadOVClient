@@ -59,12 +59,25 @@ struct KeybindSettings {
 struct WowSettings {
     bool useCombatLogTimeout = true;
     int32_t timeoutSeconds = 20;
+    bool recordArenas = true;
+    bool recordKeystones = true;
+    bool recordEncounters = true;
 
     static WowSettings fromJson(const nlohmann::json& obj);
 };
 
+struct ValorantSettings {
+    bool recordStandard = true;
+    bool recordSpikeRush = true;
+    bool recordDeathmatch = true;
+    bool recordOther = true;
+
+    static ValorantSettings fromJson(const nlohmann::json& obj);
+};
+
 struct PerGameSettings {
     WowSettings wow;
+    ValorantSettings valorant;
 
     static PerGameSettings fromJson(const nlohmann::json& obj);
 };
@@ -90,6 +103,7 @@ public:
     KeybindSettings keybinds();
 
     WowSettings wowSettings();
+    ValorantSettings valorantSettings();
 
     bool enableNtp();
     bool enableDns();

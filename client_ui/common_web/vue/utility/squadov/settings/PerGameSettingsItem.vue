@@ -79,6 +79,201 @@
                         </v-text-field>
                     </v-col>
                 </v-row>
+
+                <v-row align="center">
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.wow.useCombatLogTimeout"
+                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds})"
+                            label="Use Combat Log Timeout"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    When enabled, SquadOV will detect extended periods of time with no new data in the combat log as being the same as a match end.
+                                    Use this when you find SquadOV recording well past the end of a match (generally, until and/or including the next match).
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.wow.recordArenas"
+                            @change="$store.commit('changeWowRecordArenas', arguments[0])"
+                            label="Record Arenas"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record arenas (2v2, 3v3, Skirmish, etc.) in World of Warcraft.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.wow.recordKeystones"
+                            @change="$store.commit('changeWowRecordKeystones', arguments[0])"
+                            label="Record Keystones"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record keystones in World of Warcraft.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.wow.recordEncounters"
+                            @change="$store.commit('changeWowRecordEncounters', arguments[0])"
+                            label="Record Encounters"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record encounters (boss fights) in raids and non-keystone dungeons in World of Warcraft.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+                </v-row>
+            </v-tab-item>
+
+            <v-tab>
+                Valorant
+            </v-tab>
+
+            <v-tab-item>
+                <v-row align="center">
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.valorant.recordStandard"
+                            @change="$store.commit('changeValorantRecordingSettings', {standard: arguments[0]})"
+                            label="Record Standard"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Record standard Valorant games.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.valorant.recordSpikeRush"
+                            @change="$store.commit('changeValorantRecordingSettings', {spikeRush: arguments[0]})"
+                            label="Record Spike Rush"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Record spike rush Valorant games.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.valorant.recordDeathmatch"
+                            @change="$store.commit('changeValorantRecordingSettings', {deathmatch: arguments[0]})"
+                            label="Record Deathmatch"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Record spike rush Valorant games.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.games.valorant.recordOther"
+                            @change="$store.commit('changeValorantRecordingSettings', {other: arguments[0]})"
+                            label="Record Other"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Record Valorant games played with any other game mode.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+                </v-row>
             </v-tab-item>
         </v-tabs>
     </div>

@@ -35,7 +35,7 @@ std::unique_ptr<process_watcher::process::Process> createProcess(DWORD id) {
 
     try {
         // We only want to use windows that have a visible window.
-        const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true);
+        const HWND window = shared::system::win32::findWindowForProcessWithMaxDelay(id, std::chrono::milliseconds(1), std::chrono::milliseconds(0), true, false);
         if (window == NULL) {
             CloseHandle(hProcess);
             LOG_DEBUG("Failed to find window for process." << std::endl);

@@ -31,6 +31,7 @@ struct GameLogState {
     bool isInMatch = false;
     bool stagedMatchEnd = false;
     shared::valorant::EValorantMap matchMap = shared::valorant::EValorantMap::Unknown;
+    shared::valorant::EValorantGameMode gameMode = shared::valorant::EValorantGameMode::Unknown;
     std::string matchId;
     std::string apiServer;
     std::string username;

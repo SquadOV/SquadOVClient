@@ -24,9 +24,19 @@ enum class EValorantMap {
     Unknown
 };
 
+enum class EValorantGameMode {
+    Standard,
+    SpikeRush,
+    Deathmatch,
+    Unknown
+};
+
 EValorantMap codenameToValorantMap(const std::string& codename);
 EValorantMap mapIdToValorantMap(const std::string& id);
 std::string mapToName(EValorantMap map);
 bool isGameMap(EValorantMap map);
+
+EValorantGameMode gameIdToValorantMode(const std::string& id);
+std::string gameModeToName(EValorantGameMode mode);
 
 }

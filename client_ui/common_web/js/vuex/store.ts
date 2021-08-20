@@ -317,7 +317,58 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.record.useVoiceSpeechNoiseReduction = use
             saveLocalSettings(state.settings)
 /// #endif        
-        }
+        },
+        changeWowRecordArenas(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordArenas = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowRecordKeystones(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordKeystones = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowRecordEncounters(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordEncounters = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeValorantRecordingSettings(state: RootState, params: {standard?: boolean, spikeRush?: boolean, deathmatch?: boolean, other?: boolean }) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+
+            if (params.standard !== undefined) {
+                state.settings.games.valorant.recordStandard = params.standard
+            }
+
+            if (params.spikeRush !== undefined) {
+                state.settings.games.valorant.recordSpikeRush = params.spikeRush
+            }
+
+            if (params.deathmatch !== undefined) {
+                state.settings.games.valorant.recordDeathmatch = params.deathmatch
+            }
+
+            if (params.other !== undefined) {
+                state.settings.games.valorant.recordOther = params.other
+            }
+            saveLocalSettings(state.settings)
+/// #endif  
+        },
     },
     actions: {
         async reloadLocalSettings(context) {
