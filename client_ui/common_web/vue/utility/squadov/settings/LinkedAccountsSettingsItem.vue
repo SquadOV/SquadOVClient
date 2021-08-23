@@ -45,6 +45,185 @@
 
         <div class="d-flex align-center my-2">
             <div class="font-weight-bold text-h6">
+                SquadOV Account
+            </div>
+        </div>
+        <v-divider></v-divider>
+
+        <loading-container :is-loading="!profileUser">
+            <template v-slot:default="{ loading }">
+                <div v-if="!loading">
+                    <v-container fluid>
+                        <v-row>
+                            <v-col cols="4">
+                                <div class="font-weight-bold">
+                                    Username
+                                </div>
+                                
+                                <div class="d-flex align-center">
+                                    <div v-if="!editUsername">
+                                        {{ profileUser.username }}
+                                    </div>
+
+                                    <v-text-field
+                                        v-model="pendingUsername"
+                                        filled
+                                        hide-details
+                                        single-line
+                                        dense
+                                        v-else
+                                    >
+                                    </v-text-field>
+
+                                    <v-btn
+                                        icon
+                                        class="ml-2"
+                                        color="warning"
+                                        v-if="!editUsername"
+                                        @click="editUsername = true"
+                                        x-small
+                                    >
+                                        <v-icon>
+                                            mdi-pencil
+                                        </v-icon>
+                                    </v-btn>
+
+                                    <template v-else>
+                                        <v-btn
+                                            icon
+                                            class="ml-2"
+                                            color="success"
+                                            @click="finishEditUsername"
+                                            x-small
+                                            :loading="editInProgress"
+                                        >
+                                            <v-icon>
+                                                mdi-check-circle
+                                            </v-icon>
+                                        </v-btn>
+
+                                        <v-btn
+                                                icon
+                                                class="ml-2"
+                                                color="error"
+                                                @click="editUsername = false"
+                                                x-small
+                                            >
+                                                <v-icon>
+                                                    mdi-close-circle
+                                                </v-icon>
+                                        </v-btn>
+                                    </template>
+                                </div>
+                            </v-col>
+
+                            <v-col cols="4" v-if="isLocal">
+                                <div class="font-weight-bold">
+                                    Email
+                                </div>
+
+                                <div class="d-flex align-center">
+                                    <v-icon
+                                        class="mr-2"
+                                        color="success"
+                                        small
+                                        v-if="profileUser.verified"
+                                    >
+                                        mdi-check-circle
+                                    </v-icon>
+
+                                    <div v-if="!editEmail">
+                                        {{ profileUser.email }}
+                                    </div>
+
+                                    <v-text-field
+                                        v-model="pendingEmail"
+                                        filled
+                                        hide-details
+                                        single-line
+                                        dense
+                                        v-else
+                                    >
+                                    </v-text-field>
+
+                                    <v-btn
+                                        icon
+                                        class="ml-2"
+                                        color="warning"
+                                        v-if="!editEmail"
+                                        @click="editEmail = true"
+                                        x-small
+                                    >
+                                        <v-icon>
+                                            mdi-pencil
+                                        </v-icon>
+                                    </v-btn>
+
+                                    <template v-else>
+                                        <v-btn
+                                            icon
+                                            class="ml-2"
+                                            color="success"
+                                            @click="finishEditEmail"
+                                            x-small
+                                            :loading="editInProgress"
+                                        >
+                                            <v-icon>
+                                                mdi-check-circle
+                                            </v-icon>
+                                        </v-btn>
+
+                                        <v-btn
+                                            icon
+                                            class="ml-2"
+                                            color="error"
+                                            @click="editEmail = false"
+                                            x-small
+                                        >
+                                            <v-icon>
+                                                mdi-close-circle
+                                            </v-icon>
+                                        </v-btn>
+                                    </template>
+
+                                    
+                                    
+                                    <template v-if="!profileUser.verified">
+                                        <v-btn
+                                            class="ml-2"
+                                            color="success"
+                                            small
+                                            v-if="!sentVerification"
+                                            @click="resendVerification"
+                                            :loading="emailPending" 
+                                        >
+                                            Resend Email Verification
+                                        </v-btn>
+
+                                        <div class="ml-2" v-else>
+                                            Email Sent!
+                                        </div>
+
+                                        <v-btn
+                                            class="ml-2"
+                                            color="secondary"
+                                            small
+                                            @click="recheckVerification"
+                                            :loading="checkPending"
+                                        >
+                                            Refresh
+                                        </v-btn>
+                                    </template>
+                                </div>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </div>
+            </template>
+        </loading-container>
+
+        <div class="d-flex align-center my-2">
+            <div class="font-weight-bold text-h6">
                 Linked Accounts
             </div>
 
@@ -179,6 +358,14 @@
         >
             Please login using in the service provider's login form that was just opened in your web browser.
         </v-snackbar>
+
+        <v-snackbar
+            v-model="editFailure"
+            :timeout="5000"
+            color="error"
+        >
+            Failed edit your user profile. Please try again later.
+        </v-snackbar>
     </div>
 </template>
 
@@ -193,6 +380,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { redirectToRsoLogin } from '@client/js/riot/rso'
 import { redirectToTwitchLogin } from '@client/js/twitch'
+import { SquadOVUser, getSquadOVUser } from '@client/js/squadov/user'
 
 @Component({
     components: {
@@ -200,6 +388,21 @@ import { redirectToTwitchLogin } from '@client/js/twitch'
     }
 })
 export default class LinkedAccountsSettingsItem extends Vue {
+    profileUser: SquadOVUser | null = null
+    sentVerification: boolean = false
+    emailPending: boolean = false
+    verificationErr: boolean = false
+    checkPending: boolean = false
+
+    editInProgress: boolean = false
+    editFailure: boolean = false
+
+    editUsername: boolean = false
+    pendingUsername: string = ''
+
+    editEmail: boolean = false
+    pendingEmail: string = ''
+
     accounts: LinkedAccounts | null = null
 
     showHideDelete: boolean = false
@@ -211,6 +414,88 @@ export default class LinkedAccountsSettingsItem extends Vue {
 
     pendingOauthLink: boolean = false
     showHideProgress: boolean = false
+
+    @Watch('profileUser', {deep: true})
+    syncFromProfileUser() {
+        if (!this.profileUser) {
+            return
+        }
+        this.pendingUsername = this.profileUser.username
+        this.pendingEmail = this.profileUser.email
+    }
+
+    finishEditUsername() {
+        this.editInProgress = true
+        apiClient.editMyUsername(this.pendingUsername).then(() => {
+            if (!!this.profileUser) {
+                this.profileUser.username = this.pendingUsername
+                if (this.isLocal) {
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser)))
+                }
+            }
+            this.pendingUsername = ''
+            this.editUsername = false
+        }).catch((err: any) => {
+            console.log('Failed to edit username: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.editInProgress = false
+        })
+    }
+
+    finishEditEmail() {
+        this.editInProgress = true
+        apiClient.editMyEmail(this.pendingEmail).then(() => {
+            if (!!this.profileUser) {
+                this.profileUser.email = this.pendingEmail
+                this.profileUser.verified = false
+                if (this.isLocal) {
+                    this.$store.commit('setUser' , JSON.parse(JSON.stringify(this.profileUser)))
+                }
+            }
+            this.pendingEmail = ''
+            this.editEmail = false
+        }).catch((err: any) => {
+            console.log('Failed to edit email: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.editInProgress = false
+        })
+    }
+
+    recheckVerification() {
+        this.checkPending = true
+        getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
+            if (this.isLocal) {
+                this.$store.commit('setUser' , resp.data)
+            }
+            this.profileUser = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to refresh squadovuser : ', err)
+        }).finally(() => {
+            this.checkPending = false
+        })
+    }
+
+    resendVerification() {
+        this.emailPending = true
+        apiClient.resendVerification().then(() => {
+            this.sentVerification = true
+        }).catch((err: any) => {
+            console.log('Failed to resend verification: ', err)
+            this.verificationErr = false
+        }).finally(() => {
+            this.emailPending = false
+        })
+    }
+
+    get localUserId(): number {
+        return this.$store.state.currentUser!.id
+    }
+
+    get isLocal(): boolean {
+        return this.localUserId == this.profileUser?.id
+    }
 
     deleteRiot(account: RiotAccountData) {
         this.riotToDelete = account
@@ -273,6 +558,13 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.accounts = resp.data
         }).catch((err: any) => {
             console.log('Failed to get linked accounts: ', err)
+        })
+
+        this.profileUser = null
+        getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
+            this.profileUser = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to obtain user profile: ', err)
         })
     }
 

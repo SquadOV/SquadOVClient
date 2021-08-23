@@ -54,3 +54,6 @@ export const LocalStoragePageId = 'localStorage'
 export const CommunityHomePageId = 'communities'
 export const CommunityDiscoverPageId = 'communityDiscover'
 export const CommunityPageId = 'communityPage'
+
+export const FavoritesPageId = 'favorites'
+export const WatchlistPageId = 'watchlist'

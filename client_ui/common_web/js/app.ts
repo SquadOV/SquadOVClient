@@ -105,6 +105,9 @@ const CommunityFeed = () => import('@client/vue/utility/community/CommunityFeed.
 const CommunityPage = () => import('@client/vue/utility/community/CommunityPage.vue')
 const CommunityDiscover = () => import('@client/vue/utility/community/CommunityDiscover.vue')
 
+const UserFavoritesPage = () => import('@client/vue/profile/UserFavoritesPage.vue')
+const UserWatchlistPage = () => import('@client/vue/profile/UserWatchlistPage.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -204,8 +207,6 @@ const baseRoutes : any[] = [
                 component: UserProfile,
                 props: (route : any) => ({
                     userId: parseInt(route.params.userId),
-                    tab: parseInt(route.query.tab),
-                    matchTab: parseInt(route.query.matchTab)
                 })
             },
             {
@@ -228,6 +229,16 @@ const baseRoutes : any[] = [
                 path: 'localstorage',
                 name: pi.LocalStoragePageId,
                 component: LocalStorageManager,
+            },
+            {
+                path: 'watchlist',
+                name: pi.WatchlistPageId,
+                component: UserWatchlistPage,
+            },
+            {
+                path: 'favorites',
+                name: pi.FavoritesPageId,
+                component: UserFavoritesPage,
             },
             { 
                 path: 'logs/:userId',

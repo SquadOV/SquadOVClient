@@ -144,7 +144,7 @@
                         Email Sent!
                     </div>
 
-                    <v-btn small v-if="!sentVerification" class="ml-2" color="secondary" :to="profileTo">
+                    <v-btn small v-if="!sentVerification" class="ml-2" color="secondary" :to="accountSettingsTo">
                         Wrong email!
                     </v-btn>
 
@@ -336,14 +336,13 @@ export default class AppNav extends mixins(CommonComponent) {
                     {
                         name: 'Favorites',
                         to: {
-                            name: pi.UserProfilePageId,
-                            params: {
-                                userId: this.$store.state.currentUser!.id,
-                            },
-                            query: {
-                                tab: 1,
-                                matchTab: 0,
-                            }
+                            name: pi.FavoritesPageId,
+                        },
+                    },
+                    {
+                        name: 'Watchlist',
+                        to: {
+                            name: pi.WatchlistPageId,
                         },
                     },
                     {
@@ -398,6 +397,15 @@ export default class AppNav extends mixins(CommonComponent) {
         }
 
         return this.$store.state.currentUser.username
+    }
+
+    get accountSettingsTo(): any {
+        return {
+            name: pi.SettingsPageId,
+            query: {
+                inputTab: 2
+            }
+        }
     }
 
     get profileTo(): any {
