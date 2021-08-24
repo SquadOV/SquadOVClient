@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { AnalyticsContainer, getAnalyticsContainer } from '@client/js/analytics/container'
 import { AnalyticsCategory, AnalyticsAction } from '@client/js/analytics/events'
+import { openUrlInBrowser} from '@client/js/external'
 
 @Component
 export default class CommonComponent extends Vue {
@@ -26,5 +27,16 @@ export default class CommonComponent extends Vue {
 
     deactivated() {
         this.isActive = false
+    }
+
+    forceLinksToOpenInBrowser() {
+/// #if DESKTOP
+        this.$el.querySelectorAll('a').forEach((he: HTMLAnchorElement) => {
+            he.addEventListener('click', (me: MouseEvent) => {
+                openUrlInBrowser(he.href)
+                me.preventDefault()
+            })
+        })
+/// #endif
     }
 }

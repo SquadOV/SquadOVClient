@@ -45,6 +45,8 @@ import {
     SquadOvHeartbeatResponse,
     cleanSquadOvHeartbeatResponse,
     SquadOVUserHandle,
+    UserProfileBasic,
+    cleanUserProfileBasicFromJson,
 } from '@client/js/squadov/user'
 import {
     RiotSummoner
@@ -1453,6 +1455,30 @@ class ApiClient {
 
     acceptSquadInviteLink(id: string): Promise<void> {
         return axios.post(`v1/link/${id}/accept`, {}, this.createWebAxiosConfig())
+    }
+
+    getBasicUserProfileFromId(userId: number): Promise<ApiData<UserProfileBasic>> {
+        return axios.get(`profile`, {
+            params: {
+                id: userId,
+            },
+            ...this.createWebAxiosConfig()
+        }).then((resp: ApiData<UserProfileBasic>) => {
+            cleanUserProfileBasicFromJson(resp.data)
+            return resp
+        })
+    }
+
+    getBasicUserProfileFromSlug(slug: string): Promise<ApiData<UserProfileBasic>> {
+        return axios.get(`profile`, {
+            params: {
+                slug,
+            },
+            ...this.createWebAxiosConfig()
+        }).then((resp: ApiData<UserProfileBasic>) => {
+            cleanUserProfileBasicFromJson(resp.data)
+            return resp
+        })
     }
 
     // Local API

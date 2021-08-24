@@ -55,7 +55,7 @@ import { User2UserSubscription } from '@client/js/squadov/subscription'
 import { TwitchAccount } from '@client/js/squadov/accounts'
 import { apiClient, ApiData } from '@client/js/api'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { UserProfilePageId } from '@client/js/pages'
+import { SettingsPageId } from '@client/js/pages'
 
 @Component({
     components: {
@@ -91,9 +91,9 @@ export default class CommunitySubscriptionButton extends Vue {
 
     get accountsTo(): any {
         return {
-            name: UserProfilePageId,
+            name: SettingsPageId,
             query: {
-                inputTab: 1,
+                inputTab: 2,
             }
         }
     }

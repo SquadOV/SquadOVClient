@@ -410,7 +410,7 @@ export default class AppNav extends mixins(CommonComponent) {
 
     get profileTo(): any {
         return {
-            name: pi.UserProfilePageId,
+            name: pi.UserProfileIdPageId,
             params: {
                 userId: this.$store.state.currentUser!.id
             }

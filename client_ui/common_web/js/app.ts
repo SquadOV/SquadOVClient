@@ -202,14 +202,6 @@ const baseRoutes : any[] = [
                 })
             },
             {
-                path: 'profile/:userId',
-                name: pi.UserProfilePageId,
-                component: UserProfile,
-                props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
-                })
-            },
-            {
                 path: 'profile/:userId/squads',
                 name: pi.UserSquadsPageId,
                 component: UserSquads,
@@ -649,6 +641,22 @@ const baseRoutes : any[] = [
                 ]
             },
             {
+                path: 'p/:profileSlug',
+                name: pi.UserProfileSlugPageId,
+                component: UserProfile,
+                props: (route : any) => ({
+                    userId: parseInt(route.params.userId),
+                })
+            },
+            {
+                path: 'pi/:userId',
+                name: pi.UserProfileIdPageId,
+                component: UserProfile,
+                props: (route : any) => ({
+                    userId: parseInt(route.params.userId),
+                })
+            },
+            {
                 path: 'link/:linkId',
                 component: SquadLinkResponsePage,
                 name: pi.LinkResponsePageId,
@@ -688,7 +696,14 @@ router.beforeEach((to : Route, from : Route, next : any) => {
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId)
 
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
-    if (to.name === pi.RsoOauthPageId || to.name === pi.InviteResponsePageId || to.name === pi.ShareRedirectPageId || to.name === pi.VerifyEmailPageId || to.name === pi.PlayerPageId || to.name === pi.ForgotPasswordPageId) {
+    if (to.name === pi.RsoOauthPageId
+        || to.name === pi.InviteResponsePageId 
+        || to.name === pi.ShareRedirectPageId
+        || to.name === pi.VerifyEmailPageId
+        || to.name === pi.PlayerPageId
+        || to.name === pi.ForgotPasswordPageId
+        || to.name === pi.UserProfileSlugPageId
+    ) {
         next()
         return
     }
