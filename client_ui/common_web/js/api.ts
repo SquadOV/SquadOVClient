@@ -1481,6 +1481,43 @@ class ApiClient {
         })
     }
 
+    updateBasicProfileData(p: UserProfileBasic, coverPhoto: File | null, profilePhoto: File | null): Promise<void> {
+        let form = new FormData()
+        if (!!coverPhoto) {
+            form.append('coverPhoto', coverPhoto)
+        }
+
+        if (!!profilePhoto) {
+            form.append('profilePhoto', profilePhoto)
+        }
+        
+        if (!!p.misc) {
+            form.append('description', p.misc.description)
+            form.append('facebook', p.misc.links.facebook || '')
+            form.append('instagram', p.misc.links.instagram || '')
+            form.append('twitch', p.misc.links.twitch || '')
+            form.append('youtube', p.misc.links.youtube || '')
+            form.append('snapchat', p.misc.links.snapchat || '')
+            form.append('twitter', p.misc.links.twitter || '')
+            form.append('tiktok', p.misc.links.tiktok || '')
+        }
+
+        form.append('displayName', p.displayName)
+
+        let cfg = this.createWebAxiosConfig()
+        cfg.headers['Content-Type'] = 'multipart/form-data'
+        return axios.post(`v1/users/me/profile/data`, form, cfg)
+    }
+
+    updateBasicProfileAccess(p: UserProfileBasic): Promise<void> {
+        return axios.post(`v1/users/me/profile/access`, {
+            slug: p.linkSlug,
+            misc: p.miscAccess,
+            achievements: p.achievementAccess,
+            matches: p.matchAccess,
+        }, this.createWebAxiosConfig())
+    }
+
     // Local API
     async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
         return axios.get('api/vods', {

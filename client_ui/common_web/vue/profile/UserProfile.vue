@@ -14,6 +14,7 @@
 
                 <v-img
                     id="profile-image"
+                    class="profile-image"
                     :src="profileImageUrl"
                     height="128px"
                     width="128px"
@@ -86,8 +87,15 @@
                     </div>
 
                     <!-- Description -->
-                    <div v-html="userProfile.misc.description"></div>
+                    <div class="mt-1 d-flex align-center justify-center flex-wrap text-subtitle-2">
+                        {{ userProfile.misc.description }}
+                    </div>
                 </div>
+            </div>
+
+            <!-- Member Since -->
+            <div class="mt-1 d-flex align-center justify-center flex-wrap text-caption">
+                <span class="font-weight-bold">Member Since: </span> {{ standardFormatTime(userProfile.memberSince) }}
             </div>
 
             <!-- Edit Buttons -->
@@ -114,88 +122,243 @@
                         <v-divider></v-divider>
 
                         <div class="ma-4 edit-content">
-                            <v-container fluid>
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Profile Picture
-                                    </v-col>
+                            <v-form v-model="profileValid">
+                                <v-container fluid>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Profile Picture
+                                        </v-col>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            outlined
-                                            dense
-                                            hide-details
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
+                                        <v-col cols="8">
+                                            <v-file-input
+                                                v-model="stagedProfilePhoto"
+                                                outlined
+                                                dense
+                                                accept="image/*"
+                                                show-size
+                                                :rules="profilePicRules"
+                                            >
+                                            </v-file-input>
+                                        </v-col>
+                                    </v-row>
 
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Cover Photo
-                                    </v-col>
+                                    <v-row justify="center">
+                                        <v-col cols="12">
+                                            <div class="d-flex justify-center">
+                                                <v-img
+                                                    class="profile-image"
+                                                    :src="stagedProfileImageUrl"
+                                                    height="128px"
+                                                    max-height="128px"
+                                                    width="128px"
+                                                    max-width="128px"
+                                                >
+                                                </v-img>
+                                            </div>
+                                        </v-col>
+                                    </v-row>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            outlined
-                                            dense
-                                            hide-details
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Cover Photo
+                                        </v-col>
 
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Display Name
-                                    </v-col>
+                                        <v-col cols="8">
+                                            <v-file-input
+                                                v-model="stagedCoverPhoto"
+                                                outlined
+                                                dense
+                                                accept="image/*"
+                                                show-size
+                                                :rules="coverPhotoRules"
+                                            >
+                                            </v-file-input>
+                                        </v-col>
+                                    </v-row>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            outlined
-                                            dense
-                                            hide-details
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
+                                    <v-row justify="center">
+                                        <v-col cols="12">
+                                            <div class="d-flex justify-center">
+                                                <v-img
+                                                    :src="stagedCoverPhotoUrl"
+                                                >
+                                                </v-img>
+                                            </div>
+                                        </v-col>
+                                    </v-row>
 
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Description
-                                    </v-col>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Display Name
+                                        </v-col>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            outlined
-                                            dense
-                                            hide-details
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
+                                        <v-col cols="8">
+                                            <v-text-field
+                                                v-model="editableProfile.displayName"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
 
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Social Media
-                                    </v-col>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Description
+                                        </v-col>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            outlined
-                                            dense
-                                            hide-details
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
-                            </v-container>
+                                        <v-col cols="8">
+                                            <v-text-field
+                                                v-model="editableProfile.misc.description"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Social Media
+                                        </v-col>
+
+                                        <v-col cols="8">
+                                            <v-text-field
+                                                v-model="editableProfile.misc.links.facebook"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/facebook.svg')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.instagram"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/instagram.svg')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.snapchat"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/snapchat.png')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.tiktok"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/tiktok.png')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.twitch"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/twitch.png')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.twitter"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/twitter.svg')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+
+                                            <v-text-field
+                                                class="mt-2"
+                                                v-model="editableProfile.misc.links.youtube"
+                                                outlined
+                                                dense
+                                                hide-details
+                                            >
+                                                <template v-slot:prepend-inner>
+                                                    <v-img
+                                                        :src="$root.generateAssetUri('assets/profile/social/youtube.svg')"
+                                                        width="16px"
+                                                        height="16px"
+                                                        contain
+                                                    >
+                                                    </v-img>
+                                                </template>
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-form>
                         </div>
 
                         <v-card-actions>
                             <v-btn
                                 color="error"
-                                @click="showHideEditProfile = false"
+                                @click="cancelEdit"
                             >
                                 Cancel
                             </v-btn>
@@ -204,6 +367,9 @@
 
                             <v-btn
                                 color="success"
+                                :disabled="!profileValid"
+                                :loading="profileEditInProgress"
+                                @click="saveProfile"
                             >
                                 Save
                             </v-btn>
@@ -233,65 +399,70 @@
                         <v-divider></v-divider>
 
                         <div class="ma-4 edit-content">
-                            <v-container fluid>
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        <div>
-                                            <div>URL</div>
-                                            <div class="text-caption">
-                                                https://app.squadov.gg/p/{{ editableProfile.linkSlug }}
+                            <v-form v-model="accessValid">
+                                <v-container fluid>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            <div>
+                                                <div>URL</div>
                                             </div>
+                                        </v-col>
+
+                                        <v-col cols="8">
+                                            <v-text-field
+                                                v-model="editableProfile.linkSlug"
+                                                :rules="urlRules"
+                                                outlined
+                                                dense
+                                            >
+                                            </v-text-field>
+                                        </v-col>
+                                    </v-row>
+
+                                    <v-row>
+                                        <div class="text-caption">
+                                            https://app.squadov.gg/p/{{ editableProfile.linkSlug }}
                                         </div>
-                                    </v-col>
+                                    </v-row>
 
-                                    <v-col cols="8">
-                                        <v-text-field
-                                            v-model="editableProfile.linkSlug"
-                                            :rules="urlRules"
-                                            outlined
-                                            dense
-                                        >
-                                        </v-text-field>
-                                    </v-col>
-                                </v-row>
+                                    <v-row justify="center">
+                                        <v-col class="d-flex" align-self="center" cols="4">
+                                            Access
+                                        </v-col>
 
-                                <v-row justify="center">
-                                    <v-col class="d-flex" align-self="center" cols="4">
-                                        Access
-                                    </v-col>
+                                        <v-col cols="8">
+                                            <user-profile-access-editor
+                                                v-model="editableProfile.matchAccess"
+                                                label="Games"
+                                                tooltip="Who can see your profile's VODs and clips."
+                                            >
+                                            </user-profile-access-editor>
 
-                                    <v-col cols="8">
-                                        <user-profile-access-editor
-                                            v-model="editableProfile.matchAccess"
-                                            label="Games"
-                                            tooltip="Who can see your profile's VODs and clips."
-                                        >
-                                        </user-profile-access-editor>
+                                            <user-profile-access-editor
+                                                class="mt-4"
+                                                v-model="editableProfile.achievementAccess"
+                                                label="Ranks"
+                                                tooltip="Who can see your profile's ranks and gaming achievements."
+                                            >
+                                            </user-profile-access-editor>
 
-                                        <user-profile-access-editor
-                                            class="mt-4"
-                                            v-model="editableProfile.achievementAccess"
-                                            label="Ranks"
-                                            tooltip="Who can see your profile's ranks and gaming achievements."
-                                        >
-                                        </user-profile-access-editor>
-
-                                        <user-profile-access-editor
-                                            class="mt-4"
-                                            v-model="editableProfile.miscAccess"
-                                            label="Misc."
-                                            tooltip="Who can see your profile's description and social links."
-                                        >
-                                        </user-profile-access-editor>
-                                    </v-col>
-                                </v-row>
-                            </v-container>
+                                            <user-profile-access-editor
+                                                class="mt-4"
+                                                v-model="editableProfile.miscAccess"
+                                                label="Misc."
+                                                tooltip="Who can see your profile's description and social links."
+                                            >
+                                            </user-profile-access-editor>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-form>
                         </div>
 
                         <v-card-actions>
                             <v-btn
                                 color="error"
-                                @click="showHideEditAccess = false"
+                                @click="cancelEdit"
                             >
                                 Cancel
                             </v-btn>
@@ -300,6 +471,9 @@
 
                             <v-btn
                                 color="success"
+                                :disabled="!accessValid"
+                                :loading="profileEditInProgress"
+                                @click="saveAccess"
                             >
                                 Save
                             </v-btn>
@@ -311,6 +485,14 @@
             <v-divider class="my-4"></v-divider>
 
             <!-- Profile Data -->
+
+            <v-snackbar
+                v-model="editFailure"
+                :timeout="5000"
+                color="error"
+            >
+                Failed to edit your profile. Please try again.
+            </v-snackbar>
         </template>
     </loading-container>
 </template>
@@ -323,6 +505,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { UserProfileBasic, cleanUserProfileBasicFromJson } from '@client/js/squadov/user'
 import { apiClient, ApiData } from '@client/js/api'
+import { standardFormatTime } from '@client/js/time'
 
 import FacebookLink from '@client/vue/utility/social/FacebookLink.vue'
 import InstagramLink from '@client/vue/utility/social/InstagramLink.vue'
@@ -347,6 +530,8 @@ import UserProfileAccessEditor from '@client/vue/profile/UserProfileAccessEditor
     }
 })
 export default class UserProfile extends Vue {
+    standardFormatTime = standardFormatTime
+
     // One of userId or profileSlug must be set so we know
     // which user's profile to access. 
     @Prop()
@@ -357,9 +542,33 @@ export default class UserProfile extends Vue {
 
     userProfile: UserProfileBasic | null = null
     showHideEditProfile: boolean = false
+    profileValid: boolean = false
+    
     showHideEditAccess: boolean = false
+    accessValid: boolean = false
 
+    profileEditInProgress: boolean = false
     editableProfile: UserProfileBasic | null = null
+    stagedProfilePhoto: File | null = null
+    stagedCoverPhoto: File | null = null
+
+    editFailure: boolean = false
+
+    get stagedCoverPhotoUrl(): string {
+        if (!!this.stagedCoverPhoto) {
+            return URL.createObjectURL(this.stagedCoverPhoto)
+        } else {
+            return this.coverPhotoUrl
+        }
+    }
+
+    get stagedProfileImageUrl(): string {
+        if (!!this.stagedProfilePhoto) {
+            return URL.createObjectURL(this.stagedProfilePhoto)
+        } else {
+            return this.profileImageUrl
+        }
+    }
 
     get coverPhotoUrl(): string {
         if (!!this.userProfile?.misc?.coverPictureUrl) {
@@ -423,6 +632,58 @@ export default class UserProfile extends Vue {
         ]
     }
 
+    get profilePicRules(): any[] {
+        return [
+            (value : File | null | undefined) => (!value || (!!value && value.size <= 1 * 1024 * 1024)) || 'Image can not be larger than 1MB.'
+        ]
+    }
+
+    get coverPhotoRules(): any[] {
+        return [
+            (value : File | null | undefined) => (!value || (!!value && value.size <= 1 * 1024 * 1024)) || 'Image can not be larger than 1MB.'
+        ]
+    }
+
+    cancelEdit() {
+        this.syncToEditableProfile()
+        this.showHideEditProfile = false
+        this.showHideEditAccess = false
+        this.stagedCoverPhoto = null
+        this.stagedProfilePhoto = null
+    }
+
+    saveProfile() {
+        if (!this.editableProfile) {
+            return
+        }
+        this.profileEditInProgress = true
+        apiClient.updateBasicProfileData(this.editableProfile, this.stagedCoverPhoto, this.stagedProfilePhoto).then(() => {
+            this.showHideEditProfile = false
+            this.refreshProfile()
+        }).catch((err: any) => {
+            console.log('Failed to update basic profile data: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.profileEditInProgress = false
+        })
+    }
+
+    saveAccess() {
+        if (!this.editableProfile) {
+            return
+        }
+        this.profileEditInProgress = true
+        apiClient.updateBasicProfileAccess(this.editableProfile).then(() => {
+            this.showHideEditAccess = false
+            this.refreshProfile()
+        }).catch((err: any) => {
+            console.log('Failed to update basic profile access: ', err)
+            this.editFailure = true
+        }).finally(() => {
+            this.profileEditInProgress = false
+        })
+    }
+
     mounted() {
         this.refreshProfile()
     }
@@ -440,6 +701,9 @@ export default class UserProfile extends Vue {
     position: absolute;
     left: 50%;
     transform: translateX(-50%) translateY(-100%) translateY(16px);
+}
+
+.profile-image {
     background-color: #303030;
     border: 3px solid white;
     border-radius: 50%;
@@ -447,7 +711,7 @@ export default class UserProfile extends Vue {
 
 .edit-content {
     overflow: auto;
-    max-height: 80vh;
+    max-height: 70vh;
 }
 
 </style>

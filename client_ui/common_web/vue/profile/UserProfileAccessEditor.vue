@@ -20,7 +20,7 @@
 
         <v-checkbox
             v-model="public"
-            @input="syncToValue"
+            @change="syncToValue"
             hide-details
             label="Public"
         >
@@ -40,7 +40,7 @@
         <template v-if="!public">
             <v-checkbox
                 v-model="sameSquad"
-                @input="syncToValue"
+                @change="syncToValue"
                 hide-details
                 label="Same Squad"
             >
@@ -59,7 +59,7 @@
 
             <v-checkbox
                 v-model="twitchSub"
-                @input="syncToValue"
+                @change="syncToValue"
                 hide-details
                 label="Twitch Sub"
             >
@@ -111,6 +111,7 @@ export default class UserProfileAccessEditor extends Vue {
     }
 
     syncToValue() {
+        console.log('sync to value: ', this.finalValue)
         this.$emit('input', this.finalValue)
     }
 

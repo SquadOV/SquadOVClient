@@ -997,6 +997,15 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.3.tgz#90420f9f9c6d3987f176a19a7d8e764271a2f55d"
   integrity sha512-Fxt+AfXgjMoin2maPIYzFZnQjAXjAL0PHscM5pRTtatFqB+vZxAM9tLp2Optnuw3QOQC40jTNeGYFOMvyf7v9g==
 
+"@editorjs/editorjs@^2.22.2":
+  version "2.22.2"
+  resolved "https://registry.yarnpkg.com/@editorjs/editorjs/-/editorjs-2.22.2.tgz#bf1d10c9fa9dd1dc574c18d8f4b77fef43d8e7f6"
+  integrity sha512-rPCv7Z5LZebreQaaL4DZuWzoVGEqwB+P7BF1dsefGQNBmLyeLF412topeW2b6e+g4l1oQ7t75kCOACNTEyYYIA==
+  dependencies:
+    codex-notifier "^1.1.2"
+    codex-tooltip "^1.0.2"
+    nanoid "^3.1.22"
+
 "@electron/get@^1.0.1":
   version "1.12.4"
   resolved "https://registry.yarnpkg.com/@electron/get/-/get-1.12.4.tgz#a5971113fc1bf8fa12a8789dc20152a7359f06ab"
@@ -2867,6 +2876,16 @@ code-point-at@^1.0.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/code-point-at/-/code-point-at-1.1.0.tgz#0d070b4d043a5bea33a2f1a40e2edb3d9a4ccf77"
   integrity sha1-DQcLTQQ6W+ozovGkDi7bPZpMz3c=
+
+codex-notifier@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/codex-notifier/-/codex-notifier-1.1.2.tgz#a733079185f4c927fa296f1d71eb8753fe080895"
+  integrity sha512-DCp6xe/LGueJ1N5sXEwcBc3r3PyVkEEDNWCVigfvywAkeXcZMk9K41a31tkEFBW0Ptlwji6/JlAb49E3Yrxbtg==
+
+codex-tooltip@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/codex-tooltip/-/codex-tooltip-1.0.2.tgz#81a9d3e2937658c6e5312106b47b9f094ff7be63"
+  integrity sha512-oC+Bu5X/zyhbPydgMSLWKoM/+vkJMqaLWu3Dt/jZgXS3MWK23INwC5DMBrVXZSufAFk0i0SUni38k9rLMyZn/w==
 
 color-convert@^1.9.0:
   version "1.9.3"
@@ -5667,6 +5686,11 @@ nan@^2.13.2, nan@^2.14.0:
   version "2.14.2"
   resolved "https://registry.yarnpkg.com/nan/-/nan-2.14.2.tgz#f5376400695168f4cc694ac9393d0c9585eeea19"
   integrity sha512-M2ufzIiINKCuDfBSAUr1vWQ+vuVcA9kqx8JJUsbQi6yf1uGRyb7HfpdfUr5qLXf3B/t8dPvcjhKMmlfnP47EzQ==
+
+nanoid@^3.1.22:
+  version "3.1.25"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-3.1.25.tgz#09ca32747c0e543f0e1814b7d3793477f9c8e152"
+  integrity sha512-rdwtIXaXCLFAQbnfqDRnI6jaRHp9fTcYBjtFKE8eezcZ7LuLjhUaQGNeMXf1HmRoCH32CLz6XwX0TtxEOS/A3Q==
 
 nanoid@^3.1.23:
   version "3.1.23"
