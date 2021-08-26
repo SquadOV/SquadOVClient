@@ -433,7 +433,8 @@
                                         <v-col cols="8">
                                             <user-profile-access-editor
                                                 v-model="editableProfile.matchAccess"
-                                                label="Games"
+                                                :twitch="!!userProfile.twitchChannelForSub"
+                                                label="Games and Clips"
                                                 tooltip="Who can see your profile's VODs and clips."
                                             >
                                             </user-profile-access-editor>
@@ -441,6 +442,7 @@
                                             <user-profile-access-editor
                                                 class="mt-4"
                                                 v-model="editableProfile.achievementAccess"
+                                                :twitch="!!userProfile.twitchChannelForSub"
                                                 label="Ranks"
                                                 tooltip="Who can see your profile's ranks and gaming achievements."
                                             >
@@ -449,6 +451,7 @@
                                             <user-profile-access-editor
                                                 class="mt-4"
                                                 v-model="editableProfile.miscAccess"
+                                                :twitch="!!userProfile.twitchChannelForSub"
                                                 label="Misc."
                                                 tooltip="Who can see your profile's description and social links."
                                             >
@@ -479,12 +482,78 @@
                             </v-btn>
                         </v-card-actions>
                     </v-card>
-                </v-dialog>
-                
+                </v-dialog>  
             </div>
-            <v-divider class="my-4"></v-divider>
+
+            <div class="mt-4" v-else-if="needTwitchSub">
+                <div class="d-flex justify-center align-center text-subtitle-2">
+                    This user has chosen to make parts of their profile private, subscribe to them on Twitch for access!
+                </div>
+
+                <div class="d-flex justify-center align-center mt-2">
+                    <template v-if="!!$store.state.currentUser">
+                        <v-btn
+                            @click="redirectToTwitch"
+                            color="#9147ff"
+                        >
+                            Subscribe on Twitch
+                        </v-btn>
+
+                        <v-btn
+                            @click="refreshProfile"
+                            class="ml-2"
+                        >
+                            Refresh
+                        </v-btn>
+                    </template>
+
+                    <template v-else>
+                        <v-btn
+                            color="success"
+                            :to="registerTo"
+                        >
+                            Register
+                        </v-btn>
+
+                        <v-btn
+                            class="ml-2"
+                            color="primary"
+                            :to="loginTo"
+                        >
+                            Login
+                        </v-btn>
+                    </template>
+                </div>
+            </div>
+
+            <v-divider class="mt-2"></v-divider>
 
             <!-- Profile Data -->
+            <v-container fluid>
+                <v-row justify="center">
+                    <v-col cols="4">
+                        <user-profile-achievements
+                            :user-id="userProfile.userId"
+                            v-if="userProfile.hasAchievementAccess"
+                        >
+                        </user-profile-achievements>
+
+                        <user-profile-clips
+                            :user-id="userProfile.userId"
+                            v-if="userProfile.hasMatchAccess"
+                            class="mb-4"
+                        >
+                        </user-profile-clips>
+                    </v-col>
+
+                    <v-col cols="8" v-if="userProfile.hasMatchAccess">
+                        <user-profile-matches
+                            :user-id="userProfile.userId"
+                        >
+                        </user-profile-matches>
+                    </v-col>
+                </v-row>
+            </v-container>
 
             <v-snackbar
                 v-model="editFailure"
@@ -503,9 +572,11 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { UserProfileBasic, cleanUserProfileBasicFromJson } from '@client/js/squadov/user'
+import { UserProfileBasic, cleanUserProfileBasicFromJson, USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB } from '@client/js/squadov/user'
 import { apiClient, ApiData } from '@client/js/api'
 import { standardFormatTime } from '@client/js/time'
+import { openUrlInBrowser} from '@client/js/external'
+import * as pi from '@client/js/pages'
 
 import FacebookLink from '@client/vue/utility/social/FacebookLink.vue'
 import InstagramLink from '@client/vue/utility/social/InstagramLink.vue'
@@ -515,6 +586,9 @@ import SnapchatLink from '@client/vue/utility/social/SnapchatLink.vue'
 import TwitterLink from '@client/vue/utility/social/TwitterLink.vue'
 import TiktokLink from '@client/vue/utility/social/TiktokLink.vue'
 import UserProfileAccessEditor from '@client/vue/profile/UserProfileAccessEditor.vue'
+import UserProfileAchievements from '@client/vue/profile/UserProfileAchievements.vue'
+import UserProfileMatches from '@client/vue/profile/UserProfileMatches.vue'
+import UserProfileClips from '@client/vue/profile/UserProfileClips.vue'
 
 @Component({
     components: {
@@ -527,6 +601,9 @@ import UserProfileAccessEditor from '@client/vue/profile/UserProfileAccessEditor
         TwitterLink,
         TiktokLink,
         UserProfileAccessEditor,
+        UserProfileAchievements,
+        UserProfileMatches,
+        UserProfileClips,
     }
 })
 export default class UserProfile extends Vue {
@@ -553,6 +630,37 @@ export default class UserProfile extends Vue {
     stagedCoverPhoto: File | null = null
 
     editFailure: boolean = false
+
+    redirectToTwitch() {
+        if (!this.userProfile?.twitchChannelForSub) {
+            return
+        }
+        openUrlInBrowser(`https://www.twitch.tv/${this.userProfile.twitchChannelForSub}`)
+    }
+
+    get needTwitchSub(): boolean {
+        if (!this.userProfile) {
+            return false
+        }
+
+        if (!this.userProfile.twitchChannelForSub) {
+            return false
+        }
+
+        if (!this.userProfile.misc && this.userProfile.miscAccess & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) {
+            return true
+        }
+
+        if (!this.userProfile.hasAchievementAccess && this.userProfile.achievementAccess & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) {
+            return true
+        }
+
+        if (!this.userProfile.hasMatchAccess && this.userProfile.matchAccess & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) {
+            return true
+        }
+
+        return false
+    }
 
     get stagedCoverPhotoUrl(): string {
         if (!!this.stagedCoverPhoto) {
@@ -589,6 +697,9 @@ export default class UserProfile extends Vue {
     }
 
     get canEdit(): boolean {
+        if (!this.$store.state.currentUser) {
+            return false
+        }
         return this.$store.state.currentUser.id === this.userProfile?.userId
     }
 
@@ -607,6 +718,7 @@ export default class UserProfile extends Vue {
         }
 
         promise.then((resp: ApiData<UserProfileBasic>) => {
+            apiClient.setAccessToken(resp.data.accessToken)
             this.userProfile = resp.data
         }).catch((err: any) => {
             console.log('Failed to get user profile basic: ', err)
@@ -687,6 +799,18 @@ export default class UserProfile extends Vue {
     mounted() {
         this.refreshProfile()
     }
+
+    get registerTo(): any {
+        return {
+            name: pi.RegisterPageId
+        }
+    }
+
+    get loginTo(): any {
+        return {
+            name: pi.LoginPageId
+        }
+    }
 }
 
 </script>
@@ -698,9 +822,10 @@ export default class UserProfile extends Vue {
 }
 
 #profile-image {
-    position: absolute;
+    position: relative;
     left: 50%;
     transform: translateX(-50%) translateY(-100%) translateY(16px);
+    margin-bottom: -128px;
 }
 
 .profile-image {

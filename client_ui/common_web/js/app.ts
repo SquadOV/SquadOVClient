@@ -645,7 +645,7 @@ const baseRoutes : any[] = [
                 name: pi.UserProfileSlugPageId,
                 component: UserProfile,
                 props: (route : any) => ({
-                    userId: parseInt(route.params.userId),
+                    profileSlug: route.params.profileSlug,
                 })
             },
             {
@@ -696,17 +696,13 @@ router.beforeEach((to : Route, from : Route, next : any) => {
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId)
 
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
-    if (to.name === pi.RsoOauthPageId
+    let isPublic = to.name === pi.RsoOauthPageId
         || to.name === pi.InviteResponsePageId 
         || to.name === pi.ShareRedirectPageId
         || to.name === pi.VerifyEmailPageId
         || to.name === pi.PlayerPageId
         || to.name === pi.ForgotPasswordPageId
         || to.name === pi.UserProfileSlugPageId
-    ) {
-        next()
-        return
-    }
 
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')
@@ -740,7 +736,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
                 next()
             }
         }, () => {
-            if (!mustBeInvalid && !isTmpSession) {
+            if (!mustBeInvalid && !isTmpSession && !isPublic) {
                 next({
                     name: pi.LoginPageId,
                     query: {
@@ -752,7 +748,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             }
         })
     } else {
-        if (isTmpSession) {
+        if (isTmpSession || isPublic) {
             next()
         } else if (mustBeInvalid && hasCookie) {
             next({

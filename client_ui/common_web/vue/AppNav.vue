@@ -208,6 +208,9 @@ export default class AppNav extends mixins(CommonComponent) {
     checkPending: boolean = false
 
     get emailAddress(): string {
+        if (!this.$store.state.currentUser) {
+            return ''
+        }
         return this.$store.state.currentUser.email
     }
 

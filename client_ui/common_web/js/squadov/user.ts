@@ -54,9 +54,16 @@ export interface UserProfileBasic {
     miscAccess: number
     achievementAccess: number
     matchAccess: number
+    twitchChannelForSub: string | null
+    accessToken: string | null
 }
 
 export function cleanUserProfileBasicFromJson(p: UserProfileBasic): UserProfileBasic {
     p.memberSince = new Date(p.memberSince)
     return p
 }
+
+export const USER_PROFILE_ACCESS_PRIVATE_SQUADS: number = 1
+export const USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB: number = 2
+export const USER_PROFILE_ACCESS_PRIVATE_SQUADOV_SUB: number = 4
+export const USER_PROFILE_ACCESS_PUBLIC: number = 8

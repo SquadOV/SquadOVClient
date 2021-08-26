@@ -62,6 +62,7 @@
                 @change="syncToValue"
                 hide-details
                 label="Twitch Sub"
+                v-if="twitch"
             >
                 <template v-slot:append>
                     <v-tooltip bottom max-width="450px">
@@ -84,6 +85,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
+import { USER_PROFILE_ACCESS_PUBLIC, USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB, USER_PROFILE_ACCESS_PRIVATE_SQUADS } from '@client/js/squadov/user'
 
 @Component
 export default class UserProfileAccessEditor extends Vue {
@@ -96,36 +98,38 @@ export default class UserProfileAccessEditor extends Vue {
     @Prop({required: true})
     value!: number
 
+    @Prop({default: false})
+    twitch!: boolean
+
     sameSquad: boolean = false
     twitchSub: boolean = false
     public: boolean = false
 
     @Watch('value')
     syncFromValue() {
-        if (this.value == 8) {
+        if (this.value == USER_PROFILE_ACCESS_PUBLIC) {
             this.public = true
         } else {
-            this.sameSquad = (this.value & 1) >0
-            this.twitchSub = (this.value & 2) > 0
+            this.sameSquad = (this.value & USER_PROFILE_ACCESS_PRIVATE_SQUADS) > 0
+            this.twitchSub = (this.value & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) > 0
         }
     }
 
     syncToValue() {
-        console.log('sync to value: ', this.finalValue)
         this.$emit('input', this.finalValue)
     }
 
     get finalValue(): number {
         if (this.public) {
-            return 8
+            return USER_PROFILE_ACCESS_PUBLIC
         } else {
             let value = 0
             if (this.sameSquad) {
-                value |= 1
+                value |= USER_PROFILE_ACCESS_PRIVATE_SQUADS
             }
 
             if (this.twitchSub) {
-                value |= 2
+                value |= USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB
             }
             return value
         }

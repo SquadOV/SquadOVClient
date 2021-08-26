@@ -180,6 +180,7 @@ class ApiClient {
     _sessionId: string | null
     _tempSessionId: string | null
     _tempUserId: number | null
+    _accessToken: string | null
     _localApiPort: number | null
 
     constructor() {
@@ -187,6 +188,7 @@ class ApiClient {
         this._tempSessionId = null
         this._tempUserId = null
         this._localApiPort = null
+        this._accessToken = null
     }
 
     setSessionId(s : string) {
@@ -200,6 +202,10 @@ class ApiClient {
         } else {
             this._tempUserId = null
         }
+    }
+
+    setAccessToken(s: string | null) {
+        this._accessToken = s
     }
 
     get hasTempSession(): boolean {
@@ -222,6 +228,7 @@ class ApiClient {
         this._sessionId = null
         this._tempSessionId = null
         this._tempUserId = null
+        this._accessToken = null
     }
 
     setSessionFull(s: string, userId: number) {
@@ -237,7 +244,12 @@ class ApiClient {
             baseURL: SQUADOV_API_URL,
         }
 
-        if (!!this._tempSessionId && useTempIfAvailable) {
+        // Always use access token when available.
+        if (!!this._accessToken) {
+            ret.headers = {
+                'x-squadov-access-token': this._accessToken,
+            }
+        } else if (!!this._tempSessionId && useTempIfAvailable) {
             ret.headers = {
                 'x-squadov-share-id': this._tempSessionId,
             }
@@ -1047,17 +1059,27 @@ class ApiClient {
         })
     }
 
-    listMyRecentMatches(params : {next : string | null, start : number, end : number, filters : RecentMatchFilters}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
+    listMyRecentMatches(params : {next : string | null, start : number, end : number, filters : RecentMatchFilters, profileId: number | undefined}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
+        let cfg = this.createWebAxiosConfig()
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/users/me/recent`, {
-                ...this.createWebAxiosConfig(),
-                params: {
-                    start: params.start!,
-                    end: params.end!,
-                    ...params.filters,
-                }
-            })
+            axios.get(params.next, cfg) :
+            (params.profileId !== undefined) ?
+                axios.get(`profile/${params.profileId}/matches`, {
+                    ...cfg,
+                    params: {
+                        start: params.start!,
+                        end: params.end!,
+                        ...params.filters,
+                    }
+                }) :
+                axios.get(`v1/users/me/recent`, {
+                    ...cfg,
+                    params: {
+                        start: params.start!,
+                        end: params.end!,
+                        ...params.filters,
+                    }
+                })
 
         return promise.then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
             resp.data.data.forEach(cleanRecentMatchFromJson)
