@@ -34,7 +34,7 @@ export default class ShareRedirect extends Vue {
             url.search = params.toString()
             this.$router.replace(url.pathname + '?' + params.toString())
         }).catch((err: any) => {
-            console.log('Failed to exchange access token: ', err)
+            console.error('Failed to exchange access token: ', err)
             this.$router.replace({
                 name: pi.DashboardPageId
             })

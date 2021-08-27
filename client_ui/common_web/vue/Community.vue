@@ -316,7 +316,7 @@ export default class Community extends Vue {
         }).then((resp: ApiData<SquadOvCommunity[]>) => {
             this.myCommunities = resp.data
         }).catch((err: any) => {
-            console.log('Failed to list my communities: ', err)
+            console.error('Failed to list my communities: ', err)
         }).finally(() => {
             this.refreshPending = false
         })
@@ -358,7 +358,7 @@ export default class Community extends Vue {
             this.showHideCreate = false
             this.newCommunity = createDefaultCommunity()
         }).catch((err: any) => {
-            console.log('Failed to create community: ', err)
+            console.error('Failed to create community: ', err)
             if (!!err.response?.data.duplicateFlag) {
                 this.createDupError = true
             } else {

@@ -13,7 +13,7 @@ export function openVodEditingWindow(videoUuid: string, game: SquadOvGames) {
         game
     })
 /// #else
-    console.log('VOD Editing not yet supported on the web.')
+    console.error('VOD Editing not yet supported on the web.')
 /// #endif
 }
 

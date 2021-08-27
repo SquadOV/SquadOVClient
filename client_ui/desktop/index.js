@@ -95,6 +95,10 @@ process.env.SQUADOV_CSGO_RESOURCES = !!process.env.SQUADOV_CSGO_RESOURCES ?
     app.isPackaged ? path.join(process.resourcesPath, 'csgo') : path.join(__dirname, '../../resources/csgo')
 const iconPath = path.join(__dirname, 'assets/icon.ico')
 
+if (app.isPackaged) {
+    process.env.SQUADOV_VERSION = app.getVersion()
+}
+
 let win
 let editorWin
 let tray

@@ -128,7 +128,7 @@ export default class SquadInviteTable extends Vue {
             this.$emit('on-revoke')
         }).catch((err: any) => {
             this.showHideError = true
-            console.log('Failed to revoke invite: ', err)
+            console.error('Failed to revoke invite: ', err)
         }).finally(() => {
             Vue.set(item, 'revokePending', false)
         })

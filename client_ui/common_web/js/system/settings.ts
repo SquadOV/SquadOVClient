@@ -480,7 +480,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     try {
         parsedData = JSON.parse(data)
     } catch (e) {
-        console.log('Failed to load local settings: ', e)
+        console.error('Failed to load local settings: ', e)
         fs.unlinkSync(settingsFname)
         return loadLocalSettings()
     }

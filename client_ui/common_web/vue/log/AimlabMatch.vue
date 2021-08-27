@@ -112,7 +112,7 @@ export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase)
         apiClient.accessToken().getAimlabTaskData(this.taskId, this.userId).then((resp : ApiData<AimlabTaskData>) => {
             this.data = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get Aim Lab task data: ' + err)
+            console.error('Failed to get Aim Lab task data: ' + err)
         })
     }
 

@@ -86,14 +86,14 @@ export default class HearthstoneDuelRunMatchLog extends Vue {
         apiClient.listHearthstoneMatchesForDuelRun(this.runId, this.userId, this.filters).then((resp : ApiData<string[]>) => {
             this.allMatchIds = resp.data
         }).catch((err: any) => {
-            console.log('Failed to list Hearthstone duel matches: ' + err);            
+            console.error('Failed to list Hearthstone duel matches: ' + err);            
         })
 
         this.currentDuelRun = null
         apiClient.getHearthstoneDuelRun(this.runId, this.userId).then((resp : ApiData<HearthstoneDuelRun>) => {
             this.currentDuelRun = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get Hearthstone Duel Run: ', err)
+            console.error('Failed to get Hearthstone Duel Run: ', err)
         })
     }
 

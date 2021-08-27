@@ -94,7 +94,7 @@ export default class AimlabGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list Aim Lab tasks: ' + err);
+            console.error('Failed to list Aim Lab tasks: ' + err);
         })
     }
 

@@ -677,6 +677,55 @@ const router = new VueRouter({
 
 const store = new Vuex.Store(RootStoreOptions)
 
+import * as Sentry from '@sentry/vue'
+import { Integrations } from '@sentry/tracing'
+import { CaptureConsole, Offline } from '@sentry/integrations'
+import { version } from '@client/package.json'
+
+function getSentryRelease(): string {
+    let v = version
+    if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+        v = 'dev'
+    }
+
+///#if !DESKTOP
+    return `squadov-common-web-browser@${v}`
+///#else
+    return `squadov-common-web-desktop@${v}`
+///#endif
+}
+
+function initializeSentry(u: SquadOVUser) {
+    apiClient.getSentryDsn().then((resp: ApiData<string>) => {
+        Sentry.init({
+            Vue,
+            dsn: resp.data,
+            maxBreadcrumbs: 500,
+            release: getSentryRelease(),
+            integrations: [
+                new Integrations.BrowserTracing({
+                    routingInstrumentation: Sentry.vueRouterInstrumentation(router),
+                    tracingOrigins: ['localhost', 'app.squadov.gg', /^\//],
+                }),
+                new CaptureConsole({
+                    levels: ['error']
+                }),
+                new Offline(),
+            ],
+            tracesSampleRate: 0.1,
+            trackComponents: true,
+        })
+
+        Sentry.setUser({
+            id: u.uuid,
+            username: u.username,
+            ip_address: '{{auto}}',
+        })
+    }).catch((err: any) => {
+        console.error('Failed to get Sentry DSN: ', err)
+    })
+}
+
 import { initializeAnalyticsContainer, getAnalyticsContainer } from '@client/js/analytics/container'
 import { TrackedUserStatsManager } from '@client/js/squadov/status'
 const statusTracker = new TrackedUserStatsManager(store)
@@ -724,8 +773,10 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             apiClient.getIpAddress().then((resp: ApiData<string>) => {
                 getAnalyticsContainer()?.identify(resp.data)
             }).catch((err: any) => {
-                console.log('Failed to get IP address: ', err)
+                console.error('Failed to get IP address: ', err)
             })
+
+            initializeSentry(store.state.currentUser!)
             
             // Note that in the web case, the renderer code is responsible for the doing the session
             // heartbeat as well.
@@ -791,20 +842,21 @@ ipcRenderer.invoke('request-session').then((session : {
 }) => {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+        initializeSentry(resp.data)
         store.commit('setUser' , resp.data)
         store.dispatch('loadUserFeatureFlags')
 
         apiClient.getIpAddress().then((resp: ApiData<string>) => {
             getAnalyticsContainer()?.identify(resp.data)
         }).catch((err: any) => {
-            console.log('Failed to get IP address: ', err)
+            console.error('Failed to get IP address: ', err)
         })
     }).catch((err : any ) => {
         // Uhhhhhhhhhhhhhhhhhhhhhhh....? Need to logout here since
         // the stored session is garbage and so we have no way to recover
         // unless the user re-logs in. There's a chance that the API might have failed
         // so don't bother trying to do a proper API logout.
-        console.log('Failed to obtain user: ', err)
+        console.error('Failed to obtain user: ', err)
         ipcRenderer.sendSync('logout')
     })
 })

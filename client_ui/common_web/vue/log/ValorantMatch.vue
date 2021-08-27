@@ -281,7 +281,7 @@ export default class ValorantMatch extends mixins(CommonComponent, MatchShareBas
         apiClient.accessToken().getValorantMatchDetails(this.matchUuid).then((resp : ApiData<ValorantMatchDetails>) => {
             this.currentMatch = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get valorant match details: ' + err)
+            console.error('Failed to get valorant match details: ' + err)
         })
     }
 

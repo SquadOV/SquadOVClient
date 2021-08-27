@@ -239,7 +239,7 @@ export default class Dashboard extends mixins(CommonComponent) {
             apiClient.getSquadUsers(this.selectedSquad.squad.id).then((resp: ApiData<SquadMembership[]>) => {
                 this.squadMembers = resp.data
             }).catch((err: any) => {
-                console.log('Failed to get all squad memberships: ', err)
+                console.error('Failed to get all squad memberships: ', err)
             })
         }
     }
@@ -248,7 +248,7 @@ export default class Dashboard extends mixins(CommonComponent) {
         apiClient.getUserSquads(this.$store.state.currentUser.id).then((resp: ApiData<SquadMembership[]>) => {
             this.mySquads = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain user squads: ', err)
+            console.error('Failed to obtain user squads: ', err)
         })
     }
 

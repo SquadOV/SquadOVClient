@@ -102,7 +102,7 @@ export default class TftSingleTraitDisplay extends Vue {
         axios.get(staticClient.getTftTraitData(this.tftSet, this.trait.name)).then((resp: ApiData<TftTraitData>) => {
             this.currentTrait = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get TFT trait data: ', err)
+            console.warn('Failed to get TFT trait data: ', err)
             this.currentTrait = {
                 key: 'Unknown',
                 name: 'Unknown'

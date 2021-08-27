@@ -121,7 +121,7 @@ export default class LolLogContainer extends mixins(CommonComponent) {
         apiClient.listRiotLolAccounts(this.userId).then((resp : ApiData<RiotSummoner[]>) => {
             this.allAccounts = resp.data
         }).catch((err : any) => {
-            console.log('Failed to list LoL accounts: ' + err);
+            console.error('Failed to list LoL accounts: ' + err);
         })
     }
 

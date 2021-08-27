@@ -74,7 +74,7 @@ export default class LolParticipantDisplay extends Vue {
             ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionName(this.participant.participant.championId).then((resp: string) => {
                 this.name = resp
             }).catch((err: any) => {
-                console.log('Failed to get LoL champion name as player name bakcup: ', err)
+                console.error('Failed to get LoL champion name as player name bakcup: ', err)
             })
         }
     }

@@ -24,7 +24,7 @@ export default class LogoutButton extends Vue {
     logout() {
         apiClient.logout().then(() => {
         }).catch((err : any) => {
-            console.log('Failed to logout: {}', err)
+            console.error('Failed to logout: {}', err)
         }).finally(() => {
             // The user should feel like they logged out regardless of what happened on the server.
 /// #if DESKTOP

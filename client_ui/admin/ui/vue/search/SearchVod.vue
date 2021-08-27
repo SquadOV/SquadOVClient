@@ -90,7 +90,7 @@ export default class SearchVod extends Vue {
         searchForVod(vsearch, usearch).then((v: Vod[]) => {
             this.vods = v
         }).catch((err: any) => {
-            console.log('Failed to find VODs: ', err)
+            console.error('Failed to find VODs: ', err)
         }).finally(() => {
             this.searching = false
         })

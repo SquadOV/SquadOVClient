@@ -103,7 +103,7 @@ export class AnalyticsContainer {
 ///#if DESKTOP
         if (!!this._store.state.currentUser) {
             apiClient.secondaryIdentify(this._ip, this._anonId).catch((err: any) => {
-                console.log('Failed to do secondary identify.')
+                console.error('Failed to do secondary identify.')
             })
         }
 ///#endif

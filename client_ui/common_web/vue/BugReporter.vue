@@ -142,7 +142,7 @@ export default class BugReporter extends Vue {
                 logZip.addFile(zipFname, data)
             }
         } catch(e) {
-            console.log('Failed to read logs from filesystem: ', e)
+            console.error('Failed to read logs from filesystem: ', e)
             this.inProgress = false
             this.showHideError = true
             return
@@ -155,7 +155,7 @@ export default class BugReporter extends Vue {
         apiClient.submitBugReport(this.title, this.description, new Blob([buffer.buffer])).then(() => {
             this.submitted = true
         }).catch((err: any) => {
-            console.log('Failed to submit bug report: ', err)
+            console.error('Failed to submit bug report: ', err)
             this.showHideError = true    
         }).finally(() => {
             this.inProgress = false

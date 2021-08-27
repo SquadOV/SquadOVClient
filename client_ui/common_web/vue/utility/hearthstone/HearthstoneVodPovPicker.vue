@@ -185,7 +185,7 @@ export default class HearthstoneVodPovPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getHearthstoneMatchAccessibleVods(this.matchId).then((resp: ApiData<HearthstoneMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get accessible Hearthstone match VODS: ', err)
+            console.error('Failed to get accessible Hearthstone match VODS: ', err)
         })
     }
 

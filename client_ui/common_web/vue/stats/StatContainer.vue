@@ -199,7 +199,7 @@ export default class StatContainer extends Vue {
             container.parseGraphqlResponse(resp)
             this.seriesData = this.instances.map((ele : StatInstance) => ele.data)
         }).catch((err: any) => {
-            console.log('Failed to obtain GraphQL data: ', err)
+            console.error('Failed to obtain GraphQL data: ', err)
         })
     }
 

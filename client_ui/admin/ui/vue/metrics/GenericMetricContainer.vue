@@ -100,7 +100,7 @@ export default class GenericMetricContainer extends Vue {
         getMetricData(this.metric, this.interval, this.startDate, this.endDate, this.extra).then((resp: MetricDatum[]) => {
             this.data = resp
         }).catch((err: any) => {
-            console.log('Failed to get metric data: ', err)
+            console.error('Failed to get metric data: ', err)
         })
     }
 

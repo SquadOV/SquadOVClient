@@ -57,7 +57,7 @@ export default class UserFilterUi extends Vue {
         apiClient.getMySquadMates(this.squads).then((resp: ApiData<SquadOVUserHandle[]>) => {
             this.availableUsers = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get squad mates: ', err)
+            console.error('Failed to get squad mates: ', err)
         })
     }
 

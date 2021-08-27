@@ -64,7 +64,7 @@ export default class SquadInviteDisplay extends Vue {
         apiClient.getSquad(this.invite.squadId).then((resp: ApiData<Squad>) => {
             this.relevantSquad = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain squad for invite: ', err)
+            console.error('Failed to obtain squad for invite: ', err)
         })
     }
 
@@ -77,7 +77,7 @@ export default class SquadInviteDisplay extends Vue {
         apiClient.acceptSquadInvite(this.invite.squadId, this.invite.inviteUuid).then(() => {
             this.$emit('clear-invite')
         }).catch((err: any) => {
-            console.log('Failed to accept invite: ', err)
+            console.error('Failed to accept invite: ', err)
         }).finally(() => {
             this.pending = false
         })
@@ -88,7 +88,7 @@ export default class SquadInviteDisplay extends Vue {
         apiClient.rejectSquadInvite(this.invite.squadId, this.invite.inviteUuid).then(() => {
             this.$emit('clear-invite')
         }).catch((err: any) => {
-            console.log('Failed to reject invite: ', err)
+            console.error('Failed to reject invite: ', err)
         }).finally(() => {
             this.pending = false
         })

@@ -248,7 +248,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
             this.showHideError = true
-            console.log('Failed to create share URL: ', err)
+            console.error('Failed to create share URL: ', err)
         }).finally(() => {
             this.creatingLink = false
         })
@@ -264,7 +264,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
             this.shareUrl = null
         }).catch((err: any) => {
             this.showHideError = true
-            console.log('Failed to delete share URL: ', err)
+            console.error('Failed to delete share URL: ', err)
         }).finally(() => {
             this.deletingLink = false
         })
@@ -281,7 +281,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
             this.handlePublicLinkResponse(resp.data)
         }).catch((err: any) => {
             this.showHideError = true
-            console.log('Failed to get share URL: ', err)
+            console.error('Failed to get share URL: ', err)
         })
     }
 

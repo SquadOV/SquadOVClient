@@ -47,7 +47,7 @@ export default class LocalDiskSpaceUsageDisplay extends Vue {
         computeFileFolderSizeGb(this.localRecordingLocation).then((resp: number) => {
             this.localDiskSpaceRecordUsageGb = resp
         }).catch((err: any) => {
-            console.log('Failed to get local disk space record usage: ', err)
+            console.error('Failed to get local disk space record usage: ', err)
         })
     }
 

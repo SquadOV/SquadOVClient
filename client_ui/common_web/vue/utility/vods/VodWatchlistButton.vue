@@ -54,7 +54,7 @@ export default class VodWatchlistButton extends Vue {
         promise.then(() => {
             this.isWatchlist = !this.isWatchlist
         }).catch((err: any) => {
-            console.log('Failed to toggle VOD watch list: ', err)
+            console.error('Failed to toggle VOD watch list: ', err)
             this.showHideError = true
         }).finally(() => {
             this.loading = false
@@ -67,7 +67,7 @@ export default class VodWatchlistButton extends Vue {
         apiClient.isVodWatchlist(this.vodUuid).then((resp: ApiData<boolean>) => {
             this.isWatchlist = resp.data
         }).catch((err: any) => {
-            console.log('Failed to check if VOD is on watchlist: ', err)
+            console.error('Failed to check if VOD is on watchlist: ', err)
         }).finally(() => {
             this.loading = false
         })

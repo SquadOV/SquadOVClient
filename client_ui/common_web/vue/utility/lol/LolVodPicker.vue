@@ -95,7 +95,7 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getLolMatchAccessibleVods(this.matchUuid).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain LoL VODs: ', err)
+            console.error('Failed to obtain LoL VODs: ', err)
         })
     }
 
@@ -198,13 +198,13 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         // In other failure cases, we want to make sure the state doesn't change.
         let userUuid = this.participantIdToUserUuid.get(participantId)
         if (!userUuid) {
-            console.log('Cannot select participant id [no user uuid]: ', participantId)
+            console.warn('Cannot select participant id [no user uuid]: ', participantId)
             return
         }
 
         let vod = this.uuidToVod.get(userUuid)
         if (!vod) {
-            console.log('Cannot select participant id [no vod]: ', participantId)
+            console.warn('Cannot select participant id [no vod]: ', participantId)
             return
         }
 

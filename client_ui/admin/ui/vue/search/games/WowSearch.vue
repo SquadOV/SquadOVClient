@@ -189,7 +189,7 @@ export default class WowSearch extends Vue {
         }).then((resp: WowGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get wow games: ', err)
+            console.error('Failed to get wow games: ', err)
         })
     }
 

@@ -109,7 +109,7 @@ export default class ValorantGameLog extends Vue {
         apiClient.getValorantAccount(this.userId, this.puuid).then((resp : ApiData<RiotAccountData>) => {
             this.account = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get valorant account: ', err);
+            console.error('Failed to get valorant account: ', err);
         })
     }
 
@@ -165,7 +165,7 @@ export default class ValorantGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list valorant matches: ' + err);
+            console.error('Failed to list valorant matches: ' + err);
         })
     }
 
@@ -179,7 +179,7 @@ export default class ValorantGameLog extends Vue {
         apiClient.getValorantPlayerStats(this.userId, this.accountPuuid).then((resp : ApiData<ValorantPlayerStatsSummary>) => {
             this.playerStats = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get player stats: ' + err);
+            console.error('Failed to get player stats: ' + err);
         })
     }
 

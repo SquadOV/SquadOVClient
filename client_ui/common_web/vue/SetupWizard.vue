@@ -532,7 +532,7 @@ export default class SetupWizard extends CommonComponent {
         apiClient.listRiotValorantAccounts(this.$store.state.currentUser.id).then((resp : ApiData<RiotAccountData[]>) => {
             this.riotAccounts = resp.data
         }).catch((err : any) => {
-            console.log('Failed to list valorant accounts: ', err);
+            console.error('Failed to list valorant accounts: ', err);
         })
     }
 
@@ -546,7 +546,7 @@ export default class SetupWizard extends CommonComponent {
         apiClient.getSquadUsers(this.defaultSquad.squad.id).then((resp: ApiData<SquadMembership[]>) => {
             this.squadMembers = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get users in default squad in setup wizard: ', err)
+            console.error('Failed to get users in default squad in setup wizard: ', err)
         })
     }
 
@@ -566,7 +566,7 @@ export default class SetupWizard extends CommonComponent {
                 }
             }
         }).catch((err: any) => {
-            console.log('Failed to get user squads in setup wizard: ', err)
+            console.error('Failed to get user squads in setup wizard: ', err)
         }).finally(() => {
             this.ready = true
         })

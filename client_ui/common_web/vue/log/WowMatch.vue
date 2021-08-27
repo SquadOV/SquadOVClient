@@ -423,7 +423,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
         apiClient.accessToken().getWoWMatch(this.userId, this.matchUuid).then((resp: ApiData<GenericWowMatchContainer>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW match: ', err)
+            console.error('Failed to obtain WoW match: ', err)
         })
     }
 
@@ -434,7 +434,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
         apiClient.accessToken().listWoWCharactersForMatch(this.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
             this.matchCharacters = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW match characters: ', err)
+            console.error('Failed to obtain WoW match characters: ', err)
         })
     }
 
@@ -444,7 +444,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
         apiClient.accessToken().listWoWMatchCharacterAssociations(this.userId, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
             this.characterAssociations = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW character associations: ', err)
+            console.error('Failed to obtain WoW character associations: ', err)
         })
     }
 
@@ -455,7 +455,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
         apiClient.accessToken().getWoWMatchEvents(this.userId, this.matchUuid).then((resp: ApiData<SerializedWowMatchEvents>) => {
             this.events = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW match events: ', err)
+            console.error('Failed to obtain WoW match events: ', err)
         })
     }
 

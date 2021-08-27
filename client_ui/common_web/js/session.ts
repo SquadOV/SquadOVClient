@@ -25,7 +25,7 @@ export function startSessionHeartbeat(store: any, initialSession: SquadOvHeartbe
             store.commit('markValidSession', true)
             sessionRetryCount = 0
         }).catch((err: any) => {
-            console.log('Tick session heartbeat failure: ', err)
+            console.error('Tick session heartbeat failure: ', err)
             nextTickTimeMs = Math.min(Math.pow(2, sessionRetryCount) + Math.random() * 1000, 60000)
 
             // At this point we aren't able to move forward and do anything in the app so
@@ -62,11 +62,11 @@ export function loadInitialSessionFromCookies(store: any, onValid: () => void, o
             startSessionHeartbeat(store, sresp.data)
             onValid()
         }).catch((err : any ) => {
-            console.log('Failed to obtain user: ', err)
+            console.error('Failed to obtain user: ', err)
             onInvalid()
         })
     }).catch((err: any) => {
-        console.log('Failed to refresh session', err)
+        console.error('Failed to refresh session', err)
         onInvalid()
     })
 }

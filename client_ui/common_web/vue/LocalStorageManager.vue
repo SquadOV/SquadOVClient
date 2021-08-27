@@ -285,7 +285,7 @@ export default class LocalStorageManager extends Vue {
                     this.deleteError = true
                 }
             }).catch((err: any) => {
-                console.log('Failed to delete local VOD: ', err)
+                console.error('Failed to delete local VOD: ', err)
                 this.deleteError = true
             }).finally(() => {
                 this.deleteInProgress = false
@@ -314,7 +314,7 @@ export default class LocalStorageManager extends Vue {
             apiClient.getMatchDataFromVideoUuid(vod).then((resp: ApiData<RecentMatch>) => {
                 Vue.set(this.vodToMatch, vod, resp.data)
             }).catch((err: any) => {
-                console.log('Failed to get match data for video: ', err)
+                console.error('Failed to get match data for video: ', err)
             })
         }
     }
@@ -356,7 +356,7 @@ export default class LocalStorageManager extends Vue {
             this.end = this.start + MAX_VODS_PER_REQUEST
             this.hasMore = (resp.data.data.length >= MAX_VODS_PER_REQUEST)
         }).catch((err: any) => {
-            console.log('Failed to list local VODs: ', err)
+            console.error('Failed to list local VODs: ', err)
         })
     }
 

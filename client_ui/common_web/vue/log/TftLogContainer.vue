@@ -121,7 +121,7 @@ export default class TftLogContainer extends mixins(CommonComponent) {
         apiClient.listRiotTftAccounts(this.userId).then((resp : ApiData<RiotSummoner[]>) => {
             this.allAccounts = resp.data
         }).catch((err : any) => {
-            console.log('Failed to list TFT accounts: ' + err);
+            console.error('Failed to list TFT accounts: ' + err);
         })
     }
 

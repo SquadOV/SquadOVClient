@@ -3,6 +3,7 @@
 
 #include "shared/time.h"
 
+#include <atomic>
 #include <deque>
 #include <filesystem>
 #include <iostream>
@@ -35,6 +36,7 @@ public:
     LogType type() const { return _type; }
     std::string data() const { return _data; }
     std::string currentLogLevel() const;
+    std::string sentryLevel() const;
 
 private:
     LogType _type;
@@ -105,6 +107,8 @@ public:
     ~Log();
 
     void setThreshold(LogType t) { _typeThreshold = t; }
+    void enableSentry() { _sentryEnabled = true; }
+
     Log& operator<<(const LogItem& t) {
         {
             std::lock_guard<std::mutex> guard(_queueMutex);
@@ -130,6 +134,7 @@ private:
     std::deque<LogItem> _queue;
     std::thread _queueThread;
     bool _running = true;
+    std::atomic<bool> _sentryEnabled = false;
     void queueWorker();
 };
 

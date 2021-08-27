@@ -64,13 +64,13 @@ export default class WowCovenantDisplay extends Vue {
         wowCache.getCache(this.patch).getCovenant(this.covenant.covenantId).then((resp: string) => {
             this.covenantName = resp
         }).catch((err: any) => {
-            console.log('Failed to get covenant: ', err)
+            console.warn('Failed to get covenant: ', err)
         })
 
         wowCache.getCache(this.patch).getSoulbind(this.covenant.soulbindId).then((resp: string) => {
             this.soulbindName = resp
         }).catch((err: any) => {
-            console.log('Failed to get covenant: ', err)
+            console.warn('Failed to get covenant: ', err)
         })
     }
 

@@ -432,7 +432,7 @@ export default class WowMatchEvents extends mixins(CommonComponent) {
             }
 
             if (selectedIndex == args.length) {
-                console.log('Failed to merge event containers???')
+                console.warn('Failed to merge event containers???')
                 break
             }
 

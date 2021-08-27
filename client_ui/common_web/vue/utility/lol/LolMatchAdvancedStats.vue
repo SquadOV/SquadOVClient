@@ -150,7 +150,7 @@ export default class LolMatchAdvancedStats extends Vue {
                 ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionName(p.participant.championId).then((resp: string) => {
                     Vue.set(this.participantIdToName, p.participant.participantId, resp)
                 }).catch((err: any) => {
-                    console.log('Failed to get LoL champion name as player name bakcup: ', err)
+                    console.error('Failed to get LoL champion name as player name bakcup: ', err)
                 })
             }
             return 'Loading...'

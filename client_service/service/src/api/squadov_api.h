@@ -40,6 +40,7 @@ public:
 
     int64_t getSessionUserId() const;
     std::string getSessionUserUuid() const;
+    std::string getSessionUsername() const;
     shared::squadov::FeatureFlags getSessionFeatures() const {
         std::shared_lock guard(_featureMutex);
         return _features;
@@ -48,6 +49,9 @@ public:
 
     // Kafka
     KafkaInfo getKafkaInfo() const;
+
+    // Sentry
+    std::string getSentryDsn() const;
 
     // User
     shared::squadov::SquadOVUser getCurrentUserApi() const;

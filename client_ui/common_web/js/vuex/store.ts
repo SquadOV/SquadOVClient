@@ -384,7 +384,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             apiClient.getFeatureFlags(context.state.currentUser.id).then((resp: ApiData<FeatureFlags>) => {
                 context.commit('setFeatureFlags', resp.data)
             }).catch((err: any) => {
-                console.log('Failed to load feature flags: ', err)
+                console.error('Failed to load feature flags: ', err)
             })
         }
     }

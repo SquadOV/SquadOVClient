@@ -67,7 +67,7 @@ export default class WowTalentIcon extends Vue {
         wowCache.getCache(this.patch).getTalent(this.talentId).then((resp: WowTalentStatic) => {
             this.talent = resp
         }).catch((err: any) => {
-            console.log('Failed to get talent: ', err)
+            console.warn('Failed to get talent: ', err)
         })
     }
 

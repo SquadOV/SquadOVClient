@@ -721,14 +721,14 @@ export default class UserProfile extends Vue {
         } else if (this.profileSlug !== undefined) {
             promise = apiClient.getBasicUserProfileFromSlug(this.profileSlug)
         } else {
-            console.log('No user ID or profile slug found to get user profile.')
+            console.error('No user ID or profile slug found to get user profile.')
             return
         }
 
         promise.then((resp: ApiData<UserProfileBasic>) => {
             this.userProfile = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get user profile basic: ', err)
+            console.error('Failed to get user profile basic: ', err)
         })
     }
 
@@ -780,7 +780,7 @@ export default class UserProfile extends Vue {
             this.showHideEditProfile = false
             this.refreshProfile()
         }).catch((err: any) => {
-            console.log('Failed to update basic profile data: ', err)
+            console.error('Failed to update basic profile data: ', err)
             this.editFailure = true
         }).finally(() => {
             this.profileEditInProgress = false
@@ -796,7 +796,7 @@ export default class UserProfile extends Vue {
             this.showHideEditAccess = false
             this.refreshProfile()
         }).catch((err: any) => {
-            console.log('Failed to update basic profile access: ', err)
+            console.error('Failed to update basic profile access: ', err)
             this.editFailure = true
         }).finally(() => {
             this.profileEditInProgress = false

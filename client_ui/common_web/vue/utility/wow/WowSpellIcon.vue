@@ -50,7 +50,7 @@ export default class WowSpellIcon extends Vue {
         wowCache.getCache(this.patch).bulkGetSpellNames([this.spellId]).then((resp: Map<number, string>) => {
             this.spellName = resp.get(this.spellId)!
         }).catch((err: any) => {
-            console.log('Failed to get spell name: ', err)
+            console.warn('Failed to get spell name: ', err)
         })
     }
 

@@ -78,7 +78,6 @@ export default class UserProfileClips extends Vue {
     nextLink: string | null = null
 
     onChangePageIdx(idx: number) {
-        console.log('on change idx: ', idx)
         if (!this.clipPages) {
             return
         }
@@ -133,7 +132,7 @@ export default class UserProfileClips extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list clips: ' + err);
+            console.error('Failed to list clips: ' + err);
         })
     }
 

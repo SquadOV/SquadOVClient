@@ -146,7 +146,7 @@ class LocalVodManager {
 
             this.startUpload(vod.data, localResp.data)
         } catch (ex) {
-            console.log('Failed to obtain VOD upload data: ', ex)
+            console.error('Failed to obtain VOD upload data: ', ex)
             return
         }
 ///#endif
@@ -196,7 +196,7 @@ class LocalVodManager {
                 await apiClient.associateVod(newAssociation, metadata, uploadData.session, uploadData.parts)
                 this.uploads.finish(vod.videoUuid)
             } catch (ex) {
-                console.log('Failed to complete upload: ', ex)
+                console.error('Failed to complete upload: ', ex)
                 this.uploads.notifyError(vod.videoUuid)
             }
 

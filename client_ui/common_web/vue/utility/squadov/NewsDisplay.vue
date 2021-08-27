@@ -91,7 +91,7 @@ export default class NewsDisplay extends mixins(CommonComponent) {
         axios.get(`https://us-central1.content.squadov.gg/news/index.json?t=${new Date().getTime()}`).then((resp: ApiData<NewsIndex[]>) => {
             this.newsIndex = resp.data
         }).catch((err: any) => {
-            console.log('Failed to grab news: ', err)
+            console.warn('Failed to grab news: ', err)
         })
     }
 

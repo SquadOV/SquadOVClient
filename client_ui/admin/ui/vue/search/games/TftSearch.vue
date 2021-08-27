@@ -113,7 +113,7 @@ export default class TftSearch extends Vue {
         }).then((resp: TftGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get tft games: ', err)
+            console.error('Failed to get tft games: ', err)
         })
     }
 

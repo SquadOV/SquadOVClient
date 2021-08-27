@@ -288,7 +288,7 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
                     ddragonContainer.getClientForVersion(match.gameVersion).getLolChampionName(p.participant.championId).then((resp: string) => {
                         Vue.set(this.participantIdToName, p.participant.participantId, resp)
                     }).catch((err: any) => {
-                        console.log('Failed to get LoL champion name as player name bakcup: ', err)
+                        console.error('Failed to get LoL champion name as player name bakcup: ', err)
                     })
                 }
                 return 'Loading...'
@@ -404,7 +404,7 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
                             return val - diffY[idx]
                         })
                     } else {
-                        console.log('Diff Graph can not be populated due to difference in data length.')
+                        console.warn('Diff Graph can not be populated due to difference in data length.')
                     }
                 }
 

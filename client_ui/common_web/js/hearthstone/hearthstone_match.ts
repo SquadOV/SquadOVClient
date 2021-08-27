@@ -200,7 +200,7 @@ export class HearthstoneMatchWrapper {
             }
 
             if (snapshotIdx == this._allSnapshots.length) {
-                console.log('Unable to find snapshot for block: ', b.blockId, b.endActionIndex)
+                console.error('Unable to find snapshot for block: ', b.blockId, b.endActionIndex)
                 break
             }
 
@@ -289,7 +289,7 @@ export class HearthstoneMatchWrapper {
 
         let ss = this.snapshotForTurn(turn)
         if (!ss) {
-            console.log('No snapshot for turn: ', turn)
+            console.warn('No snapshot for turn: ', turn)
             return false
         }
 

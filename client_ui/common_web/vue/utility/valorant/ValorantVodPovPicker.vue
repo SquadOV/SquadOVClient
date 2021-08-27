@@ -185,7 +185,7 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getValorantMatchAccessibleVods(this.matchUuid).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain Valorant VODs: ', err)
+            console.error('Failed to obtain Valorant VODs: ', err)
         })
     }
 
@@ -216,7 +216,7 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
             apiClient.accessToken().getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
                 this.$emit('update:playerMetadata', resp.data)
             }).catch((err : any) => {
-                console.log('Failed to obtain Valorant VOD Player Metadata: ', err)
+                console.error('Failed to obtain Valorant VOD Player Metadata: ', err)
             })
         } else {
             this.$emit('update:vod', null)
@@ -230,13 +230,13 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
 
         let uuid = this.puuidToUuid.get(puuid)
         if (!uuid) {
-            console.log('Selected an invalid PUUID [uuid]: ', puuid, this.availableVods)
+            console.warn('Selected an invalid PUUID [uuid]: ', puuid, this.availableVods)
             return
         }
 
         let vod = this.uuidToVod.get(uuid)
         if (!vod) {
-            console.log('Selected an invalid PUUID [vod]: ', puuid, this.availableVods)
+            console.warn('Selected an invalid PUUID [vod]: ', puuid, this.availableVods)
             return
         }
 

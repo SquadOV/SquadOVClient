@@ -52,7 +52,7 @@ export default class SearchUser extends Vue {
         searchForUser(this.userSearch).then((resp: User | null) => {
             this.currentUser = resp
         }).catch((err: any) => {
-            console.log('Failed to get user: ', err)
+            console.error('Failed to get user: ', err)
         })
     }
 }

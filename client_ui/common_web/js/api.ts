@@ -1571,6 +1571,10 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
+    getSentryDsn(): Promise<ApiData<string>> {
+        return axios.get('v1/sentry/web', this.createWebAxiosConfig())
+    }
+
     // Local API
     async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
         return axios.get('api/vods', {

@@ -118,7 +118,7 @@ export default class EnableMfaDialog extends Vue {
         Vue.nextTick(() => {
             QRCode.toCanvas(this.$refs.qrcode, url, (err: any) => {
                 if (!!err) {
-                    console.log('Failed to generate QR code: ', err)
+                    console.error('Failed to generate QR code: ', err)
                     this.error = true
                 }
             })
@@ -131,7 +131,7 @@ export default class EnableMfaDialog extends Vue {
             this.backupCodes = resp.data
             this.showBackups = true
         }).catch((err: any) => {
-            console.log('Failed to enable 2fa: ', err)
+            console.error('Failed to enable 2fa: ', err)
             this.error = true
         }).finally(() => {
             this.inProgress = false

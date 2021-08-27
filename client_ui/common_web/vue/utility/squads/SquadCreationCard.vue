@@ -67,7 +67,7 @@ export default class SquadCreationCard extends mixins(CommonComponent) {
         apiClient.createSquad(this.newSquadName, this.$store.state.currentUser.username).then(() => {
             this.$emit('on-new-squad', this.newSquadName)
         }).catch((err: any) => {
-            console.log('Failed to create squad: ', err)
+            console.error('Failed to create squad: ', err)
             this.showHideCreateSquadError = true
         }).finally(() => {
             this.createPending = false

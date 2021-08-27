@@ -218,7 +218,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.toggleHasVideo()
                 }).catch((err : any) => {
                     this.setNoVideo()
-                    console.log('Failed to obtain VOD manifest: ', err)
+                    console.error('Failed to obtain VOD manifest: ', err)
                 })
 ///#if DESKTOP
             }
@@ -283,7 +283,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         apiClient.accessToken().getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<string>) => {
             this.videoUri = resp.data
         }).catch((err : any) => {
-            console.log('Failed to get final URL for video.')
+            console.error('Failed to get final URL for video.')
         })
     }
 

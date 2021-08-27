@@ -55,7 +55,7 @@ export default class WowConduitIcon extends Vue {
         wowCache.getCache(this.patch).getConduitItem(this.conduitId).then((resp: number) => {
             this.baseItemId = resp
         }).catch((err: any) => {
-            console.log('Failed to get conduit: ', err)
+            console.warn('Failed to get conduit: ', err)
         })
     }
 

@@ -220,7 +220,7 @@ export default class AppNav extends mixins(CommonComponent) {
         getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
             this.$store.commit('setUser' , resp.data)
         }).catch((err: any) => {
-            console.log('Failed to refresh squadovuser : ', err)
+            console.error('Failed to refresh squadovuser : ', err)
         }).finally(() => {
             this.checkPending = false
         })
@@ -234,7 +234,7 @@ export default class AppNav extends mixins(CommonComponent) {
                 this.showEmailVerification = false
             }, 5000)
         }).catch((err: any) => {
-            console.log('Failed to resend verification: ', err)
+            console.error('Failed to resend verification: ', err)
             this.verificationErr = false
         }).finally(() => {
             this.emailPending = false
@@ -446,7 +446,7 @@ export default class AppNav extends mixins(CommonComponent) {
     logout() {
         apiClient.logout().then(() => {
         }).catch((err : any) => {
-            console.log('Failed to logout: {}', err)
+            console.error('Failed to logout: {}', err)
         }).finally(() => {
             // The user should feel like they logged out regardless of what happened on the server.
 /// #if DESKTOP
@@ -474,7 +474,7 @@ export default class AppNav extends mixins(CommonComponent) {
         apiClient.getNotificationSummary().then((resp: ApiData<NotificationSummary>) => {
             this.notifications = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain notifications: ', err)
+            console.error('Failed to obtain notifications: ', err)
         })
     }
 

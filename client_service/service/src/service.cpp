@@ -48,6 +48,7 @@
 #include <nlohmann/json.hpp>
 #include <portaudio.h>
 #include <thread>
+#include <sentry.h>
 
 #include "shared/system/win32/hwnd_utils.h"
 
@@ -260,6 +261,28 @@ int main(int argc, char** argv) {
         // Maybe use a specific failure message?
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
         std::exit(1);
+    }
+
+    LOG_INFO("Initialize Sentry" << std::endl);
+    {
+        std::ostringstream release;
+        release << "squadov-client-service@" << shared::getEnv("SQUADOV_VERSION", "dev");
+
+        const auto dsn = service::api::getGlobalApi()->getSentryDsn();
+        sentry_options_t* opts = sentry_options_new();
+        sentry_options_set_dsn(opts, dsn.c_str());
+        sentry_options_set_release(opts, release.str().c_str());
+        sentry_options_set_max_breadcrumbs(opts, 1000);
+        sentry_init(opts);
+        sentry_set_level(SENTRY_LEVEL_INFO);
+
+        sentry_value_t user = sentry_value_new_object();
+        sentry_value_set_by_key(user, "id", sentry_value_new_string(service::api::getGlobalApi()->getSessionUserUuid().c_str()));
+        sentry_value_set_by_key(user, "username", sentry_value_new_string(service::api::getGlobalApi()->getSessionUsername().c_str()));
+        sentry_value_set_by_key(user, "ip_address", sentry_value_new_string("{{auto}}"));
+        sentry_set_user(user);
+
+        shared::log::Log::singleton()->enableSentry();
     }
 
     try {
@@ -726,6 +749,7 @@ int main(int argc, char** argv) {
     curl_global_cleanup();
     Pa_Terminate();
 
+    sentry_close();
 #ifdef _WIN32
     CoUninitialize();
 #endif

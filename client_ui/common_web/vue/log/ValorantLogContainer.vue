@@ -165,7 +165,7 @@ export default class ValorantLogContainer extends mixins(CommonComponent) {
         apiClient.listRiotValorantAccounts(this.userId).then((resp : ApiData<RiotAccountData[]>) => {
             this.allAccounts = resp.data
         }).catch((err : any) => {
-            console.log('Failed to list valorant accounts: ' + err);
+            console.error('Failed to list valorant accounts: ' + err);
         })
     }
 

@@ -138,6 +138,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/cppzmq
         ${CMAKE_SOURCE_DIR}/deps/libzmq/include
         ${CMAKE_SOURCE_DIR}/deps/libcpuid/libcpuid
+        ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
         ${OPENSSL_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
@@ -158,7 +159,8 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ZLIB::ZLIB
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
-        cpuid 
+        cpuid
+        sentry
         ${Boost_LIBRARIES}
         ${OPENSSL_LIBRARIES}
         ${FFMPEG_LIBRARIES}

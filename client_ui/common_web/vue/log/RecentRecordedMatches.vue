@@ -358,7 +358,7 @@ export default class RecentRecordedMatches extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list recent SquadOV matches: ' + err);
+            console.error('Failed to list recent SquadOV matches: ' + err);
         }).finally(() => {
             this.loading = false
         })
@@ -374,7 +374,7 @@ export default class RecentRecordedMatches extends Vue {
             this.refreshData()
             this.showHideDelete = false
         }).catch((err: any) => {
-            console.log('Failed to delete VODs: ', err)
+            console.error('Failed to delete VODs: ', err)
             this.showHideDeleteError = true
         }).finally(() => {
             this.deleteInProgress = false

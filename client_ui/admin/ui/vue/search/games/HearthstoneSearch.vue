@@ -103,7 +103,7 @@ export default class HearthstoneSearch extends Vue {
         }).then((resp: HearthstoneGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get Hearthstone games: ', err)
+            console.error('Failed to get Hearthstone games: ', err)
         })
     }
 

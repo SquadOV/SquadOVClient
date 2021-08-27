@@ -213,7 +213,7 @@ export default class Login extends Vue {
                     apiClient.finishMfaLogin(resp.data.twoFactor!, code).then((r2: ApiData<LoginOutput>) => {
                         this.handleSuccessfulLogin(r2.data)
                     }).catch((err: any) => {
-                        console.log('MFA Login Failure')
+                        console.warn('MFA Login Failure')
                         this.showHideAuthError = true
                     })
                 })
@@ -224,7 +224,7 @@ export default class Login extends Vue {
             if (!!err.response && err.response.status === 401) {
                 this.showHideAuthError = true
             } else {
-                console.log('Login failure')
+                console.warn('Login failure')
                 this.showHideGenericError = true
             }
         }).finally(() => {
@@ -247,7 +247,7 @@ export default class Login extends Vue {
         apiClient.forgotPassword(this.username).then(() => {
             this.showHideResetPasswordSuccess = true
         }).catch((err : any) => {
-            console.log('Failed to reset password: ', err)
+            console.error('Failed to reset password: ', err)
             this.showHideGenericError = true
         }).finally(() => {
             this.forgotInProgress = false

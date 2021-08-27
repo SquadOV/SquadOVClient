@@ -71,7 +71,7 @@ export default class RsoOauthHandler extends Vue {
             this.showSuccess = true
             this.startRedirectCountdown()
         }).catch((err: any) => {
-            console.log('Failed to submit RSO authorization code: ', err)
+            console.error('Failed to submit RSO authorization code: ', err)
             this.showError = true
         })
     }

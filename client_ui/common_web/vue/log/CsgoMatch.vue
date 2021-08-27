@@ -220,7 +220,7 @@ export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {
         apiClient.accessToken().getCsgoMatchData(this.matchUuid, this.userId).then((resp: ApiData<CsgoFullMatchData>) => {
             this.match = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get CSGO match data: ', err)
+            console.error('Failed to get CSGO match data: ', err)
         })
     }
 

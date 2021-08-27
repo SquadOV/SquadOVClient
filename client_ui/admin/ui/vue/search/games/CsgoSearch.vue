@@ -133,7 +133,7 @@ export default class CsgoSearch extends Vue {
         }).then((resp: CsgoGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get csgo games: ', err)
+            console.error('Failed to get csgo games: ', err)
         })
     }
 

@@ -254,7 +254,7 @@ export default class ShareConnectionsEditor extends Vue {
         promise.then((resp: ApiData<MatchVideoShareConnection[]>) => {
             this.internalValue = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get share connections: ', err)
+            console.error('Failed to get share connections: ', err)
         })
     }
 
@@ -271,7 +271,7 @@ export default class ShareConnectionsEditor extends Vue {
                     return 0
                 })
         }).catch((err : any) => {
-            console.log('Failed to get user squads [share connections editor]: ', err)
+            console.error('Failed to get user squads [share connections editor]: ', err)
         })
     }
     
@@ -302,7 +302,7 @@ export default class ShareConnectionsEditor extends Vue {
                 ele.canClip = canClip
             })
         }).catch((err: any) => {
-            console.log('Failed to edit squad share connections: ', err)
+            console.error('Failed to edit squad share connections: ', err)
         }).finally(() => {
             Vue.set(this.squadEditsPending, squadId, false)
         })
@@ -325,7 +325,7 @@ export default class ShareConnectionsEditor extends Vue {
             this.mergeIncomingConnections(resp.map((ele: ApiData<MatchVideoShareConnection[]>) => ele.data).flat())
             this.squadsToShare = []
         }).catch((err: any) => {
-            console.log('Failed to share with squads: ', err)
+            console.error('Failed to share with squads: ', err)
         }).finally(() => {
             this.addPending = false
         })
@@ -352,7 +352,7 @@ export default class ShareConnectionsEditor extends Vue {
                 }
             }
         }).catch((err: any) => {
-            console.log('Failed to delete squad share connections: ', err)
+            console.error('Failed to delete squad share connections: ', err)
         }).finally(() => {
             this.deletePending = false
         })

@@ -253,7 +253,7 @@ export default class ClipView extends Vue {
         apiClient.getGenericSharePermissions(undefined, this.clipUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.permissions = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get clip share permissions: ', err)
+            console.error('Failed to get clip share permissions: ', err)
         })
     }
 
@@ -275,7 +275,7 @@ export default class ClipView extends Vue {
         if (elapsed >= threshold && vodOnPage >= threshold) {
             this.sentView = true
             apiClient.accessToken().markClipView(this.clipUuid).catch((err: any) => {
-                console.log('Failed to mark clip view: ', err)
+                console.error('Failed to mark clip view: ', err)
                 this.sentView = false
             })
         }
@@ -328,7 +328,7 @@ export default class ClipView extends Vue {
                 this.clip!.reacts -= 1
             }
         }).catch((err: any) => {
-            console.log('Failed to react to clip: ', err)
+            console.error('Failed to react to clip: ', err)
         }).finally(() => {
             this.reactPending = false
         })
@@ -350,14 +350,14 @@ export default class ClipView extends Vue {
         apiClient.accessToken().getClip(this.clipUuid).then((resp: ApiData<VodClip>) => {
             this.clip = resp.data
         }).catch((err: any) => {
-            console.log('Failed to load clip: ', err)
+            console.error('Failed to load clip: ', err)
         })
 
         if (this.isUser) {
             apiClient.getClipReacts(this.clipUuid).then((resp: ApiData<ClipReact[]>) => {
                 this.myReacts = resp.data
             }).catch((err: any) => {
-                console.log('Failed to get clip reacts: ', err)
+                console.error('Failed to get clip reacts: ', err)
             })
         } else {
             this.myReacts = []
@@ -391,7 +391,7 @@ export default class ClipView extends Vue {
                 this.nextCommentLink = null
             }
         }).catch((err: any) => {
-            console.log('Failed to get comments: ', err)
+            console.error('Failed to get comments: ', err)
         })
     }
 
@@ -406,7 +406,7 @@ export default class ClipView extends Vue {
             this.clip!.comments += 1
             this.commentText = ''
         }).catch((err: any) => {
-            console.log('Failed to add new comment: ' err)
+            console.error('Failed to add new comment: ' err)
             this.commentError = true
         }).finally(() => {
             this.commentPending = false

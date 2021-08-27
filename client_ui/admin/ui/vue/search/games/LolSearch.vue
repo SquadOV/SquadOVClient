@@ -113,7 +113,7 @@ export default class LolSearch extends Vue {
         }).then((resp: LolGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get lol games: ', err)
+            console.error('Failed to get lol games: ', err)
         })
     }
 

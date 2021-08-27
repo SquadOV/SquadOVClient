@@ -89,7 +89,7 @@ export class StatXYSeriesData extends BaseGraphData {
     constructor(x : any[], y : any[], type : string, subtype: string, name : string) {
         super(type, subtype, name)
         if (x.length != y.length) {
-            console.log('Error in series data: X-Y length mismatch.')
+            console.warn('Error in series data: X-Y length mismatch.')
         }
         this._x = x
         this._y = y

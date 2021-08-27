@@ -36,7 +36,7 @@ export default class LolLaneIcon extends Vue {
         ddragonContainer.getClientForVersion(this.gameVersion).getLolSummonerSpellIconUrl(this.spellId).then((resp: string) => {
             this.src = resp
         }).catch((err: any) => {
-            console.log('Failed to get LoL summoner spell icon: ', err)
+            console.error('Failed to get LoL summoner spell icon: ', err)
         })
     }
 

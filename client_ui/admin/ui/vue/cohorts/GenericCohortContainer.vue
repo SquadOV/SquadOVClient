@@ -106,7 +106,7 @@ export default class GenericMetricContainer extends Vue {
         getCohortData(this.cohort, this.interval, this.startDate, this.endDate, this.cohortPeriod, this.cohortLength).then((resp: CohortDatumContainer[]) => {
             this.data = resp
         }).catch((err: any) => {
-            console.log('Failed to get cohort data: ', err)
+            console.error('Failed to get cohort data: ', err)
         })
     }
 

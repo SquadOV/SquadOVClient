@@ -103,7 +103,7 @@ export default class WowKeystoneGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW challenges: ', err)
+            console.error('Failed to obtain WoW challenges: ', err)
         })
     }
 

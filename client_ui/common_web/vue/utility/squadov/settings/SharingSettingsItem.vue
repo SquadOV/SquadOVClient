@@ -147,7 +147,7 @@ export default class SharingSettingsItem extends Vue {
             editConn.canClip = conn.canClip
             editConn.games = conn.games
         }).catch((err: any) => {
-            console.log('Failed to edit auto share connection: ', err)
+            console.error('Failed to edit auto share connection: ', err)
         }).finally(() => {
             Vue.set(this.squadEditsPending, conn.destSquadId!, false)
         })
@@ -170,7 +170,7 @@ export default class SharingSettingsItem extends Vue {
                 this.settings.push(...resp.map((ele: ApiData<AutoShareConnection>) => ele.data))
             }
         }).catch((err: any) => {
-            console.log('Failed to add auto share connection: ', err)
+            console.error('Failed to add auto share connection: ', err)
         }).finally(() => {
             this.addPending = false
         })
@@ -189,7 +189,7 @@ export default class SharingSettingsItem extends Vue {
             }
             this.settings.splice(idx, 1)
         }).catch((err: any) => {
-            console.log('Failed to delete auto share connection: ', err)
+            console.error('Failed to delete auto share connection: ', err)
         }).finally(() => {
             this.deletePending = false
         })
@@ -237,7 +237,7 @@ export default class SharingSettingsItem extends Vue {
         apiClient.getAutoShareConnections().then((resp: ApiData<AutoShareConnection[]>) => {
             this.settings = resp.data
         }).catch((err: any) => {
-            console.log('Failed to load auto share connections: ', err)
+            console.error('Failed to load auto share connections: ', err)
         })
     }
 
@@ -254,7 +254,7 @@ export default class SharingSettingsItem extends Vue {
                     return 0
                 })
         }).catch((err : any) => {
-            console.log('Failed to get user squads [share connections editor]: ', err)
+            console.error('Failed to get user squads [share connections editor]: ', err)
         })
     }
 

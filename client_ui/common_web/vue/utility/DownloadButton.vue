@@ -29,7 +29,7 @@ export default class DownloadButton extends CommonComponent {
             apiClient.markUserDownload().then(() => {
                 localStorage.setItem('squadovDownload', 'yes')
             }).catch((err: any) => {
-                console.log('Failed to mark user download: ', err)
+                console.error('Failed to mark user download: ', err)
             })
         }
 

@@ -163,7 +163,7 @@ export default class CommunityPage extends Vue {
         apiClient.getCommunityFromSlug(this.slug).then((resp: ApiData<SquadOvCommunity>) => {
             this.community = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get community from slug: ', err)
+            console.error('Failed to get community from slug: ', err)
         })
 
         this.roles = null
@@ -172,14 +172,14 @@ export default class CommunityPage extends Vue {
             apiClient.getMyCommunityRolesFromSlug(this.slug).then((resp: ApiData<CommunityRole[]>) => {
                 this.roles = [] // resp.data
             }).catch((err: any) => {
-                console.log('Failed to get community roles: ', err)
+                console.error('Failed to get community roles: ', err)
                 this.roles = []
             })
 
             apiClient.getMyCommunitySubscription(this.slug).then((resp: ApiData<User2UserSubscription[]>) => {
                 this.sub = resp.data
             }).catch((err: any) => {
-                console.log('Failed to get community sub: ', err)
+                console.error('Failed to get community sub: ', err)
             })
         } else {
             this.roles = []

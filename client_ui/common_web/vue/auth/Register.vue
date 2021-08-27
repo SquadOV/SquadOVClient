@@ -136,7 +136,7 @@ export default class Register extends Vue {
         apiClient.getGlobalAppFeatures().then((resp: ApiData<GlobalFlags>) => {
             this.canRegister = !resp.data.disableRegistration
         }).catch((err: any) => {
-            console.log('Failed to get if registration is enabled, allowing registrations as fall through: ', err)
+            console.warn('Failed to get if registration is enabled, allowing registrations as fall through: ', err)
 
             // Generally the advice is to fail secure aka if we fail we'd probably want to disable registrations.
             // That seems like a shitty idea though so I'd rather fail and allow registrations. And honestly
@@ -208,7 +208,7 @@ export default class Register extends Vue {
                 }
             })
         }).catch((err : any) => {
-            console.log('Failed to register')
+            console.error('Failed to register')
             if (!!err.response?.data.duplicateFlag) {
                 this.showHideDuplicateError = true
             } else {

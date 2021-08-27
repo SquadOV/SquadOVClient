@@ -114,7 +114,7 @@ export default class CsgoGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list CSGO matches: ' + err);
+            console.error('Failed to list CSGO matches: ' + err);
         })
     }
 

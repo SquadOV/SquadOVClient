@@ -65,7 +65,7 @@ export default class ReferralCampaigns extends Vue {
             this.campaignDescription = ''
             this.$router.go(0)
         }).catch((err: any) => {
-            console.log('Failed to create campaign: ', err)
+            console.error('Failed to create campaign: ', err)
         }).finally(() => {
             this.creating = false
         })

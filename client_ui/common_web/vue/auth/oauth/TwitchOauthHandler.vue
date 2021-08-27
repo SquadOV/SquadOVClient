@@ -71,7 +71,7 @@ export default class TwitchOauthHandler extends Vue {
             this.showSuccess = true
             this.startRedirectCountdown()
         }).catch((err: any) => {
-            console.log('Failed to submit Twitch authorization code: ', err)
+            console.error('Failed to submit Twitch authorization code: ', err)
             this.showError = true
         })
     }

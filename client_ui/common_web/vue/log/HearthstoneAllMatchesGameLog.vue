@@ -96,7 +96,7 @@ export default class HearthstoneAllMatchesGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list Hearthstone matches: ' + err);
+            console.error('Failed to list Hearthstone matches: ' + err);
         })
     }
 

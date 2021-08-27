@@ -153,7 +153,7 @@ export default class AccountSecuritySettingsItems extends Vue {
         apiClient.check2faStatus().then((resp: ApiData<boolean>) => {
             this.is2faEnabled = resp.data
         }).catch((err: any) => {
-            console.log('Failed to check 2FA status: ', err)
+            console.error('Failed to check 2FA status: ', err)
         })
     }
 
@@ -189,7 +189,7 @@ export default class AccountSecuritySettingsItems extends Vue {
                 this.passwordSuccess = false
             }, 5000)
         }).catch((err: any) => {
-            console.log('Failed to change user password.')
+            console.error('Failed to change user password.')
             this.passwordFail = true
             this.currentPassword = ''
         }).finally(() => {
@@ -207,7 +207,7 @@ export default class AccountSecuritySettingsItems extends Vue {
                     this.is2faEnabled = true
                 })
             }).catch((err: any) => {
-                console.log('Failed to request 2FA url: ', err)
+                console.error('Failed to request 2FA url: ', err)
                 this.error2fa = true
             }).finally(() => {
                 this.progress2fa = false
@@ -221,7 +221,7 @@ export default class AccountSecuritySettingsItems extends Vue {
             apiClient.disable2fa(code).then(() => {
                 this.is2faEnabled = false
             }).catch((err: any) => {
-                console.log('Failed to disable 2FA: ', err)
+                console.error('Failed to disable 2FA: ', err)
                 this.error2fa = true
             }).finally(() => {
                 this.progress2fa = false

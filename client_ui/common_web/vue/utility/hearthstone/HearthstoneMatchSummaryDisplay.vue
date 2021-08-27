@@ -325,7 +325,7 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
         apiClient.accessToken(this.accessToken).getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<HearthstoneMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain Hearthstone match: ', err)
+            console.error('Failed to obtain Hearthstone match: ', err)
         })
     }
 

@@ -103,7 +103,7 @@ export default class WowEncounterGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW encounters: ', err)
+            console.error('Failed to obtain WoW encounters: ', err)
         })
     }
 

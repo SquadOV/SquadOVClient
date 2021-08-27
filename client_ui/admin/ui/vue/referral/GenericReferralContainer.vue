@@ -65,7 +65,7 @@ export default class GenericReferralContainer extends Vue {
         getReferralBreakdown(this.referral).then((resp: ReferralDatum[]) => {
             this.data = resp
         }).catch((err: any) => {
-            console.log('Failed to get referral data: ', err)
+            console.error('Failed to get referral data: ', err)
         })
     }
 

@@ -63,7 +63,7 @@ export default class WowSingleItemDisplay extends Vue {
                 Vue.set(this.data, key, value)
             }
         }).catch((err: any) => {
-            console.log('Failed to get item: ', err)
+            console.warn('Failed to get item: ', err)
         })
     }
 

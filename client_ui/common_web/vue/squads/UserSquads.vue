@@ -130,13 +130,13 @@ export default class UserSquads extends Vue {
         apiClient.getUserSquads(this.userId).then((resp: ApiData<SquadMembership[]>) => {
             this.mySquads = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain user squads: ', err)
+            console.error('Failed to obtain user squads: ', err)
         })
 
         apiClient.getUserSquadInvites(this.userId).then((resp: ApiData<SquadInvite[]>) => {
             this.myInvites = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain user squad invites: ', err)
+            console.error('Failed to obtain user squad invites: ', err)
         })
     }
 

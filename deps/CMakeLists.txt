@@ -35,3 +35,7 @@ add_subdirectory(oatpp)
 set(BUILD_SHARED_LIBS "${BUILD_SHARED_LIBS_SAVED}")
 
 add_subdirectory(libcpuid)
+
+set(SENTRY_BACKEND "crashpad" CACHE STRING "")
+set(SENTRY_BUILD_SHARED_LIBS ON CACHE BOOL "")
+add_subdirectory(sentry-native)

@@ -258,7 +258,7 @@ export default class ClipLibrary extends Vue {
             this.refreshClips()
             this.showHideDelete = false
         }).catch((err: any) => {
-            console.log('Failed to delete clips: ', err)
+            console.error('Failed to delete clips: ', err)
             this.showHideDeleteError = true
         }).finally(() => {
             this.deleteInProgress = false
@@ -316,7 +316,7 @@ export default class ClipLibrary extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list clips: ' + err);
+            console.error('Failed to list clips: ' + err);
         })
     }
 

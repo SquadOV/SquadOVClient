@@ -48,7 +48,7 @@ export default class MetricRegistrations extends Vue {
                 }
             })
         }).catch((err: any) => {
-            console.log('Failed to get referral codes: ', err)
+            console.error('Failed to get referral codes: ', err)
         })
     }
 

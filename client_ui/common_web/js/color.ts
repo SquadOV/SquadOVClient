@@ -14,7 +14,7 @@ export function colorFromElementTheme(element: Element, key: string): ColorA {
         // Assume the hex is well formed with 6 digits.
         let match = value.match(/\#([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])([0-9A-F][0-9A-F])/i)
         if (!match) {
-            console.log('Failed to parse rgba value [hex] from: ', value)
+            console.warn('Failed to parse rgba value [hex] from: ', value)
             return {
                 r: 0,
                 g: 0,
@@ -32,7 +32,7 @@ export function colorFromElementTheme(element: Element, key: string): ColorA {
     } else if (value.startsWith('rgb(')) {
         let match = value.match(/rgb\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?\)/i)
         if (!match) {
-            console.log('Failed to parse rgba value [rgb] from: ', value)
+            console.warn('Failed to parse rgba value [rgb] from: ', value)
             return {
                 r: 0,
                 g: 0,
@@ -50,7 +50,7 @@ export function colorFromElementTheme(element: Element, key: string): ColorA {
     } else if (value.startsWith('rgba(')) {
         let match = value.match(/rgba\(\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?,\s*?(\d+)\s*?\)/i)
         if (!match) {
-            console.log('Failed to parse rgba value [rgba] from: ', value)
+            console.warn('Failed to parse rgba value [rgba] from: ', value)
             return {
                 r: 0,
                 g: 0,
@@ -66,7 +66,7 @@ export function colorFromElementTheme(element: Element, key: string): ColorA {
             a: parseFloat(match[4])
         }
     } else {
-        console.log('Failed to parse rgba value from: ', value)
+        console.warn('Failed to parse rgba value from: ', value)
         return {
             r: 0,
             g: 0,

@@ -115,7 +115,7 @@ export default class VodFavoriteButton extends Vue {
             this.isFavorite = !this.isFavorite
             this.showHideReason = false
         }).catch((err: any) => {
-            console.log('Failed to toggle VOD favorite: ', err)
+            console.error('Failed to toggle VOD favorite: ', err)
             this.showHideError = true
         }).finally(() => {
             this.loading = false
@@ -129,7 +129,7 @@ export default class VodFavoriteButton extends Vue {
             this.isFavorite = resp.data.favorite
             this.reason = !!resp.data.reason ? resp.data.reason : ''
         }).catch((err: any) => {
-            console.log('Failed to check if VOD is favorite: ', err)
+            console.error('Failed to check if VOD is favorite: ', err)
         }).finally(() => {
             this.loading = false
         })

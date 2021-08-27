@@ -58,6 +58,20 @@ KafkaInfo SquadovApi::getKafkaInfo() const {
     return ret;
 }
 
+std::string SquadovApi::getSentryDsn() const {
+    const std::string path = "/v1/sentry/desktop";
+
+    const auto result = _webClient->get(path);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get SquadOV client service sentry info: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
 
@@ -76,6 +90,11 @@ int64_t SquadovApi::getSessionUserId() const {
 std::string SquadovApi::getSessionUserUuid() const {
     std::shared_lock<std::shared_mutex> guard(_sessionMutex);
     return _session.user.uuid;
+}
+
+std::string SquadovApi::getSessionUsername() const {
+    std::shared_lock<std::shared_mutex> guard(_sessionMutex);
+    return _session.user.username;
 }
 
 void SquadovApi::syncHardware(const service::hardware::Hardware& data) const {

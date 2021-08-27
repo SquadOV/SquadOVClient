@@ -143,7 +143,7 @@ export default class ValorantSearch extends Vue {
         }).then((resp: ValorantGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get valorant games: ', err)
+            console.error('Failed to get valorant games: ', err)
         })
     }
 

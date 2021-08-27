@@ -282,10 +282,10 @@ export default class HearthstoneMatch extends mixins(CommonComponent, MatchShare
                 this.matchWrapper.addLogs(resp.data)
                 this.ready = true
             }).catch((err: any) => {
-                console.log('Failed to obtain Hearthstone match logs: ', err)    
+                console.error('Failed to obtain Hearthstone match logs: ', err)    
             })
         }).catch((err: any) => {
-            console.log('Failed to obtain Hearthstone match: ', err)
+            console.error('Failed to obtain Hearthstone match: ', err)
         })
     }
 

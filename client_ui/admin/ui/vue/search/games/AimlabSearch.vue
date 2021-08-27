@@ -123,7 +123,7 @@ export default class AimlabSearch extends Vue {
         }).then((resp: AimlabGame[]) => {
             this.games = resp
         }).catch((err: any) => {
-            console.log('Failed to get aimlab tasks: ', err)
+            console.error('Failed to get aimlab tasks: ', err)
         })
     }
 

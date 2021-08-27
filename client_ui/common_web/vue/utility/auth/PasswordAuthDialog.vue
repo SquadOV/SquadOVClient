@@ -93,7 +93,7 @@ export default class PasswordAuthDialog extends Vue {
             }
             this.showHide = false
         }).catch((err: any) => {
-            console.log('Failed to verify password.')
+            console.warn('Failed to verify password.')
             this.pwError = true
         }).finally(() => {
             this.inProgress = false

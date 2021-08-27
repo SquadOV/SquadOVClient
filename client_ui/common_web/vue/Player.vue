@@ -37,7 +37,7 @@ export default class Player extends Vue {
         apiClient.findVodFromVideoUuid(this.vodUuid).then((resp: ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get VOD: ', err)
+            console.error('Failed to get VOD: ', err)
         })
     }
 
@@ -49,7 +49,7 @@ export default class Player extends Vue {
             this.hasAccess = true
             this.requestVod()
         }).catch((err: any) => {
-            console.log('Failed to exchange access token: ', err)
+            console.error('Failed to exchange access token: ', err)
         })
     }
 

@@ -157,7 +157,7 @@ export default class SquadMemberTable extends Vue {
             this.cancelKick()
         }).catch((err: any) => {
             this.showHideError = true
-            console.log('Failed to kick player: ', err)
+            console.error('Failed to kick player: ', err)
         }).finally(() => {
             this.kickPending = false
         })

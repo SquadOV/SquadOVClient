@@ -64,7 +64,7 @@ export default class LolItemIcon extends Vue {
         ddragonContainer.getClientForVersion(this.gameVersion).getLolItemName(this.itemId).then((resp: string) => {
             this.itemName = resp
         }).catch((err: any) => {
-            console.log('Failed to get item name: ', err)
+            console.error('Failed to get item name: ', err)
         })
     }
 

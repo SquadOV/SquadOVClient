@@ -252,7 +252,7 @@ export default class LolMatchSummary extends mixins(CommonComponent) {
         ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionSplashUrl(this.currentPlayer.championId).then((resp: string) => {
             this.backgroundUrl = resp
         }).catch((err: any) => {
-            console.log('Failed to get LoL champion splash art: ', err)
+            console.error('Failed to get LoL champion splash art: ', err)
         })
     }
 

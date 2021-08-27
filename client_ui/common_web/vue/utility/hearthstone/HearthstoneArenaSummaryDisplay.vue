@@ -89,7 +89,7 @@ export default class HearthstoneArenaSummaryDisplay extends Vue {
         apiClient.getHearthstoneArenaRun(this.arenaUuid, this.userId).then((resp : ApiData<HearthstoneArenaRun>) => {
             this.currentArenaRun = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get Hearthstone Arena Run: ', err)
+            console.error('Failed to get Hearthstone Arena Run: ', err)
         })
     }
 

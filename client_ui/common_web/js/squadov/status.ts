@@ -82,7 +82,7 @@ export class TrackedUserStatsManager {
             }
 
             this._connection.onerror = (err: any) => {
-                console.log('User Activity Websocket Error: ' , err)
+                console.warn('User Activity Websocket Error: ' , err)
                 this.recoverFromError()
             }
             
@@ -92,7 +92,7 @@ export class TrackedUserStatsManager {
                 cb()
             }
         }).catch((err : any) => {
-            console.log('Failed to connect websocket: ', err)
+            console.error('Failed to connect websocket: ', err)
             this.recoverFromError()
         })
     }

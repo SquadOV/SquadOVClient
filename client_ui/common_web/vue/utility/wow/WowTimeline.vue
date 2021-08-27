@@ -835,7 +835,7 @@ export default class WowTimeline extends mixins(CommonComponent) {
         }).then((resp: ApiData<WowMatchStatContainer>) => {
             Vue.set(this.cachedStats, endpoint, resp.data)
         }).catch((err: any) => {
-            console.log('Failed to get WoW match stats: ', err)
+            console.error('Failed to get WoW match stats: ', err)
         }).finally(() => {
             this.pendingEndpoints.delete(endpoint)
         })

@@ -4,6 +4,7 @@
 #include "shared/time.h"
 
 #include <algorithm>
+#include <sentry.h>
 #include <vector>
 
 #ifdef _WIN32
@@ -84,6 +85,15 @@ void Log::flush() {
                 << "[" << currentTimeLog() << "] ";
             _outLog << str.str() << item.data() << std::flush;
             std::cout << str.str() << item.data() << std::flush;
+
+            if (_sentryEnabled) {
+                std::ostringstream data;
+                data << item.data();
+                sentry_value_t crumb = sentry_value_new_breadcrumb("default", data.str().c_str());
+                sentry_value_set_by_key(crumb, "level", sentry_value_new_string(item.sentryLevel().c_str()));
+                sentry_value_set_by_key(crumb, "timestamp", sentry_value_new_string(shared::timeToIso(shared::nowUtc()).c_str()));
+                sentry_add_breadcrumb(crumb);
+            }
         }
 
         _queue.pop_front();
@@ -122,6 +132,20 @@ std::string LogItem::currentLogLevel() const {
             return "Debug";
     }
     return "";
+}
+
+std::string LogItem::sentryLevel() const {
+    switch (_type) {
+        case LogType::Info:
+            return "info";
+        case LogType::Warning:
+            return "warning";
+        case LogType::Error:
+            return "error";
+        case LogType::Debug:
+            return "debug";
+    }
+    return "info";
 }
 
 bool Log::canLogPass(const LogItem& t) const {

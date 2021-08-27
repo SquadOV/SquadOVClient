@@ -53,7 +53,7 @@ export default class ReferralLink extends mixins(CommonComponent) {
         apiClient.myReferralLink().then((resp: ApiData<string>) => {
             this.link = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get referral link: ', err)
+            console.error('Failed to get referral link: ', err)
         })
     }
 

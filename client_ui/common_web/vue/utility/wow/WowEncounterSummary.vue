@@ -90,7 +90,7 @@ export default class WowEncounterSummary extends Vue {
         axios.get(staticClient.getWowDifficultyDataUrl(this.encounter.build, this.encounter.difficulty)).then((resp: ApiData<WowDifficultyData>) => {
             this.difficultyData = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain difficulty data: ', err)
+            console.error('Failed to obtain difficulty data: ', err)
         })
     }
 

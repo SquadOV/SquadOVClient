@@ -102,7 +102,7 @@ export default class WowArenaGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err: any) => {
-            console.log('Failed to obtain WoW arenas: ', err)
+            console.error('Failed to obtain WoW arenas: ', err)
         })
     }
 

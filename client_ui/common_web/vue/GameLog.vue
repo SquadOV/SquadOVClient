@@ -158,7 +158,6 @@ export default class GameLog extends Vue {
 
     get routerKey(): string {
         let key = routeLevelToKey(this.$route, 2)
-        console.log('router key: ', key)
         return `${key}.${this.forceUpdateKey}`
     }
 
@@ -307,11 +306,11 @@ export default class GameLog extends Vue {
                     })
                     Vue.set(this.perSquadMembers!, squadId, resp.data)
                 }).catch((err: any) => {
-                    console.log('Failed to obtain squad members: ', err)
+                    console.error('Failed to obtain squad members: ', err)
                 })
             }
         }).catch((err: any) => {
-            console.log('Failed to obtain local user squads: ', err)
+            console.error('Failed to obtain local user squads: ', err)
         })
     }
 
@@ -325,7 +324,7 @@ export default class GameLog extends Vue {
         getSquadOVUser(this.userId).then((resp: ApiData<SquadOVUser>) => {
             this.logUser = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain user: ', err)
+            console.error('Failed to obtain user: ', err)
         })
     }
 
@@ -342,7 +341,7 @@ export default class GameLog extends Vue {
         apiClient.getSquad(this.squadId).then((resp: ApiData<Squad>) => {
             this.logSquad = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain squad: ', err)
+            console.error('Failed to obtain squad: ', err)
         })
     }
 

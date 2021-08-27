@@ -344,7 +344,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getGenericSharePermissions(undefined, this.value.videoUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.permissions = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get video share permissions: ', err)
+            console.error('Failed to get video share permissions: ', err)
         })
     }
 
@@ -416,7 +416,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
                 this.onDeleteFinish(this.value!.videoUuid)
             }
         }).catch((err: any) => {
-            console.log('Failed to delete VOD: ', err)
+            console.error('Failed to delete VOD: ', err)
             this.downloadError = true
         }).finally(() => {
             this.loadingDelete = false
@@ -436,7 +436,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
                         this.downloadError = true
                     }
                 }).catch((err: any) => {
-                    console.log('Failed to delete local VOD: ', err)
+                    console.error('Failed to delete local VOD: ', err)
                     this.downloadError = true
                 }).finally(() => {
                     this.loadingLocalDelete = false
@@ -455,7 +455,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getVodManifest(this.value.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
             this.manifest = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get VOD manifest:', err)
+            console.error('Failed to get VOD manifest:', err)
         })
     }
 
@@ -500,7 +500,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
                 this.localVodLocation = null
             }
         }).catch((err: any) => {
-            console.log('Failed to check for local VOD: ', err)
+            console.error('Failed to check for local VOD: ', err)
         }).finally(() => {
             this.checkingForLocal = false
         })
@@ -546,7 +546,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getVodSegment(this.track.segments[0].uri).then((resp : ApiData<string>) => {
             this.downloadUri = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get VOD download URI: ', err)
+            console.error('Failed to get VOD download URI: ', err)
         })
     }
 

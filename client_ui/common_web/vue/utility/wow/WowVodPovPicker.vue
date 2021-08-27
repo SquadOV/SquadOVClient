@@ -183,20 +183,20 @@ export default class WowVodPovPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getWoWMatchAccessibleVods(this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
             this.allAccessibleVods = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get WoW match accessible VODs: ', err)
+            console.error('Failed to get WoW match accessible VODs: ', err)
         })
     }
 
     selectUserId(userId: number) {
         let uuid = this.userIdToUuid.get(userId)
         if (!uuid) {
-            console.log(`Selected Invalid WoW Match User ID [UUID]: ${userId}`)
+            console.warn(`Selected Invalid WoW Match User ID [UUID]: ${userId}`)
             return
         }
 
         let vod = this.uuidToVod.get(uuid)
         if (!vod) {
-            console.log(`Selected Invalid WoW Match User ID [VOD]: ${userId}`)
+            console.warn(`Selected Invalid WoW Match User ID [VOD]: ${userId}`)
             return
         }
         this.selectVod(vod)

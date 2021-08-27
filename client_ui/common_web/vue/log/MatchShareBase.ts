@@ -15,7 +15,7 @@ export default class MatchShareBase extends Vue {
     onVodChange(newVod: VodAssociation | null, oldVod: VodAssociation | null) {
         if (!oldVod && !!newVod && !!this.$store.state.currentUser) {
             apiClient.markUserActive().catch((err: any) => {
-                console.log('Failed to mark user active', err)
+                console.error('Failed to mark user active', err)
             })
         }
     }
@@ -25,7 +25,7 @@ export default class MatchShareBase extends Vue {
         apiClient.getGenericSharePermissions(matchUuid, undefined, game).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.matchPermissions = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get match share permissions: ', err)
+            console.error('Failed to get match share permissions: ', err)
         })
     }
 }

@@ -95,7 +95,7 @@ export default class HearthstoneDuelSummaryDisplay extends Vue {
         apiClient.getHearthstoneDuelRun(this.duelUuid, this.userId).then((resp : ApiData<HearthstoneDuelRun>) => {
             this.currentDuelRun = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get Hearthstone Duel Run: ', err)
+            console.error('Failed to get Hearthstone Duel Run: ', err)
         })
     }
 

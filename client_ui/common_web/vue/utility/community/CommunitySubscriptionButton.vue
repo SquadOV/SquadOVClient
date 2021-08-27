@@ -81,7 +81,7 @@ export default class CommunitySubscriptionButton extends Vue {
         apiClient.getLinkedTwitchAcccount().then((resp: ApiData<TwitchAccount[]>) => {
             this.twitchAccount = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get linked Twitch account: ', err)
+            console.error('Failed to get linked Twitch account: ', err)
         })
     }
 

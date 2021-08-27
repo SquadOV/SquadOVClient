@@ -119,7 +119,7 @@ export default class MatchFavoriteButton extends Vue {
             this.isFavorite = !this.isFavorite
             this.showHideReason = false
         }).catch((err: any) => {
-            console.log('Failed to toggle match favorite: ', err)
+            console.error('Failed to toggle match favorite: ', err)
             this.showHideError = true
         }).finally(() => {
             this.loading = false
@@ -133,7 +133,7 @@ export default class MatchFavoriteButton extends Vue {
             this.isFavorite = resp.data.favorite
             this.reason = !!resp.data.reason ? resp.data.reason : ''
         }).catch((err: any) => {
-            console.log('Failed to check if match is favorite: ', err)
+            console.warn('Failed to check if match is favorite: ', err)
         }).finally(() => {
             this.loading = false
         })

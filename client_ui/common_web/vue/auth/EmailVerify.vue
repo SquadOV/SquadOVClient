@@ -79,7 +79,7 @@ export default class EmailVerify extends Vue {
         apiClient.resendVerification().then(() => {
             this.showHideSent = true
         }).catch((err : any) => {
-            console.log('Resend Verification Error: ', err)
+            console.error('Resend Verification Error: ', err)
             this.showHideError = true
             this.errorMessage = `Oops! Something went wrong. Please try again.`
         })
@@ -106,7 +106,7 @@ export default class EmailVerify extends Vue {
                 this.errorMessage = `Oops! You haven't verified your email address. Please try resending a verification email.`
             }
         }).catch((err : any) => {
-            console.log('Check Verification Error: ', err)
+            console.error('Check Verification Error: ', err)
             this.showHideError = true
             this.errorMessage = `Oops! Something went wrong. Please try again.`
         })

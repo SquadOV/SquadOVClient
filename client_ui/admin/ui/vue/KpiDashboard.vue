@@ -56,7 +56,7 @@ export default class KpiDashboard extends Vue {
         getKpi(kpi).then((v: number) => {
             Vue.set(this.kpiMap, kpi, v)
         }).catch((err: any) => {
-            console.log('Failed to get KPI: ', err)
+            console.error('Failed to get KPI: ', err)
         })
     }
 

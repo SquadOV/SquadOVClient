@@ -129,7 +129,7 @@ export default class TftGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list TFT matches: ' + err);
+            console.error('Failed to list TFT matches: ' + err);
         })
     }
 

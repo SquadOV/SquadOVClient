@@ -241,7 +241,7 @@ export default class SingleSquadPage extends Vue {
         apiClient.getSquadUsers(this.squadId).then((resp: ApiData<SquadMembership[]>) => {
             this.squadMembers = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get all squad memberships: ', err)
+            console.error('Failed to get all squad memberships: ', err)
         })
     }
 
@@ -250,7 +250,7 @@ export default class SingleSquadPage extends Vue {
         apiClient.getSquadInvites(this.squadId).then((resp: ApiData<SquadInvite[]>) => {
             this.squadInvites = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get all squad invites: ', err)
+            console.error('Failed to get all squad invites: ', err)
         })
     }
 
@@ -259,7 +259,7 @@ export default class SingleSquadPage extends Vue {
         apiClient.getUserSquadMembership(this.squadId, this.$store.state.currentUser.id).then((resp: ApiData<SquadMembership>) => {
             this.localMembership = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get local squad membership: ', err)
+            console.error('Failed to get local squad membership: ', err)
         })
 
         this.refreshMembers()
@@ -281,7 +281,7 @@ export default class SingleSquadPage extends Vue {
                 }
             })
         }).catch((err: any) => {
-            console.log('Failed to delete squad: ', err)
+            console.error('Failed to delete squad: ', err)
             this.showError('Failed to delete squad, please try again.')
         }).finally(() => {
             this.leaveDeletePending = true
@@ -298,7 +298,7 @@ export default class SingleSquadPage extends Vue {
                 }
             })
         }).catch((err: any) => {
-            console.log('Failed to leave squad: ', err)
+            console.error('Failed to leave squad: ', err)
             this.showError('Failed to leave squad, please try again.')
         }).finally(() => {
             this.leaveDeletePending = true
@@ -330,7 +330,7 @@ export default class SingleSquadPage extends Vue {
             this.localMembership!.squad.squadName = copy
             this.editMode = false
         }).catch((err: any) => {
-            console.log('Failed to edit squad: ', err)
+            console.error('Failed to edit squad: ', err)
             this.showError('Failed to edit squad, please try again.')
         }).finally(() => {
             this.editPending = false

@@ -152,7 +152,7 @@ export default class GenericRiotUserChooser extends Vue {
             this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
-            console.log('Failed to redirect to RSO: ', err)
+            console.error('Failed to redirect to RSO: ', err)
             this.showError = true
         }).finally(() => {
             this.loadingAdd = false
@@ -169,7 +169,7 @@ export default class GenericRiotUserChooser extends Vue {
             this.$emit('on-account-change')
             this.showHideDeleteConfirm = false
         }).catch((err: any) => {
-            console.log('Failed to delete riot account: ', err)
+            console.error('Failed to delete riot account: ', err)
             this.showError = true
         }).finally(() => {
             this.loadingDelete = false
@@ -185,7 +185,7 @@ export default class GenericRiotUserChooser extends Vue {
         apiClient.resyncRiotAccount(this.$store.state.currentUser.id, this.puuid).then(() => {
             this.showHideResync = true
         }).catch((err: any) => {
-            console.log('Failed to resync riot account: ', err)
+            console.error('Failed to resync riot account: ', err)
             this.showError = true
         }).finally(() => {
             this.loadingSync = false

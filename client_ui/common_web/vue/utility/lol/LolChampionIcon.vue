@@ -38,7 +38,7 @@ export default class LolChampionIcon extends Vue {
         ddragonContainer.getClientForVersion(this.gameVersion).getLolChampionIconUrl(this.championId).then((resp: string) => {
             this.src = resp
         }).catch((err: any) => {
-            console.log('Failed to get LoL champion icon: ', err)
+            console.error('Failed to get LoL champion icon: ', err)
         })
     }
 

@@ -409,7 +409,7 @@ export default class SquadInviteCreateCard extends mixins(CommonComponent) {
             this.deleteLinkFromLocal(id)
             this.cancelLinkChanges()
         }).catch((err: any) => {
-            console.log('Failed to delete link: ', err)
+            console.error('Failed to delete link: ', err)
             this.deleteError = true
         }).finally(() => {
             this.deleteInProgress = false
@@ -452,7 +452,7 @@ export default class SquadInviteCreateCard extends mixins(CommonComponent) {
             this.inviteLinks.push(newLink)
             this.cancelLinkChanges()
         }).catch((err: any) => {
-            console.log('Failed to modify squad invite link: ', err)
+            console.error('Failed to modify squad invite link: ', err)
             this.modifyError = true
         }).finally(() => {
             this.modifyingLink = false
@@ -487,7 +487,7 @@ export default class SquadInviteCreateCard extends mixins(CommonComponent) {
                 this.inviteLinks.push(resp.data)
             }
         }).catch((err: any) => {
-            console.log('Failed to create squad invite link: ', err)
+            console.error('Failed to create squad invite link: ', err)
             this.inviteLinkError = true
         }).finally(() => {
             this.newLinkInProgress = false
@@ -498,7 +498,7 @@ export default class SquadInviteCreateCard extends mixins(CommonComponent) {
         apiClient.getSquadInviteLinksForUser(this.squadId, this.$store.state.currentUser.id).then((resp: ApiData<SquadInviteLink[]>) => {
             this.inviteLinks = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get squad invite links: ', err)
+            console.error('Failed to get squad invite links: ', err)
         })
     }
 
@@ -520,7 +520,7 @@ export default class SquadInviteCreateCard extends mixins(CommonComponent) {
             this.$emit('on-send-invite')
             this.clear()
         }).catch((err: any) => {
-            console.log('Failed to send squad invites: ', err)
+            console.error('Failed to send squad invites: ', err)
             this.showError = true
         }).finally(() => {
             this.invitePending = false

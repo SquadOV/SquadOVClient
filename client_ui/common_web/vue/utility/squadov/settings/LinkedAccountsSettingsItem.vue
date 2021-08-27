@@ -436,7 +436,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.pendingUsername = ''
             this.editUsername = false
         }).catch((err: any) => {
-            console.log('Failed to edit username: ', err)
+            console.error('Failed to edit username: ', err)
             this.editFailure = true
         }).finally(() => {
             this.editInProgress = false
@@ -456,7 +456,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.pendingEmail = ''
             this.editEmail = false
         }).catch((err: any) => {
-            console.log('Failed to edit email: ', err)
+            console.error('Failed to edit email: ', err)
             this.editFailure = true
         }).finally(() => {
             this.editInProgress = false
@@ -471,7 +471,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             }
             this.profileUser = resp.data
         }).catch((err: any) => {
-            console.log('Failed to refresh squadovuser : ', err)
+            console.error('Failed to refresh squadovuser : ', err)
         }).finally(() => {
             this.checkPending = false
         })
@@ -482,7 +482,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
         apiClient.resendVerification().then(() => {
             this.sentVerification = true
         }).catch((err: any) => {
-            console.log('Failed to resend verification: ', err)
+            console.error('Failed to resend verification: ', err)
             this.verificationErr = false
         }).finally(() => {
             this.emailPending = false
@@ -544,7 +544,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.riotToDelete = null
             this.showHideDelete = false
         }).catch((err: any) => {
-            console.log('Failed to unlink account: ', err)
+            console.error('Failed to unlink account: ', err)
             this.deleteFailure = true
         }).finally(() => {
             this.deletePending = false
@@ -557,14 +557,14 @@ export default class LinkedAccountsSettingsItem extends Vue {
         apiClient.getAllLinkedAccounts().then((resp: ApiData<LinkedAccounts>) => {
             this.accounts = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get linked accounts: ', err)
+            console.error('Failed to get linked accounts: ', err)
         })
 
         this.profileUser = null
         getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
             this.profileUser = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain user profile: ', err)
+            console.error('Failed to obtain user profile: ', err)
         })
     }
 
@@ -578,7 +578,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
-            console.log('Failed to redirect to RSO: ', err)
+            console.error('Failed to redirect to RSO: ', err)
         }).finally(() => {
             this.pendingOauthLink = false
         })
@@ -590,7 +590,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             this.$store.commit('setRedirectUrl', url)
             this.showHideProgress = true
         }).catch((err: any) => {
-            console.log('Failed to redirect to Twitch: ', err)
+            console.error('Failed to redirect to Twitch: ', err)
         }).finally(() => {
             this.pendingOauthLink = false
         })

@@ -68,7 +68,7 @@ export default class WowCharacterItemsDisplay extends Vue {
                 Vue.set(this.data, key, value)
             }
         }).catch((err: any) => {
-            console.log('Failed to get items: ', err)
+            console.error('Failed to get items: ', err)
         })
     }
 

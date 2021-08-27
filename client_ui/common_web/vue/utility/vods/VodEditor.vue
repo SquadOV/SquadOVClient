@@ -480,7 +480,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.resetClip()
             this.context!.requestTimeSync()
         }).catch((err: any) => {
-            console.log('Failed to request VOD association: ', err)
+            console.error('Failed to request VOD association: ', err)
         })
     }
     
@@ -595,7 +595,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.clipUuid = resp.data
         }).catch((err: any) => {
             this.clipError = true
-            console.log('Failed to create clip: ', err)
+            console.error('Failed to create clip: ', err)
         }).finally(() => {
             this.saveInProgress = false
         })
@@ -620,7 +620,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         apiClient.createClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<LinkShareData>) => {
             this.clipShareUrl = resp.data.shareUrl
         }).catch((err: any) => {
-            console.log('Failed to get share URL for clip: ', err)
+            console.error('Failed to get share URL for clip: ', err)
             this.shareError = true
         })
     }
@@ -663,7 +663,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.localClipPath = `file:///${normalPath}`
             this.metadata = resp.metadata
         }).catch((err: any) => {
-            console.log('Failed to clip: ', err)
+            console.error('Failed to clip: ', err)
             this.clipError = true
             this.showHideClipDialog = false
             this.clipInProgress = false

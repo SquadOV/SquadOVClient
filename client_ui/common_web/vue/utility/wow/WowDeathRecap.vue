@@ -197,7 +197,7 @@ export default class WowDeathRecapAnalysis extends mixins(CommonComponent) {
             })
 
         }).catch((err: any) => {
-            console.log('Failed to get death recap: ', err)
+            console.error('Failed to get death recap: ', err)
         })
     }
 

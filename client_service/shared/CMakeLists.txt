@@ -78,5 +78,10 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/deps/json/single_include
     ${CMAKE_SOURCE_DIR}/deps/curl/include
     ${CMAKE_SOURCE_DIR}/deps/civetweb/include
+    ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
     ${Boost_INCLUDE_DIRS}
+)
+
+target_link_libraries(squadov_shared
+    sentry
 )

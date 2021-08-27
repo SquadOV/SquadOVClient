@@ -112,7 +112,7 @@ export default class VideoPreviewPlayer extends Vue {
                     this.onVideoUriChange()
                 })
             }).catch((err: any) => {
-                console.log('Failed to get local VOD for preview: ', err)
+                console.error('Failed to get local VOD for preview: ', err)
             })
         } else {
             let previewUri = this.vod.videoTracks[0]?.preview
@@ -127,7 +127,7 @@ export default class VideoPreviewPlayer extends Vue {
                     this.onVideoUriChange()
                 })
             }).catch((err : any) => {
-                console.log('Failed to get final URL for video preview: ', err)
+                console.error('Failed to get final URL for video preview: ', err)
             })
         }
     }

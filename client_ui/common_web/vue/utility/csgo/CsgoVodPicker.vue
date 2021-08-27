@@ -156,7 +156,7 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
         apiClient.accessToken().getCsgoMatchAccessibleVods(this.matchUuid).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain CSGO VODs: ', err)
+            console.error('Failed to obtain CSGO VODs: ', err)
         })
     }
 
@@ -183,13 +183,13 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
         // In other failure cases, we want to make sure the state doesn't change.
         let userUuid = this.steamIdToUserUuid.get(steamId)
         if (!userUuid) {
-            console.log('Cannot select steam id [no user uuid]: ', steamId)
+            console.warn('Cannot select steam id [no user uuid]: ', steamId)
             return
         }
 
         let vod = this.uuidToVod.get(userUuid)
         if (!vod) {
-            console.log('Cannot select steam id [no vod]: ', steamId)
+            console.warn('Cannot select steam id [no vod]: ', steamId)
             return
         }
         this.selectVod(vod)

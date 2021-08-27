@@ -160,7 +160,7 @@ export default class TftMatch extends mixins(MatchShareBase) {
         apiClient.accessToken().getTftMatch(this.matchUuid).then((resp: ApiData<WrappedTftMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get TFT match: ', err)
+            console.error('Failed to get TFT match: ', err)
         })
     }
 

@@ -84,7 +84,7 @@ export default class SquadLinkResponsePage extends Vue {
                 this.$router.push(this.homeTo)
             }, 5000)
         }).catch((err: any) => {
-            console.log('Failed to accept squad invite: ', err)
+            console.error('Failed to accept squad invite: ', err)
             this.error = true
         }).finally(() => {
             this.joining = false
@@ -97,7 +97,7 @@ export default class SquadLinkResponsePage extends Vue {
             this.squad = resp.data.squad
             this.inviter = resp.data.inviter
         }).catch((err: any) => {
-            console.log('Failed to get link data: ', err)
+            console.error('Failed to get link data: ', err)
         })
     }
 

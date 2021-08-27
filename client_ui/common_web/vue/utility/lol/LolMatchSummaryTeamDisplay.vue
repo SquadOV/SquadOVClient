@@ -100,7 +100,7 @@ export default class LolMatchSummaryTeamDisplay extends Vue {
                 ddragonContainer.getClientForVersion(this.gameVersion).getLolChampionName(id).then((resp: string) => {
                     Vue.set(this.championIdToName, id, resp)
                 }).catch((err: any) => {
-                    console.log('Failed to get LoL champion splash art: ', err)
+                    console.error('Failed to get LoL champion splash art: ', err)
                 })
                 return 'Loading...'
             } else {

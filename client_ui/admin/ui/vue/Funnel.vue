@@ -63,7 +63,7 @@ export default class Funnel extends Vue {
                 }
             })
         }).catch((err: any) => {
-            console.log('Failed to get referral codes: ', err)
+            console.error('Failed to get referral codes: ', err)
         })
     }
 
@@ -79,7 +79,7 @@ export default class Funnel extends Vue {
         getFunnelData(this.startDate, this.endDate, this.selectedReferralCodes).then((resp: FunnelData) => {
             this.data = resp
         }).catch((err: any) => {
-            console.log('Failed to get funnel data: ', err)
+            console.error('Failed to get funnel data: ', err)
         })
     }
 

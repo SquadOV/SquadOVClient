@@ -177,7 +177,7 @@ export default class WowCharacterFullDisplay extends Vue {
         apiClient.accessToken().getWoWCharacterArmoryLink(this.character.name, this.character.guid).then((resp: ApiData<string>) => {
             openUrlInBrowser(resp.data)
         }).catch((err: any) => {
-            console.log('Failed to get WoW character armory link: ', err)
+            console.error('Failed to get WoW character armory link: ', err)
         }).finally(() => {
             this.armoryProgress = false
         })
@@ -190,7 +190,7 @@ export default class WowCharacterFullDisplay extends Vue {
         apiClient.accessToken().getWowFullCharacter(this.userId, this.matchUuid, this.character.guid).then((resp: ApiData<WowFullCharacter>) => {
             this.fullChar = resp.data
         }).catch((err: any) => {
-            console.log('Failed to get full WoW character info: ', err)
+            console.error('Failed to get full WoW character info: ', err)
         })
 
         this.specIcon = staticClient.getWowSpecsIconUrl(this.patch, this.character.specId)
@@ -201,7 +201,7 @@ export default class WowCharacterFullDisplay extends Vue {
                 this.className = classData.name
             })
         }).catch((err: any) => {
-            console.log('Failed to get WoW spec: ', err)
+            console.error('Failed to get WoW spec: ', err)
         })
     }
 

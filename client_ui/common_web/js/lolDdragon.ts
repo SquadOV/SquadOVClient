@@ -89,7 +89,7 @@ class LolDdragonClient {
             let data = await axios.get(`${DDRAGON_BASE_URL}/${this.ddragonVersion}/data/en_US/champion.json`)
             this.championCache = new LolDdragonCache(data.data)
         } catch (e) {
-            console.log('Failed to load Ddragon champion cache: ', e)
+            console.error('Failed to load Ddragon champion cache: ', e)
         }
 
         this.isLoadingChampionCache = false
@@ -114,7 +114,7 @@ class LolDdragonClient {
             let data = await axios.get(`${DDRAGON_BASE_URL}/${this.ddragonVersion}/data/en_US/summoner.json`)
             this.summonerSpellCache = new LolDdragonCache(data.data)
         } catch (e) {
-            console.log('Failed to load Ddragon summoner spell cache: ', e)
+            console.error('Failed to load Ddragon summoner spell cache: ', e)
         }
 
         this.isLoadingSummonerSpellCache = false
@@ -139,7 +139,7 @@ class LolDdragonClient {
             let data = await axios.get(`${DDRAGON_BASE_URL}/${this.ddragonVersion}/data/en_US/item.json`)
             this.itemCache = new LolDdragonCache(data.data)
         } catch (e) {
-            console.log('Failed to load Ddragon Item cache: ', e)
+            console.error('Failed to load Ddragon Item cache: ', e)
         }
 
         this.isLoadingItemCache = false
@@ -290,7 +290,7 @@ class LolDdragonClientContainer {
             resp.data.forEach((ele: string) => this.validVersions.add(ele))
             this.defaultVersion = resp.data[0]
         }).catch((err: any) => {
-            console.log('Failed to obtain DDragon version: ', err)
+            console.error('Failed to obtain DDragon version: ', err)
         })
     }
 

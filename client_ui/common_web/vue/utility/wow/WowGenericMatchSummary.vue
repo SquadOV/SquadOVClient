@@ -219,7 +219,7 @@ export default class WowGenericMatchSummary extends Vue {
                 return a.team - b.team
             })
         }).catch((err: any) => {
-            console.log('Failed to get characters for WoW match: ', err)
+            console.error('Failed to get characters for WoW match: ', err)
         })
     }
 
@@ -229,7 +229,7 @@ export default class WowGenericMatchSummary extends Vue {
         axios.get(url).then((resp: ApiData<WowInstanceData>) => {
             this.instanceData = resp.data
         }).catch((err: any) => {
-            console.log('Failed to obtain instance data: ', err)
+            console.error('Failed to obtain instance data: ', err)
         })
     }
 

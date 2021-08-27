@@ -129,7 +129,7 @@ export default class LolGameLog extends Vue {
                 this.nextLink = null
             }
         }).catch((err : any) => {
-            console.log('Failed to list LoL matches: ' + err);
+            console.error('Failed to list LoL matches: ' + err);
         })
     }
 

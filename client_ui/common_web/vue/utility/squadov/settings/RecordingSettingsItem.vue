@@ -635,7 +635,7 @@ export default class RecordingSettingsItem extends Vue {
             this.$store.commit('changeLocalRecording', {use, loc, limit})
             this.$refs.loc.refresh()
         }).catch((err: any) => {
-            console.log('Failed to change local recording settings: ', err)
+            console.error('Failed to change local recording settings: ', err)
             this.localRecordChangeFail = true
         }).finally(() => {
             this.changeLocalRecordingProgress = false
@@ -717,7 +717,7 @@ export default class RecordingSettingsItem extends Vue {
                     throw 'Bad keycode?'
                 }
             } catch (ex) {
-                console.log('Failed to request key code: ', code, ex)
+                console.warn('Failed to request key code: ', code, ex)
                 this.keybindCache.set(code, '<ERROR>')
             }
         }

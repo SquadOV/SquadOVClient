@@ -106,7 +106,7 @@ export default class SingleNewsDisplay extends Vue {
         axios.get(`https://us-central1.content.squadov.gg/news/${this.news.data}`).then((resp: ApiData<string>) => {
             this.markdownText = resp.data
         }).catch((err: any) => {
-            console.log('Failed to grab news item: ', err)
+            console.warn('Failed to grab news item: ', err)
         })
     }
 

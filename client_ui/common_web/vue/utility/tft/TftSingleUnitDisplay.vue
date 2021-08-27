@@ -154,7 +154,7 @@ export default class TftSingleUnitDisplay extends Vue {
             this.unitData = resp.data
             this.refreshTraitData()
         }).catch((err: any) => {
-            console.log('Failed to get TFT unit data: ', err)
+            console.warn('Failed to get TFT unit data: ', err)
         })
     }
 
@@ -177,7 +177,7 @@ export default class TftSingleUnitDisplay extends Vue {
             })).then((values: ApiData<TftTraitData>[]) => {
                 this.traitData = values.map((ele: ApiData<TftTraitData>) => ele.data)
             }).catch((err: any) => {
-                console.log('Failed to get TFT unit trait data: ', err)
+                console.warn('Failed to get TFT unit trait data: ', err)
             })
         }
     }
@@ -193,7 +193,7 @@ export default class TftSingleUnitDisplay extends Vue {
         })).then((values: ApiData<TftItemData>[]) => {
             this.itemData = values.map((ele: ApiData<TftItemData>) => ele.data)
         }).catch((err: any) => {
-            console.log('Failed to get TFT unit item data: ', err)
+            console.warn('Failed to get TFT unit item data: ', err)
         })
     }
 

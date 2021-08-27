@@ -186,7 +186,7 @@ export default class TotalRecordedPlaytimeWidget extends Vue {
             this.msToNextRefresh = REFRESH_FREQUENCY_MS
             this.updateMinutesSinceLastRefresh()
         }).catch((err: any) => {
-            console.log('Failed to obtain recent playtime: ', err)
+            console.error('Failed to obtain recent playtime: ', err)
         })
     }
 
