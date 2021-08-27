@@ -439,6 +439,7 @@
                                             >
                                             </user-profile-access-editor>
 
+                                            <!--
                                             <user-profile-access-editor
                                                 class="mt-4"
                                                 v-model="editableProfile.achievementAccess"
@@ -447,6 +448,7 @@
                                                 tooltip="Who can see your profile's ranks and gaming achievements."
                                             >
                                             </user-profile-access-editor>
+                                            -->
 
                                             <user-profile-access-editor
                                                 class="mt-4"
@@ -532,14 +534,17 @@
             <v-container fluid>
                 <v-row justify="center">
                     <v-col cols="4">
+                    <!--
                         <user-profile-achievements
                             :user-id="userProfile.userId"
                             v-if="userProfile.hasAchievementAccess"
                         >
                         </user-profile-achievements>
+                    -->
 
                         <user-profile-clips
                             :user-id="userProfile.userId"
+                            :access-token="userProfile.accessToken"
                             v-if="userProfile.hasMatchAccess"
                             class="mb-4"
                         >
@@ -549,6 +554,7 @@
                     <v-col cols="8" v-if="userProfile.hasMatchAccess">
                         <user-profile-matches
                             :user-id="userProfile.userId"
+                            :access-token="userProfile.accessToken"
                         >
                         </user-profile-matches>
                     </v-col>
@@ -651,9 +657,11 @@ export default class UserProfile extends Vue {
             return true
         }
 
+/*
         if (!this.userProfile.hasAchievementAccess && this.userProfile.achievementAccess & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) {
             return true
         }
+*/
 
         if (!this.userProfile.hasMatchAccess && this.userProfile.matchAccess & USER_PROFILE_ACCESS_PRIVATE_TWITCH_SUB) {
             return true
@@ -718,7 +726,6 @@ export default class UserProfile extends Vue {
         }
 
         promise.then((resp: ApiData<UserProfileBasic>) => {
-            apiClient.setAccessToken(resp.data.accessToken)
             this.userProfile = resp.data
         }).catch((err: any) => {
             console.log('Failed to get user profile basic: ', err)

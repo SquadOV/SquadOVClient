@@ -279,7 +279,7 @@ export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
     refreshData() {
         this.currentMatch = null
         this.refreshMatchPermissions(this.matchUuid, SquadOvGames.LeagueOfLegends)
-        apiClient.getLolMatch(this.matchUuid).then((resp: ApiData<FullLolMatch>) => {
+        apiClient.accessToken().getLolMatch(this.matchUuid).then((resp: ApiData<FullLolMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain LoL match: ', err)

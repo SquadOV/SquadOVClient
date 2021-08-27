@@ -24,6 +24,7 @@ export interface VodClip {
     comments: number
     favoriteReason: string | null
     isWatchlist: boolean
+    accessToken: string | null
 }
 
 export interface VodFavoriteResponse {

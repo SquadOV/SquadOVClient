@@ -25,13 +25,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
-import { Prop, Watch } from 'vue-property-decorator'
+import Component, { mixins } from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
+import CommonComponent from '../CommonComponent'
 
 @Component
-export default class WoWGameLog extends Vue {
+export default class WoWGameLog extends mixins(CommonComponent) {
     @Prop({required: true})
     userId!: number
 
@@ -42,7 +42,7 @@ export default class WoWGameLog extends Vue {
         return {
             name: pi.WowEncounterLogPageId,
             params: this.$route.params,
-            query: this.$route.query
+            query: this.cleanQuery
         }
     }
 
@@ -50,7 +50,7 @@ export default class WoWGameLog extends Vue {
         return {
             name: pi.WowChallengeLogPageId,
             params: this.$route.params,
-            query: this.$route.query
+            query: this.cleanQuery
         }
     }
 
@@ -58,7 +58,7 @@ export default class WoWGameLog extends Vue {
         return {
             name: pi.WowArenaLogPageId,
             params: this.$route.params,
-            query: this.$route.query
+            query: this.cleanQuery
         }
     }
 }

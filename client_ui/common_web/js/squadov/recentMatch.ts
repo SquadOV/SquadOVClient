@@ -17,6 +17,7 @@ export interface BaseRecentMatch {
     userId: number
     favoriteReason: string | null
     isWatchlist: boolean
+    accessToken: string | null
 }
 
 export interface RecentMatch {

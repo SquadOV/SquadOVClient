@@ -78,6 +78,9 @@ export default class AimlabTaskSummaryDisplay extends mixins(CommonComponent) {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     content : AimlabContent = getAimlabContent()
 
     get hasVod() : boolean {
@@ -91,7 +94,8 @@ export default class AimlabTaskSummaryDisplay extends mixins(CommonComponent) {
                 taskId: this.task.matchUuid
             },
             query: {
-                userId: this.userId
+                userId: this.userId,
+                at: this.accessToken,
             }
         }
     }
@@ -108,7 +112,7 @@ export default class AimlabTaskSummaryDisplay extends mixins(CommonComponent) {
         }
 
         this.vod = null
-        apiClient.findVodFromMatchUserId(this.task.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
+        apiClient.accessToken(this.accessToken).findVodFromMatchUserId(this.task.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

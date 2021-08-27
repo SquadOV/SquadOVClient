@@ -213,7 +213,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }).finally(() => {
             if (!this.videoUri) {
 ///#endif
-                apiClient.getVodManifest(this.vod!.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
+                apiClient.accessToken().getVodManifest(this.vod!.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
                     this.manifest = resp.data
                     this.toggleHasVideo()
                 }).catch((err : any) => {
@@ -280,7 +280,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             return
         }
 
-        apiClient.getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<string>) => {
+        apiClient.accessToken().getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<string>) => {
             this.videoUri = resp.data
         }).catch((err : any) => {
             console.log('Failed to get final URL for video.')

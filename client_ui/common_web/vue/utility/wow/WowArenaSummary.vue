@@ -9,6 +9,7 @@
         :friendly-team="friendlyTeam"
         :disable-link="disableLink"
         :link-to-player-section="linkToPlayerSection"
+        :access-token="accessToken"
         @go-to-character="$emit('go-to-character', arguments[0])"
     >
         <template v-slot="{ instanceName }">
@@ -62,6 +63,9 @@ export default class WowArenaSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     linkToPlayerSection!: boolean
+
+    @Prop()
+    accessToken!: string | undefined
 
     get arenaType(): string {
         if (this.arena.type === '5v5') {

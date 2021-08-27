@@ -5,6 +5,7 @@
         disable-mini
         disable-select
         profile
+        :access-token="accessToken"
     >
     </recent-recorded-matches>
 </template>
@@ -24,6 +25,9 @@ import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 export default class UserProfileMatches extends Vue {
     @Prop({required: true})
     userId!: number
+
+    @Prop({required: true})
+    accessToken!: string
 }
 
 </script>

@@ -109,7 +109,7 @@ export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase)
     @Watch('taskId')
     refreshTask() {
         this.refreshMatchPermissions(this.taskId, SquadOvGames.AimLab)
-        apiClient.getAimlabTaskData(this.taskId, this.userId).then((resp : ApiData<AimlabTaskData>) => {
+        apiClient.accessToken().getAimlabTaskData(this.taskId, this.userId).then((resp : ApiData<AimlabTaskData>) => {
             this.data = resp.data
         }).catch((err : any) => {
             console.log('Failed to get Aim Lab task data: ' + err)

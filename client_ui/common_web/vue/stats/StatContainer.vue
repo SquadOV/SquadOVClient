@@ -195,7 +195,7 @@ export default class StatContainer extends Vue {
         // TODO: Figure out *what* changed exactly so we can only request data that we expect to be different.
         let container = new StatInstanceContainer(new Map([[this.userId, this.instances]]))
         let request = container.buildGraphqlQuery()
-        apiClient.graphqlRequest(request).then((resp : GraphqlApiData<any>) => {
+        apiClient.accessToken().graphqlRequest(request).then((resp : GraphqlApiData<any>) => {
             container.parseGraphqlResponse(resp)
             this.seriesData = this.instances.map((ele : StatInstance) => ele.data)
         }).catch((err: any) => {

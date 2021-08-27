@@ -341,7 +341,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
             return
         }
 
-        apiClient.getGenericSharePermissions(undefined, this.value.videoUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
+        apiClient.accessToken().getGenericSharePermissions(undefined, this.value.videoUuid, undefined).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.permissions = resp.data
         }).catch((err: any) => {
             console.log('Failed to get video share permissions: ', err)
@@ -452,7 +452,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         if (!this.value) {
             return
         }
-        apiClient.getVodManifest(this.value.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
+        apiClient.accessToken().getVodManifest(this.value.videoUuid!).then((resp : ApiData<vod.VodManifest>) => {
             this.manifest = resp.data
         }).catch((err: any) => {
             console.log('Failed to get VOD manifest:', err)
@@ -543,7 +543,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
             return
         }
 
-        apiClient.getVodSegment(this.track.segments[0].uri).then((resp : ApiData<string>) => {
+        apiClient.accessToken().getVodSegment(this.track.segments[0].uri).then((resp : ApiData<string>) => {
             this.downloadUri = resp.data
         }).catch((err: any) => {
             console.log('Failed to get VOD download URI: ', err)

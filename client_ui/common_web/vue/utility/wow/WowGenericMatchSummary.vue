@@ -133,6 +133,9 @@ export default class WowGenericMatchSummary extends Vue {
     @Prop({type: Boolean, default: false})
     linkToPlayerSection!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
     instanceData: WowInstanceData | null = null
@@ -191,6 +194,7 @@ export default class WowGenericMatchSummary extends Vue {
             },
             query: {
                 userId: this.userId,
+                at: this.accessToken,
             }
         }
     }
@@ -198,7 +202,7 @@ export default class WowGenericMatchSummary extends Vue {
     @Watch('match')
     @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
+        apiClient.accessToken(this.accessToken).findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null
@@ -209,7 +213,7 @@ export default class WowGenericMatchSummary extends Vue {
     @Watch('userId')
     refreshCharacters() {
         this.relevantCharacters = null
-        apiClient.listWoWCharactersForMatch(this.match.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
+        apiClient.accessToken(this.accessToken).listWoWCharactersForMatch(this.match.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
             this.relevantCharacters = resp.data
             this.relevantCharacters!.sort((a: WowCharacter, b: WowCharacter) => {
                 return a.team - b.team

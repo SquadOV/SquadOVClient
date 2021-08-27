@@ -274,7 +274,7 @@ export default class ClipView extends Vue {
 
         if (elapsed >= threshold && vodOnPage >= threshold) {
             this.sentView = true
-            apiClient.markClipView(this.clipUuid).catch((err: any) => {
+            apiClient.accessToken().markClipView(this.clipUuid).catch((err: any) => {
                 console.log('Failed to mark clip view: ', err)
                 this.sentView = false
             })
@@ -347,7 +347,7 @@ export default class ClipView extends Vue {
 
     @Watch('clipUuid')
     refreshData() {
-        apiClient.getClip(this.clipUuid).then((resp: ApiData<VodClip>) => {
+        apiClient.accessToken().getClip(this.clipUuid).then((resp: ApiData<VodClip>) => {
             this.clip = resp.data
         }).catch((err: any) => {
             console.log('Failed to load clip: ', err)
@@ -373,7 +373,7 @@ export default class ClipView extends Vue {
             this.comments = []
             return
         }
-        apiClient.getClipComments({
+        apiClient.accessToken().getClipComments({
             next: this.nextCommentLink,
             clipUuid: this.clipUuid,
             start: this.lastCommentIndex,

@@ -148,6 +148,9 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     vod: VodAssociation | null = null
     currentMatch: HearthstoneMatch | null = null
 
@@ -158,7 +161,8 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
                 matchId: this.matchId
             },
             query: {
-                userId: this.userId
+                userId: this.userId,
+                at: this.accessToken,
             }
         }
     }
@@ -318,7 +322,7 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     @Watch('userId')
     refreshData() {
         this.currentMatch = null
-        apiClient.getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<HearthstoneMatch>) => {
+        apiClient.accessToken(this.accessToken).getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<HearthstoneMatch>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Hearthstone match: ', err)
@@ -329,7 +333,7 @@ export default class HearthstoneMatchSummaryDisplay extends Vue {
     @Watch('userId')
     refreshVod() {
         this.vod = null
-        apiClient.findVodFromMatchUserId(this.matchId, this.userId).then((resp : ApiData<VodAssociation>) => {
+        apiClient.accessToken(this.accessToken).findVodFromMatchUserId(this.matchId, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

@@ -181,6 +181,7 @@ class ApiClient {
     _tempSessionId: string | null
     _tempUserId: number | null
     _accessToken: string | null
+    _useAccessToken: boolean
     _localApiPort: number | null
 
     constructor() {
@@ -189,6 +190,7 @@ class ApiClient {
         this._tempUserId = null
         this._localApiPort = null
         this._accessToken = null
+        this._useAccessToken = false
     }
 
     setSessionId(s : string) {
@@ -205,7 +207,23 @@ class ApiClient {
     }
 
     setAccessToken(s: string | null) {
-        this._accessToken = s
+        this._accessToken = s 
+    }
+
+    accessToken(s: string | null | undefined = null): ApiClient {
+        let newToken = s || this._accessToken
+        if (!!newToken) {
+            let ret: ApiClient = new ApiClient()
+            ret._sessionId = this._sessionId
+            ret._tempSessionId = this._tempSessionId
+            ret._tempUserId = this._tempUserId
+            ret._localApiPort = this._localApiPort
+            ret.setAccessToken(newToken)
+            ret._useAccessToken = true
+            return ret
+        } else {
+            return this
+        }
     }
 
     get hasTempSession(): boolean {
@@ -245,7 +263,7 @@ class ApiClient {
         }
 
         // Always use access token when available.
-        if (!!this._accessToken) {
+        if (!!this._accessToken && this._useAccessToken) {
             ret.headers = {
                 'x-squadov-access-token': this._accessToken,
             }
@@ -996,10 +1014,13 @@ class ApiClient {
     }
 
     getWoWCharacterArmoryLink(name: string, guid: string): Promise<ApiData<string>> {
-        return axios.post(`v1/wow/characters/armory`, {
-            characterName: name,
-            characterGuid: guid,
-        }, this.createWebAxiosConfig(true))
+        return axios.get(`v1/wow/characters/armory`, {
+            ...this.createWebAxiosConfig(true),
+            params: {
+                characterName: name,
+                characterGuid: guid,
+            }
+        })
     }
     
     getWowDeathRecap(userId: number, matchUuid: string, eventId: number, seconds: number): Promise<ApiData<WowDeathRecap>> {
@@ -1200,18 +1221,28 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number, filters : RecentMatchFilters}): Promise<ApiData<HalResponse<VodClip[]>>> {
+    listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number, filters : RecentMatchFilters, profileId?: number}): Promise<ApiData<HalResponse<VodClip[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get('v1/clip', {
-                ...this.createWebAxiosConfig(),
-                params: {
-                    start: params.start!,
-                    end: params.end!,
-                    matchUuid: params.matchUuid,
-                    ...params.filters,
-                }
-            })
+            (params.profileId !== undefined) ?
+                axios.get(`profile/${params.profileId}/clips`, {
+                    ...this.createWebAxiosConfig(),
+                    params: {
+                        start: params.start!,
+                        end: params.end!,
+                        matchUuid: params.matchUuid,
+                        ...params.filters,
+                    }
+                }) :
+                axios.get('v1/clip', {
+                    ...this.createWebAxiosConfig(),
+                    params: {
+                        start: params.start!,
+                        end: params.end!,
+                        matchUuid: params.matchUuid,
+                        ...params.filters,
+                    }
+                })
 
         return promise.then((resp : ApiData<HalResponse<VodClip[]>>) => {
             resp.data.data.forEach(cleanVodClipFromJson)

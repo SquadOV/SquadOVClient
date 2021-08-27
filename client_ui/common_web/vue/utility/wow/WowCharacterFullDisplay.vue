@@ -174,7 +174,7 @@ export default class WowCharacterFullDisplay extends Vue {
 
     goToArmory() {
         this.armoryProgress = true
-        apiClient.getWoWCharacterArmoryLink(this.character.name, this.character.guid).then((resp: ApiData<string>) => {
+        apiClient.accessToken().getWoWCharacterArmoryLink(this.character.name, this.character.guid).then((resp: ApiData<string>) => {
             openUrlInBrowser(resp.data)
         }).catch((err: any) => {
             console.log('Failed to get WoW character armory link: ', err)
@@ -187,7 +187,7 @@ export default class WowCharacterFullDisplay extends Vue {
     @Watch('userId')
     @Watch('character')
     refreshData() {
-        apiClient.getWowFullCharacter(this.userId, this.matchUuid, this.character.guid).then((resp: ApiData<WowFullCharacter>) => {
+        apiClient.accessToken().getWowFullCharacter(this.userId, this.matchUuid, this.character.guid).then((resp: ApiData<WowFullCharacter>) => {
             this.fullChar = resp.data
         }).catch((err: any) => {
             console.log('Failed to get full WoW character info: ', err)

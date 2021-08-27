@@ -28,6 +28,9 @@ export default class VideoPreviewPlayer extends Vue {
     @Prop({type: Boolean, default: false})
     useLocalVod!: boolean
 
+    @Prop()
+    accessToken!: string | null | undefined
+
     videoUri: string | null = null
     player: videojs.Player | null = null
     previousTime: number = 10000000000
@@ -118,7 +121,7 @@ export default class VideoPreviewPlayer extends Vue {
                 return
             }
 
-            apiClient.getVodSegment(previewUri).then((resp : ApiData<string>) => {
+            apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<string>) => {
                 this.videoUri = resp.data
                 Vue.nextTick(() => {
                     this.onVideoUriChange()

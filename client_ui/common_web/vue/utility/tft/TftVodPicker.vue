@@ -115,7 +115,7 @@ export default class TftVodPicker extends mixins(CommonComponent) {
             return
         }
         this.availableVods = null
-        apiClient.getTftMatchAccessibleVods(this.matchUuid).then((resp: ApiData<TftMatchAccessibleVods>) => {
+        apiClient.accessToken().getTftMatchAccessibleVods(this.matchUuid).then((resp: ApiData<TftMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain TFT VODs: ', err)

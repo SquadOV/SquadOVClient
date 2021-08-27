@@ -7,6 +7,7 @@
         :fill="fill"
         :disable-link="disableLink"
         :link-to-player-section="linkToPlayerSection"
+        :access-token="accessToken"
         @go-to-character="$emit('go-to-character', arguments[0])"
     >
         <div class="text-subtitle-1 font-weight-bold">
@@ -59,6 +60,9 @@ export default class WowKeystoneSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     linkToPlayerSection!: boolean
+
+    @Prop()
+    accessToken!: string | undefined
 
     get challengeName(): string {
         return this.challenge.challengeName.replace(/"/g, '')

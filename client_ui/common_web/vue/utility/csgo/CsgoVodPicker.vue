@@ -153,7 +153,7 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
         }
 
         this.availableVods = null
-        apiClient.getCsgoMatchAccessibleVods(this.matchUuid).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
+        apiClient.accessToken().getCsgoMatchAccessibleVods(this.matchUuid).then((resp: ApiData<CsgoMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain CSGO VODs: ', err)

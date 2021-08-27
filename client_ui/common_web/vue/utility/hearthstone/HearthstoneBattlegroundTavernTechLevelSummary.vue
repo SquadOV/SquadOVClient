@@ -116,7 +116,7 @@ export default class HearthstoneBattlegroundTavernTechLevelSummary extends Vue {
     }
 
     refreshData() {
-        apiClient.getHearthstoneBattlegroundsCardsForTavernLevel(this.level).then((resp: ApiData<HearthstoneBattlegroundsCardMetadata[]>) => {
+        apiClient.accessToken().getHearthstoneBattlegroundsCardsForTavernLevel(this.level).then((resp: ApiData<HearthstoneBattlegroundsCardMetadata[]>) => {
             this.cards = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Battleground cards for tavern level: ', err)

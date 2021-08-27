@@ -40,7 +40,7 @@ export default class HearthstoneMatchDeckDisplay extends Vue {
             originalSlots.set(s.cardId, s)
         }
 
-        apiClient.getBulkHearthstoneCardMetadata(this.deck.slots.map((slot: HearthstoneDeckSlot) => {
+        apiClient.accessToken().getBulkHearthstoneCardMetadata(this.deck.slots.map((slot: HearthstoneDeckSlot) => {
             return slot.cardId
         })).then((resp : ApiData<HearthstoneCardMetadata[]>) => {
             this.slots = resp.data.map((ele: HearthstoneCardMetadata) => {

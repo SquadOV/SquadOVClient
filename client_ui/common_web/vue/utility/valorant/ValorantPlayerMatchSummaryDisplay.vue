@@ -67,8 +67,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { ValorantPlayerMatchSummary, getGameMode, getIsCustom } from '@client/js/valorant/valorant_matches'
 import { kda, dpr, cspr } from '@client/js/valorant/valorant_player_stats'
@@ -80,6 +79,7 @@ import { standardFormatTime } from '@client/js/time'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
 import * as pi from '@client/js/pages'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -87,7 +87,7 @@ import * as pi from '@client/js/pages'
         ValorantHitTracker
     }
 })
-export default class ValorantPlayerMatchSummaryDisplay extends Vue {
+export default class ValorantPlayerMatchSummaryDisplay extends mixins(CommonComponent) {
     standardFormatTime = standardFormatTime
 
     @Prop({required: true})
@@ -108,6 +108,9 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     vod: VodAssociation | null = null
 
     get hasVod() : boolean {
@@ -122,9 +125,10 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
                 matchUuid: this.match.matchUuid,
             },
             query: {
-                ...this.$route.query,
+                ...this.cleanQuery,
                 account: this.account,
                 userId: this.userId,
+                at: this.accessToken,
             },
         }
     }
@@ -234,7 +238,7 @@ export default class ValorantPlayerMatchSummaryDisplay extends Vue {
 
     @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
+        apiClient.accessToken().accessToken(this.accessToken).findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

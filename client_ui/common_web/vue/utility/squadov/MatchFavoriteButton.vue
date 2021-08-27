@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="canFavorite">
         <v-dialog
             v-model="showHideReason"
             persistent
@@ -92,6 +92,10 @@ export default class MatchFavoriteButton extends Vue {
 
     showHideReason: boolean = false
     reason: string = ''
+
+    get canFavorite(): boolean {
+        return !!this.$store.state.currentUser
+    }
 
     startFavoriteFlow() {
         if (this.isFavorite) {

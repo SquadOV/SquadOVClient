@@ -278,7 +278,7 @@ export default class ValorantMatch extends mixins(CommonComponent, MatchShareBas
     @Watch('matchUuid')
     refreshMatch() {
         this.refreshMatchPermissions(this.matchUuid, SquadOvGames.Valorant)
-        apiClient.getValorantMatchDetails(this.matchUuid).then((resp : ApiData<ValorantMatchDetails>) => {
+        apiClient.accessToken().getValorantMatchDetails(this.matchUuid).then((resp : ApiData<ValorantMatchDetails>) => {
             this.currentMatch = resp.data
         }).catch((err : any) => {
             console.log('Failed to get valorant match details: ' + err)

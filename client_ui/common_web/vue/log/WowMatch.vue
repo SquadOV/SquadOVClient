@@ -420,7 +420,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     refreshMatch() {
         this.currentMatch = null
         this.refreshMatchPermissions(this.matchUuid, SquadOvGames.WorldOfWarcraft)
-        apiClient.getWoWMatch(this.userId, this.matchUuid).then((resp: ApiData<GenericWowMatchContainer>) => {
+        apiClient.accessToken().getWoWMatch(this.userId, this.matchUuid).then((resp: ApiData<GenericWowMatchContainer>) => {
             this.currentMatch = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW match: ', err)
@@ -431,7 +431,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     @Watch('userId')
     refreshCharacters() {
         this.matchCharacters = []
-        apiClient.listWoWCharactersForMatch(this.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
+        apiClient.accessToken().listWoWCharactersForMatch(this.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
             this.matchCharacters = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW match characters: ', err)
@@ -441,7 +441,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     @Watch('matchUuid')
     refreshCharacterAssociations() {
         this.characterAssociations = []
-        apiClient.listWoWMatchCharacterAssociations(this.userId, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
+        apiClient.accessToken().listWoWMatchCharacterAssociations(this.userId, this.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
             this.characterAssociations = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW character associations: ', err)
@@ -452,7 +452,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
     @Watch('userId')
     refreshEvents() {
         this.events = null
-        apiClient.getWoWMatchEvents(this.userId, this.matchUuid).then((resp: ApiData<SerializedWowMatchEvents>) => {
+        apiClient.accessToken().getWoWMatchEvents(this.userId, this.matchUuid).then((resp: ApiData<SerializedWowMatchEvents>) => {
             this.events = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain WoW match events: ', err)

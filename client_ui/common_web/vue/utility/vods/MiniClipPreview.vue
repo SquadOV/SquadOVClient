@@ -6,15 +6,16 @@
                     <video-preview-player
                         class="full-width full-parent-height"
                         :vod="clip.manifest"
+                        :access-token="accessToken"
                     >
                     </video-preview-player>
                 </div>
 
-                <div class="d-flex align-center">
+                <div :class="`d-flex align-center ${ hideDetails ? 'justify-center' : '' }`">
                     <v-tooltip bottom>
                         <template v-slot:activator="{on, attrs}">
                             <v-icon
-                                v-if="!!clip.favoriteReason"
+                                v-if="!!clip.favoriteReason && !hideDetails"
                                 v-bind="attrs"
                                 v-on="on"
                                 color="warning"
@@ -38,14 +39,16 @@
                     </v-img>
                     <div class="font-weight-bold text-subtitle-1">{{ clip.title }}</div>
 
-                    <v-spacer></v-spacer>
-                    <div class="text-body-2">{{ clipTime }}</div>
-                    <v-icon small v-if="clip.isWatchlist">
-                        mdi-playlist-check
-                    </v-icon>
+                    <template v-if="!hideDetails">
+                        <v-spacer></v-spacer>
+                        <div class="text-body-2">{{ clipTime }}</div>
+                        <v-icon small v-if="clip.isWatchlist">
+                            mdi-playlist-check
+                        </v-icon>
+                    </template>
                 </div>
 
-                <div class="d-flex align-center">
+                <div :class="`d-flex align-center`" v-if="!hideDetails">
                     <div class="text-body-2 font-weight-bold">{{ clip.clipper }}</div>
                     <v-spacer></v-spacer>
                     <v-icon
@@ -100,6 +103,12 @@ export default class MiniClipPreview extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined | null
+
+    @Prop({type: Boolean, default: false})
+    hideDetails!: boolean
+
     gameToIcon = gameToIcon
 
     get clipTime(): string {
@@ -111,6 +120,9 @@ export default class MiniClipPreview extends Vue {
             name: pi.ClipPageId,
             params: {
                 clipUuid: this.clip.clip.videoUuid
+            },
+            query: {
+                at: this.accessToken,
             }
         }
     }

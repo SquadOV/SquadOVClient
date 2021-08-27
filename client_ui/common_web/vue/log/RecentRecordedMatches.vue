@@ -225,6 +225,9 @@ export default class RecentRecordedMatches extends Vue {
     @Prop({type: Boolean, default: false})
     profile!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     recentMatches: RecentMatch[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null
@@ -336,7 +339,7 @@ export default class RecentRecordedMatches extends Vue {
 
     loadMoreMatches() {
         this.loading = true
-        apiClient.listMyRecentMatches({
+        apiClient.accessToken(this.accessToken).listMyRecentMatches({
             next: this.nextLink,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,

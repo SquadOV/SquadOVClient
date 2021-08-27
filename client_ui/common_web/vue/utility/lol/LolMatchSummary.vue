@@ -124,8 +124,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { LolPlayerMatchSummary, LolMiniParticipantStats, getLolGameMode } from '@client/js/lol/matches'
 import * as pi from '@client/js/pages'
@@ -133,6 +132,7 @@ import { standardFormatTime, secondsToTimeString } from '@client/js/time'
 import { ddragonContainer } from '@client/js/lolDdragon'
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
 import LolMatchSummaryTeamDisplay from '@client/vue/utility/lol/LolMatchSummaryTeamDisplay.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -140,7 +140,7 @@ import LolMatchSummaryTeamDisplay from '@client/vue/utility/lol/LolMatchSummaryT
         LolMatchSummaryTeamDisplay,
     }
 })
-export default class LolMatchSummary extends Vue {
+export default class LolMatchSummary extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: LolPlayerMatchSummary
 
@@ -155,6 +155,9 @@ export default class LolMatchSummary extends Vue {
 
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
+
+    @Prop()
+    accessToken!: string | undefined
 
     backgroundUrl: string = ''
 
@@ -180,7 +183,8 @@ export default class LolMatchSummary extends Vue {
             },
             query: {
                 userId: this.userId,
-                ...this.$route.query
+                at: this.accessToken,
+                ...this.cleanQuery
             },
         }
     }

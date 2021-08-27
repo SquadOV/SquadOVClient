@@ -44,14 +44,14 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { apiClient, ApiData } from '@client/js/api'
 import { WowCharacter } from '@client/js/wow/character'
 import { openUrlInBrowser } from '@client/js/external'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
+import CommonComponent from '../CommonComponent'
 
 const maxTasksPerRequest : number = 10
 
@@ -61,7 +61,7 @@ const maxTasksPerRequest : number = 10
         WowCharacterChooser
     }
 })
-export default class WowLogContainer extends Vue {
+export default class WowLogContainer extends mixins(CommonComponent) {
     @Prop({required: true})
     userId!: number
 
@@ -100,7 +100,7 @@ export default class WowLogContainer extends Vue {
                 userId: this.userId,
                 guid: this.selectedCharacter.guid
             },
-            query: this.$route.query
+            query: this.cleanQuery
         }
 
         if (!this.guid) {

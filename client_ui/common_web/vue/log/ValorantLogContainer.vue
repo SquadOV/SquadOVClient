@@ -46,14 +46,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import RiotAccountChooser from '@client/vue/utility/riot/RiotAccountChooser.vue'
-import * as pi from '@client/js/pages'
+import CommonComponent from '../CommonComponent'
 
 @Component({
     components: {
@@ -61,7 +60,7 @@ import * as pi from '@client/js/pages'
         RiotAccountChooser
     }
 })
-export default class ValorantLogContainer extends Vue {
+export default class ValorantLogContainer extends mixins(CommonComponent) {
     @Prop({required: true})
     userId!: number
 
@@ -127,7 +126,7 @@ export default class ValorantLogContainer extends Vue {
                 userId: this.userId,
                 account: this.selectedAccount.puuid
             },
-            query: this.$route.query
+            query: this.cleanQuery
         }
 
         if (!this.puuid) {

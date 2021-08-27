@@ -707,8 +707,9 @@ router.beforeEach((to : Route, from : Route, next : any) => {
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')
     apiClient.setTempSessionId(nextUrl.searchParams.get('share'), nextUrl.searchParams.get('uid'))
+    apiClient.setAccessToken(nextUrl.searchParams.get('at'))
 
-    let isTmpSession = apiClient.hasTempSession
+    let isTmpSession = apiClient.hasTempSession || !!apiClient._accessToken
     let isAuth = !!store.state.currentUser
 
 /// #if DESKTOP

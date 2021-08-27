@@ -828,7 +828,7 @@ export default class WowTimeline extends mixins(CommonComponent) {
 
         this.pendingEndpoints.add(endpoint)
 
-        apiClient.getWoWMatchStats(this.userId, this.matchUuid, endpoint, {
+        apiClient.accessToken().getWoWMatchStats(this.userId, this.matchUuid, endpoint, {
             psStepSeconds: STAT_SECOND_STEP,
             start: this.encounterStartTime.getTime(),
             end: this.encounterEndTime.getTime()

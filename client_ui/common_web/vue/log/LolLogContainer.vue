@@ -39,13 +39,13 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { RiotSummoner } from '@client/js/riot/summoner'
 import { apiClient, ApiData } from '@client/js/api'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SummonerAccountChooser from '@client/vue/utility/riot/SummonerAccountChooser.vue'
+import CommonComponent from '../CommonComponent'
 
 @Component({
     components: {
@@ -53,7 +53,7 @@ import SummonerAccountChooser from '@client/vue/utility/riot/SummonerAccountChoo
         SummonerAccountChooser,
     }
 })
-export default class LolLogContainer extends Vue {
+export default class LolLogContainer extends mixins(CommonComponent) {
 @Prop({required: true})
     userId!: number
 
@@ -84,7 +84,7 @@ export default class LolLogContainer extends Vue {
                 userId: this.userId,
                 account: this.selectedAccount.puuid
             },
-            query: this.$route.query
+            query: this.cleanQuery
         }
 
         if (!this.puuid) {

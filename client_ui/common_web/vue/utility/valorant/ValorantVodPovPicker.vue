@@ -182,7 +182,7 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
 
         this.availableVods = null
         // Using the current user ID here is correct as we only want the VODS accessible to the current user (not to the user whose match we're viewing).
-        apiClient.getValorantMatchAccessibleVods(this.matchUuid).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
+        apiClient.accessToken().getValorantMatchAccessibleVods(this.matchUuid).then((resp: ApiData<ValorantMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain Valorant VODs: ', err)
@@ -213,7 +213,7 @@ export default class ValorantVodPovPicker extends mixins(CommonComponent) {
 
             this.$emit('update:puuid', puuid)
             this.$emit('update:vod', vod)
-            apiClient.getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
+            apiClient.accessToken().getValorantMatchPlayerMetadata(this.matchUuid, puuid).then((resp : ApiData<ValorantMatchPlayerMatchMetadata>) => {
                 this.$emit('update:playerMetadata', resp.data)
             }).catch((err : any) => {
                 console.log('Failed to obtain Valorant VOD Player Metadata: ', err)

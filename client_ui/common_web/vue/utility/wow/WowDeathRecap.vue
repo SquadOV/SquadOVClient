@@ -183,7 +183,7 @@ export default class WowDeathRecapAnalysis extends mixins(CommonComponent) {
     @Watch('userId')
     @Watch('death')
     refreshData() {
-        apiClient.getWowDeathRecap(this.userId, this.matchUuid, this.death.eventId, DEATH_RECAP_LENGTH_SECONDS).then((resp: ApiData<WowDeathRecap>) => {
+        apiClient.accessToken().getWowDeathRecap(this.userId, this.matchUuid, this.death.eventId, DEATH_RECAP_LENGTH_SECONDS).then((resp: ApiData<WowDeathRecap>) => {
             this.recap = resp.data
             let uniqueSpellIds: Set<number> = new Set()
             for (let e of this.recap.hpEvents) {

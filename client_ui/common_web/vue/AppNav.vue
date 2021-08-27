@@ -290,7 +290,7 @@ export default class AppNav extends mixins(CommonComponent) {
     }
 
     get gameLogQuery() : any {
-        return this.$route.query
+        return this.cleanQuery
     }
 
     get menuItems(): any [] {

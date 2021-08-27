@@ -217,7 +217,7 @@ export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {
     @Watch('userId')
     refreshData() {
         this.refreshMatchPermissions(this.matchUuid, SquadOvGames.Csgo)
-        apiClient.getCsgoMatchData(this.matchUuid, this.userId).then((resp: ApiData<CsgoFullMatchData>) => {
+        apiClient.accessToken().getCsgoMatchData(this.matchUuid, this.userId).then((resp: ApiData<CsgoFullMatchData>) => {
             this.match = resp.data
         }).catch((err: any) => {
             console.log('Failed to get CSGO match data: ', err)

@@ -92,7 +92,7 @@ export default class LolVodPicker extends mixins(CommonComponent) {
             return
         }
         this.availableVods = null
-        apiClient.getLolMatchAccessibleVods(this.matchUuid).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
+        apiClient.accessToken().getLolMatchAccessibleVods(this.matchUuid).then((resp: ApiData<LeagueMatchAccessibleVods>) => {
             this.availableVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to obtain LoL VODs: ', err)

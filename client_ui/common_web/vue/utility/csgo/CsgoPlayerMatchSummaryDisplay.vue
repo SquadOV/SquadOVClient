@@ -68,8 +68,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { CsgoPlayerMatchSummary } from '@client/js/csgo/summary'
 import { standardFormatTime, secondsToTimeString } from '@client/js/time'
@@ -78,13 +77,14 @@ import { kda } from '@client/js/valorant/valorant_player_stats'
 import { apiClient, ApiData } from '@client/js/api'
 import * as pi from '@client/js/pages'
 import ValorantHitTracker from '@client/vue/utility/valorant/ValorantHitTracker.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
         ValorantHitTracker
     }
 })
-export default class CsgoPlayerMatchSummaryDisplay extends Vue {
+export default class CsgoPlayerMatchSummaryDisplay extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: CsgoPlayerMatchSummary
 
@@ -100,6 +100,9 @@ export default class CsgoPlayerMatchSummaryDisplay extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     vod: VodAssociation | null = null
 
     get hasVod() : boolean {
@@ -114,8 +117,9 @@ export default class CsgoPlayerMatchSummaryDisplay extends Vue {
                 matchUuid: this.match.matchUuid,
             },
             query: {
-                ...this.$route.query,
+                ...this.cleanQuery,
                 userId: this.userId,
+                at: this.accessToken,
             },
         }
     }
@@ -158,7 +162,7 @@ export default class CsgoPlayerMatchSummaryDisplay extends Vue {
     @Watch('match')
     @Watch('userId')
     refreshVod() {
-        apiClient.findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
+        apiClient.accessToken(this.accessToken).findVodFromMatchUserId(this.match.matchUuid, this.userId).then((resp : ApiData<VodAssociation>) => {
             this.vod = resp.data
         }).catch((err : any) => {
             this.vod = null

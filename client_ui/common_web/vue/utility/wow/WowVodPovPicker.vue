@@ -180,7 +180,7 @@ export default class WowVodPovPicker extends mixins(CommonComponent) {
             return
         }
         this.allAccessibleVods = null
-        apiClient.getWoWMatchAccessibleVods(this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
+        apiClient.accessToken().getWoWMatchAccessibleVods(this.matchUuid).then((resp: ApiData<WowMatchAccessibleVods>) => {
             this.allAccessibleVods = resp.data
         }).catch((err: any) => {
             console.log('Failed to get WoW match accessible VODs: ', err)

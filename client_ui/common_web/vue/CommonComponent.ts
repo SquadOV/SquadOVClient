@@ -15,6 +15,12 @@ export default class CommonComponent extends Vue {
         return getAnalyticsContainer()
     }
 
+    get cleanQuery(): any {
+        let q = JSON.parse(JSON.stringify(this.$route.query))
+        delete q['at']
+        return q
+    }
+
     sendAnalyticsEvent(category: AnalyticsCategory, action: AnalyticsAction, label: string, value: number) {
         if (!!this.analytics) {
             this.analytics.event(this.$route, category, action, label, value)

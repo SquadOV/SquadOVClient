@@ -53,6 +53,7 @@
                 v-if="!disablePreview && !forceNoPreview"
                 :vod="match.base.vod"
                 :use-local-vod="useLocalVodPreview"
+                :access-token="match.base.accessToken"
                 class="recent-match-item preview-item"
                 ref="player"
             >
@@ -65,6 +66,7 @@
                 :user-id="match.base.userId"
                 fill
                 :disable-click="disableClick"
+                :access-token="match.base.accessToken"
             >
             </aimlab-task-summary-display>
 
@@ -76,6 +78,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
+                :access-token="match.base.accessToken"
             >
             </lol-match-summary>
 
@@ -88,6 +91,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
+                :access-token="match.base.accessToken"
             >
             </tft-match-summary>
 
@@ -100,6 +104,7 @@
                 fill
                 :mini="!disableMini"
                 :disable-click="disableClick"
+                :access-token="match.base.accessToken"
             >
             </valorant-player-match-summary-display>
 
@@ -111,6 +116,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
+                :access-token="match.base.accessToken"
             >
             </wow-keystone-summary>
 
@@ -122,6 +128,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
+                :access-token="match.base.accessToken"
             >
             </wow-encounter-summary>
 
@@ -133,6 +140,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
+                :access-token="match.base.accessToken"
             >
             </wow-arena-summary>
 
@@ -144,6 +152,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
+                :access-token="match.base.accessToken"
             >
             </csgo-player-match-summary-display>
 
@@ -155,6 +164,7 @@
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
+                :access-token="match.base.accessToken"
             >
             </hearthstone-match-summary-display>
 

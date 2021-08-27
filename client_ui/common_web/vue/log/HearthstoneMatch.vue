@@ -275,10 +275,10 @@ export default class HearthstoneMatch extends mixins(CommonComponent, MatchShare
         this.currentMatch = null
         this.refreshMatchPermissions(this.matchId, SquadOvGames.Hearthstone)
         
-        apiClient.getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<RawHearthstoneMatch>) => {
+        apiClient.accessToken().getHearthstoneMatch(this.matchId, this.userId).then((resp : ApiData<RawHearthstoneMatch>) => {
             this.currentMatch = resp.data
 
-            apiClient.getHearthstoneMatchLogs(this.matchId, this.userId).then((resp: ApiData<HearthstoneMatchLogs>) => {
+            apiClient.accessToken().getHearthstoneMatchLogs(this.matchId, this.userId).then((resp: ApiData<HearthstoneMatchLogs>) => {
                 this.matchWrapper.addLogs(resp.data)
                 this.ready = true
             }).catch((err: any) => {

@@ -69,8 +69,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { TftPlayerMatchSummary, getTftSetNumber } from '@client/js/tft/matches'
 import * as pi from '@client/js/pages'
@@ -81,6 +80,7 @@ import { TFT_RANKED_QUEUE_ID } from '@client/js/tft/queue'
 import TftLittleLegendIcon from '@client/vue/utility/tft/TftLittleLegendIcon.vue'
 import TftFullTraitDisplay from '@client/vue/utility/tft/TftFullTraitDisplay.vue'
 import TftFullUnitDisplay from '@client/vue/utility/tft/TftFullUnitDisplay.vue'
+import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
     components: {
@@ -89,7 +89,7 @@ import TftFullUnitDisplay from '@client/vue/utility/tft/TftFullUnitDisplay.vue'
         TftFullUnitDisplay
     }
 })
-export default class TftMatchSummary extends Vue {
+export default class TftMatchSummary extends mixins(CommonComponent) {
     @Prop({required: true})
     match!: TftPlayerMatchSummary
 
@@ -108,6 +108,9 @@ export default class TftMatchSummary extends Vue {
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
+    @Prop()
+    accessToken!: string | undefined
+
     get gameTo(): any {
         return {
             name: pi.TftMatchPageId,
@@ -116,9 +119,10 @@ export default class TftMatchSummary extends Vue {
                 matchUuid: this.match.matchUuid,
             },
             query: {
-                ...this.$route.query,
+                ...this.cleanQuery,
                 account: this.puuid,
                 userId: this.userId,
+                at: this.accessToken,
             },
         }
     }
