@@ -110,7 +110,7 @@
 
             <v-btn
                 text
-                href="https://discord.gg/jVyfv9ZHHV"
+                href="https://discord.gg/6Rj5jCVDeC"
                 target="_blank"
             >
                 <v-icon class="mr-2">

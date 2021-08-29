@@ -746,6 +746,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
 
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
     let isPublic = to.name === pi.RsoOauthPageId
+        || to.name === pi.TwitchOauthPageId
         || to.name === pi.InviteResponsePageId 
         || to.name === pi.ShareRedirectPageId
         || to.name === pi.VerifyEmailPageId

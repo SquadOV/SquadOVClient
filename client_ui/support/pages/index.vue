@@ -81,7 +81,7 @@
         </div>
 
         <div class="d-flex flex-wrap justify-center align-center mt-2">
-            <a href="https://discord.gg/jVyfv9ZHHV" target="_blank" alt="Discord" class="sheet-link">
+            <a href="https://discord.gg/6Rj5jCVDeC" target="_blank" alt="Discord" class="sheet-link">
                 <v-sheet
                     class="mx-2 d-flex flex-column align-center justify-center"
                     width="125"

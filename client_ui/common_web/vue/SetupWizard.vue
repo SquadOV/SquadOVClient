@@ -519,7 +519,7 @@ export default class SetupWizard extends CommonComponent {
     }
 
     get discordUrl(): string {
-        return 'https://discord.gg/jVyfv9ZHHV'
+        return 'https://discord.gg/6Rj5jCVDeC'
     }
 
     goToScl() {

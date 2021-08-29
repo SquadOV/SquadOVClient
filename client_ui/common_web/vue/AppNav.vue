@@ -380,7 +380,7 @@ export default class AppNav extends mixins(CommonComponent) {
                     },
                     {
                         name: 'Discord',
-                        to: 'https://discord.gg/jVyfv9ZHHV',
+                        to: 'https://discord.gg/6Rj5jCVDeC',
                         link: true,
                     },
                 ]
