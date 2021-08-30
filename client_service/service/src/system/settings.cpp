@@ -107,7 +107,6 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     LocalSettings settings;
     settings.record = RecordingSettings::fromJson(obj["record"]);
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
-    settings.enableNtp = obj.value("enableNtp", false);
     settings.games = PerGameSettings::fromJson(obj["games"]);
     settings.enableDnsOverride = obj.value("enableDnsOverride", true);
 
@@ -156,11 +155,6 @@ WowSettings Settings::wowSettings() {
 ValorantSettings Settings::valorantSettings() {
     std::shared_lock lock(_mutex);
     return _settings.games.valorant;
-}
-
-bool Settings::enableNtp() {
-    std::shared_lock lock(_mutex);
-    return _settings.enableNtp;
 }
 
 bool Settings::enableDns() {

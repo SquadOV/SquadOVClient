@@ -153,11 +153,14 @@ void NTPClient::tick() {
                 newOffset += offsets[i];
                 den += 1;
             }
-        } else {
+        } else if (!offsets.empty()) {
             for (const auto& v : offsets) {
                 newOffset += v;
                 den += 1;
             }
+        } else {
+            LOG_WARNING("No valid NTP servers...?" << std::endl);
+            return;
         }
 
         if (den > 0) {

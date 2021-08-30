@@ -208,15 +208,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        setEnableNtp(state: RootState, v: boolean) {
-/// #if DESKTOP
-            if (!state.settings) {
-                return
-            }
-            state.settings.enableNtp = v
-            saveLocalSettings(state.settings)
-/// #endif
-        },
         setEnableDnsOverride(state: RootState, v: boolean) {
 /// #if DESKTOP
             if (!state.settings) {

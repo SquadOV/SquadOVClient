@@ -86,7 +86,6 @@ struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
     PerGameSettings games;
-    bool enableNtp = true;
     std::unordered_set<shared::EGame> disabledGames;
     bool enableDnsOverride = true;
 
@@ -105,7 +104,6 @@ public:
     WowSettings wowSettings();
     ValorantSettings valorantSettings();
 
-    bool enableNtp();
     bool enableDns();
     bool isGameEnabled(shared::EGame);
     

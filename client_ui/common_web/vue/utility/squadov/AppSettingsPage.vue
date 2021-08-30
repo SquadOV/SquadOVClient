@@ -37,15 +37,6 @@
                 </v-checkbox>
 
                 <v-checkbox
-                    :input-value="syncToNtp"
-                    @change="changeSyncToNtp"
-                    dense
-                    hide-details
-                    label="Sync time to NTP servers"
-                >
-                </v-checkbox>
-
-                <v-checkbox
                     :input-value="$store.state.settings.enableDnsOverride"
                     @change="$store.commit('setEnableDnsOverride', arguments[0])"
                     dense
@@ -225,14 +216,6 @@ export default class AppSettingsPage extends Vue {
 
     changeMinimizeOnClose(v: boolean) {
         this.$store.commit('setMinimizeOnClose', v)
-    }
-
-    get syncToNtp(): boolean {
-        return this.$store.state.settings.enableNtp
-    }
-
-    changeSyncToNtp(v: boolean) {
-        this.$store.commit('setEnableNtp', v)
     }
 
     get anonymousAnalytics(): boolean {

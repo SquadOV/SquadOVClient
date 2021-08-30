@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
 
     // NTP can't be init before the logger since we log stuff inside the NTP client.
     shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
-    shared::time::NTPClient::singleton()->enable(service::system::getCurrentSettings()->enableNtp());
+    shared::time::NTPClient::singleton()->enable(true);
     shared::time::NTPClient::singleton()->initialize();
 
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
@@ -647,7 +647,6 @@ int main(int argc, char** argv) {
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_RELOAD_SETTINGS, [](const std::string& msg){
         LOG_INFO("RECEIVE RELOAD SETTINGS REQUEST." << std::endl);
         service::system::getCurrentSettings()->reloadSettingsFromFile();
-        shared::time::NTPClient::singleton()->enable(service::system::getCurrentSettings()->enableNtp(), true);
         shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
     });
 

@@ -217,7 +217,6 @@ export interface SquadOvLocalSettings {
     minimizeOnClose: boolean
     runOnStartup: boolean
     setupWizardRun: boolean
-    enableNtp: boolean
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
@@ -403,7 +402,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
-        enableNtp: true,
         enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
@@ -457,7 +455,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
-        enableNtp: true,
         enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
@@ -561,10 +558,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.vodEndDelaySeconds === undefined) {
         parsedData.record.vodEndDelaySeconds = 0
-    }
-
-    if (parsedData.enableNtp === undefined) {
-        parsedData.enableNtp = true
     }
 
     if (parsedData.playback === undefined) {
