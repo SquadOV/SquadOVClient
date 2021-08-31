@@ -3,6 +3,7 @@ export interface FeatureFlags {
     maxRecordFps: number
     allowRecordUpload: boolean
     allowWowCombatLogUpload: boolean
+    enableUserProfiles: boolean
 }
 
 export interface GlobalFlags {

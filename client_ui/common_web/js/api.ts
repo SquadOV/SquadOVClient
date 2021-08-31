@@ -1510,26 +1510,30 @@ class ApiClient {
         return axios.post(`v1/link/${id}/accept`, {}, this.createWebAxiosConfig())
     }
 
-    getBasicUserProfileFromId(userId: number): Promise<ApiData<UserProfileBasic>> {
+    getBasicUserProfileFromId(userId: number): Promise<ApiData<UserProfileBasic | null>> {
         return axios.get(`profile`, {
             params: {
                 id: userId,
             },
             ...this.createWebAxiosConfig()
-        }).then((resp: ApiData<UserProfileBasic>) => {
-            cleanUserProfileBasicFromJson(resp.data)
+        }).then((resp: ApiData<UserProfileBasic | null>) => {
+            if (!!resp.data) {
+                cleanUserProfileBasicFromJson(resp.data)
+            }
             return resp
         })
     }
 
-    getBasicUserProfileFromSlug(slug: string): Promise<ApiData<UserProfileBasic>> {
+    getBasicUserProfileFromSlug(slug: string): Promise<ApiData<UserProfileBasic | null>> {
         return axios.get(`profile`, {
             params: {
                 slug,
             },
             ...this.createWebAxiosConfig()
-        }).then((resp: ApiData<UserProfileBasic>) => {
-            cleanUserProfileBasicFromJson(resp.data)
+        }).then((resp: ApiData<UserProfileBasic | null>) => {
+            if (!!resp.data) {
+                cleanUserProfileBasicFromJson(resp.data)
+            }
             return resp
         })
     }
@@ -1569,6 +1573,15 @@ class ApiClient {
             achievements: p.achievementAccess,
             matches: p.matchAccess,
         }, this.createWebAxiosConfig())
+    }
+
+    createUserProfile(slug: string): Promise<ApiData<UserProfileBasic>> {
+        return axios.post(`v1/users/me/profile`, {
+            slug,
+        }, this.createWebAxiosConfig()).then((resp: ApiData<UserProfileBasic>) => {
+            cleanUserProfileBasicFromJson(resp.data)
+            return resp
+        })
     }
 
     getSentryDsn(): Promise<ApiData<string>> {
