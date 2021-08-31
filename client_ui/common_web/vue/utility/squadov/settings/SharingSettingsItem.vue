@@ -1,109 +1,121 @@
 <template>
     <loading-container :is-loading="settings === null">
         <template v-slot:default="{ loading }">
-            <v-tabs grow v-if="!loading">
-                <v-tab>
-                    Squads
-                </v-tab>
+            <template v-if="!loading">
+                <v-checkbox
+                    v-if="$store.state.features.enableUserProfiles"
+                    :input-value="isAutoSharingToProfile"
+                    @change="toggleAutoShareToProfile"
+                    label="Auto-Share VODs and Clips To Profile"
+                    color="success"
+                    hide-details
+                >
+                </v-checkbox>
 
-                <v-tab-item>
-                    <v-data-table
-                        :headers="squadConnHeaders"
-                        :items="squadConnItems"
-                        :items-per-page="15"
-                    >
-                        <template v-slot:item.squad="{ item }">
-                            <span class="font-weight-bold" v-if="!!item.squad">
-                                {{ item.squad.squadName }} ({{ item.squad.squadGroup }})
-                            </span>
-                        </template>
+                <v-tabs grow>
+                    <v-tab>
+                        Squads
+                    </v-tab>
 
-                        <template v-slot:item.share="{ item }">
-                            <v-checkbox
-                                class="ma-0"
-                                :input-value="item.share"
-                                dense
+                    <v-tab-item>
+                        <v-data-table
+                            :headers="squadConnHeaders"
+                            :items="squadConnItems"
+                            :items-per-page="15"
+                        >
+                            <template v-slot:item.squad="{ item }">
+                                <span class="font-weight-bold" v-if="!!item.squad">
+                                    {{ item.squad.squadName }} ({{ item.squad.squadGroup }})
+                                </span>
+                            </template>
+
+                            <template v-slot:item.share="{ item }">
+                                <v-checkbox
+                                    class="ma-0"
+                                    :input-value="item.share"
+                                    dense
+                                    hide-details
+                                    v-if="!!item.squad && !squadEditsPending[item.squad.id]"
+                                    @change="editSquadSetting({...item.full, canShare: arguments[0]})"
+                                >
+                                </v-checkbox>
+
+                                <v-progress-circular size="16" indeterminate v-else>
+                                </v-progress-circular>
+                            </template>
+
+                            <template v-slot:item.clip="{ item }">
+                                <v-checkbox
+                                    class="ma-0"
+                                    :input-value="item.clip"
+                                    dense
+                                    hide-details
+                                    v-if="!!item.squad && !squadEditsPending[item.squad.id]"
+                                    @change="editSquadSetting({...item.full, canClip: arguments[0]})"
+                                >
+                                </v-checkbox>
+
+                                <v-progress-circular size="16" indeterminate v-else>
+                                </v-progress-circular>
+                            </template>
+
+                            <template v-slot:item.games="{ item }">
+                                <game-filter-ui
+                                    :loading="!!item.squad && squadEditsPending[item.squad.id]"
+                                    :value="item.games"
+                                    @input="editSquadSetting({...item.full, games: arguments[0]})"
+                                    style="max-width: 500px;"
+                                    class="my-2"
+                                >
+                                </game-filter-ui>
+                            </template>
+
+                            <template v-slot:item.actions="{ item }">
+                                <v-btn
+                                    small
+                                    icon
+                                    color="error"
+                                    :loading="deletePending"
+                                    @click="deleteAutoSetting(item.full)"
+                                >
+                                    <v-icon>
+                                        mdi-close-circle
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+                        </v-data-table>
+
+                        <div class="d-flex align-center">
+                            <div class="text-overline">
+                                New:
+                            </div>
+
+                            <v-select
+                                class="mx-2"
+                                label="Squads"
+                                v-model="squadsToShare"
+                                :items="shareSquadItems"
+                                deletable-chips
+                                chips
+                                multiple
+                                clearable
+                                outlined
                                 hide-details
-                                v-if="!!item.squad && !squadEditsPending[item.squad.id]"
-                                @change="editSquadSetting({...item.full, canShare: arguments[0]})"
-                            >
-                            </v-checkbox>
-
-                            <v-progress-circular size="16" indeterminate v-else>
-                            </v-progress-circular>
-                        </template>
-
-                        <template v-slot:item.clip="{ item }">
-                            <v-checkbox
-                                class="ma-0"
-                                :input-value="item.clip"
                                 dense
-                                hide-details
-                                v-if="!!item.squad && !squadEditsPending[item.squad.id]"
-                                @change="editSquadSetting({...item.full, canClip: arguments[0]})"
                             >
-                            </v-checkbox>
+                            </v-select>
 
-                            <v-progress-circular size="16" indeterminate v-else>
-                            </v-progress-circular>
-                        </template>
-
-                        <template v-slot:item.games="{ item }">
-                            <game-filter-ui
-                                :loading="!!item.squad && squadEditsPending[item.squad.id]"
-                                :value="item.games"
-                                @input="editSquadSetting({...item.full, games: arguments[0]})"
-                                style="max-width: 500px;"
-                                class="my-2"
-                            >
-                            </game-filter-ui>
-                        </template>
-
-                        <template v-slot:item.actions="{ item }">
                             <v-btn
-                                small
-                                icon
-                                color="error"
-                                :loading="deletePending"
-                                @click="deleteAutoSetting(item.full)"
+                                color="primary"
+                                :loading="addPending"
+                                @click="newSquadSetting"
                             >
-                                <v-icon>
-                                    mdi-close-circle
-                                </v-icon>
+                                Share
                             </v-btn>
-                        </template>
-                    </v-data-table>
-
-                    <div class="d-flex align-center">
-                        <div class="text-overline">
-                            New:
-                        </div>
-
-                        <v-select
-                            class="mx-2"
-                            label="Squads"
-                            v-model="squadsToShare"
-                            :items="shareSquadItems"
-                            deletable-chips
-                            chips
-                            multiple
-                            clearable
-                            outlined
-                            hide-details
-                            dense
-                        >
-                        </v-select>
-
-                        <v-btn
-                            color="primary"
-                            :loading="addPending"
-                            @click="newSquadSetting"
-                        >
-                            Share
-                        </v-btn>
-                    </div>          
-                </v-tab-item>
-            </v-tabs>
+                        </div>          
+                    </v-tab-item>
+                </v-tabs>
+            </template>
         </template>
     </loading-container>
 </template>
@@ -112,6 +124,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
 import { AutoShareConnection } from '@client/js/squadov/share'
@@ -134,6 +147,38 @@ export default class SharingSettingsItem extends Vue {
     addPending: boolean = false
     deletePending: boolean = false
     squadEditsPending: { [squadId: number] : boolean | undefined } = {}
+    isAutoSharingToProfile: boolean = false
+
+    toggleAutoShareToProfile(v: boolean) {
+        if (!this.settings) {
+            return
+        }
+        
+        if (v) {
+            apiClient.newAutoShareConnection({
+                id: -1,
+                sourceUserId: this.$store.state.currentUser.id,
+                canShare: true,
+                canClip: true,
+                destUserId: null,
+                destSquadId: null,
+                games: allGames,
+            }).then((resp: ApiData<AutoShareConnection>) => {
+                if (!!this.settings) {
+                    this.settings.push(resp.data)
+                }
+            }).catch((err: any) => {
+                console.error('Failed to add auto share connection [profile]: ', err)
+            })
+        } else {
+            let conn = this.settings.find((ele: AutoShareConnection) => ele.destUserId === null && ele.destSquadId === null)
+            if (!conn) {
+                return
+            }
+
+            this.deleteAutoSetting(conn)
+        }
+    }
 
     editSquadSetting(conn: AutoShareConnection) {
         if (conn.destSquadId === null) {
@@ -256,6 +301,21 @@ export default class SharingSettingsItem extends Vue {
         }).catch((err : any) => {
             console.error('Failed to get user squads [share connections editor]: ', err)
         })
+    }
+
+    @Watch('settings')
+    refreshShareToProfile() {
+        this.isAutoSharingToProfile = false
+        if (!this.settings) {
+            return
+        }
+
+        for (let s of this.settings) {
+            if (s.destUserId === null && s.destSquadId === null) {
+                this.isAutoSharingToProfile = true
+                break
+            }
+        }
     }
 
     get squadConnHeaders(): any[] {
