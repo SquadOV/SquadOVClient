@@ -9,6 +9,7 @@
                     :vod="clip.clip"
                     :current-time.sync="viewTime"
                     :ready.sync="vodReady"
+                    :current-ts.sync="timestamp"
                 >
                 </video-player>
 
@@ -70,6 +71,7 @@
                             :clip-uuid="clipUuid"
                             :permissions="permissions"
                             :full-path="$route.fullPath"
+                            :timestamp="timestamp"
                             no-clip
                         >
                         </match-share-button>
@@ -226,11 +228,15 @@ export default class ClipView extends Vue {
     @Prop({required: true})
     clipUuid!: string
 
+    @Prop({default: 0})
+    inTs!: number
+
     clip: VodClip | null = null
     myReacts: ClipReact[] | null = null
     viewTime: Date | null = null
     vodReady: boolean = false
     onVodShowTime: Date | null = null
+    timestamp: number = 0
 
     // Comments
     comments: ClipComment[] | null = null
@@ -406,7 +412,7 @@ export default class ClipView extends Vue {
             this.clip!.comments += 1
             this.commentText = ''
         }).catch((err: any) => {
-            console.error('Failed to add new comment: ' err)
+            console.error('Failed to add new comment: ', err)
             this.commentError = true
         }).finally(() => {
             this.commentPending = false
@@ -414,6 +420,10 @@ export default class ClipView extends Vue {
     }
 
     mounted() {
+        if (!isNaN(this.inTs)) {
+            this.timestamp = this.inTs
+        }
+
         this.refreshData()
         this.refreshPermissions()
     }

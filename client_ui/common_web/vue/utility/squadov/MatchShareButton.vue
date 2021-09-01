@@ -55,7 +55,7 @@
                                 <template v-if="isSharedPublic">
                                     <div class="d-flex align-center">
                                         <v-text-field
-                                            :value="shareUrl"
+                                            :value="finalShareUrl"
                                             :success-messages="messages"
                                             single-line
                                             outlined
@@ -76,6 +76,14 @@
                                             </template>
                                         </v-text-field>
                                     </div>
+
+                                    <v-checkbox
+                                        v-model="shareTimestamp"
+                                        label="Share Timestamp"
+                                        class="my-2"
+                                        hide-details
+                                    >
+                                    </v-checkbox>
 
                                     <div class="d-flex align-center">
                                         <template v-if="!needConfirmDeleteLink">
@@ -196,6 +204,7 @@ import { LinkShareData, MatchVideoSharePermissions, ShareToProfileData } from '@
 import FacebookShareButton from '@client/vue/utility/squadov/share/FacebookShareButton.vue'
 import TwitterShareButton from '@client/vue/utility/squadov/share/TwitterShareButton.vue'
 import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButton.vue'
+import { secondsToTimeString } from '@client/js/time'
 
 @Component({
     components: {
@@ -228,8 +237,12 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     @Prop({required: true})
     fullPath!: string
 
+    @Prop({default: 0})
+    timestamp!: number
+
     showHideError: boolean = false
     showHideShare: boolean = false
+    shareTimestamp: boolean = false
 
     isSharedPublic: boolean | null = null
 
@@ -245,6 +258,22 @@ export default class MatchShareButton extends mixins(CommonComponent) {
 
     $refs!: {
         urlInput: any
+    }
+
+    get finalShareUrl(): string {
+        if (!this.shareUrl) {
+            return ''
+        }
+
+        let url = new URL(this.shareUrl)
+
+        let params = new URLSearchParams(url.search)
+        if (this.shareTimestamp) {
+            params.append('t', secondsToTimeString(this.timestamp, true))
+        }
+        url.search = params.toString()
+
+        return url.toString()
     }
 
     get warningText(): string {

@@ -24,6 +24,7 @@
                         :game="SquadOvGames.Hearthstone"
                         :permissions="matchPermissions"
                         :full-path="$route.fullPath"
+                        :timestamp="timestamp"
                     >
                     </match-share-button>
                 </div>
@@ -43,6 +44,7 @@
                             :current-time.sync="vodTime"
                             :enable-draw="enableDraw"
                             :go-to-offset="1000"
+                            :current-ts.sync="timestamp"
                         >
                         </video-player>
 

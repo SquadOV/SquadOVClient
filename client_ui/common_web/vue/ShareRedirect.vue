@@ -39,9 +39,13 @@ export default class ShareRedirect extends Vue {
         apiClient.exchangeShareAccessToken(this.accessTokenId).then((resp: ApiData<ShareAccessTokenResponse>) => {
             let url = new URL(resp.data.fullPath, 'http://localhost')
             let params = new URLSearchParams(url.search)
+            let windowParams = new URLSearchParams(window.location.search)
             params.append('share', resp.data.key)
             params.append('uid', resp.data.uid.toString())
             params.append('nonav', '1')
+            if (windowParams.has('t')) {
+                params.append('t', windowParams.get('t')!)
+            }
             url.search = params.toString()
 
             let goTo = url.pathname + '?' + params.toString()

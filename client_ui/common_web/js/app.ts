@@ -117,6 +117,7 @@ import { ipcRenderer } from 'electron'
 import { apiClient, ApiData } from '@client/js/api'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 import { RootStoreOptions } from '@client/js/vuex/store'
+import { timeStringToSeconds } from '@client/js/time'
 
 function isDesktop(): boolean {
 /// #if DESKTOP
@@ -479,7 +480,8 @@ const baseRoutes : any[] = [
                 component: CsgoMatch,
                 props: (route: any) => ({
                     matchUuid: route.params.matchUuid,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 }),
             },
             {
@@ -489,7 +491,8 @@ const baseRoutes : any[] = [
                 props: (route : any) => ({
                     puuid: route.query.account,
                     matchUuid: route.params.matchUuid,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {
@@ -499,7 +502,8 @@ const baseRoutes : any[] = [
                 props: (route : any) => ({
                     puuid: route.query.account,
                     matchUuid: route.params.matchUuid,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {
@@ -508,7 +512,8 @@ const baseRoutes : any[] = [
                 component: LolMatch,
                 props: (route : any) => ({
                     matchUuid: route.params.matchUuid,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {
@@ -517,7 +522,8 @@ const baseRoutes : any[] = [
                 component: AimlabMatch,
                 props: (route : any) => ({
                     taskId: route.params.taskId,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {
@@ -526,7 +532,8 @@ const baseRoutes : any[] = [
                 component: HearthstoneMatch,
                 props: (route : any) => ({
                     matchId: route.params.matchId,
-                    userId: parseInt(route.query.userId)
+                    userId: parseInt(route.query.userId),
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {
@@ -536,6 +543,7 @@ const baseRoutes : any[] = [
                 props: (route : any) => ({
                     userId: parseInt(route.query.userId),
                     matchUuid: route.params.matchUuid,
+                    inTs: timeStringToSeconds(route.query.t),
                 }),
             },
             { 
@@ -613,7 +621,8 @@ const baseRoutes : any[] = [
                 name: pi.ClipPageId,
                 component: ClipView,
                 props: (route: any) => ({
-                    clipUuid: route.params.clipUuid
+                    clipUuid: route.params.clipUuid,
+                    inTs: timeStringToSeconds(route.query.t),
                 })
             },
             {

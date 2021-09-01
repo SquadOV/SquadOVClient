@@ -82,6 +82,9 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     currentTime!: Date | null
 
     @Prop()
+    currentTs!: number
+
+    @Prop()
     ready!: boolean | undefined
 
     @Prop({type: Boolean, default: false})
@@ -111,6 +114,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     rcContext: VodRemoteControlContext | null = null
     forceNoVideo: boolean = false
     forceRedraw: number = 0
+    syncedInputTs: boolean = false
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -374,10 +378,19 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         // trigger any of the *resize events.
         this.player.on('canplay', () => {
             this.$emit('update:playerHeight', this.player!.currentHeight())
-            if (!!this.pinnedTimeStamp && !!this.vod && !!this.player && this.player.readyState() >= 2) {
-                this.goToTimeMs(this.pinnedTimeStamp.getTime() - this.vod.startTime.getTime(), false)
-                this.pinnedTimeStamp = null
-                if (this.pinnedPlaying) {
+            if (!!this.vod && !!this.player && this.player.readyState() >= 2) {
+                let setTime = false
+                if (!!this.pinnedTimeStamp) {
+                    this.goToTimeMs(this.pinnedTimeStamp.getTime() - this.vod.startTime.getTime(), false)
+                    this.pinnedTimeStamp = null
+                    setTime = true
+                } else if (!this.syncedInputTs) {
+                    this.syncedInputTs = true
+                    this.player.currentTime(this.currentTs)
+                    setTime = true
+                }
+
+                if (this.pinnedPlaying && setTime) {
                     this.player.play()
                 }
             }
@@ -401,6 +414,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 if (diff > 1.0) {
                     this.$emit('update:currentTime', newCurrentTime)
                 }
+
+                this.$emit('update:currentTs', this.player.currentTime())
             }
         })
 

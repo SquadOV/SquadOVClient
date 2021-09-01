@@ -21,6 +21,7 @@
                         :game="SquadOvGames.LeagueOfLegends"
                         :permissions="matchPermissions"
                         :full-path="$route.fullPath"
+                        :timestamp="timestamp"
                     >
                     </match-share-button>
                 </div>
@@ -37,6 +38,7 @@
                             :current-time.sync="vodTime"
                             :ready.sync="vodReady"
                             :enable-draw="enableDraw"
+                            :current-ts.sync="timestamp"
                         >
                         </video-player>
 

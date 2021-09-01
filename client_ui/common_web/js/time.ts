@@ -7,7 +7,7 @@ export function standardFormatTime(dt : Date | null) : string {
     return format(dt, 'MM/dd/yyyy, h:mm a')
 }
 
-export function secondsToTimeString(totalSeconds : number) : string {
+export function secondsToTimeString(totalSeconds : number, forUrl: boolean = false) : string {
     let negFlag = (totalSeconds < 0) ? '-' : ''
     totalSeconds = Math.abs(Math.floor(totalSeconds))
     let seconds = totalSeconds % 60
@@ -18,14 +18,27 @@ export function secondsToTimeString(totalSeconds : number) : string {
     let minutesStr = `${minutes}`.padStart(2, '0')
     let hoursStr = `${hours}`.padStart(2, '0')
 
-    if (hours > 0) {
-        return `${negFlag}${hoursStr}:${minutesStr}:${secondsStr}`
+    if (forUrl) {
+        if (hours > 0) {
+            return `${negFlag}${hoursStr}h${minutesStr}m${secondsStr}s`
+        } else {
+            return `${negFlag}${minutesStr}m${secondsStr}s`
+        }
     } else {
-        return `${negFlag}${minutesStr}:${secondsStr}`
+        if (hours > 0) {
+            return `${negFlag}${hoursStr}:${minutesStr}:${secondsStr}`
+        } else {
+            return `${negFlag}${minutesStr}:${secondsStr}`
+        }
     }
 }
 
-export function timeStringToSeconds(ts: string): number {
+export function timeStringToSeconds(ts: string | undefined | null): number {
+    if (!ts) {
+        return 0
+    }
+
+    ts = ts.replace('h', ':').replace('m', ':').replace('s', ':')
     let components = ts.split(':')
     if (components.length == 1) {
         // Just seconds

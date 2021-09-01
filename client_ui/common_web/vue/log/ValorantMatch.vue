@@ -20,6 +20,7 @@
                         :game="SquadOvGames.Valorant"
                         :permissions="matchPermissions"
                         :full-path="$route.fullPath"
+                        :timestamp="timestamp"
                     >
                     </match-share-button>
                 </div>
@@ -35,6 +36,7 @@
                             :ready.sync="vodReady"
                             :current-time.sync="vodTime"
                             :enable-draw="enableDraw"
+                            :current-ts.sync="timestamp"
                         >
                         </video-player>
 
