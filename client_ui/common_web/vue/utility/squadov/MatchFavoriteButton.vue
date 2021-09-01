@@ -128,6 +128,10 @@ export default class MatchFavoriteButton extends Vue {
 
     @Watch('matchUuid')
     resyncStatus() {
+        if (!this.$store.state.currentUser) {
+            return
+        }
+
         this.loading = true
         apiClient.isMatchFavorite(this.matchUuid).then((resp: ApiData<MatchFavoriteResponse>) => {
             this.isFavorite = resp.data.favorite

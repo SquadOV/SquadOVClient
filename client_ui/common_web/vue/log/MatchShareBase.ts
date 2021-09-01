@@ -31,6 +31,10 @@ export default class MatchShareBase extends Vue {
     }
 
     refreshMatchPermissions(matchUuid: string, game: SquadOvGames) {
+        if (!this.$store.state.currentUser) {
+            return
+        }
+
         this.matchPermissions = null
         apiClient.getGenericSharePermissions(matchUuid, undefined, game).then((resp: ApiData<MatchVideoSharePermissions>) => {
             this.matchPermissions = resp.data
