@@ -44,6 +44,7 @@
                         :permissions="matchPermissions"
                         :full-path="$route.fullPath"
                         :timestamp="timestamp"
+                        :user-id="userId"
                     >
                     </match-share-button>
                 </div>

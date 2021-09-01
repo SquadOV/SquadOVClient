@@ -1137,11 +1137,12 @@ class ApiClient {
         return axios.delete(`v1/match/${matchUuid}/share/public`, this.createWebAxiosConfig())
     }
 
-    createMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames, graphqlStats: StatPermission[] | undefined): Promise<ApiData<LinkShareData>> {
+    createMatchShareUrl(matchUuid: string, fullPath: string, game: SquadOvGames, graphqlStats: StatPermission[] | undefined, userId: number): Promise<ApiData<LinkShareData>> {
         return axios.post(`v1/match/${matchUuid}/share/public`, {
             fullPath,
             game,
             graphqlStats,
+            userId,
         }, this.createWebAxiosConfig())
     }
 

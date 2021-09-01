@@ -240,6 +240,9 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     @Prop({default: 0})
     timestamp!: number
 
+    @Prop()
+    userId!: number
+
     showHideError: boolean = false
     showHideShare: boolean = false
     shareTimestamp: boolean = false
@@ -313,7 +316,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
         this.creatingLink = true
         
         let promise = !!this.matchUuid ?
-            apiClient.createMatchShareUrl(this.matchUuid, this.fullPath, this.game, this.graphqlStats) :
+            apiClient.createMatchShareUrl(this.matchUuid, this.fullPath, this.game, this.graphqlStats, this.userId) :
             apiClient.createClipShareUrl(this.clipUuid!, this.fullPath)
 
         this.sendAnalyticsEvent(this.AnalyticsCategory.Share, this.AnalyticsAction.CreateSharePublic, !!this.matchUuid ? 'Match': 'Clip', 0)
