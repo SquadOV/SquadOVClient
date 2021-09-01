@@ -696,34 +696,36 @@ function getSentryRelease(): string {
 }
 
 function initializeSentry(u: SquadOVUser) {
-    apiClient.getSentryDsn().then((resp: ApiData<string>) => {
-        Sentry.init({
-            Vue,
-            dsn: resp.data,
-            maxBreadcrumbs: 500,
-            release: getSentryRelease(),
-            integrations: [
-                new Integrations.BrowserTracing({
-                    routingInstrumentation: Sentry.vueRouterInstrumentation(router),
-                    tracingOrigins: ['localhost', 'app.squadov.gg', /^\//],
-                }),
-                new CaptureConsole({
-                    levels: ['error']
-                }),
-                new Offline(),
-            ],
-            tracesSampleRate: 0.1,
-            trackComponents: true,
-        })
+    if (!!process.env.NODE_ENV && process.env.NODE_ENV !== 'development') {
+        apiClient.getSentryDsn().then((resp: ApiData<string>) => {
+            Sentry.init({
+                Vue,
+                dsn: resp.data,
+                maxBreadcrumbs: 500,
+                release: getSentryRelease(),
+                integrations: [
+                    new Integrations.BrowserTracing({
+                        routingInstrumentation: Sentry.vueRouterInstrumentation(router),
+                        tracingOrigins: ['localhost', 'app.squadov.gg', /^\//],
+                    }),
+                    new CaptureConsole({
+                        levels: ['error']
+                    }),
+                    new Offline(),
+                ],
+                tracesSampleRate: 0.1,
+                trackComponents: true,
+            })
 
-        Sentry.setUser({
-            id: u.uuid,
-            username: u.username,
-            ip_address: '{{auto}}',
+            Sentry.setUser({
+                id: u.uuid,
+                username: u.username,
+                ip_address: '{{auto}}',
+            })
+        }).catch((err: any) => {
+            console.error('Failed to get Sentry DSN: ', err)
         })
-    }).catch((err: any) => {
-        console.error('Failed to get Sentry DSN: ', err)
-    })
+    }
 }
 
 import { initializeAnalyticsContainer, getAnalyticsContainer } from '@client/js/analytics/container'

@@ -263,6 +263,7 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
+#ifdef NDEBUG
     LOG_INFO("Initialize Sentry" << std::endl);
     {
         std::ostringstream release;
@@ -284,6 +285,7 @@ int main(int argc, char** argv) {
 
         shared::log::Log::singleton()->enableSentry();
     }
+#endif
 
     try {
         service::api::getGlobalApi()->syncHardware(sysHw);
