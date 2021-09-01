@@ -74,6 +74,8 @@ public:
     shared::squadov::VodMetadata getMetadata() const;
     void overrideResolution(size_t width, size_t height);
     void loadCachedInfo();
+    void setNewProcess(const process_watcher::process::Process& process) { _process = process; }
+
 private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;

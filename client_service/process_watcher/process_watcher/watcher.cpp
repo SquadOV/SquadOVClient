@@ -53,7 +53,9 @@ void ProcessWatcher::start() {
                     // and we need to restart the game's watcher as well.
                     if (newProcess->pid() != watchedProcess.pid()) {
                         if (!watchedProcess.empty()) {
-                            kvp.second->onProcessStops();
+                            if (!kvp.second->onProcessChange(*newProcess)) {
+                                kvp.second->publicOnProcessStops();
+                            }
                         }
 
                         LOG_INFO("Detected Process Start: " << newProcess->path() << " - " << newProcess->pid() << std::endl);
@@ -61,7 +63,7 @@ void ProcessWatcher::start() {
                     }
                 } else if (!watchedProcess.empty()) {
                     // If we're no longer running then we need to stop the watcher if it's watching something.
-                    kvp.second->onProcessStops();
+                    kvp.second->publicOnProcessStops();
                 }
             }
 

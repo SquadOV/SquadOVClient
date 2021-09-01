@@ -14,6 +14,8 @@ public:
     ~WoWProcessHandler();
 
     void manualStartLogWatching(const std::filesystem::path& path, const std::filesystem::path& vodPath, const shared::TimePoint& vodStartTime);
+
+    bool onProcessChange(const process_watcher::process::Process& p) override;
 private:
     void onProcessStarts(const process_watcher::process::Process& p) override;
     void onProcessStops() override;

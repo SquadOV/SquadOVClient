@@ -32,6 +32,7 @@ public:
     void overrideCombatLogPosition(const std::filesystem::path& path);
     void manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime);
     void waitForLogWatcher();
+    void onProcessChange(const process_watcher::process::Process& p);
 
 private:
     process_watcher::process::Process  _process;
@@ -180,6 +181,29 @@ void WoWProcessHandlerInstance::cleanup() {
     LOG_INFO("Finish WoW cleanup..." << std::endl);
 }
 
+void WoWProcessHandlerInstance::onProcessChange(const process_watcher::process::Process& p) {
+    LOG_INFO("Change WoW Process from " << _process.pid() << " to " << p.pid() << "...Ending Matches" << std::endl);
+
+    // Before we end the match, make sure the recorder gets pointed to the new process as well.
+    if (!_recorder) {
+        LOG_WARNING("...No recorder on WoW process change...?" << std::endl);
+    }
+
+    _recorder->setNewProcess(p);
+
+    if (inMatch()) {
+        // We want to end arenas, encounters, and challenges (hence true true).
+        prematurelyEndMatch(shared::nowUtc(), true, true);
+    } else {
+        // And even if we aren't already in a match - we want to make sure we restart the DVR session
+        // to pick up the new process (make sure we're recording the right window and what not).
+        _recorder->stop({}, false);
+
+        // Restart DVR!
+        _recorder->startDvrSession(getWowRecordingFlags());
+    }
+}
+
 bool WoWProcessHandlerInstance::hasValidCombatLog() const {
     return _combatLogActive;
 }
@@ -305,10 +329,6 @@ void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, cons
         return;
     }
 
-    if (!hasValidCombatLog() || !inEncounter()) {
-        return;
-    }
-
     const auto end = *reinterpret_cast<const game_event_watcher::WoWEncounterEnd*>(data);
     LOG_INFO("WoW Encounter End [" <<  shared::timeToStr(tm) << "]: " << end << std::endl);
     std::string matchUuid;
@@ -352,10 +372,7 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
 
 void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, const void* data) {
     std::lock_guard guard(_currentMatchMutex);
-    if (service::system::getGlobalState()->isPaused()) {
-        return;
-    }
-    
+
     if (!hasValidCombatLog() || !inChallenge()) {
         return;
     }
@@ -404,9 +421,6 @@ void WoWProcessHandlerInstance::onArenaStart(const shared::TimePoint& tm, const 
 
 void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const void* data) {
     std::lock_guard guard(_currentMatchMutex);
-    if (service::system::getGlobalState()->isPaused()) {
-        return;
-    }
     
     if (!hasValidCombatLog() || !inArena()) {
         return;
@@ -566,10 +580,6 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 }
 
 void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, const shared::TimePoint& tm) {
-    if (service::system::getGlobalState()->isPaused()) {
-        return;
-    }
-
     LOG_INFO("WoW Match End [" << shared::timeToStr(tm) << "] - VIEW " << _currentMatchViewUuid << std::endl);
     const auto isRecording = _recorder->isRecording();
     if (isRecording) {
@@ -650,6 +660,15 @@ void WoWProcessHandler::onProcessStops() {
     _instance->cleanup();
     _instance.reset(nullptr);
     LOG_INFO("\tWoW fully stopped." << std::endl);
+}
+
+bool WoWProcessHandler::onProcessChange(const process_watcher::process::Process& p) {
+    if (!_instance) {
+        return false;
+    }
+
+    _instance->onProcessChange(p);
+    return true;
 }
 
 }
