@@ -18,32 +18,9 @@ GameProcessDetector::GameProcessDetector(const std::string& exe):
     
 }
 
-bool GameProcessDetector::checkIsRunning(const std::vector<process::Process>& processes, size_t* outIndex) const {
+std::optional<process::Process> GameProcessDetector::checkIsRunning(const process::ProcessRunningState& processes) const {
     const process::Process cmpProcess(_exeName, 0);
-    return checkProcessIsRunning(cmpProcess, processes, outIndex);
-}
-
-bool GameProcessDetector::checkProcessIsRunning(const process::Process& ref, const std::vector<process::Process>& processes, size_t* outIndex) const {
-    const auto fnCmp = [](const process::Process& a, const process::Process& b){
-        return a.name() < b.name();
-    };
-
-    if (!outIndex) {
-        const bool found = std::binary_search(processes.begin(), processes.end(), ref, fnCmp);
-        return found;
-    } else {
-        const auto it = std::lower_bound(processes.begin(), processes.end(), ref, fnCmp);
-        if (it == processes.end()) {
-            return false;
-        }
-        const size_t idx = std::distance(processes.begin(), it);
-        if (processes[idx].name() != ref.name()) {
-            return false;
-        }
-
-        *outIndex =idx;
-        return true;
-    }
+    return processes.getProcesssRunningByName(cmpProcess.name(), true);
 }
 
 std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {

@@ -27,10 +27,11 @@ void ProcessWatcher::start() {
     _watchThread = std::thread([this](){
         using namespace std::chrono_literals;
 
+        process::ProcessRunningState processState;
         while (_running) {
             // Get a sorted list of running processes from the OS.
             std::vector<process::Process> processes;
-            const bool success = process::listRunningProcesses(processes);
+            const bool success = processState.update();
 
             if (!success) {
                 // If this fails something probably went very wrong.
@@ -40,26 +41,23 @@ void ProcessWatcher::start() {
             std::shared_lock<std::shared_mutex> guard(_mapMutex);
             for (const auto& kvp : _gameToWatcher) {
                 const auto detector = games::createDetectorForGame(kvp.first);
-
-                size_t processIndex = 0;
-                const bool isRunning = detector->checkIsRunning(processes, &processIndex);
+                const auto newProcess = detector->checkIsRunning(processState);
                 
                 const auto& watchedProcess = kvp.second->currentProcess();
                 // Check to see if the running state is the different from the last checked state
                 // to fire off the appropriate event. 
-                if (isRunning) {
+                if (newProcess) {
                     // If we're running, we want to see if the PID changed which would indicate a state change.
                     // If we previously didn't have a PID for the EXE, then that means this process just started (fresh).
                     // If we previously did have a PID for the EXE, then that means the user restarted the app really quickly
                     // and we need to restart the game's watcher as well.
-                    const auto& newProcess = processes[processIndex];
-                    if (newProcess.pid() != watchedProcess.pid()) {
+                    if (newProcess->pid() != watchedProcess.pid()) {
                         if (!watchedProcess.empty()) {
                             kvp.second->onProcessStops();
                         }
 
-                        LOG_INFO("Detected Process Start: " << newProcess.path() << " - " << newProcess.pid() << std::endl);
-                        kvp.second->publicOnProcessStarts(newProcess);
+                        LOG_INFO("Detected Process Start: " << newProcess->path() << " - " << newProcess->pid() << std::endl);
+                        kvp.second->publicOnProcessStarts(*newProcess);
                     }
                 } else if (!watchedProcess.empty()) {
                     // If we're no longer running then we need to stop the watcher if it's watching something.
@@ -74,21 +72,11 @@ void ProcessWatcher::start() {
 }
 
 std::optional<process::Process> isGameRunning(shared::EGame game) {
-    std::vector<process::Process> processes;
-    if (!process::listRunningProcesses(processes)) {
-        return std::nullopt;
-    }
+    process::ProcessRunningState processState;
+    processState.update();
 
     const auto detector = games::createDetectorForGame(game);
-
-    size_t outIndex = 0;
-    bool isRunning = detector->checkIsRunning(processes, &outIndex);
-
-    if (!isRunning) {
-        return std::nullopt;
-    } else {
-        return processes[outIndex];
-    }
+    return detector->checkIsRunning(processState);
 }
 
 }
