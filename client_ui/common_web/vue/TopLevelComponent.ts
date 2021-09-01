@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 import LRU from 'lru-cache'
 
 interface CachedScroll {
@@ -10,6 +11,19 @@ interface CachedScroll {
 @Component
 export default class TopLevelComponent extends Vue {
     cache: any = null
+
+    @Prop({default: true})
+    showNav!: boolean
+
+    get appInnerStyle(): any {
+        if (this.showNav) {
+            return {
+                'overflow': 'auto'
+            }
+        } else {
+            return {}
+        }
+    }
 
     restoreScroll(key: string) {
         if (!this.cache) {

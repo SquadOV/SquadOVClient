@@ -133,6 +133,7 @@ export default class AimlabTaskSummaryDisplay extends mixins(CommonComponent) {
 .task-summary {
     width: 100%;
     position: relative;
+    overflow: hidden;
 }
 
 .task-div {

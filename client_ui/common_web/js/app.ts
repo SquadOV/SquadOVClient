@@ -153,6 +153,9 @@ const baseRoutes : any[] = [
     {
         path: '/',
         component: isDesktop() ? PrimaryApp : WebApp,
+        props: (route: any) => ({
+            showNav: !route.query.nonav || parseInt(route.query.nonav) === 0
+        }),
         children: [
             {
                 path: '',

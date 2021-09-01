@@ -1,7 +1,7 @@
 <template>
     <div id="appInner">
         <template v-if="userLoaded">    
-            <app-nav class="flex-grow-0"></app-nav>
+            <app-nav class="flex-grow-0" v-if="showNav"></app-nav>
             <v-banner
                 v-if="$root.globals.serviceError"
                 single-line
@@ -35,7 +35,7 @@
                 <router-view></router-view>
             </div>
 
-            <div id="footer" class="flex-grow-0 py-1">
+            <div id="footer" class="flex-grow-0 py-1" v-if="showNav">
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>

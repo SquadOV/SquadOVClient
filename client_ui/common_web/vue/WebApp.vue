@@ -1,6 +1,6 @@
 <template>
-    <div id="appInner">
-        <app-nav class="flex-grow-0" v-if="hasValidSession"></app-nav>            
+    <div id="appInner" :style="appInnerStyle">
+        <app-nav class="flex-grow-0" v-if="hasValidSession && showNav"></app-nav>            
         <div class="d-flex flex-column flex-grow-1">
             <router-view v-if="hasValidSession"></router-view>
             <template v-else>
@@ -16,7 +16,7 @@
                 </div>
             </template>
 
-            <div id="footer" class="flex-grow-0 py-1">
+            <div id="footer" class="flex-grow-0 py-1" v-if="showNav">
                 <div class="text-center ma-0 text-overline footer-text">
                     SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>

@@ -1,5 +1,14 @@
 <template>
-    <loading-container :is-loading="true">
+    <loading-container :is-loading="!iframeUrl">
+        <template v-slot:default="{ loading }">
+            <iframe
+                v-if="!loading"
+                :src="iframeUrl"
+                style="border:none;"
+                class="full-width full-parent-height"
+            >
+            </iframe>
+        </template>
     </loading-container>
 </template>
 
@@ -21,6 +30,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 export default class ShareRedirect extends Vue {
     @Prop({required: true})
     accessTokenId!: string
+    iframeUrl: string | null = null
 
     mounted() {
         // Get final redirect URL by processing the access token on the server side.
@@ -31,8 +41,11 @@ export default class ShareRedirect extends Vue {
             let params = new URLSearchParams(url.search)
             params.append('share', resp.data.key)
             params.append('uid', resp.data.uid.toString())
+            params.append('nonav', '1')
             url.search = params.toString()
-            this.$router.replace(url.pathname + '?' + params.toString())
+
+            let goTo = url.pathname + '?' + params.toString()
+            this.iframeUrl = goTo
         }).catch((err: any) => {
             console.error('Failed to exchange access token: ', err)
             this.$router.replace({
