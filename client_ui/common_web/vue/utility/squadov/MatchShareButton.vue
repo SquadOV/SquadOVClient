@@ -37,6 +37,17 @@
                         Link Sharing
                     </div>
                     <v-divider class="mb-2"></v-divider>
+                    
+                    <v-checkbox
+                        v-if="$store.state.features.enableUserProfiles && isSharedProfile !== null && isSharedProfile.canShare"
+                        :input-value="isSharedProfile.isShared"
+                        @change="toggleSharedToProfile"
+                        label="Shared to Profile"
+                        color="success"
+                        class="mb-2"
+                        hide-details
+                    >
+                    </v-checkbox>
 
                     <loading-container :is-loading="isSharedPublic === null">
                         <template v-slot:default="{ loading }">
@@ -160,6 +171,14 @@
         >
             Oops! Something went wrong, please try again later (or submit a bug report)!
         </v-snackbar>
+
+        <v-snackbar
+            v-model="errorShareProfile"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to share/remove from your profile. Please try again!
+        </v-snackbar>
     </div>
 </template>
 
@@ -173,7 +192,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ShareConnectionsEditor from '@client/vue/utility/squadov/ShareConnectionsEditor.vue'
-import { LinkShareData, MatchVideoSharePermissions } from '@client/js/squadov/share'
+import { LinkShareData, MatchVideoSharePermissions, ShareToProfileData } from '@client/js/squadov/share'
 import FacebookShareButton from '@client/vue/utility/squadov/share/FacebookShareButton.vue'
 import TwitterShareButton from '@client/vue/utility/squadov/share/TwitterShareButton.vue'
 import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButton.vue'
@@ -213,6 +232,11 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     showHideShare: boolean = false
 
     isSharedPublic: boolean | null = null
+
+    isSharedProfile: ShareToProfileData | null = null
+    profileChangeInProgress: boolean = false
+    errorShareProfile: boolean = false
+
     shareUrl: string | null = null
     creatingLink: boolean = false
     needConfirmDeleteLink: boolean = false
@@ -229,6 +253,26 @@ export default class MatchShareButton extends mixins(CommonComponent) {
         } else {
             return 'Warning: Everyone with this link will be able to view this clip until you delete this link!'
         }
+    }
+
+    toggleSharedToProfile(v: boolean) {
+        if (!this.isSharedProfile?.canShare) {
+            return
+        }
+
+        this.profileChangeInProgress = true
+        let promise = v ? apiClient.shareMatchClipToProfile(this.matchUuid, this.clipUuid) : apiClient.deleteMatchClipFromProfile(this.matchUuid, this.clipUuid)
+        
+        promise.then(() => {
+            if (!!this.isSharedProfile) {
+                this.isSharedProfile.isShared = v
+            }
+        }).catch((err: any) => {
+            console.error('Failed to toggle profile share: ', err)
+            this.errorShareProfile = true
+        }).finally(() => {
+            this.profileChangeInProgress = true
+        })
     }
 
     handlePublicLinkResponse(resp: LinkShareData) {
@@ -274,6 +318,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     @Watch('clipUuid')
     refreshLinkShareData() {
         this.isSharedPublic = null
+        this.isSharedProfile = null
         this.shareUrl = null
 
         let promise = !!this.matchUuid ? apiClient.getMatchShareUrl(this.matchUuid) : apiClient.getClipShareUrl(this.clipUuid!)
@@ -282,6 +327,12 @@ export default class MatchShareButton extends mixins(CommonComponent) {
         }).catch((err: any) => {
             this.showHideError = true
             console.error('Failed to get share URL: ', err)
+        })
+
+        apiClient.checkIfMatchClipSharedToProfile(this.matchUuid, this.clipUuid).then((resp: ApiData<ShareToProfileData>) => {
+            this.isSharedProfile = resp.data
+        }).catch((err: any) => {
+            console.error('Failed to get shared to profile: ', err)
         })
     }
 

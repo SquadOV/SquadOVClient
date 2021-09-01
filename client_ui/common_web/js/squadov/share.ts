@@ -33,3 +33,8 @@ export interface AutoShareConnection {
     destSquadId: number | null
     games: SquadOvGames[]
 }
+
+export interface ShareToProfileData {
+    canShare: boolean
+    isShared: boolean
+}

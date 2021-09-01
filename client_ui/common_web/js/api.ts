@@ -97,7 +97,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse } from '@client/js/squadov/share'
+import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToCloud } from '@client/js/cloud'
 
@@ -1581,6 +1581,33 @@ class ApiClient {
         }, this.createWebAxiosConfig()).then((resp: ApiData<UserProfileBasic>) => {
             cleanUserProfileBasicFromJson(resp.data)
             return resp
+        })
+    }
+
+    checkIfMatchClipSharedToProfile(matchUuid: string | undefined, clipUuid: string | undefined): Promise<ApiData<ShareToProfileData>> {
+        return axios.get(`v1/share/profile`, {
+            ...this.createWebAxiosConfig(),
+            params: {
+                matchUuid,
+                clipUuid,
+            }
+        })
+    }
+
+    shareMatchClipToProfile(matchUuid: string | undefined, clipUuid: string | undefined): Promise<void> {
+        return axios.post(`v1/share/profile`, {
+            matchUuid,
+            clipUuid,
+        }, this.createWebAxiosConfig())
+    }
+
+    deleteMatchClipFromProfile(matchUuid: string | undefined, clipUuid: string | undefined): Promise<void> {
+        return axios.delete(`v1/share/profile`, {
+            ...this.createWebAxiosConfig(),
+            params: {
+                matchUuid,
+                clipUuid,
+            }
         })
     }
 
