@@ -1345,8 +1345,10 @@ class ApiServer {
                     )).rows.map((ele) => ele.name),
                     linkedTwitch: (await this.pool.query(
                         `
-                        SELECT DISTINCT lta.twitch_name AS "name"
+                        SELECT DISTINCT ta.twitch_name AS "name"
                         FROM squadov.linked_twitch_accounts AS lta
+                        INNER JOIN squadov.twitch_accounts AS ta
+                            ON ta.twitch_user_id = lta.twitch_user_id
                         WHERE lta.user_id = $1
                         `,
                         [rows[0].id]
