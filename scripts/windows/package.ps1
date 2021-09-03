@@ -5,6 +5,7 @@ cmake -S . -B build -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release --target squadov_client_service
 cmake --build build --config Release --target advanced_crash_dump_enabler
 cmake --build build --config Release --target csgo_demo_retriever
+cmake --build build --config Release --target crashpad_handler
 
 Set-Location -Path .\build\bin\x64\Release
 Set-Location -Path ..\..\..\..\client_ui\common_web

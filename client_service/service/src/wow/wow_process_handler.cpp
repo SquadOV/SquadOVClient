@@ -325,7 +325,7 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
 
 void WoWProcessHandlerInstance::onEncounterEnd(const shared::TimePoint& tm, const void* data) {
     std::lock_guard guard(_currentMatchMutex);
-    if (service::system::getGlobalState()->isPaused()) {
+    if (!hasValidCombatLog() || !inEncounter()) {
         return;
     }
 
