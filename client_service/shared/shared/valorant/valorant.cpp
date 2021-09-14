@@ -16,6 +16,8 @@ EValorantMap mapIdToValorantMap(const std::string& id) {
         return EValorantMap::Icebox;
     } else if (id == "/Game/Maps/Foxtrot/Foxtrot") {
         return EValorantMap::Breeze;
+    } else if (id == "/Game/Maps/Canyon/Canyon") {
+        return EValorantMap::Fracture;
     }
     return EValorantMap::Unknown;
 }
@@ -39,6 +41,8 @@ EValorantMap codenameToValorantMap(const std::string& codename) {
         return EValorantMap::Init;
     } else if (codename == "CharacterSelectPersistentLevel") {
         return EValorantMap::CharacterSelect;
+    } else if (codename == "Canyon") {
+        return EValorantMap::Fracture;
     }
     return EValorantMap::Unknown;
 }
@@ -57,6 +61,8 @@ std::string mapToName(EValorantMap map) {
             return "Icebox";
         case EValorantMap::Breeze:
             return "Breeze";
+        case EValorantMap::Fracture:
+            return "Fracture";
         case EValorantMap::MainMenu:
             return "Main Menu";
         case EValorantMap::CharacterSelect:
@@ -69,15 +75,14 @@ std::string mapToName(EValorantMap map) {
 
 bool isGameMap(EValorantMap map) {
     switch (map) {
-        case EValorantMap::Ascent:
-        case EValorantMap::Bind:
-        case EValorantMap::Haven:
-        case EValorantMap::Split:
-        case EValorantMap::Icebox:
-        case EValorantMap::Breeze:
-            return true;
+        case EValorantMap::CharacterSelect:
+        case EValorantMap::Init:
+        case EValorantMap::Unknown:
+            return false;
     }    
-    return false;
+
+    // True by default so we don't have to add an update to record on a new map
+    return true;
 }
 
 EValorantGameMode gameIdToValorantMode(const std::string& id) {

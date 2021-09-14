@@ -18,6 +18,7 @@ enum class EValorantMap {
     Split,
     Icebox,
     Breeze,
+    Fracture,
     MainMenu,
     CharacterSelect,
     Init,
