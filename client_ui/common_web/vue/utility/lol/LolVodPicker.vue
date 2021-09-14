@@ -38,7 +38,7 @@ import {
     extractSameTeamPlayersFromTeamId,
     getPlayerFromParticipantId,
 } from '@client/js/lol/matches'
-import { WrappedLolParticipant } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
@@ -99,7 +99,7 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         })
     }
 
-    participantFromUserUuid(userUuid: string): WrappedLolParticipant | undefined {
+    participantFromUserUuid(userUuid: string): LolParticipant | undefined {
         if (!this.availableVods) {
             return undefined
         }
@@ -132,7 +132,7 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         return map
     }
 
-    get friendlyParticipants(): WrappedLolParticipant[] {
+    get friendlyParticipants(): LolParticipant[] {
         if (!!this.currentParticipantId) {
             return extractSameTeamPlayersFromParticipantId(this.match, this.currentParticipantId)!
         } else {
@@ -140,7 +140,7 @@ export default class LolVodPicker extends mixins(CommonComponent) {
         }
     }
 
-    get enemyParticipants(): WrappedLolParticipant[] {
+    get enemyParticipants(): LolParticipant[] {
         if (!!this.currentParticipantId) {
             return extractEnemyTeamPlayersFromParticipantId(this.match, this.currentParticipantId)!
         } else {
@@ -157,8 +157,8 @@ export default class LolVodPicker extends mixins(CommonComponent) {
     }
 
     get friendlyPovs(): VodAssociation[] {
-        return <VodAssociation[]>this.friendlyParticipants.map((ele: WrappedLolParticipant) => {
-            let userUuid = this.participantIdToUserUuid.get(ele.participant.participantId)
+        return <VodAssociation[]>this.friendlyParticipants.map((ele: LolParticipant) => {
+            let userUuid = this.participantIdToUserUuid.get(ele.participantId)
             if (!userUuid) {
                 return undefined
             }
@@ -174,8 +174,8 @@ export default class LolVodPicker extends mixins(CommonComponent) {
     }
 
     get enemyPovs(): VodAssociation[] {
-        return <VodAssociation[]>this.enemyParticipants.map((ele: WrappedLolParticipant) => {
-            let userUuid = this.participantIdToUserUuid.get(ele.participant.participantId)
+        return <VodAssociation[]>this.enemyParticipants.map((ele: LolParticipant) => {
+            let userUuid = this.participantIdToUserUuid.get(ele.participantId)
             if (!userUuid) {
                 return undefined
             }

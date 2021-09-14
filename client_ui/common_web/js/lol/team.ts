@@ -1,23 +1,27 @@
 export interface LolTeamStats {
-    towerKills: number
-    riftHeraldKills: number
-    firstBlood: boolean
-    inhibitorKills: number
-    firstBaron: boolean
-    firstDragon: boolean
-    dragonKills: number
-    baronKills: number
-    firstInhibitor: boolean
-    firstTower: boolean
-    firstRiftHerald: boolean
     teamId: number
     win: string
     bans: LolTeamBan[]
+    objectives: LolObjectives
 }
 
 export interface LolTeamBan {
     championId: number
     pickTurn: number
+}
+
+export interface LolObjectives {
+    baron: LolSingleObjective
+    champion: LolSingleObjective
+    dragon: LolSingleObjective
+    inhibitor: LolSingleObjective
+    riftHerald: LolSingleObjective
+    tower: LolSingleObjective
+}
+
+export interface LolSingleObjective {
+    first: boolean
+    kills: number
 }
 
 export function lolTeamIdToString(id: number): string {

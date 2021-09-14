@@ -9,8 +9,8 @@
                 >
                     <lol-champion-icon
                         :style="iconStyle"
-                        :champion-id="participant.participant.championId"
-                        :game-version="match.gameVersion"
+                        :champion-id="participant.championId"
+                        :game-version="match.info.gameVersion"
                         :width="widthHeight"
                         :height="widthHeight"
                     >
@@ -35,7 +35,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { LolMatch, getTeamIdFromParticipantId } from '@client/js/lol/matches'
-import { WrappedLolParticipant } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 import { ddragonContainer } from '@client/js/lolDdragon'
 import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
 
@@ -46,7 +46,7 @@ import LolChampionIcon from '@client/vue/utility/lol/LolChampionIcon.vue'
 })
 export default class LolParticipantDisplay extends Vue {
     @Prop({required: true})
-    participant!: WrappedLolParticipant
+    participant!: LolParticipant
 
     @Prop({required: true})
     match!: LolMatch
@@ -68,15 +68,7 @@ export default class LolParticipantDisplay extends Vue {
     @Watch('participant')
     refreshName() {
         this.name = ''
-        if (!!this.participant.identity?.player) {
-            this.name = this.participant.identity.player.summonerName
-        } else {
-            ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionName(this.participant.participant.championId).then((resp: string) => {
-                this.name = resp
-            }).catch((err: any) => {
-                console.error('Failed to get LoL champion name as player name bakcup: ', err)
-            })
-        }
+        this.name = this.participant.summonerName
     }
 
     mounted() {
@@ -89,11 +81,11 @@ export default class LolParticipantDisplay extends Vue {
         }
 
         let borderColor: string
-        let playerTeam = getTeamIdFromParticipantId(this.match, this.participant.participant.participantId)
+        let playerTeam = getTeamIdFromParticipantId(this.match, this.participant.participantId)
 
         if (!!this.currentParticipantId) {
             let currentTeam = getTeamIdFromParticipantId(this.match, this.currentParticipantId)
-            if (this.participant.participant.participantId === this.currentParticipantId) {
+            if (this.participant.participantId === this.currentParticipantId) {
                 borderColor = 'color-self'
             } else if (currentTeam === playerTeam) {
                 borderColor = 'color-friendly'

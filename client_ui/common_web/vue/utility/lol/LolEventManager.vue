@@ -192,7 +192,7 @@ export default class LolEventManager extends mixins(CommonComponent) {
     }
 
     get filteredEvents(): LolMatchEvent[] {
-        let retEvents = this.timeline.frames.map((frame: LolMatchFrame) => {
+        let retEvents = this.timeline.info.frames.map((frame: LolMatchFrame) => {
             return frame.events.filter((ev: LolMatchEvent) => {
                 return (ev.type === 'CHAMPION_KILL' && this.showKills)
                     || ((ev.type === 'WARD_PLACED' || ev.type === 'WARD_KILL') && ev.wardType !== 'UNDEFINED' && ev.wardType !== 'TEEMO_MUSHROOM' && this.showWards)

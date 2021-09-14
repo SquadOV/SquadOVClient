@@ -53,8 +53,10 @@ export interface LolMatchFrame {
 }
 
 export interface LolMatchTimeline {
-    frames: LolMatchFrame[]
-    frameInterval: number
+    info: {
+        frames: LolMatchFrame[]
+        frameInterval: number
+    }
 }
 
 export enum LolStaticTargets {
@@ -76,5 +78,5 @@ export enum LolStaticTargets {
 }
 
 export function getLolMatchNonEmptyTimelineFrames(t: LolMatchTimeline): LolMatchFrame[] {
-    return t.frames.filter((ele: LolMatchFrame) => Object.keys(ele.participantFrames).length > 0)
+    return t.info.frames.filter((ele: LolMatchFrame) => Object.keys(ele.participantFrames).length > 0)
 }

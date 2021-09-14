@@ -1,42 +1,33 @@
-export interface LolParticipantIdentity {
-    participantId: number
-    player: LolPlayer | null
-}
-
-export interface LolPlayer {
-    accountId: number
-    currentAccountId: number
-    currentPlatformId: number
-    summonerName: string
-    summonerId: string | null
-    platformId: string
-}
-
 export interface LolParticipant {
-    participantId: number
-    championId: number
-    teamId: number
-    spell1Id: number
-    spell2Id: number
-    stats: LolParticipantStats
-    timeline: LolParticipantTimeline
-}
-
-export interface WrappedLolParticipant {
-    participant: LolParticipant
-    identity: LolParticipantIdentity | undefined
-}
-
-export interface LolParticipantStats {
-    // Player Identity
-    participantId: number
-    champLevel: number
-    win: boolean
-    // KDA
-    kills: number
-    deaths: number
     assists: number
-    // Items
+    baronKills: number
+    bountyLevel: number
+    champExperience: number
+    champLevel: number
+    championId: number
+    championName: string
+    championTransform: number
+    consumablesPurchased: number
+    damageDealtToBuildings: number
+    damageDealtToObjectives: number
+    damageDealtToTurrets: number
+    damageSelfMitigated: number
+    deaths: number
+    detectorWardsPlaced: number
+    doubleKills: number
+    dragonKills: number
+    firstBloodAssist: boolean
+    firstBloodKill: boolean
+    firstTowerAssist: boolean
+    firstTowerKill: boolean
+    gameEndedInEarlySurrender: boolean
+    gameEndedInSurrender: boolean
+    goldEarned: number
+    goldSpent: number
+    individualPosition: string
+    inhibitorKills: number
+    inhibitorTakedowns: number
+    inhibitorsLost: number
     item0: number
     item1: number
     item2: number
@@ -44,58 +35,74 @@ export interface LolParticipantStats {
     item4: number
     item5: number
     item6: number
-    // Notable kills
-    doubleKills: number
-    tripleKills: number
-    quadraKills: number
+    itemsPurchased: number
+    killingSprees: number
+    kills: number
+    lane: string
+    largestCriticalStrike: number
+    largestKillingSpree: number
+    largestMultiKill: number
+    longestTimeSpentLiving: number
+    magicDamageDealt: number
+    magicDamageDealtToChampions: number
+    magicDamageTaken: number
+    neutralMinionsKilled: number
+    nexusKills: number
+    nexusTakedowns: number
+    nexusLost: number
+    objectivesStolen: number
+    objectivesStolenAssists: number
+    participantId: number
     pentaKills: number
-    firstBloodKill: boolean
-    // Econ Stats
-    goldEarned: number
-    goldSpent: number
-    // Neutral Stats
-    neutralMinionsKilledTeamJungle: number
-    neutralMinionsKilledEnemyJungle: number
+    physicalDamageDealt: number
+    physicalDamageDealtToChampions: number
+    physicalDamageTaken: number
+    profileIcon: number
+    puuid: string
+    quadraKills: number
+    riotIdName: string
+    riotIdTagline: string
+    role: string
+    sightWardsBoughtInGame: number
+    spell1Casts: number
+    spell2Casts: number
+    spell3Casts: number
+    spell4Casts: number
+    summoner1Casts: number
+    summoner1Id: number
+    summoner2Casts: number
+    summoner2Id: number
+    summonerId: string
+    summonerLevel: number
+    summonerName: string
+    teamEarlySurrendered: boolean
+    teamId: number
+    teamPosition: string
+    timeCcingOthers: number
+    timePlayed: number
+    totalDamageDealt: number
+    totalDamageDealtToChampions: number
+    totalDamageShieldedOnTeammates: number
+    totalDamageTaken: number
+    totalHeal: number
+    totalHealsOnTeammates: number
+    totalMinionsKilled: number
+    totalTimeCcDealt: number
+    totalTimeSpentDead: number
+    totalUnitsHealed: number
+    tripleKills: number
+    trueDamageDealt: number
+    trueDamageDealtToChampions: number
+    trueDamageTaken: number
+    turretKills: number
+    turretTakedowns: number
+    turretsLost: number
+    unrealKills: number
+    visionScore: number
+    visionWardsBoughtInGame: number
     wardsKilled: number
     wardsPlaced: number
-    visionWardsBoughtInGame: number
-    sightWardsBoughtInGame: number
-    neutralMinionsKills: number
-    totalMinionsKilled: number
-    // Objective Stats
-    damageDealtToObjectives: number
-    inhibitorKills: number
-    turretKills: number
-    damageDealtToTurrets: number
-    // Score
-    totalPlayerScore: number
-    totalScoreRank: number
-    objectivePlayerScore: number
-    combatPlayerScore: number
-    visionScore: number
-    // Damage Dealt to Champions
-    totalDamageDealtToChampions: number
-    physicalDamageDealtToChampions: number
-    magicDamageDealtToChampions: number
-    trueDamageDealtToChampions: number
-    // Damage Dealt
-    totalDamageDealt: number
-    physicalDamageDealt: number
-    magicDamageDealt: number 
-    trueDamageDealt: number
-    // Damage Taken
-    totalDamageTaken: number 
-    physicalDamageTaken: number
-    magicalDamageTaken: number
-    trueDamageTaken: number
-    // Other Combat  
-    totalHeal: number
-    damageSelfMitigated: number
-}
-
-export interface LolParticipantTimeline {
-    participantId: number
-    lane: string
+    win: boolean
 }
 
 export enum ELolDisplayStat {
@@ -110,8 +117,6 @@ export enum ELolDisplayStat {
     GoldEarned,
     GoldSpent,
     // Neutral
-    JungleTeam,
-    JungleEnemy,
     NeutralsKilled,
     MinionsKilled,
     // Vision
@@ -125,9 +130,6 @@ export enum ELolDisplayStat {
     TowerKills,
     DamageToTurrets,
     // Score
-    TotalScore,
-    ObjectiveScore,
-    CombatScore,
     VisionScore,
     // Damage Dealt
     TotalDamageDealt,
@@ -155,14 +157,9 @@ export let allLolDisplayStats: ELolDisplayStat[] = [
     ELolDisplayStat.QK,
     ELolDisplayStat.PK,
     ELolDisplayStat.FirstBlood,
-    ELolDisplayStat.TotalScore,
-    ELolDisplayStat.ObjectiveScore,
-    ELolDisplayStat.CombatScore,
     ELolDisplayStat.VisionScore,
     ELolDisplayStat.GoldEarned,
     ELolDisplayStat.GoldSpent,
-    ELolDisplayStat.JungleTeam,
-    ELolDisplayStat.JungleEnemy,
     ELolDisplayStat.NeutralsKilled,
     ELolDisplayStat.MinionsKilled,
     ELolDisplayStat.WardsKilled,
@@ -257,8 +254,6 @@ export function lolDisplayStatToCategory(s: ELolDisplayStat): ELolStatCategory {
         case ELolDisplayStat.GoldSpent:
             return ELolStatCategory.Economy
         // Neutral
-        case ELolDisplayStat.JungleTeam:
-        case ELolDisplayStat.JungleEnemy:
         case ELolDisplayStat.NeutralsKilled:
         case ELolDisplayStat.MinionsKilled:
             return ELolStatCategory.Neutrals
@@ -275,9 +270,6 @@ export function lolDisplayStatToCategory(s: ELolDisplayStat): ELolStatCategory {
         case ELolDisplayStat.DamageToTurrets:
             return ELolStatCategory.Objectives
         // Score
-        case ELolDisplayStat.TotalScore:
-        case ELolDisplayStat.ObjectiveScore:
-        case ELolDisplayStat.CombatScore:
         case ELolDisplayStat.VisionScore:
             return ELolStatCategory.Score
         // Damage Dealt
@@ -324,10 +316,6 @@ export function lolDisplayStatToName(s: ELolDisplayStat): string {
         case ELolDisplayStat.GoldSpent:
             return 'Gold Spent'
         // Neutral
-        case ELolDisplayStat.JungleTeam:
-            return 'Killed in Team Jungle'
-        case ELolDisplayStat.JungleEnemy:
-            return 'Killed in Enemy Jungle'
         case ELolDisplayStat.NeutralsKilled:
             return 'Neutrals Killed'
         case ELolDisplayStat.MinionsKilled:
@@ -351,12 +339,6 @@ export function lolDisplayStatToName(s: ELolDisplayStat): string {
         case ELolDisplayStat.DamageToTurrets:
             return 'Damage To Turrets'
         // Score
-        case ELolDisplayStat.TotalScore:
-            return 'Total Score'
-        case ELolDisplayStat.ObjectiveScore:
-            return 'Objective Score'
-        case ELolDisplayStat.CombatScore:
-            return 'Combat Score'
         case ELolDisplayStat.VisionScore:
             return 'Vision Score'
         // Damage Dealt
@@ -388,7 +370,7 @@ export function lolDisplayStatToName(s: ELolDisplayStat): string {
     }
 }
 
-export function extractLolDisplayStatFromParticipant(p: LolParticipantStats, s: ELolDisplayStat): any {
+export function extractLolDisplayStatFromParticipant(p: LolParticipant, s: ELolDisplayStat): any {
     switch (s) {
         // KDA
         case ELolDisplayStat.KDA:
@@ -409,12 +391,8 @@ export function extractLolDisplayStatFromParticipant(p: LolParticipantStats, s: 
         case ELolDisplayStat.GoldSpent:
             return p.goldSpent
         // Neutral
-        case ELolDisplayStat.JungleTeam:
-            return p.neutralMinionsKilledTeamJungle
-        case ELolDisplayStat.JungleEnemy:
-            return p.neutralMinionsKilledEnemyJungle
         case ELolDisplayStat.NeutralsKilled:
-            return p.neutralMinionsKills
+            return p.neutralMinionsKilled
         case ELolDisplayStat.MinionsKilled:
             return p.totalMinionsKilled
         // Vision
@@ -436,12 +414,6 @@ export function extractLolDisplayStatFromParticipant(p: LolParticipantStats, s: 
         case ELolDisplayStat.DamageToTurrets:
             return p.damageDealtToTurrets
         // Score
-        case ELolDisplayStat.TotalScore:
-            return p.totalPlayerScore
-        case ELolDisplayStat.ObjectiveScore:
-            return p.objectivePlayerScore
-        case ELolDisplayStat.CombatScore:
-            return p.combatPlayerScore
         case ELolDisplayStat.VisionScore:
             return p.visionScore
         // Damage Dealt
@@ -456,7 +428,7 @@ export function extractLolDisplayStatFromParticipant(p: LolParticipantStats, s: 
         case ELolDisplayStat.MagicDealt:
             return p.magicDamageDealt
         case ELolDisplayStat.MagicTaken:
-            return p.magicalDamageTaken
+            return p.magicDamageTaken
         case ELolDisplayStat.TrueDealt:
             return p.trueDamageDealt
         case ELolDisplayStat.TrueTaken:

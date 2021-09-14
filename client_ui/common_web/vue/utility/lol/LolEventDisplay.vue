@@ -47,14 +47,14 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { LolMatch, getPlayerFromParticipantId } from '@client/js/lol/matches'
 import { LolMatchTimeline, LolMatchEvent, LolStaticTargets } from '@client/js/lol/timeline'
-import { WrappedLolParticipant } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 
 import LolParticipantDisplay from '@client/vue/utility/lol/LolParticipantDisplay.vue'
 import LolStaticTargetDisplay from '@client/vue/utility/lol/LolStaticTargetDisplay.vue'
 
 interface Subject {
-    primary: WrappedLolParticipant
-    assistants: WrappedLolParticipant[]
+    primary: LolParticipant
+    assistants: LolParticipant[]
 }
 
 enum Verb {
@@ -63,7 +63,7 @@ enum Verb {
 }
 
 interface Target {
-    participant?: WrappedLolParticipant | undefined
+    participant?: LolParticipant | undefined
     other?: LolStaticTargets
 }
 
@@ -112,10 +112,10 @@ export default class LolEventDisplay extends Vue {
 
                 return {
                     primary,
-                    assistants: <WrappedLolParticipant[]>(!!this.inputEvent.assistingParticipantIds ?
+                    assistants: <LolParticipant[]>(!!this.inputEvent.assistingParticipantIds ?
                         this.inputEvent.assistingParticipantIds.map((ele: number) => {
                             return getPlayerFromParticipantId(this.match, ele)
-                        }).filter((ele: WrappedLolParticipant | undefined) => {
+                        }).filter((ele: LolParticipant | undefined) => {
                             return !!ele
                         }) : [])
                 }

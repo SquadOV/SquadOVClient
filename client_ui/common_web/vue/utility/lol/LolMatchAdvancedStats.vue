@@ -19,8 +19,8 @@
                                 >
                                     <lol-champion-icon
                                         :style="playerChampionStyle(p)"
-                                        :champion-id="p.participant.championId"
-                                        :game-version="match.gameVersion"
+                                        :champion-id="p.championId"
+                                        :game-version="match.info.gameVersion"
                                         :width="32"
                                         :height="32"
                                     >
@@ -80,7 +80,7 @@
                         :key="`player-${idx}-${stIdx}-${pIdx}`"
                     >
                         <lol-advanced-stat-display
-                            :value="extractLolDisplayStatFromParticipant(p.participant.stats, st)"
+                            :value="extractLolDisplayStatFromParticipant(p, st)"
                         >
                         </lol-advanced-stat-display>
                     </td>
@@ -103,7 +103,7 @@ import {
     getTeamIdFromParticipantId
 } from '@client/js/lol/matches'
 import {
-    WrappedLolParticipant,
+    LolParticipant,
     lolDisplayStatToName,
     extractLolDisplayStatFromParticipant,
     allLolStatCategories,
@@ -142,30 +142,21 @@ export default class LolMatchAdvancedStats extends Vue {
         Vue.set(this.isGroupExpanded, key, !this.isGroupExpanded[key])
     }
 
-    playerName(p: WrappedLolParticipant): string {
-        if (!(p.participant.participantId in this.participantIdToName)) {
-            if (!!p.identity?.player) {
-                return p.identity.player.summonerName
-            } else {
-                ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionName(p.participant.championId).then((resp: string) => {
-                    Vue.set(this.participantIdToName, p.participant.participantId, resp)
-                }).catch((err: any) => {
-                    console.error('Failed to get LoL champion name as player name bakcup: ', err)
-                })
-            }
-            return 'Loading...'
+    playerName(p: LolParticipant): string {
+        if (!(p.participantId in this.participantIdToName)) {
+            return p.summonerName
         }
         
-        return this.participantIdToName[p.participant.participantId]!
+        return this.participantIdToName[p.participantId]!
     }
 
-    playerChampionStyle(p: WrappedLolParticipant) : any {
+    playerChampionStyle(p: LolParticipant) : any {
         let borderColor: string
-        let playerTeam = getTeamIdFromParticipantId(this.match, p.participant.participantId)
+        let playerTeam = getTeamIdFromParticipantId(this.match, p.participantId)
 
         if (!!this.currentParticipantId) {
             let currentTeam = getTeamIdFromParticipantId(this.match, this.currentParticipantId)
-            if (p.participant.participantId === this.currentParticipantId) {
+            if (p.participantId === this.currentParticipantId) {
                 borderColor = 'color-self'
             } else if (currentTeam === playerTeam) {
                 borderColor = 'color-friendly'
@@ -186,19 +177,19 @@ export default class LolMatchAdvancedStats extends Vue {
         }
     }
 
-    get teamPlayers(): WrappedLolParticipant[] {
+    get teamPlayers(): LolParticipant[] {
         return !!this.currentParticipantId ?
             extractSameTeamPlayersFromParticipantId(this.match, this.currentParticipantId)! :
             extractSameTeamPlayersFromTeamId(this.match, 100)
     }
 
-    get enemyPlayers(): WrappedLolParticipant[] {
+    get enemyPlayers(): LolParticipant[] {
         return !!this.currentParticipantId ?
             extractEnemyTeamPlayersFromParticipantId(this.match, this.currentParticipantId)! :
             extractSameTeamPlayersFromTeamId(this.match, 200)
     }
 
-    get allPlayers(): WrappedLolParticipant[] {
+    get allPlayers(): LolParticipant[] {
         return [
             ...this.teamPlayers,
             ...this.enemyPlayers

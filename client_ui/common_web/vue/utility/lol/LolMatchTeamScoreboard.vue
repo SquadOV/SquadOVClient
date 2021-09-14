@@ -46,7 +46,7 @@
                         contain
                     >
                     </v-img>
-                    {{ teamStats.towerKills }}
+                    {{ teamStats.objectives.tower.kills }}
                 </div>
 
                 <div class="d-flex align-center mx-1">
@@ -57,7 +57,7 @@
                         contain
                     >
                     </v-img>
-                    {{ teamStats.inhibitorKills }}
+                    {{ teamStats.objectives.inhibitor.kills }}
                 </div>
                 
                 <div class="d-flex align-center mx-1">
@@ -79,7 +79,7 @@
                         contain
                     >
                     </v-img>
-                    {{ teamStats.baronKills }}
+                    {{ teamStats.objectives.baron.kills }}
                 </div>
                 
                 <div class="d-flex align-center mx-1">
@@ -90,7 +90,7 @@
                         contain
                     >
                     </v-img>
-                    {{ teamStats.dragonKills }}
+                    {{ teamStats.objectives.dragon.kills }}
                 </div>
                 
                 <div class="d-flex align-center mx-1">
@@ -101,7 +101,7 @@
                         contain
                     >
                     </v-img>
-                    {{ teamStats.riftHeraldKills }}
+                    {{ teamStats.objectives.riftHerald.kills }}
                 </div>
             </div>
         </div>
@@ -119,8 +119,8 @@
                         <div class="d-flex align-center">
                             <lol-champion-icon
                                 class="mr-2"
-                                :champion-id="item.participant.championId"
-                                :game-version="match.gameVersion"
+                                :champion-id="item.championId"
+                                :game-version="match.info.gameVersion"
                                 :width="48"
                                 :height="48"
                                 :style="playerChampionStyle(item)"
@@ -132,22 +132,22 @@
                                     {{ playerName(item) }}
 
                                     <lol-lane-icon
-                                        :lane="item.participant.timeline.lane"
+                                        :lane="item.lane"
                                     >
                                     </lol-lane-icon>
                                 </div>
 
                                 <div class="d-flex align-center">
                                     <lol-summoner-spell-icon
-                                        :spell-id="item.participant.spell1Id"
-                                        :game-version="match.gameVersion"
+                                        :spell-id="item.summoner1Id"
+                                        :game-version="match.info.gameVersion"
                                         :width-height="24"
                                     >
                                     </lol-summoner-spell-icon>
 
                                     <lol-summoner-spell-icon
-                                        :spell-id="item.participant.spell2Id"
-                                        :game-version="match.gameVersion"
+                                        :spell-id="item.summoner2Id"
+                                        :game-version="match.info.gameVersion"
                                         :width-height="24"
                                     >
                                     </lol-summoner-spell-icon>
@@ -157,19 +157,19 @@
                     </td>
 
                     <td class="level-column">
-                        {{ item.participant.champLevel }}
+                        {{ item.champLevel }}
                     </td>
 
                     <td class="items-column">
                         <lol-player-items
-                            :stats="item.participant.stats"
-                            :game-version="match.gameVersion"
+                            :stats="item"
+                            :game-version="match.info.gameVersion"
                         >
                         </lol-player-items>
                     </td>
 
                     <td class="kda-column">
-                        {{ item.participant.stats.kills }} / {{ item.participant.stats.deaths }} / {{ item.participant.stats.assists }}
+                        {{ item.kills }} / {{ item.deaths }} / {{ item.assists }}
                     </td>
 
                     <td class="gold-column">
@@ -183,7 +183,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ formatThousands(item.participant.stats.goldEarned) }} ({{ formatThousands(item.participant.stats.goldSpent) }})
+                            {{ formatThousands(item.goldEarned) }} ({{ formatThousands(item.goldSpent) }})
                         </div>
                     </td>
 
@@ -198,7 +198,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ item.participant.stats.totalMinionsKilled }}
+                            {{ item.totalMinionsKilled }}
                         </div>
                     </td>
 
@@ -213,7 +213,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ item.participant.stats.wardsPlaced }}
+                            {{ item.wardsPlaced }}
                         </div>
                     </td>
 
@@ -228,7 +228,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ item.participant.stats.totalDamageDealtToChampions }}
+                            {{ item.totalDamageDealtToChampions }}
                         </div>
 
                         <div class="d-flex align-center">
@@ -241,7 +241,7 @@
                                 contain
                             >
                             </v-img>
-                            {{ item.participant.stats.totalDamageTaken }}
+                            {{ item.totalDamageTaken }}
                         </div>
                     </td>
                 </tr>
@@ -257,7 +257,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { LolMatch, extractSameTeamPlayersFromTeamId } from '@client/js/lol/matches'
 import { LolTeamStats } from '@client/js/lol/team'
-import { LolParticipant, WrappedLolParticipant } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 import { formatThousands } from '@client/js/lol/number'
 import { ddragonContainer } from '@client/js/lolDdragon'
 
@@ -289,75 +289,66 @@ export default class LolMatchTeamScoreboard extends Vue {
     participantIdToName: { [id: number] : string | undefined } = {}
 
     get totalKills() : number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.kills
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.kills
         }, 0)
     }
 
     get totalDeaths() : number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.deaths
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.deaths
         }, 0)
     }
 
     get totalAssists(): number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.assists
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.assists
         }, 0)
     }
 
     get totalGoldEarned(): number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.goldEarned
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.goldEarned
         }, 0)
     }
 
     get totalGoldSpent(): number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.goldSpent
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.goldSpent
         }, 0)
     }
 
     get totalCreepsKilled(): number {
-        return this.teamPlayers.reduce((acc: number, curr: WrappedLolParticipant) => {
-            return acc + curr.participant.stats.totalMinionsKilled
+        return this.teamPlayers.reduce((acc: number, curr: LolParticipant) => {
+            return acc + curr.totalMinionsKilled
         }, 0)
     }
 
-    get teamPlayers(): WrappedLolParticipant[] {
+    get teamPlayers(): LolParticipant[] {
         return extractSameTeamPlayersFromTeamId(this.match, this.teamId)
     }
 
     get sameTeam(): boolean {
-        return (this.match.participants.find((ele: LolParticipant) => ele.participantId === this.currentParticipantId)?.teamId === this.teamId)
+        return (this.match.info.participants.find((ele: LolParticipant) => ele.participantId === this.currentParticipantId)?.teamId === this.teamId)
     }
 
     get teamStats(): LolTeamStats | undefined {
-        return this.match.teams.find((ele: LolTeamStats) => ele.teamId === this.teamId)
+        return this.match.info.teams.find((ele: LolTeamStats) => ele.teamId === this.teamId)
     }
 
-    playerName(p: WrappedLolParticipant): string {
-        if (!(p.participant.participantId in this.participantIdToName)) {
-            if (!!p.identity?.player) {
-                return p.identity.player.summonerName
-            } else {
-                ddragonContainer.getClientForVersion(this.match.gameVersion).getLolChampionName(p.participant.championId).then((resp: string) => {
-                    Vue.set(this.participantIdToName, p.participant.participantId, resp)
-                }).catch((err: any) => {
-                    console.error('Failed to get LoL champion name as player name bakcup: ', err)
-                })
-            }
-            return 'Loading...'
+    playerName(p: LolParticipant): string {
+        if (!(p.participantId in this.participantIdToName)) {
+            return p.summonerName
         }
         
-        return this.participantIdToName[p.participant.participantId]!
+        return this.participantIdToName[p.participantId]!
     }
 
-    playerChampionStyle(p: WrappedLolParticipant) : any {
+    playerChampionStyle(p: LolParticipant) : any {
         let borderColor: string
 
         if (!!this.currentParticipantId) {
-            if (p.participant.participantId === this.currentParticipantId) {
+            if (p.participantId === this.currentParticipantId) {
                 borderColor = 'color-self'
             } else if (this.sameTeam) {
                 borderColor = 'color-friendly'

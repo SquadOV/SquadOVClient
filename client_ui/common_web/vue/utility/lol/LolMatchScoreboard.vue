@@ -1,7 +1,7 @@
 <template>
     <div>
         <lol-match-team-scoreboard
-            v-for="(team, idx) in match.teams"
+            v-for="(team, idx) in match.info.teams"
             :key="idx"
             :match="match"
             :current-participant-id="currentParticipantId"

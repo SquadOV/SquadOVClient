@@ -16,8 +16,8 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { LolParticipantStats } from '@client/js/lol/participant'
 import LolItemIcon from '@client/vue/utility/lol/LolItemIcon.vue'
+import { LolParticipant } from '@client/js/lol/participant'
 
 @Component({
     components: {
@@ -26,7 +26,7 @@ import LolItemIcon from '@client/vue/utility/lol/LolItemIcon.vue'
 })
 export default class LolPlayerItems extends Vue {
     @Prop({required: true})
-    stats!: LolParticipantStats
+    stats!: LolParticipant
 
     @Prop({default: 32})
     itemWidthHeight!: number

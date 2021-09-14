@@ -130,7 +130,7 @@
                         ref="goldGraph"
                         :series-data="goldSeries"
                         :forced-min-x="0"
-                        :forced-max-x="match.gameDuration"
+                        :forced-max-x="match.info.gameDuration"
                         :diff-graph="diffGraphs"
                         @graphclick="handleClick"
                     >
@@ -148,7 +148,7 @@
                         ref="xpGraph"
                         :series-data="xpSeries"
                         :forced-min-x="0"
-                        :forced-max-x="match.gameDuration"
+                        :forced-max-x="match.info.gameDuration"
                         :diff-graph="diffGraphs"
                         @graphclick="handleClick"
                     >
@@ -166,7 +166,7 @@
                         ref="levelGraph"
                         :series-data="levelSeries"
                         :forced-min-x="0"
-                        :forced-max-x="match.gameDuration"
+                        :forced-max-x="match.info.gameDuration"
                         :diff-graph="diffGraphs"
                         @graphclick="handleClick"
                     >
@@ -184,7 +184,7 @@
                         ref="minionGraph"
                         :series-data="minionSeries"
                         :forced-min-x="0"
-                        :forced-max-x="match.gameDuration"
+                        :forced-max-x="match.info.gameDuration"
                         :diff-graph="diffGraphs"
                         @graphclick="handleClick"
                     >
@@ -213,7 +213,7 @@ import {
 } from '@client/js/lol/matches'
 import { LolMatchTimeline, LolMatchFrameStat, LolMatchFrame, getLolMatchNonEmptyTimelineFrames } from '@client/js/lol/timeline'
 import { LolTeamStats, lolTeamIdToString, getOpposingLolTeam } from '@client/js/lol/team'
-import { WrappedLolParticipant } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 import { StatXYSeriesData } from '@client/js/stats/seriesData'
 import { ddragonContainer } from '@client/js/lolDdragon'
 import { colorToCssString, colorFromElementTheme } from '@client/js/color'
@@ -276,31 +276,21 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
         return getTeamIdFromParticipantId(this.match, this.currentParticipantId)
     }
 
-    get playerName(): (p: WrappedLolParticipant) => string {
-        let match = this.match
+    get playerName(): (p: LolParticipant) => string {
         let participantIdToName = this.participantIdToName
 
-        return (p: WrappedLolParticipant): string => {
-            if (!(p.participant.participantId in participantIdToName)) {
-                if (!!p.identity?.player) {
-                    return p.identity.player.summonerName
-                } else {
-                    ddragonContainer.getClientForVersion(match.gameVersion).getLolChampionName(p.participant.championId).then((resp: string) => {
-                        Vue.set(this.participantIdToName, p.participant.participantId, resp)
-                    }).catch((err: any) => {
-                        console.error('Failed to get LoL champion name as player name bakcup: ', err)
-                    })
-                }
-                return 'Loading...'
+        return (p: LolParticipant): string => {
+            if (!(p.participantId in participantIdToName)) {
+                return p.summonerName
             }
             
-            return participantIdToName[p.participant.participantId]!
+            return participantIdToName[p.participantId]!
         }
     }
 
     get selectOptions(): any[] {
         if (this.teamGraphs) {
-            return this.match.teams.map((ele: LolTeamStats) => {
+            return this.match.info.teams.map((ele: LolTeamStats) => {
                 return {
                     text: !!this.currentTeamId ?
                         ((this.currentTeamId === ele.teamId) ? 'Your Team': 'Enemy Team') :
@@ -309,7 +299,7 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
                 }
             })
         } else {
-            let allPlayers: WrappedLolParticipant[] = []
+            let allPlayers: LolParticipant[] = []
             if (!!this.currentParticipantId && !!this.currentTeamId) {
                 allPlayers = [
                     ...extractSameTeamPlayersFromParticipantId(this.match, this.currentParticipantId)!,
@@ -321,11 +311,11 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
                     ...extractSameTeamPlayersFromTeamId(this.match, 200),
                 ]
             }
-            return allPlayers.map((ele: WrappedLolParticipant) => {
+            return allPlayers.map((ele: LolParticipant) => {
                 return {
                     player: ele,
                     text: this.playerName(ele),
-                    value: ele.participant.participantId
+                    value: ele.participantId
                 }
             })
         }
@@ -376,7 +366,7 @@ export default class LolStatTimelineContainer extends mixins(CommonComponent) {
         return  (st: LolMatchFrameStat): StatXYSeriesData[] => {
             let x: number[] = [
                 ...getLolMatchNonEmptyTimelineFrames(timeline).map((ele: LolMatchFrame) => ele.timestamp / 1000),
-                this.match.gameDuration,
+                this.match.info.gameDuration,
             ]
             return ids.map((id: number) => {
                 let y: number[] = []

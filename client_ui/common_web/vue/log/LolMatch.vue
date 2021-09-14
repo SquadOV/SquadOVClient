@@ -73,7 +73,7 @@
                 <generic-match-timeline
                     class="full-width my-2"
                     :start="0"
-                    :end="currentMatch.match.gameDuration"
+                    :end="currentMatch.match.info.gameDuration"
                     :current="currentMatchTimeSeconds"
                     :input-events="genericEvents"
                     :major-tick-every="90"
@@ -147,7 +147,7 @@
 import Component, { mixins } from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import { FullLolMatch, LolPlayerMatchSummary } from '@client/js/lol/matches'
-import { LolParticipant, LolParticipantIdentity } from '@client/js/lol/participant'
+import { LolParticipant } from '@client/js/lol/participant'
 import { LolMatchEvent } from '@client/js/lol/timeline'
 import { apiClient, ApiData } from '@client/js/api'
 import { VodAssociation } from '@client/js/squadov/vod'
@@ -247,31 +247,31 @@ export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
         }
         return {
             matchUuid: this.matchUuid,
-            gameCreation: this.currentMatch.match.gameCreation,
-            gameDuration: this.currentMatch.match.gameDuration,
-            gameType: this.currentMatch.match.gameType,
-            gameVersion: this.currentMatch.match.gameVersion,
-            queueId: this.currentMatch.match.queueId,
-            seasonId: this.currentMatch.match.seasonId,
-            mapId: this.currentMatch.match.mapId,
-            gameMode: this.currentMatch.match.gameMode,
+            gameCreation: this.currentMatch.match.info.gameCreation,
+            gameDuration: this.currentMatch.match.info.gameDuration,
+            gameType: this.currentMatch.match.info.gameType,
+            gameVersion: this.currentMatch.match.info.gameVersion,
+            queueId: this.currentMatch.match.info.queueId,
+            seasonId: 0,
+            mapId: this.currentMatch.match.info.mapId,
+            gameMode: this.currentMatch.match.info.gameMode,
             currentParticipantId: this.currentParticipantId,
-            participants: this.currentMatch.match.participants.map((ele: LolParticipant) => {
+            participants: this.currentMatch.match.info.participants.map((ele: LolParticipant) => {
                 return {
                     participantId: ele.participantId,
                     championId: ele.championId,
-                    summonerName: this.currentMatch?.match.participantIdentities.find((p: LolParticipantIdentity) => {
+                    summonerName: this.currentMatch?.match.info.participants.find((p: LolParticipant) => {
                         return ele.participantId === p.participantId
-                    })?.player?.summonerName,
+                    })?.summonerName,
                     teamId: ele.teamId,
-                    kills: ele.stats.kills,
-                    deaths: ele.stats.deaths,
-                    assists: ele.stats.assists,
-                    totalDamageDealtToChampions: ele.stats.totalDamageDealtToChampions,
-                    totalMinionsKilled: ele.stats.totalMinionsKilled,
-                    wardsPlaced: ele.stats.wardsPlaced,
-                    lane: ele.timeline.lane,
-                    win: ele.stats.win,
+                    kills: ele.kills,
+                    deaths: ele.deaths,
+                    assists: ele.assists,
+                    totalDamageDealtToChampions: ele.totalDamageDealtToChampions,
+                    totalMinionsKilled: ele.totalMinionsKilled,
+                    wardsPlaced: ele.wardsPlaced,
+                    lane: ele.lane,
+                    win: ele.win,
                 }
             }),
             hasVod: !!this.vod,
