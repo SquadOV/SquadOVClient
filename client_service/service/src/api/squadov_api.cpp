@@ -126,6 +126,7 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     flags.maxRecordFps = parsedJson["maxRecordFps"].get<int>();
     flags.allowRecordUpload = parsedJson["allowRecordUpload"].get<bool>();
     flags.allowWowCombatLogUpload = parsedJson["allowWowCombatLogUpload"].get<bool>();
+    flags.disableSentry = parsedJson.value("disableSentry", true);
     LOG_INFO("Obtain feature flags: " << flags << std::endl);
     
     std::lock_guard guard(_featureMutex);

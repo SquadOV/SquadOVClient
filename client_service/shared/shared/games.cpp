@@ -18,6 +18,10 @@ std::string gameToString(EGame game) {
         return "Teamfight Tactics";
     case EGame::CSGO:
         return "Counter Strike: Global Offensive";
+    case EGame::WowVanilla:
+        return "World of Warcraft Classic";
+    case EGame::WowTbc:
+        return "Burning Crusade Classic";
     }
     return "";
 }
@@ -38,6 +42,10 @@ std::string gameToIconString(EGame game) {
         return "tft";
     case EGame::CSGO:
         return "csgo";
+    case EGame::WowVanilla:
+        return "wowc";
+    case EGame::WowTbc:
+        return "tbc";
     }
     return "";
 }

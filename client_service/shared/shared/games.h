@@ -14,6 +14,8 @@ enum class EGame {
     Valorant,
     WoW,
     CSGO,
+    WowVanilla,
+    WowTbc,
     Unknown
 };
 
