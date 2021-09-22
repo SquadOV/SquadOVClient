@@ -6,6 +6,8 @@ export enum SquadOvGames {
     Valorant,
     WorldOfWarcraft,
     Csgo,
+    WowVanilla,
+    WowTbc,
     Unknown,
 }
 
@@ -16,7 +18,9 @@ export let allGames = [
     SquadOvGames.TeamfightTactics,
     SquadOvGames.Valorant,
     SquadOvGames.WorldOfWarcraft,
-    SquadOvGames.Csgo
+    SquadOvGames.Csgo,
+    SquadOvGames.WowVanilla,
+    SquadOvGames.WowTbc,
 ]
 
 export function gameToRect(game: SquadOvGames): string {
@@ -35,6 +39,10 @@ export function gameToRect(game: SquadOvGames): string {
             return 'assets/games/wow_rect_small.jpg'
         case SquadOvGames.Csgo:
             return 'assets/games/csgo_rect_small.jpg'
+        case SquadOvGames.WowVanilla:
+            return 'assets/games/wow_vanilla_rect_small.jpg'
+        case SquadOvGames.WowTbc:
+            return 'assets/games/wow_tbc_rect_small.jpg'
         case SquadOvGames.Unknown:
             return ''
     }
@@ -56,6 +64,10 @@ export function gameToIcon(game: SquadOvGames): string {
             return 'assets/wow-logo.png'
         case SquadOvGames.Csgo:
             return 'assets/csgo-logo.png'
+        case SquadOvGames.WowVanilla:
+            return 'assets/wowc-logo.png'
+        case SquadOvGames.WowTbc:
+            return 'assets/tbc-logo.png'
         case SquadOvGames.Unknown:
             return ''
     }
@@ -77,6 +89,10 @@ export function gameToName(game: SquadOvGames): string {
             return 'World of Warcraft'
         case SquadOvGames.Csgo:
             return 'CS:GO'
+        case SquadOvGames.WowVanilla:
+            return 'World of Warcraft Classic'
+        case SquadOvGames.WowTbc:
+            return 'Burning Crusade Classic'
         case SquadOvGames.Unknown:
             return 'Unknown'
     }
@@ -98,6 +114,10 @@ export function gameShorthandToGame(str: string): SquadOvGames {
             return SquadOvGames.WorldOfWarcraft
         case 'csgo':
             return SquadOvGames.Csgo
+        case 'wowc':
+            return SquadOvGames.WowVanilla
+        case 'tbc':
+            return SquadOvGames.WowTbc
     }
     return SquadOvGames.Unknown
 }

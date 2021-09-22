@@ -3,6 +3,7 @@
 namespace {
 #ifdef _WIN32
 const std::string wowProcessName("Wow.exe");
+const std::string wowClassicProcessName("WowClassic.exe");
 #else
 #endif
 
@@ -11,7 +12,7 @@ const std::string wowProcessName("Wow.exe");
 namespace process_watcher::games {
 
 WoWProcessDetector::WoWProcessDetector():
-    GameProcessDetector(wowProcessName) {
+    GameProcessDetector({wowProcessName, wowClassicProcessName}) {
 
 }
 

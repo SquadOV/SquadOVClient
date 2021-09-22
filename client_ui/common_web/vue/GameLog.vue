@@ -246,6 +246,18 @@ export default class GameLog extends Vue {
                 'to': wowTo,
                 'route': this.$router.resolve(wowTo).route
             },
+            {
+                'icon': 'assets/wowc-logo.png',
+                'name': 'World of Warcraft Classic',
+                'to': wowTo,
+                'route': this.$router.resolve(wowTo).route
+            },
+            {
+                'icon': 'assets/tbc-logo.png',
+                'name': 'Burning Crusade Classic',
+                'to': wowTo,
+                'route': this.$router.resolve(wowTo).route
+            },
         ]
     }
 

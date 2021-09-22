@@ -13,5 +13,6 @@ struct VersionInfo {
 
 VersionInfo parseVersionInfo(const std::string& vers);
 bool operator<(const VersionInfo& a, const VersionInfo& b);
+std::ostream& operator<<(std::ostream& os, const VersionInfo& p);
 
 }

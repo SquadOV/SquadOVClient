@@ -177,101 +177,73 @@ WoWLogWatcher::~WoWLogWatcher() {
 
 void WoWLogWatcher::loadFromExecutable(const fs::path& exePath) {
     const auto combatLogFolder = exePath.parent_path() / fs::path("Logs");
-
-    // At this point we either want WoWCombatLog.txt or the new timestamped version.
-    // Detect this by reading properties off the EXE.
-    DWORD unk1 = 0;
-    const auto fileInfoSize = GetFileVersionInfoSizeExW(0, exePath.native().c_str(), &unk1);
-
-    std::vector<char> buffer(fileInfoSize);
-    if (!GetFileVersionInfoExW(0, exePath.native().c_str(), 0, fileInfoSize, (void*)buffer.data())) {
-        THROW_ERROR("Failed to get WoW EXE info: " << shared::errors::getWin32ErrorAsString());
-    }
-
-    char* infBuffer = nullptr;
-    unsigned int infSize = 0;
-    if (!VerQueryValueA((void*)buffer.data(), "\\StringFileInfo\\000004B0\\FileVersion", (void**)&infBuffer, &infSize)) {
-        THROW_ERROR("Failed to query exe info.");
-    }
-
-    std::string versionString(infBuffer, infSize);
-    const auto currentVersion = shared::parseVersionInfo(versionString);
-    const auto thresholdVersion = shared::parseVersionInfo("9.0.5");
-
-    if (currentVersion < thresholdVersion) {
-        LOG_INFO("...Legacy combat log detected." << std::endl);
-        // Older WoW - load WoWCombatLog.txt.
-        const auto combatLogPath = combatLogFolder / fs::path("WoWCombatLog.txt");
-        loadFromPath(combatLogPath, true, true, true);
-    } else {
-        LOG_INFO("...Timestamped combat log detected." << std::endl);
-        // Newer WoW - file will be of the form WoWCombatLog-DATE-TIME.txt.
-        _timestampLogThread = std::thread([this, combatLogFolder](){
-            std::filesystem::path logFile;
-            bool found = false;
-            size_t iterations = 0;
-            bool isOldFile = true;
-            std::optional<typename std::ifstream::pos_type> position = std::nullopt;
-            // This loop needs to constantly run until WoW exits to catch each subsequent WoW combat log.
-            while (_running) {
-                // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
-                // continue on in the while loop all at once.
-                try {
-                    if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold()) || (shared::filesystem::timeOfLastFileWrite(logFile) < _lastLogTime)) {
-                        const auto oldLogFile = logFile;
-                        logFile = shared::filesystem::getNewestFileInFolder(combatLogFolder, [](const fs::path& path){
-                            if (path.extension() != ".txt") {
-                                return false;
-                            }
-
-                            if (path.filename().native().find(L"WoWCombatLog"s) != 0) {
-                                return false;
-                            }
-
-                            return true;
-                        });
-
-                        if (oldLogFile != logFile) {
-                            iterations = 0;
+    LOG_INFO("...Timestamped combat log detected." << std::endl);
+    // Newer WoW - file will be of the form WoWCombatLog-DATE-TIME.txt.
+    _timestampLogThread = std::thread([this, combatLogFolder](){
+        std::filesystem::path logFile;
+        bool found = false;
+        size_t iterations = 0;
+        bool isOldFile = true;
+        std::optional<typename std::ifstream::pos_type> position = std::nullopt;
+        // This loop needs to constantly run until WoW exits to catch each subsequent WoW combat log.
+        while (_running) {
+            // I'm not sure how to do this conditional, catch the possible exception in timeOfLastFileWrite and *still*
+            // continue on in the while loop all at once.
+            try {
+                if (!fs::exists(logFile) || (shared::filesystem::timeOfLastFileWrite(logFile) < timeThreshold()) || (shared::filesystem::timeOfLastFileWrite(logFile) < _lastLogTime)) {
+                    const auto oldLogFile = logFile;
+                    logFile = shared::filesystem::getNewestFileInFolder(combatLogFolder, [](const fs::path& path){
+                        if (path.extension() != ".txt") {
+                            return false;
                         }
 
-                        try {
-                            if (fs::exists(logFile)) {
-                                std::ifstream file(logFile);
-                                if (file.is_open()) {
-                                    file.seekg(0, std::ios_base::end);
-                                    position = file.tellg();
-                                }
-                                file.close();
-                            }
-                        } catch (std::exception& ex) {
-                            LOG_WARNING("Failed to get log file position: " << ex.what() << std::endl);
+                        if (path.filename().native().find(L"WoWCombatLog"s) != 0) {
+                            return false;
                         }
 
-                        isOldFile = iterations++ > 0;
-                    } else {
-                        const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(logFile);
-                        found = ((lastWriteTime >= timeThreshold()) && (lastWriteTime >= _lastLogTime));
-                        if (found && _running) {
-                            _lastLogTime = lastWriteTime;
-                            found = false;
-                            loadFromPath(
-                                logFile,
-                                true,
-                                logFile.filename() == fs::path("WoWCombatLog.txt"),
-                                isOldFile,
-                                position
-                            );
-                        }
+                        return true;
+                    });
+
+                    if (oldLogFile != logFile) {
+                        iterations = 0;
                     }
-                } catch (std::exception& ex) {
-                    LOG_WARNING("Exception when detecting WoW combat log: " << ex.what() << std::endl);
-                    continue;
+
+                    try {
+                        if (fs::exists(logFile)) {
+                            std::ifstream file(logFile);
+                            if (file.is_open()) {
+                                file.seekg(0, std::ios_base::end);
+                                position = file.tellg();
+                            }
+                            file.close();
+                        }
+                    } catch (std::exception& ex) {
+                        LOG_WARNING("Failed to get log file position: " << ex.what() << std::endl);
+                    }
+
+                    isOldFile = iterations++ > 0;
+                } else {
+                    const auto lastWriteTime = shared::filesystem::timeOfLastFileWrite(logFile);
+                    found = ((lastWriteTime >= timeThreshold()) && (lastWriteTime >= _lastLogTime));
+                    if (found && _running) {
+                        _lastLogTime = lastWriteTime;
+                        found = false;
+                        loadFromPath(
+                            logFile,
+                            true,
+                            logFile.filename() == fs::path("WoWCombatLog.txt"),
+                            isOldFile,
+                            position
+                        );
+                    }
                 }
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            } catch (std::exception& ex) {
+                LOG_WARNING("Exception when detecting WoW combat log: " << ex.what() << std::endl);
+                continue;
             }
-        });
-    }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    });
 }
 
 void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, bool loop, bool legacy, bool isOldFile, std::optional<typename std::ifstream::pos_type> position) {

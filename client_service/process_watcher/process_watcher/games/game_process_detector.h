@@ -12,11 +12,13 @@ namespace process_watcher::games {
 class GameProcessDetector {
 public:
     explicit GameProcessDetector(const std::string& exe);
+    explicit GameProcessDetector(const std::vector<std::string>& exes);
+
     virtual ~GameProcessDetector() {}
     std::optional<process::Process> checkIsRunning(const process::ProcessRunningState& processes) const;
     
 private:
-    const std::string _exeName;
+    const std::vector<std::string> _exeNames;
 };
 
 std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game);

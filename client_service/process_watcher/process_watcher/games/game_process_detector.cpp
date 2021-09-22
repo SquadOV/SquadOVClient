@@ -14,13 +14,26 @@
 namespace process_watcher::games {
 
 GameProcessDetector::GameProcessDetector(const std::string& exe):
-    _exeName(exe) {
+    _exeNames({exe})
+{
+
+}
+
+GameProcessDetector::GameProcessDetector(const std::vector<std::string>& exes):
+    _exeNames(exes)
+{
     
 }
 
 std::optional<process::Process> GameProcessDetector::checkIsRunning(const process::ProcessRunningState& processes) const {
-    const process::Process cmpProcess(_exeName, 0);
-    return processes.getProcesssRunningByName(cmpProcess.name(), true);
+    for (const auto& exe : _exeNames) {
+        const process::Process cmpProcess(exe, 0);
+        const auto p = processes.getProcesssRunningByName(cmpProcess.name(), true);
+        if (p) {
+            return p;
+        }
+    }
+    return std::nullopt;
 }
 
 std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {

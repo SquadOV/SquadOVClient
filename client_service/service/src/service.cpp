@@ -121,6 +121,8 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
     watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
+    // Note that this will cover WoW, WoW Classic, and TBC classic (and all other classics into the future) since the way we record
+    // WoW will have to be similar for all of them.
     watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());

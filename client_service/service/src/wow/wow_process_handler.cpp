@@ -6,6 +6,7 @@
 #include "recorder/game_recorder.h"
 #include "system/state.h"
 #include "shared/http/http_client.h"
+#include "shared/version.h"
 
 #include <atomic>
 #include <VersionHelpers.h>
@@ -28,11 +29,14 @@ public:
     WoWProcessHandlerInstance(const process_watcher::process::Process& p);
     ~WoWProcessHandlerInstance();
 
+    void detectGameFromProcess();
     void cleanup();
     void overrideCombatLogPosition(const std::filesystem::path& path);
     void manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime);
     void waitForLogWatcher();
     void onProcessChange(const process_watcher::process::Process& p);
+
+    shared::EGame game() const { return _finalGame; }
 
 private:
     process_watcher::process::Process  _process;
@@ -110,9 +114,10 @@ private:
     std::filesystem::path _manualVodPath;
     shared::TimePoint _manualVodStartTime;
 
-    // Set of known zones and whether zoning there should quality as a map change.
+    // Set of known zones and whether zoning there should qualify as a map change.
     std::unordered_map<int, bool> _instanceIdIsMatchEnd;
 
+    shared::EGame _finalGame = shared::EGame::Unknown;
 #ifndef NDEBUG
 #if TEST_DUMP
     nlohmann::json _debugSendLog;
@@ -125,7 +130,9 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher(new game_event_watcher::WoWLogWatcher(true, shared::nowUtc())),
     _lastLogTime(shared::nowUtc())
 {
-    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::WoW);
+    detectGameFromProcess();
+
+    _recorder = std::make_unique<service::recorder::GameRecorder>(_process, _finalGame);
     if (!_process.empty()) {
         _recorder->startDvrSession(getWowRecordingFlags());
     }
@@ -151,6 +158,41 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
     forceKillLogTimeoutThread();
+}
+
+void WoWProcessHandlerInstance::detectGameFromProcess() {
+    if (_process.name() == L"Wow.exe") {
+        LOG_INFO("Detected WoW Retail..." << std::endl);
+        _finalGame = shared::EGame::WoW;
+    } else if (_process.name() == L"WowClassic.exe") {
+        DWORD unk1 = 0;
+        const auto fileInfoSize = GetFileVersionInfoSizeExW(0, _process.path().native().c_str(), &unk1);
+
+        std::vector<char> buffer(fileInfoSize);
+        if (!GetFileVersionInfoExW(0, _process.path().native().c_str(), 0, fileInfoSize, (void*)buffer.data())) {
+            THROW_ERROR("Failed to get WoW EXE info: " << shared::errors::getWin32ErrorAsString());
+        }
+
+        char* infBuffer = nullptr;
+        unsigned int infSize = 0;
+        if (!VerQueryValueA((void*)buffer.data(), "\\StringFileInfo\\000004B0\\FileVersion", (void**)&infBuffer, &infSize)) {
+            THROW_ERROR("Failed to query exe info.");
+        }
+
+        std::string versionString(infBuffer, infSize);
+        const auto currentVersion = shared::parseVersionInfo(versionString);
+
+        // 1.X.X is Vanilla and 2.X.X is TBC.
+        if (currentVersion.major == 1) {
+            _finalGame = shared::EGame::WowVanilla;
+        } else if (currentVersion.major == 2) {
+            _finalGame = shared::EGame::WowTbc;
+        } else {
+            THROW_ERROR("Unknown WoW classic version: " << currentVersion << std::endl);
+        }
+    } else {
+        THROW_ERROR("Unknown WoW executable name: " << _process.path() << std::endl);
+    }
 }
 
 void WoWProcessHandlerInstance::overrideCombatLogPosition(const std::filesystem::path& path) {
@@ -488,7 +530,18 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
     if (_instanceIdIsMatchEnd.find(zoneData.instanceId) == _instanceIdIsMatchEnd.end()) {
         try {
             std::ostringstream path;
-            path << "/wow/9.1.0/instances/" << zoneData.instanceId << "/data.json";
+            path << "/wow/"; 
+
+            // We shouldn't ever need the final WoW condition unless the detect WoW game from process function failed at construction.
+            if (game() == shared::EGame::WoW) {
+                path << "9.1.0";
+            } else if (game() == shared::EGame::WowVanilla) {
+                path << "1.13.7";
+            } else if (game() == shared::EGame::WowTbc) {
+                path << "2.5.2";
+            }
+            
+            path << "/instances/" << zoneData.instanceId << "/data.json";
 
             shared::http::HttpClient client("https://us-central1.content.squadov.gg");
             client.setTimeout(30);
@@ -639,8 +692,8 @@ void WoWProcessHandler::onProcessStarts(const process_watcher::process::Process&
     }
 
     LOG_INFO("START WOW" << std::endl);
-    service::system::getGlobalState()->markGameRunning(shared::EGame::WoW, true);
     _instance = std::make_unique<WoWProcessHandlerInstance>(p);
+    service::system::getGlobalState()->markGameRunning(_instance->game(), true);
 }
 
 void WoWProcessHandler::manualStartLogWatching(const std::filesystem::path& path, const std::filesystem::path& vodPath, const shared::TimePoint& vodStartTime) {
@@ -656,7 +709,7 @@ void WoWProcessHandler::onProcessStops() {
         return;
     }
     LOG_INFO("STOP WOW" << std::endl);
-    service::system::getGlobalState()->markGameRunning(shared::EGame::WoW, false);
+    service::system::getGlobalState()->markGameRunning(_instance->game(), false);
     _instance->cleanup();
     _instance.reset(nullptr);
     LOG_INFO("\tWoW fully stopped." << std::endl);

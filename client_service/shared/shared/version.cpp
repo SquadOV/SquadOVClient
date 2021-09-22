@@ -33,4 +33,9 @@ bool operator<(const VersionInfo& a, const VersionInfo& b) {
     return a.major < b.major && a.minor < b.minor && a.patch < b.patch && a.extra < b.extra;
 }
 
+std::ostream& operator<<(std::ostream& os, const VersionInfo& p) {
+    os << p.major << "." << p.minor << "." << p.patch << "." << p.extra;
+    return os;
+}
+
 }

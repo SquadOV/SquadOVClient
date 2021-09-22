@@ -66,6 +66,8 @@ export function checkRecentMatchValidity(r: RecentMatch): boolean {
         case SquadOvGames.AimLab:
             return !!r.aimlabTask
         case SquadOvGames.WorldOfWarcraft:
+        case SquadOvGames.WowVanilla:
+        case SquadOvGames.WowTbc:
             return !!r.wowChallenge || !!r.wowEncounter || !!r.wowArena
         case SquadOvGames.TeamfightTactics:
             return !!r.tftMatch
