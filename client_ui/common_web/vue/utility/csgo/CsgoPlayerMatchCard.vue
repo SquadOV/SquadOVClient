@@ -21,7 +21,7 @@
                         <v-col cols="6">
                             <generic-stat
                                 name="KDA"
-                                desc="(Kills + Deaths) / Assists"
+                                desc="(Kills + Assists) / Deaths"
                                 :value="stats.kda"
                             >
                             </generic-stat>
