@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { staticClient, getSupportedWowPatch } from '@client/js/staticData'
+import { staticClient, getSupportedWowPatch, WowGameRelease } from '@client/js/staticData'
 import { ApiData } from '@client/js/api'
 
 interface WowBasicStatic {
@@ -181,10 +181,10 @@ export interface WowContentDatum {
 class WowPatchStaticCache {
     _patch: Map<string, WowStaticCache> = new Map()
 
-    _cachedArenas: WowContentDatum[] | null = null
-    _cachedDungeons: WowContentDatum[] | null = null
-    _cachedEncounters: WowContentDatum[] | null = null
-    _cachedRaids: WowContentDatum[] | null = null
+    _cachedArenas: Map<WowGameRelease, WowContentDatum[]> = new Map()
+    _cachedDungeons: Map<WowGameRelease, WowContentDatum[]> = new Map()
+    _cachedEncounters: Map<WowGameRelease, WowContentDatum[]> = new Map()
+    _cachedRaids: Map<WowGameRelease, WowContentDatum[]> = new Map()
 
     getCache(v: string) {
         let patch = getSupportedWowPatch(v)
@@ -195,40 +195,40 @@ class WowPatchStaticCache {
         return this._patch.get(patch)!
     }
 
-    async getArenas(): Promise<WowContentDatum[]> {
-        if (!this._cachedArenas) {
-            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentArenaUrl())
-            this._cachedArenas = data.data
+    async getArenas(r: WowGameRelease): Promise<WowContentDatum[]> {
+        if (!this._cachedArenas.has(r)) {
+            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentArenaUrl(r))
+            this._cachedArenas.set(r, data.data)
         }
 
-        return this._cachedArenas!
+        return this._cachedArenas.get(r)!
     }
 
-    async getDungeons(): Promise<WowContentDatum[]> {
-        if (!this._cachedDungeons) {
-            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentDungeonsUrl())
-            this._cachedDungeons = data.data
+    async getDungeons(r: WowGameRelease): Promise<WowContentDatum[]> {
+        if (!this._cachedDungeons.has(r)) {
+            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentDungeonsUrl(r))
+            this._cachedDungeons.set(r, data.data)
         }
 
-        return this._cachedDungeons!
+        return this._cachedDungeons.get(r)!
     }
 
-    async getEncounters(): Promise<WowContentDatum[]> {
-        if (!this._cachedEncounters) {
-            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentEncountersUrl())
-            this._cachedEncounters = data.data
+    async getEncounters(r: WowGameRelease): Promise<WowContentDatum[]> {
+        if (!this._cachedEncounters.has(r)) {
+            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentEncountersUrl(r))
+            this._cachedEncounters.set(r, data.data)
         }
 
-        return this._cachedEncounters!
+        return this._cachedEncounters.get(r)!
     }
 
-    async getRaids(): Promise<WowContentDatum[]> {
-        if (!this._cachedRaids) {
-            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentRaidsUrl())
-            this._cachedRaids = data.data
+    async getRaids(r: WowGameRelease): Promise<WowContentDatum[]> {
+        if (!this._cachedRaids.has(r)) {
+            let data: ApiData<WowContentDatum[]> = await axios.get(staticClient.getWowContentRaidsUrl(r))
+            this._cachedRaids.set(r, data.data)
         }
 
-        return this._cachedRaids!
+        return this._cachedRaids.get(r)!
     }
 }
 

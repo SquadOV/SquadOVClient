@@ -443,6 +443,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
+                                            release: wowGameReleaseFromString(route.query.release),
                                         }),
                                     },
                                     {
@@ -452,6 +453,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
+                                            release: wowGameReleaseFromString(route.query.release),
                                         }),
                                     },
                                     {
@@ -461,6 +463,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
+                                            release: wowGameReleaseFromString(route.query.release),
                                         }),
                                     }
                                 ]
@@ -745,6 +748,7 @@ import { TrackedUserStatsManager } from '@client/js/squadov/status'
 const statusTracker = new TrackedUserStatsManager(store)
 
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
+import { WowGameRelease, wowGameReleaseFromString } from './staticData';
 
 router.afterEach((to: Route, from: Route) => {
     let container = getAnalyticsContainer()

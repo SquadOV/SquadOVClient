@@ -1,16 +1,54 @@
 const STATIC_CONTENT_BASE_URL = 'https://us-central1.content.squadov.gg'
 const SUPPORTED_WOW_PATCHES = new Set([
+    '1.13.7',
+    '2.5.2',
     '9.0.2',
     '9.0.5',
     '9.1.0',
 ])
 const LATEST_WOW_PATCH = '9.1.0'
+const LATEST_WOW_VANILLA_PATCH = '1.13.7'
+const LATEST_WOW_TBC_PATCH = '2.5.2'
+
+export enum WowGameRelease {
+    Retail,
+    Vanilla,
+    TBC,
+}
+
+export function wowGameReleaseFromString(s: string | undefined): WowGameRelease {
+    if (s == 'vanilla') {
+        return WowGameRelease.Vanilla
+    } else if (s == 'tbc') {
+        return WowGameRelease.TBC
+    } else {
+        return WowGameRelease.Retail
+    }
+}
+
+function wowGameReleaseToStaticFolder(r: WowGameRelease) : string {
+    switch (r) {
+        case WowGameRelease.Retail:
+            return 'content'
+        case WowGameRelease.Vanilla:
+            return 'content-vanilla'
+        case WowGameRelease.TBC:
+            return 'content-tbc'
+    }
+}
 
 export function getSupportedWowPatch(p: string): string {
     if (SUPPORTED_WOW_PATCHES.has(p)) {
         return p
     } else {
-        return LATEST_WOW_PATCH
+        const versionParts = p.split('.')
+        if (versionParts[0] === '1') {
+            return LATEST_WOW_VANILLA_PATCH
+        } else if (versionParts[0] === '2') {
+            return LATEST_WOW_TBC_PATCH
+        } else {
+            return LATEST_WOW_PATCH
+        }
     }
 }
 
@@ -92,20 +130,20 @@ class StaticDataClient {
         return `${STATIC_CONTENT_BASE_URL}/wow/${getSupportedWowPatch(wowPatch)}/talents/${id}/icon.png`
     }
 
-    getWowContentArenaUrl(): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/content/arenas.json`
+    getWowContentArenaUrl(r: WowGameRelease): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/arenas.json`
     }
 
-    getWowContentDungeonsUrl(): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/content/dungeons.json`
+    getWowContentDungeonsUrl(r: WowGameRelease): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/dungeons.json`
     }
 
-    getWowContentRaidsUrl(): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/content/raids.json`
+    getWowContentRaidsUrl(r: WowGameRelease): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/raids.json`
     }
 
-    getWowContentEncountersUrl(): string {
-        return `${STATIC_CONTENT_BASE_URL}/wow/content/encounters.json`
+    getWowContentEncountersUrl(r: WowGameRelease): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/encounters.json`
     }
 
     getTftLittleLegendIcon(id: string): string {

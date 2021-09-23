@@ -4,6 +4,7 @@
             v-model="filters"
             for-raids
             class="my-2"
+            :release="release"
         >
         </wow-filter-ui>
         <loading-container :is-loading="!allEncounters">
@@ -43,6 +44,7 @@ import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filt
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
+import { WowGameRelease } from '@client/js/staticData'
 
 const maxTasksPerRequest : number = 10
 
@@ -59,6 +61,9 @@ export default class WowEncounterGameLog extends Vue {
 
     @Prop({required: true})
     guid!: string
+
+    @Prop({required: true})
+    release!: WowGameRelease
 
     allEncounters: WowEncounter[] | null = null
     lastIndex: number = 0

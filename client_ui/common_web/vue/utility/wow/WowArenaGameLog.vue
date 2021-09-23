@@ -4,6 +4,7 @@
             v-model="filters"
             for-arenas
             class="my-2"
+            :release="release"
         >
         </wow-filter-ui>
         <loading-container :is-loading="!allArenas">
@@ -42,6 +43,7 @@ import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filt
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
+import { WowGameRelease } from '@client/js/staticData'
 
 const maxTasksPerRequest : number = 10
 
@@ -58,6 +60,9 @@ export default class WowArenaGameLog extends Vue {
 
     @Prop({required: true})
     guid!: string
+    
+    @Prop({required: true})
+    release!: WowGameRelease
 
     allArenas: WowArena[] | null = null
     lastIndex: number = 0

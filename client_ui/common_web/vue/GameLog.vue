@@ -203,6 +203,12 @@ export default class GameLog extends Vue {
         let tftTo = this.constructPageTo(pi.TftLogPageId)
         let valorantTo = this.constructPageTo(pi.ValorantLogPageId)
         let wowTo = this.constructPageTo(pi.WowLogPageId)
+        let wowVanillaTo = this.constructPageTo(pi.WowLogPageId)
+        wowVanillaTo.query['release'] = 'vanilla'
+
+        let wowTbcTo = this.constructPageTo(pi.WowLogPageId)
+        wowTbcTo.query['release'] = 'tbc'
+
         return [
             {
                 'icon': 'assets/aimlab-logo.png',
@@ -249,14 +255,14 @@ export default class GameLog extends Vue {
             {
                 'icon': 'assets/wowc-logo.png',
                 'name': 'World of Warcraft Classic',
-                'to': wowTo,
-                'route': this.$router.resolve(wowTo).route
+                'to': wowVanillaTo,
+                'route': this.$router.resolve(wowVanillaTo).route
             },
             {
                 'icon': 'assets/tbc-logo.png',
                 'name': 'Burning Crusade Classic',
-                'to': wowTo,
-                'route': this.$router.resolve(wowTo).route
+                'to': wowTbcTo,
+                'route': this.$router.resolve(wowTbcTo).route
             },
         ]
     }

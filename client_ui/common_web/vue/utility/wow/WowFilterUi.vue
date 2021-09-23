@@ -193,6 +193,7 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 import { wowCache, WowContentDatum } from '@client/js/wow/staticCache'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import { WowGameRelease } from '@client/js/staticData'
 
 @Component({
     components: {
@@ -211,6 +212,9 @@ export default class WowFilterUi extends Vue {
 
     @Prop({type: Boolean, default: false})
     forArenas!: boolean
+
+    @Prop({required: true})
+    release!: WowGameRelease
 
     internalValue: WowMatchFilters = createEmptyWowMatchFilters()
 
@@ -288,7 +292,7 @@ export default class WowFilterUi extends Vue {
     }
 
     mounted() {
-        wowCache.getEncounters().then((resp: WowContentDatum[]) => {
+        wowCache.getEncounters(this.release).then((resp: WowContentDatum[]) => {
             this.encounterItems = resp.map((ele: WowContentDatum) => {
                 return {
                     text: ele.name,
@@ -313,7 +317,7 @@ export default class WowFilterUi extends Vue {
             })
         })
 
-        wowCache.getDungeons().then((resp: WowContentDatum[]) => {
+        wowCache.getDungeons(this.release).then((resp: WowContentDatum[]) => {
             this.dungeonItems = resp.map((ele: WowContentDatum) => {
                 return {
                     text: ele.name,
@@ -330,7 +334,7 @@ export default class WowFilterUi extends Vue {
             })
         })
 
-        wowCache.getRaids().then((resp: WowContentDatum[]) => {
+        wowCache.getRaids(this.release).then((resp: WowContentDatum[]) => {
             this.raidItems = resp.map((ele: WowContentDatum) => {
                 return {
                     text: ele.name,
@@ -347,7 +351,7 @@ export default class WowFilterUi extends Vue {
             })
         })
 
-        wowCache.getArenas().then((resp: WowContentDatum[]) => {
+        wowCache.getArenas(this.release).then((resp: WowContentDatum[]) => {
             this.arenaItems = resp.map((ele: WowContentDatum) => {
                 return {
                     text: ele.name,
