@@ -10,11 +10,20 @@
                     :class="`ma-1 ${(char.team === friendlyTeam) ? 'friendly-char' : 'enemy-char'}`"
                 >
                     <wow-class-spec-icon
+                        v-if="char.specId > 0"
                         :spec-id="char.specId"
                         :width-height="widthHeight"
                         :patch="patch"
                     >
-                    </wow-class-spec-icon>    
+                    </wow-class-spec-icon>
+
+                    <wow-class-icon
+                        v-else-if="!!char.classId"
+                        :class-id="char.classId"
+                        :width-height="widthHeight"
+                        :patch="patch"
+                    >
+                    </wow-class-icon>
                 </div>
             </template>
 
@@ -38,11 +47,14 @@ import { WowCharacter } from '@client/js/wow/character'
 import { apiClient, ApiData } from '@client/js/api'
 import { openUrlInBrowser } from '@client/js/external'
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
+import WowClassIcon from '@client/vue/utility/wow/WowClassIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
+import { doesWowPatchSupportArmory } from '@client/js/wow/constants'
 
 @Component({
     components: {
         WowClassSpecIcon,
+        WowClassIcon,
         WowCharacterDisplay
     }
 })
@@ -66,7 +78,7 @@ export default class WowCharacterIcon extends Vue {
     patch!: string
 
     goToArmoryLink(e: MouseEvent) {
-        if (!this.armoryLink) {
+        if (!this.armoryLink || !doesWowPatchSupportArmory(this.patch)) {
             return
         }
 

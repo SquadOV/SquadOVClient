@@ -19,11 +19,20 @@
                         class="ma-1"
                     >
                         <wow-class-spec-icon
+                            v-if="charForUuid(ivod.userUuid).specId > 0"
                             :spec-id="charForUuid(ivod.userUuid).specId"
                             :class="(!!selected && selected.videoUuid === ivod.videoUuid) ? 'selected-char' : 'unselected-char'"
                             :patch="patch"
                         >
-                        </wow-class-spec-icon>    
+                        </wow-class-spec-icon>
+
+                        <wow-class-icon
+                            v-else-if="!!charForUuid(ivod.userUuid).classId"
+                            :class-id="charForUuid(ivod.userUuid).classId"
+                            :class="(!!selected && selected.videoUuid === ivod.videoUuid) ? 'selected-char' : 'unselected-char'"
+                            :patch="patch"
+                        >
+                        </wow-class-icon>
                     </div>
                 </template>
 
@@ -49,6 +58,7 @@ import { WowMatchAccessibleVods, VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
+import WowClassIcon from '@client/vue/utility/wow/WowClassIcon.vue'
 import WowCharacterDisplay from '@client/vue/utility/wow/WowCharacterDisplay.vue'
 import GenericVodPicker from '@client/vue/utility/vods/GenericVodPicker.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
@@ -57,6 +67,7 @@ import CommonComponent from '@client/vue/CommonComponent'
 @Component({
     components: {
         WowClassSpecIcon,
+        WowClassIcon,
         WowCharacterDisplay,
         GenericVodPicker
     }

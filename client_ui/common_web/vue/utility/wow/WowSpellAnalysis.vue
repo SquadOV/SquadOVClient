@@ -348,8 +348,9 @@ export default class WowSpellAnalysis extends mixins(CommonComponent) {
                             this.$parent.$el,
                             c.team === this.friendlyTeam ? 'color-top-place' : 'color-bottom-place'
                         )
-                    )
-                    staticClient.getWowSpecsIconUrl(this.patch, c.specId)
+                    ),
+                    c.specId > 0 ? staticClient.getWowSpecsIconUrl(this.patch, c.specId) :
+                        !!c.classId ? staticClient.getWowClassIconUrl(this.patch, c.classId) : ''
                 )
 
                 if (!!this.currentTime && this.showTime) {

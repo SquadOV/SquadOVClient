@@ -830,6 +830,7 @@ VodIdentifier GameRecorder::startFromSource(const std::filesystem::path& vodPath
 
 void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameRecordEnd& end) {
     const auto vodId = currentId();
+    
     const auto metadata = getMetadata();
     const auto sessionId = this->sessionId();
     const auto vodStartTime = this->vodStartTime();

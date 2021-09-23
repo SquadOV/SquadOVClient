@@ -22,6 +22,7 @@
                 contain
                 :src="$root.generateAssetUri('assets/wow/armory.png')"
                 style="cursor: pointer;"
+                v-if="canShowArmory"
             >
             </v-img>
         </div>
@@ -48,7 +49,7 @@
                                 </v-img>
                             </div>
 
-                            <div class="d-flex align-center mt-2">
+                            <div class="d-flex align-center mt-2" v-if="!!specName">
                                 <div class="text-h6 font-weight-bold mr-2">Specialization: </div>
                                 <div class="text-h6 mr-2" :style="specTextStyling">{{ specName }}</div>
                                 <v-img
@@ -141,6 +142,7 @@ import WowSpellIcon from '@client/vue/utility/wow/WowSpellIcon.vue'
 import WowCovenantDisplay from '@client/vue/utility/wow/WowCovenantDisplay.vue'
 import { staticClient } from '@client/js/staticData'
 import { specIdToColor } from '@client/js/wow/colors'
+import { doesWowPatchSupportArmory } from '@client/js/wow/constants'
 
 @Component({
     components: {
@@ -172,6 +174,10 @@ export default class WowCharacterFullDisplay extends Vue {
     className: string | null = null
     classIcon: string | null = null
 
+    get canShowArmory(): boolean {
+        return doesWowPatchSupportArmory(this.patch)
+    }
+
     goToArmory() {
         this.armoryProgress = true
         apiClient.accessToken().getWoWCharacterArmoryLink(this.character.name, this.character.guid).then((resp: ApiData<string>) => {
@@ -193,16 +199,23 @@ export default class WowCharacterFullDisplay extends Vue {
             console.error('Failed to get full WoW character info: ', err)
         })
 
-        this.specIcon = staticClient.getWowSpecsIconUrl(this.patch, this.character.specId)
-        wowCache.getCache(this.patch).getClassSpec(this.character.specId).then((data: WowClassSpecStatic) => {
-            this.specName = data.name
-            this.classIcon = staticClient.getWowClassIconUrl(this.patch, data.class)
-            wowCache.getCache(this.patch).getClass(data.class).then((classData: WowClassStatic) => {
+        if (this.character.specId > 0) {
+            this.specIcon = staticClient.getWowSpecsIconUrl(this.patch, this.character.specId)
+            wowCache.getCache(this.patch).getClassSpec(this.character.specId).then((data: WowClassSpecStatic) => {
+                this.specName = data.name
+                this.classIcon = staticClient.getWowClassIconUrl(this.patch, data.class)
+                wowCache.getCache(this.patch).getClass(data.class).then((classData: WowClassStatic) => {
+                    this.className = classData.name
+                })
+            }).catch((err: any) => {
+                console.error('Failed to get WoW spec: ', err)
+            })
+        } else if (!!this.character.classId) {
+            this.classIcon = staticClient.getWowClassIconUrl(this.patch, this.character.classId)
+            wowCache.getCache(this.patch).getClass(this.character.classId).then((classData: WowClassStatic) => {
                 this.className = classData.name
             })
-        }).catch((err: any) => {
-            console.error('Failed to get WoW spec: ', err)
-        })
+        }
     }
 
     get specTextStyling(): any {

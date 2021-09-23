@@ -5,10 +5,18 @@
     >
         <v-list-item-content class="content mr-4">
             <wow-class-spec-icon
+                v-if="character.specId > 0"
                 :spec-id="character.specId"
                 :patch="patch"
             >
             </wow-class-spec-icon>
+
+            <wow-class-icon
+                v-else-if="!!character.classId"
+                :class-id="character.classId"
+                :patch="patch"
+            >
+            </wow-class-icon>
         </v-list-item-content>
 
         <v-list-item-content class="content">
@@ -30,10 +38,12 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { WowCharacter } from '@client/js/wow/character'
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
+import WowClassIcon from '@client/vue/utility/wow/WowClassIcon.vue'
 
 @Component({
     components: {
-        WowClassSpecIcon
+        WowClassSpecIcon,
+        WowClassIcon,
     }
 })
 export default class WowCharacterDisplay extends Vue {

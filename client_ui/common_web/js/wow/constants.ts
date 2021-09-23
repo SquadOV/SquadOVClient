@@ -864,3 +864,12 @@ export const WOW_IMPORTANT_SPELL_IDS = new Set([
     183752,
     187707
 ])
+
+export function doesWowPatchSupportArmory(p: string): boolean {
+    let major = parseInt(p.split('.')[0])
+    if (major >= 9) {
+        return true
+    } else {
+        return false
+    }
+}

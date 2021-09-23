@@ -473,29 +473,42 @@ export default class WowTimeline extends mixins(CommonComponent) {
         let addEventsToSeries = (data: StatXYSeriesData, filterGuid: string | undefined) => {
             if (this.showEvents) {
                 for (let e of this.unifiedEvents) {
+                    let guid
+                    let playerName
+                    let title
+                    let symbol
                     if (!!e.death && (!filterGuid || e.death.guid == filterGuid)) {
-                        let guid = e.death.guid
-                        let playerName = this.guidToName.has(guid) ?
+                        guid = e.death.guid
+                        playerName = this.guidToName.has(guid) ?
                             this.guidToName.get(guid)! :
                             guid
-                        data.addXMarkLine({
-                            x: this.convertTmToX(e.tm),
-                            name: `${playerName} - Death`,
-                            symbol: `image://assets/wow/stats/skull.png`,
-                            colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(this.guidToSpecId.get(guid)!))),
-                        })
+                        title = `${playerName} - Death`
+                        symbol = `image://assets/wow/stats/skull.png`
+                        
                     } else if (!!e.resurrect && (!filterGuid || e.resurrect.guid == filterGuid)) {
-                        let guid = e.resurrect.guid
-                        let playerName = this.guidToName.has(guid) ?
+                        guid = e.resurrect.guid
+                        playerName = this.guidToName.has(guid) ?
                             this.guidToName.get(guid)! :
                             guid
-                        data.addXMarkLine({
-                            x: this.convertTmToX(e.tm),
-                            name: `${playerName} - Resurrect`,
-                            symbol: `image://assets/wow/stats/res.png`,
-                            colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, colors.specIdToColor(this.guidToSpecId.get(guid)!))),
-                        })
+                        title = `${playerName} - Resurrect`
+                        symbol = `image://assets/wow/stats/res.png`
+                    } else {
+                        continue
                     }
+
+                    let color = 'color-self'
+                    if (this.guidToSpecId.has(guid)) {
+                        color = colors.specIdToColor(this.guidToSpecId.get(guid)!)
+                    } else if (this.guidToClassId.has(guid)) {
+                        color = colors.classIdToColor(this.guidToClassId.get(guid)!)
+                    }
+
+                    data.addXMarkLine({
+                        x: this.convertTmToX(e.tm),
+                        name: title,
+                        symbol: symbol,
+                        colorOverride: colorToCssString(colorFromElementTheme(this.$parent.$el, color)),
+                    })
                 }
             }
         }
@@ -721,6 +734,14 @@ export default class WowTimeline extends mixins(CommonComponent) {
                         name
                     )
                     data.setGroup(group)
+
+                    let icon = ''
+                    if (this.guidToSpecId.has(guid)) {
+                        icon = staticClient.getWowSpecsIconUrl(this.patch, this.guidToSpecId.get(guid)!)
+                    } else if (this.guidToClassId.has(guid)) {
+                        icon = staticClient.getWowClassIconUrl(this.patch, this.guidToClassId.get(guid)!)
+                    } 
+
                     data.setGroupStyle(
                         colorToCssString(
                             colorFromElementTheme(
@@ -728,7 +749,7 @@ export default class WowTimeline extends mixins(CommonComponent) {
                                 this.guidToTeam.get(guid) === this.friendlyTeam ? 'color-friendly' : 'color-enemy'
                             )
                         ),
-                        staticClient.getWowSpecsIconUrl(this.patch, this.guidToSpecId.get(guid)!)
+                        icon
                     )
                     data.setSymbol(guidToSymbol.get(guid))
 
@@ -783,7 +804,19 @@ export default class WowTimeline extends mixins(CommonComponent) {
     get guidToSpecId(): Map<string, number> {
         let mapping = new Map<string, number>()
         for (let m of this.matchCharacters) {
-            mapping.set(m.guid, m.specId)
+            if (m.specId > 0) {
+                mapping.set(m.guid, m.specId)
+            }
+        }
+        return mapping
+    }
+
+    get guidToClassId(): Map<string, number> {
+        let mapping = new Map<string, number>()
+        for (let m of this.matchCharacters) {
+            if (!!m.classId) {
+                mapping.set(m.guid, m.classId)
+            }
         }
         return mapping
     }

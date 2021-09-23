@@ -5,6 +5,7 @@ export interface WowCharacter {
     specId: number
     team: number
     rating: number
+    classId: number | null
 }
 
 export interface WowItem {

@@ -7,6 +7,7 @@
 #include "system/state.h"
 #include "shared/http/http_client.h"
 #include "shared/version.h"
+#include "shared/env.h"
 
 #include <atomic>
 #include <VersionHelpers.h>
@@ -161,6 +162,19 @@ WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
 }
 
 void WoWProcessHandlerInstance::detectGameFromProcess() {
+    // If there is no process then we're probably in a test/dev environment and we can pull the data from an env variable instead for convenience.
+    if (_process.empty()) {
+        const auto env = shared::getEnv("SQUADOV_WOW_RELEASE");
+        if (env == "vanilla") {
+            _finalGame = shared::EGame::WowVanilla;
+        } else if (env == "tbc") {
+            _finalGame = shared::EGame::WowTbc;
+        } else {
+            _finalGame = shared::EGame::WoW;
+        }
+        return;
+    }
+
     if (_process.name() == L"Wow.exe") {
         LOG_INFO("Detected WoW Retail..." << std::endl);
         _finalGame = shared::EGame::WoW;
