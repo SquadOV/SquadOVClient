@@ -473,6 +473,7 @@ const baseRoutes : any[] = [
                         props: (route : any) => ({
                             userId: parseInt(route.params.userId),
                             guid: route.params.guid,
+                            release: wowGameReleaseFromString(route.params.release),
                         }),
                     }
                 ],

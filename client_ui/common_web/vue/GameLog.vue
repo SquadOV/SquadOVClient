@@ -255,16 +255,16 @@ export default class GameLog extends Vue {
                 'route': this.$router.resolve(wowTo).route
             },
             {
-                'icon': 'assets/wowc-logo.png',
-                'name': 'World of Warcraft Classic',
-                'to': wowVanillaTo,
-                'route': this.$router.resolve(wowVanillaTo).route
-            },
-            {
                 'icon': 'assets/tbc-logo.png',
                 'name': 'Burning Crusade Classic',
                 'to': wowTbcTo,
                 'route': this.$router.resolve(wowTbcTo).route
+            },
+            {
+                'icon': 'assets/wowc-logo.png',
+                'name': 'World of Warcraft Classic',
+                'to': wowVanillaTo,
+                'route': this.$router.resolve(wowVanillaTo).route
             },
         ]
     }

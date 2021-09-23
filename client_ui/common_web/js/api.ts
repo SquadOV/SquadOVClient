@@ -171,6 +171,7 @@ import { SquadOvCommunity, CommunityFilter, cleanCommunityFromJson, CommunityRol
 import { cleanUser2UserSubscriptionFromJson, User2UserSubscription } from './squadov/subscription'
 import { LinkedAccounts, TwitchAccount } from './squadov/accounts'
 import { VodDestination } from './vods/destination'
+import { WowGameRelease } from './staticData'
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -899,8 +900,13 @@ class ApiClient {
         return axios.get(`v1/users/${userId}/accounts/riot/valorant/puuid/${puuid}`, this.createWebAxiosConfig())
     }
 
-    listWoWCharacters(userId: number): Promise<ApiData<WowCharacter[]>> {
-        return axios.get(`v1/wow/users/${userId}/characters`, this.createWebAxiosConfig()).then((resp: ApiData<WowCharacter[]>) => {
+    listWoWCharacters(userId: number, release: WowGameRelease): Promise<ApiData<WowCharacter[]>> {
+        return axios.get(`v1/wow/users/${userId}/characters`, {
+            params: {
+                release,
+            },
+            ...this.createWebAxiosConfig()
+        }).then((resp: ApiData<WowCharacter[]>) => {
             resp.data.sort((a: WowCharacter, b: WowCharacter) => {
                 if (a.name < b.name) {
                     return -1

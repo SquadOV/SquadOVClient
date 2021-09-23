@@ -52,6 +52,7 @@ import { WowCharacter } from '@client/js/wow/character'
 import { openUrlInBrowser } from '@client/js/external'
 import WowCharacterChooser from '@client/vue/utility/wow/WowCharacterChooser.vue'
 import CommonComponent from '../CommonComponent'
+import { WowGameRelease } from '@client/js/staticData'
 
 const maxTasksPerRequest : number = 10
 
@@ -67,6 +68,9 @@ export default class WowLogContainer extends mixins(CommonComponent) {
 
     @Prop({required: true})
     guid!: string | undefined
+
+    @Prop({required: true})
+    release!: WowGameRelease
 
     allCharacters : WowCharacter[] | null = null
     selectedCharacter : WowCharacter | null | undefined = null
@@ -113,7 +117,7 @@ export default class WowLogContainer extends mixins(CommonComponent) {
     @Watch('userId')
     refreshData() {
         this.allCharacters = null
-        apiClient.listWoWCharacters(this.userId).then((resp: ApiData<WowCharacter[]>) => {
+        apiClient.listWoWCharacters(this.userId, this.release).then((resp: ApiData<WowCharacter[]>) => {
             this.allCharacters = resp.data
             if (this.allCharacters!.length > 0) {
                 if (!!this.guid) {
