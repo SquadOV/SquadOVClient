@@ -203,11 +203,13 @@ export default class GameLog extends Vue {
         let tftTo = this.constructPageTo(pi.TftLogPageId)
         let valorantTo = this.constructPageTo(pi.ValorantLogPageId)
         let wowTo = this.constructPageTo(pi.WowLogPageId)
+        wowTo.params['release'] = 'retail'
+
         let wowVanillaTo = this.constructPageTo(pi.WowLogPageId)
-        wowVanillaTo.query['release'] = 'vanilla'
+        wowVanillaTo.params['release'] = 'vanilla'
 
         let wowTbcTo = this.constructPageTo(pi.WowLogPageId)
-        wowTbcTo.query['release'] = 'tbc'
+        wowTbcTo.params['release'] = 'tbc'
 
         return [
             {

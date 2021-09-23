@@ -418,7 +418,7 @@ const baseRoutes : any[] = [
                         ]
                     },
                     {
-                        path: 'wow/character/:guid?',
+                        path: 'wow/:release/character/:guid?',
                         children: [
                             {
                                 path: '',
@@ -443,7 +443,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
-                                            release: wowGameReleaseFromString(route.query.release),
+                                            release: wowGameReleaseFromString(route.params.release),
                                         }),
                                     },
                                     {
@@ -453,7 +453,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
-                                            release: wowGameReleaseFromString(route.query.release),
+                                            release: wowGameReleaseFromString(route.params.release),
                                         }),
                                     },
                                     {
@@ -463,7 +463,7 @@ const baseRoutes : any[] = [
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,
-                                            release: wowGameReleaseFromString(route.query.release),
+                                            release: wowGameReleaseFromString(route.params.release),
                                         }),
                                     }
                                 ]
