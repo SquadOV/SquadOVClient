@@ -1,10 +1,35 @@
-import format from 'date-fns/format'
+const STD_DATETIME_FORMATTER = new Intl.DateTimeFormat([], {
+    dateStyle: 'short',
+    timeStyle: 'medium',
+})
+
+const STD_DATE_FORMATTER = new Intl.DateTimeFormat([], {
+    dateStyle: 'short',
+})
+
+const STD_TIME_FORMATTER = new Intl.DateTimeFormat([], {
+    timeStyle: 'medium',
+})
 
 export function standardFormatTime(dt : Date | null) : string {
     if (!dt) {
         return "None"
     }
-    return format(dt, 'MM/dd/yyyy, h:mm a')
+    return STD_DATETIME_FORMATTER.format(dt)
+}
+
+export function standardFormatDate(dt : Date | null) : string {
+    if (!dt) {
+        return "None"
+    }
+    return STD_DATE_FORMATTER.format(dt)
+}
+
+export function standardFormatTimeOnly(dt : Date | null) : string {
+    if (!dt) {
+        return "None"
+    }
+    return STD_TIME_FORMATTER.format(dt)
 }
 
 export function secondsToTimeString(totalSeconds : number, forUrl: boolean = false) : string {

@@ -1,5 +1,5 @@
 import format from 'date-fns/format'
-import { secondsToTimeString } from '@client/js/time'
+import { secondsToTimeString, standardFormatTime, standardFormatDate, standardFormatTimeOnly } from '@client/js/time'
 
 export interface XLineMarker {
     x: any
@@ -44,11 +44,11 @@ export class BaseGraphData {
     xFormatter(data: any): string {
         if (this._type == 'time') {
             if (this._subtype == 'date') {
-                return format(data, 'MMMM do uuuu')
+                return standardFormatDate(data)
             } else if (this._subtype == 'time') {
-                return format(data, 'h:mm a')
+                return standardFormatTimeOnly(data)
             } else {
-                return format(data, 'MMMM do uuuu, h:mm a')
+                return standardFormatTime(data)
             }
         } else if (this._type == 'value') {
             if (this._subtype == 'elapsedSeconds') {

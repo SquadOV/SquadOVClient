@@ -27,7 +27,7 @@ import { Prop } from 'vue-property-decorator'
 import { getGameMode, getIsCustom } from '@client/js/valorant/valorant_matches'
 import { ValorantMatchDetailsWrapper } from '@client/js/valorant/valorant_matches_parsed'
 import { getValorantContent } from '@client/js/valorant/valorant_content'
-import format from 'date-fns/format'
+import { standardFormatTime } from '@client/js/time'
 
 @Component
 export default class ValorantMatchHeaderSummary extends Vue {
@@ -83,7 +83,7 @@ export default class ValorantMatchHeaderSummary extends Vue {
         if (!this.match._details.data.matchInfo.serverStartTimeUtc) {
             return 'Unknown'
         }
-        return format(this.match._details.data.matchInfo.serverStartTimeUtc, 'MMMM do uuuu, h:mm a')
+        return standardFormatTime(this.match._details.data.matchInfo.serverStartTimeUtc)
     }
 
 }
