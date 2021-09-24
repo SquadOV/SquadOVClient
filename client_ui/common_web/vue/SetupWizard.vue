@@ -184,7 +184,8 @@
                             <ol class="mt-4">
                                 <li>
                                     You have an automatic combat logger addon installed.
-                                    We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
+                                    We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon if you're playing retail.
+                                    We recommend using the <a href="#" @click="goToAcl">AutoCombatLogger</a> addon if you're playing classic (TBC or Vanilla).
                                 </li>
                                 <li>
                                     In your World of Warcraft settings menu, enable the <b>Advanced Combat Logging</b> option under the "System" and "Network" submenus.
@@ -524,6 +525,11 @@ export default class SetupWizard extends CommonComponent {
 
     goToScl() {
         const url = 'https://www.curseforge.com/wow/addons/simplecombatlogger'
+        openUrlInBrowser(url)
+    }
+
+    goToAcl() {
+        const url = 'https://www.curseforge.com/wow/addons/autocombatlogger'
         openUrlInBrowser(url)
     }
 
