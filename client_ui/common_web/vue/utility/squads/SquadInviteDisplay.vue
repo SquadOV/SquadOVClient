@@ -9,7 +9,7 @@
                         </v-card-title>
 
                         <v-card-subtitle>
-                            {{ relevantSquad.squadGroup }} ({{ invite.inviterUsername }})
+                            ({{ invite.inviterUsername }})
                         </v-card-subtitle>
                     </div>
 

@@ -44,7 +44,7 @@ export default class SquadFilterUi extends Vue {
             return []
         }
         return this.availableSquads.map((s: SquadMembership) => ({
-           text: `${s.squad.squadName} (${s.squad.squadGroup})`,
+           text: `${s.squad.squadName}`,
            value: s.squad.id, 
         }))
     }

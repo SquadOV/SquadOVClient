@@ -13,7 +13,6 @@
                             v-else
                         >
                         </v-text-field>
-                        <div class="text-subtitle-2 squad-group-text">{{ localMembership.squad.squadGroup }}</div>
                     </div>
 
                     <template v-if="isOwner">

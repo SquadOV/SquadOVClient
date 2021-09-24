@@ -3,7 +3,6 @@ import { SquadOVUserHandle } from "@client/js/squadov/user"
 export interface Squad {
     id: number
     squadName: string
-    squadGroup: string
     creationTime: Date
     memberCount: number
     pendingInviteCount: number

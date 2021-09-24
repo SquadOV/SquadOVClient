@@ -64,7 +64,7 @@ export default class SquadCreationCard extends mixins(CommonComponent) {
         this.createPending = true
         this.sendAnalyticsEvent(AnalyticsCategory.Button, AnalyticsAction.CreateSquad, '', 0)
 
-        apiClient.createSquad(this.newSquadName, this.$store.state.currentUser.username).then(() => {
+        apiClient.createSquad(this.newSquadName).then(() => {
             this.$emit('on-new-squad', this.newSquadName)
         }).catch((err: any) => {
             console.error('Failed to create squad: ', err)

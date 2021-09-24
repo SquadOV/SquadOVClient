@@ -7,7 +7,7 @@
                 </v-card-title>
 
                 <v-card-subtitle>
-                    {{ membership.squad.squadGroup }} ({{ roleName }})
+                    ({{ roleName }})
                 </v-card-subtitle>
             </div>
 

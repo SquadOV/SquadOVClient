@@ -186,7 +186,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     get squadItems(): any[] {
         return this.mySquads.map((ele: SquadMembership) => {
             return {
-                text: `${ele.squad.squadName} (${ele.squad.squadGroup})`,
+                text: `${ele.squad.squadName}`,
                 value: ele,
             }
         })

@@ -35,7 +35,6 @@
                                 >
                                     <div class="d-flex flex-column">
                                         <div class="title-font">{{ sq.squadName }} </div>
-                                        <div class="title-font subtitle-font">{{ sq.squadGroup }} </div>
                                     </div>
 
                                     <div>

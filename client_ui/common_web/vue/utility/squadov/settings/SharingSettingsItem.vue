@@ -25,7 +25,7 @@
                         >
                             <template v-slot:item.squad="{ item }">
                                 <span class="font-weight-bold" v-if="!!item.squad">
-                                    {{ item.squad.squadName }} ({{ item.squad.squadGroup }})
+                                    {{ item.squad.squadName }}
                                 </span>
                             </template>
 
@@ -248,7 +248,7 @@ export default class SharingSettingsItem extends Vue {
             .filter((ele: Squad) => !this.groupedBySquad.has(ele.id))
             .map((ele: Squad) => {
                 return {
-                    text: `${ele.squadName} (${ele.squadGroup})`,
+                    text: `${ele.squadName}`,
                     value: ele,
                 }
             })

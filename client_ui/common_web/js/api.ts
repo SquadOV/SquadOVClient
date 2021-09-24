@@ -555,10 +555,9 @@ class ApiClient {
         return axios.post(`v1/squad/${squadId}/leave`, {}, this.createWebAxiosConfig())
     }
     
-    createSquad(squadName: string, squadGroup: string): Promise<void> {
+    createSquad(squadName: string): Promise<void> {
         return axios.post(`v1/squad`, {
             squadName,
-            squadGroup
         }, this.createWebAxiosConfig())
     }
 

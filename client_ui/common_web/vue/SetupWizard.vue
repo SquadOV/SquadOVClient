@@ -558,7 +558,7 @@ export default class SetupWizard extends CommonComponent {
         apiClient.getUserSquads(this.$store.state.currentUser.id).then((resp: ApiData<SquadMembership[]>) => {
             let username = this.$store.state.currentUser.username
             for (let sm of resp.data) {
-                if (sm.squad.squadGroup === username && sm.squad.squadName === `${username}'s Squad`) {
+                if (sm.squad.squadName === `${username}'s Squad`) {
                     this.defaultSquad = sm
                     this.dynamicSteps = new Set([DynamicSteps.Squad])
                     this.refreshSquadMembers()
