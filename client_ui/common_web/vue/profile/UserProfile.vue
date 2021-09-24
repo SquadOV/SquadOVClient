@@ -97,7 +97,7 @@
 
                     <!-- Member Since -->
                     <div class="mt-1 d-flex align-center justify-center flex-wrap text-caption">
-                        <span class="font-weight-bold">Member Since: </span> {{ standardFormatTime(userProfile.memberSince) }}
+                        <span class="font-weight-bold">Member Since:&nbsp;</span> {{ standardFormatTime(userProfile.memberSince) }}
                     </div>
 
                     <!-- Edit Buttons -->
