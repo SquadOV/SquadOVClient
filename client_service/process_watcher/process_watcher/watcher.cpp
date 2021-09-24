@@ -30,7 +30,6 @@ void ProcessWatcher::start() {
         process::ProcessRunningState processState;
         while (_running) {
             // Get a sorted list of running processes from the OS.
-            std::vector<process::Process> processes;
             const bool success = processState.update();
 
             if (!success) {
@@ -41,12 +40,10 @@ void ProcessWatcher::start() {
             std::shared_lock<std::shared_mutex> guard(_mapMutex);
             for (const auto& kvp : _gameToWatcher) {
                 const auto detector = games::createDetectorForGame(kvp.first);
-                const auto newProcess = detector->checkIsRunning(processState);
+                const auto isRunning = detector->checkIsRunning(processState);
                 
                 const auto& watchedProcess = kvp.second->currentProcess();
-                // Check to see if the running state is the different from the last checked state
-                // to fire off the appropriate event. 
-                if (newProcess) {
+                if (isRunning) {
                     // If we're running, we want to see if the PID changed which would indicate a state change.
                     // If we previously didn't have a PID for the EXE, then that means this process just started (fresh).
                     // If we previously did have a PID for the EXE, then that means the user restarted the app really quickly
