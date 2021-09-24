@@ -258,24 +258,24 @@ class ApiClient {
        storeSessionCookie(s, userId)
     }
 
-    createWebAxiosConfig(useTempIfAvailable: boolean = false) : any {
+    createWebAxiosConfig(useTempIfAvailable: boolean = false, useCache: boolean = true) : any {
         let ret : any = {
             baseURL: SQUADOV_API_URL,
+            headers: {},
         }
 
         // Always use access token when available.
         if (!!this._accessToken && this._useAccessToken) {
-            ret.headers = {
-                'x-squadov-access-token': this._accessToken,
-            }
+            ret.headers['x-squadov-access-token'] = this._accessToken
         } else if (!!this._tempSessionId && useTempIfAvailable) {
-            ret.headers = {
-                'x-squadov-share-id': this._tempSessionId,
-            }
+            ret.headers['x-squadov-share-id'] = this._tempSessionId
         } else if (!!this._sessionId) {
-            ret.headers = {
-                'x-squadov-session-id': this._sessionId,
-            }
+            ret.headers['x-squadov-session-id'] = this._sessionId
+        }
+
+        if (!useCache) {
+            ret.headers['cache-control'] = 'no-cache'
+            ret.headers['Pragma'] = 'no-cache'
         }
 
         return ret
@@ -596,7 +596,7 @@ class ApiClient {
 
     getVodSegment(url : string) : Promise<ApiData<string>> {
         return axios.get(url, {
-            ...this.createWebAxiosConfig(true),
+            ...this.createWebAxiosConfig(true, false),
         })
     }
 
