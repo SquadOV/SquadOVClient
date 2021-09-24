@@ -534,7 +534,7 @@
 
                     <!-- Profile Data -->
                     <v-container fluid>
-                        <v-row justify="center">
+                        <v-row justify="center" v-if="userProfile.hasMatchAccess">
                             <v-col cols="4">
                             <!--
                                 <user-profile-achievements
@@ -547,18 +547,51 @@
                                 <user-profile-clips
                                     :user-id="userProfile.userId"
                                     :access-token="userProfile.accessToken"
-                                    v-if="userProfile.hasMatchAccess"
                                     class="mb-4"
                                 >
                                 </user-profile-clips>
                             </v-col>
 
-                            <v-col cols="8" v-if="userProfile.hasMatchAccess">
+                            <v-col cols="8">
                                 <user-profile-matches
                                     :user-id="userProfile.userId"
                                     :access-token="userProfile.accessToken"
                                 >
                                 </user-profile-matches>
+                            </v-col>
+                        </v-row>
+
+                        <v-row justify="center" v-else-if="!!$store.state.currentUser">
+                            <v-col cols="6">
+                                <div class="d-flex justify-center">
+                                    {{ userProfile.displayName }} has chosen to keep their profile private.
+                                    You must be a part of their squad to view their profile.
+                                </div>
+                            </v-col>
+                        </v-row>
+
+                        <v-row justify="center" v-else>
+                            <v-col cols="6">
+                                <div class="d-flex justify-center">
+                                    {{ userProfile.displayName }} has chosen to keep their profile private.
+                                </div>
+
+                                <div class="d-flex justify-center align-center mt-2">
+                                    <v-btn
+                                        color="success"
+                                        :to="registerTo"
+                                    >
+                                        Register
+                                    </v-btn>
+
+                                    <v-btn
+                                        class="ml-2"
+                                        color="primary"
+                                        :to="loginTo"
+                                    >
+                                        Login
+                                    </v-btn>
+                                </div>
                             </v-col>
                         </v-row>
                     </v-container>
