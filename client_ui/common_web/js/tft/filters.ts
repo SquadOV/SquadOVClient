@@ -4,6 +4,6 @@ export interface TftMatchFilters {
 
 export function createEmptyTftMatchFilters(): TftMatchFilters {
     return {
-        hasVod: false,
+        hasVod: true,
     }
 }

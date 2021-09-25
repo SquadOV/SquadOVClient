@@ -7,7 +7,7 @@ export interface ValorantMatchFilters {
 
 export function createEmptyValorantMatchFilters(): ValorantMatchFilters {
     return {
-        hasVod: false,
+        hasVod: true,
         isRanked: false,
         modes: [],
         maps: [],

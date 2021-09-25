@@ -10,7 +10,7 @@ export interface WowMatchFilters {
 
 export function createEmptyWowMatchFilters(): WowMatchFilters {
     return {
-        hasVod: false,
+        hasVod: true,
         encounters: [],
         raids: [],
         dungeons: [],

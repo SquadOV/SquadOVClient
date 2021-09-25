@@ -4,6 +4,6 @@ export interface HearthstoneMatchFilters {
 
 export function createEmptyHearthstoneMatchFilters(): HearthstoneMatchFilters {
     return {
-        hasVod: false,
+        hasVod: true,
     }
 }

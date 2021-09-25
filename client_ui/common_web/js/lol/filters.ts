@@ -8,6 +8,6 @@ export function createEmptyLolMatchFilters(): LolMatchFilters {
     return {
         maps: [],
         modes: [],
-        hasVod: false,
+        hasVod: true,
     }
 }

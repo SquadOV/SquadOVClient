@@ -9,7 +9,7 @@ export function createEmptyCsgoMatchFilters(): CsgoMatchFilters {
     return {
         modes: [],
         maps: [],
-        hasVod: false,
-        hasDemo: false,
+        hasVod: true,
+        hasDemo: true,
     }
 }

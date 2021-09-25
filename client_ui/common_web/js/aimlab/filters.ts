@@ -6,6 +6,6 @@ export interface AimlabMatchFilters {
 export function createEmptyAimlabMatchFilters(): AimlabMatchFilters {
     return {
         tasks: [],
-        hasVod: false,
+        hasVod: true,
     }
 }
