@@ -12,7 +12,6 @@
         hide-details
         dense
         :loading="loading"
-        v-if="value !== undefined"
         :readonly="readonly"
     >
         <template v-slot:item="{ item }">
