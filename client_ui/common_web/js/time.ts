@@ -143,8 +143,9 @@ export function dateRangeIntersects(aMin: Date, aMax: Date, bMin: Date, bMax: Da
         dateInRange(bMax, aMin, aMax)
 }
 
+import { differenceInCalendarDays } from 'date-fns'
 export function numDaysAgo(d: Date): number {
-    return Math.floor((new Date().getTime() - d.getTime()) / (24 * 60 * 60 * 1000))
+    return differenceInCalendarDays(new Date(), d)
 }
 
 export function numDaysAgoToString(diffDays: number): string {
