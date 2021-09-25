@@ -130,7 +130,7 @@ import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
 import { AutoShareConnection } from '@client/js/squadov/share'
 import { apiClient, ApiData } from '@client/js/api'
 import { Squad, SquadMembership } from '@client/js/squadov/squad'
-import { allGames } from '@client/js/squadov/game'
+import { allServerSideGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
@@ -162,7 +162,7 @@ export default class SharingSettingsItem extends Vue {
                 canClip: true,
                 destUserId: null,
                 destSquadId: null,
-                games: allGames,
+                games: allServerSideGames,
             }).then((resp: ApiData<AutoShareConnection>) => {
                 if (!!this.settings) {
                     this.settings.push(resp.data)
@@ -208,7 +208,7 @@ export default class SharingSettingsItem extends Vue {
                 canClip: true,
                 destUserId: null,
                 destSquadId: ele.id,
-                games: allGames,
+                games: allServerSideGames,
             })
         })).then((resp: ApiData<AutoShareConnection>[]) => {
             if (!!this.settings) {

@@ -19,8 +19,19 @@ export let allGames = [
     SquadOvGames.Valorant,
     SquadOvGames.WorldOfWarcraft,
     SquadOvGames.Csgo,
+    // these two are client side only
     SquadOvGames.WowVanilla,
     SquadOvGames.WowTbc,
+]
+
+export let allServerSideGames = [
+    SquadOvGames.AimLab,
+    SquadOvGames.Hearthstone,
+    SquadOvGames.LeagueOfLegends,
+    SquadOvGames.TeamfightTactics,
+    SquadOvGames.Valorant,
+    SquadOvGames.WorldOfWarcraft,
+    SquadOvGames.Csgo,
 ]
 
 export function gameToRect(game: SquadOvGames): string {
