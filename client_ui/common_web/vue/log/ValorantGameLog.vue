@@ -42,7 +42,7 @@
 
                             <div class="d-flex justify-center align-center text-h5" v-else>
                                 <span>
-                                No games found. Open Valorant and play a game to sync your matches.
+                                No games found. Open Valorant and play a game to start recording.
                                 If you just added the account and Valorant is running, you will need to <span class="font-weight-bold">restart</span> Valorant for this to work.
                                 </span>
                             </div>

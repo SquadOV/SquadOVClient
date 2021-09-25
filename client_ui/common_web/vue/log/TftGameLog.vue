@@ -36,7 +36,7 @@
 
                             <div class="d-flex justify-center align-center text-h5" v-else>
                                 <span>
-                                No games found. Open TFT and play a game to sync your matches.
+                                No games found. Open TFT and play a game to start recording.
                                 </span>
                             </div>
                         </div>
