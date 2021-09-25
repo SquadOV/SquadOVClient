@@ -3,6 +3,7 @@
         :src="$root.generateAssetUri(equipFname)"
         :max-height="maxHeight"
         :max-width="maxWidth"
+        :style="style"
         contain
     >
     </v-img>
@@ -32,9 +33,24 @@ export default class ValorantWeaponAbilityIcon extends Vue {
     @Prop({type: Number, default: 50})
     maxWidth!: number
 
+    @Prop({type: Boolean, default: false})
+    reverseWeapon!: boolean
+
     get agentName() : string {
         let cnt = getValorantContent(null)
         return cnt.agentIdToFilesystemName(this.agent)
+    }
+
+    get isReversed(): boolean {
+        return this.equipType == 'Weapon' && this.reverseWeapon
+    }
+
+    get style(): any {
+        let ret: any = {}
+        if (this.isReversed) {
+            ret['transform'] = 'scaleX(-1)'
+        }
+        return ret
     }
 
     get equipFname() : string {

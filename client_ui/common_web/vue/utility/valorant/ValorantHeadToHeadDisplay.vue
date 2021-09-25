@@ -50,6 +50,7 @@
                                     :equip-id="kill._k.finishingDamage.damageItem"
                                     :max-height="40"
                                     :max-width="150"
+                                    reverse-weapon
                                 >
                                 </valorant-weapon-ability-icon>
 
