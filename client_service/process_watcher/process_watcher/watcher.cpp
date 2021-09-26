@@ -40,10 +40,10 @@ void ProcessWatcher::start() {
             std::shared_lock<std::shared_mutex> guard(_mapMutex);
             for (const auto& kvp : _gameToWatcher) {
                 const auto detector = games::createDetectorForGame(kvp.first);
-                const auto isRunning = detector->checkIsRunning(processState);
+                const auto newProcess = detector->checkIsRunning(processState);
                 
                 const auto& watchedProcess = kvp.second->currentProcess();
-                if (isRunning) {
+                if (newProcess) {
                     // If we're running, we want to see if the PID changed which would indicate a state change.
                     // If we previously didn't have a PID for the EXE, then that means this process just started (fresh).
                     // If we previously did have a PID for the EXE, then that means the user restarted the app really quickly
