@@ -130,7 +130,6 @@
                                                 <v-col class="d-flex" align-self="center" cols="4">
                                                     Profile Picture
                                                 </v-col>
-
                                                 <v-col cols="8">
                                                     <v-file-input
                                                         v-model="stagedProfilePhoto"
@@ -143,7 +142,6 @@
                                                     </v-file-input>
                                                 </v-col>
                                             </v-row>
-
                                             <v-row justify="center">
                                                 <v-col cols="12">
                                                     <div class="d-flex justify-center">
@@ -159,7 +157,17 @@
                                                     </div>
                                                 </v-col>
                                             </v-row>
-
+                                            <v-row justify="center">
+                                                <v-col cols="12">
+                                                    <div class="d-flex justify-center">
+                                                        <user-ready-player-me 
+                                                            v-model="stagedProfilePhoto"
+                                                            :rules="profilePicRules"
+                                                        >
+                                                        </user-ready-player-me>
+                                                    </div>
+                                                </v-col>
+                                            </v-row>
                                             <v-row justify="center">
                                                 <v-col class="d-flex" align-self="center" cols="4">
                                                     Cover Photo
@@ -631,7 +639,6 @@
                             Create My Profile
                         </v-btn>
                     </template>
-
                     <span class="text-h6" v-else>We're in the process of rolling out access to user profiles, check back soon!</span>
                 </div>
 
@@ -670,6 +677,8 @@ import UserProfileAccessEditor from '@client/vue/profile/UserProfileAccessEditor
 import UserProfileAchievements from '@client/vue/profile/UserProfileAchievements.vue'
 import UserProfileMatches from '@client/vue/profile/UserProfileMatches.vue'
 import UserProfileClips from '@client/vue/profile/UserProfileClips.vue'
+import UserReadyPlayerMe from '@client/vue/profile/UserReadyPlayerMe.vue'
+import axios from 'axios'
 
 @Component({
     components: {
@@ -685,6 +694,7 @@ import UserProfileClips from '@client/vue/profile/UserProfileClips.vue'
         UserProfileAchievements,
         UserProfileMatches,
         UserProfileClips,
+        UserReadyPlayerMe,
     }
 })
 export default class UserProfile extends Vue {
