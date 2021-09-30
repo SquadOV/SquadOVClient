@@ -9,7 +9,8 @@ Currently, we only support development on Windows 10.
 * Vcpkg (installed at `$VCPKG`)
 * Node v14.16
 * Yarn
-* Boost v1.74+
+* [Boost v1.74+](https://sourceforge.net/projects/boost/files/boost-binaries/1.74.0/)
+* Perl
 
 We shall assume that you have downloaded the SquadOVClient repository into `$SRC/SquadOVClient`.
 We will assume all commands are run in Powershell, hence the availability of UNIX-esque commands.
@@ -22,6 +23,8 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 
 * `openssl:x64-windows`
 * `librdkafka:x64-windows`
+* `c-ares:x64-windows`
+* `openssl:x64-windows-static-md`
 
 ## Build SquadOV Client Service
 
@@ -29,7 +32,6 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `mkdir build && cd build`
 * `cmake -S ../ -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$VCPKG\scripts\buildsystems\vcpkg.cmake`
 * `cmake --build build --config Debug --target squadov_client_service`
-
 ## SquadOV Common Web UI
 
 * `cd $SRC\client_ui\common_web`
@@ -46,12 +48,13 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 
 There are a few environment variables that let you configure the SquadOV UI.
 * `SQUADOV_SERVICE_EXE`: The path to the `squadov_client_service.exe`, e.g. `$SRC\build\bin\x64\Debug\squadov_client_service.exe` (mandatory).
+    * ie. `$env:SQUADOV_SERVICE_EXE="$SquadOVClient\build\bin\x64\Debug\squadov_client_service.exe"`
 * `SQUADOV_API_PORT`: Port to run the local API server on (recommended).
+    * ie. `$env:SQUADOV_API_PORT="8080"`
 * `SQUADOV_API_KEY`: Not currently used.
 * `SQUADOV_ZEROMQ_SERVICE_PORT`: Port to run the ZeroMQ socket on for communication between the UI and the client service (recommended).
 * `SQUADOV_MANUAL_SERVICE`: Set to `1` if you do not wish to have the SquadOV UI automatically run the specified client service EXE.
 * `SQUADOV_APPDATA_SUFFIX`: The local SquadOV files are written to `%APPDATA%\SquadOV${SQUADOV_APPDATA_SUFFIX}`.
-
 
 In Windows, you can set the environment variable by typing `$env:{NAME}={VALUE}`.
 Finally, start the UI by running: `yarn start`.
