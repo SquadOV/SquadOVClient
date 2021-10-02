@@ -51,9 +51,6 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
     settings.maxLocalRecordingSizeGb = obj["maxLocalRecordingSizeGb"].get<double>();
 
-    settings.useBitrate = obj.value("useBitrate", false);
-    settings.bitrateKbps = obj["bitrateKbps"].get<int64_t>();
-
     settings.vodEndDelaySeconds = obj["vodEndDelaySeconds"].get<int32_t>();
     if (obj.count("overlays") > 0) {
         settings.overlays = service::renderer::OverlaySettings::fromJson(obj["overlays"]);
