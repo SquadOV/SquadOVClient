@@ -20,6 +20,8 @@ namespace shared::http {
 namespace {
 
 constexpr size_t MAX_RAW_JSON_POST_BYTES_SIZE = 1 * 1024 * 1024;
+constexpr int MAX_RETRY = 3;
+constexpr int MAX_RETRY_BACKOFF = 15000;
 
 }
 
@@ -190,13 +192,24 @@ HttpResponsePtr HttpRequest::execute() {
     _errBuffer[0] = 0;
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errBuffer);
 
-    resp->curlError = curl_easy_perform(_curl);
-    if (resp->curlError == CURLE_OK) {
-        curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
-        resp->body = buffer.str();
-    } else {
-        resp->body = std::string(_errBuffer);
-        LOG_WARNING("Generic CURL failure: " << resp->body << std::endl);
+    for (int i = 0; i < MAX_RETRY; ++i) {
+        resp->curlError = curl_easy_perform(_curl);
+        if (resp->curlError == CURLE_OK) {
+            curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
+            resp->body = buffer.str();
+            break;
+        } else {
+            resp->body = std::string(_errBuffer);
+            LOG_WARNING("Generic CURL failure: " << resp->body << std::endl);
+
+            if (i < MAX_RETRY - 1) {
+                // Exponential backoff with jitter algorithm.
+                // See: https://cloud.google.com/iot/docs/how-tos/exponential-backoff
+                // Some notable changes are that we have a base minimum of a 100ms backoff.
+                const auto backoffMs = std::min(static_cast<int>(100 + std::pow(2, i + 1) + rand() / RAND_MAX * 1000), MAX_RETRY_BACKOFF);
+                std::this_thread::sleep_for(std::chrono::milliseconds(backoffMs));
+            }
+        }
     }
 
     if (ofile.is_open()) {
