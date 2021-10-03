@@ -417,7 +417,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
 
             canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
-            _vcodecContext->bit_rate = std::min(settings.bitrateKbps, int64_t(6000)) * 1000;
+            _vcodecContext->bit_rate = int64_t(6000) * 1000;
             _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;
             _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 2;
             _vcodecContext->thread_count = 0;
@@ -508,7 +508,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
                     av_dict_set(&options, "profile", "high", 0);
                 }
 
-                if (!settings.useBitrate) {
+                {
                     // CRF/CQ
                     if (enc.name == "h264_mf") {
                         av_dict_set(&options, "quality", "30", 0);

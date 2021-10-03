@@ -105,46 +105,6 @@
                     </v-col>
                 </v-row>
 
-                <v-row v-if="!mini" align="center">
-                    <v-col cols="4">
-                        <v-checkbox
-                            class="ma-0"
-                            :input-value="useBitrate"
-                            @change="changeUseBitrate"
-                            label="Use Bitrate"
-                        >
-                            <template v-slot:append>
-                                <v-tooltip bottom max-width="450px">
-                                    <template v-slot:activator="{on, attrs}">
-                                        <v-icon v-on="on" v-bind="attrs">
-                                            mdi-help-circle
-                                        </v-icon>
-                                    </template>
-
-                                    If you enable this option, SquadOV will instead try to record at your specified bitrate instead of
-                                    trying to encode at a certain (hidden) quality level. This number is capped at 6,000Kbps (kilobits per second) for now.
-                                </v-tooltip>
-                            </template>
-                        </v-checkbox>
-                    </v-col>
-
-                    <v-col cols="8">
-                        <v-text-field
-                            :disabled="!useBitrate"
-                            :value="bitrateKbps"
-                            @change="changeBitrateKbps(parseInt(arguments[0]))"
-                            type="number"
-                            solo
-                            single-line
-                            :rules="bitrateRules"
-                        >
-                            <template v-slot:append>
-                                Kbps
-                            </template>
-                        </v-text-field>
-                    </v-col>
-                </v-row>
-
                 <div class="d-flex align-center mt-4" v-if="!mini">
                     <span class="text-overline mr-4">Audio</span>
 
@@ -640,37 +600,6 @@ export default class RecordingSettingsItem extends Vue {
         }).finally(() => {
             this.changeLocalRecordingProgress = false
         })
-    }
-
-    get useBitrate(): boolean {
-        return this.$store.state.settings.record.useBitrate
-    }
-
-    changeUseBitrate(v: boolean) {
-        this.$store.commit('changeRecordingBitrate', {
-            enable: v,
-            bitrateKbps: this.bitrateKbps,
-        })
-    }
-
-    get bitrateKbps(): number {
-        return this.$store.state.settings.record.bitrateKbps
-    }
-
-    changeBitrateKbps(v: number) {
-        this.$store.commit('changeRecordingBitrate', {
-            enable: this.useBitrate,
-            bitrateKbps: v,
-        })
-    }
-
-    get bitrateRules(): any[] {
-        return [
-            (value: string) => !!value || 'Required.',
-            (value: string) => !isNaN(parseInt(value)) || 'Must be a number',
-            (value: string) => parseInt(value) <= 6000 || 'Must be less than 6000Kbps',
-            (value: string) => parseInt(value) > 0 || 'Must be greater than 0Kbps'
-        ]
     }
 
     get vodEndDelaySeconds(): number {
