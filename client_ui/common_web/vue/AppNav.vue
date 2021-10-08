@@ -1,7 +1,6 @@
 <template>
     <v-app-bar
         dense
-        :extension-height="extensionHeight"
     >
         <v-btn
             text
@@ -115,62 +114,6 @@
                 Register
             </v-btn>
         </template>
-
-        <template v-slot:extension>
-            <v-alert
-                v-model="showEmailVerification"
-                class="pa-2 ma-0"
-                type="warning"
-                dismissible
-                tile
-                width="100%"
-            >
-                <template v-slot:prepend>
-                    <v-icon>mdi-exclamation</v-icon>
-                </template>
-
-                <div class="d-flex align-center">
-                    <div>
-                        Your email address is unverified. Please verify your email address ({{ emailAddress }}) ASAP to prevent account deletion.
-                    </div>
-
-                    <v-spacer></v-spacer>
-
-                    <v-btn small color="primary" @click="resendVerification" v-if="!sentVerification" :loading="emailPending">
-                        Resend Email Verification
-                    </v-btn>
-
-                    <div v-else>
-                        Email Sent!
-                    </div>
-
-                    <v-btn small v-if="!sentVerification" class="ml-2" color="secondary" :to="accountSettingsTo">
-                        Wrong email!
-                    </v-btn>
-
-                    <v-btn
-                        class="ml-2"
-                        color="success"
-                        small
-                        icon
-                        @click="recheckVerification"
-                        :loading="checkPending"
-                    >
-                        <v-icon>
-                            mdi-refresh
-                        </v-icon>
-                    </v-btn>
-                </div>
-            </v-alert>
-        </template>
-
-        <v-snackbar
-            v-model="verificationErr"
-            :timeout="5000"
-            color="error"
-        >
-            Failed to send a verification email. Please try again later.
-        </v-snackbar>
     </v-app-bar>
 </template>
 
@@ -191,7 +134,6 @@ import { ipcRenderer } from 'electron'
 /// #endif
 
 import { NotificationSummary } from '@client/js/squadov/notification'
-import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 
 @Component({
     components: {
@@ -201,53 +143,6 @@ import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 })
 export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
-    showEmailVerification: boolean = false
-    sentVerification: boolean = false
-    emailPending: boolean = false
-    verificationErr: boolean = false
-    checkPending: boolean = false
-
-    get emailAddress(): string {
-        if (!this.$store.state.currentUser) {
-            return ''
-        }
-        return this.$store.state.currentUser.email
-    }
-
-    
-    recheckVerification() {
-        this.checkPending = true
-        getSquadOVUser(this.$store.state.currentUser.id).then((resp: ApiData<SquadOVUser>) => {
-            this.$store.commit('setUser' , resp.data)
-        }).catch((err: any) => {
-            console.error('Failed to refresh squadovuser : ', err)
-        }).finally(() => {
-            this.checkPending = false
-        })
-    }
-
-    resendVerification() {
-        this.emailPending = true
-        apiClient.resendVerification().then(() => {
-            this.sentVerification = true
-            setTimeout(() => {
-                this.showEmailVerification = false
-            }, 5000)
-        }).catch((err: any) => {
-            console.error('Failed to resend verification: ', err)
-            this.verificationErr = false
-        }).finally(() => {
-            this.emailPending = false
-        })
-    }
-
-    get extensionHeight(): number {
-        if (this.showEmailVerification) {
-            return 40
-        } else {
-            return 0
-        }
-    }
 
     get isDesktop(): boolean {
 /// #if DESKTOP
@@ -354,14 +249,14 @@ export default class AppNav extends mixins(CommonComponent) {
                             name: pi.ClipLibraryPageId,
                         },
                     },
-///#if DESKTOP
+/// #if DESKTOP
                     {
                         name: 'Local',
                         to: {
                             name: pi.LocalStoragePageId,
                         },
                     },
-///#endif
+/// #endif
                 ]
             },
             {
@@ -400,15 +295,6 @@ export default class AppNav extends mixins(CommonComponent) {
         }
 
         return this.$store.state.currentUser.username
-    }
-
-    get accountSettingsTo(): any {
-        return {
-            name: pi.SettingsPageId,
-            query: {
-                inputTab: 2
-            }
-        }
     }
 
     get profileTo(): any {
@@ -480,14 +366,6 @@ export default class AppNav extends mixins(CommonComponent) {
 
     mounted() {
         this.refreshNotifications()
-        this.resyncVerificationStatus()
-    }
-
-    @Watch('$store.state.currentUser')
-    resyncVerificationStatus() {
-        if (this.isLoggedIn) {
-            this.showEmailVerification = !this.$store.state.currentUser.verified
-        }
     }
 
     goToLink(url: string) {
@@ -501,11 +379,6 @@ export default class AppNav extends mixins(CommonComponent) {
 
 .inner-badge {
     margin-top: 0px !important;
-}
-
->>>.v-toolbar__extension {
-    padding: 0;
-    margin: 0;
 }
 
 .news-div {

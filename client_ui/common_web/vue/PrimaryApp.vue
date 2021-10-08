@@ -2,6 +2,7 @@
     <div id="appInner">
         <template v-if="userLoaded">    
             <app-nav class="flex-grow-0" v-if="showNav"></app-nav>
+            <app-alerts width="100%"></app-alerts>
             <v-banner
                 v-if="$root.globals.serviceError"
                 single-line
@@ -126,6 +127,7 @@ import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
 import rawData from '@client/package.json'
 import TopLevelComponent from '@client/vue/TopLevelComponent'
+import AppAlerts from '@client/vue/utility/squadov/alerts/AppAlerts.vue'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -136,14 +138,15 @@ import { ipcRenderer } from 'electron'
         AppNav,
         LicenseData,
         BugReporter,
-        RecordingStatusWindow
+        RecordingStatusWindow,
+        AppAlerts,
     }
 })
 export default class PrimaryApp extends mixins(TopLevelComponent) {
     version: string = rawData.version
     showHideLicenses: boolean = false
     showHideBug: boolean = false
-
+    
     get userLoaded(): boolean {
         return !!this.$store.state.currentUser
     }
