@@ -43,8 +43,8 @@
                     <v-col cols-sm="12" cols-md="3" v-if="!mini">
                         <v-checkbox
                             class="ma-0"
-                            :input-value="useVideoHw"
-                            @change="changeUseVideoHw"
+                            :input-value="$store.state.settings.record.useVideoHw"
+                            @change="$store.commit('changeUseVideoHw', arguments[0])"
                             hide-details
                             label="Use GPU Pipeline"
                         >
@@ -64,8 +64,8 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="useHwEncoder"
-                            @change="changeUseHwEncoder"
+                            :input-value="$store.state.settings.record.useHwEncoder"
+                            @change="$store.commit('changeUseHwEncoder', arguments[0])"
                             hide-details
                             label="Use GPU Encoder"
                         >
@@ -84,8 +84,8 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="useVfr3"
-                            @change="changeUseVfr32"
+                            :input-value="$store.state.settings.record.useVfr3"
+                            @change="$store.commit('changeUseVfr32', arguments[0])"
                             hide-details
                             label="Use Variable Framerate"
                         >
@@ -99,6 +99,27 @@
 
                                     Whether to allow the creation of a video file with variable frame rate.
                                     This may help your videos be smoother if your computer is unable to handle the load of recording at your specified resolution and FPS.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.record.useWGC"
+                            @change="$store.commit('changeUseWGC', arguments[0])"
+                            hide-details
+                            label="Use Windows Graphics Capture"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+                                    Whether to use WGC for recording.
+                                    When disabled, the default is GDI which may produce lower quality videoes. WGC might cause additional lag and produce a yellow border in the recording.
+                                    GDI is currently not supported for: League of Legends, WoW, and AimLab
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
@@ -524,35 +545,10 @@ export default class RecordingSettingsItem extends Vue {
             60
         ]
     }
-    
-    get useVideoHw(): boolean {
-        return this.$store.state.settings.record.useVideoHw
-    }
-
-    changeUseVideoHw(val: boolean) {
-        this.$store.commit('changeUseVideoHw', val)
-    }
-
-    get useHwEncoder(): boolean {
-        return this.$store.state.settings.record.useHwEncoder
-    }
-
-    changeUseHwEncoder(val: boolean) {
-        this.$store.commit('changeUseHwEncoder', val)
-    }
-
-    get useVfr3(): boolean {
-        return this.$store.state.settings.record.useVfr3
-    }
-
-    changeUseVfr32(val: boolean) {
-        this.$store.commit('changeUseVfr32', val)
-    }
 
     get hasSettings(): boolean {
         return !!this.$store.state.settings
     }
-
 
     get showLocalRecordingSettings(): boolean {
 ///#if DESKTOP
