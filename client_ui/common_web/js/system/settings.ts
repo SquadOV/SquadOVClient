@@ -67,8 +67,6 @@ export interface SquadOvRecordingSettings {
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
-    useBitrate: boolean
-    bitrateKbps: number
     vodEndDelaySeconds: number
     overlays: SquadOvOverlaySettings
     useAudioDriftCompensation: boolean
@@ -306,8 +304,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
-                useBitrate: false,
-                bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
@@ -342,8 +338,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
-                useBitrate: false,
-                bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
@@ -378,8 +372,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
-                useBitrate: false,
-                bitrateKbps: 6000,
                 vodEndDelaySeconds: 0,
                 overlays: createDefaultOverlaySettings(),
                 useAudioDriftCompensation: true,
@@ -435,8 +427,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
-            useBitrate: false,
-            bitrateKbps: 6000,
             vodEndDelaySeconds: 0,
             overlays: createDefaultOverlaySettings(),
             useAudioDriftCompensation: true,
@@ -536,14 +526,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.maxLocalRecordingSizeGb === undefined) {
         parsedData.record.maxLocalRecordingSizeGb = 100
-    }
-
-    if (parsedData.record.useBitrate === undefined) {
-        parsedData.record.useBitrate = false
-    }
-
-    if (parsedData.record.bitrateKbps === undefined) {
-        parsedData.record.bitrateKbps = 6000
     }
 
     if (parsedData.record.usePushToTalk === undefined) {

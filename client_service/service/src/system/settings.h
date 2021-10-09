@@ -37,9 +37,6 @@ struct RecordingSettings {
     std::filesystem::path localRecordingLocation;
     double maxLocalRecordingSizeGb = 1.0;
 
-    bool useBitrate = false;
-    int64_t bitrateKbps = 6000;
-
     int32_t vodEndDelaySeconds = 0;
     service::renderer::OverlaySettings overlays;
     bool useAudioDriftCompensation = false;
