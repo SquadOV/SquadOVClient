@@ -79,6 +79,7 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/deps/curl/include
     ${CMAKE_SOURCE_DIR}/deps/civetweb/include
     ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
+    ${CARES_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
 )
 
