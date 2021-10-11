@@ -385,7 +385,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
     const EncoderChoice encodersToUse[] = {
         {"h264_nvenc", VideoStreamContext::GPU, true },
         {"h264_amf", VideoStreamContext::GPU, true },
-        {"h264_mf", VideoStreamContext::CPU, true },
+        {"h264_mf", VideoStreamContext::CPU, false },
         {"libopenh264", VideoStreamContext::CPU, false }
     };
 
@@ -511,13 +511,13 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
                 {
                     // CRF/CQ
                     if (enc.name == "h264_mf") {
-                        av_dict_set(&options, "quality", "30", 0);
+                        av_dict_set_int(&options, "quality", 50, 0);
                     } else if (enc.name == "h264_nvenc") {
-                        av_dict_set(&options, "qp", "30", 0);
+                        av_dict_set_int(&options, "qp", 30, 0);
                     } else if (enc.name == "h264_amf") {
-                        av_dict_set(&options, "qp_i", "30", 0);
-                        av_dict_set(&options, "qp_p", "30", 0);
-                        av_dict_set(&options, "qp_b", "30", 0);
+                        av_dict_set_int(&options, "qp_i", 30, 0);
+                        av_dict_set_int(&options, "qp_p", 30, 0);
+                        av_dict_set_int(&options, "qp_b", 30, 0);
                     } else if (enc.name == "libopenh264") {
                         _vcodecContext->qmin = 20;
                         _vcodecContext->qmax = 30;
