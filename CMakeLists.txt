@@ -29,6 +29,7 @@ set(FFMPEG_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/ffmpeg CACHE STRING "" FORCE)
 set(OPENH264_ROOT ${CMAKE_SOURCE_DIR}/prebuilt/openh264 CACHE STRING "" FORCE)
 find_package(FFMPEG REQUIRED)
 find_package(RdKafka CONFIG REQUIRED)
+find_package(CARES REQUIRED)
 
 set(Protobuf_USE_STATIC_LIBS ON)
 set(protobuf_MODULE_COMPATIBLE ON)

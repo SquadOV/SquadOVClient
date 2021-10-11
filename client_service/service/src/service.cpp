@@ -170,6 +170,10 @@ int main(int argc, char** argv) {
     const auto sysHw = service::hardware::getSystemHardware();
     LOG_INFO(sysHw << std::endl);
 
+    // Initialize the DNS manager at the very beginning before any network calls are done and we start
+    // making calls to CURL/C-ARES.
+    shared::http::getDnsManager();
+
     // Initialize global state and start to listen to messages coming via ZeroMQ about
     // how to update certain state.
     service::system::getGlobalState();
