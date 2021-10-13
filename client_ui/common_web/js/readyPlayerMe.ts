@@ -6,7 +6,7 @@ export async function createReadyPlayerMeRender(
     armature: String = "ArmatureTargetMale",
     mouthSmile: number = 0.2,
     browInnerUp: number = 0,
-    //For list of other settings, see https://docs.readyplayer.me/render-api/render-api
+    // For list of other settings, see https://docs.readyplayer.me/render-api/render-api
 ): Promise<string> {
     return axios
         .post("https://render.readyplayer.me/render", {

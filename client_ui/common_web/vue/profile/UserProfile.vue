@@ -161,8 +161,7 @@
                                                 <v-col cols="12">
                                                     <div class="d-flex justify-center">
                                                         <user-ready-player-me 
-                                                            v-model="stagedProfilePhoto"
-                                                            :rules="profilePicRules"
+                                                            @input="stagedProfilePhoto = arguments[0]"
                                                         >
                                                         </user-ready-player-me>
                                                     </div>
@@ -740,7 +739,7 @@ export default class UserProfile extends Vue {
         this.createInProgress = true
         apiClient.createUserProfile(this.createSlug).then((resp: ApiData<UserProfileBasic>) => {
             this.userProfile = resp.data
-        }).catch((err:any) => {
+        }).catch((err: any) => {
             console.error('Failed to create user profile: ', err)
             this.createFailure = true
         }).finally(() => {
