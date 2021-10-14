@@ -550,7 +550,7 @@ const baseRoutes : any[] = [
                     inTs: timeStringToSeconds(route.query.t),
                 }),
             },
-            { 
+            {
                 path: 'performance',
                 component: Performance,
                 children: [

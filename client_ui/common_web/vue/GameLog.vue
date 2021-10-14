@@ -76,7 +76,9 @@
                     <v-tooltip bottom :open-delay="1000">
                         <template v-slot:activator="{on, attrs}">
                             <div :class="`ml-2 pa-2 d-flex align-center justify-center home-game game-div ${isOnHome ? 'selected-game' : ''}`" v-on="on" v-bind="attrs">
-                                <v-icon large>
+                                <v-icon 
+                                    large
+                                >
                                     mdi-all-inclusive
                                 </v-icon>
                             </div>
@@ -111,9 +113,7 @@
                     </div>
                 </template>
             </template>
-
             <v-spacer></v-spacer>
-
             <v-btn icon @click="refresh">
                 <v-icon>
                     mdi-refresh

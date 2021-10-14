@@ -7,15 +7,18 @@
         <v-tab-item>
             <stat-container
                 class="pa-4 task-stat-container"
-                :stats="[content.getTaskCommonScoreStat(task.taskName, task.mode)]"
-                :title="getStatTitle(content.getTaskCommonScoreStat(task.taskName, task.mode))"
+                :stats="[
+                    content.getTaskCommonScoreStat(task.taskName, task.mode)
+                ]"
+                :title="
+                    getStatTitle(
+                        content.getTaskCommonScoreStat(task.taskName, task.mode)
+                    )
+                "
                 :user-id="userId"
             >
                 <template v-slot:default="{ data }">
-                    <line-graph
-                        :series-data="data"
-                    >
-                    </line-graph>
+                    <line-graph :series-data="data"> </line-graph>
                 </template>
             </stat-container>
         </v-tab-item>
@@ -29,7 +32,10 @@
                 <v-row>
                     <v-col
                         cols="6"
-                        v-for="(stat, idx) in content.getTaskExtraStats(task.taskName, task.mode)"
+                        v-for="(stat, idx) in content.getTaskExtraStats(
+                            task.taskName,
+                            task.mode
+                        )"
                         :key="idx"
                     >
                         <stat-container
@@ -39,16 +45,17 @@
                             :user-id="userId"
                         >
                             <template v-slot:default="{ data }">
-                                <line-graph
-                                    :series-data="data"
-                                >
-                                </line-graph>
+                                <line-graph :series-data="data"> </line-graph>
                             </template>
                         </stat-container>
                     </v-col>
                 </v-row>
             </v-tab-item>
         </template>
+        <v-spacer></v-spacer>
+        <v-btn id="viz-button" :to="vizStatsPageTo">
+            Stat Visualization
+        </v-btn>
     </v-tabs>
 </template>
 
@@ -63,6 +70,7 @@ import { statLibrary } from '@client/js/stats/statLibrary'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import StatContainer from '@client/vue/stats/StatContainer.vue'
 import LineGraph from '@client/vue/stats/LineGraph.vue'
+import * as pi from '@client/js/pages'
 
 @Component({
     components: {
@@ -71,16 +79,16 @@ import LineGraph from '@client/vue/stats/LineGraph.vue'
     }
 })
 export default class AimlabTaskPerformanceHistory extends Vue {
-    @Prop({required: true})
-    task! : AimlabTaskData
+    @Prop({ required: true })
+    task!: AimlabTaskData
 
-    @Prop({required: true})
+    @Prop({ required: true })
     userId!: number
 
-    @Prop({required: true})
+    @Prop({ required: true })
     stats!: StatPermission[]
 
-    content : AimlabContent = getAimlabContent()
+    content: AimlabContent = getAimlabContent()
 
     mounted() {
         this.syncStatPermissions()
@@ -96,6 +104,12 @@ export default class AimlabTaskPerformanceHistory extends Vue {
         this.$emit('update:stats', Array.from(new Set(newStats)))
     }
 
+    get vizStatsPageTo(): any {
+        return {
+            name: pi.VizStatsPageId
+        }
+    }
+
     get allStats(): string[] {
         let stats: string[] = [this.content.getTaskCommonScoreStat(this.task.taskName, this.task.mode)!]
         if (this.hasExtraStats) {
@@ -104,12 +118,12 @@ export default class AimlabTaskPerformanceHistory extends Vue {
         return stats
     }
 
-    get hasExtraStats() : boolean {
+    get hasExtraStats(): boolean {
         let stats = this.content.getTaskExtraStats(this.task.taskName, this.task.mode)
         return !!stats && stats.length > 0
     }
 
-    getStatTitle(st : string) : string {
+    getStatTitle(st: string): string {
         let nameTokens = statLibrary.getStatName(statLibrary.splitId(st)).split('/')
         return nameTokens[nameTokens.length - 1]
     }
@@ -118,9 +132,7 @@ export default class AimlabTaskPerformanceHistory extends Vue {
 </script>
 
 <style scoped>
-
 .task-stat-container {
     height: 600px;
 }
-
 </style>

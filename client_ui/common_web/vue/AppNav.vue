@@ -323,17 +323,6 @@ export default class AppNav extends mixins(CommonComponent) {
                 notifications: this.totalSquadInvites,
             },
             {
-                name: 'Performance',
-                children: [
-                    {
-                        name: 'Visualization',
-                        to: {
-                            name: pi.VizStatsPageId,
-                        },
-                    },
-                ]
-            },
-            {
                 name: 'Library',
                 children: [
                     {
