@@ -1199,8 +1199,11 @@ class ApiServer {
     }
 
     async getFunnelData(start, end, codes) {
-        const { rows } = await this.pool.query(
-            `
+        let query
+        let params
+
+        if (codes.length > 0) {
+            query = `
             SELECT (
                 SELECT COUNT(rv.code)
                 FROM squadov.referral_visits AS rv
@@ -1271,8 +1274,76 @@ class ApiServer {
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
             ) AS "active"
-            `,
-            [start, end, codes]
+            `
+
+            params = [start, end, codes]
+        } else {
+            query = `SELECT (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "view", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "reg", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "login", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_downloads AS ud
+                    ON ud.user_id = u.id
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "download", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_hardware_specs AS uhs
+                    ON uhs.user_id = u.id
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "install", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.vods AS v
+                    ON v.user_uuid = u.uuid
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND v.is_clip = FALSE
+                    AND v.end_time IS NOT NULL
+            ) AS "record", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.daily_active_endpoint AS dae
+                    ON dae.user_id = u.id
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE rcu.code_id IS NULL
+                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+            ) AS "active"`
+            params = [start, end]
+        }
+
+        const { rows } = await this.pool.query(
+            query,
+            params,
         )
 
         return rows[0]
