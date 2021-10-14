@@ -68,7 +68,7 @@ process_watcher::ProcessWatcher watcher;
 #ifdef _WIN32
 
 LONG handleTopLevelExceptions(EXCEPTION_POINTERS* ex) {
-    LOG_ERROR("Executing unhandled exception hanlder..." << std::endl);
+    LOG_ERROR("Executing unhandled exception handler..." << std::endl);
     const auto dumpLoc = shared::log::generateMinidump(ex);
     LOG_ERROR(
         "SquadOV Fatal Error [Code: " << ex->ExceptionRecord->ExceptionCode << "] @" << dumpLoc << std::endl
