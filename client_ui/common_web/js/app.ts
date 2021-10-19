@@ -881,17 +881,12 @@ ipcRenderer.invoke('request-session').then((session : {
     })
 })
 
-let globals: any = {
-    serviceError: false,
-    hasUpdate: false,
-}
-
 ipcRenderer.on('service-error', () => {
-    globals.serviceError = true
+    store.commit('notifyServiceError')
 })
 
 ipcRenderer.on('main-update-downloaded', () => {
-    globals.hasUpdate = true
+    store.commit('notifyUpdate')
 })
 
 ipcRenderer.on('change-running-games', (_, games) => {
@@ -920,9 +915,6 @@ new Vue({
         },
     }),
     data: () => ({
-/// #if DESKTOP
-        globals,
-/// #endif
         statusTracker,
     }),
     methods: {

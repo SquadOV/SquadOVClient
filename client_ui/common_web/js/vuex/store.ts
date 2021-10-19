@@ -27,8 +27,16 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         currentState: createDefaultState(),
 /// #endif
         status: { status:{} },
+        hasUpdate: false,
+        serviceError: false,
     },
     mutations: {
+        notifyUpdate(state: RootState) {
+            state.hasUpdate = true
+        },
+        notifyServiceError(state: RootState) {
+            state.serviceError = true
+        },
         setUser(state : RootState, user : SquadOVUser) {
             state.currentUser = user
         },

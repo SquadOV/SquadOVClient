@@ -3,7 +3,7 @@
         <template v-if="userLoaded">    
             <app-nav class="flex-grow-0" v-if="showNav"></app-nav>
             <v-banner
-                v-if="$root.globals.serviceError"
+                v-if="$store.state.serviceError"
                 single-line
                 sticky
                 color="error"
@@ -12,7 +12,7 @@
             </v-banner>
 
             <v-banner
-                v-if="$root.globals.hasUpdate"
+                v-if="$store.state.hasUpdate"
                 single-line
                 sticky
                 color="primary"

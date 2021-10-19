@@ -435,6 +435,9 @@ function startClientService() {
     if (totalCloseCount > 5) {
         log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
         if (!!win) {
+            win.webContents.on('did-finish-load', () => {
+                win.webContents.send('service-error')    
+            })
             win.webContents.send('service-error')
         }
         return
@@ -465,7 +468,7 @@ function startClientService() {
         }
     }
 
-    log.log("SPAWN PROCESS: " + exePath);
+    log.log("SPAWN PROCESS: " + exePath)
     let child = spawn(exePath, {
         cwd: path.dirname(exePath)
     })
@@ -477,8 +480,8 @@ function startClientService() {
     child.stderr.on('data', (data) => {
         console.log(`SERVICE: ${data}`)
     })
-
     child.on('close', (code) => {
+
         log.log('Unexpected close of client service: ', code)
         totalCloseCount += 1
         win.webContents.send('reset-state')
