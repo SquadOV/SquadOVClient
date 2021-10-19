@@ -177,7 +177,7 @@ class ApiServer {
                 ON rcu.email = u.email
             LEFT JOIN squadov.referral_codes AS rc
                 ON rc.id = rcu.code_id
-            WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 day'
+            WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
             GROUP BY rc.code
         ) AS g(code, cnt)
             `
