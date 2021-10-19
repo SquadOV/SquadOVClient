@@ -796,6 +796,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
                 console.error('Failed to get IP address: ', err)
             })
 
+            store.dispatch('loadUserFeatureFlags')
             initializeSentry(store.state.currentUser!)
             
             // Note that in the web case, the renderer code is responsible for the doing the session
