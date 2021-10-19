@@ -110,7 +110,10 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
         const auto oldFolder = _initFolder.value();
         const auto entries = getAllLocalEntries();
         for (const auto& e : entries) {
-            migrationTasks.push_back(migrateLocalEntry(e, to));
+            const auto task = migrateLocalEntry(e, to);
+            if (task) {
+                migrationTasks.push_back(task.value());
+            }
         }
 
         release();
@@ -139,14 +142,18 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
     return true;
 }
 
-std::pair<fs::path, fs::path> LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
+std::optional<std::pair<fs::path, fs::path>> LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
     const auto source = getEntryPath(entry);
     const auto dest = getEntryPath(to, entry);
-    if (fs::exists(dest.parent_path())) {
-        fs::remove_all(dest.parent_path());
-    }
 
-    if (fs::exists(source.parent_path())) {
+    if (!fs::exists(source.parent_path())) {
+        // If the source path doesn't exist, then something is fucked up. The user probably
+        // did some manual moving around outside of SquadOV...ideally we'd have some better way to recover.
+        return std::nullopt;
+    } else {
+        if (fs::exists(dest.parent_path())) {
+            fs::remove_all(dest.parent_path());
+        }
         fs::copy(source.parent_path(), dest.parent_path());
     }
     
