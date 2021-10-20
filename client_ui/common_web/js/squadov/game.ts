@@ -132,3 +132,34 @@ export function gameShorthandToGame(str: string): SquadOvGames {
     }
     return SquadOvGames.Unknown
 }
+
+// This is...slightly duplicating of SquadOvGames.
+// The main reason we need this is because I made SquadOvGames mean different things so we can't
+// actually send the client side WowVanilla and WowTbc...uhh..woops. Fight me. :D
+export enum SquadOvWowRelease {
+    Retail,
+    Vanilla,
+    Tbc,
+}
+
+export function wowReleaseToGame(r: SquadOvWowRelease): SquadOvGames {
+    switch (r) {
+        case SquadOvWowRelease.Retail:
+            return SquadOvGames.WorldOfWarcraft
+        case SquadOvWowRelease.Vanilla:
+            return SquadOvGames.WowVanilla
+        case SquadOvWowRelease.Tbc:
+            return SquadOvGames.WowTbc
+    }
+}
+
+export function wowReleaseToName(r: SquadOvWowRelease): string {
+    switch (r) {
+        case SquadOvWowRelease.Retail:
+            return 'Retail'
+        case SquadOvWowRelease.Vanilla:
+            return 'Vanilla'
+        case SquadOvWowRelease.Tbc:
+            return 'Burning Crusade'
+    }
+}
