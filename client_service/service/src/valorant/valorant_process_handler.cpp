@@ -106,6 +106,30 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
         return;
     }
 
+    // Don't record if gameMode is disabled
+    const auto valorantSettings = service::system::getCurrentSettings()->valorantSettings();
+    switch (state->gameMode) {
+        case shared::valorant::EValorantGameMode::Standard:
+            if(!valorantSettings.recordStandard) {
+                return;
+            }
+            break;
+        case shared::valorant::EValorantGameMode::SpikeRush:
+            if(!valorantSettings.recordSpikeRush) {
+                return;
+            }
+            break;
+        case shared::valorant::EValorantGameMode::Deathmatch:
+            if(!valorantSettings.recordDeathmatch) {
+                return;
+            }
+            break;
+        default:
+            if(!valorantSettings.recordOther) {
+                return;
+            }
+    }
+
     // In the case where we're starting a match again without clearing out the current match
     // we *may* be dealing with a case of a custom game restart or some other weird case where the
     // logs print out another match start (insta reconnect? no idea - see issue SquadOVClient#1068).
