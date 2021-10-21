@@ -184,7 +184,7 @@
             </v-checkbox>
         </div>
 
-        <div class="d-flex align-center mt-2">
+        <div class="d-flex align-center mt-2" v-if="isRetail">
             <number-range-filter-ui
                 v-if="forArenas"
                 label="Rating"
@@ -290,6 +290,10 @@ export default class WowFilterUi extends Vue {
     dungeonItems: any[] | null = null
     raidItems: any[] | null = null
     arenaItems: any[] | null = null
+
+    get isRetail(): boolean {
+        return this.release === WowGameRelease.Retail
+    }
 
     @Watch('value')
     syncFromValue() {
