@@ -14,4 +14,6 @@ export interface RootState {
     currentState: SquadOvState
 /// #endif
     status: TrackedUserStatusContainer
+    hasUpdate: boolean
+    serviceError: boolean
 }
