@@ -6,7 +6,7 @@
 
         <v-text-field
             v-model="lowerStr"
-            @input="onStrValueChange"
+            @change="onStrValueChange"
             hide-details
             outlined
             single-line
@@ -21,7 +21,7 @@
 
         <v-text-field
             v-model="upperStr"
-            @input="onStrValueChange"
+            @change="onStrValueChange"
             hide-details
             outlined
             single-line
