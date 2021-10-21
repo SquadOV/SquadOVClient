@@ -5,6 +5,14 @@ export interface WowMatchFilters {
     dungeons: number[]
     arenas: number[]
     brackets: string[]
+    ratingLow: number | undefined
+    ratingHigh: number | undefined
+    friendlyComposition: string[]
+    enemyComposition: string[]
+    povSpec: number[]
+    encounterDifficulties: number[]
+    keystoneLow: number | undefined
+    keystoneHigh: number | undefined
     isWinner: boolean | null
 }
 
@@ -16,6 +24,14 @@ export function createEmptyWowMatchFilters(): WowMatchFilters {
         dungeons: [],
         arenas: [],
         brackets: [],
+        ratingLow: undefined,
+        ratingHigh: undefined,
+        friendlyComposition: [],
+        enemyComposition: [],
+        povSpec: [],
+        encounterDifficulties: [],
+        keystoneLow: undefined,
+        keystoneHigh: undefined,
         isWinner: null,
     }
 }

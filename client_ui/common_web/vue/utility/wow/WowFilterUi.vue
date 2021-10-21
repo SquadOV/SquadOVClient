@@ -1,6 +1,6 @@
 <template>
     <generic-match-filter-ui>
-        <div class="d-flex align-center">       
+        <div class="d-flex align-center">
             <v-select
                 v-if="forRaids"
                 label="Raids"
@@ -161,15 +161,6 @@
                 </template>
             </v-select>
 
-            <v-checkbox
-                class="ml-2 mt-0"
-                label="Must have VOD"
-                v-model="internalValue.hasVod"
-                @change="syncToValue"
-                hide-details
-                dense
-            ></v-checkbox>
-
             <v-select
                 class="ml-2"
                 label="Success"
@@ -181,6 +172,75 @@
                 dense
             >
             </v-select>
+
+            <v-checkbox
+                class="ml-2 mt-0"
+                label="Must have VOD"
+                v-model="internalValue.hasVod"
+                @change="syncToValue"
+                hide-details
+                dense
+            >
+            </v-checkbox>
+        </div>
+
+        <div class="d-flex align-center mt-2">
+            <number-range-filter-ui
+                v-if="forArenas"
+                label="Rating"
+                :lower.sync="internalValue.ratingLow"
+                @update:lower="syncToValue"
+                :upper.sync="internalValue.ratingHigh"
+                @update:upper="syncToValue"
+            >
+            </number-range-filter-ui>
+
+            <number-range-filter-ui
+                v-if="forDungeons"
+                label="Keystones"
+                :lower.sync="internalValue.keystoneLow"
+                @update:lower="syncToValue"
+                :upper.sync="internalValue.keystoneHigh"
+                @update:upper="syncToValue"
+            >
+            </number-range-filter-ui>
+
+            <wow-encounter-difficulty-selector
+                v-if="forRaids"
+                v-model="internalValue.encounterDifficulties"
+                @input="syncToValue"
+            >
+            </wow-encounter-difficulty-selector>
+
+            <div class="d-flex align-center ml-4">
+                <div>
+                    POV:
+                </div>
+
+                <wow-spec-chooser
+                    class="ml-1"
+                    v-model="internalValue.povSpec"
+                    @input="syncToValue"
+                >
+                </wow-spec-chooser>
+            </div>
+
+            <wow-composition-selector
+                class="ml-4"
+                label="Team 1"
+                v-model="internalValue.friendlyComposition"
+                @input="syncToValue"
+            >
+            </wow-composition-selector>
+
+            <wow-composition-selector
+                class="ml-4"
+                label="Team 2"
+                v-model="internalValue.enemyComposition"
+                v-if="forArenas"
+                @input="syncToValue"
+            >
+            </wow-composition-selector>
         </div>
     </generic-match-filter-ui>
 </template>
@@ -193,11 +253,19 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 import { wowCache, WowContentDatum } from '@client/js/wow/staticCache'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import NumberRangeFilterUi from '@client/vue/utility/squadov/filters/NumberRangeFilterUi.vue'
+import WowSpecChooser from '@client/vue/utility/wow/WowSpecChooser.vue'
+import WowEncounterDifficultySelector from '@client/vue/utility/wow/WowEncounterDifficultySelector.vue'
+import WowCompositionSelector from '@client/vue/utility/wow/WowCompositionSelector.vue'
 import { WowGameRelease } from '@client/js/staticData'
 
 @Component({
     components: {
-        GenericMatchFilterUi
+        GenericMatchFilterUi,
+        NumberRangeFilterUi,
+        WowSpecChooser,
+        WowEncounterDifficultySelector,
+        WowCompositionSelector,
     }
 })
 export default class WowFilterUi extends Vue {
