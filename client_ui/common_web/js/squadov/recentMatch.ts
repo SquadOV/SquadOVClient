@@ -1,4 +1,4 @@
-import { SquadOvGames } from '@client/js/squadov/game'
+import { SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
 import { VodManifest } from '@client/js/squadov/vod'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { LolPlayerMatchSummary, cleanLolPlayerMatchSummaryFromJson } from '@client/js/lol/matches'
@@ -41,6 +41,7 @@ export interface MatchFavoriteResponse {
 
 export interface RecentMatchFilters {
     games: SquadOvGames[] | undefined
+    wowReleases: SquadOvWowRelease[] | undefined
     squads: number[] | undefined
     users: number[] | undefined
     timeStart: number | undefined
@@ -52,6 +53,7 @@ export interface RecentMatchFilters {
 export function createEmptyRecentMatchFilters(): RecentMatchFilters {
     return {
         games: undefined,
+        wowReleases: undefined,
         squads: undefined,
         users: undefined,
         timeStart: undefined,
