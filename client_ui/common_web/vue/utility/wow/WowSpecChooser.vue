@@ -83,7 +83,7 @@
                             <v-spacer></v-spacer>
 
                             <wow-class-spec-icon
-                                :class-id="item.value"
+                                :spec-id="item.value"
                                 :patch="LATEST_RETAIL_PATCH_ID"
                             >
                             </wow-class-spec-icon>
