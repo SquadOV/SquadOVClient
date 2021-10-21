@@ -4,20 +4,29 @@
             <game-filter-ui
                 v-model="internalValue.games"
                 @input="syncToValue"
-            ></game-filter-ui>
+            >
+            </game-filter-ui>
+            <wow-release-filter-ui
+                v-if="needsWowReleaseFilter"
+                v-model="internalValue.wowReleases"
+                @input="syncToValue"
+            >
+            </wow-release-filter-ui>
             <squad-filter-ui
                 v-if="!disableSquads"
                 v-model="internalValue.squads"
                 @input="syncToValue"
                 class="ml-1"
-            ></squad-filter-ui>
+            >
+            </squad-filter-ui>
             <user-filter-ui
                 v-if="!disableUsers"
                 v-model="internalValue.users"
                 :squads="internalValue.squads"
                 @input="syncToValue"
                 class="ml-1"
-            ></user-filter-ui>
+            >
+            </user-filter-ui>
             
         </div>
 
@@ -38,10 +47,12 @@ import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
 import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
+import WowReleaseFilterUi from '@client/vue/utility/squadov/filters/WowReleaseFilterUi.vue'
 import SquadFilterUi from '@client/vue/utility/squadov/filters/SquadFilterUi.vue'
 import UserFilterUi from '@client/vue/utility/squadov/filters/UserFilterUi.vue'
 import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilterUi.vue'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import { SquadOvGames } from '@client/js/squadov/game'
 @Component({
     components: {
         GenericMatchFilterUi,
@@ -49,6 +60,7 @@ import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
         SquadFilterUi,
         UserFilterUi,
         TimeRangeFilterUi,
+        WowReleaseFilterUi,
     }
 })
 export default class RecentMatchFiltersUi extends Vue {
@@ -62,6 +74,10 @@ export default class RecentMatchFiltersUi extends Vue {
     disableUsers!: boolean
 
     internalValue: RecentMatchFilters = createEmptyRecentMatchFilters()
+
+    get needsWowReleaseFilter(): boolean {
+        return !!this.internalValue.games && this.internalValue.games.includes(SquadOvGames.WorldOfWarcraft)
+    }
 
     @Watch('value')
     syncFromValue() {
