@@ -68,7 +68,7 @@ export default class WowReleaseFilterUi extends Vue {
 
         return this.value.sort((a: SquadOvWowRelease, b: SquadOvWowRelease) => {
             let aName = wowReleaseToName(a)
-            let bName = wowReleaseToName(a)
+            let bName = wowReleaseToName(b)
             if (aName < bName) {
                 return -1
             } else if (aName > bName) {
