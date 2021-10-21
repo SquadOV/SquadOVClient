@@ -1,6 +1,6 @@
 <template>
     <v-select
-        label="Games"
+        label="WoW Release"
         :value="sortedValue"
         @input="changeValue"
         :items="items"
@@ -48,12 +48,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { SquadOvGames, gameToName, gameToIcon } from '@client/js/squadov/game'
+import { SquadOvWowRelease, wowReleaseToGame, gameToIcon, wowReleaseToName } from '@client/js/squadov/game'
 
 @Component
-export default class GameFilterUi extends Vue {
+export default class WowReleaseFilterUi extends Vue {
     @Prop({type: Array})
-    value!: SquadOvGames[] | undefined
+    value!: SquadOvWowRelease[] | undefined
 
     @Prop({type: Boolean, default: false})
     loading!: boolean
@@ -61,14 +61,14 @@ export default class GameFilterUi extends Vue {
     @Prop({type: Boolean, default: false})
     readonly!: boolean
 
-    get sortedValue(): SquadOvGames[] {
+    get sortedValue(): SquadOvWowRelease[] {
         if (!this.value) {
             return []
         }
 
-        return this.value.sort((a: SquadOvGames, b: SquadOvGames) => {
-            let aName = gameToName(a)
-            let bName = gameToName(b)
+        return this.value.sort((a: SquadOvWowRelease, b: SquadOvWowRelease) => {
+            let aName = wowReleaseToName(a)
+            let bName = wowReleaseToName(b)
             if (aName < bName) {
                 return -1
             } else if (aName > bName) {
@@ -79,7 +79,7 @@ export default class GameFilterUi extends Vue {
         })
     }
 
-    changeValue(v: SquadOvGames[]) {
+    changeValue(v: SquadOvWowRelease[]) {
         if (v.length === 0) {
             this.$emit('input', undefined)
         } else {
@@ -88,20 +88,20 @@ export default class GameFilterUi extends Vue {
     }
 
     get items(): any[] {
-        let supportedGames: SquadOvGames[] = [
-            SquadOvGames.AimLab,
-            SquadOvGames.Csgo,
-            SquadOvGames.Hearthstone,
-            SquadOvGames.LeagueOfLegends,
-            SquadOvGames.TeamfightTactics,
-            SquadOvGames.Valorant,
-            SquadOvGames.WorldOfWarcraft
+        let releases: SquadOvWowRelease[] = [
+            SquadOvWowRelease.Retail,
+            SquadOvWowRelease.Vanilla,
+            SquadOvWowRelease.Tbc,
         ]
-        return supportedGames.map((g: SquadOvGames) => ({
-            text: gameToName(g),
-            value: g,
-            icon: gameToIcon(g)
-        }))
+
+        return releases.map((r: SquadOvWowRelease) => {
+            let g = wowReleaseToGame(r)
+            return {
+                text: wowReleaseToName(r),
+                value: r,
+                icon: gameToIcon(g)
+            }
+        })
     }
 }
 
