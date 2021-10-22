@@ -550,7 +550,7 @@ const baseRoutes : any[] = [
                     inTs: timeStringToSeconds(route.query.t),
                 }),
             },
-            { 
+            {
                 path: 'performance',
                 component: Performance,
                 children: [
@@ -617,7 +617,8 @@ const baseRoutes : any[] = [
                 name: pi.ClipLibraryPageId,
                 component: ClipLibrary,
                 props: (route: any) => ({
-                    matchUuid: route.query.matchUuid
+                    matchUuid: route.query.matchUuid,
+                    refresh: parseInt(route.query.refresh) === 1
                 })
             },
             {
@@ -899,6 +900,10 @@ ipcRenderer.on('change-recording-games', (_, games) => {
     store.commit('setRecordingGames', games)
     statusTracker.refreshCurrentUserStatus()
 })
+
+setInterval(() => {
+    store.dispatch('recomputeLocalDiskSpaceRecordUsage')
+}, 60000)
 
 /// #endif
 

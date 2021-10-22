@@ -8,6 +8,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import { RootState } from '@client/js/vuex/state'
 import { TrackedUserStatus } from '@client/js/squadov/status'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { computeFileFolderSizeGb } from '@client/js/system/settings'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
@@ -25,6 +26,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
 /// #if DESKTOP
         settings: null,
         currentState: createDefaultState(),
+        localDiskSpaceRecordUsageGb: null,
 /// #endif
         status: { status:{} },
         hasUpdate: false,
@@ -84,12 +86,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseVfr32(state: RootState, b: boolean) {
+        changeUseVfr(state: RootState, b: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.useVfr3 = b
+            state.settings.record.useVfr4 = b
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -368,6 +370,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif  
         },
+        updateLocalStorageUsage(state: RootState, val: number) {
+            state.localDiskSpaceRecordUsageGb = val
+        }
     },
     actions: {
         async reloadLocalSettings(context) {
@@ -385,6 +390,19 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }).catch((err: any) => {
                 console.error('Failed to load feature flags: ', err)
             })
+        },
+        recomputeLocalDiskSpaceRecordUsage(context) {
+            if (!context.state.settings?.record.localRecordingLocation) {
+                return
+            }
+
+            computeFileFolderSizeGb(context.state.settings.record.localRecordingLocation)
+                .then((resp: number) => {
+                    context.commit('updateLocalStorageUsage', resp)
+                })
+                .catch((err: any) => {
+                    console.error('Failed to get local disk space record usage: ', err)
+                })
         }
     }
 }

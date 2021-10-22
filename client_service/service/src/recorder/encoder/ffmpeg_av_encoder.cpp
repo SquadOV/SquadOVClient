@@ -193,7 +193,7 @@ private:
     std::shared_mutex _runningMutex;
     std::chrono::nanoseconds _nsPerFrame;
     size_t _fps = 0;
-    bool _useVfr3 = false;
+    bool _useVfr4 = true;
 
     FfmpegVideoSwapChainPtr _videoSwapChain;
 
@@ -574,7 +574,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
     _videoSwapChain->initializeOverlay(overlay);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = settings.fps;
-    _useVfr3 = settings.useVfr3;
+    _useVfr4 = settings.useVfr4;
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / settings.fps * 1.0e+9));
 }
 
@@ -819,7 +819,7 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
 
     bool forceFrame0 = false;
     const int64_t duration = desiredFrameNum - _vFrameNum;
-    if (_useVfr3) {
+    if (_useVfr4) {
         forceFrame0 = (_vFrameNum == 0 && desiredFrameNum > 1);
         _vFrameNum = desiredFrameNum - 1;
     }

@@ -1,58 +1,66 @@
 <template>
-    <generic-match-filter-ui>
-        <div class="d-flex align-center">
-            <v-select
-                label="Tasks"
-                v-model="internalValue.tasks"
-                @input="syncToValue"
-                :items="taskItems"
-                deletable-chips
-                chips
-                multiple
-                clearable
-                outlined
-                hide-details
-                dense
-                style="max-width: 500px;"
-            >
-                <template v-slot:item="{ item }">
-                    <div class="d-flex full-width align-center">
-                        <v-checkbox
-                            class="selection-checkbox"
-                            dense
-                            hide-details
-                            :input-value="internalValue.tasks.includes(item.value)"
-                            readonly
-                        >
-                        </v-checkbox>
+    <div class="d-flex align-center">
+        <generic-match-filter-ui>
+            <div class="d-flex align-center">
+                <v-select
+                    label="Tasks"
+                    v-model="internalValue.tasks"
+                    @input="syncToValue"
+                    :items="taskItems"
+                    deletable-chips
+                    chips
+                    multiple
+                    clearable
+                    outlined
+                    hide-details
+                    dense
+                    style="max-width: 500px;"
+                >
+                    <template v-slot:item="{ item }">
+                        <div class="d-flex full-width align-center">
+                            <v-checkbox
+                                class="selection-checkbox"
+                                dense
+                                hide-details
+                                :input-value="
+                                    internalValue.tasks.includes(item.value)
+                                "
+                                readonly
+                            >
+                            </v-checkbox>
 
-                        {{ item.text }}
+                            {{ item.text }}
 
-                        <v-spacer></v-spacer>
+                            <v-spacer></v-spacer>
 
-                        <v-img
-                            :src="$root.generateAssetUri(item.icon)"
-                            :width="32"
-                            :max-width="32"
-                            :height="32"
-                            :max-height="32"
-                            contain
-                        >
-                        </v-img>
-                    </div>
-                </template>
-            </v-select>
+                            <v-img
+                                :src="$root.generateAssetUri(item.icon)"
+                                :width="32"
+                                :max-width="32"
+                                :height="32"
+                                :max-height="32"
+                                contain
+                            >
+                            </v-img>
+                        </div>
+                    </template>
+                </v-select>
 
-            <v-checkbox
-                class="ml-2 mt-0"
-                label="Must have VOD"
-                v-model="internalValue.hasVod"
-                @change="syncToValue"
-                hide-details
-                dense
-            ></v-checkbox>
-        </div>
-    </generic-match-filter-ui>
+                <v-checkbox
+                    class="ml-2 mt-0"
+                    label="Must have VOD"
+                    v-model="internalValue.hasVod"
+                    @change="syncToValue"
+                    hide-details
+                    dense
+                ></v-checkbox>
+            </div>
+        </generic-match-filter-ui>
+        <v-spacer></v-spacer>
+        <v-btn :to="vizStatsPageTo">
+            Stat Visualization
+        </v-btn>
+    </div>
 </template>
 
 <script lang="ts">
@@ -63,6 +71,7 @@ import { Watch, Prop } from 'vue-property-decorator'
 import { AimlabMatchFilters, createEmptyAimlabMatchFilters } from '@client/js/aimlab/filters'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import * as pi from '@client/js/pages'
 
 @Component({
     components: {
@@ -70,13 +79,19 @@ import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
     }
 })
 export default class AimlabFilterUi extends Vue {
-    @Prop({required: true})
+    @Prop({ required: true })
     value!: AimlabMatchFilters
 
     internalValue: AimlabMatchFilters = createEmptyAimlabMatchFilters()
 
     get content(): AimlabContent {
         return getAimlabContent()
+    }
+
+    get vizStatsPageTo(): any {
+        return {
+            name: pi.VizStatsPageId
+        }
     }
 
     get taskItems(): any[] {
@@ -114,9 +129,7 @@ export default class AimlabFilterUi extends Vue {
 </script>
 
 <style scoped>
-
 .selection-checkbox {
     margin: 0px !important;
 }
-
 </style>

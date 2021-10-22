@@ -349,6 +349,8 @@ void WoWProcessHandlerInstance::logTimeoutHandler() {
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
+
+    LOG_INFO("...Exiting out of Log Timeout Thread." << std::endl);
 }
 
 void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, const void* data) {
@@ -643,6 +645,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     forceKillLogTimeoutThread();
     LOG_INFO("Start Combat Log Timeout" << std::endl);
+    _lastLogTimeoutRunning = true;
     _lastLogTimeoutThread = std::thread(std::bind(&WoWProcessHandlerInstance::logTimeoutHandler, this));
 }
 

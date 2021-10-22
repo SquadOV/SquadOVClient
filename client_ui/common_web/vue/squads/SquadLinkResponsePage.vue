@@ -29,6 +29,10 @@
                         <div class="text-h6">
                             You've joined <span class="font-weight-bold">{{ squad.squadName }}</span>!
                         </div>
+
+                        <div class="text-subtitle-2 mt-1">
+                            You will be redirected to the home page in {{ timeToRedirect }} seconds...
+                        </div>
                     </template>
                 </div>
             </template>
@@ -69,6 +73,7 @@ export default class SquadLinkResponsePage extends Vue {
     inviter: SquadOVUserHandle | null = null
     error: boolean = false
     joining: boolean = false
+    timeToRedirect: number = 5
 
     get homeTo(): any {
         return {
@@ -76,13 +81,26 @@ export default class SquadLinkResponsePage extends Vue {
         }
     }
 
+    redirectTick() {
+        this.timeToRedirect -= 1
+        if (this.timeToRedirect <= 0) {
+            this.$router.push(this.homeTo)
+        } else {
+            this.startRedirectTick()
+        }
+    }
+
+    startRedirectTick() {
+        setTimeout(() => {
+            this.redirectTick()
+        }, 1000)
+    }
+
     joinSquad() {
         this.joining = true
         apiClient.acceptSquadInviteLink(this.linkId).then(() => {
             this.success = true
-            setTimeout(() => {
-                this.$router.push(this.homeTo)
-            }, 5000)
+            this.startRedirectTick()
         }).catch((err: any) => {
             console.error('Failed to accept squad invite: ', err)
             this.error = true

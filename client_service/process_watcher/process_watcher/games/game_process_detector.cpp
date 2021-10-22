@@ -45,6 +45,8 @@ std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {
         case shared::EGame::Hearthstone:
             return std::make_unique<HearthstoneProcessDetector>();
         case shared::EGame::WoW:
+        case shared::EGame::WowVanilla:
+        case shared::EGame::WowTbc:
             return std::make_unique<WoWProcessDetector>();
         case shared::EGame::LeagueOfLegends:
             return std::make_unique<LeagueProcessDetector>();

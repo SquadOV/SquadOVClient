@@ -39,6 +39,72 @@
                             :track="clip.manifest.videoTracks[0]"
                         >
                         </vod-download-button>
+                        
+                        <v-tooltip bottom v-if="isClipOwner">
+                            <template v-slot:activator="{on, attrs}">
+                                <v-btn
+                                    color="error"
+                                    icon
+                                    @click="showHideDeleteConfirm = true"
+                                    v-on="on"
+                                    v-bind="attrs"
+                                    :loading="deleteInProgress"
+                                    small
+                                >
+                                    <v-icon>
+                                        mdi-delete
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+
+                            Delete Clip
+                        </v-tooltip>
+
+                        <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
+                            <v-card>
+                                <v-card-title>
+                                    Confirmation
+                                </v-card-title>
+                                <v-divider></v-divider>
+
+                                <v-card-text class="mt-4">
+                                    <div>
+                                        Are you sure you wish to delete your VOD? You and your squadmates will no longer be able to watch this match from your point of view.
+                                        This will delete the VOD from SquadOV's servers as well as from your local machine (if applicable).
+                                    </div>
+
+                                    <div class="mt-4">
+                                        Please type <span class="font-weight-bold">CONFIRM</span> (case-sensitive) to confirm this action.
+                                    </div>
+
+                                    <v-text-field
+                                        class="mt-4"
+                                        filled
+                                        label="Confirmation"
+                                        v-model="confirmationText"
+                                        hide-details
+                                    >
+                                    </v-text-field>
+                                </v-card-text>
+
+                                <v-card-actions>
+                                    <v-btn @click="hideDeleteConfirm">
+                                        Cancel
+                                    </v-btn>
+
+                                    <v-spacer></v-spacer>
+
+                                    <v-btn
+                                        color="error"
+                                        :loading="deleteInProgress"
+                                        :disabled="confirmationText != 'CONFIRM'"
+                                        @click="deleteVod"
+                                    >
+                                        Delete
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
 
                         <v-spacer></v-spacer>
 
@@ -195,6 +261,14 @@
                 >
                     Failed to comment. Please try again.
                 </v-snackbar>
+
+                <v-snackbar
+                    v-model="deleteError"
+                    :timeout="5000"
+                    color="error"
+                >
+                    Failed to delete the clip. Please try again.
+                </v-snackbar>
             </div>
         </template>
     </loading-container>
@@ -202,8 +276,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodClip, ClipReact, ClipComment } from '@client/js/squadov/vod'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
@@ -231,7 +305,7 @@ const maxCommentsPerRequest = 20
         VodDownloadButton,
     }
 })
-export default class ClipView extends Vue {
+export default class ClipView extends mixins(CommonComponent) {
     standardFormatTime = standardFormatTime
 
     @Prop({required: true})
@@ -252,6 +326,12 @@ export default class ClipView extends Vue {
     lastCommentIndex: number = 0
     nextCommentLink: string | null = null
 
+    // Delete
+    showHideDeleteConfirm: boolean = false
+    deleteInProgress: boolean = false
+    confirmationText: string = ''
+    deleteError: boolean = false
+
     gameToIcon = gameToIcon
     reactPending: boolean = false
     sentView: boolean = false
@@ -261,6 +341,12 @@ export default class ClipView extends Vue {
     commentError: boolean = false
 
     permissions: MatchVideoSharePermissions | null = null
+
+    get isClipOwner(): boolean {
+        return !!this.$store.state.currentUser &&
+            !!this.clip &&
+            this.$store.state.currentUser.uuid === this.clip.clip.userUuid
+    }
 
     @Watch('clipUuid')
     refreshPermissions() {
@@ -447,6 +533,42 @@ export default class ClipView extends Vue {
         return {
             name: pi.LoginPageId
         }
+    }
+
+    hideDeleteConfirm() {
+        this.showHideDeleteConfirm = false
+        this.confirmationText = ''
+    }
+
+    onDeleteFinish() {
+        this.hideDeleteConfirm()
+
+        // Once we've deleted the clip we can just go back to the clip library since there won't be
+        // anything else to do on this page.
+        this.$router.replace({
+            name: pi.ClipLibraryPageId,
+            query: {
+                refresh: '1',
+            }
+        })
+    }
+
+    deleteVod() {
+        if (!this.clip) {
+            return
+        }
+
+        this.deleteInProgress = true
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DeleteVod, '', 0)
+
+        apiClient.deleteVod(this.clip.clip.videoUuid).then(() => {
+            this.onDeleteFinish()
+        }).catch((err: any) => {
+            console.error('Failed to delete clip: ', err)
+            this.deleteError = true
+        }).finally(() => {
+            this.deleteInProgress = false
+        })
     }
 }
 
