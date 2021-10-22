@@ -160,8 +160,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
 import { VodClip } from '@client/js/squadov/vod'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
@@ -179,7 +179,7 @@ const maxClipsPerRequest: number = 20
         RecentMatchFiltersUi
     }
 })
-export default class ClipLibrary extends Vue {
+export default class ClipLibrary extends mixins(CommonComponent) {
     @Prop({default: 'Clip Library'})
     title!: string
 
@@ -194,6 +194,9 @@ export default class ClipLibrary extends Vue {
 
     @Prop({type: Boolean, default: false})
     onlyWatchlist!: boolean
+
+    @Prop({type: Boolean, default: false})
+    refresh!: boolean
 
     clips: VodClip[] | null = null
     lastIndex: number = 0
@@ -322,6 +325,13 @@ export default class ClipLibrary extends Vue {
 
     mounted() {
         this.refreshClips()
+    }
+
+    @Watch('isActive')
+    onChangeActive() {
+        if (this.refresh) {
+            this.refreshClips()
+        }
     }
 }
 

@@ -617,7 +617,8 @@ const baseRoutes : any[] = [
                 name: pi.ClipLibraryPageId,
                 component: ClipLibrary,
                 props: (route: any) => ({
-                    matchUuid: route.query.matchUuid
+                    matchUuid: route.query.matchUuid,
+                    refresh: parseInt(route.query.refresh) === 1
                 })
             },
             {
