@@ -1090,20 +1090,18 @@ class ApiClient {
         let promise = !!params.next ?
             axios.get(params.next, cfg) :
             (params.profileId !== undefined) ?
-                axios.get(`profile/${params.profileId}/matches`, {
+                axios.post(`profile/${params.profileId}/matches`, params.filters, {
                     ...cfg,
                     params: {
                         start: params.start!,
                         end: params.end!,
-                        ...params.filters,
                     }
                 }) :
-                axios.get(`v1/users/me/recent`, {
+                axios.post(`v1/users/me/recent`, params.filters, {
                     ...cfg,
                     params: {
                         start: params.start!,
                         end: params.end!,
-                        ...params.filters,
                     }
                 })
 

@@ -6,6 +6,7 @@ import { TftPlayerMatchSummary, cleanTftPlayerMatchSummaryFromJson } from '@clie
 import { WowChallenge, WowEncounter, WowArena, cleanWowChallengeFromJson, cleanWowEncounterFromJson, cleanWowArenaFromJson } from '@client/js/wow/matches'
 import { ValorantPlayerMatchSummary, cleanValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
+import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 
 export interface BaseRecentMatch {
     matchUuid: string
@@ -39,6 +40,20 @@ export interface MatchFavoriteResponse {
     reason: string | null
 }
 
+export interface WowGenericMatchFilters {
+    encounters: WowMatchFilters
+    keystones: WowMatchFilters
+    arenas: WowMatchFilters
+}
+
+function createEmptyWowGenericMatchFilters(): WowGenericMatchFilters {
+    return {
+        encounters: createEmptyWowMatchFilters(),
+        keystones: createEmptyWowMatchFilters(),
+        arenas: createEmptyWowMatchFilters(),
+    }
+}
+
 export interface RecentMatchFilters {
     games: SquadOvGames[] | undefined
     wowReleases: SquadOvWowRelease[] | undefined
@@ -48,6 +63,9 @@ export interface RecentMatchFilters {
     timeEnd: number | undefined
     onlyFavorite: boolean
     onlyWatchlist: boolean
+    filters: {
+        wow: WowGenericMatchFilters
+    }
 }
 
 export function createEmptyRecentMatchFilters(): RecentMatchFilters {
@@ -60,6 +78,9 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
         timeEnd: undefined,
         onlyFavorite: false,
         onlyWatchlist: false,
+        filters: {
+            wow: createEmptyWowGenericMatchFilters(),
+        }
     }
 }
 

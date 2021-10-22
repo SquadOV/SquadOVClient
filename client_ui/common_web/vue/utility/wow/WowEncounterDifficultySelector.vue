@@ -1,6 +1,6 @@
 <template>
     <v-select
-        label="Difficulty"
+        label="Raid Difficulty"
         :value="value"
         @input="$emit('input', arguments[0])"
         :items="items"

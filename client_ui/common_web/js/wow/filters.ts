@@ -14,6 +14,7 @@ export interface WowMatchFilters {
     keystoneLow: number | undefined
     keystoneHigh: number | undefined
     isWinner: boolean | null
+    enabled: boolean
 }
 
 export function createEmptyWowMatchFilters(): WowMatchFilters {
@@ -33,5 +34,6 @@ export function createEmptyWowMatchFilters(): WowMatchFilters {
         keystoneLow: undefined,
         keystoneHigh: undefined,
         isWinner: null,
+        enabled: true,
     }
 }

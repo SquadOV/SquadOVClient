@@ -1,6 +1,17 @@
 <template>
     <generic-match-filter-ui>
         <div class="d-flex align-center">
+            <v-checkbox
+                class="mt-0 mr-2"
+                label="Enabled"
+                v-if="showEnabled"
+                v-model="internalValue.enabled"
+                @change="syncToValue"
+                hide-details
+                dense
+            >
+            </v-checkbox>
+
             <v-select
                 v-if="forRaids"
                 label="Raids"
@@ -176,6 +187,7 @@
             <v-checkbox
                 class="ml-2 mt-0"
                 label="Must have VOD"
+                v-if="!hideVodOption"
                 v-model="internalValue.hasVod"
                 @change="syncToValue"
                 hide-details
@@ -283,6 +295,13 @@ export default class WowFilterUi extends Vue {
 
     @Prop({required: true})
     release!: WowGameRelease
+
+    // Recent matches always have VODs which is when we turn this on.
+    @Prop({type: Boolean, default: false})
+    hideVodOption!: boolean
+
+    @Prop({type: Boolean, default: false})
+    showEnabled!: boolean
 
     internalValue: WowMatchFilters = createEmptyWowMatchFilters()
 
