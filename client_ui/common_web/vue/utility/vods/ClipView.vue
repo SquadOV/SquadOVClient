@@ -39,27 +39,14 @@
                             :track="clip.manifest.videoTracks[0]"
                         >
                         </vod-download-button>
+
+                        <vod-delete-button
+                            v-if="!!clip && isClipOwner"
+                            :vod="clip.clip"
+                            @on-delete="onDeleteFinish"
+                        >
+                        </vod-delete-button>
                         
-                        <v-tooltip bottom v-if="isClipOwner">
-                            <template v-slot:activator="{on, attrs}">
-                                <v-btn
-                                    color="error"
-                                    icon
-                                    @click="showHideDeleteConfirm = true"
-                                    v-on="on"
-                                    v-bind="attrs"
-                                    :loading="deleteInProgress"
-                                    small
-                                >
-                                    <v-icon>
-                                        mdi-delete
-                                    </v-icon>
-                                </v-btn>
-                            </template>
-
-                            Delete Clip
-                        </v-tooltip>
-
                         <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
                             <v-card>
                                 <v-card-title>
@@ -292,6 +279,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
+import VodDeleteButton from '@client/vue/utility/vods/VodDeleteButton.vue'
 
 const maxCommentsPerRequest = 20
 
@@ -303,6 +291,7 @@ const maxCommentsPerRequest = 20
         VodFavoriteButton,
         VodWatchlistButton,
         VodDownloadButton,
+        VodDeleteButton,
     }
 })
 export default class ClipView extends mixins(CommonComponent) {
@@ -325,12 +314,6 @@ export default class ClipView extends mixins(CommonComponent) {
     comments: ClipComment[] | null = null
     lastCommentIndex: number = 0
     nextCommentLink: string | null = null
-
-    // Delete
-    showHideDeleteConfirm: boolean = false
-    deleteInProgress: boolean = false
-    confirmationText: string = ''
-    deleteError: boolean = false
 
     gameToIcon = gameToIcon
     reactPending: boolean = false
@@ -523,26 +506,7 @@ export default class ClipView extends mixins(CommonComponent) {
         this.refreshPermissions()
     }
 
-    get registerTo(): any {
-        return {
-            name: pi.RegisterPageId
-        }
-    }
-
-    get loginTo(): any {
-        return {
-            name: pi.LoginPageId
-        }
-    }
-
-    hideDeleteConfirm() {
-        this.showHideDeleteConfirm = false
-        this.confirmationText = ''
-    }
-
     onDeleteFinish() {
-        this.hideDeleteConfirm()
-
         // Once we've deleted the clip we can just go back to the clip library since there won't be
         // anything else to do on this page.
         this.$router.replace({
@@ -553,22 +517,16 @@ export default class ClipView extends mixins(CommonComponent) {
         })
     }
 
-    deleteVod() {
-        if (!this.clip) {
-            return
+    get registerTo(): any {
+        return {
+            name: pi.RegisterPageId
         }
+    }
 
-        this.deleteInProgress = true
-        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DeleteVod, '', 0)
-
-        apiClient.deleteVod(this.clip.clip.videoUuid).then(() => {
-            this.onDeleteFinish()
-        }).catch((err: any) => {
-            console.error('Failed to delete clip: ', err)
-            this.deleteError = true
-        }).finally(() => {
-            this.deleteInProgress = false
-        })
+    get loginTo(): any {
+        return {
+            name: pi.LoginPageId
+        }
     }
 }
 
