@@ -113,6 +113,199 @@ export const WARLOCK_CLASS_ID = 9
 export const MONK_CLASS_ID = 10
 export const DH_CLASS_ID = 12
 
+export const ALL_WOW_CLASSES = [
+    MAGE_CLASS_ID,
+    PALLY_CLASS_ID,
+    WARRIOR_CLASS_ID,
+    DRUID_CLASS_ID,
+    DK_CLASS_ID,
+    HUNTER_CLASS_ID,
+    PRIEST_CLASS_ID,
+    ROGUE_CLASS_ID,
+    SHAMAN_CLASS_ID,
+    WARLOCK_CLASS_ID,
+    MONK_CLASS_ID,
+    DH_CLASS_ID,
+    -1,
+]
+
+export function classToName(classId: number): string {
+    switch (classId) {
+        case MAGE_CLASS_ID:
+            return 'Mage'
+        case PALLY_CLASS_ID:
+            return 'Paladin'
+        case WARRIOR_CLASS_ID:
+            return 'Warrior'
+        case DRUID_CLASS_ID:
+            return 'Druid'
+        case DK_CLASS_ID:
+            return 'Death Knight'
+        case HUNTER_CLASS_ID:
+            return 'Hunter'
+        case PRIEST_CLASS_ID:
+            return 'Priest'
+        case ROGUE_CLASS_ID:
+            return 'Rogue'
+        case SHAMAN_CLASS_ID:
+            return 'Shaman'
+        case WARLOCK_CLASS_ID:
+            return 'Warlock'
+        case MONK_CLASS_ID:
+            return 'Monk'
+        case DH_CLASS_ID:
+            return 'Demon Hunter'
+        default:
+            return 'Unknown'
+    }
+}
+
+export function classToSpecIds(classId: number): number[] {
+    switch (classId) {
+        case MAGE_CLASS_ID:
+            return [62, 63, 64]
+        case PALLY_CLASS_ID:
+            return [65, 66, 70]
+        case WARRIOR_CLASS_ID:
+            return [71, 72, 73]
+        case DRUID_CLASS_ID:
+            return [102, 103, 104, 105]
+        case DK_CLASS_ID:
+            return [250, 251, 252]
+        case HUNTER_CLASS_ID:
+            return [253, 254, 255]
+        case PRIEST_CLASS_ID:
+            return [256, 257, 258]
+        case ROGUE_CLASS_ID:
+            return [259, 260, 261]
+        case SHAMAN_CLASS_ID:
+            return [262, 263, 264]
+        case WARLOCK_CLASS_ID:
+            return [265, 266, 267]
+        case MONK_CLASS_ID:
+            return [268, 269, 270]
+        case DH_CLASS_ID:
+            return [577, 581]
+        default:
+            return []
+    }
+}
+
+export function specToName(specId: number): string {
+    switch (specId) {
+        // MAGE
+        case 62:
+            return 'Arcane'
+        case 63:
+            return 'Fire'
+        case 64:
+            return 'Frost'
+        case 1449:
+            return 'Initial'
+        // PALLY
+        case 65:
+            return 'Holy'
+        case 66:
+            return 'Protection'
+        case 70:
+            return 'Retribution'
+        case 1451:
+            return 'Initial'
+        // WARRIOR
+        case 71:
+            return 'Arms'
+        case 72:
+            return 'Fury'
+        case 73:
+            return 'Protection'
+        case 1446:
+            return 'Initial'
+        // DRUID
+        case 102:
+            return 'Balance'
+        case 103:
+            return 'Feral'
+        case 104:
+            return 'Guardian'
+        case 105:
+            return 'Restoration'
+        case 1447:
+            return 'Initial'
+        // DEATHKNIGHT
+        case 250:
+            return 'Blood'
+        case 251:
+            return 'Frost'
+        case 252:
+            return 'Unholy'
+        case 1455:
+            return 'Initial'
+        // HUNTER
+        case 253:
+            return 'Beast Mastery'
+        case 254:
+            return 'Marksmanship'
+        case 255:
+            return 'Survival'
+        case 1448:
+            return 'Initial'
+        // PRIEST
+        case 256:
+            return 'Discipline'
+        case 257:
+            return 'Holy'
+        case 258:
+            return 'Shadow'
+        case 1452:
+            return 'Initial'
+        // ROGUE
+        case 259:
+            return 'Assassination'
+        case 260:
+            return 'Outlaw'
+        case 261:
+            return 'Subtlety'
+        case 1453:
+            return 'Initial'
+        // SHAMAN
+        case 262:
+            return 'Elemental'
+        case 263:
+            return 'Enhancement'
+        case 264:
+            return 'Restoration'
+        case 1444:
+            return 'Initial'
+        // WARLOCK
+        case 265:
+            return 'Affliction'
+        case 266:
+            return 'Demonology'
+        case 267:
+            return 'Destruction'
+        case 1454:
+            return 'Initial'
+        // MONK
+        case 268:
+            return 'Brewmaster'
+        case 269:
+            return 'Windwalker'
+        case 270:
+            return 'Mistweaver'
+        case 1450:
+            return 'Initial'
+        // DH
+        case 577:
+            return 'Havoc'
+        case 581:
+            return 'Vengeance'
+        case 1456:
+            return 'Initial'
+        default:
+            return 'Unknown'
+    }
+}
+
 export function specIdToClassId(specId: number): number {
     switch (specId) {
         // MAGE
