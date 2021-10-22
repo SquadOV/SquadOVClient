@@ -19,6 +19,14 @@
                 :start-date.sync="startDate"
                 :end-date.sync="endDate"
             ></date-range-picker>
+
+            <v-checkbox
+                v-model="organicOnly"
+                dense
+                hide-details
+                label="Organic Only"
+            >
+            </v-checkbox>
         </div>
 
         <div class="d-flex flex-wrap full-width justify-center mt-4">
@@ -71,12 +79,14 @@ export default class Funnel extends Vue {
     startDate: Date = new Date()
     endDate: Date = new Date()
     data: FunnelData | null = null
+    organicOnly: boolean = false
 
     @Watch('selectedReferralCodes')
     @Watch('startDate')
     @Watch('endDate')
+    @Watch('organicOnly')
     refreshData() {
-        getFunnelData(this.startDate, this.endDate, this.selectedReferralCodes).then((resp: FunnelData) => {
+        getFunnelData(this.startDate, this.endDate, this.selectedReferralCodes, this.organicOnly).then((resp: FunnelData) => {
             this.data = resp
         }).catch((err: any) => {
             console.error('Failed to get funnel data: ', err)
