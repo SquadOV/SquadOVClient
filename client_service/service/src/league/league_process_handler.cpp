@@ -13,11 +13,23 @@
 #include <queue>
 #include <mutex>
 #include <unordered_set>
+#include <VersionHelpers.h>
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
 namespace service::league {
+
+// GDI fails to record properly in window mode. Defaults to WGC over GDI
+namespace {
+
+int getLeagueRecordingFlags() {
+    return service::recorder::FLAG_DXGI_RECORDING |
+        (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
+}
+
+}
+
 
 // League of Legends and TFT are unique in that they share the same game executable.
 // So we can only actually know what game mode we're in once we actually connect to
@@ -203,7 +215,7 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
         }
 
         if (_ownsAccount) {
-            _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+            _recorder->start(eventTime, service::recorder::RecordingMode::Normal, getLeagueRecordingFlags());
         }
 
         requestMatchCreation();
