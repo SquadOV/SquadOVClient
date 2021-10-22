@@ -133,45 +133,12 @@
             </template>
 
             <!-- download VOD button -->
-            <v-tooltip bottom v-if="hasLocal">
-                <template v-slot:activator="{on, attrs}">
-                    <v-btn color="warning icon" icon :loading="checkingForLocal" v-on="on" v-bind="attrs" @click="openLocalDownload" >
-                        <v-icon>
-                            mdi-folder-open
-                        </v-icon>
-                    </v-btn>
-                </template>
-
-                Open Folder Location
-            </v-tooltip>
-
-            <v-tooltip bottom v-else-if="!!downloadUri && useSimpleDownload && hasFastify" >
-                <template v-slot:activator="{on, attrs}">
-                    <v-btn color="warning" icon :href="downloadUri" :loading="checkingForLocal" v-on="on" v-bind="attrs">
-                        <v-icon>
-                            mdi-download
-                        </v-icon>
-                    </v-btn>
-                </template>
-
-                Download
-            </v-tooltip>
-
-            <v-tooltip bottom v-else-if="!useSimpleDownload && hasFastify">
-                <template v-slot:activator="{on, attrs}">
-                    <v-btn color="warning" icon @click="doLocalDownload" :loading="downloadProgress !== null || checkingForLocal" v-on="on" v-bind="attrs">
-                        <v-icon>
-                            mdi-download
-                        </v-icon>
-                    </v-btn>
-                </template>
-
-                Download
-            </v-tooltip>
-
-            <div v-if="downloadProgress !== null">
-                {{ (downloadProgress * 100.0).toFixed(0) }}% 
-            </div>
+            <vod-download-button
+                v-if="!!value"
+                :video-uuid="value.videoUuid"
+                :track="track"
+            >
+            </vod-download-button>
             
             <!-- create clip button -->
             <v-tooltip bottom v-if="clippingAllowed" >
@@ -279,6 +246,7 @@ import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import { VodRemoteControlContext } from '@client/js/vods/remote'
 import { DownloadUploadProgressCb, manager } from '@client/js/vods/local_manager'
 import { MatchVideoSharePermissions } from '@client/js/squadov/share'
+import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
 
 /// #if DESKTOP
 import { shell, ipcRenderer } from 'electron'
@@ -289,6 +257,7 @@ import { IpcResponse } from '@client/js/system/ipc'
     components: {
         VodFavoriteButton,
         VodWatchlistButton,
+        VodDownloadButton,
     }
 })
 export default class GenericVodPicker extends mixins(CommonComponent) {
@@ -320,7 +289,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
 
     manifest: vod.VodManifest | null = null
     track: vod.VodTrack | null = null
-    downloadUri: string | null = null
     context: VodEditorContext | null = null
     localVodLocation: string | null = null
     rcContext: VodRemoteControlContext | null = null
@@ -506,57 +474,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         })
 ///#endif
     }
-
-    openLocalDownload() {
-        if (!this.localVodLocation) {
-            return
-        }
-///#if DESKTOP
-        shell.showItemInFolder(this.localVodLocation)
-///#endif
-    }
-
-    onDownloadProgress(progress: number, finish: boolean, error: boolean) {
-        if (finish) {
-            this.downloadProgress = null
-            this.downloadError = error
-            this.recheckForLocalFile()
-        } else {
-            this.downloadProgress = progress
-        }
-    }
-
-    doLocalDownload() {
-        if (!this.value) {
-            return
-        }
-///#if DESKTOP
-        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DownloadVod, '', 0)
-        manager.startDownload(this.value.videoUuid)
-///#endif
-    }
-
-    @Watch('track')
-    refreshDownloadUri() {
-        this.downloadUri = null
-        if (!this.track){ 
-            return
-        }
-
-        apiClient.accessToken().getVodSegment(this.track.segments[0].uri).then((resp : ApiData<string>) => {
-            this.downloadUri = resp.data
-        }).catch((err: any) => {
-            console.error('Failed to get VOD download URI: ', err)
-        })
-    }
-
-    get downloadName(): string {
-        if (!this.track) {
-            return ''
-        }
-        return (this.track!.segments[0].mimeType === 'video/mp2t') ? 'vod.ts' : 'vod.mp4'
-    }
-
+    
     get hasLocal(): boolean {
         return !!this.localVodLocation
     }
@@ -638,7 +556,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
 ///#endif
     }
 
-    _registeredDownloadCb: DownloadUploadProgressCb | null = null
     _registeredUploadCb: DownloadUploadProgressCb | null = null
 
     @Watch('value')
@@ -647,23 +564,16 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         if (!this.value) {
             return
         }
-        this._registeredDownloadCb = this.onDownloadProgress.bind(this)
-        manager.downloads.addCallback(this.value!.videoUuid, this._registeredDownloadCb!)
 
         this._registeredUploadCb = this.onUploadProgress.bind(this)
         manager.uploads.addCallback(this.value!.videoUuid, this._registeredUploadCb!)
     }
 
     unregisterCallbacks() {
-        if (!!this.value && !!this._registeredDownloadCb) {
-            manager.downloads.removeCallback(this.value!.videoUuid, this._registeredDownloadCb!)
-        }
-
         if (!!this.value && !!this._registeredUploadCb) {
             manager.uploads.removeCallback(this.value!.videoUuid, this._registeredUploadCb!)
         }
 
-        this._registeredDownloadCb = null
         this._registeredUploadCb = null
     }
 
