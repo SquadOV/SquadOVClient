@@ -9,103 +9,104 @@
                         mdi-refresh
                     </v-icon>
                 </v-btn>
+
+                <v-spacer></v-spacer>
+
+                <template v-if="!disableSelect">
+                    <template v-if="!inSelectMode">
+                        <v-btn
+                            color="primary"
+                            @click="inSelectMode = true"
+                        >
+                            Select
+                        </v-btn>
+                    </template>
+
+                    <template v-else>
+                        <v-dialog persistent v-model="showHideDelete" max-width="60%">
+                            <template v-slot:activator="{on, attrs}">
+                                <v-btn
+                                    icon
+                                    color="error"
+                                    :disabled="selected.length === 0"
+                                    v-on="on"
+                                    v-bind="attrs"
+                                >
+                                    <v-icon>
+                                        mdi-delete
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+
+                            <v-card>
+                                <v-card-title>
+                                    Are you sure?
+                                </v-card-title>
+
+                                <v-card-text>
+                                    Are you sure you want to delete {{ selected.length }} VODs?
+                                    This action can not be undone.
+                                </v-card-text>
+
+                                <v-card-actions>
+                                    <v-btn
+                                        color="error"
+                                        @click="showHideDelete = false"
+                                    >
+                                        Cancel
+                                    </v-btn>
+
+                                    <v-spacer></v-spacer>
+
+                                    <v-btn
+                                        color="success"
+                                        @click="deleteSelectedVods"
+                                        :loading="deleteInProgress"
+                                    >
+                                        Delete
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+
+                        <v-btn
+                            @click="toggleSelected"
+                            outlined
+                            class="ml-2"
+                        >
+                            <v-checkbox
+                                :input-value="allSelected"
+                                readonly
+                            >
+                            </v-checkbox>
+
+                            {{ selected.length }} Selected
+                        </v-btn>
+
+                        <v-btn
+                            class="ml-2"
+                            icon
+                            @click="closeSelect"
+                            color="warning"
+                        >
+                            <v-icon>
+                                mdi-close
+                            </v-icon>
+                        </v-btn>
+                    </template>
+                </template>
             </div>
 
             <v-divider class="my-2"></v-divider>
         </template>
 
-        <div class="d-flex align-center">
+        <div class="d-flex align-center full-width">
             <recent-match-filters-ui
                 v-model="filters"
                 :disable-squads="isUserLocked"
                 :disable-users="isUserLocked"
-            ></recent-match-filters-ui>
-
-            <v-spacer></v-spacer>
-
-            <template v-if="!disableSelect">
-                <template v-if="!inSelectMode">
-                    <v-btn
-                        color="primary"
-                        @click="inSelectMode = true"
-                    >
-                        Select
-                    </v-btn>
-                </template>
-
-                <template v-else>
-                    <v-dialog persistent v-model="showHideDelete" max-width="60%">
-                        <template v-slot:activator="{on, attrs}">
-                            <v-btn
-                                icon
-                                color="error"
-                                :disabled="selected.length === 0"
-                                v-on="on"
-                                v-bind="attrs"
-                            >
-                                <v-icon>
-                                    mdi-delete
-                                </v-icon>
-                            </v-btn>
-                        </template>
-
-                        <v-card>
-                            <v-card-title>
-                                Are you sure?
-                            </v-card-title>
-
-                            <v-card-text>
-                                Are you sure you want to delete {{ selected.length }} VODs?
-                                This action can not be undone.
-                            </v-card-text>
-
-                            <v-card-actions>
-                                <v-btn
-                                    color="error"
-                                    @click="showHideDelete = false"
-                                >
-                                    Cancel
-                                </v-btn>
-
-                                <v-spacer></v-spacer>
-
-                                <v-btn
-                                    color="success"
-                                    @click="deleteSelectedVods"
-                                    :loading="deleteInProgress"
-                                >
-                                    Delete
-                                </v-btn>
-                            </v-card-actions>
-                        </v-card>
-                    </v-dialog>
-
-                    <v-btn
-                        @click="toggleSelected"
-                        outlined
-                        class="ml-2"
-                    >
-                        <v-checkbox
-                            :input-value="allSelected"
-                            readonly
-                        >
-                        </v-checkbox>
-
-                        {{ selected.length }} Selected
-                    </v-btn>
-
-                    <v-btn
-                        class="ml-2"
-                        icon
-                        @click="closeSelect"
-                        color="warning"
-                    >
-                        <v-icon>
-                            mdi-close
-                        </v-icon>
-                    </v-btn>
-                </template>
-            </template>
+            >
+            </recent-match-filters-ui>
         </div>
         
         <v-list-item-group v-model="selected" multiple>
@@ -338,6 +339,10 @@ export default class RecentRecordedMatches extends Vue {
     }
 
     loadMoreMatches() {
+        if (this.loading) {
+            return
+        }
+
         this.loading = true
         apiClient.accessToken(this.accessToken).listMyRecentMatches({
             next: this.nextLink,

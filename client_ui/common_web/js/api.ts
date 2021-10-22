@@ -1090,20 +1090,18 @@ class ApiClient {
         let promise = !!params.next ?
             axios.get(params.next, cfg) :
             (params.profileId !== undefined) ?
-                axios.get(`profile/${params.profileId}/matches`, {
+                axios.post(`profile/${params.profileId}/matches`, params.filters, {
                     ...cfg,
                     params: {
                         start: params.start!,
                         end: params.end!,
-                        ...params.filters,
                     }
                 }) :
-                axios.get(`v1/users/me/recent`, {
+                axios.post(`v1/users/me/recent`, params.filters, {
                     ...cfg,
                     params: {
                         start: params.start!,
                         end: params.end!,
-                        ...params.filters,
                     }
                 })
 
@@ -1231,22 +1229,20 @@ class ApiClient {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             (params.profileId !== undefined) ?
-                axios.get(`profile/${params.profileId}/clips`, {
+                axios.post(`profile/${params.profileId}/clips`, params.filters, {
                     ...this.createWebAxiosConfig(),
                     params: {
                         start: params.start!,
                         end: params.end!,
                         matchUuid: params.matchUuid,
-                        ...params.filters,
                     }
                 }) :
-                axios.get('v1/clip', {
+                axios.post('v1/clip', params.filters, {
                     ...this.createWebAxiosConfig(),
                     params: {
                         start: params.start!,
                         end: params.end!,
                         matchUuid: params.matchUuid,
-                        ...params.filters,
                     }
                 })
 
