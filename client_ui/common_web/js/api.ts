@@ -1229,22 +1229,20 @@ class ApiClient {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
             (params.profileId !== undefined) ?
-                axios.get(`profile/${params.profileId}/clips`, {
+                axios.post(`profile/${params.profileId}/clips`, params.filters, {
                     ...this.createWebAxiosConfig(),
                     params: {
                         start: params.start!,
                         end: params.end!,
                         matchUuid: params.matchUuid,
-                        ...params.filters,
                     }
                 }) :
-                axios.get('v1/clip', {
+                axios.post('v1/clip', params.filters, {
                     ...this.createWebAxiosConfig(),
                     params: {
                         start: params.start!,
                         end: params.end!,
                         matchUuid: params.matchUuid,
-                        ...params.filters,
                     }
                 })
 

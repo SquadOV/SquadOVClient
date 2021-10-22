@@ -339,6 +339,10 @@ export default class RecentRecordedMatches extends Vue {
     }
 
     loadMoreMatches() {
+        if (this.loading) {
+            return
+        }
+
         this.loading = true
         apiClient.accessToken(this.accessToken).listMyRecentMatches({
             next: this.nextLink,
