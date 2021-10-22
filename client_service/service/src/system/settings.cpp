@@ -45,7 +45,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
-    settings.useVfr3 = obj.value("useVfr3", false);
+    settings.useVfr4 = obj.value("useVfr4", true);
     settings.useWGC = obj.value("useWGC", false);
 
     settings.useLocalRecording = obj.value("useLocalRecording", false);

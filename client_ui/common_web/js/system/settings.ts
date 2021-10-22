@@ -60,7 +60,7 @@ export interface SquadOvRecordingSettings {
     fps: number
     useVideoHw: boolean
     useHwEncoder: boolean
-    useVfr3: boolean
+    useVfr4: boolean
     useWGC: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
@@ -284,7 +284,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 30,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr3: false,
+                useVfr4: true,
                 useWGC: false,
                 outputDevices: [
                     {
@@ -319,7 +319,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 60,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr3: false,
+                useVfr4: true,
                 useWGC: false,
                 outputDevices: [
                     {
@@ -354,7 +354,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 fps: 60,
                 useVideoHw: true,
                 useHwEncoder: true,
-                useVfr3: false,
+                useVfr4: true,
                 useWGC: false,
                 outputDevices: [
                     {
@@ -410,7 +410,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             fps: 60,
             useVideoHw: true,
             useHwEncoder: true,
-            useVfr3: false,
+            useVfr4: true,
             useWGC: false,
             outputDevices: [
                 {
@@ -517,8 +517,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.setupWizardRun = false
     }
 
-    if (parsedData.record.useVfr3 === undefined) {
-        parsedData.record.useVfr3 = false
+    if (parsedData.record.useVfr4 === undefined) {
+        parsedData.record.useVfr4 = true
     }
 
     if (parsedData.record.useWGC === undefined) {
