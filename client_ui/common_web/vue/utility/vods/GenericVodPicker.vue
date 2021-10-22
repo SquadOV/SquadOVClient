@@ -48,72 +48,14 @@
         <template v-if="!!$store.state.currentUser">
             <v-divider vertical class="mx-2"></v-divider>
             <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
-                <v-tooltip bottom>
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn
-                            color="error"
-                            icon
-                            @click="showHideDeleteConfirm = true"
-                            v-on="on"
-                            v-bind="attrs"
-                            :loading="loadingDelete || loadingLocalDelete"
-                        >
-                            <v-icon>
-                                mdi-delete
-                            </v-icon>
-                        </v-btn>
-                    </template>
+                <!-- delete button -->
+                <vod-delete-button
+                    v-if="!!value"
+                    :vod="value"
+                    @on-delete="onDeleteFinish"
+                >
+                </vod-delete-button>
 
-                    Delete (VOD only)
-                </v-tooltip>
-
-                <!-- delete VOD button -->
-                <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
-                    <v-card>
-                        <v-card-title>
-                            Confirmation
-                        </v-card-title>
-                        <v-divider></v-divider>
-
-                        <v-card-text class="mt-4">
-                            <div>
-                                Are you sure you wish to delete your VOD? You and your squadmates will no longer be able to watch this match from your point of view.
-                                This will delete the VOD from SquadOV's servers as well as from your local machine (if applicable).
-                            </div>
-
-                            <div class="mt-4">
-                                Please type <span class="font-weight-bold">CONFIRM</span> (case-sensitive) to confirm this action.
-                            </div>
-
-                            <v-text-field
-                                class="mt-4"
-                                filled
-                                label="Confirmation"
-                                v-model="confirmationText"
-                                hide-details
-                            >
-                            </v-text-field>
-                        </v-card-text>
-
-                        <v-card-actions>
-                            <v-btn @click="hideDeleteConfirm">
-                                Cancel
-                            </v-btn>
-
-                            <v-spacer></v-spacer>
-
-                            <v-btn
-                                color="error"
-                                :loading="loadingDelete"
-                                :disabled="confirmationText != 'CONFIRM'"
-                                @click="deleteVod"
-                            >
-                                Delete
-                            </v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-                
                 <!-- upload button -->
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
@@ -137,6 +79,7 @@
                 v-if="!!value"
                 :video-uuid="value.videoUuid"
                 :track="track"
+                @on-download="recheckForLocalFile"
             >
             </vod-download-button>
             
@@ -243,13 +186,13 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { openPathInNewWindow } from '@client/js/external'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
-import { VodRemoteControlContext } from '@client/js/vods/remote'
 import { DownloadUploadProgressCb, manager } from '@client/js/vods/local_manager'
 import { MatchVideoSharePermissions } from '@client/js/squadov/share'
 import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
+import VodDeleteButton from '@client/vue/utility/vods/VodDeleteButton.vue'
 
 /// #if DESKTOP
-import { shell, ipcRenderer } from 'electron'
+import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
@@ -258,6 +201,7 @@ import { IpcResponse } from '@client/js/system/ipc'
         VodFavoriteButton,
         VodWatchlistButton,
         VodDownloadButton,
+        VodDeleteButton,
     }
 })
 export default class GenericVodPicker extends mixins(CommonComponent) {
@@ -282,16 +226,10 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
     @Prop({type: Boolean, default: false})
     enableDraw!: boolean
 
-    showHideDeleteConfirm: boolean = false
-    loadingDelete: boolean = false
-    loadingLocalDelete: boolean = false
-    confirmationText: string = ''
-
     manifest: vod.VodManifest | null = null
     track: vod.VodTrack | null = null
     context: VodEditorContext | null = null
     localVodLocation: string | null = null
-    rcContext: VodRemoteControlContext | null = null
 
     permissions: MatchVideoSharePermissions | null = null
 
@@ -328,17 +266,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         this.context.syncTime(this.timestamp)
     }
 
-    @Watch('value')
-    refreshRcContext() {
-        if (!this.value) {
-            return
-        }
-
-///#if DESKTOP
-        this.rcContext = new VodRemoteControlContext(this.value.videoUuid)
-///#endif
-    }
-
     get isClippingEnabled(): boolean {
 ///#if DESKTOP
         return true
@@ -347,14 +274,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
 ///#endif
     }
 
-    hideDeleteConfirm() {
-        this.showHideDeleteConfirm = false
-        this.confirmationText = ''
-    }
-
     onDeleteFinish(videoUuid: string) {
-        this.hideDeleteConfirm()
-
         let newOptions = [...this.options]
         let idx = newOptions.findIndex((ele: VodAssociation) => ele.videoUuid === videoUuid)
         if (idx === -1) {
@@ -368,50 +288,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         } else {
             this.$emit('input', newOptions[0])
         }
-    }
-
-    deleteVod() {
-        if (!this.value) {
-            return
-        }
-
-        this.loadingDelete = true
-        this.loadingLocalDelete = this.hasLocal
-        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DeleteVod, '', 0)
-
-        apiClient.deleteVod(this.value.videoUuid).then(() => {
-            if (!this.loadingLocalDelete) {
-                this.onDeleteFinish(this.value!.videoUuid)
-            }
-        }).catch((err: any) => {
-            console.error('Failed to delete VOD: ', err)
-            this.downloadError = true
-        }).finally(() => {
-            this.loadingDelete = false
-        })
-
-///#if DESKTOP
-        if (this.hasLocal && !!this.rcContext) {
-            // Need a delay to give us time to release the file handle on the client side by destorying the player.
-            this.rcContext.stopAndDestroy()
-            setTimeout(() => {
-                ipcRenderer.invoke('delete-vod-local', this.value!.videoUuid).then((resp: IpcResponse<void>) => {
-                    if (resp.success) {
-                        if (!this.loadingDelete) {
-                            this.onDeleteFinish(this.value!.videoUuid)
-                        }
-                    } else {
-                        this.downloadError = true
-                    }
-                }).catch((err: any) => {
-                    console.error('Failed to delete local VOD: ', err)
-                    this.downloadError = true
-                }).finally(() => {
-                    this.loadingLocalDelete = false
-                })
-            }, 1000)
-        }
-///#endif
     }
 
     @Watch('value')
@@ -580,7 +456,6 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
     mounted () {
         this.refreshManifest()
         this.recheckForLocalFile()
-        this.refreshRcContext()
         this.registerCallbacks()
         this.refreshPermissions()
     }

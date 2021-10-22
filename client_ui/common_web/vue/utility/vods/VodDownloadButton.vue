@@ -156,6 +156,7 @@ export default class VodDownloadButton extends mixins(CommonComponent) {
             this.downloadProgress = null
             this.downloadError = error
             this.recheckForLocalFile()
+            this.$emit('on-download')
         } else {
             this.downloadProgress = progress
         }
