@@ -12,6 +12,7 @@ export interface RootState {
 /// #if DESKTOP
     settings: SquadOvLocalSettings | null
     currentState: SquadOvState
+    localDiskSpaceRecordUsageGb: number | null
 /// #endif
     status: TrackedUserStatusContainer
     hasUpdate: boolean
