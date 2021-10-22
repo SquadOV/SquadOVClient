@@ -1,6 +1,7 @@
 <template>
     <div id="appInner" :style="appInnerStyle">
-        <app-nav class="flex-grow-0" v-if="hasValidSession && showNav"></app-nav>            
+        <app-nav class="flex-grow-0" v-if="hasValidSession && showNav"></app-nav>     
+        <app-alerts width="100%"></app-alerts>
         <div class="d-flex flex-column flex-grow-1">
             <router-view v-if="hasValidSession"></router-view>
             <template v-else>
@@ -31,10 +32,12 @@ import Component, {mixins} from 'vue-class-component'
 import AppNav from '@client/vue/AppNav.vue'
 import { version } from '@client/package.json'
 import TopLevelComponent from '@client/vue/TopLevelComponent'
+import AppAlerts from '@client/vue/utility/squadov/alerts/AppAlerts.vue'
 
 @Component({
     components: {
         AppNav,
+        AppAlerts,
     }
 })
 export default class WebApp extends mixins(TopLevelComponent) {
