@@ -75,6 +75,10 @@ std::optional<process::Process> isGameRunning(shared::EGame game) {
     processState.update();
 
     const auto detector = games::createDetectorForGame(game);
+    if (!detector) {
+        LOG_WARNING("...Failed to create detector for game: " << shared::gameToString(game) << std::endl);
+        return std::nullopt;
+    }
     return detector->checkIsRunning(processState);
 }
 
