@@ -140,6 +140,7 @@
                             color="primary"
                             block
                             @click="loadMoreData"  
+                            :loading="loading"
                         >
                             Load More
                         </v-btn>
@@ -209,6 +210,7 @@ export default class ClipLibrary extends mixins(CommonComponent) {
     deleteInProgress: boolean = false
     showHideDelete: boolean = false
     showHideDeleteError: boolean = false
+    loading: boolean = false
 
     get isUserLocked(): boolean {
         return this.userId !== undefined
@@ -296,10 +298,11 @@ export default class ClipLibrary extends mixins(CommonComponent) {
     }
 
     loadMoreData() {
-        if (!!this.clips && !this.nextLink) {
+        if (!!this.clips && !this.nextLink || this.loading) {
             return
         }
 
+        this.loading = true
         apiClient.listClips({
             next: this.nextLink,
             matchUuid: this.matchUuid,
@@ -320,6 +323,8 @@ export default class ClipLibrary extends mixins(CommonComponent) {
             }
         }).catch((err : any) => {
             console.error('Failed to list clips: ' + err);
+        }).finally(() => {
+            this.loading = false
         })
     }
 

@@ -10,7 +10,7 @@
                 <v-icon x-small>
                     mdi-chevron-down
                 </v-icon>
-                Hide Filters
+                Hide {{ label }}
             </v-btn>
         </template>
 
@@ -24,7 +24,7 @@
                 <v-icon x-small>
                     mdi-chevron-right
                 </v-icon>
-                Show Filters
+                Show {{ label }}
             </v-btn>
         </template>
 
@@ -38,10 +38,14 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 
 @Component
 export default class GenericMatchFilterUi extends Vue {
     showFilters: boolean = false
+    
+    @Prop({default: 'Filters'})
+    label!: string
 }
 
 </script>

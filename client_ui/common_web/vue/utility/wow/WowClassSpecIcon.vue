@@ -27,7 +27,12 @@ export default class WowClassSpecIcon extends Vue {
     patch!: string
 
     get iconUrl(): string {
-        return staticClient.getWowSpecsIconUrl(this.patch, this.specId)
+        if (this.specId === -1) {
+            //@ts-ignore
+            return this.$root.generateAssetUri('assets/wow/Unknown.png')
+        } else {
+            return staticClient.getWowSpecsIconUrl(this.patch, this.specId)   
+        }
     }
 }
 

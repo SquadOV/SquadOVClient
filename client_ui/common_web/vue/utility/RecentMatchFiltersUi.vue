@@ -1,43 +1,111 @@
 <template>
-    <generic-match-filter-ui>
-        <div class="d-flex align-center">
-            <game-filter-ui
-                v-model="internalValue.games"
-                @input="syncToValue"
-            >
-            </game-filter-ui>
-            <wow-release-filter-ui
-                v-if="needsWowReleaseFilter"
-                v-model="internalValue.wowReleases"
-                @input="syncToValue"
-            >
-            </wow-release-filter-ui>
-            <squad-filter-ui
-                v-if="!disableSquads"
-                v-model="internalValue.squads"
-                @input="syncToValue"
-                class="ml-1"
-            >
-            </squad-filter-ui>
-            <user-filter-ui
-                v-if="!disableUsers"
-                v-model="internalValue.users"
-                :squads="internalValue.squads"
-                @input="syncToValue"
-                class="ml-1"
-            >
-            </user-filter-ui>
-            
-        </div>
+    <div class="full-width">
+        <generic-match-filter-ui>
+            <div class="d-flex align-center">
+                <game-filter-ui
+                    v-model="internalValue.games"
+                    @input="syncToValue"
+                >
+                </game-filter-ui>
+                <wow-release-filter-ui
+                    v-if="needsWowReleaseFilter"
+                    v-model="internalValue.wowReleases"
+                    @input="syncToValue"
+                >
+                </wow-release-filter-ui>
+                <squad-filter-ui
+                    v-if="!disableSquads"
+                    v-model="internalValue.squads"
+                    @input="syncToValue"
+                    class="ml-1"
+                >
+                </squad-filter-ui>
+                <user-filter-ui
+                    v-if="!disableUsers"
+                    v-model="internalValue.users"
+                    :squads="internalValue.squads"
+                    @input="syncToValue"
+                    class="ml-1"
+                >
+                </user-filter-ui>
+                
+            </div>
 
-        <div class="d-flex align-center mt-1">
-            <time-range-filter-ui
-                :start.sync="internalValue.timeStart"
-                :end.sync="internalValue.timeEnd"
-                @on-change="syncToValue"
-            ></time-range-filter-ui>
-        </div>
-    </generic-match-filter-ui>
+            <div class="d-flex align-center mt-1">
+                <time-range-filter-ui
+                    :start.sync="internalValue.timeStart"
+                    :end.sync="internalValue.timeEnd"
+                    @on-change="syncToValue"
+                ></time-range-filter-ui>
+            </div>
+        </generic-match-filter-ui>
+
+        <generic-match-filter-ui
+            class="mt-2"
+            label="Per-Game Filters"
+        >
+            <v-tabs>
+                <v-tab>
+                    <v-img
+                        width="32px"
+                        max-width="32px"
+                        :src="$root.generateAssetUri('assets/wow-logo.png')"
+                        contain
+                    >
+                    </v-img>
+                </v-tab>
+
+                <v-tab-item>
+                    <div class="ma-4">
+                        <div>
+                            <div class="font-weight-bold">
+                                Encounters
+                            </div>
+                            <wow-filter-ui
+                                v-model="internalValue.filters.wow.encounters"
+                                @input="syncToValue"
+                                :for-raids="true"
+                                :release="WowGameRelease.Retail"
+                                hide-vod-option
+                                show-enabled
+                            >
+                            </wow-filter-ui>
+                        </div>
+
+                        <div class="mt-2">
+                            <div class="font-weight-bold">
+                                Keystones
+                            </div>
+                            <wow-filter-ui
+                                v-model="internalValue.filters.wow.keystones"
+                                @input="syncToValue"
+                                :for-dungeons="true"
+                                :release="WowGameRelease.Retail"
+                                hide-vod-option
+                                show-enabled
+                            >
+                            </wow-filter-ui>
+                        </div>
+
+                        <div class="mt-2">
+                            <div class="font-weight-bold">
+                                Arena
+                            </div>
+                            <wow-filter-ui
+                                v-model="internalValue.filters.wow.arenas"
+                                @input="syncToValue"
+                                :for-arenas="true"
+                                :release="WowGameRelease.Retail"
+                                hide-vod-option
+                                show-enabled
+                            >
+                            </wow-filter-ui>
+                        </div>
+                    </div>
+                </v-tab-item>
+            </v-tabs>
+        </generic-match-filter-ui>
+    </div>
 </template>
 
 <script lang="ts">
@@ -52,7 +120,10 @@ import SquadFilterUi from '@client/vue/utility/squadov/filters/SquadFilterUi.vue
 import UserFilterUi from '@client/vue/utility/squadov/filters/UserFilterUi.vue'
 import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilterUi.vue'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
+import { WowGameRelease } from '@client/js/staticData'
+
 @Component({
     components: {
         GenericMatchFilterUi,
@@ -61,9 +132,12 @@ import { SquadOvGames } from '@client/js/squadov/game'
         UserFilterUi,
         TimeRangeFilterUi,
         WowReleaseFilterUi,
+        WowFilterUi,
     }
 })
 export default class RecentMatchFiltersUi extends Vue {
+    WowGameRelease: any = WowGameRelease
+
     @Prop({required: true})
     value!: RecentMatchFilters
 
