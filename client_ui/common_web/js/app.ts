@@ -900,6 +900,10 @@ ipcRenderer.on('change-recording-games', (_, games) => {
     statusTracker.refreshCurrentUserStatus()
 })
 
+setInterval(() => {
+    store.dispatch('recomputeLocalDiskSpaceRecordUsage')
+}, 60000)
+
 /// #endif
 
 new Vue({
