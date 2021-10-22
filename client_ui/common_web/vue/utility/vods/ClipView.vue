@@ -33,6 +33,13 @@
                         </v-icon>
                         <div class="text-body-2 mr-4">{{ clip.views }}</div>
 
+                        <vod-download-button
+                            v-if="!!clip"
+                            :video-uuid="clip.clip.videoUuid"
+                            :track="clip.manifest.videoTracks[0]"
+                        >
+                        </vod-download-button>
+                        
                         <v-tooltip bottom v-if="isClipOwner">
                             <template v-slot:activator="{on, attrs}">
                                 <v-btn
@@ -284,6 +291,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
+import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
 
 const maxCommentsPerRequest = 20
 
@@ -293,7 +301,8 @@ const maxCommentsPerRequest = 20
         LoadingContainer,
         MatchShareButton,
         VodFavoriteButton,
-        VodWatchlistButton
+        VodWatchlistButton,
+        VodDownloadButton,
     }
 })
 export default class ClipView extends mixins(CommonComponent) {
