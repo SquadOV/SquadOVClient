@@ -77,7 +77,6 @@ export default class LocalDiskSpaceUsageAlert extends Vue {
 
     @Watch('localDiskSpaceRecordUsageGb')
     recheckLocalDiskSpaceRecordUsage() {
-        console.log('recheck: ', this.localDiskSpaceRecordUsageGb)
         if (this.localDiskSpaceRecordUsageGb === null) {
             return
         }

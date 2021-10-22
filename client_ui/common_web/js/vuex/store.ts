@@ -398,7 +398,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
 
             computeFileFolderSizeGb(context.state.settings.record.localRecordingLocation)
                 .then((resp: number) => {
-                    console.log('get storage size: ', resp)
                     context.commit('updateLocalStorageUsage', resp)
                 })
                 .catch((err: any) => {
