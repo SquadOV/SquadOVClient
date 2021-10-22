@@ -84,8 +84,8 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="$store.state.settings.record.useVfr3"
-                            @change="$store.commit('changeUseVfr32', arguments[0])"
+                            :input-value="$store.state.settings.record.useVfr4"
+                            @change="$store.commit('changeUseVfr', arguments[0])"
                             hide-details
                             label="Use Variable Framerate"
                         >
