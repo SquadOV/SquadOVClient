@@ -1198,7 +1198,7 @@ class ApiServer {
         return rows.map((ele) => ele.code)
     }
 
-    async getFunnelData(start, end, codes) {
+    async getFunnelData(start, end, codes, organicOnly) {
         let query
         let params
 
@@ -1283,21 +1283,21 @@ class ApiServer {
                 FROM squadov.users AS u
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "view", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "reg", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "login", (
                 SELECT COUNT(DISTINCT u.id)
@@ -1306,7 +1306,7 @@ class ApiServer {
                     ON ud.user_id = u.id
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "download", (
                 SELECT COUNT(DISTINCT u.id)
@@ -1315,7 +1315,7 @@ class ApiServer {
                     ON uhs.user_id = u.id
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "install", (
                 SELECT COUNT(DISTINCT u.id)
@@ -1324,7 +1324,7 @@ class ApiServer {
                     ON v.user_uuid = u.uuid
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
                     AND v.is_clip = FALSE
                     AND v.end_time IS NOT NULL
@@ -1335,10 +1335,10 @@ class ApiServer {
                     ON dae.user_id = u.id
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
-                WHERE rcu.code_id IS NULL
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
             ) AS "active"`
-            params = [start, end]
+            params = [start, end, organicOnly]
         }
 
         const { rows } = await this.pool.query(
