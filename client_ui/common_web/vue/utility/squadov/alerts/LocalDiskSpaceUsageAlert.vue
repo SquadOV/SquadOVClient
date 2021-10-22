@@ -7,7 +7,7 @@
         tile
         height="localDiskSpaceUsageAlertHeight"
         width="100%"
-        @input="onClose()"
+        @input="muteAlert"
     >
         <template v-slot:prepend>
             <v-icon>mdi-exclamation</v-icon>
@@ -36,23 +36,24 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
-import { computeFileFolderSizeGb } from '@client/js/system/settings'
 import * as pi from '@client/js/pages'
 
 @Component
 export default class LocalDiskSpaceUsageAlert extends Vue {
     localDiskSpaceUsageAlertHeight: number = 45
-    localDiskSpaceRecordUsageGb: number = 0
     showStorageWarning: boolean = false
-    storageGBLeft!: number
-    runningDiskChecker!: NodeJS.Timeout
-
-    get localRecordingLocation(): string {
-        return this.$store.state.settings.record.localRecordingLocation
-    }
+    storageGBLeft: number = 0
 
     get maxLocalRecordingSizeGb(): number {
         return this.$store.state.settings.record.maxLocalRecordingSizeGb
+    }
+
+    get localDiskSpaceRecordUsageGb(): number | null {
+///#if DESKTOP
+        return this.$store.state.localDiskSpaceRecordUsageGb
+///#else
+        return null
+///#endif
     }
 
     get isAlarmMute() {
@@ -74,48 +75,22 @@ export default class LocalDiskSpaceUsageAlert extends Vue {
         }
     }
 
-    @Watch('localRecordingLocation')
-    @Watch('maxLocalRecordingSizeGb')
-    refreshLocalDiskSpaceRecordUsage() {
-        computeFileFolderSizeGb(this.localRecordingLocation)
-            .then((resp: number) => {
-                this.localDiskSpaceRecordUsageGb = resp
-                this.storageGBLeft = this.maxLocalRecordingSizeGb - this.localDiskSpaceRecordUsageGb
-                let storagePercentLeft = 100 - (this.localDiskSpaceRecordUsageGb / this.maxLocalRecordingSizeGb * 100)
-                if ((this.storageGBLeft < 10 || storagePercentLeft < 10) && !this.isAlarmMute) {
-                    this.showStorageWarning = true
-                }
-            })
-            .catch((err: any) => {
-                console.error(
-                    'Failed to get local disk space record usage: ',
-                    err
-                )
-            })
-    }
+    @Watch('localDiskSpaceRecordUsageGb')
+    recheckLocalDiskSpaceRecordUsage() {
+        console.log('recheck: ', this.localDiskSpaceRecordUsageGb)
+        if (this.localDiskSpaceRecordUsageGb === null) {
+            return
+        }
 
-    onClose() {
-        this.muteAlert()
-        clearInterval(this.runningDiskChecker)
+        this.storageGBLeft = this.maxLocalRecordingSizeGb - this.localDiskSpaceRecordUsageGb
+        let storagePercentLeft = 100 - (this.localDiskSpaceRecordUsageGb / this.maxLocalRecordingSizeGb * 100)
+        if ((this.storageGBLeft < 10 || storagePercentLeft < 10) && !this.isAlarmMute) {
+            this.showStorageWarning = true
+        }
     }
 
     muteAlert() {
         window.sessionStorage.setItem('muteLowStorageAlert', 'true')
     }
-
-    mounted() {
-        if (!this.isAlarmMute) {
-            this.runningDiskChecker = setInterval(this.refreshLocalDiskSpaceRecordUsage, 5000)
-        }
-    }
-
-    created() {
-        this.refreshLocalDiskSpaceRecordUsage()
-    }
-
-    destroyed() {
-        clearInterval(this.runningDiskChecker)
-    }
-
 }
 </script>
