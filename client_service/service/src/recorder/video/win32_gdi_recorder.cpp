@@ -10,6 +10,8 @@
 #include <filesystem>
 #include <sstream>
 
+#include <VersionHelpers.h>
+
 namespace fs = std::filesystem;
 
 #define LOG_FRAME_TIME 0
@@ -148,6 +150,14 @@ void Win32GdiRecorderInstance::startRecording() {
 }
 
 bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
+    const auto recordingSettings = service::system::getCurrentSettings()->recording();
+    
+    // This also handles the edge case that the user is using a version older than Windows 10
+    if (recordingSettings.useWGC && IsWindows10OrGreater()) {
+        LOG_INFO("Rejecting GDI due to user preference of WGC" << std::endl);
+        return false;
+    }
+
     if (!info.isWindowed) {
         LOG_INFO("Rejecting GDI due to non-windowed mode." << std::endl);
         return false;

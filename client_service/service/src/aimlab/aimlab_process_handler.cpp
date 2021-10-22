@@ -12,11 +12,22 @@
 #include <atomic>
 #include <iostream>
 #include <unordered_set>
+#include <VersionHelpers.h>
 
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
 namespace service::aimlab {
+
+// GDI fails to record properly in window mode. Defaults to WGC over GDI
+namespace {
+
+int getAimLabRecordingFlags() {
+    return service::recorder::FLAG_DXGI_RECORDING |
+        (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
+}
+
+}
 
 class AimlabProcessHandlerInstance {
 public:
@@ -94,7 +105,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
         << "\tMap: " << state->taskMap << std::endl
         << "\tVersion: " << state->gameVersion << std::endl);
 
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->start(eventTime, service::recorder::RecordingMode::Normal, getAimLabRecordingFlags());
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {

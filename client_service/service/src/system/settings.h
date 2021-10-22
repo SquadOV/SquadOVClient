@@ -28,6 +28,7 @@ struct RecordingSettings {
     bool useVideoHw = false;
     bool useHwEncoder = false;
     bool useVfr3 = false;
+    bool useWGC = false;
 
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;

@@ -61,6 +61,7 @@ export interface SquadOvRecordingSettings {
     useVideoHw: boolean
     useHwEncoder: boolean
     useVfr3: boolean
+    useWGC: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
@@ -284,6 +285,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
+                useWGC: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -318,6 +320,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
+                useWGC: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -352,6 +355,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr3: false,
+                useWGC: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -407,6 +411,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVideoHw: true,
             useHwEncoder: true,
             useVfr3: false,
+            useWGC: false,
             outputDevices: [
                 {
                     device: 'Default Device',
@@ -514,6 +519,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVfr3 === undefined) {
         parsedData.record.useVfr3 = false
+    }
+
+    if (parsedData.record.useWGC === undefined) {
+        parsedData.record.useWGC = false
     }
     
     if (parsedData.record.useLocalRecording === undefined) {

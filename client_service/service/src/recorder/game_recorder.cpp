@@ -88,13 +88,13 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         return;
     }
 
-    LOG_INFO("Trying WGC..." << std::endl);
-    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
+    LOG_INFO("Trying GDI..." << std::endl);
+    if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 
-    LOG_INFO("Trying GDI..." << std::endl);
-    if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
+    LOG_INFO("Trying WGC..." << std::endl);
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
         return;
     }
 #endif

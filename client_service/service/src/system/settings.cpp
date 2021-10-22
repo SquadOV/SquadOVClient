@@ -46,6 +46,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr3 = obj.value("useVfr3", false);
+    settings.useWGC = obj.value("useWGC", false);
 
     settings.useLocalRecording = obj.value("useLocalRecording", false);
     settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
