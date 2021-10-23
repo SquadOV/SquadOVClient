@@ -39,6 +39,7 @@ module.exports = (env, argv, subfolder) => {
         Object.assign(entry, {
             login: [`${clientSrcDir}/js/loginApp.ts`, `${clientSrcDir}/sass/app.scss`],
             update: [`${clientSrcDir}/js/updateApp.ts`, `${clientSrcDir}/sass/app.scss`],
+            setup: [`${clientSrcDir}/js/setupApp.ts`, `${clientSrcDir}/sass/app.scss`],
             sessionError: [`${clientSrcDir}/js/sessionError.ts`, `${clientSrcDir}/sass/app.scss`],
         })
     }

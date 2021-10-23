@@ -35,6 +35,7 @@ files:
   - "sessionError.html"
   - "index.js"
   - "login.js"
+  - "setup.js"
   - "log.js"
   - "paths.js"
   - "rendererLog.js"
