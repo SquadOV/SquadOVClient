@@ -75,7 +75,7 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
 WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     WowSettings settings;
     settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
-    settings.timeoutSeconds = obj.value("timeoutSeconds", 20);
+    settings.timeoutSeconds2 = obj.value("timeoutSeconds2", 180);
     settings.recordArenas = obj.value("recordArenas", true);
     settings.recordKeystones = obj.value("recordKeystones", true);
     settings.recordEncounters = obj.value("recordEncounters", true);

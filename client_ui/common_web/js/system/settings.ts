@@ -164,7 +164,7 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
 
 export interface WowSettings {
     useCombatLogTimeout: boolean
-    timeoutSeconds: number
+    timeoutSeconds2: number
     recordArenas: boolean
     recordKeystones: boolean
     recordEncounters: boolean
@@ -173,7 +173,7 @@ export interface WowSettings {
 function createEmptyWowSettings(): WowSettings {
     return {
         useCombatLogTimeout: true,
-        timeoutSeconds: 30,
+        timeoutSeconds2: 180,
         recordArenas: true,
         recordKeystones: true,
         recordEncounters: true,
@@ -643,6 +643,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.games.valorant === undefined) {
         parsedData.games.valorant = createEmptyValorantSettings()
+    }
+
+    if (parsedData.games.wow.timeoutSeconds2 === undefined) {
+        parsedData.games.wow.timeoutSeconds2 = 180
     }
 
     saveLocalSettings(parsedData, true)

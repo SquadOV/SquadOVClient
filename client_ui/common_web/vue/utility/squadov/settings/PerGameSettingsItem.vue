@@ -40,7 +40,7 @@
                         <v-checkbox
                             class="ma-0"
                             :input-value="$store.state.settings.games.wow.useCombatLogTimeout"
-                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds})"
+                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds2})"
                             label="Use Combat Log Timeout"
                             hide-details
                             dense
@@ -55,6 +55,7 @@
 
                                     When enabled, SquadOV will detect extended periods of time with no new data in the combat log as being the same as a match end.
                                     Use this when you find SquadOV recording well past the end of a match (generally, until and/or including the next match).
+                                    We recommend you use a fairly large value here (2-3 minutes).
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
@@ -62,7 +63,7 @@
 
                     <v-col cols="8">
                         <v-text-field
-                            :value="$store.state.settings.games.wow.timeoutSeconds"
+                            :value="$store.state.settings.games.wow.timeoutSeconds2"
                             @change="$store.commit('changeWowLogTimeout', {use: $store.state.settings.games.wow.useCombatLogTimeout, seconds: parseInt(arguments[0])})"
                             label="Timeout"
                             solo
@@ -85,7 +86,7 @@
                         <v-checkbox
                             class="ma-0"
                             :input-value="$store.state.settings.games.wow.useCombatLogTimeout"
-                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds})"
+                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds2})"
                             label="Use Combat Log Timeout"
                             hide-details
                             dense

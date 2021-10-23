@@ -56,7 +56,7 @@ struct KeybindSettings {
 
 struct WowSettings {
     bool useCombatLogTimeout = true;
-    int32_t timeoutSeconds = 20;
+    int32_t timeoutSeconds2 = 180;
     bool recordArenas = true;
     bool recordKeystones = true;
     bool recordEncounters = true;

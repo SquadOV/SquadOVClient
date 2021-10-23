@@ -287,7 +287,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.games.wow.useCombatLogTimeout = params.use
-            state.settings.games.wow.timeoutSeconds = params.seconds
+            state.settings.games.wow.timeoutSeconds2 = params.seconds
             saveLocalSettings(state.settings)
 /// #endif  
         },
