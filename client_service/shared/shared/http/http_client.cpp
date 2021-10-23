@@ -138,11 +138,6 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
 
     // Prefer IPv4 just in case there's issues with connecting to our servers via IPv6.
     curl_easy_setopt(_curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-
-    const auto* dns = shared::http::getDnsManager();
-    if (dns->isActive()) {
-        curl_easy_setopt(_curl, CURLOPT_DNS_SERVERS, dns->getDnsServers().c_str());
-    }
 }
 
 void HttpRequest::setTimeout(long timeoutSeconds) {

@@ -106,7 +106,6 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     settings.record = RecordingSettings::fromJson(obj["record"]);
     settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
     settings.games = PerGameSettings::fromJson(obj["games"]);
-    settings.enableDnsOverride = obj.value("enableDnsOverride", true);
 
     if (obj.count("disabledGames") > 0) {
         for (const auto& val : obj["disabledGames"]) {
@@ -153,11 +152,6 @@ WowSettings Settings::wowSettings() {
 ValorantSettings Settings::valorantSettings() {
     std::shared_lock lock(_mutex);
     return _settings.games.valorant;
-}
-
-bool Settings::enableDns() {
-    std::shared_lock lock(_mutex);
-    return _settings.enableDnsOverride;
 }
 
 bool Settings::isGameEnabled(shared::EGame game) {

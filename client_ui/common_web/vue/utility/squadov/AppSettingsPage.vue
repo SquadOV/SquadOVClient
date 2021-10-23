@@ -37,15 +37,6 @@
                 </v-checkbox>
 
                 <v-checkbox
-                    :input-value="$store.state.settings.enableDnsOverride"
-                    @change="$store.commit('setEnableDnsOverride', arguments[0])"
-                    dense
-                    hide-details
-                    label="Enable DNS Override"
-                >
-                </v-checkbox>
-
-                <v-checkbox
                     :input-value="anonymousAnalytics"
                     @change="changeAnonymousAnalytics"
                     dense

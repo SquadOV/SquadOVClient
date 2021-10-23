@@ -108,9 +108,4 @@ DnsManager* getDnsManager() {
     static DnsManagerPtr manager = std::make_unique<DnsManager>();
     return manager.get();
 }
-
-std::string DnsManager::getDnsServers() const {
-    return boost::algorithm::join(PREBUILT_DNS, ",");
-}
-
 }

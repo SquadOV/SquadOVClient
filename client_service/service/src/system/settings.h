@@ -85,7 +85,6 @@ struct LocalSettings {
     KeybindSettings keybinds;
     PerGameSettings games;
     std::unordered_set<shared::EGame> disabledGames;
-    bool enableDnsOverride = true;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -102,7 +101,6 @@ public:
     WowSettings wowSettings();
     ValorantSettings valorantSettings();
 
-    bool enableDns();
     bool isGameEnabled(shared::EGame);
     
     bool loaded() const { return _loaded; }

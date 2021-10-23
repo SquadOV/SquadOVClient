@@ -219,7 +219,6 @@ export interface SquadOvLocalSettings {
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
-    enableDnsOverride: boolean
 }
 
 function getSettingsFname() : string {
@@ -398,7 +397,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
-        enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -450,7 +448,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
-        enableDnsOverride: true,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -636,10 +633,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.record.useVoiceSpeechNoiseReduction === undefined) {
         parsedData.record.useVoiceSpeechNoiseReduction = false
-    }
-
-    if (parsedData.enableDnsOverride === undefined) {
-        parsedData.enableDnsOverride = true
     }
 
     if (parsedData.games.wow.recordArenas === undefined) {

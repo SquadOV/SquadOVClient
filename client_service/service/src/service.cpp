@@ -144,7 +144,6 @@ int main(int argc, char** argv) {
     shared::log::Log::initializeGlobalLogger("squadov.log");
 
     // NTP can't be init before the logger since we log stuff inside the NTP client.
-    shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
     shared::time::NTPClient::singleton()->enable(true);
     shared::time::NTPClient::singleton()->initialize();
 
@@ -166,6 +165,9 @@ int main(int argc, char** argv) {
         shared::log::Log::singleton()->setThreshold(shared::log::LogType::Debug);
         enablePaDebugLogs = true;
     }
+
+    // Do sanity check of DNS.
+    shared::http::getDnsManager();
 
     const auto sysHw = service::hardware::getSystemHardware();
     LOG_INFO(sysHw << std::endl);
@@ -662,7 +664,6 @@ int main(int argc, char** argv) {
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_RELOAD_SETTINGS, [](const std::string& msg){
         LOG_INFO("RECEIVE RELOAD SETTINGS REQUEST." << std::endl);
         service::system::getCurrentSettings()->reloadSettingsFromFile();
-        shared::http::getDnsManager()->enable(service::system::getCurrentSettings()->enableDns());
     });
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_KEYCODE_CHAR, [&zeroMqServerClient](const std::string& msg){
