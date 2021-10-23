@@ -334,7 +334,7 @@ void WoWProcessHandlerInstance::logTimeoutHandler() {
     if (!wowSettings.useCombatLogTimeout) {
         return;
     }
-    LOG_INFO("Using WoW combat log timeout of " << wowSettings.timeoutSeconds << " seconds..." << std::endl);
+    LOG_INFO("Using WoW combat log timeout of " << wowSettings.timeoutSeconds2 << " seconds..." << std::endl);
     
     while (_lastLogTimeoutRunning) {
         {
@@ -342,7 +342,7 @@ void WoWProcessHandlerInstance::logTimeoutHandler() {
             const auto elapsed = shared::nowUtc() - _lastLogTime;
             const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
 
-            if (elapsedSeconds > wowSettings.timeoutSeconds) {
+            if (elapsedSeconds > wowSettings.timeoutSeconds2) {
                 LOG_INFO("!!! WoW Combat Log Timeout !!!" << std::endl);
                 prematurelyEndMatch(shared::nowUtc(), false, true);
                 break;
