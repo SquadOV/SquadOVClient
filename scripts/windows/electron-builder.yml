@@ -33,6 +33,7 @@ files:
   - "login.html"
   - "update.html"
   - "sessionError.html"
+  - "setup.html"
   - "index.js"
   - "login.js"
   - "setup.js"
