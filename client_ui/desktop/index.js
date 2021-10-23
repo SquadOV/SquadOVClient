@@ -82,6 +82,7 @@ const {spawn} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
+const { setupFlow } = require('./setup.js')
 const { getAppDataFolder } = require('./paths.js')
 
 const configFile = app.isPackaged ? path.join(process.resourcesPath, 'config/config.json') : 'config/config.json'
@@ -767,10 +768,46 @@ app.on('ready', async () => {
     // Set the environment variable SQUADOV_USER_APP_FOLDER to specify which folder to store *ALL* this user's data in.
     setAppDataFolderFromEnv()
 
+    win.hide()
+
+    // Do setup flow - will get the user setup with the config file and a host of other things to ensure their settings
+    // are good to go for using SquadOV.
+    let setupWindow = new BrowserWindow({
+        width: 300,
+        height: 300,
+        webPreferences: {
+            nodeIntegration: true,
+            contextIsolation: false,
+        },
+        frame: false,
+        resizable: false,
+        movable: false,
+        icon: iconPath
+    })
+
+    if (!app.isPackaged) {
+        setupWindow.webContents.toggleDevTools()
+    }
+    setupWindow.loadFile('setup.html')
+    setupWindow.show()
+
+    try {
+        await setupFlow(setupWindow)
+    } catch (ex) {
+        log.log('User exited out of setup...')
+        quit()
+        return
+    }
+
     // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
     // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time
     // and we end up with an invalid session ID.
     startSessionHeartbeat(async () => {
+        if (!setupWindow.isDestroyed()) {
+            setupWindow.close()
+        }
+        win.show()
+
         // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
         // start the UI and the client service (2 things that require querying the API) until we have a valid session.
         // This is particularly relevant when we're loading the session from disk.

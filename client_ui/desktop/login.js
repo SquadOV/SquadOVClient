@@ -1,5 +1,4 @@
-const {app, BrowserWindow} = require('electron')
-const { ipcMain } = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 
 // Require the user to choose a password for encryption.
 // Store a hash of this password in a file so we can verify it later.
