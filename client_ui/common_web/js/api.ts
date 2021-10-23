@@ -1088,7 +1088,7 @@ class ApiClient {
     listMyRecentMatches(params : {next : string | null, start : number, end : number, filters : RecentMatchFilters, profileId: number | undefined}): Promise<ApiData<HalResponse<RecentMatch[]>>> {
         let cfg = this.createWebAxiosConfig()
         let promise = !!params.next ?
-            axios.get(params.next, cfg) :
+            axios.post(params.next, params.filters, cfg) :
             (params.profileId !== undefined) ?
                 axios.post(`profile/${params.profileId}/matches`, params.filters, {
                     ...cfg,
@@ -1227,7 +1227,7 @@ class ApiClient {
 
     listClips(params : {next : string | null, matchUuid : string | undefined, start : number, end : number, filters : RecentMatchFilters, profileId?: number}): Promise<ApiData<HalResponse<VodClip[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
             (params.profileId !== undefined) ?
                 axios.post(`profile/${params.profileId}/clips`, params.filters, {
                     ...this.createWebAxiosConfig(),
