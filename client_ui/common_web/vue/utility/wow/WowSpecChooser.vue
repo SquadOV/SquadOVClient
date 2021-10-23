@@ -27,7 +27,7 @@
             </template>
 
             <!-- First row to display class options. Only a single class can be selected. -->
-            <div class="ma-4">
+            <div class="pa-4 selector">
                 <v-select
                     label="Class"
                     :value="classToDisplay"
@@ -166,6 +166,10 @@ export default class WowSpecChooser extends Vue {
 
 .activator {
     cursor: pointer;
+}
+
+.selector {
+    background-color: #1e1e1e;
 }
 
 </style>
