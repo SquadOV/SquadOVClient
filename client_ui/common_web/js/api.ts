@@ -1,4 +1,6 @@
 import axios from 'axios'
+import axiosRetry from 'axios-retry'
+axiosRetry(axios, { retryDelay: axiosRetry.exponentialDelay})
 
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { ValorantPlayerStatsSummary } from '@client/js/valorant/valorant_player_stats'
