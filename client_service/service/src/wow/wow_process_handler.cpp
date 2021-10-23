@@ -337,14 +337,16 @@ void WoWProcessHandlerInstance::logTimeoutHandler() {
     LOG_INFO("Using WoW combat log timeout of " << wowSettings.timeoutSeconds << " seconds..." << std::endl);
     
     while (_lastLogTimeoutRunning) {
-        std::lock_guard guard(_lastLogMutex);
-        const auto elapsed = shared::nowUtc() - _lastLogTime;
-        const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+        {
+            std::lock_guard guard(_lastLogMutex);
+            const auto elapsed = shared::nowUtc() - _lastLogTime;
+            const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
 
-        if (elapsedSeconds > wowSettings.timeoutSeconds) {
-            LOG_INFO("!!! WoW Combat Log Timeout !!!" << std::endl);
-            prematurelyEndMatch(shared::nowUtc(), false, true);
-            break;
+            if (elapsedSeconds > wowSettings.timeoutSeconds) {
+                LOG_INFO("!!! WoW Combat Log Timeout !!!" << std::endl);
+                prematurelyEndMatch(shared::nowUtc(), false, true);
+                break;
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::seconds(1));
