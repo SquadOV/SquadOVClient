@@ -1,6 +1,6 @@
 {
   "name": "squadov_common_web_ui",
-  "version": "0.10.4",
+  "version": "0.10.5",
   "description": "Common Web UI for SquadOV",
   "main": "index.js",
   "scripts": {
