@@ -137,6 +137,10 @@ function loadAppSettings() {
     }
 }
 
+app.on('quit', () => {
+    log.log('Quitting out of SquadOV...')
+})
+
 const singleLock = app.requestSingleInstanceLock()
 if (!singleLock) {
     app.exit(1)
