@@ -259,10 +259,15 @@ function loadSession() {
         return false
     }
 
-    const data = JSON.parse(fs.readFileSync(sessionPath))
-    process.env.SQUADOV_SESSION_ID = data.sessionId
-    process.env.SQUADOV_USER_ID = data.userId
-    return true
+    try {
+        const data = JSON.parse(fs.readFileSync(sessionPath))
+        process.env.SQUADOV_SESSION_ID = data.sessionId
+        process.env.SQUADOV_USER_ID = data.userId
+        return true
+    } catch (e) {
+        log.log('Failed to read session JSON - forcing users to relog..', e)
+        return false
+    }
 }
 
 function saveSession() {
@@ -752,12 +757,14 @@ app.on('ready', async () => {
         process.env.SQUADOV_DEBUG = '1'
     }
     
+    log.log('Loading Session...')
     if (!loadSession()) {
         // Needing to login overrides the hidden flag as we don't display the tray icon until much later.
         // Maybe that needs to change instead?
         win.show()
 
         // DO NOT GO ANY FURTHER UNTIL WE HAVE SUCCESSFULLY LOGGED IN.
+        log.log('Start Login Flow...')
         try {
             await loginFlow(win)
         } catch (ex) {
@@ -795,6 +802,7 @@ app.on('ready', async () => {
     setupWindow.loadFile('setup.html')
     setupWindow.show()
 
+    log.log('Starting Setup Flow...')
     try {
         await setupFlow(setupWindow)
     } catch (ex) {
@@ -806,10 +814,12 @@ app.on('ready', async () => {
     // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
     // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time
     // and we end up with an invalid session ID.
+    log.log('Start Session Heartbeat...')
     startSessionHeartbeat(async () => {
         if (!setupWindow.isDestroyed()) {
             setupWindow.close()
         }
+        
         win.show()
 
         // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
