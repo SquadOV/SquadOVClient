@@ -271,12 +271,18 @@ function loadSession() {
 }
 
 function saveSession() {
-    fs.writeFileSync(getSessionPath(), JSON.stringify({
+    let tmpPath = getSessionPath() + '.tmp'
+
+    // Two step process so the change is more atomic so we don't run the risk
+    // of corrupting the session.json file.
+    fs.writeFileSync(tmpPath, JSON.stringify({
         sessionId: process.env.SQUADOV_SESSION_ID,
         userId: process.env.SQUADOV_USER_ID,
     }), {
         encoding: 'utf-8',
     })
+
+    fs.renameSync(tmpPath, getSessionPath())
 }
 
 function updateSession(sessionId, sendIpc) {
