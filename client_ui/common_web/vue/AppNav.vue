@@ -26,7 +26,7 @@
                         <template v-if="!c.disabled">
                             <v-tooltip
                                 :key="c.name"
-                                :disabled="!c.disableOnWeb"
+                                :disabled="!c.disableOnWeb && !isDesktop"
                                 bottom
                             >
                                 <template v-slot:activator="{ on }">
@@ -34,7 +34,7 @@
                                         <v-list-item
                                             :key="c.name"
                                             :to="c.to"
-                                            :disabled="c.disableOnWeb"
+                                            :disabled="c.disableOnWeb && !isDesktop"
                                             v-if="!c.link"
                                         >
                                             <v-badge
@@ -68,7 +68,7 @@
                                         </v-list-item>
                                     </div>
                                 </template>
-                                <span> {{ c.toolTip }} </span>
+                                <span> Go to the Desktop Application to view these videos. </span>
                             </v-tooltip>
                         </template>
                     </template>
@@ -100,20 +100,20 @@
 
         <template v-if="isLoggedIn">
             <v-toolbar-title>
-                <v-tooltip :disabled="settingsEnabled" bottom>
+                <v-tooltip :disabled="isDesktop" bottom>
                     <template v-slot:activator="{ on }">
                         <div v-on="on">
                             <v-btn
                                 icon
                                 :to="settingsTo"
-                                :disabled="!settingsEnabled"
+                                :disabled="!isDesktop"
                             >
                                 <v-icon> mdi-cog </v-icon>
                             </v-btn>
                         </div>
                     </template>
                     <span>
-                        Go to the Desktop Application to modify settings
+                        Go to the Desktop Application to modify settings.
                     </span>
                 </v-tooltip>
             </v-toolbar-title>
@@ -171,11 +171,11 @@ export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
 
     get isDesktop(): boolean {
-        /// #if DESKTOP
+/// #if DESKTOP
         return true
-        /// #else
+/// #else
         return false
-        /// #endif
+/// #endif
     }
 
     get downloadUrl(): string {
@@ -269,8 +269,7 @@ export default class AppNav extends mixins(CommonComponent) {
                         to: {
                             name: pi.LocalStoragePageId,
                         },
-                        disableOnWeb: !this.isDesktop,
-                        toolTip: "Go to the Desktop Application to view local videos",
+                        disableOnWeb: true,
                     },
                 ]
             },
@@ -336,23 +335,15 @@ export default class AppNav extends mixins(CommonComponent) {
         }
     }
 
-    get settingsEnabled(): boolean {
-        /// #if DESKTOP
-        return true
-        /// #else  
-        return false
-        /// #endif
-    }
-
     logout() {
         apiClient.logout().then(() => {
         }).catch((err: any) => {
             console.error('Failed to logout: {}', err)
         }).finally(() => {
             // The user should feel like they logged out regardless of what happened on the server.
-            /// #if DESKTOP
+/// #if DESKTOP
             ipcRenderer.sendSync('logout')
-            /// #else
+/// #else
             // Delete session cookie and then do a redirect to the login page as we don't have
             // any facilities to detect this deletion.
             clearSessionCookie(this.$store)
@@ -360,7 +351,7 @@ export default class AppNav extends mixins(CommonComponent) {
             this.$router.replace({
                 name: pi.LoginPageId,
             })
-            /// #endif
+/// #endif
         })
     }
 
