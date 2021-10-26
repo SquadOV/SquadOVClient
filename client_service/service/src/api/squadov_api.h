@@ -113,6 +113,7 @@ public:
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
     std::string getVodUri(const std::string& videoUuid) const;
+    std::string getVodMd5Checksum(const std::string& videoUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;

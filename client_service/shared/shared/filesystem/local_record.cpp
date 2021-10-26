@@ -7,6 +7,12 @@
 #include "shared/time.h"
 #include "shared/http/http_client.h"
 
+#include <boost/algorithm/string.hpp>
+#define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
+#include <cryptopp/files.h>
+#include <cryptopp/md5.h>
+#include <cryptopp/hex.h>
+
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 namespace {
@@ -214,15 +220,46 @@ void LocalRecordingIndexDb::cleanupLocalEntry(const LocalRecordingIndexEntry& en
     }
 }
 
-void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn) {
+void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn) {
     const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.uuid) / fs::path(entry.filename);
     fs::create_directories(dlPath.parent_path());
 
-    shared::http::HttpClient client(uri);
-    client.addDownloadProgressFn(progressFn);
-    const auto resp = client.download("", dlPath);
-    if (resp->status != 200) {
-        THROW_ERROR("Failed to download URI: " << resp->body << std::endl);
+    bool success = false;
+    for (int tries = 0; tries < 3 && !success; ++tries) {
+        LOG_INFO("Try " << tries << " to download: " << uri << std::endl);
+        fs::remove(dlPath);
+
+        shared::http::HttpClient client(uri);
+        client.addDownloadProgressFn(progressFn);
+        const auto resp = client.download("", dlPath);
+        if (resp->status != 200) {
+            THROW_ERROR("Failed to download URI: " << resp->body << std::endl);
+        }
+
+        // If we are given a valid checksum then we need to check to make sure that the file we downloaded
+        // has the correct md5 checksum to ensure file integrity.
+        if (!md5Checksum.empty()) {
+            CryptoPP::Weak::MD5 hash;
+            std::string digest;
+            
+            CryptoPP::FileSource file(
+                dlPath.c_str(),
+                true,
+                new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(digest)))
+            );
+
+            boost::algorithm::trim(digest);
+            success = boost::iequals(digest, md5Checksum);
+            LOG_INFO("...Comparing MD5 :: " << digest << " [Computed] vs " << md5Checksum << " [Reference]...Success - " << success << std::endl);
+        } else {
+            success = true;
+            break;
+        }
+    }
+
+    if (!success) {
+        THROW_ERROR("Failed to download VOD (md5?)");
+        return;
     }
 
     auto sizedEntry = entry;
