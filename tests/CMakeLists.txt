@@ -6,6 +6,7 @@ MACRO(GENERATE_TEST TEST_NAME CPP_NAME)
     target_include_directories(${TEST_NAME}
         PUBLIC
         ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/client_service/process_watcher
         ${CMAKE_SOURCE_DIR}/client_service/game_event_watcher
         ${Boost_INCLUDE_DIRS}
     )
@@ -25,4 +26,5 @@ MACRO(GENERATE_TEST TEST_NAME CPP_NAME)
 ENDMACRO()
 
 add_subdirectory(shared)
+add_subdirectory(process_watcher)
 add_subdirectory(game_event_watcher)

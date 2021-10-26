@@ -3,6 +3,7 @@
 #include "process_watcher/process/process.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
 
 #include <iostream>
 #include <chrono>
@@ -27,7 +28,7 @@ void ProcessWatcher::start() {
     _watchThread = std::thread([this](){
         using namespace std::chrono_literals;
 
-        process::ProcessRunningState processState;
+        process::ProcessRunningState processState(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
         while (_running) {
             // Get a sorted list of running processes from the OS.
             const bool success = processState.update();
@@ -71,7 +72,7 @@ void ProcessWatcher::start() {
 }
 
 std::optional<process::Process> isGameRunning(shared::EGame game) {
-    process::ProcessRunningState processState;
+    process::ProcessRunningState processState(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
     processState.update();
 
     const auto detector = games::createDetectorForGame(game);
