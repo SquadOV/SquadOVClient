@@ -25,13 +25,10 @@ export default class DownloadButton extends CommonComponent {
     }
 
     onDownload() {
-        if (!localStorage.getItem('squadovDownload')) {
-            apiClient.markUserDownload().then(() => {
-                localStorage.setItem('squadovDownload', 'yes')
-            }).catch((err: any) => {
-                console.error('Failed to mark user download: ', err)
-            })
-        }
+        apiClient.markUserDownload().then(() => {
+        }).catch((err: any) => {
+            console.error('Failed to mark user download: ', err)
+        })
 
         if (this.setupWizard) {
             this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupDoDownload, '', 0)

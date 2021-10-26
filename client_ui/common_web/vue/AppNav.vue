@@ -152,10 +152,6 @@ export default class AppNav extends mixins(CommonComponent) {
 /// #endif
     }
 
-    get downloadUrl(): string {
-        return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe'
-    }
-
     get registerTo(): any { 
         return {
             name: pi.RegisterPageId
