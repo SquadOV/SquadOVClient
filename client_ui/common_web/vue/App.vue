@@ -1,5 +1,17 @@
 <template>
     <div id="rootApp">
+        <app-nav
+            class="flex-grow-0"
+            v-if="hasValidSession && showNav"
+        ></app-nav>
+        <app-alerts
+            width="100%"
+            v-if="hasValidSession && showAlerts"
+        ></app-alerts>
+        <app-pop-ups
+            width="100%"
+            v-if="hasValidSession && showPopUps"
+        ></app-pop-ups>
         <keep-alive :max="3">
             <router-view :key="key"></router-view>
         </keep-alive>
@@ -12,7 +24,8 @@
                 <v-divider></v-divider>
 
                 <div class="ma-4">
-                    Just in case that didn't work, here's a URL that you can copy and paste into a browser of your choosing.
+                    Just in case that didn't work, here's a URL that you can
+                    copy and paste into a browser of your choosing.
 
                     <v-text-field
                         class="mt-4"
@@ -25,14 +38,8 @@
                         ref="urlInput"
                     >
                         <template v-slot:append-outer>
-                            <v-btn
-                                icon
-                                color="success"
-                                @click="doCopy"
-                            >
-                                <v-icon>
-                                    mdi-content-copy
-                                </v-icon>
+                            <v-btn icon color="success" @click="doCopy">
+                                <v-icon> mdi-content-copy </v-icon>
                             </v-btn>
                         </template>
                     </v-text-field>
@@ -51,20 +58,32 @@
 </template>
 
 <script lang="ts">
-
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import { routeLevelToKey } from '@client/js/routes'
+import TopLevelComponent from '@client/vue/TopLevelComponent'
+import AppNav from '@client/vue/AppNav.vue'
+import AppAlerts from '@client/vue/utility/squadov/alerts/AppAlerts.vue'
+import AppPopUps from '@client/vue/utility/squadov/popUps/AppPopUps.vue'
 
-@Component
-export default class App extends Vue {
+@Component({
+    components: {
+        AppNav,
+        AppAlerts,
+        AppPopUps,
+    }
+})
+export default class App extends mixins(TopLevelComponent) {
     showUrl: boolean = false
     showUrlCopy: boolean = false
     closeUrlTimeout: number | null = null
 
     $refs!: {
         urlInput: any
+    }
+
+    get hasValidSession(): boolean {
+        return this.$store.state.hasValidSession
     }
 
     @Watch('$store.state.redirectUrl')
@@ -102,11 +121,9 @@ export default class App extends Vue {
 </script>
 
 <style scoped>
-
 #rootApp {
     width: 100%;
     height: 100%;
     overflow: auto;
 }
-
 </style>

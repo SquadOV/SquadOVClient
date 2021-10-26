@@ -15,16 +15,12 @@ export default class TopLevelComponent extends Vue {
     @Prop({default: true})
     showNav!: boolean
 
-    get appInnerStyle(): any {
-        if (this.showNav) {
-            return {
-                'overflow': 'auto'
-            }
-        } else {
-            return {}
-        }
-    }
+    @Prop({default: true})
+    showAlerts !: boolean
 
+    @Prop({default: true})
+    showPopUps !: boolean
+    
     restoreScroll(key: string) {
         if (!this.cache) {
             return
