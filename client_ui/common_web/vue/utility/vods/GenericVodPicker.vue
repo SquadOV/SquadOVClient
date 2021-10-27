@@ -84,7 +84,7 @@
             </vod-download-button>
             
             <!-- create clip button -->
-            <v-tooltip bottom>
+            <v-tooltip bottom v-if="!isClippingEnabled || clippingAllowed">
                 <template v-slot:activator="{on, attrs}">
                     <div v-on="on" v-bind="attrs">
                         <v-btn :disabled="!isClippingEnabled || clippingAllowed" color="success" icon @click="openEditingWindow">
