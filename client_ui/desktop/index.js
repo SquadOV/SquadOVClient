@@ -219,7 +219,7 @@ let zeromqServer = new ZeroMQServerClient()
 
 async function quit() {
     isQuitting = true
-    zeromqServer.close()
+    await zeromqServer.close()
     app.exit(0)
 }
 
@@ -729,7 +729,7 @@ function startSessionHeartbeat(onBeat) {
 
 app.on('ready', async () => {
     await zeromqServer.start()
-    zeromqServer.run()
+    //zeromqServer.run()
 
     win = new BrowserWindow({
         width: 1600,
