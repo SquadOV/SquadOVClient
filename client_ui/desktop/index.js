@@ -177,11 +177,11 @@ function start() {
             if (!!appSettings.minimizeOnClose) {
                 e.preventDefault()
                 win.minimize()
+                win.webContents.send('onActiveChange', false)
             } else {
                 quit()
             }
         }
-        win.webContents.send('onActiveChange', false)
     })
 
     win.on('show', (e) => {
@@ -999,7 +999,10 @@ ipcMain.on('closeWindow', (event) => {
     if (event.sender.isDevToolsOpened()) {
         event.sender.closeDevTools()
     }
-    window.close()
+    
+    setTimeout(() => {
+        window.close()
+    }, 0)
 })
 
 ipcMain.handle('start-record-preview', (event, game) => {
