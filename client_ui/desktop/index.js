@@ -729,7 +729,7 @@ function startSessionHeartbeat(onBeat) {
 
 app.on('ready', async () => {
     await zeromqServer.start()
-    //zeromqServer.run()
+    zeromqServer.run()
 
     win = new BrowserWindow({
         width: 1600,
@@ -1000,9 +1000,7 @@ ipcMain.on('closeWindow', (event) => {
         event.sender.closeDevTools()
     }
     
-    setTimeout(() => {
-        window.close()
-    }, 0)
+    window.close()
 })
 
 ipcMain.handle('start-record-preview', (event, game) => {
