@@ -84,16 +84,18 @@
             </vod-download-button>
             
             <!-- create clip button -->
-            <v-tooltip bottom :disabled="clippingAllowed" >
+            <v-tooltip bottom>
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn :disabled="!clippingAllowed" color="success" icon @click="openEditingWindow" v-on="on" v-bind="attrs">
-                        <v-icon>
-                            mdi-content-cut
-                        </v-icon>
-                    </v-btn>
+                    <div v-on="on" v-bind="attrs">
+                        <v-btn :disabled="!clippingAllowed" color="success" icon @click="openEditingWindow">
+                            <v-icon>
+                                mdi-content-cut
+                            </v-icon>
+                        </v-btn>
+                    </div>
                 </template>
                 <span v-if="clippingAllowed"> Clip </span>
-                <span v-else> Go to the Desktop Application to create a Clip. </span>
+                <span v-else> Go to Desktop Application to create a clip. </span>
             </v-tooltip>
 
             <!-- drawing button -->
