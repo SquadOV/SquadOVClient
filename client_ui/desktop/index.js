@@ -177,11 +177,11 @@ function start() {
             if (!!appSettings.minimizeOnClose) {
                 e.preventDefault()
                 win.minimize()
+                win.webContents.send('onActiveChange', false)
             } else {
                 quit()
             }
         }
-        win.webContents.send('onActiveChange', false)
     })
 
     win.on('show', (e) => {
@@ -219,7 +219,7 @@ let zeromqServer = new ZeroMQServerClient()
 
 async function quit() {
     isQuitting = true
-    zeromqServer.close()
+    await zeromqServer.close()
     app.exit(0)
 }
 
@@ -999,6 +999,7 @@ ipcMain.on('closeWindow', (event) => {
     if (event.sender.isDevToolsOpened()) {
         event.sender.closeDevTools()
     }
+    
     window.close()
 })
 
