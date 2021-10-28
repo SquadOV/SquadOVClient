@@ -9,87 +9,133 @@
                 <div
                     class="activator"
                     @click="showSelector = true"
-                > 
-                    <wow-class-spec-icon
-                        :spec-id="specToDisplay"
-                        :patch="LATEST_RETAIL_PATCH_ID"
-                        v-if="value.length <= 1"
-                    >
-                    </wow-class-spec-icon>
+                >
+                    <template v-if="!isRoleMode">
+                        <wow-class-spec-icon
+                            :spec-id="specToDisplay"
+                            :patch="LATEST_RETAIL_PATCH_ID"
+                            v-if="value.length <= 1"
+                        >
+                        </wow-class-spec-icon>
 
-                    <wow-class-icon
-                        :class-id="classToDisplay"
-                        :patch="LATEST_RETAIL_PATCH_ID"
+                        <wow-class-icon
+                            :class-id="classToDisplay"
+                            :patch="LATEST_RETAIL_PATCH_ID"
+                            v-else
+                        >
+                        </wow-class-icon>
+                    </template>
+
+                    <wow-role-icon
                         v-else
+                        :value="selectedRole"
                     >
-                    </wow-class-icon>
+                    </wow-role-icon>
                 </div>
             </template>
 
-            <!-- First row to display class options. Only a single class can be selected. -->
             <div class="pa-4 selector">
-                <v-select
-                    label="Class"
-                    :value="classToDisplay"
-                    @input="changeClass"
-                    :items="classItems"
-                    outlined
-                    hide-details
+                <!-- First row to toggle role mode -->
+                <v-checkbox
+                    class="mb-2"
+                    v-model="isRoleMode"
                     dense
-                >
-                    <template v-slot:item="{ item }">
-                        <div class="d-flex full-width align-center">
-                            {{ item.text }}
-
-                            <v-spacer></v-spacer>
-
-                            <wow-class-icon
-                                :class-id="item.value"
-                                :patch="LATEST_RETAIL_PATCH_ID"
-                            >
-                            </wow-class-icon>
-                        </div>
-                    </template>
-                </v-select>
-
-                <!-- Second row to display spec options. One or more specs can be selected. -->
-                <v-select
-                    class="mt-2"
-                    label="Specs"
-                    :value="value"
-                    @input="$emit('input', arguments[0])"
-                    :items="specItems"
-                    deletable-chips
-                    chips
-                    multiple
-                    clearable
-                    outlined
                     hide-details
-                    dense
+                    label="Select Roles"
                 >
-                    <template v-slot:item="{ item }">
-                        <div class="d-flex full-width align-center">
-                            <v-checkbox
-                                class="selection-checkbox"
-                                dense
-                                hide-details
-                                :input-value="value.includes(item.value)"
-                                readonly
+                </v-checkbox>
+
+                <template v-if="!isRoleMode">
+                    <!-- Next row to display class options. Only a single class can be selected. -->
+                    <v-select
+                        class="mt-2"
+                        label="Class"
+                        :value="classToDisplay"
+                        @input="changeClass"
+                        :items="classItems"
+                        outlined
+                        hide-details
+                        dense
+                    >
+                        <template v-slot:item="{ item }">
+                            <div class="d-flex full-width align-center">
+                                {{ item.text }}
+
+                                <v-spacer></v-spacer>
+
+                                <wow-class-icon
+                                    :class-id="item.value"
+                                    :patch="LATEST_RETAIL_PATCH_ID"
+                                >
+                                </wow-class-icon>
+                            </div>
+                        </template>
+                    </v-select>
+
+                    <!-- Last row to display spec options. One or more specs can be selected. -->
+                    <v-select
+                        class="mt-2"
+                        label="Specs"
+                        :value="value"
+                        @input="$emit('input', arguments[0])"
+                        :items="specItems"
+                        deletable-chips
+                        chips
+                        multiple
+                        clearable
+                        outlined
+                        hide-details
+                        dense
+                    >
+                        <template v-slot:item="{ item }">
+                            <div class="d-flex full-width align-center">
+                                <v-checkbox
+                                    class="selection-checkbox"
+                                    dense
+                                    hide-details
+                                    :input-value="value.includes(item.value)"
+                                    readonly
+                                >
+                                </v-checkbox>
+
+                                {{ item.text }}
+
+                                <v-spacer></v-spacer>
+
+                                <wow-class-spec-icon
+                                    :spec-id="item.value"
+                                    :patch="LATEST_RETAIL_PATCH_ID"
+                                >
+                                </wow-class-spec-icon>
+                            </div>
+                        </template>
+                    </v-select>
+                </template>
+
+                <template v-else>
+                    <v-item-group
+                        v-model="selectedRole"
+                        mandatory
+                    >
+                        <div class="d-flex align-center">
+                            <v-item
+                                v-slot="{active, toggle}"
+                                v-for="(role, idx) in roleItems"
+                                :key="idx"
                             >
-                            </v-checkbox>
-
-                            {{ item.text }}
-
-                            <v-spacer></v-spacer>
-
-                            <wow-class-spec-icon
-                                :spec-id="item.value"
-                                :patch="LATEST_RETAIL_PATCH_ID"
-                            >
-                            </wow-class-spec-icon>
+                                <div
+                                    :class="(active ? 'selected-role' : '') + ' role'"
+                                    @click="toggle"
+                                >
+                                    <wow-role-icon
+                                        :value="role"
+                                    >
+                                    </wow-role-icon>
+                                </div>
+                            </v-item>
                         </div>
-                    </template>
-                </v-select>
+                    </v-item-group>
+                </template>
             </div>
         </v-menu>
     </div>    
@@ -99,16 +145,18 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { LATEST_RETAIL_PATCH_ID } from '@client/js/wow/staticCache'
-import { specIdToClassId, classToSpecIds, ALL_WOW_CLASSES, classToName, specToName } from '@client/js/wow/character'
+import { specIdToClassId, classToSpecIds, ALL_WOW_CLASSES, classToName, specToName, WowRole, roleToSpecIds } from '@client/js/wow/character'
 import WowClassSpecIcon from '@client/vue/utility/wow/WowClassSpecIcon.vue'
 import WowClassIcon from '@client/vue/utility/wow/WowClassIcon.vue'
+import WowRoleIcon from '@client/vue/utility/wow/WowRoleIcon.vue'
 
 @Component({
     components: {
         WowClassSpecIcon,
         WowClassIcon,
+        WowRoleIcon,
     }
 })
 export default class WowSpecChooser extends Vue {
@@ -117,12 +165,29 @@ export default class WowSpecChooser extends Vue {
     @Prop()
     value!: number[]
 
+    isRoleMode: boolean = false
+    selectedRole: WowRole = WowRole.Unknown
+
     // Need to use the showSelector thing manually because doing v-on="on" on the WowClassSpecIcon
     // component doesn't seem to work in triggering the menu.
     showSelector: boolean = false
 
     changeClass(classId: number) {
         this.$emit('input', classToSpecIds(classId))
+    }
+
+    @Watch('isRoleMode')
+    onSwapMode() {
+        this.$emit('input', [])
+    }
+
+    @Watch('selectedRole')
+    onRoleChange(role: WowRole) {
+        this.$emit('input', roleToSpecIds(role))
+    }
+
+    get roleItems(): any[] {
+        return [WowRole.Tank, WowRole.Healer, WowRole.Dps, WowRole.Unknown]
     }
 
     get classItems(): any[] {
@@ -170,6 +235,14 @@ export default class WowSpecChooser extends Vue {
 
 .selector {
     background-color: #1e1e1e;
+}
+
+.selected-role {
+    border: 1px solid yellow;
+}
+
+.role {
+    cursor: pointer;
 }
 
 </style>
