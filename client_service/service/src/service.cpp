@@ -389,6 +389,22 @@ int main(int argc, char** argv) {
         );
     });
 
+    // We want to notify the UI when we stop playing a game - this way we can pop up with relevant VODs!
+    service::system::getGlobalState()->addGameStatusCallback([&zeroMqServerClient](shared::EGame game, bool running, const shared::TimePoint& tm){
+        // If the game is running or if any other games are running we don't want to send a signal 
+        if (running || service::system::getGlobalState()->areGamesRunning()) {
+            return;
+        }
+
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_NOTIFICATION_POPUP_POST_GAME,
+            nlohmann::json{
+                {"game", static_cast<int>(game)},
+                {"time", shared::timeToIso(tm)}
+            }.dump()
+        );
+    });
+
     LOG_INFO("Add VOD Clip request handler..." << std::endl);    
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_VOD_CLIP_TOPIC, [&zeroMqServerClient](const std::string& msg){
         LOG_INFO("RECEIVE VOD CLIP REQUEST: " << msg << std::endl);

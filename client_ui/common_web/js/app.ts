@@ -107,6 +107,7 @@ const CommunityDiscover = () => import('@client/vue/utility/community/CommunityD
 
 const UserFavoritesPage = () => import('@client/vue/profile/UserFavoritesPage.vue')
 const UserWatchlistPage = () => import('@client/vue/profile/UserWatchlistPage.vue')
+const PostGameReport = () => import ('@client/vue/PostGameReport.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -164,6 +165,15 @@ const baseRoutes : any[] = [
                 component: Dashboard,
                 props: (route : any) => ({
                     needSetup: parseInt(route.query.needSetup),
+                })
+            },
+            {
+                path: 'postgame',
+                name: pi.PostGameReportPageId,
+                component: PostGameReport,
+                props: (route : any) => ({
+                    game: parseInt(route.query.game),
+                    tm: new Date(parseInt(route.query.tm)),
                 })
             },
             { 
@@ -751,6 +761,7 @@ const statusTracker = new TrackedUserStatsManager(store)
 
 import { loadInitialSessionFromCookies, checkHasSessionCookie } from '@client/js/session'
 import { WowGameRelease, wowGameReleaseFromString } from './staticData';
+import { SquadOvGames } from './squadov/game';
 
 router.afterEach((to: Route, from: Route) => {
     let container = getAnalyticsContainer()
@@ -899,6 +910,21 @@ ipcRenderer.on('change-running-games', (_, games) => {
 ipcRenderer.on('change-recording-games', (_, games) => {
     store.commit('setRecordingGames', games)
     statusTracker.refreshCurrentUserStatus()
+})
+
+ipcRenderer.on('post-game-notification', (_, data: { game: SquadOvGames, tm: Date }) => {
+    data.tm = new Date(data.tm)
+
+    // Redirect to the post-game report screen.
+    // In the case where no games exist on the server then that component will be responsible
+    // for displaying something reasonable to the user.
+    router.push({
+        name: pi.PostGameReportPageId,
+        query: {
+            game: `${data.game}`,
+            tm: `${data.tm.getTime()}`,
+        }
+    })
 })
 
 setInterval(() => {
