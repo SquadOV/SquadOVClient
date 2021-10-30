@@ -320,7 +320,6 @@ export default class AppNav extends mixins(CommonComponent) {
         if(this.$store.state.successfullyVisitedVideo) {
             this.$store.commit('displayInviteFriendPopUp', true)
         }
-        console.log('Hit displayInviteFriendPopUp and value is ', this.$store.state.displayInviteFriendPopUp)
     }
 
     logout() {
