@@ -7,6 +7,7 @@
             text
             exact
             :to="homeTo"
+            @click="displayInviteFriendPopUp()"
         >
             Home
         </v-btn>
@@ -14,7 +15,7 @@
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact>
+                    <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact @click="displayInviteFriendPopUp()">
                         <v-badge
                             inline
                             left
@@ -33,7 +34,7 @@
                 <v-list dense v-if="!!m.children">
                     <template v-for="c in m.children">
                         <template v-if="!c.disabled">
-                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
+                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link" @click="displayInviteFriendPopUp()">
                                 <v-badge
                                     inline
                                     right
@@ -313,6 +314,13 @@ export default class AppNav extends mixins(CommonComponent) {
 /// #else  
         return false
 /// #endif
+    }
+
+    displayInviteFriendPopUp() {
+        if(this.$store.state.successfullyVisitedVideo) {
+            this.$store.commit('displayInviteFriendPopUp', true)
+        }
+        console.log('Hit displayInviteFriendPopUp and value is ', this.$store.state.displayInviteFriendPopUp)
     }
 
     logout() {

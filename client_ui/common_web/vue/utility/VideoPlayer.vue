@@ -1,7 +1,7 @@
 <template>
     <div>
         <div v-if="hasVideo" :style="parentDivStyle" :key="forceRedraw">
-            <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video" @loadedmetadata="loadMatchMetaData()">
+            <video :class="`video-js ${!fill ? 'vjs-fluid': 'vjs-fill'}`" ref="video" @loadedmetadata="loadVideoMetaData()">
             </video>
 
             <video-draw-overlay
@@ -134,8 +134,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         return true
     }
 
-    loadMatchMetaData(){
-        this.$store.commit('visitedMatch', true)
+    loadVideoMetaData(){
+        this.$store.commit('successfullyVisitedVideo', true)
     }
 
     handleRcPacket(p: RCMessagePacket) {

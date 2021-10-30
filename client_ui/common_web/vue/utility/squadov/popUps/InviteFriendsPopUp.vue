@@ -54,10 +54,11 @@ export default class InviteFriendsPopUp extends Vue {
         this.$store.commit('muteInviteFriendsPopUp', true)
     }
 
+    @Watch('$store.state.displayInviteFriendPopUp')
     @Watch('$store.state.currentUser')
     @Watch('$store.state.firstTimeVisitingMatchVideo')
     checkLoginStatus() {
-        if (this.isLoggedIn && !this.isInviteFriendsNotificationMuted && this.$store.state.firstTimeVisitingMatchVideo) {
+        if (this.isLoggedIn && !this.isInviteFriendsNotificationMuted && this.$store.state.displayInviteFriendPopUp) {
             this.showInviteFriendsNotification = true
         }
     }

@@ -32,11 +32,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         hasUpdate: false,
         serviceError: false,
         muteInviteFriendsPopUp: !!window.localStorage.getItem('muteInviteFriendsPopUp'),
-        firstTimeVisitingMatchVideo: false,
+        successfullyVisitedVideo: false,
+        displayInviteFriendPopUp: false,
     },
     mutations: {
-        visitedMatch(state: RootState, b: boolean) {
-            state.firstTimeVisitingMatchVideo = b
+        displayInviteFriendPopUp(state: RootState, b: boolean) {
+            state.displayInviteFriendPopUp = b
+        },
+        successfullyVisitedVideo(state: RootState, b: boolean) {
+            state.successfullyVisitedVideo = b
         },
         muteInviteFriendsPopUp(state: RootState) {
             window.localStorage.setItem('muteInviteFriendsPopUp', 'true')

@@ -18,5 +18,6 @@ export interface RootState {
     hasUpdate: boolean
     muteInviteFriendsPopUp: boolean
     serviceError: boolean
-    firstTimeVisitingMatchVideo: boolean
+    successfullyVisitedVideo: boolean
+    displayInviteFriendPopUp: boolean
 }
