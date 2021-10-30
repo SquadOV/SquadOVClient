@@ -1,38 +1,23 @@
 <template>
     <div>
-        <v-dialog width="500" v-model="dialog">
+        <v-dialog width="500" v-model="showInviteFriendsNotification">
             <v-card>
-                <v-card-title> Invite your Friends! </v-card-title>
-                <v-card-text>
-                    It gets lonely here, add your friends! Play, improve, and
-                    have fun as a squad!
+                <v-card-title style="font-size: x-large"> Invite your Friends! </v-card-title>
+                <v-card-subtitle style="font-size: x-small"> Tell them to join the dark side </v-card-subtitle>
+                <v-card-text class="popUpVCardText">
+                    SquadOV is better with friends. Play, improve, and have fun
+                    as a squad!
                 </v-card-text>
+                <referral-link class="referralLink"></referral-link>
                 <v-card-actions>
-                    <v-btn
-                        small
-                        class="ml-2"
-                        color="success"
-                        @click="copyToClipboard"
-                    >
-                        Copy Invite Link!
-                    </v-btn>
+                    <a class="doNotShowButton" @click="muteFuturePopUp()">Don't Show Again</a>
                     <v-spacer></v-spacer>
-                    <v-checkbox
-                        dense
-                        :label="'Don\'t show again'"
-                        v-model="muteFuturePopUp"
-                        hide-details
-                    ></v-checkbox>
-                    <v-spacer></v-spacer>
-                    <v-btn @click="closeNotification()" color="error">
+                    <v-btn @click="closeNotification()" small color="error">
                         Close
                     </v-btn>
                 </v-card-actions>
             </v-card>
         </v-dialog>
-        <v-snackbar v-model="showHideCopy" :timeout="5000" color="success">
-            Copied URL to clipboard!
-        </v-snackbar>
     </div>
 </template>
 
@@ -42,51 +27,56 @@ import Component from 'vue-class-component'
 import { apiClient, ApiData } from '@client/js/api'
 import '@mdi/font/css/materialdesignicons.css'
 import { Watch } from 'vue-property-decorator'
+import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
 
-@Component
+@Component({
+    components: {
+        ReferralLink,
+    }
+})
 export default class InviteFriendsPopUp extends Vue {
-    alertHeight: number = 45
-    dialog: boolean = false
-    showHideCopy: boolean = false
-    refLink: string = ""
-    muteFuturePopUp: boolean = false
+    showInviteFriendsNotification: boolean = false
+
+    get isInviteFriendsNotificationMuted() {
+        return this.$store.state.muteInviteFriendsPopUp
+    }
 
     get isLoggedIn(): boolean {
         return !!this.$store.state.currentUser
     }
 
-    copyToClipboard() {
-        navigator.clipboard.writeText(this.refLink).then().catch(e => console.error(e))
-        this.showHideCopy = true
-    }
-
-    getReferralLink() {
-        apiClient.myReferralLink().then((resp: ApiData<string>) => {
-            this.refLink = resp.data
-        }).catch((err: any) => {
-            console.error('Failed to get referral link: ', err)
-        })
-    }
-
     closeNotification() {
-        this.dialog = false
-        this.checkToMute()
+        this.showInviteFriendsNotification = false
     }
 
-    checkToMute() {
-        if (this.muteFuturePopUp) {
-            this.$store.commit('muteInviteFriendsPopUp', this.muteFuturePopUp)
-        }
+    muteFuturePopUp() {
+        this.showInviteFriendsNotification = false
+        this.$store.commit('muteInviteFriendsPopUp', true)
     }
+
+    @Watch('$store.state.currentUser')
     @Watch('$store.state.firstTimeVisitingMatchVideo')
-    showNotification() {
-        if (this.$store.state.firstTimeVisitingMatchVideo) {
-            this.dialog = true
+    checkLoginStatus() {
+        if (this.isLoggedIn && !this.isInviteFriendsNotificationMuted && this.$store.state.firstTimeVisitingMatchVideo) {
+            this.showInviteFriendsNotification = true
         }
     }
 
     mounted() {
-        this.getReferralLink()
+        this.checkLoginStatus()
     }
 }
 </script>
+<style scoped>
+    .doNotShowButton {
+        font-size: x-small;
+    }
+    .popUpVCardText {
+        font-size: large;
+    }
+    .referralLink {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-bottom: 20px;
+    }
+</style>

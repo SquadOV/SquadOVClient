@@ -16,10 +16,10 @@ export default class TopLevelComponent extends Vue {
     showNav!: boolean
 
     @Prop({default: true})
-    showAlerts !: boolean
+    showAlerts!: boolean
 
     @Prop({default: true})
-    showPopUps !: boolean
+    showPopUps!: boolean
     
     restoreScroll(key: string) {
         if (!this.cache) {

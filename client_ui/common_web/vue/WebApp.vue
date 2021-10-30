@@ -44,7 +44,7 @@ import App from '@client/vue/App.vue'
     components: {
     }
 })
-export default class WebApp extends mixins(App) {
+export default class WebApp extends App {
     version: string = version
 }
 

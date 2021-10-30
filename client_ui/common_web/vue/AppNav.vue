@@ -1,5 +1,6 @@
 <template>
     <v-app-bar
+        v-if="isLoggedIn"
         dense
     >
         <v-btn
@@ -109,7 +110,7 @@
             </v-menu>
         </template>
 
-        <template v-else>
+        <template v-else-if="!isLoggedIn">
             <v-btn color="success" :to="registerTo">
                 Register
             </v-btn>
@@ -159,7 +160,7 @@ export default class AppNav extends mixins(CommonComponent) {
     }
 
     get isLoggedIn(): boolean {
-        return !!this.$store.state.currentUser
+        return this.$store.state.currentUser
     }
 
     get totalSquadInvites(): number {

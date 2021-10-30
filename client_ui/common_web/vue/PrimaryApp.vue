@@ -121,7 +121,7 @@ import { ipcRenderer } from 'electron'
         RecordingStatusWindow,
     }
 })
-export default class PrimaryApp extends mixins(App) {
+export default class PrimaryApp extends App {
     version: string = rawData.version
     showHideLicenses: boolean = false
     showHideBug: boolean = false
