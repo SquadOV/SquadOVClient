@@ -6,11 +6,11 @@
         ></app-nav>
         <app-alerts
             width="100%"
-            v-if="hasValidSession && showAlerts"
+            v-if="hasValidSession"
         ></app-alerts>
         <app-pop-ups
             width="100%"
-            v-if="hasValidSession && showPopUps"
+            v-if="hasValidSession"
         ></app-pop-ups>
         <keep-alive :max="3">
             <router-view :key="key"></router-view>
