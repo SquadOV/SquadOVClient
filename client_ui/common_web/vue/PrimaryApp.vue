@@ -103,7 +103,7 @@
 
 <script lang="ts">
 
-import Component, { mixins } from 'vue-class-component'
+import Component from 'vue-class-component'
 import LicenseData from '@client/vue/LicenseData.vue'
 import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'

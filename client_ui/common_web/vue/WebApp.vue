@@ -36,7 +36,7 @@
 
 <script lang="ts">
 
-import Component, { mixins } from 'vue-class-component'
+import Component from 'vue-class-component'
 import { version } from '@client/package.json'
 import App from '@client/vue/App.vue'
 
