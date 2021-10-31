@@ -39,6 +39,9 @@ public:
 
     shared::EGame game() const { return _finalGame; }
 
+    bool inMatch() const { return hasMatchView() && (inChallenge() || inEncounter() || inArena()); }
+    bool hasMatchView() const { return !_currentMatchViewUuid.empty(); }
+
 private:
     process_watcher::process::Process  _process;
     game_event_watcher::WoWLogWatcherPtr _logWatcher;
@@ -47,7 +50,7 @@ private:
     bool inChallenge() const { return !_currentChallenge.challengeName.empty(); }
     bool inEncounter() const { return !_currentEncounter.encounterName.empty(); }
     bool inArena() const { return !_currentArena.type.empty(); }
-    bool inMatch() const { return !_currentMatchViewUuid.empty() && (inChallenge() || inEncounter() || inArena()); }
+    
 
     // The general story of how we expect these events to play out is as follows:
     // 1) The user starts the combat log via /combatlog and we obtain a COMBAT_LOG_VERSION
@@ -158,7 +161,9 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 }
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
-    forceKillLogTimeoutThread();
+    if (_lastLogTimeoutThread.joinable()) {
+        _lastLogTimeoutThread.join();
+    }
 }
 
 void WoWProcessHandlerInstance::detectGameFromProcess() {
@@ -323,6 +328,10 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
 }
 
 void WoWProcessHandlerInstance::forceKillLogTimeoutThread() {
+    if (!_lastLogTimeoutRunning) {
+        return;
+    }
+
     _lastLogTimeoutRunning = false;
     if (_lastLogTimeoutThread.joinable()) {
         _lastLogTimeoutThread.join();
@@ -338,12 +347,15 @@ void WoWProcessHandlerInstance::logTimeoutHandler() {
     
     while (_lastLogTimeoutRunning) {
         {
-            std::lock_guard guard(_lastLogMutex);
-            const auto elapsed = shared::nowUtc() - _lastLogTime;
-            const auto elapsedSeconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+            const auto elapsedSeconds = [this](){
+                std::lock_guard guard(_lastLogMutex);
+                const auto elapsed = shared::nowUtc() - _lastLogTime;
+                return std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+            }();
 
             if (elapsedSeconds > wowSettings.timeoutSeconds2) {
                 LOG_INFO("!!! WoW Combat Log Timeout !!!" << std::endl);
+                _lastLogTimeoutRunning = false;
                 prematurelyEndMatch(shared::nowUtc(), false, true);
                 break;
             }
@@ -720,6 +732,16 @@ void WoWProcessHandler::manualStartLogWatching(const std::filesystem::path& path
     _instance->manualVodOverride(vodPath, vodStartTime);
     _instance->overrideCombatLogPosition(path);
     _instance->waitForLogWatcher();
+
+    // Wait for match to finish (so we can test the timeout functionality too).
+    auto inGameCheck = std::thread([this](){
+        while(_instance->hasMatchView()) {
+            LOG_INFO("...Checking for in match..." << std::endl);
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+    inGameCheck.join();
+
     onProcessStops();
 }
 
