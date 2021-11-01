@@ -36,15 +36,15 @@
 
 <script lang="ts">
 
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { version } from '@client/package.json'
-import App from '@client/vue/App.vue'
+import TopLevelComponent from '@client/vue/TopLevelComponent'
 
 @Component({
     components: {
     }
 })
-export default class WebApp extends App {
+export default class WebApp extends mixins(TopLevelComponent) {
     version: string = version
 }
 

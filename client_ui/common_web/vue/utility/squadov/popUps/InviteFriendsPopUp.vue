@@ -2,15 +2,27 @@
     <div>
         <v-dialog width="500" v-model="showInviteFriendsNotification">
             <v-card>
-                <v-card-title style="font-size: x-large"> Invite your Friends! </v-card-title>
-                <v-card-subtitle style="font-size: x-small"> Tell them to join the dark side </v-card-subtitle>
-                <v-card-text class="popUpVCardText">
+                <v-card-title style="font-size: x-large">
+                    Invite your Friends!
+                </v-card-title>
+                <v-card-subtitle style="font-size: x-small">
+                    Tell them to join the dark side.
+                </v-card-subtitle>
+                <v-card-text class="pop-up-vcard-text">
                     SquadOV is better with friends. Play, improve, and have fun
                     as a squad!
                 </v-card-text>
-                <referral-link class="referralLink"></referral-link>
+                <v-card-text
+                    class="pop-up-vcard-text"
+                    style="font-weight: italic; font-style: italic"
+                >
+                    Send your friends your referral link below:
+                </v-card-text>
+                <referral-link class="referral-link"></referral-link>
                 <v-card-actions>
-                    <a class="doNotShowButton" @click="muteFuturePopUp()">Don't Show Again</a>
+                    <a class="do-not-show-button" @click="muteFuturePopUp()"
+                        >Don't Show Again</a
+                    >
                     <v-spacer></v-spacer>
                     <v-btn @click="closeNotification()" small color="error">
                         Close
@@ -55,8 +67,7 @@ export default class InviteFriendsPopUp extends Vue {
     }
 
     @Watch('$store.state.displayInviteFriendPopUp')
-    @Watch('$store.state.currentUser')
-    @Watch('$store.state.firstTimeVisitingMatchVideo')
+    @Watch('isLoggedIn')
     checkLoginStatus() {
         if (this.isLoggedIn && !this.isInviteFriendsNotificationMuted && this.$store.state.displayInviteFriendPopUp) {
             this.showInviteFriendsNotification = true
@@ -69,15 +80,15 @@ export default class InviteFriendsPopUp extends Vue {
 }
 </script>
 <style scoped>
-    .doNotShowButton {
-        font-size: x-small;
-    }
-    .popUpVCardText {
-        font-size: large;
-    }
-    .referralLink {
-        padding-left: 20px;
-        padding-right: 20px;
-        padding-bottom: 20px;
-    }
+.do-not-show-button {
+    font-size: x-small;
+}
+.pop-up-vcard-text {
+    font-size: large;
+}
+.referral-link {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+}
 </style>

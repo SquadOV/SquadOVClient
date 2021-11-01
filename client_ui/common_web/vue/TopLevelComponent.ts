@@ -15,6 +15,10 @@ export default class TopLevelComponent extends Vue {
     @Prop({default: true})
     showNav!: boolean
 
+    get hasValidSession(): boolean {
+        return this.$store.state.hasValidSession
+    }
+
     restoreScroll(key: string) {
         if (!this.cache) {
             return

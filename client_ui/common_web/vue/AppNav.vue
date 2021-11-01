@@ -7,7 +7,6 @@
             text
             exact
             :to="homeTo"
-            @click="displayInviteFriendPopUp()"
         >
             Home
         </v-btn>
@@ -15,7 +14,7 @@
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact @click="displayInviteFriendPopUp()">
+                    <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact>
                         <v-badge
                             inline
                             left
@@ -34,7 +33,7 @@
                 <v-list dense v-if="!!m.children">
                     <template v-for="c in m.children">
                         <template v-if="!c.disabled">
-                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link" @click="displayInviteFriendPopUp()">
+                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
                                 <v-badge
                                     inline
                                     right
@@ -111,7 +110,7 @@
             </v-menu>
         </template>
 
-        <template v-else-if="!isLoggedIn">
+        <template v-else>
             <v-btn color="success" :to="registerTo">
                 Register
             </v-btn>
@@ -161,7 +160,7 @@ export default class AppNav extends mixins(CommonComponent) {
     }
 
     get isLoggedIn(): boolean {
-        return this.$store.state.currentUser
+        return !!this.$store.state.currentUser
     }
 
     get totalSquadInvites(): number {
@@ -314,12 +313,6 @@ export default class AppNav extends mixins(CommonComponent) {
 /// #else  
         return false
 /// #endif
-    }
-
-    displayInviteFriendPopUp() {
-        if(this.$store.state.successfullyVisitedVideo) {
-            this.$store.commit('displayInviteFriendPopUp', true)
-        }
     }
 
     logout() {

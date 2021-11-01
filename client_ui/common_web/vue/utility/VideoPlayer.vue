@@ -365,7 +365,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             ]
         }, () => {
             const adapter = new playerjs.VideoJSAdapter(this.player)
-            this.$store.commit('successfullyVisitedVideo', true)
             adapter.ready()
         })
 
@@ -396,6 +395,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.player.play()
                 }
             }
+            this.$store.commit('successfullyVisitedVideo', true)
             this.$emit('update:ready', true)
         })
 

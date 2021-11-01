@@ -103,12 +103,12 @@
 
 <script lang="ts">
 
-import Component from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import LicenseData from '@client/vue/LicenseData.vue'
 import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
 import rawData from '@client/package.json'
-import App from '@client/vue/App.vue'
+import TopLevelComponent from '@client/vue/TopLevelComponent'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -121,7 +121,7 @@ import { ipcRenderer } from 'electron'
         RecordingStatusWindow,
     }
 })
-export default class PrimaryApp extends App {
+export default class PrimaryApp extends mixins(TopLevelComponent) {
     version: string = rawData.version
     showHideLicenses: boolean = false
     showHideBug: boolean = false
