@@ -400,7 +400,7 @@ int main(int argc, char** argv) {
             service::zeromq::ZEROMQ_NOTIFICATION_POPUP_POST_GAME,
             nlohmann::json{
                 {"game", static_cast<int>(game)},
-                {"time", shared::timeToIso(tm)}
+                {"tm", shared::timeToIso(tm)}
             }.dump()
         );
     });

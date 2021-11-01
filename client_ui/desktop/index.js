@@ -460,7 +460,9 @@ zeromqServer.on('change-recording-games', (games) => {
 })
 
 zeromqServer.on('post-game-notification', (game) => {
-    win.webContents.send('post-game-notification', JSON.parse(game))
+    let data = JSON.parse(game)
+    data.tm = new Date(data.tm)
+    win.webContents.send('post-game-notification', data)
 })
 
 zeromqServer.on('respond-output-devices', (r) => {
