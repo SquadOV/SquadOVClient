@@ -87,3 +87,8 @@ html {
 #webAppDiv {
     height: calc(100vh);
 }
+
+.squeeze .v-input__control {
+    flex-grow: 0 !important;
+    width: inherit !important;
+}

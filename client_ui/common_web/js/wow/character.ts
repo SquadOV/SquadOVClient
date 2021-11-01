@@ -384,3 +384,47 @@ export function specIdToClassId(specId: number): number {
             return -1
     }
 }
+export enum WowRole {
+    Tank,
+    Healer,
+    Dps,
+    Unknown
+}
+
+export function specIdToRole(specId: number): WowRole {
+    switch (specId) {
+        case 65:
+        case 256:
+        case 257:
+        case 270:
+        case 105:
+        case 264:
+            return WowRole.Healer
+        case 104:
+        case 66:
+        case 73:
+        case 581:
+        case 250:
+        case 268:
+            return WowRole.Tank
+        default:
+            return WowRole.Dps
+    }
+}
+
+const WOW_TANK_SPEC_IDS = ALL_WOW_CLASSES.map((ele: number) => classToSpecIds(ele)).flat().filter((ele: number) => specIdToRole(ele) === WowRole.Tank)
+const WOW_HEALER_SPEC_IDS = ALL_WOW_CLASSES.map((ele: number) => classToSpecIds(ele)).flat().filter((ele: number) => specIdToRole(ele) === WowRole.Healer)
+const WOW_DPS_SPEC_IDS = ALL_WOW_CLASSES.map((ele: number) => classToSpecIds(ele)).flat().filter((ele: number) => specIdToRole(ele) === WowRole.Dps)
+
+export function roleToSpecIds(role: WowRole): number[] {
+    switch (role) {
+        case WowRole.Tank:
+            return WOW_TANK_SPEC_IDS
+        case WowRole.Healer:
+            return WOW_HEALER_SPEC_IDS
+        case WowRole.Dps:
+            return WOW_DPS_SPEC_IDS
+        case WowRole.Unknown:
+            return []
+    }
+}

@@ -181,11 +181,11 @@ function start() {
             if (!!appSettings.minimizeOnClose) {
                 e.preventDefault()
                 win.minimize()
+                win.webContents.send('onActiveChange', false)
             } else {
                 quit()
             }
         }
-        win.webContents.send('onActiveChange', false)
     })
 
     win.on('show', (e) => {
@@ -223,7 +223,7 @@ let zeromqServer = new ZeroMQServerClient()
 
 async function quit() {
     isQuitting = true
-    zeromqServer.close()
+    await zeromqServer.close()
     app.exit(0)
 }
 
@@ -394,6 +394,23 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
 
     editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}`)
     editorWin.show()
+})
+
+ipcMain.on('close-vod-editor', (event) => {
+    if (!!editorWin) {
+        if (editorWin.isDevToolsOpened()) {
+            editorWin.closeDevTools()
+        }
+
+        editorWin.close()
+        editorWin = null
+    }
+})
+
+ipcMain.on('redirect-to-route', (event, route) => {
+    if (!!win) {
+        win.webContents.send('redirect-to-route', route)
+    }
 })
 
 ipcMain.on('open-path-window', (event, path) => {
@@ -1011,6 +1028,7 @@ ipcMain.on('closeWindow', (event) => {
     if (event.sender.isDevToolsOpened()) {
         event.sender.closeDevTools()
     }
+    
     window.close()
 })
 

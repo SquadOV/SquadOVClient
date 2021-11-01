@@ -1302,15 +1302,6 @@ class ApiServer {
             ) AS "login", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
-                INNER JOIN squadov.user_downloads AS ud
-                    ON ud.user_id = u.id
-                LEFT JOIN squadov.user_referral_code_usage AS rcu
-                    ON rcu.email = u.email
-                WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
-            ) AS "download", (
-                SELECT COUNT(DISTINCT u.id)
-                FROM squadov.users AS u
                 INNER JOIN squadov.user_hardware_specs AS uhs
                     ON uhs.user_id = u.id
                 LEFT JOIN squadov.user_referral_code_usage AS rcu

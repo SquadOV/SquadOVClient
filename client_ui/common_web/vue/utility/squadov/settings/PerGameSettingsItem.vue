@@ -38,7 +38,7 @@
                 <v-row align="center">
                     <v-col cols="4">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.wow.useCombatLogTimeout"
                             @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds2})"
                             label="Use Combat Log Timeout"
@@ -63,6 +63,7 @@
 
                     <v-col cols="8">
                         <v-text-field
+                            class="squeeze"
                             :value="$store.state.settings.games.wow.timeoutSeconds2"
                             @change="$store.commit('changeWowLogTimeout', {use: $store.state.settings.games.wow.useCombatLogTimeout, seconds: parseInt(arguments[0])})"
                             label="Timeout"
@@ -84,31 +85,7 @@
                 <v-row align="center">
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
-                            :input-value="$store.state.settings.games.wow.useCombatLogTimeout"
-                            @change="$store.commit('changeWowLogTimeout', {use: arguments[0], seconds: $store.state.settings.games.wow.timeoutSeconds2})"
-                            label="Use Combat Log Timeout"
-                            hide-details
-                            dense
-                        >
-                            <template v-slot:append>
-                                <v-tooltip bottom max-width="450px">
-                                    <template v-slot:activator="{on, attrs}">
-                                        <v-icon v-on="on" v-bind="attrs">
-                                            mdi-help-circle
-                                        </v-icon>
-                                    </template>
-
-                                    When enabled, SquadOV will detect extended periods of time with no new data in the combat log as being the same as a match end.
-                                    Use this when you find SquadOV recording well past the end of a match (generally, until and/or including the next match).
-                                </v-tooltip>
-                            </template>
-                        </v-checkbox>
-                    </v-col>
-
-                    <v-col cols="3">
-                        <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.wow.recordArenas"
                             @change="$store.commit('changeWowRecordArenas', arguments[0])"
                             label="Record Arenas"
@@ -131,7 +108,7 @@
 
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.wow.recordKeystones"
                             @change="$store.commit('changeWowRecordKeystones', arguments[0])"
                             label="Record Keystones"
@@ -154,7 +131,7 @@
 
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.wow.recordEncounters"
                             @change="$store.commit('changeWowRecordEncounters', arguments[0])"
                             label="Record Encounters"
@@ -185,7 +162,7 @@
                 <v-row align="center">
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.valorant.recordStandard"
                             @change="$store.commit('changeValorantRecordingSettings', {standard: arguments[0]})"
                             label="Record Standard"
@@ -208,7 +185,7 @@
 
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.valorant.recordSpikeRush"
                             @change="$store.commit('changeValorantRecordingSettings', {spikeRush: arguments[0]})"
                             label="Record Spike Rush"
@@ -231,7 +208,7 @@
 
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.valorant.recordDeathmatch"
                             @change="$store.commit('changeValorantRecordingSettings', {deathmatch: arguments[0]})"
                             label="Record Deathmatch"
@@ -254,7 +231,7 @@
 
                     <v-col cols="3">
                         <v-checkbox
-                            class="ma-0"
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.valorant.recordOther"
                             @change="$store.commit('changeValorantRecordingSettings', {other: arguments[0]})"
                             label="Record Other"

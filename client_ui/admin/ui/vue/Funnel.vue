@@ -138,15 +138,9 @@ export default class Funnel extends Vue {
                 pinit: `${(this.data.login / this.data.view * 100.0).toFixed(2)}%`,
             },
             {
-                phase: 'Download',
-                count: this.data.download,
-                pprev: `${(this.data.download / this.data.login * 100.0).toFixed(2)}%`,
-                pinit: `${(this.data.download / this.data.view * 100.0).toFixed(2)}%`,
-            },
-            {
                 phase: 'Install',
                 count: this.data.install,
-                pprev: `${(this.data.install / this.data.download * 100.0).toFixed(2)}%`,
+                pprev: `${(this.data.install / this.data.login * 100.0).toFixed(2)}%`,
                 pinit: `${(this.data.install / this.data.view * 100.0).toFixed(2)}%`,
             },
             {
