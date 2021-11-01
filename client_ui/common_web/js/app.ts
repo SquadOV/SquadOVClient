@@ -901,6 +901,10 @@ ipcRenderer.on('change-recording-games', (_, games) => {
     statusTracker.refreshCurrentUserStatus()
 })
 
+ipcRenderer.on('redirect-to-route', (_, route: any) => {
+    router.push(route)
+})
+
 setInterval(() => {
     store.dispatch('recomputeLocalDiskSpaceRecordUsage')
 }, 60000)
