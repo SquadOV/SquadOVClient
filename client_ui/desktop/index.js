@@ -392,6 +392,23 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     editorWin.show()
 })
 
+ipcMain.on('close-vod-editor', (event) => {
+    if (!!editorWin) {
+        if (editorWin.isDevToolsOpened()) {
+            editorWin.closeDevTools()
+        }
+
+        editorWin.close()
+        editorWin = null
+    }
+})
+
+ipcMain.on('redirect-to-route', (event, route) => {
+    if (!!win) {
+        win.webContents.send('redirect-to-route', route)
+    }
+})
+
 ipcMain.on('open-path-window', (event, path) => {
     let pathWin = new BrowserWindow({
         width: 1600,

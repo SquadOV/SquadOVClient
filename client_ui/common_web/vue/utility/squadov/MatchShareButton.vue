@@ -1,13 +1,15 @@
 <template>
     <div v-if="!!permissions && permissions.canShare">
         <v-btn
-            icon
+            text
             color="primary"
             @click="onShow"
         >
             <v-icon>
                 mdi-share-variant
             </v-icon>
+
+            <span class="font-weight-bold ml-1">Share</span>
         </v-btn>
         <v-dialog
             v-model="showHideShare"
