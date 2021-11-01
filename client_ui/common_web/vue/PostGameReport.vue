@@ -17,6 +17,7 @@
                             :key="`recent-${idx}`"
                             :match="rMatch"
                             :style="`animation-delay: ${idx * 0.2}s`"
+                            :use-local-vod-preview="rMatch.base.isLocal"
                         >
 
                         </recent-match-display>
@@ -122,13 +123,15 @@ export default class PostGameReport extends mixins(CommonComponent) {
                 return b.base.tm.getTime() - a.base.tm.getTime()
             })
 
+            console.log('get recent matches: ', resp.data.data)
+
             // Filter out VODs with MP4s so we can be sure that processing happened on that VOD.
             this.recentMatches = resp.data.data.filter((r: RecentMatch) => {
-                return r.base.vod.videoTracks[0].segments[0].mimeType !== 'video/mp2t'
+                return r.base.isLocal || r.base.vod.videoTracks[0].segments[0].mimeType !== 'video/mp2t'
             })
 
             this.processingMatches = resp.data.data.filter((r: RecentMatch) => {
-                return r.base.vod.videoTracks[0].segments[0].mimeType === 'video/mp2t'
+                return !r.base.isLocal && r.base.vod.videoTracks[0].segments[0].mimeType === 'video/mp2t'
             })
 
 ///#if DESKTOP
