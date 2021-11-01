@@ -134,6 +134,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         return true
     }
 
+
     handleRcPacket(p: RCMessagePacket) {
         switch (p.type) {
             case RCMessageType.StopAndDestroy:
@@ -394,6 +395,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.player.play()
                 }
             }
+            this.$store.commit('successfullyVisitedVideo', true)
             this.$emit('update:ready', true)
         })
 
