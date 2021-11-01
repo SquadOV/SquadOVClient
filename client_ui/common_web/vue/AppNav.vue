@@ -49,6 +49,7 @@
                                                 }}</v-list-item-title>
                                             </v-badge>
                                         </v-list-item>
+
                                         <v-list-item
                                             :key="c.name"
                                             @click="goToLink(c.to)"
@@ -68,7 +69,7 @@
                                         </v-list-item>
                                     </div>
                                 </template>
-                                <span> Go to the Desktop Application to view these videos. </span>
+                                <span> Only available in the desktop application. </span>
                             </v-tooltip>
                         </template>
                     </template>
