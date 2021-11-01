@@ -46,53 +46,7 @@
                             @on-delete="onDeleteFinish"
                         >
                         </vod-delete-button>
-                        
-                        <v-dialog v-model="showHideDeleteConfirm" persistent max-width="40%">
-                            <v-card>
-                                <v-card-title>
-                                    Confirmation
-                                </v-card-title>
-                                <v-divider></v-divider>
-
-                                <v-card-text class="mt-4">
-                                    <div>
-                                        Are you sure you wish to delete your VOD? You and your squadmates will no longer be able to watch this match from your point of view.
-                                        This will delete the VOD from SquadOV's servers as well as from your local machine (if applicable).
-                                    </div>
-
-                                    <div class="mt-4">
-                                        Please type <span class="font-weight-bold">CONFIRM</span> (case-sensitive) to confirm this action.
-                                    </div>
-
-                                    <v-text-field
-                                        class="mt-4"
-                                        filled
-                                        label="Confirmation"
-                                        v-model="confirmationText"
-                                        hide-details
-                                    >
-                                    </v-text-field>
-                                </v-card-text>
-
-                                <v-card-actions>
-                                    <v-btn @click="hideDeleteConfirm">
-                                        Cancel
-                                    </v-btn>
-
-                                    <v-spacer></v-spacer>
-
-                                    <v-btn
-                                        color="error"
-                                        :loading="deleteInProgress"
-                                        :disabled="confirmationText != 'CONFIRM'"
-                                        @click="deleteVod"
-                                    >
-                                        Delete
-                                    </v-btn>
-                                </v-card-actions>
-                            </v-card>
-                        </v-dialog>
-
+                          
                         <v-spacer></v-spacer>
 
                         <div v-if="!!myReacts" @click="toggleLike" :class="`${isUser ? 'like-button' : ''}`">
@@ -128,6 +82,7 @@
                         </template>
 
                         <match-share-button
+                            v-if="!!clip && hasFastify"
                             :clip-uuid="clipUuid"
                             :permissions="permissions"
                             :full-path="$route.fullPath"
@@ -135,6 +90,28 @@
                             no-clip
                         >
                         </match-share-button>
+
+                        <div class="d-flex align-center" v-else>
+                            <div class="text-subtitle-2 font-weight-bold">
+                                Clip Processing...
+                            </div>
+
+                            <v-tooltip bottom :open-delay="100">
+                                <template v-slot:activator="{on, attrs}">
+                                    <div
+                                        v-on="on"
+                                        v-bind="attrs"
+                                    >
+                                        <v-progress-circular
+                                            indeterminate size="16"
+                                        >
+                                        </v-progress-circular>
+                                    </div>
+                                </template>
+
+                                This video is still being processed. You'll be able to share as soon as it's done!
+                            </v-tooltip>
+                        </div>
                     </div>
 
                     <div class="d-flex align-center">
@@ -248,14 +225,6 @@
                 >
                     Failed to comment. Please try again.
                 </v-snackbar>
-
-                <v-snackbar
-                    v-model="deleteError"
-                    :timeout="5000"
-                    color="error"
-                >
-                    Failed to delete the clip. Please try again.
-                </v-snackbar>
             </div>
         </template>
     </loading-container>
@@ -309,6 +278,7 @@ export default class ClipView extends mixins(CommonComponent) {
     vodReady: boolean = false
     onVodShowTime: Date | null = null
     timestamp: number = 0
+    hasFastify: boolean = false
 
     // Comments
     comments: ClipComment[] | null = null
@@ -429,8 +399,35 @@ export default class ClipView extends mixins(CommonComponent) {
         return !!this.nextCommentLink
     }
 
+    recheckClipFastify() {
+        apiClient.getVodFastifyStatus(this.clipUuid).then((resp: ApiData<boolean>) => {
+            this.hasFastify = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to get VOD fastify status: ', err)
+        }).finally(() => {
+            if (!this.hasFastify && this.isActive) {
+                this.startRecheckClipFastify()
+            }
+        })
+    }
+
+    @Watch('isActive')
+    onActiveChange() {
+        if (!this.hasFastify) {
+            this.recheckClipFastify()
+        }
+    }
+
+    startRecheckClipFastify() {
+        setTimeout(() => {
+            this.recheckClipFastify()
+        }, 1000 + Math.random() * 500)
+    }
+
     @Watch('clipUuid')
     refreshData() {
+        this.recheckClipFastify()
+
         apiClient.accessToken().getClip(this.clipUuid).then((resp: ApiData<VodClip>) => {
             this.clip = resp.data
         }).catch((err: any) => {
