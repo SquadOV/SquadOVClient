@@ -602,6 +602,10 @@ class ApiClient {
         })
     }
 
+    getVodFastifyStatus(videoUuid: string): Promise<ApiData<boolean>> {
+        return axios.get(`v1/vod/${videoUuid}/fastify`, this.createWebAxiosConfig(true))
+    }
+
     allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number, filters: AimlabMatchFilters}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {
         let promise = !!params.next ?
             axios.get(params.next, this.createWebAxiosConfig()) :
