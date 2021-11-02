@@ -1,5 +1,6 @@
 <template>
     <v-app-bar
+        v-if="isLoggedIn"
         dense
     >
         <v-btn

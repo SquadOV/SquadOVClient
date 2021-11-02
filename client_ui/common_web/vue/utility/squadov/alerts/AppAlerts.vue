@@ -1,5 +1,5 @@
 <template>
-    <div width="100%">
+    <div width="100%" v-if="isLoggedIn">
         <v-list width="100%" dense tile subheader>
             <email-verification-alert width="100%"> </email-verification-alert>
             <local-disk-space-usage-alert
@@ -23,6 +23,10 @@ import LocalDiskSpaceUsageAlert from '@client/vue/utility/squadov/alerts/LocalDi
     },
 })
 export default class AppAlerts extends Vue {
+
+    get isLoggedIn(): boolean {
+        return this.$store.state.currentUser
+    }
 
     setSessionAlerts() {
         if (window.sessionStorage.getItem('muteLowStorageAlert') == null) {
