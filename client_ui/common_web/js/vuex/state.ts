@@ -16,5 +16,8 @@ export interface RootState {
 /// #endif
     status: TrackedUserStatusContainer
     hasUpdate: boolean
+    muteInviteFriendsPopUp: boolean
     serviceError: boolean
+    successfullyVisitedVideo: boolean
+    displayInviteFriendPopUp: boolean
 }
