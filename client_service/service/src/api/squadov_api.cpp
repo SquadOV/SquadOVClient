@@ -614,7 +614,23 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
 }
 
 std::string SquadovApi::createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl) {
-    return "";
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", shared::json::JsonConverter<shared::wow::TypedInstanceData>::to(data) },
+        { "cl", cl.toJson() }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/instance";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW instance: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 std::string SquadovApi::finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp) {

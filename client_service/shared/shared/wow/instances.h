@@ -93,4 +93,19 @@ struct JsonConverter<shared::wow::InstanceData> {
     }
 };
 
+template<>
+struct JsonConverter<shared::wow::TypedInstanceData> {
+    static nlohmann::json to(const shared::wow::TypedInstanceData& v) {
+        const nlohmann::json data = {
+            { "id", JsonConverter<decltype(v.id)>::to(v.id) },
+            { "name", JsonConverter<decltype(v.name)>::to(v.name) },
+            { "expansion", JsonConverter<decltype(v.expansion)>::to(v.expansion) },
+            { "loadingScreenId", JsonConverter<decltype(v.loadingScreenId)>::to(v.loadingScreenId) },
+            { "instanceType", JsonConverter<int>::to(static_cast<int>(v.instanceType)) }
+        };
+
+        return data;
+    }
+};
+
 }
