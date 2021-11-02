@@ -27,6 +27,7 @@ SET(SRCS
     shared/audio/timing.cpp
     shared/system/win32/hwnd_utils.cpp
     shared/url.cpp
+    shared/strings/parse.cpp
 )
 
 SET(HEADERS
@@ -63,6 +64,7 @@ SET(HEADERS
     shared/system/win32/hwnd_utils.h
     shared/url.h
     shared/wow/instances.h
+    shared/strings/parse.h
 )
 
 add_library(squadov_shared

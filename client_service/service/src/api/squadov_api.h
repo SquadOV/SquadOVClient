@@ -90,9 +90,9 @@ public:
     std::string createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl);
     std::string finishWoWArenaMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaEnd& arena, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
     std::string createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl);
-    std::string finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp);
+    std::string finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
 
-    void convertWowInstanceViewToKeystone(const std::string& viewUuid, const game_event_watcher::WoWChallengeModeStart& keystone);
+    void convertWowInstanceViewToKeystone(const std::string& viewUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& keystone, const game_event_watcher::WoWCombatLogState& cl);
 
     // League of Legends
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;

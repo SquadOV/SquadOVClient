@@ -13,6 +13,7 @@
 #include <atomic>
 #include <VersionHelpers.h>
 #include <unordered_map>
+#include <unordered_set>
 
 #define TEST_DUMP 0
 
@@ -85,6 +86,7 @@ private:
     void onZoneChange(const shared::TimePoint& tm, const void* data);
     void onCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
+    void onSpellCastSuccess(const shared::TimePoint& tm, const void* data);
 
     void onInstanceStart(const shared::TimePoint& tm, const shared::wow::TypedInstanceData& data);
     void onInstanceEnd(const shared::TimePoint& tm);
@@ -116,6 +118,8 @@ private:
 
     std::vector<game_event_watcher::WoWCombatantInfo> _combatants;
     bool _expectingCombatants = false;
+
+    std::unordered_set<std::string> _instancePlayers;
 
     service::recorder::GameRecorderPtr _recorder;
 
@@ -156,6 +160,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::ZoneChange), std::bind(&WoWProcessHandlerInstance::onZoneChange, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::SpellCastSuccess), std::bind(&WoWProcessHandlerInstance::onSpellCastSuccess, this, std::placeholders::_1, std::placeholders::_2));
 
     if (!_process.empty()) {
         _logWatcher->loadFromExecutable(p.path());
@@ -446,7 +451,7 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
         // In this case we want to convert the instance view into a keystone view.
         // Functionally equivalent on the recording side.
         try {
-            service::api::getGlobalApi()->convertWowInstanceViewToKeystone(_currentMatchViewUuid, _currentChallenge);
+            service::api::getGlobalApi()->convertWowInstanceViewToKeystone(_currentMatchViewUuid, tm, _currentChallenge, _combatLog);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to convert instance to WoW challenge: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
         }
@@ -666,6 +671,7 @@ void WoWProcessHandlerInstance::onInstanceStart(const shared::TimePoint& tm, con
     }
 
     _currentInstance = data;
+    _instancePlayers.clear();
     LOG_INFO("WoW Instance Start [" <<  shared::timeToStr(tm) << "]: " << _currentInstance.value() << std::endl);;
     _matchStartTime = tm;
     genericMatchStart(tm);
@@ -680,8 +686,17 @@ void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
     LOG_INFO("WoW Instance End [" <<  shared::timeToStr(tm) << "]: " << _currentInstance.value() << std::endl);
     std::string matchUuid;
     if (!_currentMatchViewUuid.empty()) {
+        std::vector<game_event_watcher::WoWCombatantInfo> combatants;
+        combatants.reserve(_instancePlayers.size());
+
+        for (const auto& guid: _instancePlayers) {
+            combatants.push_back(game_event_watcher::WoWCombatantInfo{
+                guid
+            });
+        }
+
         try {
-            matchUuid = service::api::getGlobalApi()->finishWowInstanceMatch(_currentMatchViewUuid, tm);
+            matchUuid = service::api::getGlobalApi()->finishWowInstanceMatch(_currentMatchViewUuid, tm, combatants);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to finish WoW instance: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
             matchUuid.clear();
@@ -719,6 +734,15 @@ void WoWProcessHandlerInstance::onFinishCombatantInfo(const shared::TimePoint& t
 
     LOG_INFO("WoW Finish Combatant Info [" << shared::timeToStr(tm) << "]" << std::endl);
     _expectingCombatants = false;
+}
+
+void WoWProcessHandlerInstance::onSpellCastSuccess(const shared::TimePoint& tm, const void* data) {
+    if (!_currentInstance) {
+        return;
+    }
+
+    const auto cast = reinterpret_cast<const game_event_watcher::WowSpellCastSuccess*>(data);
+    _instancePlayers.insert(cast->src.guid);
 }
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {

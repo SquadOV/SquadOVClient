@@ -4,6 +4,7 @@
 #include "shared/errors/error.h"
 #include "shared/version.h"
 #include "shared/time/ntp_client.h"
+#include "shared/strings/parse.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <vector>
@@ -156,6 +157,25 @@ bool parseZoneChange(const RawWoWCombatLog& log, WoWZoneChange& zone) {
 
     zone.instanceId = std::stoi(log.log[1]);
     zone.zoneName = log.log[2];
+    return true;
+}
+
+bool parseSpellCastSuccess(const RawWoWCombatLog& log, WowSpellCastSuccess& cast) {
+    if (log.log[0] != "SPELL_CAST_SUCCESS") {
+        return false;
+    }
+
+    // Only parse the source and only if it's a player.
+    // If it's not a player then we can possibly fuck up in parsing the name since the simple
+    // split on commas won't work in that case.
+    if (log.log[1].rfind("Player-") != 0) {
+        return false;
+    }
+
+    cast.src.guid = log.log[1];
+    cast.src.name = log.log[2];
+    cast.src.flags = shared::strings::parseInt64FromString(log.log[3]);
+    cast.src.raidFlags = shared::strings::parseInt64FromString(log.log[4]);
     return true;
 }
 
@@ -379,6 +399,16 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
 
         // Every log line needs to get passed to the CombatLogLine event
         notify(static_cast<int>(EWoWLogEvents::CombatLogLine), log.timestamp, (void*)&log, true, true);
+
+        // Check for SPELL_CAST_SUCCESS specifically - we use this to determine who's in the match if the
+        // content in question does not spit out COMBATANT_INFO lines.
+        if (!parsed) {
+            WowSpellCastSuccess cast;
+            if (parseSpellCastSuccess(log, cast)) {
+                notify(static_cast<int>(EWoWLogEvents::SpellCastSuccess), log.timestamp, (void*)&cast);
+                parsed = true;
+            }
+        }
 
         // We need to send the "X_END" events after we send the combat log line as the log line only gets 
         // sent if a match is active. Thus if we end the match, no log line will be sent and we want to send
