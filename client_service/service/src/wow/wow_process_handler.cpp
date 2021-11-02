@@ -701,6 +701,8 @@ void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
             LOG_WARNING("Failed to finish WoW instance: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
             matchUuid.clear();
         }
+
+        _instancePlayers.clear();
     } else {
         LOG_WARNING("\tNo match UUID for instance end?" << std::endl);
     }
@@ -742,7 +744,10 @@ void WoWProcessHandlerInstance::onSpellCastSuccess(const shared::TimePoint& tm, 
     }
 
     const auto cast = reinterpret_cast<const game_event_watcher::WowSpellCastSuccess*>(data);
-    _instancePlayers.insert(cast->src.guid);
+    // 0x500 = 0x400 (object type player) + 0x100 (player control)
+    if ((cast->src.guid.rfind("Player-") == 0) && (cast->src.flags & 0x500)) {
+        _instancePlayers.insert(cast->src.guid);
+    }
 }
 
 void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
