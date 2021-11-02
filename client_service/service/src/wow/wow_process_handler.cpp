@@ -8,6 +8,7 @@
 #include "shared/http/http_client.h"
 #include "shared/version.h"
 #include "shared/env.h"
+#include "shared/wow/instances.h"
 
 #include <atomic>
 #include <VersionHelpers.h>
@@ -39,7 +40,7 @@ public:
 
     shared::EGame game() const { return _finalGame; }
 
-    bool inMatch() const { return hasMatchView() && (inChallenge() || inEncounter() || inArena()); }
+    bool inMatch() const { return hasMatchView() && (inChallenge() || inEncounter() || inArena() || _currentInstance); }
     bool hasMatchView() const { return !_currentMatchViewUuid.empty(); }
 
 private:
@@ -85,6 +86,9 @@ private:
     void onCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
 
+    void onInstanceStart(const shared::TimePoint& tm, const shared::wow::TypedInstanceData& data);
+    void onInstanceEnd(const shared::TimePoint& tm);
+
     void genericMatchStart(const shared::TimePoint& tm);
     void genericMatchEnd(const std::string& matchUuid, const shared::TimePoint& tm);
     void prematurelyEndMatch(const shared::TimePoint& tm, bool isZoneChange, bool isTimeout);
@@ -108,6 +112,7 @@ private:
     game_event_watcher::WoWChallengeModeStart _currentChallenge;
     game_event_watcher::WoWEncounterStart _currentEncounter;
     game_event_watcher::WoWArenaStart _currentArena;
+    std::optional<shared::wow::TypedInstanceData> _currentInstance;
 
     std::vector<game_event_watcher::WoWCombatantInfo> _combatants;
     bool _expectingCombatants = false;
@@ -118,8 +123,7 @@ private:
     std::filesystem::path _manualVodPath;
     shared::TimePoint _manualVodStartTime;
 
-    // Set of known zones and whether zoning there should qualify as a map change.
-    std::unordered_map<int, bool> _instanceIdIsMatchEnd;
+    std::unordered_map<int, shared::wow::TypedInstanceData> _instanceIdToData;
 
     shared::EGame _finalGame = shared::EGame::Unknown;
 #ifndef NDEBUG
@@ -425,7 +429,7 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
         return;
     }
 
-    if (!hasValidCombatLog() || inMatch()) {
+    if (!hasValidCombatLog()) {
         return;
     }
 
@@ -436,10 +440,24 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
     }
 
     _currentChallenge = *reinterpret_cast<const game_event_watcher::WoWChallengeModeStart*>(data);
-    _matchStartTime = tm;
     LOG_INFO("WoW Challenge Start [" <<  shared::timeToStr(tm) << "]: " << _currentChallenge << std::endl);
     _expectingCombatants = true;
-    genericMatchStart(tm);
+    if (inMatch() && _currentInstance) {
+        // In this case we want to convert the instance view into a keystone view.
+        // Functionally equivalent on the recording side.
+        try {
+            service::api::getGlobalApi()->convertWowInstanceViewToKeystone(_currentMatchViewUuid, _currentChallenge);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to convert instance to WoW challenge: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
+        }
+        _currentInstance = std::nullopt;
+    } else if (!inMatch()) {
+        _matchStartTime = tm;
+        genericMatchStart(tm);
+    } else {
+        _currentChallenge = {};
+        _expectingCombatants = false;
+    }
 }
 
 void WoWProcessHandlerInstance::onChallengeModeEnd(const shared::TimePoint& tm, const void* data) {
@@ -519,7 +537,9 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
 
 void WoWProcessHandlerInstance::prematurelyEndMatch(const shared::TimePoint& tm, bool isZoneChange, bool isTimeout) {
     std::lock_guard guard(_currentMatchMutex);
-    if (inArena()) {
+    if (_currentInstance) {
+        onInstanceEnd(tm);
+    } else if (inArena()) {
         game_event_watcher::WoWArenaEnd end;
         end.winningTeamId = (_currentArena.localTeamId + 1) % 2;
         end.matchDurationSeconds = static_cast<int>(std::chrono::duration_cast<std::chrono::seconds>(tm - _matchStartTime).count());
@@ -547,46 +567,131 @@ void WoWProcessHandlerInstance::prematurelyEndMatch(const shared::TimePoint& tm,
 
 void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const void* data) {
     std::lock_guard guard(_currentMatchMutex);
-    bool isMatchEnd = hasValidCombatLog() && (inArena() || inChallenge() || inEncounter());
+    bool canMatchEnd = hasValidCombatLog() && (inArena() || inChallenge() || inEncounter() || _currentInstance);
 
-    if (!isMatchEnd || !data) {
+    if (!data) {
         return;
     }
 
     const auto zoneData = *reinterpret_cast<const game_event_watcher::WoWZoneChange*>(data);
 
-    // We need to check that we're zoning out of the instance to qualify this as a match ender. Note that we 
-    // assume that we only have instances/arenas on the server - maybe we should check instance type one day.
-    if (_instanceIdIsMatchEnd.find(zoneData.instanceId) == _instanceIdIsMatchEnd.end()) {
+    // Pre-emptively create the client that we'll use to grab additional information about the instance.
+    // Note that we won't necessarily need to use it if this data is cached for example.
+    std::ostringstream path;
+    path << "/wow/"; 
+
+    // We shouldn't ever need the final WoW condition unless the detect WoW game from process function failed at construction.
+    if (game() == shared::EGame::WoW) {
+        path << "9.1.0";
+    } else if (game() == shared::EGame::WowVanilla) {
+        path << "1.13.7";
+    } else if (game() == shared::EGame::WowTbc) {
+        path << "2.5.2";
+    }
+
+    path << "/instances/" << zoneData.instanceId << "/data.json";
+
+    shared::http::HttpClient client("https://us-central1.content.squadov.gg");
+    client.setTimeout(30);
+
+    if (_instanceIdToData.find(zoneData.instanceId) == _instanceIdToData.end()) {
         try {
-            std::ostringstream path;
-            path << "/wow/"; 
-
-            // We shouldn't ever need the final WoW condition unless the detect WoW game from process function failed at construction.
-            if (game() == shared::EGame::WoW) {
-                path << "9.1.0";
-            } else if (game() == shared::EGame::WowVanilla) {
-                path << "1.13.7";
-            } else if (game() == shared::EGame::WowTbc) {
-                path << "2.5.2";
-            }
-            
-            path << "/instances/" << zoneData.instanceId << "/data.json";
-
-            shared::http::HttpClient client("https://us-central1.content.squadov.gg");
-            client.setTimeout(30);
-
             auto resp = client.get(path.str());
-            _instanceIdIsMatchEnd[zoneData.instanceId] = (resp->status != 200);
+
+            const auto parsedJson = nlohmann::json::parse(resp->body);
+            const auto instanceData = shared::json::JsonConverter<shared::wow::InstanceData>::from(parsedJson).toTyped();
+            _instanceIdToData[zoneData.instanceId] = instanceData;
         } catch (std::exception& ex) {
-            LOG_WARNING("Failed to send HTTP request to check zone info: " << ex.what() << std::endl);
-            _instanceIdIsMatchEnd[zoneData.instanceId] = true;
+            LOG_WARNING("Failed to send HTTP request to check instance type: " << ex.what() << std::endl);
         }
     }
 
-    const auto isMatchEnder = _instanceIdIsMatchEnd[zoneData.instanceId];
-    LOG_INFO("Using Zone Change as Match End: " << isMatchEnder << std::endl);
-    prematurelyEndMatch(tm, isMatchEnder, false);
+    const auto it = _instanceIdToData.find(zoneData.instanceId);
+    if (canMatchEnd) {
+        // As long as we instance somewhere into something that we aren't generally recording
+        // that'll probably be fine to determine if we want to end recording. I'm assuming
+        // it's impossible to go from a party dungeon to a raid dungeon for example.
+        const auto isMatchEnder = (it == _instanceIdToData.end()) ||
+            (it->second.instanceType == shared::wow::InstanceType::NotInstanced) ||
+            (it->second.instanceType == shared::wow::InstanceType::Unknown);
+        LOG_INFO("Using Zone Change as Match End: " << isMatchEnder << std::endl);
+        prematurelyEndMatch(tm, isMatchEnder, false);
+    } else if (hasValidCombatLog() && !_currentInstance) {
+        if (it == _instanceIdToData.end()) {
+            LOG_WARNING("...Failed to find data for zone: " << zoneData.instanceId << " [" << zoneData.zoneName << "]" << std::endl);
+            return;
+        }
+
+        const auto instanceType = it->second.instanceType;
+        // Did we zone into an instance that we might want to record??
+        // There's a couple of instance types that we care about:
+        //  1) Arenas.
+        //  2) RBGs.
+        //  3) Dungeons.
+        //  4) Raids.
+        // Note that we're going to be generally relying on the hope that the combat log
+        // won't ever timeout in the middle of running any of this content and the only
+        // possible timeout will happen AFTER the user zones out.
+        //
+        // In the case of raids, we want to give users the option to either record the entire
+        // instance or just singular encounters because they might want to review boss fights
+        // immediately afterwards rather than waiting for the raid to finish.
+        //
+        // In the case of dungeons, generally we expect users to run the whole thing through so
+        // this can be on by default. Note that if we detect that we're actually running a keystone
+        // then we'll need to convert the instance to a keystone run.
+        //
+        // In the case of arenas, this will only be necessary in WoW classic where the ARENA_MATCH_START/STOP
+        // markers in the combat log do not exist.
+        //
+        // There's nothing special of note for RBGs.
+        const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+        if (
+            ((instanceType == shared::wow::InstanceType::RaidDungeon) && wowSettings.recordFullRaids) ||
+            (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordKeystones) ||
+            ((instanceType == shared::wow::InstanceType::ArenaBattlefield) && shared::isWowClassic(_finalGame) && wowSettings.recordArenas) ||
+            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordArenas)
+        ) {
+            onInstanceStart(tm, it->second);
+        }
+    }
+}
+
+void WoWProcessHandlerInstance::onInstanceStart(const shared::TimePoint& tm, const shared::wow::TypedInstanceData& data) {
+    // Don't do a lock on the _currentMatchMutex because the only place
+    // this gets called is in zone change which already locks that mutex.
+
+    if (service::system::getGlobalState()->isPaused() || _currentInstance) {
+        return;
+    }
+
+    _currentInstance = data;
+    LOG_INFO("WoW Instance Start [" <<  shared::timeToStr(tm) << "]: " << _currentInstance.value() << std::endl);;
+    _matchStartTime = tm;
+    genericMatchStart(tm);
+}
+
+void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
+    std::lock_guard guard(_currentMatchMutex);
+    if (!_currentInstance) {
+        return;
+    }
+
+    LOG_INFO("WoW Instance End [" <<  shared::timeToStr(tm) << "]: " << _currentInstance.value() << std::endl);
+    std::string matchUuid;
+    if (!_currentMatchViewUuid.empty()) {
+        try {
+            matchUuid = service::api::getGlobalApi()->finishWowInstanceMatch(_currentMatchViewUuid, tm);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to finish WoW instance: " << ex.what() << "\t" << _currentMatchViewUuid << std::endl);
+            matchUuid.clear();
+        }
+    } else {
+        LOG_WARNING("\tNo match UUID for instance end?" << std::endl);
+    }
+
+    _currentInstance = std::nullopt;
+    genericMatchEnd(matchUuid, tm);
 }
 
 void WoWProcessHandlerInstance::onCombatantInfo(const shared::TimePoint& tm, const void* data) {
@@ -636,22 +741,27 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
-        if (inChallenge()) {
+        if (_currentInstance) {
+            _currentMatchViewUuid = service::api::getGlobalApi()->createWowInstanceMatch(_matchStartTime, _currentInstance.value(), _combatLog);
+        } else if (inChallenge()) {
             _currentMatchViewUuid = service::api::getGlobalApi()->createWoWChallengeMatch(_matchStartTime, _currentChallenge, _combatLog);
         } else if (inEncounter()) {
             _currentMatchViewUuid = service::api::getGlobalApi()->createWoWEncounterMatch(_matchStartTime, _currentEncounter, _combatLog);
         } else if (inArena()) {
             _currentMatchViewUuid = service::api::getGlobalApi()->createWoWArenaMatch(_matchStartTime, _currentArena, _combatLog);
         } else {
-            THROW_ERROR("Match start without challenge or encounter or arena." << std::endl);
+            THROW_ERROR("Match start without challenge or encounter or arena or instance." << std::endl);
         }
         LOG_INFO("\tWoW Match View Uuid: " << _currentMatchViewUuid << std::endl);
     } catch (std::exception& ex) {
-        LOG_WARNING("Failed to create WoW challenge/encounter/arena: " << ex.what() << std::endl
+        LOG_WARNING("Failed to create WoW challenge/encounter/arena/instance: " << ex.what() << std::endl
             << "\tChallenge: " << _currentChallenge << std::endl
             << "\tEncounter: " << _currentEncounter << std::endl
             << "\tArena: " << _currentArena << std::endl
             << "\tCombatants: " << _combatants << std::endl);
+        if (_currentInstance) {
+            LOG_WARNING("\tInstance: " << _currentInstance.value() << std::endl);
+        }
         return;
     }
 

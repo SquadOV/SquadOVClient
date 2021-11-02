@@ -62,6 +62,7 @@ SET(HEADERS
     shared/audio/timing.h
     shared/system/win32/hwnd_utils.h
     shared/url.h
+    shared/wow/instances.h
 )
 
 add_library(squadov_shared

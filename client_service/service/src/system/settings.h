@@ -60,6 +60,7 @@ struct WowSettings {
     bool recordArenas = true;
     bool recordKeystones = true;
     bool recordEncounters = true;
+    bool recordFullRaids = false;
 
     static WowSettings fromJson(const nlohmann::json& obj);
 };

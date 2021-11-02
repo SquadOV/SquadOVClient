@@ -613,6 +613,18 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
     return "";
 }
 
+std::string SquadovApi::createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl) {
+    return "";
+}
+
+std::string SquadovApi::finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp) {
+    return "";
+}
+
+void SquadovApi::convertWowInstanceViewToKeystone(const std::string& viewUuid, const game_event_watcher::WoWChallengeModeStart& keystone) {
+
+}
+
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {
     {
         std::lock_guard guard(_riotAccountOwnershipMutex);

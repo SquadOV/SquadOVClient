@@ -25,5 +25,6 @@ std::string gameToString(EGame game);
 std::string gameToIconString(EGame game);
 std::vector<EGame> gameSetToVector(const EGameSet& set);
 nlohmann::json gameVectorToJsonArray(const std::vector<EGame>& games);
+bool isWowClassic(EGame game);
 
 }
