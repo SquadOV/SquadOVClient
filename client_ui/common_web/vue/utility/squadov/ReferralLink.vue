@@ -8,6 +8,7 @@
             dense
             readonly
             ref="urlInput"
+            @click="doCopy"
         >
             <template v-slot:append-outer>
                 <v-btn
