@@ -186,33 +186,6 @@
                         >
                         </video-player>
 
-                        <template v-if="!!clipUuid">
-                            <v-text-field
-                                class="mt-2"
-                                :value="clipShareUrl"
-                                :loading="!clipShareUrl"
-                                :success-messages="shareMessages"
-                                single-line
-                                outlined
-                                dense
-                                readonly
-                                ref="urlInput"
-                            >
-                                <template v-slot:append-outer>
-                                    <v-btn
-                                        icon
-                                        color="success"
-                                        @click="doCopy"
-                                        :disabled="!clipShareUrl"
-                                    >
-                                        <v-icon>
-                                            mdi-content-copy
-                                        </v-icon>
-                                    </v-btn>
-                                </template>
-                            </v-text-field>
-                        </template>
-
                         <v-form v-model="formValid">
                             <v-text-field
                                 v-model="clipTitle"
@@ -253,17 +226,6 @@
                             Save
                         </v-btn>
                     </v-card-actions>
-
-                    <v-card-actions v-else>
-                        <v-spacer></v-spacer>
-
-                        <v-btn
-                            color="success"
-                            @click="cancelClip"
-                        >
-                            Finish
-                        </v-btn>
-                    </v-card-actions>
                 </template>
             </v-card>
         </v-dialog>
@@ -274,14 +236,6 @@
             color="error"
         >
             Failed to create the clip. Please try again (and submit a bug report!).
-        </v-snackbar>
-
-        <v-snackbar
-            v-model="shareError"
-            :timeout="5000"
-            color="error"
-        >
-            Failed to generate a URL for sharing the clip.
         </v-snackbar>
 
         <v-snackbar
@@ -309,11 +263,11 @@ import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 
 ///#if DESKTOP
 import fs from 'fs'
+import { ipcRenderer } from 'electron'
 ///#endif
 import { apiClient, ApiData } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
-import { LinkShareData } from '@client/js/squadov/share'
 
 const MAX_CLIP_LENGTH_MILLISECONDS = 180000
 
@@ -361,9 +315,6 @@ export default class VodEditor extends mixins(CommonComponent) {
     saveInProgress: boolean = false
 
     clipUuid: string | null = null
-    clipShareUrl: string | null = null
-    shareMessages: string[] = []
-    shareError: boolean = false
     badClipState: boolean = false
 
     $refs!: {
@@ -382,16 +333,6 @@ export default class VodEditor extends mixins(CommonComponent) {
 
     get intervalTicks(): number {
         return 10
-    }
-
-    doCopy() {
-        let inputEle = this.$refs.urlInput.$el.querySelector('input')
-        inputEle.select()
-        document.execCommand('copy')
-        this.shareMessages = ['Copied URL to clipboard!']
-        setTimeout(() => {
-            this.shareMessages = []
-        }, 5000)
     }
 
     enabled(): boolean {
@@ -572,7 +513,6 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.localClipPath = null
         this.metadata = null
         this.clipUuid = null
-        this.clipShareUrl = null
     }
 
     saveClip() {
@@ -593,6 +533,11 @@ export default class VodEditor extends mixins(CommonComponent) {
             isLocal: false,
         }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
+
+            // At this point it's better for UX to redirect to the clip page - and we'd rather do this in the main window
+            // rather than the pop-up clipping window.
+            ipcRenderer.send('redirect-to-route', this.clipPathTo)
+            ipcRenderer.send('close-vod-editor')
         }).catch((err: any) => {
             this.clipError = true
             console.error('Failed to create clip: ', err)
@@ -608,21 +553,6 @@ export default class VodEditor extends mixins(CommonComponent) {
                 clipUuid: this.clipUuid
             }
         }
-    }
-
-    @Watch('clipUuid')
-    refreshClipShareUrl() {
-        this.clipShareUrl = null
-        if (!this.clipUuid) {
-            return
-        }
-
-        apiClient.createClipShareUrl(this.clipUuid, this.$router.resolve(this.clipPathTo).route.fullPath).then((resp: ApiData<LinkShareData>) => {
-            this.clipShareUrl = resp.data.shareUrl
-        }).catch((err: any) => {
-            console.error('Failed to get share URL for clip: ', err)
-            this.shareError = true
-        })
     }
 
     doClip() {

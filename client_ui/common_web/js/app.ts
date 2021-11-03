@@ -781,7 +781,10 @@ router.beforeEach((to : Route, from : Route, next : any) => {
 
     let isTmpSession = apiClient.hasTempSession || !!apiClient._accessToken
     let isAuth = !!store.state.currentUser
-
+    
+    if(store.state.successfullyVisitedVideo){
+        displayInviteFriendPopUp()
+    }
 /// #if DESKTOP
     next()
 /// #else
@@ -901,6 +904,10 @@ ipcRenderer.on('change-recording-games', (_, games) => {
     statusTracker.refreshCurrentUserStatus()
 })
 
+ipcRenderer.on('redirect-to-route', (_, route: any) => {
+    router.push(route)
+})
+
 setInterval(() => {
     store.dispatch('recomputeLocalDiskSpaceRecordUsage')
 }, 60000)
@@ -944,4 +951,8 @@ console.log('Loading Vue Application - Web')
 
 export function getActiveUserId(): number {
     return apiClient.hasTempSession ? apiClient._tempUserId! : store.state.currentUser?.id!
+}
+
+function displayInviteFriendPopUp() {
+    store.commit('displayInviteFriendPopUp', true)
 }

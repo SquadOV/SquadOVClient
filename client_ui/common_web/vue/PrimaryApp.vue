@@ -1,15 +1,14 @@
 <template>
     <div id="appInner">
-        <template v-if="userLoaded">    
-            <app-nav class="flex-grow-0" v-if="showNav"></app-nav>
-            <app-alerts width="100%"></app-alerts>
+        <template v-if="userLoaded">
             <v-banner
                 v-if="$store.state.serviceError"
                 single-line
                 sticky
                 color="error"
             >
-                The local service encountered an unexpected error, please restart SquadOV and try again.
+                The local service encountered an unexpected error, please
+                restart SquadOV and try again.
             </v-banner>
 
             <v-banner
@@ -18,32 +17,31 @@
                 sticky
                 color="primary"
             >
-                <div
-                    class="d-flex align-center"
-                >
-                    An update for SquadOV is available. Please restart SquadOV to install it.
+                <div class="d-flex align-center">
+                    An update for SquadOV is available. Please restart SquadOV
+                    to install it.
                     <v-spacer></v-spacer>
-                    <v-btn
-                        solo
-                        @click="restart"
-                    >
-                        Restart Now
-                    </v-btn>
+                    <v-btn solo @click="restart"> Restart Now </v-btn>
                 </div>
             </v-banner>
-            
+
             <div class="d-flex flex-column flex-grow-1">
                 <router-view></router-view>
             </div>
 
             <div id="footer" class="flex-grow-0 py-1" v-if="showNav">
                 <div class="text-center ma-0 text-overline footer-text">
-                    SquadOV v{{ version }} - Created with <i class="fas fa-heart"></i> by gamers for gamers.
+                    SquadOV v{{ version }} - Created with
+                    <i class="fas fa-heart"></i> by gamers for gamers.
                 </div>
 
                 <div class="d-flex justify-center ma-0 text-overline">
-                    <v-dialog v-model="showHideLicenses" persistent max-width="80%">
-                        <template v-slot:activator="{on , attrs}">
+                    <v-dialog
+                        v-model="showHideLicenses"
+                        persistent
+                        max-width="80%"
+                    >
+                        <template v-slot:activator="{ on, attrs }">
                             <v-btn
                                 color="primary"
                                 x-small
@@ -54,12 +52,10 @@
                                 Licenses
                             </v-btn>
                         </template>
-                        
+
                         <v-card>
-                            <v-card-title>
-                                Licenses
-                            </v-card-title>
-                            
+                            <v-card-title> Licenses </v-card-title>
+
                             <license-data></license-data>
 
                             <v-card-actions>
@@ -75,12 +71,8 @@
                     </v-dialog>
                 </div>
 
-                <v-dialog
-                    v-model="showHideBug"
-                    persistent
-                    max-width="60%"
-                >
-                    <template v-slot:activator="{on, attrs}">
+                <v-dialog v-model="showHideBug" persistent max-width="60%">
+                    <template v-slot:activator="{ on, attrs }">
                         <v-btn
                             v-on="on"
                             v-bind="attrs"
@@ -88,30 +80,21 @@
                             id="bugreport"
                             color="error"
                         >
-                            <v-icon>
-                                mdi-bug
-                            </v-icon>
+                            <v-icon> mdi-bug </v-icon>
                             Report a Bug
                         </v-btn>
                     </template>
-                    <bug-reporter
-                        @cancel="showHideBug = false"
-                    ></bug-reporter>
+                    <bug-reporter @cancel="showHideBug = false"></bug-reporter>
                 </v-dialog>
-    
-                <recording-status-window
-                    id="recording"
-                >
+
+                <recording-status-window id="recording">
                 </recording-status-window>
             </div>
         </template>
-        
+
         <v-container v-else>
             <v-row justify="center" align="center">
-                <v-progress-circular
-                    size="64"
-                    indeterminate
-                >
+                <v-progress-circular size="64" indeterminate>
                 </v-progress-circular>
             </v-row>
         </v-container>
@@ -120,14 +103,12 @@
 
 <script lang="ts">
 
-import Component, {mixins} from 'vue-class-component'
-import AppNav from '@client/vue/AppNav.vue'
+import Component, { mixins } from 'vue-class-component'
 import LicenseData from '@client/vue/LicenseData.vue'
 import BugReporter from '@client/vue/BugReporter.vue'
 import RecordingStatusWindow from '@client/vue/utility/RecordingStatusWindow.vue'
 import rawData from '@client/package.json'
 import TopLevelComponent from '@client/vue/TopLevelComponent'
-import AppAlerts from '@client/vue/utility/squadov/alerts/AppAlerts.vue'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -135,22 +116,20 @@ import { ipcRenderer } from 'electron'
 
 @Component({
     components: {
-        AppNav,
         LicenseData,
         BugReporter,
         RecordingStatusWindow,
-        AppAlerts,
     }
 })
 export default class PrimaryApp extends mixins(TopLevelComponent) {
     version: string = rawData.version
     showHideLicenses: boolean = false
     showHideBug: boolean = false
-    
+
     get userLoaded(): boolean {
         return !!this.$store.state.currentUser
     }
-    
+
     restart() {
 /// #if DESKTOP
         ipcRenderer.send('request-restart')
@@ -161,7 +140,6 @@ export default class PrimaryApp extends mixins(TopLevelComponent) {
 </script>
 
 <style scoped>
-
 #bugreport {
     position: fixed;
     bottom: 0px;
@@ -183,5 +161,4 @@ export default class PrimaryApp extends mixins(TopLevelComponent) {
     border-bottom-left-radius: 0px;
     border-bottom-right-radius: 0px;
 }
-
 </style>

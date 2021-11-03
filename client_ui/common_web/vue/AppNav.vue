@@ -1,6 +1,20 @@
 <template>
+<<<<<<< HEAD
     <v-app-bar dense>
         <v-btn text exact :to="homeTo"> Home </v-btn>
+=======
+    <v-app-bar
+        v-if="isLoggedIn"
+        dense
+    >
+        <v-btn
+            text
+            exact
+            :to="homeTo"
+        >
+            Home
+        </v-btn>
+>>>>>>> origin/master
 
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">

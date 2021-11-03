@@ -64,7 +64,6 @@ html {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: auto !important;
 }
 
 .v-input--dense.v-text-field--outlined .v-chip {
@@ -86,4 +85,9 @@ html {
 
 #webAppDiv {
     height: calc(100vh);
+}
+
+.squeeze .v-input__control {
+    flex-grow: 0 !important;
+    width: inherit !important;
 }

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div v-if="isLoggedIn">
         <v-alert
             v-if="showEmailVerification"
             class="pa-2 ma-0"

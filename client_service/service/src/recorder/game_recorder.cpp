@@ -840,7 +840,9 @@ void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameReco
     const auto ffmpegBinary = std::filesystem::path(shared::getEnv("FFMPEG_BINARY_PATH", ""));
     if (fs::exists(ffmpegBinary)) {
         const auto startMs = std::chrono::duration_cast<std::chrono::milliseconds>(_manualVodRecordStart - _manualVodTimeStart).count();
-        const auto toMs = std::chrono::duration_cast<std::chrono::milliseconds>(endTm - _manualVodTimeStart).count();
+
+        // This is kind of hacky to handle instances where we timeout and we might not get a proper timeout time. Yolo.
+        const auto toMs = startMs + std::min(std::chrono::duration_cast<std::chrono::milliseconds>(endTm - _manualVodTimeStart).count() - startMs, static_cast<int64_t>(30 * 60 * 1000));
 
         std::ostringstream ffmpegCommand;
         ffmpegCommand << "\"\"" << ffmpegBinary.string() << "\""

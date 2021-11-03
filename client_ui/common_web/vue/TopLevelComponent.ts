@@ -15,14 +15,8 @@ export default class TopLevelComponent extends Vue {
     @Prop({default: true})
     showNav!: boolean
 
-    get appInnerStyle(): any {
-        if (this.showNav) {
-            return {
-                'overflow': 'auto'
-            }
-        } else {
-            return {}
-        }
+    get hasValidSession(): boolean {
+        return this.$store.state.hasValidSession
     }
 
     restoreScroll(key: string) {

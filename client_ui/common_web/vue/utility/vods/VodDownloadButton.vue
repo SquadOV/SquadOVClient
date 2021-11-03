@@ -70,7 +70,7 @@ export default class VodDownloadButton extends mixins(CommonComponent) {
     videoUuid!: string
 
     @Prop({ required: true})
-    track: vod.VodTrack | null = null
+    track!: vod.VodTrack | null
 
     localVodLocation: string | null = null
     downloadProgress: number | null = null
