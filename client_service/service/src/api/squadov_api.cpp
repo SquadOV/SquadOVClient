@@ -677,7 +677,7 @@ void SquadovApi::convertWowInstanceViewToKeystone(const std::string& viewUuid, c
     path << "/v1/wow/match/instance/" << viewUuid << "/convert/keystone";
     const auto result = _webClient->post(path.str(), body);
 
-    if (result->status != 200) {
+    if (result->status != 204) {
         THROW_ERROR("Failed to create WoW challenge: " << result->status);
         return;
     }

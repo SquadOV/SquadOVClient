@@ -4,7 +4,6 @@
 #include "shared/errors/error.h"
 #include "shared/version.h"
 #include "shared/time/ntp_client.h"
-#include "shared/strings/parse.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 #include <vector>
@@ -174,8 +173,8 @@ bool parseSpellCastSuccess(const RawWoWCombatLog& log, WowSpellCastSuccess& cast
 
     cast.src.guid = log.log[1];
     cast.src.name = log.log[2];
-    cast.src.flags = shared::strings::parseInt64FromString(log.log[3]);
-    cast.src.raidFlags = shared::strings::parseInt64FromString(log.log[4]);
+    cast.src.flags = std::stoll(log.log[3], nullptr, 16);
+    cast.src.raidFlags = std::stoll(log.log[4], nullptr, 16);
     return true;
 }
 
@@ -405,7 +404,8 @@ void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
         if (!parsed) {
             WowSpellCastSuccess cast;
             if (parseSpellCastSuccess(log, cast)) {
-                notify(static_cast<int>(EWoWLogEvents::SpellCastSuccess), log.timestamp, (void*)&cast);
+                // This is goign to be quite noisy hence we need to manually override and make it quiet.
+                notify(static_cast<int>(EWoWLogEvents::SpellCastSuccess), log.timestamp, (void*)&cast, true, true);
                 parsed = true;
             }
         }

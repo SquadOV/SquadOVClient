@@ -866,19 +866,22 @@ void GameRecorder::stopFromSource(const shared::TimePoint& endTm, const GameReco
     _currentId.reset(nullptr);
     _outputPiper->wait();
 
-    shared::squadov::VodAssociation association;
-    association.matchUuid = end.matchUuid;
-    association.userUuid = service::api::getGlobalApi()->getCurrentUserCached().uuid;
-    association.videoUuid = vodId.videoUuid;
-    association.startTime = vodStartTime;
-    association.endTime = end.endTime;
-    association.rawContainerFormat = "mpegts";
 
-    try {
-        service::api::getGlobalApi()->associateVod(association, metadata, sessionId, _outputPiper->segmentIds());
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
-        service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+    if (!end.matchUuid.empty())  {
+        shared::squadov::VodAssociation association;
+        association.matchUuid = end.matchUuid;
+        association.userUuid = service::api::getGlobalApi()->getCurrentUserCached().uuid;
+        association.videoUuid = vodId.videoUuid;
+        association.startTime = vodStartTime;
+        association.endTime = end.endTime;
+        association.rawContainerFormat = "mpegts";
+
+        try {
+            service::api::getGlobalApi()->associateVod(association, metadata, sessionId, _outputPiper->segmentIds());
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to associate VOD: " << ex.what() << std::endl);
+            service::api::getGlobalApi()->deleteVod(vodId.videoUuid);
+        }
     }
 
     _outputPiper.reset(nullptr);

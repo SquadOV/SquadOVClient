@@ -107,7 +107,7 @@ private:
     std::thread _lastLogTimeoutThread;
     std::atomic<bool> _lastLogTimeoutRunning = false;
 
-    void forceKillLogTimeoutThread();
+    void forceKillLogTimeoutThread(bool force = false);
 
     std::recursive_mutex _currentMatchMutex;
     std::string _currentMatchViewUuid;
@@ -336,8 +336,8 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
     }
 }
 
-void WoWProcessHandlerInstance::forceKillLogTimeoutThread() {
-    if (!_lastLogTimeoutRunning) {
+void WoWProcessHandlerInstance::forceKillLogTimeoutThread(bool force) {
+    if (!_lastLogTimeoutRunning && !force) {
         return;
     }
 
@@ -542,7 +542,7 @@ void WoWProcessHandlerInstance::onArenaEnd(const shared::TimePoint& tm, const vo
 
 void WoWProcessHandlerInstance::prematurelyEndMatch(const shared::TimePoint& tm, bool isZoneChange, bool isTimeout) {
     std::lock_guard guard(_currentMatchMutex);
-    if (_currentInstance) {
+    if (_currentInstance && (isZoneChange || isTimeout)) {
         onInstanceEnd(tm);
     } else if (inArena()) {
         game_event_watcher::WoWArenaEnd end;
@@ -684,8 +684,15 @@ void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
     }
 
     LOG_INFO("WoW Instance End [" <<  shared::timeToStr(tm) << "]: " << _currentInstance.value() << std::endl);
+
     std::string matchUuid;
-    if (!_currentMatchViewUuid.empty()) {
+
+    // Do a sanity check - if we just completed a super short instance then just delete it
+    // because there's no reason to create a full fledged match since it's probably just something
+    // the user did in passing.
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    const auto totalMatchTime = std::chrono::duration_cast<std::chrono::milliseconds>(tm - _matchStartTime).count();
+    if (!_currentMatchViewUuid.empty() && ((totalMatchTime / 1000) > wowSettings.minimumTimeSecondsToRecord)) {
         std::vector<game_event_watcher::WoWCombatantInfo> combatants;
         combatants.reserve(_instancePlayers.size());
 
@@ -704,7 +711,7 @@ void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
 
         _instancePlayers.clear();
     } else {
-        LOG_WARNING("\tNo match UUID for instance end?" << std::endl);
+        LOG_WARNING("\tNo match UUID for instance end or time too short - ignoring match: " << _currentMatchViewUuid << "\t" << totalMatchTime << "ms" << std::endl);
     }
 
     _currentInstance = std::nullopt;
@@ -796,7 +803,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     markCombatLogActive();
 
-    forceKillLogTimeoutThread();
+    forceKillLogTimeoutThread(true);
     LOG_INFO("Start Combat Log Timeout" << std::endl);
     _lastLogTimeoutRunning = true;
     _lastLogTimeoutThread = std::thread(std::bind(&WoWProcessHandlerInstance::logTimeoutHandler, this));
