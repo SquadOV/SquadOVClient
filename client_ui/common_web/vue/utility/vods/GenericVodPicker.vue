@@ -97,7 +97,6 @@
                 <span v-if="isClippingEnabled && !clippingAllowed"> Unable to clip. </span>
                 <span v-else-if="isClippingEnabled"> Clip </span>
                 <span v-else> Go to Desktop Application to create a clip. </span>
-
             </v-tooltip>
 
             <!-- drawing button -->
