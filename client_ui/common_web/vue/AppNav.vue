@@ -35,7 +35,7 @@
                         <template v-if="!c.disabled">
                             <v-tooltip
                                 :key="c.name"
-                                :disabled="!c.disableOnWeb && !isDesktop"
+                                :disabled="!c.disableOnWeb || isDesktop"
                                 bottom
                             >
                                 <template v-slot:activator="{ on }">
