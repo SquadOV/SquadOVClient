@@ -24,7 +24,11 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `openssl:x64-windows`
 * `librdkafka:x64-windows`
 * `c-ares:x64-windows`
+* `openssl:x64-windows-static`
 * `openssl:x64-windows-static-md`
+* `cryptopp:x64-windows`
+* `cryptopp:x64-windows-static`
+* `cryptopp:x64-windows-static-md`
 
 ## Build SquadOV Client Service
 
@@ -32,6 +36,7 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `mkdir build && cd build`
 * `cmake -S ../ -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Debug -DCMAKE_TOOLCHAIN_FILE=$VCPKG\scripts\buildsystems\vcpkg.cmake`
 * `cmake --build build --config Debug --target squadov_client_service`
+
 ## SquadOV Common Web UI
 
 * `cd $SRC\client_ui\common_web`
