@@ -6,6 +6,7 @@
 #include "process_watcher/games/wow_process_detector.h"
 #include "process_watcher/games/league_process_detector.h"
 #include "process_watcher/games/csgo_process_detector.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
 
 #include <algorithm>
 #include <iostream>
@@ -27,7 +28,7 @@ GameProcessDetector::GameProcessDetector(const std::vector<std::string>& exes):
 
 std::optional<process::Process> GameProcessDetector::checkIsRunning(const process::ProcessRunningState& processes) const {
     for (const auto& exe : _exeNames) {
-        const process::Process cmpProcess(exe, 0);
+        const process::Process cmpProcess(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>(), exe, 0);
         const auto p = processes.getProcesssRunningByName(cmpProcess.name(), true);
         if (p) {
             return p;

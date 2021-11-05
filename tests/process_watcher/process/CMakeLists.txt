@@ -1,0 +1,1 @@
+GENERATE_TEST("process_running_state_test" "process_running_state_test.cpp")

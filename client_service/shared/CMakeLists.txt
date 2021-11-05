@@ -26,6 +26,7 @@ SET(SRCS
     shared/time/ntp_client.cpp
     shared/audio/timing.cpp
     shared/system/win32/hwnd_utils.cpp
+    shared/system/win32/interfaces/win32_system_process_interface.cpp
     shared/url.cpp
 )
 
@@ -61,6 +62,8 @@ SET(HEADERS
     shared/time/ntp_client.h
     shared/audio/timing.h
     shared/system/win32/hwnd_utils.h
+    shared/system/win32/interfaces/win32_system_process_interface.h
+    shared/system/interfaces/system_process_interface.h
     shared/url.h
 )
 
