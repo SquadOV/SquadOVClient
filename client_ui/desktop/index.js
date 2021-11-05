@@ -141,22 +141,26 @@ app.on('quit', () => {
     log.log('Quitting out of SquadOV...')
 })
 
+function restore() {
+    if (!!win) {
+        if (!win.isVisible()) {
+            win.show()
+        }
+
+        if (win.isMinimized()) {
+            win.restore()
+        }
+
+        win.focus()
+    }
+}
+
 const singleLock = app.requestSingleInstanceLock()
 if (!singleLock) {
     app.exit(1)
 } else {
     app.on('second-instance', () => {
-        if (!!win) {
-            if (!win.isVisible()) {
-                win.show()
-            }
-
-            if (win.isMinimized()) {
-                win.restore()
-            }
-
-            win.focus()
-        }
+        restore()
     })
 }
 
@@ -453,6 +457,12 @@ zeromqServer.on('change-running-games', (games) => {
 
 zeromqServer.on('change-recording-games', (games) => {
     win.webContents.send('change-recording-games', JSON.parse(games))
+})
+
+zeromqServer.on('post-game-notification', (game) => {
+    let data = JSON.parse(game)
+    data.tm = new Date(data.tm)
+    win.webContents.send('post-game-notification', data)
 })
 
 zeromqServer.on('respond-output-devices', (r) => {
@@ -970,6 +980,10 @@ ipcMain.handle('request-key-code-char', async (event, keyCode) => {
             data: ex,
         }
     }
+})
+
+ipcMain.on('request-restore', () => {
+    restore()
 })
 
 zeromqServer.on('vod-download-progress', (resp) => {

@@ -139,7 +139,7 @@
                                                 class="mb-4 full-width"
                                                 :match="match"
                                                 :disable-click="inSelectMode"
-                                                :disable-preview="match.base.isLocal"
+                                                :use-local-vod-preview="match.base.isLocal"
                                                 :disable-mini="disableMini"
                                             >
                                             </recent-match-display>
