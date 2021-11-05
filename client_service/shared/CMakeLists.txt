@@ -28,6 +28,7 @@ SET(SRCS
     shared/system/win32/hwnd_utils.cpp
     shared/system/win32/interfaces/win32_system_process_interface.cpp
     shared/url.cpp
+    shared/system/keys.cpp
 )
 
 SET(HEADERS
@@ -66,6 +67,7 @@ SET(HEADERS
     shared/system/interfaces/system_process_interface.h
     shared/url.h
     shared/wow/instances.h
+    shared/system/keys.h
 )
 
 add_library(squadov_shared
