@@ -37,6 +37,13 @@ void S3StorageClient::startNewSegment() {
 }
 
 std::pair<std::string, size_t> S3StorageClient::uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) {
+    if (numBytes == 0) {
+        // This is possible due to the flexibility between AWS and GCloud.
+        // It's necessary for GCloud to finish off the upload, breaks things in AWS
+        // so we ignore this request.
+        return std::make_pair("", 0);
+    }
+
     // Dynamically set a timeout based on the number of bytes we want to send.
     // The timeout should be at least 30 seconds long to hopefully protect against any unexpected internet issues.
     // Otherwise, assume a worst case scenario of uploading at 100KB/s. We do this instead of setting
