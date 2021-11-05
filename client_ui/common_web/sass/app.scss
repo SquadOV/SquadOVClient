@@ -3,6 +3,9 @@
 
 @import '@client/sass/themes/default.scss';
 
+@import '@client/sass/animations/fade.scss';
+@import '@client/sass/animations/slide.scss';
+
 $fa-font-path: "~@fortawesome/fontawesome-free/webfonts";
 @import "~@fortawesome/fontawesome-free/scss/fontawesome.scss";
 @import "~@fortawesome/fontawesome-free/scss/solid.scss";

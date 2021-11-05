@@ -15,6 +15,7 @@ const std::string ZEROMQ_LOCAL_API_PORT_TOPIC = "on-local-api-port";
 const std::string ZEROMQ_CHANGE_PAUSE_TOPIC = "change-state-pause";
 const std::string ZEROMQ_RUNNING_GAMES_TOPIC = "change-running-games";
 const std::string ZEROMQ_RECORDING_GAMES_TOPIC = "change-recording-games";
+const std::string ZEROMQ_NOTIFICATION_POPUP_POST_GAME = "post-game-notification";
 const std::string ZEROMQ_REQUEST_AUDIO_INPUT_TOPIC = "request-audio-input";
 const std::string ZEROMQ_RESPOND_AUDIO_INPUT_TOPIC = "respond-input-devices";
 const std::string ZEROMQ_REQUEST_AUDIO_OUTPUT_TOPIC = "request-audio-output";
