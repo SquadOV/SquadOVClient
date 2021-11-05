@@ -168,6 +168,8 @@ export interface WowSettings {
     recordArenas: boolean
     recordKeystones: boolean
     recordEncounters: boolean
+    recordFullRaids: boolean
+    minimumTimeSecondsToRecord: number
 }
 
 function createEmptyWowSettings(): WowSettings {
@@ -177,6 +179,8 @@ function createEmptyWowSettings(): WowSettings {
         recordArenas: true,
         recordKeystones: true,
         recordEncounters: true,
+        recordFullRaids: false,
+        minimumTimeSecondsToRecord: 15,
     }
 }
 
@@ -465,29 +469,13 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     let data = fs.readFileSync(settingsFname , 'utf8')
     
-    let parsedData
+    let parsedData: SquadOvLocalSettings
     try {
         parsedData = JSON.parse(data)
     } catch (e) {
         console.error('Failed to load local settings: ', e)
         fs.unlinkSync(settingsFname)
         return loadLocalSettings()
-    }
-
-    if (!parsedData.record.outputDevice) {
-        parsedData.record.outputDevice = 'Default Device'
-    }
-
-    if (parsedData.record.outputVolume === undefined) {
-        parsedData.record.outputVolume = 1.0
-    }
-
-    if (!parsedData.record.inputDevice) {
-        parsedData.record.inputDevice = 'Default Device'
-    }
-
-    if (parsedData.record.inputVolume === undefined) {
-        parsedData.record.inputVolume = 1.0
     }
 
     if (parsedData.minimizeToTray === undefined) {
@@ -559,48 +547,12 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         parsedData.anonymousAnalytics = true
     }
 
-    if (parsedData.record.outputMono === undefined) {
-        parsedData.record.outputMono = false
-    }
-
-    if (parsedData.record.inputMono === undefined) {
-        parsedData.record.inputMono = false
-    }
-
     if (parsedData.disabledGames === undefined) {
         parsedData.disabledGames = []
     }
 
     if (parsedData.record.overlays === undefined) {
         parsedData.record.overlays = createDefaultOverlaySettings()
-    }
-
-    if (parsedData.record.outputDevices === undefined) {
-        parsedData.record.outputDevices = [
-            {
-                device: parsedData.record.outputDevice,
-                volume: parsedData.record.outputVolume,
-                mono: !!parsedData.record.outputMono,
-            }
-        ]
-
-        parsedData.record.outputDevice = undefined
-        parsedData.record.outputVolume = undefined
-        parsedData.record.outputMono = undefined
-    }
-
-    if (parsedData.record.inputDevices === undefined) {
-        parsedData.record.inputDevices = [
-            {
-                device: parsedData.record.inputDevice,
-                volume: parsedData.record.inputVolume,
-                mono: !!parsedData.record.inputMono,
-            }
-        ]
-
-        parsedData.record.inputDevice = undefined
-        parsedData.record.inputVolume = undefined
-        parsedData.record.inputMono = undefined
     }
 
     if (parsedData.record.useAudioDriftCompensation === undefined) {
@@ -647,6 +599,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (parsedData.games.wow.timeoutSeconds2 === undefined) {
         parsedData.games.wow.timeoutSeconds2 = 180
+    }
+
+    if (parsedData.games.wow.recordFullRaids === undefined) {
+        parsedData.games.wow.recordFullRaids = false
+    }
+
+    if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
+        parsedData.games.wow.minimumTimeSecondsToRecord = 15
     }
 
     saveLocalSettings(parsedData, true)

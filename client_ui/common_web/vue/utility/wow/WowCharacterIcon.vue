@@ -18,8 +18,8 @@
                     </wow-class-spec-icon>
 
                     <wow-class-icon
-                        v-else-if="!!char.classId"
-                        :class-id="char.classId"
+                        v-else
+                        :class-id="safeClassId"
                         :width-height="widthHeight"
                         :patch="patch"
                     >
@@ -76,6 +76,14 @@ export default class WowCharacterIcon extends Vue {
 
     @Prop({required: true})
     patch!: string
+
+    get safeClassId(): number {
+        if (this.char.classId !== null) {
+            return this.char.classId
+        } else {
+            return -1
+        }
+    }
 
     goToArmoryLink(e: MouseEvent) {
         if (!this.armoryLink || !doesWowPatchSupportArmory(this.patch)) {

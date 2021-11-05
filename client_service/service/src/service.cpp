@@ -87,6 +87,10 @@ void onSquadovExit() {
 
 void onSquadovTerminate() {
     LOG_ERROR("SquadOV Termination Detected" << std::endl);
+
+    // Make sure we flush Kafka first to ensure all the pending messages get sent.
+    service::api::getKafkaApi()->flush();
+
     LOG_FLUSH();
 }
 

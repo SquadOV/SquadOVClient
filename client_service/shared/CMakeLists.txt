@@ -65,6 +65,7 @@ SET(HEADERS
     shared/system/win32/interfaces/win32_system_process_interface.h
     shared/system/interfaces/system_process_interface.h
     shared/url.h
+    shared/wow/instances.h
 )
 
 add_library(squadov_shared

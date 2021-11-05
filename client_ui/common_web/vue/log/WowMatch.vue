@@ -33,6 +33,16 @@
                     >
                     </wow-arena-summary>
 
+                    <wow-instance-summary v-else-if="!!currentMatch.instance"
+                        :instance="currentMatch.instance"
+                        :user-id="userId"
+                        class="flex-grow-1 mb-4"
+                        disable-link
+                        link-to-player-section
+                        @go-to-character="viewPlayerGuid = arguments[0]"
+                    >
+                    </wow-instance-summary>
+
                     <match-favorite-button
                         :match-uuid="matchUuid"
                     >
@@ -145,22 +155,24 @@
                             </wow-spell-analysis>
                         </v-tab-item>
 
-                        <v-tab>
-                            Players
-                        </v-tab>
+                        <template v-if="!currentMatch.instance">
+                            <v-tab>
+                                Players
+                            </v-tab>
 
-                        <v-tab-item>
-                            <wow-players-analysis
-                                ref="players"
-                                :match-uuid="matchUuid"
-                                :user-id="userId"
-                                :match-characters="matchCharacters"
-                                :friendly-team="friendlyTeam"
-                                :patch="patch"
-                                :initial-character-guid="viewPlayerGuid"
-                            >
-                            </wow-players-analysis>
-                        </v-tab-item>
+                            <v-tab-item>
+                                <wow-players-analysis
+                                    ref="players"
+                                    :match-uuid="matchUuid"
+                                    :user-id="userId"
+                                    :match-characters="matchCharacters"
+                                    :friendly-team="friendlyTeam"
+                                    :patch="patch"
+                                    :initial-character-guid="viewPlayerGuid"
+                                >
+                                </wow-players-analysis>
+                            </v-tab-item>
+                        </template>
 
                         <v-tab>
                             Deaths
@@ -189,11 +201,9 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
 import Component, { mixins } from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { GenericWowMatchContainer, getOppositeWowArenaTeam } from '@client/js/wow/matches'
-import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { SerializedWowMatchEvents, UnifiedWowEventContainer, WowEncounter } from '@client/js/wow/events'
 import {
@@ -201,11 +211,11 @@ import {
     WoWCharacterUserAssociation
 } from '@client/js/wow/character'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { getActiveUserId } from '@client/js/app'
 
 import WowMatchEvents from '@client/vue/utility/wow/WowMatchEvents.vue'
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
+import WowInstanceSummary from '@client/vue/utility/wow/WowInstanceSummary.vue'
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import VideoPlayer from '@client/vue/utility/VideoPlayer.vue'
@@ -224,6 +234,7 @@ import CommonComponent from '@client/vue/CommonComponent'
         WowMatchEvents,
         WowKeystoneSummary,
         WowEncounterSummary,
+        WowInstanceSummary,
         WowArenaSummary,
         LoadingContainer,
         VideoPlayer,
@@ -367,6 +378,8 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
             return this.currentMatch.challenge.tm
         } else if (!!this.currentMatch?.arena) {
             return this.currentMatch.arena.tm
+        } else if (!!this.currentMatch?.instance) {
+            return this.currentMatch.instance.tm
         } else {
             return this.startTime
         }
@@ -381,6 +394,8 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
             return this.currentMatch.challenge.finishTime
         } else if (!!this.currentMatch?.arena?.finishTime) {
             return this.currentMatch.arena.finishTime
+        } else if (!!this.currentMatch?.instance?.finishTime) {
+            return this.currentMatch.instance.finishTime
         } else {
             return this.endTime
         }
@@ -397,6 +412,8 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
             return this.currentMatch.challenge.tm
         } else if (!!this.currentMatch.arena) {
             return this.currentMatch.arena.tm
+        } else if (!!this.currentMatch?.instance) {
+            return this.currentMatch.instance.tm
         } else {
             return new Date()
         }
@@ -413,6 +430,8 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
             return this.currentMatch.challenge.finishTime
         } else if (!!this.currentMatch.arena?.finishTime) {
             return this.currentMatch.arena.finishTime
+        } else if (!!this.currentMatch?.instance?.finishTime) {
+            return this.currentMatch.instance.finishTime
         } else {
             return new Date()
         }

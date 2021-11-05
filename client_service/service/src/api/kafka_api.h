@@ -18,6 +18,7 @@ struct KafkaInfo {
 class KafkaApi {
 public:
     void initialize();
+    void flush();
     ~KafkaApi();
 
     // WoW

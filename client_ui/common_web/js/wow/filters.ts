@@ -1,3 +1,5 @@
+import { WowInstanceType } from "@client/js/wow/matches";
+
 export interface WowMatchFilters {
     hasVod: boolean
     encounters: number[]
@@ -14,6 +16,7 @@ export interface WowMatchFilters {
     keystoneLow: number | undefined
     keystoneHigh: number | undefined
     isWinner: boolean | null
+    instanceTypes: WowInstanceType[]
     enabled: boolean
 }
 
@@ -34,6 +37,7 @@ export function createEmptyWowMatchFilters(): WowMatchFilters {
         keystoneLow: undefined,
         keystoneHigh: undefined,
         isWinner: null,
+        instanceTypes: [],
         enabled: true,
     }
 }

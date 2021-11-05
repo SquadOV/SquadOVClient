@@ -144,6 +144,18 @@
             >
             </wow-arena-summary>
 
+            <wow-instance-summary
+                class="flex-grow-1 recent-match-item"
+                v-else-if="!!match.wowInstance && match.base.game == SquadOvGames.WorldOfWarcraft"
+                :instance="match.wowInstance"
+                :user-id="match.base.userId"
+                :mini="!disableMini"
+                fill
+                :disable-link="disableClick"
+                :access-token="match.base.accessToken"
+            >
+            </wow-instance-summary>
+
             <csgo-player-match-summary-display
                 class="flex-grow-1 recent-match-item"
                 v-else-if="!!match.csgoMatch && match.base.game == SquadOvGames.Csgo"
@@ -193,6 +205,7 @@ import ValorantPlayerMatchSummaryDisplay from '@client/vue/utility/valorant/Valo
 import WowKeystoneSummary from '@client/vue/utility/wow/WowKeystoneSummary.vue'
 import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue'
 import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
+import WowInstanceSummary from '@client/vue/utility/wow/WowInstanceSummary.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDisplay.vue'
@@ -207,6 +220,7 @@ import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDis
         WowKeystoneSummary,
         WowEncounterSummary,
         WowArenaSummary,
+        WowInstanceSummary,
         VideoPreviewPlayer,
         CsgoPlayerMatchSummaryDisplay,
         UploadProgressDisplay,

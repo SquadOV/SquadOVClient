@@ -18,6 +18,12 @@
             >
                 Arena
             </v-tab>
+
+            <v-tab
+                :to="instanceTo"
+            >
+                Instances
+            </v-tab>
         </v-tabs>
         <router-view></router-view>
     </div>
@@ -57,6 +63,14 @@ export default class WoWGameLog extends mixins(CommonComponent) {
     get arenaTo(): any {
         return {
             name: pi.WowArenaLogPageId,
+            params: this.$route.params,
+            query: this.cleanQuery
+        }
+    }
+
+    get instanceTo(): any {
+        return {
+            name: pi.WowInstanceLogPageId,
             params: this.$route.params,
             query: this.cleanQuery
         }

@@ -151,6 +151,69 @@
                             </template>
                         </v-checkbox>
                     </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.recordFullRaids"
+                            @change="$store.commit('changeWowRecordFullRaids', arguments[0])"
+                            label="Record Full Raids"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record the entire raid rather than just individual encounters.
+                                    Do not use this if you want to immediately analyze boss wipes.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+                </v-row>
+
+                <v-row align="center">
+                    <v-col cols="6">
+                        <div class="d-flex align-center">
+                            <div class="font-weight-bold mr-1">
+                                Minimum Duration:
+                            </div>
+
+                            <v-text-field
+                                class="squeeze"
+                                :value="$store.state.settings.games.wow.minimumTimeSecondsToRecord"
+                                @change="$store.commit('changeWowMinimumTimeSecondsToRecord', parseInt(arguments[0]))"
+                                label="Minimum Time to Record"
+                                solo
+                                single-line
+                                dense
+                                hide-details
+                                type="number"
+                                style="max-width: 450px"
+                            >
+                                <template v-slot:append>
+                                    seconds
+
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        When recording instances (RBGs, WoW classic arenas, full raids), this is the number of seconds
+                                        the recording needs to be for SquadOV to not discard it. This will not take effect for regular encounters,
+                                        keystones, and retail arena recordings.
+                                    </v-tooltip>
+                                </template>
+                            </v-text-field>
+                        </div>
+                    </v-col>
                 </v-row>
             </v-tab-item>
 
