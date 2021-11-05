@@ -781,8 +781,35 @@ router.afterEach((to: Route, from: Route) => {
     }
 })
 
+if (!window.frameElement) {
+    window.addEventListener('message', (event) => {
+        let data: any
+        try {
+            data = JSON.parse(event.data)
+        } catch (ex) {
+            return
+        } 
+
+        if (data.type === 'redirect') {
+            router.push(data.to)
+        }
+    })
+}
+
 router.beforeEach((to : Route, from : Route, next : any) => {
     console.log(`Navigate ${from.fullPath} (${from.name}) => ${to.fullPath} (${to.name})`)
+    if (!!window.frameElement && !!from.name) {
+        console.log('...Detected navigation in IFRAME - sending message out of iframe.')
+        window.parent.postMessage(JSON.stringify({
+            type: 'redirect',
+            to: {
+                name: to.name,
+                params: to.params,
+                query: to.query,
+            },
+        }), '/')
+        return
+    }
     
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId)
 
