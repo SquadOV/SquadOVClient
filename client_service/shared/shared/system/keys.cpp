@@ -24,6 +24,34 @@ std::optional<std::string> keycodeToName(int keycode) {
         return "MOUSE3";
     } else if (keycode == VK_XBUTTON2) {
         return "MOUSE4";
+    } else if (keycode == VK_BROWSER_BACK) {
+        return "Browser Back";
+    } else if (keycode == VK_BROWSER_FORWARD) {
+        return "Browser Forward";
+    } else if (keycode == VK_BROWSER_REFRESH) {
+        return "Browser Refresh";
+    } else if (keycode == VK_BROWSER_STOP) {
+        return "Browser Stop";
+    } else if (keycode == VK_BROWSER_SEARCH) {
+        return "Browser Search";
+    } else if (keycode == VK_BROWSER_FAVORITES) {
+        return "Browser Favorites";
+    } else if (keycode == VK_BROWSER_HOME) {
+        return "Browser Home";
+    } else if (keycode == VK_VOLUME_MUTE) {
+        return "Volume Mute";
+    } else if (keycode == VK_VOLUME_DOWN) {
+        return "Volume Down";
+    } else if (keycode == VK_VOLUME_UP) {
+        return "Volume Up";
+    } else if (keycode == VK_MEDIA_NEXT_TRACK) {
+        return "Media Next";
+    } else if (keycode == VK_MEDIA_PREV_TRACK) {
+        return "Media Previous";
+    } else if (keycode == VK_MEDIA_STOP) {
+        return "Media Stop";
+    } else if (keycode == VK_MEDIA_PLAY_PAUSE) {
+        return "Media Play";
     } else {
         UINT scanCode = MapVirtualKeyW(keycode, MAPVK_VK_TO_VSC);
         switch (keycode) {
