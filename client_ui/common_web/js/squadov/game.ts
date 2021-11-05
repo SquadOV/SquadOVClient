@@ -163,3 +163,16 @@ export function wowReleaseToName(r: SquadOvWowRelease): string {
             return 'Burning Crusade'
     }
 }
+
+export function gameToPossibleWowTuple(game: SquadOvGames) : [SquadOvGames, SquadOvWowRelease | null] {
+    switch (game) {
+        default:
+            return [game, null]
+        case SquadOvGames.WorldOfWarcraft:
+            return [SquadOvGames.WorldOfWarcraft, SquadOvWowRelease.Retail]
+        case SquadOvGames.WowVanilla:
+            return [SquadOvGames.WorldOfWarcraft, SquadOvWowRelease.Vanilla]
+        case SquadOvGames.WowTbc:
+            return [SquadOvGames.WorldOfWarcraft, SquadOvWowRelease.Tbc]
+    }
+}
