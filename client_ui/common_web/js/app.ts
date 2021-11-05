@@ -57,6 +57,7 @@ const WowMatch = () => import('@client/vue/log/WowMatch.vue')
 const WowEncounterGameLog = () => import('@client/vue/utility/wow/WowEncounterGameLog.vue')
 const WowKeystoneGameLog = () => import('@client/vue/utility/wow/WowKeystoneGameLog.vue')
 const WowArenaGameLog = () => import('@client/vue/utility/wow/WowArenaGameLog.vue')
+const WowInstanceGameLog = () => import('@client/vue/utility/wow/WowInstanceGameLog.vue')
 const WowDefaultGameLog = () => import('@client/vue/utility/wow/WowDefaultGameLog.vue')
 
 const TftLogContainer = () => import('@client/vue/log/TftLogContainer.vue')
@@ -470,6 +471,16 @@ const baseRoutes : any[] = [
                                         path: 'arena',
                                         name: pi.WowArenaLogPageId,
                                         component: WowArenaGameLog,
+                                        props: (route : any) => ({
+                                            userId: parseInt(route.params.userId),
+                                            guid: route.params.guid,
+                                            release: wowGameReleaseFromString(route.params.release),
+                                        }),
+                                    },
+                                    {
+                                        path: 'instance',
+                                        name: pi.WowInstanceLogPageId,
+                                        component: WowInstanceGameLog,
                                         props: (route : any) => ({
                                             userId: parseInt(route.params.userId),
                                             guid: route.params.guid,

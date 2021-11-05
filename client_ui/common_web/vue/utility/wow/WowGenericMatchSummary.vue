@@ -14,7 +14,7 @@
                             {{ timestamp }}
                         </div>
 
-                        <div class="text-subtitle-2">
+                        <div class="text-subtitle-2" v-if="elapsedTime.length > 0">
                             Finished in: {{ elapsedTime }}
                         </div>
                     </v-col>

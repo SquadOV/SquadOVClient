@@ -13,7 +13,38 @@
             </v-checkbox>
 
             <v-select
-                v-if="forRaids"
+                v-if="forInstances"
+                label="Instance Type"
+                v-model="internalValue.instanceTypes"
+                @input="syncToValue"
+                :items="instanceTypeItems"
+                deletable-chips
+                chips
+                multiple
+                clearable
+                outlined
+                hide-details
+                dense
+                style="max-width: 500px;"
+            >
+                <template v-slot:item="{ item }">
+                    <div class="d-flex full-width align-center">
+                        <v-checkbox
+                            class="selection-checkbox"
+                            dense
+                            hide-details
+                            :input-value="internalValue.instanceTypes.includes(item.value)"
+                            readonly
+                        >
+                        </v-checkbox>
+
+                        {{ item.text }}
+                    </div>
+                </template>
+            </v-select>
+
+            <v-select
+                v-if="forRaids || forInstances"
                 label="Raids"
                 v-model="internalValue.raids"
                 @input="syncToValue"
@@ -77,7 +108,7 @@
             </v-select>
 
             <v-select
-                v-if="forDungeons"
+                v-if="forDungeons || forInstances"
                 label="Dungeons"
                 v-model="internalValue.dungeons"
                 @input="syncToValue"
@@ -141,7 +172,7 @@
             </v-select>
 
             <v-select
-                v-if="forArenas"
+                v-if="forArenas || forInstances"
                 label="Arenas"
                 v-model="internalValue.arenas"
                 @input="syncToValue"
@@ -181,6 +212,7 @@
                 hide-details
                 outlined
                 dense
+                v-if="!forInstances"
             >
             </v-select>
 
@@ -224,7 +256,7 @@
             >
             </wow-encounter-difficulty-selector>
 
-            <div class="d-flex align-center ml-4">
+            <div class="d-flex align-center ml-4" v-if="!forInstances">
                 <div>
                     POV:
                 </div>
@@ -241,6 +273,7 @@
                 class="ml-4"
                 label="Team 1"
                 v-model="internalValue.friendlyComposition"
+                v-if="!forInstances"
                 @input="syncToValue"
             >
             </wow-composition-selector>
@@ -263,6 +296,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
+import { wowInstanceTypeToName, ALL_WOW_INSTANCE_TYPES, WowInstanceType } from '@client/js/wow/matches'
 import { wowCache, WowContentDatum } from '@client/js/wow/staticCache'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
 import NumberRangeFilterUi from '@client/vue/utility/squadov/filters/NumberRangeFilterUi.vue'
@@ -292,6 +326,9 @@ export default class WowFilterUi extends Vue {
 
     @Prop({type: Boolean, default: false})
     forArenas!: boolean
+
+    @Prop({type: Boolean, default: false})
+    forInstances!: boolean
 
     @Prop({required: true})
     release!: WowGameRelease
@@ -380,6 +417,15 @@ export default class WowFilterUi extends Vue {
         } else {
             return this.encounterItems
         }
+    }
+
+    get instanceTypeItems(): any[] {
+        return ALL_WOW_INSTANCE_TYPES.map((ele: WowInstanceType) => {
+            return {
+                text: wowInstanceTypeToName(ele),
+                value: ele,
+            }
+        })
     }
 
     mounted() {

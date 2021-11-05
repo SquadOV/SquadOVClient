@@ -67,6 +67,8 @@ import {
     cleanWowArenaFromJson,
     GenericWowMatchContainer,
     cleanGenericWowMatchContainerFromJson,
+    WowInstance,
+    cleanWowInstanceFromJson,
 } from '@client/js/wow/matches'
 import {
     SerializedWowMatchEvents,
@@ -988,6 +990,24 @@ class ApiClient {
 
         return promise.then((resp : ApiData<HalResponse<WowArena[]>>) => {
             resp.data.data.forEach(cleanWowArenaFromJson)
+            return resp
+        })
+    }
+
+    listWoWInstancesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowInstance[]>>> {
+        let promise = !!params.next ?
+            axios.get(params.next, this.createWebAxiosConfig()) :
+            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/instance`, {
+                ...this.createWebAxiosConfig(),
+                params: {
+                    start: params.start!,
+                    end: params.end!,
+                    ...params.filters,
+                }
+            })
+
+        return promise.then((resp : ApiData<HalResponse<WowInstance[]>>) => {
+            resp.data.data.forEach(cleanWowInstanceFromJson)
             return resp
         })
     }

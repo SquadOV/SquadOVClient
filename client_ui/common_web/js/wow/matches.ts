@@ -56,10 +56,55 @@ export function cleanWowArenaFromJson(c: WowArena): WowArena {
     return c
 }
 
+export enum WowInstanceType {
+    NotInstanced,
+    PartyDungeon,
+    RaidDungeon,
+    PVPBattlefield,
+    ArenaBattlefield,
+    Scenario,
+    Unknown
+}
+
+export const ALL_WOW_INSTANCE_TYPES = [
+    WowInstanceType.PartyDungeon,
+    WowInstanceType.RaidDungeon,
+    WowInstanceType.PVPBattlefield,
+    WowInstanceType.ArenaBattlefield,
+]
+
+export function wowInstanceTypeToName(t: WowInstanceType): string {
+    switch (t) {
+        case WowInstanceType.PartyDungeon:
+            return 'Dungeon'
+        case WowInstanceType.RaidDungeon:
+            return 'Raid'
+        case WowInstanceType.PVPBattlefield:
+            return 'Battlegrounds'
+        case WowInstanceType.ArenaBattlefield:
+            return 'Arena'
+        default:
+            return 'Unknown'
+    }
+}
+
+export interface WowInstance extends WowCommonMatch {
+    instanceType: WowInstanceType
+}
+
+export function cleanWowInstanceFromJson(c: WowInstance): WowInstance {
+    c.tm = new Date(c.tm)
+    if (!!c.finishTime) {
+        c.finishTime = new Date(c.finishTime)
+    }
+    return c
+}
+
 export interface GenericWowMatchContainer {
     encounter: WowEncounter | null
     challenge: WowChallenge | null
     arena: WowArena | null
+    instance: WowInstance | null
 }
 
 export function cleanGenericWowMatchContainerFromJson(c: GenericWowMatchContainer): GenericWowMatchContainer {
@@ -73,6 +118,10 @@ export function cleanGenericWowMatchContainerFromJson(c: GenericWowMatchContaine
 
     if (!!c.arena) {
         cleanWowArenaFromJson(c.arena)
+    }
+
+    if (!!c.instance) {
+        cleanWowInstanceFromJson(c.instance)
     }
 
     return c

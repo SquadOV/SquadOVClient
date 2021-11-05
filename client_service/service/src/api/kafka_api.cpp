@@ -84,8 +84,14 @@ void KafkaApi::initialize() {
 }
 
 KafkaApi::~KafkaApi() {
+    flush();
+}
+
+void KafkaApi::flush() {
     _running = false;
-    _producerThread.join();
+    if (_producerThread.joinable()) {
+        _producerThread.join();
+    }
 }
 
 void KafkaApi::uploadWoWCombatLogLine(const std::string& matchViewUuid, const game_event_watcher::RawWoWCombatLog& log) const {
