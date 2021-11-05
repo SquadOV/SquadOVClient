@@ -13,7 +13,7 @@
 
         <template v-if="isLoggedIn">
             <v-menu bottom offset-y v-for="m in menuItems" :key="m.name">
-                <template v-slot:activator="{on, attrs}">
+                <template v-slot:activator="{ on, attrs }">
                     <v-btn text v-bind="attrs" v-on="on" :to="m.to" exact>
                         <v-badge
                             inline
@@ -25,7 +25,7 @@
                             {{ m.name }}
                             <v-icon small v-if="!!m.children">
                                 mdi-chevron-down
-                            </v-icon> 
+                            </v-icon>
                         </v-badge>
                     </v-btn>
                 </template>
@@ -33,29 +33,53 @@
                 <v-list dense v-if="!!m.children">
                     <template v-for="c in m.children">
                         <template v-if="!c.disabled">
-                            <v-list-item :key="c.name" :to="c.to" v-if="!c.link">
-                                <v-badge
-                                    inline
-                                    right
-                                    :value="c.notifications > 0"
-                                    :content="`${c.notifications}`"
-                                    color="error"
-                                >
-                                    <v-list-item-title>{{ c.name }}</v-list-item-title>
-                                </v-badge>
-                            </v-list-item>
+                            <v-tooltip
+                                :key="c.name"
+                                :disabled="!c.disableOnWeb || isDesktop"
+                                bottom
+                            >
+                                <template v-slot:activator="{ on }">
+                                    <div v-on="on">
+                                        <v-list-item
+                                            :key="c.name"
+                                            :to="c.to"
+                                            :disabled="c.disableOnWeb && !isDesktop"
+                                            v-if="!c.link"
+                                        >
+                                            <v-badge
+                                                inline
+                                                right
+                                                :value="c.notifications > 0"
+                                                :content="`${c.notifications}`"
+                                                color="error"
+                                            >
+                                                <v-list-item-title>{{
+                                                    c.name
+                                                }}</v-list-item-title>
+                                            </v-badge>
+                                        </v-list-item>
 
-                            <v-list-item :key="c.name" @click="goToLink(c.to)" v-else>
-                                <v-badge
-                                    inline
-                                    right
-                                    :value="c.notifications > 0"
-                                    :content="`${c.notifications}`"
-                                    color="error"
-                                >
-                                    <v-list-item-title>{{ c.name }}</v-list-item-title>
-                                </v-badge>
-                            </v-list-item>
+                                        <v-list-item
+                                            :key="c.name"
+                                            @click="goToLink(c.to)"
+                                            v-else
+                                        >
+                                            <v-badge
+                                                inline
+                                                right
+                                                :value="c.notifications > 0"
+                                                :content="`${c.notifications}`"
+                                                color="error"
+                                            >
+                                                <v-list-item-title>{{
+                                                    c.name
+                                                }}</v-list-item-title>
+                                            </v-badge>
+                                        </v-list-item>
+                                    </div>
+                                </template>
+                                <span> Only available in the desktop application. </span>
+                            </v-tooltip>
                         </template>
                     </template>
                 </v-list>
@@ -66,12 +90,16 @@
 
         <download-button v-if="!isDesktop" class="mr-2"></download-button>
 
-        <v-menu bottom left offset-y :close-on-content-click="false" class="mr-4">
-            <template v-slot:activator="{on, attrs}">
+        <v-menu
+            bottom
+            left
+            offset-y
+            :close-on-content-click="false"
+            class="mr-4"
+        >
+            <template v-slot:activator="{ on, attrs }">
                 <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon>
-                        mdi-history
-                    </v-icon>
+                    <v-icon> mdi-history </v-icon>
                 </v-btn>
             </template>
 
@@ -82,19 +110,28 @@
 
         <template v-if="isLoggedIn">
             <v-toolbar-title>
-                <v-btn icon :to="settingsTo" v-if="settingsEnabled">
-                    <v-icon>
-                        mdi-cog
-                    </v-icon>
-                </v-btn>
+                <v-tooltip :disabled="isDesktop" bottom>
+                    <template v-slot:activator="{ on }">
+                        <div v-on="on">
+                            <v-btn
+                                icon
+                                :to="settingsTo"
+                                :disabled="!isDesktop"
+                            >
+                                <v-icon> mdi-cog </v-icon>
+                            </v-btn>
+                        </div>
+                    </template>
+                    <span>
+                        Go to the Desktop Application to modify settings.
+                    </span>
+                </v-tooltip>
             </v-toolbar-title>
 
             <v-menu bottom left offset-y class="mr-4">
-                <template v-slot:activator="{on, attrs}">
+                <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
-                        <v-icon>
-                            mdi-account
-                        </v-icon>
+                        <v-icon> mdi-account </v-icon>
                     </v-btn>
                 </template>
 
@@ -111,16 +148,14 @@
         </template>
 
         <template v-else>
-            <v-btn color="success" :to="registerTo">
-                Register
-            </v-btn>
+            <v-btn color="success" :to="registerTo"> Register </v-btn>
         </template>
     </v-app-bar>
 </template>
 
 <script lang="ts">
 
-import Component, {mixins} from 'vue-class-component'
+import Component, { mixins } from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { apiClient, ApiData } from '@client/js/api'
@@ -181,11 +216,11 @@ export default class AppNav extends mixins(CommonComponent) {
         }
     }
 
-    get gameLogQuery() : any {
+    get gameLogQuery(): any {
         return this.cleanQuery
     }
 
-    get menuItems(): any [] {
+    get menuItems(): any[] {
         return [
             {
                 name: 'Game Logs',
@@ -235,14 +270,13 @@ export default class AppNav extends mixins(CommonComponent) {
                             name: pi.ClipLibraryPageId,
                         },
                     },
-/// #if DESKTOP
                     {
                         name: 'Local',
                         to: {
                             name: pi.LocalStoragePageId,
                         },
+                        disableOnWeb: true,
                     },
-/// #endif
                 ]
             },
             {
@@ -269,7 +303,7 @@ export default class AppNav extends mixins(CommonComponent) {
         ]
     }
 
-    get homeTo() : any {
+    get homeTo(): any {
         return {
             name: pi.DashboardPageId,
         }
@@ -307,17 +341,9 @@ export default class AppNav extends mixins(CommonComponent) {
         }
     }
 
-    get settingsEnabled(): boolean {
-/// #if DESKTOP
-        return true
-/// #else  
-        return false
-/// #endif
-    }
-
     logout() {
         apiClient.logout().then(() => {
-        }).catch((err : any) => {
+        }).catch((err: any) => {
             console.error('Failed to logout: {}', err)
         }).finally(() => {
             // The user should feel like they logged out regardless of what happened on the server.
@@ -362,7 +388,6 @@ export default class AppNav extends mixins(CommonComponent) {
 </script>
 
 <style scoped>
-
 .inner-badge {
     margin-top: 0px !important;
 }
@@ -374,5 +399,4 @@ export default class AppNav extends mixins(CommonComponent) {
     border: 1px white solid;
     overflow: auto;
 }
-
 </style>
