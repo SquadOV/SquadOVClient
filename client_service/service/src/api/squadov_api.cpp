@@ -437,6 +437,21 @@ std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
     return parsedJson.get<std::string>();
 }
 
+std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << videoUuid << "/source/fastify.mp4?md5=1";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get VOD MD5: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {
     std::ostringstream path;
     path << "/v1/wow/combatlog";
