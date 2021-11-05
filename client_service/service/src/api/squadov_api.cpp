@@ -613,6 +613,76 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
     return "";
 }
 
+std::string SquadovApi::createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl) {
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", shared::json::JsonConverter<shared::wow::TypedInstanceData>::to(data) },
+        { "cl", cl.toJson() }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/instance";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to create WoW instance: " << result->status);
+        return "";
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
+}
+
+std::string SquadovApi::finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants) {
+    nlohmann::json combatantArray = nlohmann::json::array();
+    for (const auto& c : combatants) {
+        combatantArray.push_back(c.toJson());
+    }
+
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "combatants", combatantArray }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/instance/" << matchUuid;
+
+    int lastStatus = 0;
+    for (int i = 0; i < MAX_WOW_MATCH_FINISH_RETRY; ++i) {
+        const auto result = _webClient->post(path.str(), body);
+
+        lastStatus = result->status;
+        if (result->status != 200) {
+            LOG_INFO("...Error from server...retrying." << std::endl);
+            std::this_thread::sleep_for(generateRandomBackoff(1000, static_cast<size_t>(i)));
+            continue;
+        }
+
+        const auto parsedJson = nlohmann::json::parse(result->body);
+        return parsedJson.get<std::string>();
+    }
+
+    THROW_ERROR("Failed to finish WoW instance: " << lastStatus);
+    return "";
+}
+
+void SquadovApi::convertWowInstanceViewToKeystone(const std::string& viewUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& keystone, const game_event_watcher::WoWCombatLogState& cl) {
+    const nlohmann::json body = {
+        { "timestamp", shared::timeToIso(timestamp)},
+        { "data", keystone.toJson() },
+        { "cl", cl.toJson() }
+    };
+
+    std::ostringstream path;
+    path << "/v1/wow/match/instance/" << viewUuid << "/convert/keystone";
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to create WoW challenge: " << result->status);
+        return;
+    }
+}
+
 bool SquadovApi::verifyValorantAccountOwnership(const std::string& gameName, const std::string& tagLine, const std::string& puuid) const {
     {
         std::lock_guard guard(_riotAccountOwnershipMutex);

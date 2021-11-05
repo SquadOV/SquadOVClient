@@ -27,6 +27,7 @@ enum class EWoWLogEvents {
     // This event is fired whenever the line is not a COMBATANT_INFO. Should only
     // be handled after you start to exepct COMBATANT_INFO events.
     FinishCombatantInfo,
+    SpellCastSuccess,
     ZoneChange
 };
 
@@ -104,6 +105,17 @@ struct WoWCombatantInfo {
     std::string guid;
 
     nlohmann::json toJson() const;
+};
+
+struct WowCombatLogSubject {
+    std::string guid;
+    std::string name;
+    int64_t flags = 0;
+    int64_t raidFlags = 0;
+};
+
+struct WowSpellCastSuccess {
+    WowCombatLogSubject src;
 };
 
 struct WoWZoneChange {

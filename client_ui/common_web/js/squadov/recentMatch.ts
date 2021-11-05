@@ -3,7 +3,7 @@ import { VodManifest } from '@client/js/squadov/vod'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { LolPlayerMatchSummary, cleanLolPlayerMatchSummaryFromJson } from '@client/js/lol/matches'
 import { TftPlayerMatchSummary, cleanTftPlayerMatchSummaryFromJson } from '@client/js/tft/matches'
-import { WowChallenge, WowEncounter, WowArena, cleanWowChallengeFromJson, cleanWowEncounterFromJson, cleanWowArenaFromJson } from '@client/js/wow/matches'
+import { WowChallenge, WowEncounter, WowArena, cleanWowChallengeFromJson, cleanWowEncounterFromJson, cleanWowArenaFromJson, WowInstance, cleanWowInstanceFromJson } from '@client/js/wow/matches'
 import { ValorantPlayerMatchSummary, cleanValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
@@ -32,6 +32,7 @@ export interface RecentMatch {
     wowChallenge?: WowChallenge
     wowEncounter?: WowEncounter
     wowArena?: WowArena
+    wowInstance?: WowInstance
     csgoMatch?: CsgoPlayerMatchSummary
 }
 
@@ -91,7 +92,7 @@ export function checkRecentMatchValidity(r: RecentMatch): boolean {
         case SquadOvGames.WorldOfWarcraft:
         case SquadOvGames.WowVanilla:
         case SquadOvGames.WowTbc:
-            return !!r.wowChallenge || !!r.wowEncounter || !!r.wowArena
+            return !!r.wowChallenge || !!r.wowEncounter || !!r.wowArena || !!r.wowInstance
         case SquadOvGames.TeamfightTactics:
             return !!r.tftMatch
         case SquadOvGames.LeagueOfLegends:
@@ -136,6 +137,10 @@ export function cleanRecentMatchFromJson(r: RecentMatch): RecentMatch {
 
     if (!!r.wowArena) {
         cleanWowArenaFromJson(r.wowArena)
+    }
+
+    if (!!r.wowInstance) {
+        cleanWowInstanceFromJson(r.wowInstance)
     }
 
     if (!!r.csgoMatch) {

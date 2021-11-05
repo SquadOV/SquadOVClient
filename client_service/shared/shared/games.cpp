@@ -62,4 +62,14 @@ nlohmann::json gameVectorToJsonArray(const std::vector<EGame>& games) {
     return data;
 }
 
+bool isWowClassic(EGame game) {
+    switch (game) {
+        case EGame::WowVanilla:
+        case EGame::WowTbc:
+            return true;
+        default:
+            return false;
+    }
+}
+
 }
