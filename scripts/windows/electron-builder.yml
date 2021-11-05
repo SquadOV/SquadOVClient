@@ -56,7 +56,7 @@ extraResources:
     to: "tzdata"
   - from: "../../resources/csgo"
     to: "csgo"
-  - from: "../../build/bin/x64/Release"
+  - from: "../../build-release/bin/x64/Release"
     to: "service"
     filter:
       - "*.dll"
