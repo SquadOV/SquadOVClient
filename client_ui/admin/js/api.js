@@ -1417,12 +1417,8 @@ class ApiServer {
                     )).rows.map((ele) => ele.name),
                     wowChars: (await this.pool.query(
                         `
-                        SELECT DISTINCT wcp.unit_name AS "name"
+                        SELECT DISTINCT wucc.unit_name AS "name"
                         FROM squadov.wow_user_character_cache AS wucc
-                        INNER JOIN squadov.wow_match_view_combatants AS wvc
-                            ON wvc.event_id = wucc.event_id
-                        INNER JOIN squadov.wow_match_view_character_presence AS wcp
-                            ON wcp.character_id = wvc.character_id
                         WHERE wucc.user_id = $1
                         `,
                         [rows[0].id]
