@@ -8,6 +8,7 @@ export interface RootState {
     currentUser: SquadOVUser | null
     redirectUrl: string | null
     hasValidSession: boolean
+    attemptUserLoad: boolean
     features: FeatureFlags
 /// #if DESKTOP
     settings: SquadOvLocalSettings | null

@@ -848,10 +848,9 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             }).catch((err: any) => {
                 console.error('Failed to get IP address: ', err)
             })
-
+            store.commit('attemptUserLoad', true)
             store.dispatch('loadUserFeatureFlags')
             initializeSentry(store.state.currentUser!)
-            
             // Note that in the web case, the renderer code is responsible for the doing the session
             // heartbeat as well.
             if (mustBeInvalid) {
@@ -874,6 +873,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             }
         })
     } else {
+        store.commit('attemptUserLoad', true)
         if (isTmpSession || isPublic) {
             next()
         } else if (mustBeInvalid && hasCookie) {
@@ -916,6 +916,7 @@ ipcRenderer.invoke('request-session').then((session : {
 }) => {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+        store.commit('attemptUserLoad', true)
         initializeSentry(resp.data)
         store.commit('setUser' , resp.data)
         store.dispatch('loadUserFeatureFlags')

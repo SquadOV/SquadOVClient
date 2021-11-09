@@ -14,6 +14,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
+        attemptUserLoad: false,
         redirectUrl: null,
         hasValidSession: true,
         features: {
@@ -36,6 +37,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         displayInviteFriendPopUp: false,
     },
     mutations: {
+        attemptUserLoad(state: RootState, b: boolean) {
+            state.attemptUserLoad = b
+        },
         displayInviteFriendPopUp(state: RootState, b: boolean) {
             state.displayInviteFriendPopUp = b
         },
