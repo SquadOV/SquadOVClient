@@ -1,5 +1,6 @@
 <template>
     <v-app-bar
+        v-if="dataLoaded"
         dense
     >
         <v-btn
@@ -195,6 +196,10 @@ export default class AppNav extends mixins(CommonComponent) {
 
     get isLoggedIn(): boolean {
         return !!this.$store.state.currentUser
+    }
+
+    get dataLoaded(): boolean {
+        return this.$store.state.attemptUserLoad
     }
 
     get totalSquadInvites(): number {
