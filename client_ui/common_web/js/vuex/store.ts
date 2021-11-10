@@ -221,13 +221,14 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[]}) {
+        changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[], altPtt: number[]}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.usePushToTalk = params.enable
-            state.settings.keybinds.pushToTalk = params.ptt
+            state.settings.keybinds.pushToTalk = [...params.ptt]
+            state.settings.keybinds.pushToTalk2 = [...params.altPtt]
             saveLocalSettings(state.settings)
 /// #endif
         },

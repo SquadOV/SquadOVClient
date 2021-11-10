@@ -69,6 +69,10 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     for (const auto& ele: obj["pushToTalk"]) {
         settings.pushToTalk.push_back(ele.get<int>());
     }
+
+    for (const auto& ele: obj["pushToTalk2"]) {
+        settings.pushToTalk2.push_back(ele.get<int>());
+    }
     return settings;
 }
 
