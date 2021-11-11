@@ -108,12 +108,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseWGC(state: RootState, b: boolean) {
+        changeuseWGC2(state: RootState, b: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.useWGC = b
+            state.settings.record.useWGC2 = b
             saveLocalSettings(state.settings)
 /// #endif
         },

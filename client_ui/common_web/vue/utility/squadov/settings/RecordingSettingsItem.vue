@@ -105,8 +105,8 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="$store.state.settings.record.useWGC"
-                            @change="$store.commit('changeUseWGC', arguments[0])"
+                            :input-value="$store.state.settings.record.useWGC2"
+                            @change="$store.commit('changeuseWGC2', arguments[0])"
                             hide-details
                             label="Use Windows Graphics Capture"
                         >
@@ -119,7 +119,7 @@
                                     </template>
                                     Whether to use WGC for recording.
                                     When disabled, the default is GDI which may produce lower quality videoes. WGC might cause additional lag and produce a yellow border in the recording.
-                                    GDI is currently not supported for: League of Legends, WoW, and AimLab
+                                    GDI is currently not supported for: Hearthstone, League of Legends, WoW, AimLab.
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
