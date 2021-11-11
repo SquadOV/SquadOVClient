@@ -1205,7 +1205,7 @@ class ApiServer {
         return rows.map((ele) => ele.code)
     }
 
-    async getFunnelData(start, end, codes, organicOnly) {
+    async getFunnelData(start, end, codes, organicOnly, verifiedOnly) {
         let query
         let params
 
@@ -1234,6 +1234,7 @@ class ApiServer {
                     ON u.email = rcu.email
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "login", (
                 SELECT COUNT(DISTINCT ud.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1245,6 +1246,7 @@ class ApiServer {
                     ON ud.user_id = u.id
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "download", (
                 SELECT COUNT(DISTINCT uhs.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1256,6 +1258,7 @@ class ApiServer {
                     ON uhs.user_id = u.id
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "install", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1269,6 +1272,7 @@ class ApiServer {
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND v.is_clip = FALSE
                     AND v.end_time IS NOT NULL
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "record", (
                 SELECT COUNT(DISTINCT u.id) AS "count"
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1280,10 +1284,11 @@ class ApiServer {
                     ON dae.user_id = u.id
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "active"
             `
 
-            params = [start, end, codes]
+            params = [start, end, codes, verifiedOnly]
         } else {
             query = `SELECT (
                 SELECT COUNT(DISTINCT u.id)
@@ -1292,6 +1297,7 @@ class ApiServer {
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "view", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1299,6 +1305,7 @@ class ApiServer {
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "reg", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1306,6 +1313,7 @@ class ApiServer {
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "login", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1315,6 +1323,7 @@ class ApiServer {
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "install", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1326,6 +1335,7 @@ class ApiServer {
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND v.is_clip = FALSE
                     AND v.end_time IS NOT NULL
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "record", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1335,8 +1345,9 @@ class ApiServer {
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
             ) AS "active"`
-            params = [start, end, organicOnly]
+            params = [start, end, organicOnly, verifiedOnly]
         }
 
         const { rows } = await this.pool.query(
