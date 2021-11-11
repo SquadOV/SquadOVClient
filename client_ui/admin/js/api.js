@@ -1210,14 +1210,14 @@ class ApiServer {
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rv.code
                 WHERE rc.code = ANY($3)
-                    AND rv.tm >= $1::TIMESTAMPTZ AND rv.tm < $2::TIMESTAMPTZ
+                    AND rv.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rv.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "view", (
                 SELECT COUNT(DISTINCT rcu.email)
                 FROM squadov.user_referral_code_usage AS rcu
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rcu.code_id
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "reg", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1226,7 +1226,7 @@ class ApiServer {
                 INNER JOIN squadov.users AS u
                     ON u.email = rcu.email
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "login", (
                 SELECT COUNT(DISTINCT ud.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1237,7 +1237,7 @@ class ApiServer {
                 INNER JOIN squadov.user_downloads AS ud
                     ON ud.user_id = u.id
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "download", (
                 SELECT COUNT(DISTINCT uhs.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1248,7 +1248,7 @@ class ApiServer {
                 INNER JOIN squadov.user_hardware_specs AS uhs
                     ON uhs.user_id = u.id
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "install", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.user_referral_code_usage AS rcu
@@ -1259,7 +1259,7 @@ class ApiServer {
                 INNER JOIN squadov.vods AS v
                     ON v.user_uuid = u.uuid
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND v.is_clip = FALSE
                     AND v.end_time IS NOT NULL
             ) AS "record", (
@@ -1272,7 +1272,7 @@ class ApiServer {
                 INNER JOIN squadov.daily_active_endpoint AS dae
                     ON dae.user_id = u.id
                 WHERE rc.code = ANY($3)
-                    AND rcu.tm >= $1::TIMESTAMPTZ AND rcu.tm < $2::TIMESTAMPTZ
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "active"
             `
 
@@ -1284,21 +1284,21 @@ class ApiServer {
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "view", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "reg", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "login", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1307,7 +1307,7 @@ class ApiServer {
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "install", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
@@ -1316,7 +1316,7 @@ class ApiServer {
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND v.is_clip = FALSE
                     AND v.end_time IS NOT NULL
             ) AS "record", (
@@ -1327,7 +1327,7 @@ class ApiServer {
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
-                    AND u.registration_time >= $1::TIMESTAMPTZ AND u.registration_time < $2::TIMESTAMPTZ
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
             ) AS "active"`
             params = [start, end, organicOnly]
         }
