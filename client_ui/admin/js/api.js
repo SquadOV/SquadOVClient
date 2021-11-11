@@ -168,10 +168,14 @@ class ApiServer {
         SELECT
             s.tm AS "tm",
             g.code AS "code",
-            g.cnt AS "count"
+            g.cnt AS "count",
+            g.ver AS "verified"
         FROM series AS s
         CROSS JOIN LATERAL (
-            SELECT rc.code, COUNT(DISTINCT u.id)
+            SELECT
+                rc.code,
+                COUNT(DISTINCT u.id),
+                COUNT(DISTINCT (CASE WHEN u.verified THEN u.id END))
             FROM squadov.users AS u
             LEFT JOIN squadov.user_referral_code_usage AS rcu
                 ON rcu.email = u.email
@@ -179,7 +183,7 @@ class ApiServer {
                 ON rc.id = rcu.code_id
             WHERE u.registration_time IS NOT NULL AND u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
             GROUP BY rc.code
-        ) AS g(code, cnt)
+        ) AS g(code, cnt, ver)
             `
 
         const { rows } = await this.pool.query(
@@ -197,8 +201,9 @@ class ApiServer {
                     data: {
                         'Users': 0,
                         'Organic': 0,
+                        'Verified': 0,
                     },
-                    sub: ['Users', 'Organic', ...referralCodes]
+                    sub: ['Users', 'Organic', 'Verified', ...referralCodes]
                 }
 
                 for (let r of referralCodes) {
@@ -209,6 +214,8 @@ class ApiServer {
             
             let d = retData.get(tmKey)
             let cnt = parseInt(r.count)
+            let ver = parseInt(r.verified)
+            d.data['Verified'] = ver
             if (!r.code) {
                 d.data['Organic'] = cnt
             } else {
