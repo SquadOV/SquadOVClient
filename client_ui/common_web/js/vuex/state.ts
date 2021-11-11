@@ -20,4 +20,5 @@ export interface RootState {
     serviceError: boolean
     successfullyVisitedVideo: boolean
     displayInviteFriendPopUp: boolean
+    forceHideNav: boolean
 }

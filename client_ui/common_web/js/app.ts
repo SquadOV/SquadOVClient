@@ -810,7 +810,17 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         }), '/')
         return
     }
-    
+
+    // This is a bit unfortunate but since we stuck the AppNav outside of the routerview
+    // the only real way to control whether it shows up is by modifying some global state
+    // that can actually be accessed by Vue.
+    store.commit(
+        'changeForceHideNav',
+        to.name === pi.VideoEditorPageId ||
+            to.name === pi.PlayerPageId ||
+            to.name === pi.SetupWizardPageId
+    )
+
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId)
 
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
