@@ -153,7 +153,7 @@ bool tryInitializeWin32GdiRecorder(VideoRecorderPtr& output, const VideoWindowIn
     const auto recordingSettings = service::system::getCurrentSettings()->recording();
     
     // This also handles the edge case that the user is using a version older than Windows 10
-    if (recordingSettings.useWGC && IsWindows10OrGreater()) {
+    if (recordingSettings.useWGC2 && IsWindows10OrGreater()) {
         LOG_INFO("Rejecting GDI due to user preference of WGC" << std::endl);
         return false;
     }
