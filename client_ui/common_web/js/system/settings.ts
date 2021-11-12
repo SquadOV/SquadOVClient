@@ -61,7 +61,7 @@ export interface SquadOvRecordingSettings {
     useVideoHw: boolean
     useHwEncoder: boolean
     useVfr4: boolean
-    useWGC: boolean
+    useWGC2: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
@@ -288,7 +288,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -323,7 +323,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -358,7 +358,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -413,7 +413,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVideoHw: true,
             useHwEncoder: true,
             useVfr4: true,
-            useWGC: false,
+            useWGC2: true,
             outputDevices: [
                 {
                     device: 'Default Device',
@@ -507,8 +507,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.record.useVfr4 = true
         }
 
-        if (parsedData.record.useWGC === undefined) {
-            parsedData.record.useWGC = false
+        if (parsedData.record.useWGC2 === undefined) {
+            parsedData.record.useWGC2 = true
         }
         
         if (parsedData.record.useLocalRecording === undefined) {
