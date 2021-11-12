@@ -345,7 +345,15 @@ class ApiServer {
                     ON rc.id = rd.code
                 WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NOT NULL
-            ), 0) AS "downloads"
+            ), 0) AS "downloads",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.user_referral_code_usage AS ucu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = ucu.code_id
+                WHERE ucu.tm >= s.tm AND ucu.tm < s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NOT NULL
+            ), 0) AS "registrations"
         FROM series AS s
             `
 
@@ -360,8 +368,9 @@ class ApiServer {
                 data: {
                     'Visits': parseInt(r.visits),
                     'Downloads': parseInt(r.downloads),
+                    'Registrations': parseInt(r.registrations),
                 },
-                sub: ['Visits', 'Downloads']
+                sub: ['Visits', 'Downloads', 'Registrations']
             }
         })
     }
@@ -372,7 +381,8 @@ class ApiServer {
             rc.code AS "code",
             u.username AS "description",
             v.value AS "visits",
-            d.value AS "downloads"
+            d.value AS "downloads",
+            r.value AS "registrations"
         FROM squadov.referral_codes AS rc
         INNER JOIN squadov.users AS u
             ON u.id = rc.user_id
@@ -386,6 +396,11 @@ class ApiServer {
             FROM squadov.referral_downloads AS rd
             WHERE rd.code = rc.id
         ) AS d
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value"
+            FROM squadov.user_referral_code_usage AS ucu
+            WHERE ucu.code_id = rc.id
+        ) AS r
         WHERE rc.user_id IS NOT NULL
         `
 
@@ -398,7 +413,8 @@ class ApiServer {
                 code: r.code,
                 description: r.description,
                 visits: parseInt(r.visits),
-                downloads: parseInt(r.downloads)
+                downloads: parseInt(r.downloads),
+                registrations: parseInt(r.registrations),
             }
         })
     }
@@ -439,7 +455,15 @@ class ApiServer {
                     ON rc.id = rd.code
                 WHERE rd.tm >= s.tm AND rd.tm < s.tm + INTERVAL '1 ${pgInterval}'
                     AND rc.user_id IS NULL
-            ), 0) AS "downloads"
+            ), 0) AS "downloads",
+            COALESCE((
+                SELECT COUNT(1)
+                FROM squadov.user_referral_code_usage AS ucu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = ucu.code_id
+                WHERE ucu.tm >= s.tm AND ucu.tm < s.tm + INTERVAL '1 ${pgInterval}'
+                    AND rc.user_id IS NULL
+            ), 0) AS "registrations"
         FROM series AS s
             `
 
@@ -454,8 +478,9 @@ class ApiServer {
                 data: {
                     'Visits': parseInt(r.visits),
                     'Downloads': parseInt(r.downloads),
+                    'Registrations': parseInt(r.registrations),
                 },
-                sub: ['Visits', 'Downloads']
+                sub: ['Visits', 'Downloads', 'Registrations']
             }
         })
     }
@@ -478,6 +503,11 @@ class ApiServer {
             FROM squadov.referral_downloads AS rd
             WHERE rd.code = rc.id
         ) AS d
+        CROSS JOIN LATERAL (
+            SELECT COUNT(1) AS "value"
+            FROM squadov.user_referral_code_usage AS ucu
+            WHERE ucu.code_id = rc.id
+        ) AS r
         WHERE rc.user_id IS NULL
         `
 
@@ -490,7 +520,8 @@ class ApiServer {
                 code: r.code,
                 description: r.description,
                 visits: parseInt(r.visits),
-                downloads: parseInt(r.downloads)
+                downloads: parseInt(r.downloads),
+                registrations: parseInt(r.registrations),
             }
         })
     }
