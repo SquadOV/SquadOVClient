@@ -17,7 +17,11 @@ TimePoint strToTime(const std::string& dt, const std::string& format = "%F %T");
 TimePoint isoStrToTime(const std::string& dt);
 LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %T");
 
-int64_t timeToUnixMs(const TimePoint& tm);
+template<typename T>
+int64_t timeToUnixMs(const T& tm) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(tm.time_since_epoch()).count();
+}
+
 TimePoint unixMsToTime(int64_t tm);
 std::string timeToStr(const TimePoint& tm);
 std::string timeToIso(const TimePoint& tm);
