@@ -1,17 +1,17 @@
 <template>
     <div id="rootApp">
-        <app-nav
-            class="flex-grow-0"
-            v-if="hasValidSession && showNav && shouldShowNav"
-        ></app-nav>
-        <app-alerts
-            width="100%"
-            v-if="hasValidSession"
-        ></app-alerts>
-        <app-pop-ups
-            width="100%"
-            v-if="hasValidSession"
-        ></app-pop-ups>
+        <template v-if="hasValidSession && showNav && shouldShowNav && !$store.state.forceHideNav">
+            <app-nav
+                class="flex-grow-0"
+            ></app-nav>
+            <app-alerts
+                width="100%"
+            ></app-alerts>
+            <app-pop-ups
+                width="100%"
+            ></app-pop-ups>
+        </template>
+        
         <keep-alive :max="3">
             <router-view :key="key"></router-view>
         </keep-alive>

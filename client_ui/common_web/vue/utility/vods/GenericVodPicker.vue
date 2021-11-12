@@ -113,11 +113,12 @@
             </v-tooltip>
 
             <!-- clip library button -->
+
             <v-tooltip bottom>
                 <template v-slot:activator="{on, attrs}">
-                    <v-btn color="primary" icon @click="openClipWindowForMatch" v-if="hasFastify"  v-on="on" v-bind="attrs">
+                    <v-btn color="primary" icon @click="openClipWindowForMatch" :disabled="!hasFastify" v-on="on" v-bind="attrs">
                         <v-icon>
-                            mdi-filmstrip-box-multiple
+                            mdi-filmstrip
                         </v-icon>
                     </v-btn>
                 </template>
