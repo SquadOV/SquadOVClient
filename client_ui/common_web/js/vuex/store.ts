@@ -35,6 +35,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         muteInviteFriendsPopUp: !!window.localStorage.getItem('muteInviteFriendsPopUp'),
         successfullyVisitedVideo: false,
         displayInviteFriendPopUp: false,
+        forceHideNav: false,
     },
     mutations: {
         attemptUserLoad(state: RootState, b: boolean) {
@@ -398,6 +399,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         updateLocalStorageUsage(state: RootState, val: number) {
             state.localDiskSpaceRecordUsageGb = val
+        },
+        changeForceHideNav(state: RootState, v: boolean) {
+            state.forceHideNav = v
         }
     },
     actions: {
