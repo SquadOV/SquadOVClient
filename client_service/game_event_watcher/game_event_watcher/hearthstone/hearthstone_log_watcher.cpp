@@ -26,18 +26,37 @@ HearthstoneRawLog parseLogLine(const std::string& line) {
     if (matches.size() < 3) {
         return log;
     }
-    log.canParse = true;
     
     // Hearthstone prints out log times using the local time I believe so we need to convert it into
-    // UTC before passing it through the rest of the application.
-    const auto t = date::make_zoned(date::current_zone(), shared::strToLocalTime(matches[1].str()));
-    log.tm = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
+    // UTC before passing it through the rest of the application. Note that depending on the locale
+    // Hearthstone might print the time in the log using ":" as the separator or a "." as the separator.
+    // We can determine if our parsing format failed if the returned time is the Unix epoch.
+    bool foundTime = false;
+    const auto timeFormats = { "%F %T", "%F %H.%M.%S"};
+    for (const auto& format: timeFormats) {
+        const auto parsed = shared::strToLocalTime(matches[1].str(), format);
+        if (shared::timeToUnixMs(parsed) == 0) {
+            continue;
+        }
+
+        const auto t = date::make_zoned(date::current_zone(), parsed);
+        log.tm = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
+        foundTime = true;
+        break;
+    }
+
+    if (!foundTime) {
+        LOG_WARNING("Unknown Hearthstone time format: " << matches[1].str() << std::endl);
+        return log;
+    }
+
     if (matches.size() == 3) {
         log.log = matches[2].str();
     } else if (matches.size() == 4) {
         log.section = matches[2].str();
         log.log = matches[3].str();
     }
+    log.canParse = true;
     return log;
 }
 
