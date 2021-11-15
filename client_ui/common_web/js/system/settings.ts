@@ -78,6 +78,7 @@ export interface SquadOvRecordingSettings {
 
 export interface SquadOvKeybindSettings {
     pushToTalk: number[]
+    pushToTalk2: number[]
 }
 
 export interface SquadOvVideoPlaybackSettings {
@@ -391,7 +392,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
     return {
         record,
         keybinds: {
-            pushToTalk: []
+            pushToTalk: [],
+            pushToTalk2: []
         },
         playback: {
             smallStepSize: 5000,
@@ -442,7 +444,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVoiceSpeechNoiseReduction: false,
         },
         keybinds: {
-            pushToTalk: []
+            pushToTalk: [],
+            pushToTalk2: []
         },
         playback: {
             smallStepSize: 5000,
@@ -529,7 +532,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.keybinds === undefined) {
             parsedData.keybinds = {
-                pushToTalk: []
+                pushToTalk: [],
+                pushToTalk2: []
             }
         }
 
@@ -620,6 +624,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()
+    }
+
+    if (parsedData.keybinds.pushToTalk2 === undefined) {
+        parsedData.keybinds.pushToTalk2 = []
     }
 
     saveLocalSettings(parsedData, true)
