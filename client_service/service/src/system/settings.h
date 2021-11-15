@@ -59,6 +59,7 @@ struct WowSettings {
     bool useCombatLogTimeout = true;
     int32_t timeoutSeconds2 = 180;
     bool recordArenas = true;
+    bool recordBattlegrounds = true;
     bool recordKeystones = true;
     bool recordEncounters = true;
     bool recordFullRaids = false;
