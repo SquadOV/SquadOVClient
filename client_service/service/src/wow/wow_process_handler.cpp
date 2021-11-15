@@ -653,7 +653,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
         const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
         if (
             ((instanceType == shared::wow::InstanceType::RaidDungeon) && wowSettings.recordFullRaids) ||
-            (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordKeystones) ||
+            (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordDungeons) ||
             ((instanceType == shared::wow::InstanceType::ArenaBattlefield) && shared::isWowClassic(_finalGame) && wowSettings.recordArenas) ||
             (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordArenas)
         ) {

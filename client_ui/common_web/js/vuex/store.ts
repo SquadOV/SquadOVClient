@@ -356,6 +356,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeWowRecordDungeons(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordDungeons = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeWowRecordKeystones(state: RootState, v: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
