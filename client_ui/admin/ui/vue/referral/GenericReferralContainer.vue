@@ -90,6 +90,10 @@ export default class GenericReferralContainer extends Vue {
             {
                 text: 'Downloads',
                 value: 'downloads',
+            },
+            {
+                text: 'Registrations',
+                value: 'registrations',
             }
         ]
     }

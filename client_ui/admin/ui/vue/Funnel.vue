@@ -27,6 +27,14 @@
                 label="Organic Only"
             >
             </v-checkbox>
+
+            <v-checkbox
+                v-model="verifiedOnly"
+                dense
+                hide-details
+                label="Verified Only"
+            >
+            </v-checkbox>
         </div>
 
         <div class="d-flex flex-wrap full-width justify-center mt-4">
@@ -80,13 +88,15 @@ export default class Funnel extends Vue {
     endDate: Date = new Date()
     data: FunnelData | null = null
     organicOnly: boolean = false
+    verifiedOnly: boolean = false
 
     @Watch('selectedReferralCodes')
     @Watch('startDate')
     @Watch('endDate')
     @Watch('organicOnly')
+    @Watch('verifiedOnly')
     refreshData() {
-        getFunnelData(this.startDate, this.endDate, this.selectedReferralCodes, this.organicOnly).then((resp: FunnelData) => {
+        getFunnelData(this.startDate, this.endDate, this.selectedReferralCodes, this.organicOnly, this.verifiedOnly).then((resp: FunnelData) => {
             this.data = resp
         }).catch((err: any) => {
             console.error('Failed to get funnel data: ', err)
