@@ -36,6 +36,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         successfullyVisitedVideo: false,
         displayInviteFriendPopUp: false,
         forceHideNav: false,
+        cachedIp: null,
     },
     mutations: {
         attemptUserLoad(state: RootState, b: boolean) {
@@ -403,6 +404,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         changeForceHideNav(state: RootState, v: boolean) {
             state.forceHideNav = v
+        },
+        updateCachedIp(state: RootState, ip: string) {
+            state.cachedIp = ip
         }
     },
     actions: {
