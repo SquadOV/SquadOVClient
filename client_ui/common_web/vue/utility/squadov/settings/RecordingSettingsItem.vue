@@ -219,8 +219,30 @@
                                 style="width: 500px;"
                             >
                                 <template v-slot:append>
-                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk">
+                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk(false)">
                                         Edit Keybind
+                                    </v-btn>
+
+                                    <v-btn class="error" @click="stopRecordPushToTalk" v-else>
+                                        Stop Recording
+                                    </v-btn>
+                                </template>
+                            </v-text-field>
+
+                            <v-text-field
+                                v-if="usePushToTalk"
+                                :value="pttAltKeybindStr"
+                                @keydown="addKeyToPushToTalk"
+                                class="ml-8 flex-grow-0"
+                                solo
+                                single-line
+                                hide-details
+                                readonly
+                                style="width: 500px;"
+                            >
+                                <template v-slot:append>
+                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk(true)">
+                                        Edit Keybind (Alt)
                                     </v-btn>
 
                                     <v-btn class="error" @click="stopRecordPushToTalk" v-else>
@@ -621,18 +643,32 @@ export default class RecordingSettingsItem extends Vue {
         return this.$store.state.settings.keybinds.pushToTalk
     }
 
+    get pushToTalkAltKeybind(): number[] {
+        return this.$store.state.settings.keybinds.pushToTalk2
+    }
+
     pttRecord: boolean = false
+    pttIsAltRecord: boolean = false
     pttKeybindStr: string = ''
+    pttAltKeybindStr: string = ''
     keybindCache: Map<number, string> = new Map()
 
     get pttKeySet(): Set<number> {
         return new Set(this.pushToTalkKeybind)
     }
 
+    get pttAltKeySet(): Set<number> {
+        return new Set(this.pushToTalkKeybind)
+    }
+
     @Watch('pushToTalkKeybind')
+    @Watch('pushToTalkAltKeybind')
     async resyncPushToTalkStr() {
 ///#if DESKTOP
-        let uncachedCodes = this.pushToTalkKeybind.filter((ele: number) => !this.keybindCache.has(ele))
+        let uncachedCodes = [
+            ...this.pushToTalkKeybind.filter((ele: number) => !this.keybindCache.has(ele)),
+            ...this.pushToTalkAltKeybind.filter((ele: number) => !this.keybindCache.has(ele))
+        ]
         for (let code of uncachedCodes) {
             try {
                 let k: IpcResponse<string> = await ipcRenderer.invoke('request-key-code-char', code)
@@ -648,14 +684,16 @@ export default class RecordingSettingsItem extends Vue {
         }
 
         this.pttKeybindStr = this.pushToTalkKeybind.map((ele: number) => this.keybindCache.get(ele)!).join(' + ')
+        this.pttAltKeybindStr = this.pushToTalkAltKeybind.map((ele: number) => this.keybindCache.get(ele)!).join(' + ')
 ///#endif
     }
 
     mousePttBind: any = null
 
-    startRecordPushToTalk() {
+    startRecordPushToTalk(alt: boolean) {
         this.pttRecord = true
-        this.changePushToTalk(true, [])
+        this.pttIsAltRecord = alt
+        this.changePushToTalk(true, alt ? this.pushToTalkKeybind : [], alt ? [] : this.pushToTalkAltKeybind)
 
         this.mousePttBind = this.addMouseToPushToTalk.bind(this)
         window.addEventListener('mouseup', this.mousePttBind)
@@ -663,6 +701,7 @@ export default class RecordingSettingsItem extends Vue {
 
     stopRecordPushToTalk() {
         this.pttRecord = false
+        this.pttIsAltRecord = false
         window.removeEventListener('mouseup', this.mousePttBind)
     }
 
@@ -670,7 +709,12 @@ export default class RecordingSettingsItem extends Vue {
         if (this.pttKeySet.has(code)) {
             return
         }
-        this.changePushToTalk(this.usePushToTalk, [...this.pushToTalkKeybind, code])
+
+        this.changePushToTalk(
+            this.usePushToTalk,
+            this.pttIsAltRecord ? this.pushToTalkKeybind: [...this.pushToTalkKeybind, code] ,
+            this.pttIsAltRecord ? [...this.pushToTalkAltKeybind, code] : this.pushToTalkAltKeybind
+        )
     }
 
     addKeyToPushToTalk(k: KeyboardEvent) {
@@ -713,10 +757,11 @@ export default class RecordingSettingsItem extends Vue {
         m.preventDefault()
     }
 
-    changePushToTalk(use: boolean, keys: number[]) {
+    changePushToTalk(use: boolean, keys: number[], alt: number[]) {
         this.$store.commit('changePushToTalk', {
             enable: use,
             ptt: keys,
+            altPtt: alt,
         })
     }
 
