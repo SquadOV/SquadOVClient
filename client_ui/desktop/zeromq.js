@@ -346,6 +346,10 @@ class ZeroMQServerClient {
     async reloadGameRecordingStream() {
         await this._pub.send(['reload-game-recording-stream', ''])
     }
+
+    async cleanupLocalFile(file) {
+        await this._pub.send(['cleanup-local-file', file])
+    }
 }
 
 module.exports.ZeroMQServerClient = ZeroMQServerClient
