@@ -34,10 +34,6 @@ LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format) 
     return ret;
 }
 
-int64_t timeToUnixMs(const TimePoint& tm) {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(tm.time_since_epoch()).count();
-}
-
 TimePoint unixMsToTime(int64_t tm) {
     return shared::TimePoint(std::chrono::milliseconds(tm));
 }

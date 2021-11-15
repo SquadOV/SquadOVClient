@@ -810,7 +810,17 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         }), '/')
         return
     }
-    
+
+    // This is a bit unfortunate but since we stuck the AppNav outside of the routerview
+    // the only real way to control whether it shows up is by modifying some global state
+    // that can actually be accessed by Vue.
+    store.commit(
+        'changeForceHideNav',
+        to.name === pi.VideoEditorPageId ||
+            to.name === pi.PlayerPageId ||
+            to.name === pi.SetupWizardPageId
+    )
+
     let mustBeInvalid = (to.name === pi.LoginPageId || to.name === pi.RegisterPageId)
 
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
@@ -848,10 +858,9 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             }).catch((err: any) => {
                 console.error('Failed to get IP address: ', err)
             })
-
+            store.commit('attemptUserLoad', true)
             store.dispatch('loadUserFeatureFlags')
             initializeSentry(store.state.currentUser!)
-            
             // Note that in the web case, the renderer code is responsible for the doing the session
             // heartbeat as well.
             if (mustBeInvalid) {
@@ -874,6 +883,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
             }
         })
     } else {
+        store.commit('attemptUserLoad', true)
         if (isTmpSession || isPublic) {
             next()
         } else if (mustBeInvalid && hasCookie) {
@@ -916,6 +926,7 @@ ipcRenderer.invoke('request-session').then((session : {
 }) => {
     apiClient.setSessionId(session.sessionId)
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
+        store.commit('attemptUserLoad', true)
         initializeSentry(resp.data)
         store.commit('setUser' , resp.data)
         store.dispatch('loadUserFeatureFlags')

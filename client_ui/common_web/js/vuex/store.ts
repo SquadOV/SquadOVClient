@@ -14,6 +14,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     strict: true,
     state: {
         currentUser: null,
+        attemptUserLoad: false,
         redirectUrl: null,
         hasValidSession: true,
         features: {
@@ -34,8 +35,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         muteInviteFriendsPopUp: !!window.localStorage.getItem('muteInviteFriendsPopUp'),
         successfullyVisitedVideo: false,
         displayInviteFriendPopUp: false,
+        forceHideNav: false,
     },
     mutations: {
+        attemptUserLoad(state: RootState, b: boolean) {
+            state.attemptUserLoad = b
+        },
         displayInviteFriendPopUp(state: RootState, b: boolean) {
             state.displayInviteFriendPopUp = b
         },
@@ -108,12 +113,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseWGC(state: RootState, b: boolean) {
+        changeuseWGC2(state: RootState, b: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.useWGC = b
+            state.settings.record.useWGC2 = b
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -395,6 +400,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         updateLocalStorageUsage(state: RootState, val: number) {
             state.localDiskSpaceRecordUsageGb = val
+        },
+        changeForceHideNav(state: RootState, v: boolean) {
+            state.forceHideNav = v
         }
     },
     actions: {

@@ -1,6 +1,7 @@
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "shared/log/log.h"
 #include "shared/time.h"
+#include "shared/filesystem/common_paths.h"
 
 #include <boost/program_options.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -15,6 +16,12 @@ namespace fs = std::filesystem;
 using namespace game_event_watcher;
 
 int main(int argc, char** argv) {
+    shared::log::Log::initializeGlobalLogger("hearthstone_log_parser.log");
+
+    const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
+    date::set_install(tzDataFolder);
+    date::get_tzdb_list();
+
     po::options_description desc("Options");
     desc.add_options()
         ("log", po::value<std::string>()->required(), "Hearthstone log to parse.")
