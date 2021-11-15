@@ -121,8 +121,9 @@ apiRouter.get('/funnel', async function (request, response) {
     end = new Date(parseInt(request.query.end))
     codes = JSON.parse(request.query.codes)
     organicOnly = !!parseInt(request.query.organicOnly)
+    verifiedOnly = !!parseInt(request.query.verifiedOnly)
 
-    data = await apiServer.getFunnelData(start, end, codes, organicOnly)
+    data = await apiServer.getFunnelData(start, end, codes, verifiedOnly)
     response.status(200).json(data)
 })
 
