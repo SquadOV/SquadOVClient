@@ -33,6 +33,8 @@
 #include "hardware/hardware.h"
 #include "shared/http/dns_manager.h"
 #include "shared/system/keys.h"
+#include "shared/http/http_client.h"
+#include "shared/uuid.cpp"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -139,6 +141,38 @@ void defaultMain() {
 void wowTest(const std::string& log, const std::string& vod, const std::string& vodTime) {
     service::wow::WoWProcessHandler handler;
     handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
+}
+
+// Guess we're adding to it :grimace-emoji:
+void speedCheck() {
+    // TODO: 
+    // 0) Generate a UUID that we can track and delete at the end
+    std::string pp = "/speedcheck/";
+    std::string uuid = shared::generateUuidv4();
+    
+
+    // 1) Hit the Rust API to grab the session and bucket location; Use HTTPCLIENT stuff
+    // Issue understanding why when we send this up, the path ends up having the uuid *2
+    
+    shared::http::HttpClient client("localhost");
+    try{
+        auto resp = client.get(pp);
+        const auto parsedJson = nlohmann::json::parse(resp->body);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to send HTTP request to get upload destination: " << ex.what() << std::endl);
+    }
+
+    // 2) Pipe data up to the bucket for 10 seconds and get speed check
+    
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    while(true) {
+        // TODO: Pipe data up to destination 
+        if(std::chrono::steady_clock::now() - start > std::chrono::seconds(10))
+            break;
+    }
+
+    // 3) Update SQL database for user with the speedtest; Alternatively, we can return the value to the client and use client to submit sql database
+
 }
 
 int main(int argc, char** argv) {
@@ -744,6 +778,8 @@ int main(int argc, char** argv) {
         shared::system::win32::Win32MessageLoop::singleton()->start();
     } else if (mode == "wow_test") {
         wowTest(vm["log"].as<std::string>(), vm["vod"].as<std::string>(), vm["vodTime"].as<std::string>());
+    } else if (mode == "speed_check") {
+        speedCheck();
     } else {
         THROW_ERROR("Unknown Mode: " << mode);
     }
