@@ -375,10 +375,6 @@ ipcMain.handle('request-cloud-upload', async (event, {task, file, destination}) 
     return await zeromqServer.performCloudUpload(task, file, destination)
 })
 
-ipcMain.on('cleanup-local-file', async (event, file) => {
-    zeromqServer.cleanupLocalFile(file)
-})
-
 ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
