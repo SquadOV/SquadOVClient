@@ -176,3 +176,28 @@ export function gameToPossibleWowTuple(game: SquadOvGames) : [SquadOvGames, Squa
             return [SquadOvGames.WorldOfWarcraft, SquadOvWowRelease.Tbc]
     }
 }
+
+export interface FullSupportedGame {
+    game: SquadOvGames
+    wow: SquadOvWowRelease | null
+}
+
+export function fullSupportGameToEnum(g: FullSupportedGame): SquadOvGames {
+    switch (g.game) {
+        case SquadOvGames.WorldOfWarcraft:
+            if (g.wow === null) {
+                return SquadOvGames.WorldOfWarcraft
+            } else {
+                switch (g.wow) {
+                    case SquadOvWowRelease.Retail:
+                        return SquadOvGames.WorldOfWarcraft
+                    case SquadOvWowRelease.Vanilla:
+                        return SquadOvGames.WowVanilla
+                    case SquadOvWowRelease.Tbc:
+                        return SquadOvGames.WowTbc
+                }
+            }
+        default:
+            return g.game
+    }
+}
