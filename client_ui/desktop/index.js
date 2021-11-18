@@ -1000,6 +1000,13 @@ zeromqServer.on('cloud-upload-progress', (resp) => {
     }
 })
 
+zeromqServer.on('preview-stream-status', (resp) => {
+    let parsedResp = JSON.parse(resp)
+    if (!!win) {
+        win.webContents.send('preview-stream-status', parsedResp)
+    }
+})
+
 let apiPort = null
 zeromqServer.on('on-local-api-port', (resp) => {
     let port = JSON.parse(resp)
