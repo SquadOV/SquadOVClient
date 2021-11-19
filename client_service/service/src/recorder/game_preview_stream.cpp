@@ -116,8 +116,10 @@ void GamePreviewStream::internalStart(const std::string& url, shared::EGame game
     if (_running) {
         return;
     }
+
     auto gameProcess = process_watcher::isGameRunning(game);
     if (!gameProcess) {
+        notifyCallbacks(GamePreviewTasksType::Start, false);
         LOG_INFO("Trying to start game preview stream for a game that isn't running?" << std::endl);
         return;
     }
@@ -126,7 +128,7 @@ void GamePreviewStream::internalStart(const std::string& url, shared::EGame game
     _recorder->forceUrl(url);
     _recorder->start(shared::nowUtc(), service::recorder::RecordingMode::Normal);
     _running = true;
-
+    notifyCallbacks(GamePreviewTasksType::Start, true);
 }
 
 void GamePreviewStream::internalStop() {
@@ -149,6 +151,16 @@ void GamePreviewStream::internalReload() {
 void GamePreviewStream::internalEnableOverlay(bool enable) {
     std::lock_guard guard(_mutex);
     _recorder->enableOverlay(enable);
+}
+
+void GamePreviewStream::addCallback(const StatusCallback& cb) {
+    _callbacks.push_back(cb);
+}
+
+void GamePreviewStream::notifyCallbacks(GamePreviewTasksType task, bool success) const {
+    for (const auto& cb: _callbacks) {
+        cb(task, success);
+    }
 }
 
 }
