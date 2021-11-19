@@ -167,6 +167,7 @@ export interface WowSettings {
     useCombatLogTimeout: boolean
     timeoutSeconds2: number
     recordArenas: boolean
+    recordDungeons: boolean
     recordKeystones: boolean
     recordEncounters: boolean
     minimumTimeSecondsToRecord: number
@@ -177,6 +178,7 @@ function createEmptyWowSettings(): WowSettings {
         useCombatLogTimeout: true,
         timeoutSeconds2: 180,
         recordArenas: true,
+        recordDungeons: true,
         recordKeystones: true,
         recordEncounters: true,
         minimumTimeSecondsToRecord: 15,
@@ -611,7 +613,11 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.games.wow.timeoutSeconds2 === undefined) {
             parsedData.games.wow.timeoutSeconds2 = 180
         }
-        
+
+        if (parsedData.games.wow.recordDungeons === undefined) {
+            parsedData.games.wow.recordDungeons = true
+        }
+
         if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
             parsedData.games.wow.minimumTimeSecondsToRecord = 15
         }
