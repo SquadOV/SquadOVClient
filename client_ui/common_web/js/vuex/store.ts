@@ -329,15 +329,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif        
         },
-        changeWowRecordFullRaids(state: RootState, v: boolean) {
-/// #if DESKTOP
-            if (!state.settings) {
-                return
-            }
-            state.settings.games.wow.recordFullRaids = v
-            saveLocalSettings(state.settings)
-/// #endif
-        },
         changeWowMinimumTimeSecondsToRecord(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {
@@ -353,6 +344,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.games.wow.recordArenas = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowRecordDungeons(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordDungeons = v
             saveLocalSettings(state.settings)
 /// #endif
         },

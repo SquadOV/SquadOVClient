@@ -60,9 +60,9 @@ struct WowSettings {
     int32_t timeoutSeconds2 = 180;
     bool recordArenas = true;
     bool recordBattlegrounds = true;
+    bool recordDungeons = true;
     bool recordKeystones = true;
     bool recordEncounters = true;
-    bool recordFullRaids = false;
     int32_t minimumTimeSecondsToRecord = 15;
 
     static WowSettings fromJson(const nlohmann::json& obj);
