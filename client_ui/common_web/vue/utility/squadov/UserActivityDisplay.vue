@@ -16,7 +16,7 @@
                     height="24px"
                     max-height="24px"
                     contain
-                    :src="$root.generateAssetUri(gameToIcon(g))"
+                    :src="$root.generateAssetUri(gameToIcon(fullSupportGameToEnum(g)))"
                 >
                 </v-img>
             </template>
@@ -30,12 +30,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { TrackedUserStatus, SquadOvActivity } from '@client/js/squadov/status'
-import { gameToIcon } from '@client/js/squadov/game'
+import { gameToIcon, fullSupportGameToEnum } from '@client/js/squadov/game'
 
 @Component
 export default class UserActivityDisplay extends Vue {
     SquadOvActivity = SquadOvActivity
     gameToIcon = gameToIcon
+    fullSupportGameToEnum = fullSupportGameToEnum
     
     @Prop({required: true})
     status!: TrackedUserStatus | undefined
