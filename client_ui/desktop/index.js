@@ -143,14 +143,11 @@ app.on('quit', () => {
 
 function restore() {
     if (!!win) {
-        if (!win.isVisible()) {
-            win.show()
-        }
-
         if (win.isMinimized()) {
             win.restore()
         }
 
+        win.show()
         win.focus()
     }
 }
