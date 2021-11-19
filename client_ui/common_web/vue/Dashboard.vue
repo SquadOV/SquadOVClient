@@ -85,7 +85,8 @@
                             v-if="filteredSquadMembers.length > 0"
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
-                            :items-per-page="filteredSquadMembers.length"
+                            :items-per-page="10"
+                            :page="userPage + 1"
                             hide-default-footer
                             hide-default-header
                         >
@@ -94,6 +95,15 @@
                                     :status="item.status"
                                 >
                                 </user-activity-display>
+                            </template>
+
+                            <template v-slot:footer="{props}">
+                                <v-pagination
+                                    v-if="props.pagination.itemsLength > props.pagination.itemsPerPage"
+                                    :length="Math.ceil(props.pagination.itemsLength / props.pagination.itemsPerPage)"
+                                    v-model="userPage"
+                                >
+                                </v-pagination>
                             </template>
                         </v-data-table>
 
@@ -159,6 +169,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     squadMembers: SquadMembership[] = []
     showHideCreateSquad: boolean = false
     showHideInviteSquad: boolean = false
+    userPage: number = 0
 
     get squadTableHeaders(): any[] {
         return [
