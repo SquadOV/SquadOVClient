@@ -41,7 +41,7 @@ import { HearthstoneGameAction, cleanHearthstoneGameActionFromJson } from '@clie
 import {
     Squad, cleanSquadFromJson,
     SquadMembership, cleanSquadMembershipFromJson
-    SquadInvite, cleanSquadInviteFromJson, SquadInviteLink, cleanSquadInviteLinkFromJson, SquadInviteLinkData
+    SquadInvite, cleanSquadInviteFromJson, SquadInviteLink, cleanSquadInviteLinkFromJson, SquadInviteLinkData, SquadSharingSettings
 } from '@client/js/squadov/squad'
 import {
     SquadOvHeartbeatResponse,
@@ -571,6 +571,14 @@ class ApiClient {
         return axios.post(`v1/squad`, {
             squadName,
         }, this.createWebAxiosConfig())
+    }
+
+    getSquadSharingSettings(squadId: number): Promise<ApiData<SquadSharingSettings>> {
+        return axios.get(`v1/squad/${squadId}/share`, this.createWebAxiosConfig())
+    }
+
+    updateSquadSharingSettings(squadId: number, settings: SquadSharingSettings): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/admin/share`, settings, this.createWebAxiosConfig())
     }
 
     sendSquadInvite(squadId: number, usernames: string[], emails: string[]): Promise<void> {

@@ -107,6 +107,10 @@
                         <v-tab>
                             Invites ({{ localMembership.squad.pendingInviteCount }})
                         </v-tab>
+
+                        <v-tab>
+                            Sharing
+                        </v-tab>
                     </v-tabs>
                     
                     <v-dialog width="40%" v-model="showHideInvite">
@@ -146,6 +150,19 @@
                         >
                         </squad-invite-table>
                     </v-tab-item>
+
+                    <v-tab-item>
+                        <squad-sharing-settings-display
+                            :squad-id="squadId"
+                            :is-owner="isOwner"
+                            v-if="isOwner"
+                        >
+                        </squad-sharing-settings-display>
+
+                        <div v-else>
+                            You must be the squad owner to view/change these settings.
+                        </div>
+                    </v-tab-item>
                 </v-tabs-items>
 
                 <v-snackbar
@@ -183,6 +200,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
+import SquadSharingSettingsDisplay from '@client/vue/utility/squads/SquadSharingSettingsDisplay.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
@@ -190,7 +208,8 @@ import * as pi from '@client/js/pages'
         LoadingContainer,
         SquadMemberTable,
         SquadInviteTable,
-        SquadInviteCreateCard
+        SquadInviteCreateCard,
+        SquadSharingSettingsDisplay,
     }
 })
 export default class SingleSquadPage extends Vue {
