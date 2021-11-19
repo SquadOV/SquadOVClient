@@ -38,3 +38,7 @@ export interface ShareToProfileData {
     canShare: boolean
     isShared: boolean
 }
+
+export interface AutoShareSettings {
+    shareOnJoin: boolean
+}

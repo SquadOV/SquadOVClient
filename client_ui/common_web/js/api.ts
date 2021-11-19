@@ -101,7 +101,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
+import { AutoShareConnection, AutoShareSettings, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToCloud } from '@client/js/cloud'
 
@@ -1429,6 +1429,14 @@ class ApiClient {
             canShare,
             canClip
         }, this.createWebAxiosConfig())
+    }
+
+    getAutoShareSettings(): Promise<ApiData<AutoShareSettings>> {
+        return axios.get('v1/share/settings', this.createWebAxiosConfig())
+    }
+
+    editAutoShareSettings(v: AutoShareSettings): Promise<void> {
+        return axios.post(`v1/share/settings`, v, this.createWebAxiosConfig())
     }
 
     getAutoShareConnections(): Promise<ApiData<AutoShareConnection[]>> {
