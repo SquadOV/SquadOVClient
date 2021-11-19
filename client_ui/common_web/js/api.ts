@@ -489,6 +489,10 @@ class ApiClient {
         })
     }
 
+    getUserRecommendedSquads(): Promise<ApiData<Squad[]>> {
+        return axios.get(`v1/users/me/discover/squads`, this.createWebAxiosConfig())
+    }
+
     getSquadUsers(squadId: number): Promise<ApiData<SquadMembership[]>> {
         return axios.get(`v1/squad/${squadId}/membership`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
             resp.data.forEach(cleanSquadMembershipFromJson)
@@ -543,6 +547,10 @@ class ApiClient {
                 sig
             },
         })
+    }
+
+    joinPublicSquad(squadId: number): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/join`, {}, this.createWebAxiosConfig())
     }
 
     deleteSquad(squadId: number): Promise<void> {
