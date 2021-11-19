@@ -81,6 +81,7 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
     settings.timeoutSeconds2 = obj.value("timeoutSeconds2", 180);
     settings.recordArenas = obj.value("recordArenas", true);
+    settings.recordBattlegrounds = obj.value("recordBattlegrounds", true);
     settings.recordDungeons = obj.value("recordDungeons", true);
     settings.recordKeystones = obj.value("recordKeystones", true);
     settings.recordEncounters = obj.value("recordEncounters", true);

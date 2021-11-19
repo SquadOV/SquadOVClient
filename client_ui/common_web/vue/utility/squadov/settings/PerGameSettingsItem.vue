@@ -109,6 +109,29 @@
                      <v-col cols="3">
                         <v-checkbox
                             class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.recordBattlegrounds"
+                            @change="$store.commit('changeWowRecordBattlegrounds', arguments[0])"
+                            label="Record Arenas"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record battlegrounds in World of Warcraft.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
                             :input-value="$store.state.settings.games.wow.recordDungeons"
                             @change="$store.commit('changeWowRecordDungeons', arguments[0])"
                             label="Record Dungeons"
