@@ -16,6 +16,7 @@ extern "C" {
 #include "api/squadov_api.h"
 #include "shared/env.h"
 #include "system/win32/message_loop.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "vod/process.h"
 
 namespace po = boost::program_options;
@@ -68,7 +69,7 @@ int main(int argc, char** argv) {
     std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
     std::wstring wProcessName = converter.from_bytes(processName);
 
-    process::ProcessRunningState processes;
+    process::ProcessRunningState processes(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
     processes.update();
     const auto finalProcess = processes.getProcesssRunningByName(wProcessName, false);
 
@@ -99,7 +100,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);
