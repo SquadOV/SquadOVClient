@@ -325,11 +325,11 @@ export default class SharingSettingsItem extends Vue {
                 value: 'squad',
             },
             {
-                text: 'Share',
+                text: 'Can Resahre',
                 value: 'share',
             },
             {
-                text: 'Clip',
+                text: 'Can Clip',
                 value: 'clip',
             },
             {
@@ -337,7 +337,7 @@ export default class SharingSettingsItem extends Vue {
                 value: 'games',
             },
             {
-                text: 'Actions',
+                text: 'Disable Auto-Share',
                 value: 'actions',
                 sortable: false,
                 filterable: false
