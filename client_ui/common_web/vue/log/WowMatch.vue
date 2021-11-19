@@ -288,7 +288,8 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
 
         let ret = this.currentMatch?.encounter?.build ||
             this.currentMatch?.challenge?.build ||
-            this.currentMatch?.arena?.build
+            this.currentMatch?.arena?.build ||
+            this.currentMatch?.instance?.build
 
         if (!ret) {
             return ''
