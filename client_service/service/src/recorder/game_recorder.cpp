@@ -20,6 +20,7 @@
 #include "shared/math.h"
 #include "shared/filesystem/local_record.h"
 #include "vod/process.h"
+#include "recorder/default_flags.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -196,6 +197,10 @@ void GameRecorder::startNewDvrSegment(const fs::path& dir) {
 }
 
 void GameRecorder::startDvrSession(int flags, bool autoTick) {
+    if (flags == FLAG_UNKNOWN) {
+        flags = service::recorder::getDefaultRecordingFlagsForGame(_game);
+    }
+
     if (_encoder.hasEncoder()) {
         LOG_WARNING("Can not start DVR session while a VOD encoder is active." << std::endl);
         return;
@@ -499,7 +504,11 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         return;
     }
 
-    LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << std::endl);
+    if (flags == FLAG_UNKNOWN) {
+        flags = service::recorder::getDefaultRecordingFlagsForGame(_game);
+    }
+
+    LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << " - " << flags << std::endl);
 
     _currentId = createNewVodIdentifier();
     loadCachedInfo();
