@@ -106,6 +106,29 @@
                         </v-checkbox>
                     </v-col>
 
+                     <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.recordDungeons"
+                            @change="$store.commit('changeWowRecordDungeons', arguments[0])"
+                            label="Record Dungeons"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record dungeons in World of Warcraft. If the run turns out to be a keystone, we will convert the run to record a keystone (challenge).
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
                     <v-col cols="3">
                         <v-checkbox
                             class="ma-0 squeeze"
