@@ -151,30 +151,6 @@
                             </template>
                         </v-checkbox>
                     </v-col>
-
-                    <v-col cols="3">
-                        <v-checkbox
-                            class="ma-0 squeeze"
-                            :input-value="$store.state.settings.games.wow.recordFullRaids"
-                            @change="$store.commit('changeWowRecordFullRaids', arguments[0])"
-                            label="Record Full Raids"
-                            hide-details
-                            dense
-                        >
-                            <template v-slot:append>
-                                <v-tooltip bottom max-width="450px">
-                                    <template v-slot:activator="{on, attrs}">
-                                        <v-icon v-on="on" v-bind="attrs">
-                                            mdi-help-circle
-                                        </v-icon>
-                                    </template>
-
-                                    Whether to record the entire raid rather than just individual encounters.
-                                    Do not use this if you want to immediately analyze boss wipes.
-                                </v-tooltip>
-                            </template>
-                        </v-checkbox>
-                    </v-col>
                 </v-row>
 
                 <v-row align="center">
