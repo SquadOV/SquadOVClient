@@ -44,6 +44,7 @@ const std::string ZEROMQ_START_GAME_RECORDING_STREAM = "start-game-recording-str
 const std::string ZEROMQ_STOP_GAME_RECORDING_STREAM = "stop-game-recording-stream";
 const std::string ZEROMQ_ENABLE_PREVIEW_GAME_RECORDING_STREAM = "enable-preview-game-recording-stream";
 const std::string ZEROMQ_RELOAD_GAME_RECORDING_STREAM = "reload-game-recording-stream";
+const std::string ZEROMQ_PREVIEW_STATUS_MESSAGE = "preview-stream-status";
 
 using ZeroMQHandler = std::function<void(const std::string&)>;
 

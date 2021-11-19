@@ -6,6 +6,7 @@
 #include <atomic>
 #include <boost/variant.hpp>
 #include <condition_variable>
+#include <functional>
 #include <deque>
 #include <memory>
 #include <mutex>
@@ -55,6 +56,9 @@ private:
 
 using GamePreviewStreamThreadWorkerPtr = std::unique_ptr<GamePreviewStreamThreadWorker>;
 
+// Get's passed back (status, success).
+using StatusCallback = std::function<void(GamePreviewTasksType, bool)>;
+
 class GamePreviewStream {
 public:
     GamePreviewStream();
@@ -63,6 +67,7 @@ public:
     void stop();
     void reload();
     void enableOverlay(bool enable);
+    void addCallback(const StatusCallback& cb);
 
     friend class GamePreviewStreamThreadWorker;
 private:
@@ -71,11 +76,13 @@ private:
     void internalStop();
     void internalReload();
     void internalEnableOverlay(bool enable);
+    void notifyCallbacks(GamePreviewTasksType task, bool success) const;
 
     mutable std::mutex _mutex;
     bool _running = false;
     GameRecorderPtr _recorder;
     GamePreviewStreamThreadWorkerPtr _worker;
+    std::vector<StatusCallback> _callbacks;
 };
 
 }
