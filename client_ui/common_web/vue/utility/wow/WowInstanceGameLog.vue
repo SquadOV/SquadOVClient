@@ -5,6 +5,7 @@
             for-instances
             class="my-2"
             :release="release"
+            :saved-filter-loc="DataStorageLocation.WowInstance"
         >
         </wow-filter-ui>
         
@@ -45,6 +46,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import WowInstanceSummary from '@client/vue/utility/wow/WowInstanceSummary.vue'
 import { WowGameRelease } from '@client/js/staticData'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 10
 
@@ -56,6 +58,8 @@ const maxTasksPerRequest : number = 10
     }
 })
 export default class WowInstanceGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

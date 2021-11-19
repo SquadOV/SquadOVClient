@@ -21,6 +21,7 @@
                 <valorant-filter-ui
                     v-model="filters"
                     class="mb-2"
+                    :saved-filter-loc="DataStorageLocation.Valorant"
                 >
                 </valorant-filter-ui>
                 
@@ -69,6 +70,7 @@ import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import ValorantPlayerCard from '@client/vue/utility/valorant/ValorantPlayerCard.vue'
 import ValorantMatchScroller from '@client/vue/utility/valorant/ValorantMatchScroller.vue'
 import ValorantFilterUi from '@client/vue/utility/valorant/ValorantFilterUi.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -81,6 +83,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class ValorantGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 
