@@ -151,13 +151,13 @@ export default class Register extends Vue {
 
     get usernameRules() : any[] {
         return [
-            (value : any) => !!value || 'Required.',
+            (value : any) => !!value || value.trim().length > 0 || 'Required.',
         ]
     }
 
     get emailRules() : any[] {
         return [
-            (value : any) => !!value || 'Required.',
+            (value : any) => !!value || value.trim().length > 0 || 'Required.',
         ]
     }
 
@@ -189,10 +189,10 @@ export default class Register extends Vue {
     register() {
         this.inProgress = true
         apiClient.register({
-            username: this.username,
-            password: this.password,
-            email: this.email,
-            ref: this.referral,
+            username: this.username.trim(),
+            password: this.password.trim(),
+            email: this.email.trim(),
+            ref: this.referral?.trim(),
         }, {
             inviteUuid: this.inviteUuid,
             squadId: !!this.squadId ? this.squadId.toString() : undefined,
