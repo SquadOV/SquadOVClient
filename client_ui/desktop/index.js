@@ -232,6 +232,14 @@ function setAppDataFolderFromEnv() {
             recursive: true
         })
     }
+
+    const clipsFolder = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'Clips')
+    if (fs.existsSync(clipsFolder)) {
+        fs.rmSync(clipsFolder, {
+            recursive: true,
+            force: true,
+        })
+    }
 }
 
 function getSessionPath() {
@@ -385,7 +393,10 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
         editorWin.setMenu(null)
         editorWin.setMenuBarVisibility(false)
         editorWin.on('close', () => {
-            editorWin = null
+            // One last hurrah to make sure the editor window cleans up its shit (local files - clips).
+            if (!!editorWin) {
+                editorWin = null
+            }
         })
     }
 
@@ -400,7 +411,6 @@ ipcMain.on('close-vod-editor', (event) => {
         }
 
         editorWin.close()
-        editorWin = null
     }
 })
 
