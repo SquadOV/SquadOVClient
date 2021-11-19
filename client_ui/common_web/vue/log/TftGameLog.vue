@@ -3,6 +3,7 @@
         <tft-filter-ui
             v-model="filters"
             class="mb-2"
+            :saved-filter-loc="DataStorageLocation.Tft"
         >
         </tft-filter-ui>
         <v-row>
@@ -58,6 +59,7 @@ import { TftMatchFilters, createEmptyTftMatchFilters } from '@client/js/tft/filt
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import TftMatchSummary from '@client/vue/utility/tft/TftMatchSummary.vue'
 import TftFilterUi from '@client/vue/utility/tft/TftFilterUi.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -69,6 +71,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class TftGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

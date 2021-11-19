@@ -5,6 +5,7 @@
             for-raids
             class="my-2"
             :release="release"
+            :saved-filter-loc="DataStorageLocation.WowEncounter"
         >
         </wow-filter-ui>
         <loading-container :is-loading="!allEncounters">
@@ -45,6 +46,7 @@ import WowEncounterSummary from '@client/vue/utility/wow/WowEncounterSummary.vue
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import { WowGameRelease } from '@client/js/staticData'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 10
 
@@ -56,6 +58,8 @@ const maxTasksPerRequest : number = 10
     }
 })
 export default class WowEncounterGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

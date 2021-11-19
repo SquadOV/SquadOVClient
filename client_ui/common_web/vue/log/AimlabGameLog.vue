@@ -3,6 +3,7 @@
         <aimlab-filter-ui
             v-model="filters"
             class="my-2"
+            :saved-filter-loc="DataStorageLocation.Aimlab"
         >
         </aimlab-filter-ui>
         
@@ -38,6 +39,7 @@ import { AimlabMatchFilters, createEmptyAimlabMatchFilters } from '@client/js/ai
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import AimlabTaskScroller from '@client/vue/utility/aimlab/AimlabTaskScroller.vue'
 import AimlabFilterUi from '@client/vue/utility/aimlab/AimlabFilterUi.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -49,6 +51,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class AimlabGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
     filters: AimlabMatchFilters = createEmptyAimlabMatchFilters()

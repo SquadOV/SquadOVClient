@@ -15,18 +15,18 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { HearthstoneMatchFilters, createEmptyHearthstoneMatchFilters } from '@client/js/hearthstone/filters'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import CommonFilters from '@client/vue/utility/CommonFilters'
 
 @Component({
     components: {
         GenericMatchFilterUi
     }
 })
-export default class HearthstoneFilterUi extends Vue {
+export default class HearthstoneFilterUi extends mixins(CommonFilters) {
     @Prop({required: true})
     value!: HearthstoneMatchFilters
 
@@ -39,10 +39,15 @@ export default class HearthstoneFilterUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+        this.saveToLocal(this.internalValue)
     }
 
     mounted() {
         this.syncFromValue()
+        if (!!this.savedFilter) {
+            this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
     }
 }
 

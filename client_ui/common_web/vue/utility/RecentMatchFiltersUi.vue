@@ -110,8 +110,8 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
+import CommonFilters from '@client/vue/utility/CommonFilters'
 import { Watch, Prop } from 'vue-property-decorator'
 import { RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
 import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
@@ -135,7 +135,7 @@ import { WowGameRelease } from '@client/js/staticData'
         WowFilterUi,
     }
 })
-export default class RecentMatchFiltersUi extends Vue {
+export default class RecentMatchFiltersUi extends mixins(CommonFilters) {
     WowGameRelease: any = WowGameRelease
 
     @Prop({required: true})
@@ -160,10 +160,15 @@ export default class RecentMatchFiltersUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+        this.saveToLocal(this.internalValue)
     }
 
     mounted() {
         this.syncFromValue()
+        if (!!this.savedFilter) {
+            this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
     }
 }
 
