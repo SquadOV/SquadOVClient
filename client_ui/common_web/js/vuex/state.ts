@@ -22,4 +22,5 @@ export interface RootState {
     successfullyVisitedVideo: boolean
     displayInviteFriendPopUp: boolean
     forceHideNav: boolean
+    cachedIp: string | null
 }
