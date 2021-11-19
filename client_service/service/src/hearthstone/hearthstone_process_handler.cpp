@@ -11,6 +11,8 @@
 #include "recorder/game_recorder.h"
 #include "system/state.h"
 
+#include <VersionHelpers.h>
+
 namespace service::hearthstone {
 namespace {
 const std::string HEARTHSTONE_MONO_MODULE = "mono-2.0-bdwgc.dll";

@@ -84,7 +84,6 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     settings.recordDungeons = obj.value("recordDungeons", true);
     settings.recordKeystones = obj.value("recordKeystones", true);
     settings.recordEncounters = obj.value("recordEncounters", true);
-    settings.recordFullRaids = obj.value("recordFullRaids", false);
     settings.minimumTimeSecondsToRecord = obj.value("minimumTimeSecondsToRecord", 15);
     return settings;
 }

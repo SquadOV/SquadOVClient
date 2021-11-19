@@ -329,15 +329,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif        
         },
-        changeWowRecordFullRaids(state: RootState, v: boolean) {
-/// #if DESKTOP
-            if (!state.settings) {
-                return
-            }
-            state.settings.games.wow.recordFullRaids = v
-            saveLocalSettings(state.settings)
-/// #endif
-        },
         changeWowMinimumTimeSecondsToRecord(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {

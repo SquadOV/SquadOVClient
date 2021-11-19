@@ -170,7 +170,6 @@ export interface WowSettings {
     recordDungeons: boolean
     recordKeystones: boolean
     recordEncounters: boolean
-    recordFullRaids: boolean
     minimumTimeSecondsToRecord: number
 }
 
@@ -182,7 +181,6 @@ function createEmptyWowSettings(): WowSettings {
         recordDungeons: true,
         recordKeystones: true,
         recordEncounters: true,
-        recordFullRaids: false,
         minimumTimeSecondsToRecord: 15,
     }
 }
@@ -614,10 +612,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.games.wow.timeoutSeconds2 === undefined) {
             parsedData.games.wow.timeoutSeconds2 = 180
-        }
-
-        if (parsedData.games.wow.recordFullRaids === undefined) {
-            parsedData.games.wow.recordFullRaids = false
         }
 
         if (parsedData.games.wow.recordDungeons === undefined) {
