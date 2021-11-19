@@ -312,6 +312,7 @@ export default class VodEditor extends mixins(CommonComponent) {
     formValid: boolean = false
     clipTitle: string = ''
     clipDescription: string = ''
+    clipPathsInSession: string[] = []
     saveInProgress: boolean = false
 
     clipUuid: string | null = null
@@ -499,14 +500,18 @@ export default class VodEditor extends mixins(CommonComponent) {
     }
 
     cancelClip() {
-        this.showHideClipDialog = false
-        this.clipInProgress = false
-
+        // We also need to make sure the clip gets deleted in local storage.
 ///#if DESKTOP
-        if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
-            fs.unlinkSync(this.localClipPath)
+        for (let path of this.clipPathsInSession) {
+            if (fs.existsSync(path)) {
+                fs.unlinkSync(path)
+            }
         }
 ///#endif
+        this.clipPathsInSession = []
+
+        this.showHideClipDialog = false
+        this.clipInProgress = false
 
         this.clipTitle = ''
         this.clipDescription = ''
@@ -538,6 +543,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             // rather than the pop-up clipping window.
             ipcRenderer.send('redirect-to-route', this.clipPathTo)
             ipcRenderer.send('close-vod-editor')
+            this.cancelClip()
         }).catch((err: any) => {
             this.clipError = true
             console.error('Failed to create clip: ', err)
@@ -591,6 +597,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.clipInProgress = false
             this.clipKey += 1
             this.localClipPath = `file:///${normalPath}`
+            this.clipPathsInSession.push(normalPath)
             this.metadata = resp.metadata
         }).catch((err: any) => {
             console.error('Failed to clip: ', err)
