@@ -12,6 +12,26 @@
                 >
                 </v-checkbox>
 
+                <template v-if="!!autoshareSettings">
+                    <v-checkbox
+                        v-model="autoshareSettings.shareOnJoin"
+                        @change="changeAutoshareSettings"
+                        label="Auto-Share Existing VODs and Clips to Squads on Join"
+                        color="success"
+                        hide-details
+                        :disabled="autoshareOnJoinPending"
+                    >
+                        <template v-slot:append>
+                            <v-progress-circular
+                                v-if="autoshareOnJoinPending"
+                                size="16"
+                                indeterminate
+                            >
+                            </v-progress-circular>
+                        </template>
+                    </v-checkbox>
+                </template>
+
                 <v-tabs grow>
                     <v-tab>
                         Squads
@@ -127,7 +147,7 @@ import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import GameFilterUi from '@client/vue/utility/squadov/filters/GameFilterUi.vue'
-import { AutoShareConnection } from '@client/js/squadov/share'
+import { AutoShareConnection, AutoShareSettings } from '@client/js/squadov/share'
 import { apiClient, ApiData } from '@client/js/api'
 import { Squad, SquadMembership } from '@client/js/squadov/squad'
 import { allServerSideGames } from '@client/js/squadov/game'
@@ -148,6 +168,22 @@ export default class SharingSettingsItem extends Vue {
     deletePending: boolean = false
     squadEditsPending: { [squadId: number] : boolean | undefined } = {}
     isAutoSharingToProfile: boolean = false
+
+    autoshareSettings: AutoShareSettings | null = null
+    autoshareOnJoinPending: boolean = false
+
+    changeAutoshareSettings() {
+        if (!this.autoshareSettings) {
+            return
+        }
+
+        this.autoshareOnJoinPending = true
+        apiClient.editAutoShareSettings(this.autoshareSettings).catch((err: any) => {
+            console.error('Failed to edit auto share settings: ', err)
+        }).finally(() => {
+            this.autoshareOnJoinPending = false
+        })
+    }
 
     toggleAutoShareToProfile(v: boolean) {
         if (!this.settings) {
@@ -283,6 +319,12 @@ export default class SharingSettingsItem extends Vue {
             this.settings = resp.data
         }).catch((err: any) => {
             console.error('Failed to load auto share connections: ', err)
+        })
+
+        apiClient.getAutoShareSettings().then((resp: ApiData<AutoShareSettings>) => {
+            this.autoshareSettings = resp.data
+        }).catch((err: any) => {
+            console.error('Failed to load auto share settings: ', err)
         })
     }
 
