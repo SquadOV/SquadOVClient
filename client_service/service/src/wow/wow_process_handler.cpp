@@ -654,7 +654,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
         if (
             (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordDungeons) ||
             ((instanceType == shared::wow::InstanceType::ArenaBattlefield) && shared::isWowClassic(_finalGame) && wowSettings.recordArenas) ||
-            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordArenas)
+            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordBattlegrounds)
         ) {
             onInstanceStart(tm, it->second);
         }
