@@ -28,7 +28,7 @@ struct RecordingSettings {
     bool useVideoHw = false;
     bool useHwEncoder = false;
     bool useVfr4 = true;
-    bool useWGC = false;
+    bool useWGC2 = true;
 
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
@@ -51,6 +51,7 @@ struct RecordingSettings {
 
 struct KeybindSettings {
     std::vector<int> pushToTalk;
+    std::vector<int> pushToTalk2;
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 
@@ -58,9 +59,10 @@ struct WowSettings {
     bool useCombatLogTimeout = true;
     int32_t timeoutSeconds2 = 180;
     bool recordArenas = true;
+    bool recordBattlegrounds = true;
+    bool recordDungeons = true;
     bool recordKeystones = true;
     bool recordEncounters = true;
-    bool recordFullRaids = false;
     int32_t minimumTimeSecondsToRecord = 15;
 
     static WowSettings fromJson(const nlohmann::json& obj);

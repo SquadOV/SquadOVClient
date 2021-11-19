@@ -94,5 +94,11 @@
         "Ability1": "Flash/Drive",
         "Ability2": "Zero/Point",
         "Ultimate": "Null/Cmd"
+    },
+    "Chamber": {
+        "GrenadeAbility": "Trademark",
+        "Ability1": "Headhunter",
+        "Ability2": "Rendezvous",
+        "Ultimate": "Tour De Force"
     }
 }

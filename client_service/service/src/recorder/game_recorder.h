@@ -38,6 +38,7 @@ enum class RecordingMode {
     Normal
 };
 
+constexpr int FLAG_UNKNOWN = -1;
 constexpr int FLAG_DXGI_RECORDING = 0b001;
 constexpr int FLAG_GDI_RECORDING = 0b010;
 constexpr int FLAG_WGC_RECORDING = 0b100;
@@ -52,9 +53,9 @@ public:
     );
     ~GameRecorder();
 
-    void startDvrSession(int flags = FLAG_ALL_RECORDING, bool autoTick = true);
+    void startDvrSession(int flags = FLAG_UNKNOWN, bool autoTick = true);
     void startNewDvrSegment();
-    void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_ALL_RECORDING);
+    void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_UNKNOWN);
     void stop(std::optional<GameRecordEnd> end, bool keepLocal = false);
     void stopInputs();
     std::string stopDvrSession();

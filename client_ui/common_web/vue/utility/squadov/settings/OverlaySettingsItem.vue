@@ -278,6 +278,14 @@
         </template>
 
         <v-snackbar
+            v-model="previewErrorStart"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to start the preview. Check that the selected game is running.
+        </v-snackbar>
+
+        <v-snackbar
             v-model="editSuccess"
             :timeout="5000"
             color="success"
@@ -313,6 +321,18 @@ import { ipcRenderer } from 'electron'
 import { allGames, gameToName, SquadOvGames } from '@client/js/squadov/game'
 import { createEmptyOverlay, SquadOvOverlay } from '@client/js/system/settings'
 
+enum PreviewTask {
+    Start,
+    Stop,
+    Reload,
+    EnableOverlay
+}
+
+interface PreviewStatus {
+    task: PreviewTask
+    success: boolean
+}
+
 // The gist of how this component works is that when the user
 // just wants to see a preview of their overlays, we just display a HLS stream.
 // When the user goes to edit the preview, we render a canvas based preview
@@ -340,6 +360,7 @@ export default class OverlaySettingsItem extends Vue {
     editSuccess: boolean = false
     previewStartMsg: boolean = false
     ready: boolean = false
+    previewErrorStart: boolean = false
 
     confirmDelete = false
 
@@ -527,6 +548,7 @@ export default class OverlaySettingsItem extends Vue {
     stopPreview() {
         this.previewStarted = false
         this.previewPlaying = false
+        this.previewStartMsg = false
 
         if (!!this.player) {
             this.player.src([])
@@ -557,12 +579,24 @@ export default class OverlaySettingsItem extends Vue {
         this.togglePreview(!this.previewPlaying)
     }
 
+    _previewStatusBind: any = null
+    onPreviewStatus(event: any, status: PreviewStatus) {
+        console.log('preview status: ', status, this.previewStarted)
+        if (status.task == PreviewTask.Start && this.previewStarted && !status.success) {
+            this.previewErrorStart = true
+            this.stopPreview()
+        } 
+    }
+
     mounted() {
         this.syncLayers()
     
 ///#if DESKTOP
         this._togglePreviewPlayingBind = this.togglePreviewPlaying.bind(this)
         ipcRenderer.on('toggle-overlay-preview-play', this._togglePreviewPlayingBind)
+
+        this._previewStatusBind = this.onPreviewStatus.bind(this)
+        ipcRenderer.on('preview-stream-status', this._previewStatusBind)
 ///#endif
     }
 
@@ -575,6 +609,10 @@ export default class OverlaySettingsItem extends Vue {
 ///#if DESKTOP
         if (!!this._togglePreviewPlayingBind) {
             ipcRenderer.removeListener('toggle-overlay-preview-play', this._togglePreviewPlayingBind)
+        }
+
+        if (!!this._previewStatusBind) {
+            ipcRenderer.removeListener('preview-stream-status', this._previewStatusBind)
         }
 ///#endif
     }

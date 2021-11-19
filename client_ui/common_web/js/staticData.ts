@@ -151,27 +151,27 @@ class StaticDataClient {
     }
     
     getTftTraitIcon(set: string, trait: string): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/traits/${trait}/icon.png`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/traits/${trait}/icon.png`
     }
 
     getTftTraitData(set: string, trait: string): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/traits/${trait}/data.json`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/traits/${trait}/data.json`
     }
 
     getTftUnitIcon(set: string, unit: string): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/champions/${unit}/icon.png`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/champions/${unit}/icon.png`
     }
 
     getTftUnitData(set: string, unit: string): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/champions/${unit}/data.json`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/champions/${unit}/data.json`
     }
 
     getTftItemIcon(set: string, item: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/items/${item}/icon.png`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/items/${item}/icon.png`
     }
 
     getTftItemData(set: string, item: number): string {
-        return `${STATIC_CONTENT_BASE_URL}/tft/set${set}/items/${item}/data.json`
+        return `${STATIC_CONTENT_BASE_URL}/tft/full/items/${item}/data.json`
     }
 }
 

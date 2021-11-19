@@ -2,7 +2,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { Store } from 'vuex'
 import { RootState } from '@client/js/vuex/state'
 import { apiClient } from '@client/js/api'
-import { gameShorthandToGame } from '@client/js/squadov/game'
+import { FullSupportedGame, gameShorthandToGame, gameToPossibleWowTuple } from '@client/js/squadov/game'
 
 const MANUAL_CLOSE = 4000
 
@@ -15,7 +15,7 @@ export enum SquadOvActivity {
 
 export interface TrackedUserStatus {
     activity: SquadOvActivity
-    game: SquadOvGames[]
+    game: FullSupportedGame[]
 }
 
 export interface TrackedUserStatusContainer {
@@ -192,7 +192,13 @@ export class TrackedUserStatsManager {
         let msg = JSON.stringify({
             type: 'StatusChange',
             activity,
-            game: games,
+            game: games.map((g: SquadOvGames) => {
+                let tup = gameToPossibleWowTuple(g)
+                return {
+                    game: tup[0],
+                    wow: tup[1]
+                }
+            }),
         })
         this.sendMessage(msg)
     }

@@ -154,13 +154,13 @@ export default class Login extends Vue {
 
     get usernameRules() : any[] {
         return [
-            (value : any) => !!value || 'Required.',
+            (value : any) => !!value || value.trim().length > 0 || 'Required.',
         ]
     }
 
     get passwordRules() : any[] {
         return [
-            (value : any) => !!value || 'Required.',
+            (value : any) => !!value || value.trim().length > 0 || 'Required.',
         ]
     }
 
@@ -204,8 +204,8 @@ export default class Login extends Vue {
     login() {
         this.inProgress = true
         apiClient.login({
-            username: this.username,
-            password: this.password,
+            username: this.username.trim(),
+            password: this.password.trim(),
         }).then((resp : ApiData<LoginOutput>) => {
             if (!!resp.data.twoFactor) {
                 // Ask for two factor code before passing that back to the server to finish the user login.
@@ -234,7 +234,7 @@ export default class Login extends Vue {
 
     forgotPassword() {
         // User needs to have put in an email so we know where to send the validation email to.
-        if (this.username.length == 0) {
+        if (this.username.trim().length == 0) {
             this.forcedUsernameMessages = ['Username/email required for resetting your password.']
             setTimeout(() => {
                 this.forcedUsernameMessages = []
@@ -244,7 +244,7 @@ export default class Login extends Vue {
 
         this.forgotInProgress = true
         // If the email exists, send a request to the server to send a password reset email.
-        apiClient.forgotPassword(this.username).then(() => {
+        apiClient.forgotPassword(this.username.trim()).then(() => {
             this.showHideResetPasswordSuccess = true
         }).catch((err : any) => {
             console.error('Failed to reset password: ', err)

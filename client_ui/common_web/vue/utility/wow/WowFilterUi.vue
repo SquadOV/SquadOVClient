@@ -292,8 +292,7 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 import { wowInstanceTypeToName, ALL_WOW_INSTANCE_TYPES, WowInstanceType } from '@client/js/wow/matches'
@@ -304,6 +303,7 @@ import WowSpecChooser from '@client/vue/utility/wow/WowSpecChooser.vue'
 import WowEncounterDifficultySelector from '@client/vue/utility/wow/WowEncounterDifficultySelector.vue'
 import WowCompositionSelector from '@client/vue/utility/wow/WowCompositionSelector.vue'
 import { WowGameRelease } from '@client/js/staticData'
+import CommonFilters from '@client/vue/utility/CommonFilters'
 
 @Component({
     components: {
@@ -314,7 +314,7 @@ import { WowGameRelease } from '@client/js/staticData'
         WowCompositionSelector,
     }
 })
-export default class WowFilterUi extends Vue {
+export default class WowFilterUi extends mixins(CommonFilters) {
     @Prop({required: true})
     value!: WowMatchFilters
 
@@ -358,6 +358,7 @@ export default class WowFilterUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+        this.saveToLocal(this.internalValue)
     }
 
     get successItems(): any[] {
@@ -506,6 +507,10 @@ export default class WowFilterUi extends Vue {
         })
 
         this.syncFromValue()
+        if (!!this.savedFilter) {
+            this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
     }
 }
 

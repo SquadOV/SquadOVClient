@@ -101,7 +101,7 @@ import {
     MatchFavoriteResponse
 } from '@client/js/squadov/recentMatch'
 import { SquadOvGames } from '@client/js/squadov/game'
-import { AutoShareConnection, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
+import { AutoShareConnection, AutoShareSettings, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToCloud } from '@client/js/cloud'
 
@@ -489,6 +489,10 @@ class ApiClient {
         })
     }
 
+    getUserRecommendedSquads(): Promise<ApiData<Squad[]>> {
+        return axios.get(`v1/users/me/discover/squads`, this.createWebAxiosConfig())
+    }
+
     getSquadUsers(squadId: number): Promise<ApiData<SquadMembership[]>> {
         return axios.get(`v1/squad/${squadId}/membership`, this.createWebAxiosConfig()).then((resp : ApiData<SquadMembership[]>) => {
             resp.data.forEach(cleanSquadMembershipFromJson)
@@ -543,6 +547,10 @@ class ApiClient {
                 sig
             },
         })
+    }
+
+    joinPublicSquad(squadId: number): Promise<void> {
+        return axios.post(`v1/squad/${squadId}/join`, {}, this.createWebAxiosConfig())
     }
 
     deleteSquad(squadId: number): Promise<void> {
@@ -1429,6 +1437,14 @@ class ApiClient {
             canShare,
             canClip
         }, this.createWebAxiosConfig())
+    }
+
+    getAutoShareSettings(): Promise<ApiData<AutoShareSettings>> {
+        return axios.get('v1/share/settings', this.createWebAxiosConfig())
+    }
+
+    editAutoShareSettings(v: AutoShareSettings): Promise<void> {
+        return axios.post(`v1/share/settings`, v, this.createWebAxiosConfig())
     }
 
     getAutoShareConnections(): Promise<ApiData<AutoShareConnection[]>> {

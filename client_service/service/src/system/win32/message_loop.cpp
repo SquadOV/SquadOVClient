@@ -159,7 +159,7 @@ void Win32MessageLoop::onChangeKeycodeState() {
 
     // Translate keypress into actions using the settings.
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
-    const auto pttActive = checkKeybindActive(keybinds.pushToTalk);
+    const auto pttActive = checkKeybindActive(keybinds.pushToTalk) || checkKeybindActive(keybinds.pushToTalk2);
     if (pttActive && !_lastPttEnabledState) {
         LOG_INFO("Toggling PTT [ON]" << std::endl);
         _lastPttEnabledState = true;

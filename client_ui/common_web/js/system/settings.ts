@@ -61,7 +61,7 @@ export interface SquadOvRecordingSettings {
     useVideoHw: boolean
     useHwEncoder: boolean
     useVfr4: boolean
-    useWGC: boolean
+    useWGC2: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
@@ -78,6 +78,7 @@ export interface SquadOvRecordingSettings {
 
 export interface SquadOvKeybindSettings {
     pushToTalk: number[]
+    pushToTalk2: number[]
 }
 
 export interface SquadOvVideoPlaybackSettings {
@@ -166,9 +167,10 @@ export interface WowSettings {
     useCombatLogTimeout: boolean
     timeoutSeconds2: number
     recordArenas: boolean
+    recordBattlegrounds: boolean
+    recordDungeons: boolean
     recordKeystones: boolean
     recordEncounters: boolean
-    recordFullRaids: boolean
     minimumTimeSecondsToRecord: number
 }
 
@@ -177,9 +179,10 @@ function createEmptyWowSettings(): WowSettings {
         useCombatLogTimeout: true,
         timeoutSeconds2: 180,
         recordArenas: true,
+        recordBattlegrounds: true,
+        recordDungeons: true,
         recordKeystones: true,
         recordEncounters: true,
-        recordFullRaids: false,
         minimumTimeSecondsToRecord: 15,
     }
 }
@@ -288,7 +291,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -323,7 +326,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -358,7 +361,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVideoHw: true,
                 useHwEncoder: true,
                 useVfr4: true,
-                useWGC: false,
+                useWGC2: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -391,7 +394,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
     return {
         record,
         keybinds: {
-            pushToTalk: []
+            pushToTalk: [],
+            pushToTalk2: []
         },
         playback: {
             smallStepSize: 5000,
@@ -413,7 +417,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVideoHw: true,
             useHwEncoder: true,
             useVfr4: true,
-            useWGC: false,
+            useWGC2: true,
             outputDevices: [
                 {
                     device: 'Default Device',
@@ -442,7 +446,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVoiceSpeechNoiseReduction: false,
         },
         keybinds: {
-            pushToTalk: []
+            pushToTalk: [],
+            pushToTalk2: []
         },
         playback: {
             smallStepSize: 5000,
@@ -478,135 +483,157 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         return loadLocalSettings()
     }
 
-    if (parsedData.minimizeToTray === undefined) {
-        parsedData.minimizeToTray = true
-    }
-
-    if (parsedData.minimizeOnClose === undefined) {
-        parsedData.minimizeOnClose = true
-    }
-
-    if (parsedData.runOnStartup === undefined) {
-        parsedData.runOnStartup = true
-    }
-
-    if (parsedData.record.useVideoHw === undefined) {
-        parsedData.record.useVideoHw = true
-    }
-
-    if (parsedData.record.useHwEncoder === undefined) {
-        parsedData.record.useHwEncoder = true
-    }
-
-    if (parsedData.setupWizardRun === undefined) {
-        parsedData.setupWizardRun = false
-    }
-
-    if (parsedData.record.useVfr4 === undefined) {
-        parsedData.record.useVfr4 = true
-    }
-
-    if (parsedData.record.useWGC === undefined) {
-        parsedData.record.useWGC = false
-    }
-    
-    if (parsedData.record.useLocalRecording === undefined) {
-        parsedData.record.useLocalRecording = false
-    }
-
-    if (parsedData.record.localRecordingLocation === undefined) {
-        parsedData.record.localRecordingLocation = getDefaultRecordingLocation()
-    }
-
-    if (parsedData.record.maxLocalRecordingSizeGb === undefined) {
-        parsedData.record.maxLocalRecordingSizeGb = 100
-    }
-
-    if (parsedData.record.usePushToTalk === undefined) {
-        parsedData.record.usePushToTalk = false   
-    }
-
-    if (parsedData.keybinds === undefined) {
-        parsedData.keybinds = {
-            pushToTalk: []
+    try {
+        if (parsedData.minimizeToTray === undefined) {
+            parsedData.minimizeToTray = true
         }
-    }
 
-    if (parsedData.record.vodEndDelaySeconds === undefined) {
-        parsedData.record.vodEndDelaySeconds = 0
-    }
-
-    if (parsedData.playback === undefined) {
-        parsedData.playback = {
-            smallStepSize: 5000,
-            largeStepSize: 10000,
+        if (parsedData.minimizeOnClose === undefined) {
+            parsedData.minimizeOnClose = true
         }
-    }
 
-    if (parsedData.anonymousAnalytics === undefined) {
-        parsedData.anonymousAnalytics = true
-    }
-
-    if (parsedData.disabledGames === undefined) {
-        parsedData.disabledGames = []
-    }
-
-    if (parsedData.record.overlays === undefined) {
-        parsedData.record.overlays = createDefaultOverlaySettings()
-    }
-
-    if (parsedData.record.useAudioDriftCompensation === undefined) {
-        parsedData.record.useAudioDriftCompensation = true
-    }
-
-    if (parsedData.games === undefined) {
-        parsedData.games = createEmptyPerGameSettings()
-    }
-
-    for (let d of parsedData.record.outputDevices) {
-        if (d.voice === undefined) {
-            d.voice = false
+        if (parsedData.runOnStartup === undefined) {
+            parsedData.runOnStartup = true
         }
-    }
 
-    for (let d of parsedData.record.inputDevices) {
-        if (d.voice === undefined) {
-            d.voice = true
+        if (parsedData.record.useVideoHw === undefined) {
+            parsedData.record.useVideoHw = true
         }
-    }
-    
-    if (parsedData.record.useVoiceBasicNoiseFilter === undefined) {
-        parsedData.record.useVoiceBasicNoiseFilter = false
+
+        if (parsedData.record.useHwEncoder === undefined) {
+            parsedData.record.useHwEncoder = true
+        }
+
+        if (parsedData.setupWizardRun === undefined) {
+            parsedData.setupWizardRun = false
+        }
+
+        if (parsedData.record.useVfr4 === undefined) {
+            parsedData.record.useVfr4 = true
+        }
+
+        if (parsedData.record.useWGC2 === undefined) {
+            parsedData.record.useWGC2 = true
+        }
+        
+        if (parsedData.record.useLocalRecording === undefined) {
+            parsedData.record.useLocalRecording = false
+        }
+
+        if (parsedData.record.localRecordingLocation === undefined) {
+            parsedData.record.localRecordingLocation = getDefaultRecordingLocation()
+        }
+
+        if (parsedData.record.maxLocalRecordingSizeGb === undefined) {
+            parsedData.record.maxLocalRecordingSizeGb = 100
+        }
+
+        if (parsedData.record.usePushToTalk === undefined) {
+            parsedData.record.usePushToTalk = false   
+        }
+
+        if (parsedData.keybinds === undefined) {
+            parsedData.keybinds = {
+                pushToTalk: [],
+                pushToTalk2: []
+            }
+        }
+
+        if (parsedData.record.vodEndDelaySeconds === undefined) {
+            parsedData.record.vodEndDelaySeconds = 0
+        }
+
+        if (parsedData.playback === undefined) {
+            parsedData.playback = {
+                smallStepSize: 5000,
+                largeStepSize: 10000,
+            }
+        }
+
+        if (parsedData.anonymousAnalytics === undefined) {
+            parsedData.anonymousAnalytics = true
+        }
+
+        if (parsedData.disabledGames === undefined) {
+            parsedData.disabledGames = []
+        }
+
+        if (parsedData.record.overlays === undefined) {
+            parsedData.record.overlays = createDefaultOverlaySettings()
+        }
+
+        if (parsedData.record.useAudioDriftCompensation === undefined) {
+            parsedData.record.useAudioDriftCompensation = true
+        }
+
+        if (parsedData.games === undefined) {
+            parsedData.games = createEmptyPerGameSettings()
+        }
+
+        if (parsedData.record.outputDevices === undefined) {
+            parsedData.record.outputDevices = []
+        }
+
+        for (let d of parsedData.record.outputDevices) {
+            if (d.voice === undefined) {
+                d.voice = false
+            }
+        }
+
+        if (parsedData.record.inputDevices === undefined) {
+            parsedData.record.inputDevices = []
+        }
+
+        for (let d of parsedData.record.inputDevices) {
+            if (d.voice === undefined) {
+                d.voice = true
+            }
+        }
+        
+        if (parsedData.record.useVoiceBasicNoiseFilter === undefined) {
+            parsedData.record.useVoiceBasicNoiseFilter = false
+        }
+
+        if (parsedData.record.voiceFilterThresholdDb === undefined) {
+            parsedData.record.voiceFilterThresholdDb = -60
+        }
+
+        if (parsedData.record.useVoiceSpeechNoiseReduction === undefined) {
+            parsedData.record.useVoiceSpeechNoiseReduction = false
+        }
+
+        if (parsedData.games.wow.recordArenas === undefined) {
+            parsedData.games.wow.recordArenas = true
+            parsedData.games.wow.recordKeystones = true
+            parsedData.games.wow.recordEncounters = true
+        }
+
+        if (parsedData.games.valorant === undefined) {
+            parsedData.games.valorant = createEmptyValorantSettings()
+        }
+
+        if (parsedData.games.wow.timeoutSeconds2 === undefined) {
+            parsedData.games.wow.timeoutSeconds2 = 180
+        }
+
+        if (parsedData.games.wow.recordDungeons === undefined) {
+            parsedData.games.wow.recordDungeons = true
+        }
+
+        if (parsedData.games.wow.recordBattlegrounds === undefined) {
+            parsedData.games.wow.recordBattlegrounds = true
+        }
+
+        if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
+            parsedData.games.wow.minimumTimeSecondsToRecord = 15
+        }
+    } catch (ex) {
+        console.log('Failed to migrate config file...regenerating: ', ex)
+        parsedData = await generateDefaultSettings()
     }
 
-    if (parsedData.record.voiceFilterThresholdDb === undefined) {
-        parsedData.record.voiceFilterThresholdDb = -60
-    }
-
-    if (parsedData.record.useVoiceSpeechNoiseReduction === undefined) {
-        parsedData.record.useVoiceSpeechNoiseReduction = false
-    }
-
-    if (parsedData.games.wow.recordArenas === undefined) {
-        parsedData.games.wow.recordArenas = true
-        parsedData.games.wow.recordKeystones = true
-        parsedData.games.wow.recordEncounters = true
-    }
-
-    if (parsedData.games.valorant === undefined) {
-        parsedData.games.valorant = createEmptyValorantSettings()
-    }
-
-    if (parsedData.games.wow.timeoutSeconds2 === undefined) {
-        parsedData.games.wow.timeoutSeconds2 = 180
-    }
-
-    if (parsedData.games.wow.recordFullRaids === undefined) {
-        parsedData.games.wow.recordFullRaids = false
-    }
-
-    if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
-        parsedData.games.wow.minimumTimeSecondsToRecord = 15
+    if (parsedData.keybinds.pushToTalk2 === undefined) {
+        parsedData.keybinds.pushToTalk2 = []
     }
 
     saveLocalSettings(parsedData, true)

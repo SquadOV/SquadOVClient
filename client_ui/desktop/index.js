@@ -143,14 +143,11 @@ app.on('quit', () => {
 
 function restore() {
     if (!!win) {
-        if (!win.isVisible()) {
-            win.show()
-        }
-
         if (win.isMinimized()) {
             win.restore()
         }
 
+        win.show()
         win.focus()
     }
 }
@@ -233,6 +230,14 @@ function setAppDataFolderFromEnv() {
     if (!fs.existsSync(process.env.SQUADOV_USER_APP_FOLDER)) {
         fs.mkdirSync(process.env.SQUADOV_USER_APP_FOLDER, {
             recursive: true
+        })
+    }
+
+    const clipsFolder = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'Clips')
+    if (fs.existsSync(clipsFolder)) {
+        fs.rmSync(clipsFolder, {
+            recursive: true,
+            force: true,
         })
     }
 }
@@ -388,7 +393,10 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
         editorWin.setMenu(null)
         editorWin.setMenuBarVisibility(false)
         editorWin.on('close', () => {
-            editorWin = null
+            // One last hurrah to make sure the editor window cleans up its shit (local files - clips).
+            if (!!editorWin) {
+                editorWin = null
+            }
         })
     }
 
@@ -403,7 +411,6 @@ ipcMain.on('close-vod-editor', (event) => {
         }
 
         editorWin.close()
-        editorWin = null
     }
 })
 
@@ -997,6 +1004,13 @@ zeromqServer.on('cloud-upload-progress', (resp) => {
     let parsedResp = JSON.parse(resp)
     if (!!win) {
         win.webContents.send('cloud-upload-progress', parsedResp)
+    }
+})
+
+zeromqServer.on('preview-stream-status', (resp) => {
+    let parsedResp = JSON.parse(resp)
+    if (!!win) {
+        win.webContents.send('preview-stream-status', parsedResp)
     }
 })
 

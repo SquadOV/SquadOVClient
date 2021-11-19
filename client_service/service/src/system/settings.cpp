@@ -46,7 +46,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useVfr4 = obj.value("useVfr4", true);
-    settings.useWGC = obj.value("useWGC", false);
+    settings.useWGC2 = obj.value("useWGC2", true);
 
     settings.useLocalRecording = obj.value("useLocalRecording", false);
     settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
@@ -69,6 +69,10 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     for (const auto& ele: obj["pushToTalk"]) {
         settings.pushToTalk.push_back(ele.get<int>());
     }
+
+    for (const auto& ele: obj["pushToTalk2"]) {
+        settings.pushToTalk2.push_back(ele.get<int>());
+    }
     return settings;
 }
 
@@ -77,9 +81,10 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
     settings.timeoutSeconds2 = obj.value("timeoutSeconds2", 180);
     settings.recordArenas = obj.value("recordArenas", true);
+    settings.recordBattlegrounds = obj.value("recordBattlegrounds", true);
+    settings.recordDungeons = obj.value("recordDungeons", true);
     settings.recordKeystones = obj.value("recordKeystones", true);
     settings.recordEncounters = obj.value("recordEncounters", true);
-    settings.recordFullRaids = obj.value("recordFullRaids", false);
     settings.minimumTimeSecondsToRecord = obj.value("minimumTimeSecondsToRecord", 15);
     return settings;
 }

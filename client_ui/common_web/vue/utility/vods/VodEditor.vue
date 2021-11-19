@@ -173,7 +173,7 @@
                     <v-progress-circular indeterminate size="64"></v-progress-circular>
                 </div>
 
-                <template v-if="!clipInProgress">
+                <template v-if="!clipInProgress && !clipUuid">
                     <div class="ma-2">
                         <video-player
                             v-if="!!localClipPath"
@@ -226,6 +226,26 @@
                             Save
                         </v-btn>
                     </v-card-actions>
+                </template>
+
+                <template v-else-if="!!clipUuid">
+                    <v-container fluid>
+                        <v-row justify="center" align="center">
+                            <v-col cols="6">
+                                <v-btn class="mb-4" color="primary" block large @click="goToClip">
+                                    Go to Clip
+                                </v-btn>
+
+                                <v-btn class="mb-4" color="success" block large @click="createNewClip">
+                                    Create a new clip!
+                                </v-btn>
+
+                                <v-btn block large @click="returnToMatch">
+                                    Return to Match
+                                </v-btn>
+                            </v-col>
+                        </v-row>
+                    </v-container>
                 </template>
             </v-card>
         </v-dialog>
@@ -312,6 +332,7 @@ export default class VodEditor extends mixins(CommonComponent) {
     formValid: boolean = false
     clipTitle: string = ''
     clipDescription: string = ''
+    clipPathsInSession: string[] = []
     saveInProgress: boolean = false
 
     clipUuid: string | null = null
@@ -499,14 +520,18 @@ export default class VodEditor extends mixins(CommonComponent) {
     }
 
     cancelClip() {
-        this.showHideClipDialog = false
-        this.clipInProgress = false
-
+        // We also need to make sure the clip gets deleted in local storage.
 ///#if DESKTOP
-        if (!!this.localClipPath && fs.existsSync(this.localClipPath)) {
-            fs.unlinkSync(this.localClipPath)
+        for (let path of this.clipPathsInSession) {
+            if (fs.existsSync(path)) {
+                fs.unlinkSync(path)
+            }
         }
 ///#endif
+        this.clipPathsInSession = []
+
+        this.showHideClipDialog = false
+        this.clipInProgress = false
 
         this.clipTitle = ''
         this.clipDescription = ''
@@ -533,17 +558,27 @@ export default class VodEditor extends mixins(CommonComponent) {
             isLocal: false,
         }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
             this.clipUuid = resp.data
-
-            // At this point it's better for UX to redirect to the clip page - and we'd rather do this in the main window
-            // rather than the pop-up clipping window.
-            ipcRenderer.send('redirect-to-route', this.clipPathTo)
-            ipcRenderer.send('close-vod-editor')
         }).catch((err: any) => {
             this.clipError = true
             console.error('Failed to create clip: ', err)
         }).finally(() => {
             this.saveInProgress = false
         })
+    }
+
+    goToClip() {
+        ipcRenderer.send('redirect-to-route', this.clipPathTo)
+        ipcRenderer.send('close-vod-editor')
+        this.cancelClip()
+    }
+
+    returnToMatch() {
+        ipcRenderer.send('close-vod-editor')
+        this.cancelClip()
+    }
+
+    createNewClip() {
+        this.cancelClip()
     }
 
     get clipPathTo(): any {
@@ -591,6 +626,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.clipInProgress = false
             this.clipKey += 1
             this.localClipPath = `file:///${normalPath}`
+            this.clipPathsInSession.push(normalPath)
             this.metadata = resp.metadata
         }).catch((err: any) => {
             console.error('Failed to clip: ', err)

@@ -11,21 +11,12 @@
 #include "shared/wow/instances.h"
 
 #include <atomic>
-#include <VersionHelpers.h>
 #include <unordered_map>
 #include <unordered_set>
 
 #define TEST_DUMP 0
 
 namespace service::wow {
-namespace {
-
-int getWowRecordingFlags() {
-    return service::recorder::FLAG_DXGI_RECORDING |
-        (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
-}
-
-}
 
 class WoWProcessHandlerInstance {
 public:
@@ -146,7 +137,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, _finalGame);
     if (!_process.empty()) {
-        _recorder->startDvrSession(getWowRecordingFlags());
+        _recorder->startDvrSession();
     }
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
@@ -257,6 +248,7 @@ void WoWProcessHandlerInstance::onProcessChange(const process_watcher::process::
     // Before we end the match, make sure the recorder gets pointed to the new process as well.
     if (!_recorder) {
         LOG_WARNING("...No recorder on WoW process change...?" << std::endl);
+        return;
     }
 
     _recorder->setNewProcess(p);
@@ -270,7 +262,7 @@ void WoWProcessHandlerInstance::onProcessChange(const process_watcher::process::
         _recorder->stop({}, false);
 
         // Restart DVR!
-        _recorder->startDvrSession(getWowRecordingFlags());
+        _recorder->startDvrSession();
     }
 }
 
@@ -652,10 +644,9 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
         // There's nothing special of note for RBGs.
         const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
         if (
-            ((instanceType == shared::wow::InstanceType::RaidDungeon) && wowSettings.recordFullRaids) ||
-            (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordKeystones) ||
+            (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordDungeons) ||
             ((instanceType == shared::wow::InstanceType::ArenaBattlefield) && shared::isWowClassic(_finalGame) && wowSettings.recordArenas) ||
-            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordArenas)
+            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordBattlegrounds)
         ) {
             onInstanceStart(tm, it->second);
         }
@@ -770,7 +761,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
-        _recorder->start(tm, service::recorder::RecordingMode::DVR, getWowRecordingFlags());
+        _recorder->start(tm, service::recorder::RecordingMode::DVR);
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
     }
@@ -827,7 +818,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
                 _recorder->stop({});
             }
 
-            _recorder->startDvrSession(getWowRecordingFlags());
+            _recorder->startDvrSession();
         } else {
             service::recorder::GameRecordEnd end;
             end.matchUuid = matchUuid;

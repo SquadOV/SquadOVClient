@@ -3,6 +3,7 @@
         <lol-filter-ui
             v-model="filters"
             class="mb-2"
+            :saved-filter-loc="DataStorageLocation.Lol"
         >
         </lol-filter-ui>
 
@@ -58,6 +59,7 @@ import { LolMatchFilters, createEmptyLolMatchFilters } from '@client/js/lol/filt
 import LolFilterUi from '@client/vue/utility/lol/LolFilterUi.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import LolMatchSummary from '@client/vue/utility/lol/LolMatchSummary.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -69,6 +71,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class LolGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

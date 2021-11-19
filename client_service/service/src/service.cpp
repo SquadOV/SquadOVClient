@@ -748,6 +748,16 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Initializing game preview stream handler..." << std::endl);
     service::recorder::GamePreviewStream previewStream;
+    previewStream.addCallback([&zeroMqServerClient](service::recorder::GamePreviewTasksType task, bool success){
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_PREVIEW_STATUS_MESSAGE,
+            nlohmann::json{
+                { "task", static_cast<int>(task) },
+                { "success", success }
+            }.dump()
+        );
+    });
+
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_START_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
         LOG_INFO("START GAME RECORDING STREAM:" << msg << std::endl);
         const auto json = nlohmann::json::parse(msg);

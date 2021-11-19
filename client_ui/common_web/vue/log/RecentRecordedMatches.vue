@@ -105,6 +105,7 @@
                 v-model="filters"
                 :disable-squads="isUserLocked"
                 :disable-users="isUserLocked"
+                :saved-filter-loc="DataStorageLocation.RecentMatch"
             >
             </recent-match-filters-ui>
         </div>
@@ -188,6 +189,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { RecentMatch, checkRecentMatchValidity, RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { numDaysAgo, numDaysAgoToString } from '@client/js/time'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import RecentMatchDisplay from '@client/vue/utility/RecentMatchDisplay.vue'
 import RecentMatchFiltersUi from '@client/vue/utility/RecentMatchFiltersUi.vue'
@@ -205,6 +207,8 @@ interface GroupedMatch {
     }
 })
 export default class RecentRecordedMatches extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({default: 'Recent VODs'})
     title!: string
 

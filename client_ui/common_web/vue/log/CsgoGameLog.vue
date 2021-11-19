@@ -3,6 +3,7 @@
         <csgo-filter-ui
             v-model="filters"
             class="my-2"
+            :saved-filter-loc="DataStorageLocation.Csgo"
         >
         </csgo-filter-ui>
 
@@ -58,6 +59,7 @@ import { CsgoMatchFilters, createEmptyCsgoMatchFilters } from '@client/js/csgo/f
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import CsgoFilterUi from '@client/vue/utility/csgo/CsgoFilterUi.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -69,6 +71,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class CsgoGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

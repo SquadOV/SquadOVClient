@@ -104,6 +104,7 @@
             v-model="filters"
             :disable-squads="isUserLocked"
             :disable-users="isUserLocked"
+            :saved-filter-loc="DataStorageLocation.RecentMatch"
         ></recent-match-filters-ui>
 
         <loading-container :is-loading="!clips">
@@ -167,6 +168,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { VodClip } from '@client/js/squadov/vod'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 import MiniClipPreview from '@client/vue/utility/vods/MiniClipPreview.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import RecentMatchFiltersUi from '@client/vue/utility/RecentMatchFiltersUi.vue'
@@ -181,6 +183,8 @@ const maxClipsPerRequest: number = 20
     }
 })
 export default class ClipLibrary extends mixins(CommonComponent) {
+    DataStorageLocation = DataStorageLocation
+    
     @Prop({default: 'Clip Library'})
     title!: string
 

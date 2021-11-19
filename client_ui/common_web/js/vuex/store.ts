@@ -35,6 +35,8 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         muteInviteFriendsPopUp: !!window.localStorage.getItem('muteInviteFriendsPopUp'),
         successfullyVisitedVideo: false,
         displayInviteFriendPopUp: false,
+        forceHideNav: false,
+        cachedIp: null,
     },
     mutations: {
         attemptUserLoad(state: RootState, b: boolean) {
@@ -112,12 +114,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseWGC(state: RootState, b: boolean) {
+        changeuseWGC2(state: RootState, b: boolean) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.record.useWGC = b
+            state.settings.record.useWGC2 = b
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -225,13 +227,14 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[]}) {
+        changePushToTalk(state: RootState, params: {enable: boolean, ptt: number[], altPtt: number[]}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
             state.settings.record.usePushToTalk = params.enable
-            state.settings.keybinds.pushToTalk = params.ptt
+            state.settings.keybinds.pushToTalk = [...params.ptt]
+            state.settings.keybinds.pushToTalk2 = [...params.altPtt]
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -327,15 +330,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif        
         },
-        changeWowRecordFullRaids(state: RootState, v: boolean) {
-/// #if DESKTOP
-            if (!state.settings) {
-                return
-            }
-            state.settings.games.wow.recordFullRaids = v
-            saveLocalSettings(state.settings)
-/// #endif
-        },
         changeWowMinimumTimeSecondsToRecord(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {
@@ -351,6 +345,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.games.wow.recordArenas = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowRecordDungeons(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordDungeons = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowRecordBattlegrounds(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordBattlegrounds = v
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -398,6 +410,12 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         updateLocalStorageUsage(state: RootState, val: number) {
             state.localDiskSpaceRecordUsageGb = val
+        },
+        changeForceHideNav(state: RootState, v: boolean) {
+            state.forceHideNav = v
+        },
+        updateCachedIp(state: RootState, ip: string) {
+            state.cachedIp = ip
         }
     },
     actions: {

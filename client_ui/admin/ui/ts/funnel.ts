@@ -10,7 +10,7 @@ export interface FunnelData {
 
 import bent from 'bent'
 
-export function getFunnelData(start: Date, end: Date, codes: string[], organicOnly: boolean): Promise<FunnelData> {
+export function getFunnelData(start: Date, end: Date, codes: string[], organicOnly: boolean, verifiedOnly: boolean): Promise<FunnelData> {
     let req = bent('GET', 'json', 200)
     return new Promise((resolve, reject) => {
         let url = new URL(`${window.location.origin}/api/funnel`)
@@ -18,6 +18,7 @@ export function getFunnelData(start: Date, end: Date, codes: string[], organicOn
         url.searchParams.append('end', `${end.getTime()}`)
         url.searchParams.append('codes', JSON.stringify(codes))
         url.searchParams.append('organicOnly', organicOnly ? '1' : '0')
+        url.searchParams.append('verifiedOnly', verifiedOnly ? '1' : '0')
 
         req(url.href).then((resp: any) => {
             const data: FunnelData = resp
