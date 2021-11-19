@@ -847,17 +847,22 @@ router.beforeEach((to : Route, from : Route, next : any) => {
 /// #if DESKTOP
     next()
 /// #else
+
+    //@ts-ignore
+    gtag('set', 'page_path', to.fullPath);
+    //@ts-ignore
+    gtag('event', 'page_view');
+
+
     let hasCookie = checkHasSessionCookie()
     if (hasCookie && !isAuth) {
         // If we have a cookie and the current user isn't set, then send out a request
         // to verify the session cookie.
         loadInitialSessionFromCookies(store, () => {
-            initializeAnalyticsContainer(store)
-            apiClient.getIpAddress().then((resp: ApiData<string>) => {
-                getAnalyticsContainer()?.identify(resp.data)
-            }).catch((err: any) => {
-                console.error('Failed to get IP address: ', err)
-            })
+            if (!getAnalyticsContainer()?._identified && !!store.state.cachedIp) {
+                getAnalyticsContainer()?.identify(store.state.cachedIp)
+            }
+
             store.commit('attemptUserLoad', true)
             store.dispatch('loadUserFeatureFlags')
             initializeSentry(store.state.currentUser!)
@@ -1030,4 +1035,22 @@ export function getActiveUserId(): number {
 
 function displayInviteFriendPopUp() {
     store.commit('displayInviteFriendPopUp', true)
+}
+
+interface IpData {
+    ip: string
+}
+
+//@ts-ignore
+window.onIp = (data: IpData) => {
+    let ip = data.ip.trim()
+    store.commit('updateCachedIp', ip)
+
+    // This is the callback for the Ipify request in the webapp because we can't send a HTTP request
+    // directly because of CORs.
+    initializeAnalyticsContainer(store)
+
+    if (!getAnalyticsContainer()?._identified && !!store.state.currentUser) {
+        getAnalyticsContainer()?.identify(ip)
+    }
 }
