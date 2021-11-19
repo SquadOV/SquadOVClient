@@ -80,6 +80,32 @@
                             </v-dialog>
                         </div>
 
+                        <!-- recommend squads -->
+                        <div
+                            id="rec-squads"
+                            class="my-2"
+                            v-if="!!recommendedSquads && recommendedSquads.length > 0"
+                        >
+                            <div class="ma-2 text-h6 font-weight-bold">Recommend Squads!</div>
+                            <v-divider></v-divider>
+                            <v-list-item
+                                v-for="(squad, idx) in recommendedSquads"
+                                :key="`squad-${idx}`"
+                            >
+                                <v-list-item-content>
+                                    <v-list-item-title>{{ squad.squadName }}</v-list-item-title>
+                                </v-list-item-content>
+
+                                <v-spacer></v-spacer>
+
+                                <v-list-item-action>
+                                    <v-btn color="primary" @click="joinPublicSquad(squad.id)" :loading="joiningPublicSquad">
+                                        Join
+                                    </v-btn>
+                                </v-list-item-action>
+                            </v-list-item>
+                        </div>
+
                         <!-- Squad member list and status -->
                         <v-data-table
                             v-if="filteredSquadMembers.length > 0"
@@ -120,6 +146,7 @@
                     <v-col cols="9">
                         <!-- Recent recorded games -->
                         <recent-recorded-matches
+                            ref="recent"
                             disable-mini
                         >
                         </recent-recorded-matches>
@@ -136,7 +163,7 @@ import Component, {mixins} from 'vue-class-component'
 import CommonComponent from '@client/vue/CommonComponent'
 import { Watch, Prop } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
-import { SquadMembership } from '@client/js/squadov/squad'
+import { Squad, SquadMembership } from '@client/js/squadov/squad'
 import { apiClient, ApiData } from '@client/js/api'
 import { TrackedUserStatsManager } from '@client/js/squadov/status'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
@@ -169,7 +196,13 @@ export default class Dashboard extends mixins(CommonComponent) {
     squadMembers: SquadMembership[] = []
     showHideCreateSquad: boolean = false
     showHideInviteSquad: boolean = false
+    recommendedSquads: Squad[] | null = null
     userPage: number = 0
+    joiningPublicSquad: boolean = false
+
+    $refs!: {
+        recent: RecentRecordedMatches
+    }
 
     get squadTableHeaders(): any[] {
         return [
@@ -261,6 +294,12 @@ export default class Dashboard extends mixins(CommonComponent) {
         }).catch((err: any) => {
             console.error('Failed to obtain user squads: ', err)
         })
+
+        apiClient.getUserRecommendedSquads().then((resp: ApiData<Squad[]>) => {
+            this.recommendedSquads = resp.data
+        }).catch((err: any) => {
+            console.error('Failed to obtain user recommended squads: ', err)
+        })
     }
 
     get loaded(): boolean {
@@ -318,6 +357,22 @@ export default class Dashboard extends mixins(CommonComponent) {
             }
         }
     }
+
+    joinPublicSquad(squadId: number) {
+        this.joiningPublicSquad = true
+        apiClient.joinPublicSquad(squadId).then(() => {
+            if (!!this.recommendedSquads) {
+                this.recommendedSquads = this.recommendedSquads.filter((ele: Squad) => ele.id !== squadId)
+            }
+
+            this.refreshSquads()
+            this.$refs.recent.refreshData()
+        }).catch((err: any) => {
+            console.error('Failed to join public squad: ', err)
+        }).finally(() => {
+            this.joiningPublicSquad = false
+        })
+    }
 }
 
 </script>
@@ -327,6 +382,11 @@ export default class Dashboard extends mixins(CommonComponent) {
 .choice {
     margin-left: 8px;
     margin-right: 8px;
+}
+
+#rec-squads {
+    border-radius: 4px;
+    border: 1px solid yellow;
 }
 
 </style>
