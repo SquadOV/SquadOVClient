@@ -3,6 +3,7 @@
         <hearthstone-filter-ui
             v-model="filters"
             class="my-2"
+            :saved-filter-loc="DataStorageLocation.Hearthstone"
         >
         </hearthstone-filter-ui>
 
@@ -45,6 +46,7 @@ import { HearthstoneGameType } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneMatchFilters, createEmptyHearthstoneMatchFilters } from '@client/js/hearthstone/filters'
 import HearthstoneFilterUi from '@client/vue/utility/hearthstone/HearthstoneFilterUi.vue'
 import HearthstoneMatchScroller from '@client/vue/utility/hearthstone/HearthstoneMatchScroller.vue'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 20
 
@@ -56,6 +58,8 @@ const maxTasksPerRequest : number = 20
     }
 })
 export default class HearthstoneAllMatchesGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     allMatchIds: string[] | null = null
     lastIndex: number = 0
     nextLink: string | null = null

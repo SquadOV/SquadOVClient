@@ -69,6 +69,7 @@
     "stream-http": "^3.2.0",
     "thread-loader": "^3.0.4",
     "ts-loader": "^9.2.3",
+    "ts-md5": "^1.2.10",
     "typescript": "^4.3.2",
     "universal-analytics": "^0.4.23",
     "url": "^0.11.0",

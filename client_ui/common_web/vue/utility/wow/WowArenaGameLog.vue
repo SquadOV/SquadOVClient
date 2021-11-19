@@ -5,6 +5,7 @@
             for-arenas
             class="my-2"
             :release="release"
+            :saved-filter-loc="DataStorageLocation.WowArena"
         >
         </wow-filter-ui>
         <loading-container :is-loading="!allArenas">
@@ -44,6 +45,7 @@ import WowArenaSummary from '@client/vue/utility/wow/WowArenaSummary.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import { WowGameRelease } from '@client/js/staticData'
+import { DataStorageLocation } from '@client/js/system/data_storage'
 
 const maxTasksPerRequest : number = 10
 
@@ -55,6 +57,8 @@ const maxTasksPerRequest : number = 10
     }
 })
 export default class WowArenaGameLog extends Vue {
+    DataStorageLocation = DataStorageLocation
+
     @Prop({required: true})
     userId!: number
 

@@ -65,12 +65,12 @@
 
 <script lang="ts">
 
-import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import { AimlabMatchFilters, createEmptyAimlabMatchFilters } from '@client/js/aimlab/filters'
 import { AimlabContent, getAimlabContent } from '@client/js/aimlab/aimlab_content'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import CommonFilters from '@client/vue/utility/CommonFilters'
 import * as pi from '@client/js/pages'
 
 @Component({
@@ -78,7 +78,7 @@ import * as pi from '@client/js/pages'
         GenericMatchFilterUi
     }
 })
-export default class AimlabFilterUi extends Vue {
+export default class AimlabFilterUi extends mixins(CommonFilters) {
     @Prop({ required: true })
     value!: AimlabMatchFilters
 
@@ -119,10 +119,15 @@ export default class AimlabFilterUi extends Vue {
 
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
+        this.saveToLocal(this.internalValue)
     }
 
     mounted() {
         this.syncFromValue()
+        if (!!this.savedFilter) {
+            this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
     }
 }
 

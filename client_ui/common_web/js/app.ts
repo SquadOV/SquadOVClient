@@ -120,6 +120,7 @@ import { apiClient, ApiData } from '@client/js/api'
 import { getSquadOVUser, SquadOVUser } from '@client/js/squadov/user'
 import { RootStoreOptions } from '@client/js/vuex/store'
 import { timeStringToSeconds } from '@client/js/time'
+import { initializeDataStorageSingleton } from '@client/js/system/data_storage'
 
 function isDesktop(): boolean {
 /// #if DESKTOP
@@ -712,6 +713,7 @@ const router = new VueRouter({
 /// #endif
     routes: baseRoutes,
 })
+initializeDataStorageSingleton(router)
 
 const store = new Vuex.Store(RootStoreOptions)
 
