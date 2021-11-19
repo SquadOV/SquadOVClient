@@ -56,7 +56,7 @@ export default class MfaAuthDialog extends Vue {
 
     doVerify() {
         if (!!this.cb) {
-            this.cb(this.code)
+            this.cb(this.code.trim())
         }
         this.showHide = false
     }
