@@ -11,18 +11,9 @@
 #include "recorder/game_recorder.h"
 #include "system/state.h"
 
-#include <VersionHelpers.h>
-
 namespace service::hearthstone {
 namespace {
 const std::string HEARTHSTONE_MONO_MODULE = "mono-2.0-bdwgc.dll";
-
-// GDI fails to record properly in window mode. Defaults to WGC over GDI
-int getHearthstoneRecordingFlags() {
-    return service::recorder::FLAG_DXGI_RECORDING |
-        (IsWindows10OrGreater() ? service::recorder::FLAG_WGC_RECORDING : service::recorder::FLAG_GDI_RECORDING);    
-}
-
 }
 
 class HearthstoneProcessHandlerInstance {
@@ -186,7 +177,7 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 
     // We need to start recording now because the game start event comes much later so if we don't start recording now then we
     // might miss parts of the mulligan.
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal, getHearthstoneRecordingFlags());
+    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
 
     if (_inGame) {
         onGameStart(eventTime, nullptr);
