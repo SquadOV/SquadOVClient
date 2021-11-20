@@ -24,6 +24,7 @@ export interface SquadMembership {
     role: SquadRole
     username: string
     userId: number
+    canShare: boolean
 }
 
 export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembership {
