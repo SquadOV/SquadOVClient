@@ -22,7 +22,7 @@
 
                     <v-spacer></v-spacer>
 
-                    <v-btn color="error" :loading="kickPending" @click="doKick">
+                    <v-btn color="error" :loading="changePending" @click="doKick">
                         Kick
                     </v-btn>
                 </v-card-actions>
@@ -45,8 +45,19 @@
             :items="items"
             :search="filterText"
         >
+            <template v-slot:item.share="{ item }">
+                <v-checkbox
+                    v-model="item.value.canShare"
+                    @change="changeCanShare(item.value, arguments[0])"
+                    dense
+                    hide-details
+                    :loading="changePending"
+                >
+                </v-checkbox>
+            </template>
+
             <template v-slot:item.actions="{ item }">
-                <v-btn icon color="error" v-if="isOwner && item.role != 'Owner'" @click="stageKick(item.value)">
+                <v-btn icon color="error" v-if="isOwner && item.role != 'Owner'" @click="stageKick(item.value)" :loading="changePending">
                     <v-icon>
                         mdi-close-circle
                     </v-icon>
@@ -59,7 +70,7 @@
             :timeout="5000"
             color="error"
         >
-            Failed to remove user from squad, please try again.
+            Failed to make changes to the squad, please try again.
         </v-snackbar>
     </div>
 </template>
@@ -73,7 +84,7 @@ import {
     SquadMembership,
     SquadRole
 } from '@client/js/squadov/squad'
-import { apiClient, ApiData } from '@client/js/api' 
+import { apiClient } from '@client/js/api' 
 
 @Component
 export default class SquadMemberTable extends Vue {
@@ -88,7 +99,7 @@ export default class SquadMemberTable extends Vue {
 
     showHideDelete: boolean = false
     userToDelete: SquadMembership | null = null
-    kickPending: boolean = false
+    changePending: boolean = false
     
     get headers(): any[] {
         let ret : any[] = [
@@ -104,7 +115,12 @@ export default class SquadMemberTable extends Vue {
 
         if (this.isOwner) {
             ret.push({
-                text: 'Actions',
+                text: 'Can Share',
+                value: 'share',
+            })
+
+            ret.push({
+                text: 'Kick',
                 value: 'actions',
                 sortable: false,
                 filterable: false
@@ -132,6 +148,7 @@ export default class SquadMemberTable extends Vue {
                 return {
                     username: ele.username,
                     role: SquadRole[ele.role],
+                    canShare: ele.canShare,
                     value: ele,
                 }
             })
@@ -147,7 +164,7 @@ export default class SquadMemberTable extends Vue {
             return
         }
 
-        this.kickPending = true
+        this.changePending = true
         apiClient.kickSquadMember(this.userToDelete.squad.id, this.userToDelete.userId).then(() => {
             let newValues = this.value!.filter((ele: SquadMembership) => {
                 return ele.userId != this.userToDelete!.userId
@@ -159,13 +176,23 @@ export default class SquadMemberTable extends Vue {
             this.showHideError = true
             console.error('Failed to kick player: ', err)
         }).finally(() => {
-            this.kickPending = false
+            this.changePending = false
         })
     }
 
     stageKick(user: SquadMembership) {
         this.userToDelete = user
         this.showHideDelete = true
+    }
+
+    changeCanShare(user: SquadMembership, v: boolean) {
+        this.changePending = true
+        apiClient.changeSquadMemberCanShare(user.squad.id, user.userId, v).catch((err: any) => {
+            this.showHideError = true
+            console.error('Failed to change member can share: ', err)
+        }).finally(() => {
+            this.changePending = false
+        })
     }
 }
 
