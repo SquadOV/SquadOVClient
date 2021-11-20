@@ -103,7 +103,7 @@
         <div class="d-flex align-center full-width">
             <recent-match-filters-ui
                 v-model="filters"
-                :disable-squads="isUserLocked"
+                :disable-squads="isUserLocked || squadId !== undefined"
                 :disable-users="isUserLocked"
                 :saved-filter-loc="DataStorageLocation.RecentMatch"
             >
@@ -144,6 +144,9 @@
                                                 :disable-mini="disableMini"
                                             >
                                             </recent-match-display>
+
+                                            <slot name="actions" v-bind:match="match">
+                                            </slot>
                                         </div>
                                     </template>
                                     
@@ -214,6 +217,9 @@ export default class RecentRecordedMatches extends Vue {
 
     @Prop()
     userId!: number | undefined
+
+    @Prop()
+    squadId!: number | undefined
 
     @Prop({type: Boolean, default: false})
     onlyFavorite!: boolean
@@ -328,6 +334,10 @@ export default class RecentRecordedMatches extends Vue {
             filters.users = [this.userId]
         }
 
+        if (this.squadId !== undefined) {
+            filters.squads = [this.squadId]
+        }
+
         filters.onlyFavorite = this.onlyFavorite
         filters.onlyWatchlist = this.onlyWatchlist
         return filters
@@ -388,6 +398,13 @@ export default class RecentRecordedMatches extends Vue {
         }).finally(() => {
             this.deleteInProgress = false
         })
+    }
+
+    removeContent(videoUuid: string) {
+        if (!this.recentMatches) {
+            return
+        }
+        this.recentMatches = this.recentMatches.filter((ele: RecentMatch) => ele.base.vod.videoTracks[0].metadata.videoUuid !== videoUuid)
     }
 
     mounted() {

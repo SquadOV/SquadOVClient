@@ -367,7 +367,7 @@ export default class SharingSettingsItem extends Vue {
                 value: 'squad',
             },
             {
-                text: 'Can Resahre',
+                text: 'Can Reshare',
                 value: 'share',
             },
             {
