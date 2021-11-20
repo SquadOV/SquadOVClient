@@ -109,6 +109,10 @@
                         </v-tab>
 
                         <v-tab>
+                            Content
+                        </v-tab>
+
+                        <v-tab>
                             Sharing
                         </v-tab>
                     </v-tabs>
@@ -149,6 +153,68 @@
                             :is-owner="isOwner"
                         >
                         </squad-invite-table>
+                    </v-tab-item>
+
+                    <v-tab-item>
+                        <v-tabs vertical>
+                            <v-tab>
+                                VODs
+                            </v-tab>
+
+                            <v-tab-item>
+                                <recent-recorded-matches
+                                    title="Squad VODs"
+                                    :squad-id="squadId"
+                                    disable-select
+                                    ref="vods"
+                                >
+                                    <template v-slot:actions="{match}">
+                                        <v-btn
+                                            v-if="isOwner"
+                                            icon
+                                            small
+                                            color="error"
+                                            class="ml-2"
+                                            @click.stop="removeVideoFromSquad(match.base.vod.videoTracks[0].metadata.videoUuid)"
+                                            :loading="vodRemovalProgress"
+                                        >
+                                            <v-icon>
+                                                mdi-close-circle
+                                            </v-icon>
+                                        </v-btn>
+                                    </template>
+                                </recent-recorded-matches>
+                            </v-tab-item>
+
+                            <v-tab>
+                                Clips
+                            </v-tab>
+
+                            <v-tab-item>
+                                <clip-library
+                                    title="Squad Clips"
+                                    :squad-id="squadId"
+                                    disable-select
+                                    ref="clips"
+                                >
+                                    <template v-slot:actions="{clip}">
+                                        <v-btn
+                                            v-if="isOwner"
+                                            icon
+                                            small
+                                            color="error"
+                                            class="ml-2"
+                                            @click.stop="removeVideoFromSquad(clip.clip.videoUuid)"
+                                            :loading="vodRemovalProgress"
+                                        >
+                                            <v-icon>
+                                                mdi-close-circle
+                                            </v-icon>
+                                        </v-btn>
+                                    </template>
+                                </clip-library>
+                            </v-tab-item>
+                        </v-tabs>
                     </v-tab-item>
 
                     <v-tab-item>
@@ -201,6 +267,8 @@ import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
 import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateCard.vue'
 import SquadSharingSettingsDisplay from '@client/vue/utility/squads/SquadSharingSettingsDisplay.vue'
+import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
+import ClipLibrary from '@client/vue/utility/vods/ClipLibrary.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
@@ -210,6 +278,8 @@ import * as pi from '@client/js/pages'
         SquadInviteTable,
         SquadInviteCreateCard,
         SquadSharingSettingsDisplay,
+        RecentRecordedMatches,
+        ClipLibrary,
     }
 })
 export default class SingleSquadPage extends Vue {
@@ -235,6 +305,13 @@ export default class SingleSquadPage extends Vue {
 
     showHideSuccess: boolean = false
     successMessage: string = ''
+
+    vodRemovalProgress: boolean = false
+
+    $refs!: {
+        vods: RecentRecordedMatches,
+        clips: ClipLibrary,
+    }
 
     get isOwner(): boolean {
         return this.localMembership!.role == SquadRole.Owner
@@ -376,6 +453,19 @@ export default class SingleSquadPage extends Vue {
 
     mounted() {
         this.refreshData()
+    }
+
+    removeVideoFromSquad(videoUuid: string) {
+        this.vodRemovalProgress = true
+        apiClient.removeVodFromSquad(this.squadId, videoUuid).then(() => {
+            this.$refs.vods.removeContent(videoUuid)
+            this.$refs.clips.removeContent(videoUuid)
+        }).catch((err: any) => {
+            console.error('Failed to remove vod from squad: ', err)
+            this.showError('Failed to remove VOD/clip from the squad, please try again.')
+        }).finally(() => {
+            this.vodRemovalProgress = false
+        })
     }
 }
 

@@ -600,6 +600,10 @@ class ApiClient {
         return axios.post(`v1/squad/${squadId}/admin/membership/${userId}/share`, {canShare}, this.createWebAxiosConfig())
     }
 
+    removeVodFromSquad(squadId: number, videoUuid: string): Promise<void> {
+        return axios.delete(`v1/squad/${squadId}/admin/content/${videoUuid}`, this.createWebAxiosConfig())
+    }
+
     findVodFromMatchUserId(matchUuid : string, userId: number) : Promise<ApiData<VodAssociation>> {
         return axios.get(`v1/vod/match/${matchUuid}/user/id/${userId}`, this.createWebAxiosConfig(true)).then((resp : ApiData<VodAssociation>) => {
             cleanVodAssocationData(resp.data)
