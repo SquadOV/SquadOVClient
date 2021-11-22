@@ -17,92 +17,94 @@
 
             <v-spacer></v-spacer>
 
-            <template v-if="!inSelectMode">
-                <v-btn
-                    color="primary"
-                    @click="inSelectMode = true"
-                >
-                    Select
-                </v-btn>
-            </template>
-
-            <template v-else>
-                <v-dialog persistent v-model="showHideDelete" max-width="60%">
-                    <template v-slot:activator="{on, attrs}">
-                        <v-btn
-                            icon
-                            color="error"
-                            :disabled="selected.length === 0"
-                            v-on="on"
-                            v-bind="attrs"
-                        >
-                            <v-icon>
-                                mdi-delete
-                            </v-icon>
-                        </v-btn>
-                    </template>
-
-                    <v-card>
-                        <v-card-title>
-                            Are you sure?
-                        </v-card-title>
-
-                        <v-card-text>
-                            Are you sure you want to delete {{ selected.length }} clips?
-                            This action can not be undone.
-                        </v-card-text>
-
-                        <v-card-actions>
-                            <v-btn
-                                color="error"
-                                @click="showHideDelete = false"
-                            >
-                                Cancel
-                            </v-btn>
-
-                            <v-spacer></v-spacer>
-
-                            <v-btn
-                                color="success"
-                                @click="deleteSelectedClips"
-                                :loading="deleteInProgress"
-                            >
-                                Delete
-                            </v-btn>
-                        </v-card-actions>
-                    </v-card>
-                </v-dialog>
-
-                <v-btn
-                    @click="toggleSelected"
-                    outlined
-                    class="ml-2"
-                >
-                    <v-checkbox
-                        :input-value="allSelected"
-                        readonly
+            <template v-if="!disableSelect">
+                <template v-if="!inSelectMode">
+                    <v-btn
+                        color="primary"
+                        @click="inSelectMode = true"
                     >
-                    </v-checkbox>
+                        Select
+                    </v-btn>
+                </template>
 
-                    {{ selected.length }} Selected
-                </v-btn>
+                <template v-else>
+                    <v-dialog persistent v-model="showHideDelete" max-width="60%">
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn
+                                icon
+                                color="error"
+                                :disabled="selected.length === 0"
+                                v-on="on"
+                                v-bind="attrs"
+                            >
+                                <v-icon>
+                                    mdi-delete
+                                </v-icon>
+                            </v-btn>
+                        </template>
 
-                <v-btn
-                    class="ml-2"
-                    icon
-                    @click="closeSelect"
-                    color="warning"
-                >
-                    <v-icon>
-                        mdi-close
-                    </v-icon>
-                </v-btn>
+                        <v-card>
+                            <v-card-title>
+                                Are you sure?
+                            </v-card-title>
+
+                            <v-card-text>
+                                Are you sure you want to delete {{ selected.length }} clips?
+                                This action can not be undone.
+                            </v-card-text>
+
+                            <v-card-actions>
+                                <v-btn
+                                    color="error"
+                                    @click="showHideDelete = false"
+                                >
+                                    Cancel
+                                </v-btn>
+
+                                <v-spacer></v-spacer>
+
+                                <v-btn
+                                    color="success"
+                                    @click="deleteSelectedClips"
+                                    :loading="deleteInProgress"
+                                >
+                                    Delete
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-btn
+                        @click="toggleSelected"
+                        outlined
+                        class="ml-2"
+                    >
+                        <v-checkbox
+                            :input-value="allSelected"
+                            readonly
+                        >
+                        </v-checkbox>
+
+                        {{ selected.length }} Selected
+                    </v-btn>
+
+                    <v-btn
+                        class="ml-2"
+                        icon
+                        @click="closeSelect"
+                        color="warning"
+                    >
+                        <v-icon>
+                            mdi-close
+                        </v-icon>
+                    </v-btn>
+                </template>
             </template>
         </div>
         <v-divider class="my-2"></v-divider>
         <recent-match-filters-ui
             v-model="filters"
-            :disable-squads="isUserLocked"
+            :disable-squads="isUserLocked || squadId !== undefined"
             :disable-users="isUserLocked"
             :saved-filter-loc="DataStorageLocation.RecentMatch"
         ></recent-match-filters-ui>
@@ -119,6 +121,9 @@
                                             <v-list-item-action v-if="inSelectMode">
                                                 <v-checkbox :input-value="active"></v-checkbox>
                                             </v-list-item-action>
+
+                                            <slot name="actions" v-bind:clip="c">
+                                            </slot>
 
                                             <mini-clip-preview
                                                 class="flex-grow-1"
@@ -194,11 +199,17 @@ export default class ClipLibrary extends mixins(CommonComponent) {
     @Prop()
     userId!: number | undefined
 
+    @Prop()
+    squadId!: number | undefined
+
     @Prop({type: Boolean, default: false})
     onlyFavorite!: boolean
 
     @Prop({type: Boolean, default: false})
     onlyWatchlist!: boolean
+
+    @Prop({type: Boolean, default: false})
+    disableSelect!: boolean
 
     @Prop({type: Boolean, default: false})
     refresh!: boolean
@@ -286,6 +297,10 @@ export default class ClipLibrary extends mixins(CommonComponent) {
             filters.users = [this.userId]
         }
 
+        if (this.squadId !== undefined) {
+            filters.squads = [this.squadId]
+        }
+
         filters.onlyFavorite = this.onlyFavorite
         filters.onlyWatchlist = this.onlyWatchlist
         return filters
@@ -341,6 +356,14 @@ export default class ClipLibrary extends mixins(CommonComponent) {
         if (this.refresh) {
             this.refreshClips()
         }
+    }
+
+    removeContent(videoUuid: string) {
+        if (!this.clips) {
+            return
+        }
+
+        this.clips = this.clips.filter((ele: VodClip) => ele.clip.videoUuid !== videoUuid)
     }
 }
 

@@ -1,4 +1,5 @@
 import { SquadOVUserHandle } from "@client/js/squadov/user"
+import { SquadOvGames } from "@client/js/squadov/game"
 
 export interface Squad {
     id: number
@@ -23,6 +24,7 @@ export interface SquadMembership {
     role: SquadRole
     username: string
     userId: number
+    canShare: boolean
 }
 
 export function cleanSquadMembershipFromJson(s: SquadMembership): SquadMembership {
@@ -84,4 +86,17 @@ export interface SquadInviteLinkData {
 export function cleanSquadInviteLinkDataFromJson(s: SquadInviteLinkData) : SquadInviteLinkData {
     cleanSquadFromJson(s.squad)
     return s
+}
+
+export interface SquadWowSharingSettings {
+    disableEncounters: boolean
+    disableDungeons: boolean
+    disableKeystones: boolean
+    disableArenas: boolean
+    disableBgs: boolean
+}
+
+export interface SquadSharingSettings {
+    disabledGames: SquadOvGames[]
+    wow: SquadWowSharingSettings
 }
