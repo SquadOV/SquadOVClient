@@ -63,6 +63,7 @@ extraResources:
       - "squadov_client_service.exe"
       - "advanced_crash_dump_enabler.exe"
       - "crashpad_handler.exe"
+      - "audio_sanity_checker.exe"
       - "ffmpeg.exe"
       - "shaders/*"
       - "models/*"
