@@ -153,13 +153,17 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
 
         std::wstring wDeviceName(value.pwszVal);
         std::string sDeviceName = shared::strings::wcsToUtf8(wDeviceName);
-        resp.options.push_back(sDeviceName);
 
+        const auto ourDevice = service::recorder::audio::SingleAudioDevice(sDeviceName, shared::strings::wcsToUtf8(deviceId));
+        resp.options.push_back(ourDevice);
+
+        bool isDefault = false;
         if (defaultDeviceId && lstrcmpW(defaultDeviceId, deviceId) == 0) {
-            resp.default = sDeviceName;
+            isDefault = true;
+            resp.default = ourDevice;
         }
 
-        LOG_INFO("FOUND AUDIO DEVICE: " << sDeviceName << " " << (resp.default == sDeviceName) << std::endl);
+        LOG_INFO("FOUND AUDIO DEVICE: " << sDeviceName << " " << isDefault << std::endl);
 
         CoTaskMemFree(deviceId);
         deviceId = nullptr;
@@ -172,6 +176,48 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
     return resp;
 }
 
+CComPtr<IMMDevice> WASAPIInterface::getDeviceFromName(service::recorder::audio::EAudioDeviceDirection dir, const std::string& name) {
+    // When getting a device by name we have to pretty much go through the list of devices and find the one with a name that matches. F U N.
+    try {
+        const auto choices = getDeviceListing(dir);
+        for (const auto& d: choices.options) {
+            if (d.name == name) {
+                return getDeviceFromId(d.id);
+            }
+        }
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to get device listing: " << ex.what() << std::endl);
+    }
+
+    return nullptr;
 }
 
+CComPtr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
+    CComPtr<IMMDeviceEnumerator> audioEnum;
+    HRESULT hr = CoCreateInstance(
+        __uuidof(MMDeviceEnumerator),
+        NULL,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IMMDeviceEnumerator),
+        (LPVOID*)&audioEnum
+    );
+
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to create IMMDeviceEnumerator: " << hr);
+        return nullptr;
+    }
+
+    const auto wId = shared::strings::utf8ToWcs(id);
+
+    CComPtr<IMMDevice> device;
+    hr = audioEnum->GetDevice(wId.c_str(), &device);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get device from ID: " << hr);
+        return nullptr;
+    }
+
+    return device;
+}
+
+}
 #endif

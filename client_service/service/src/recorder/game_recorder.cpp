@@ -13,6 +13,7 @@
 #include "recorder/video/windows_graphics_capture.h"
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
+#include "recorder/audio/wasapi_audio_recorder.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -439,7 +440,7 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
     _vrecorder->startRecording();
     
-    {
+    if (!_cachedRecordingSettings->useWASAPIRecording) {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(new audio::PortaudioInitRAII);
     }
@@ -447,8 +448,13 @@ bool GameRecorder::initializeInputStreams(int flags) {
     service::recorder::audio::AudioDeviceSet deviceSet;
 
     for (const auto& output : _cachedRecordingSettings->outputDevices) {
-        auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
-        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output.device, output.volume, output.mono, deviceSet);
+        std::unique_ptr<audio::AudioRecorder> recorder;
+        if (_cachedRecordingSettings->useWASAPIRecording) {
+            recorder = std::make_unique<audio::WasapiAudioRecorder>();
+        } else {
+            recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+        }
+        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output, deviceSet);
         if (recorder->exists()) {
             recorder->startRecording();
             _aoutRecorder.emplace_back(std::move(recorder));
@@ -457,8 +463,13 @@ bool GameRecorder::initializeInputStreams(int flags) {
 
     std::lock_guard guard(_ainMutex);
     for (const auto& input : _cachedRecordingSettings->inputDevices) {
-        auto recorder = std::make_unique<audio::PortaudioAudioRecorder>();
-        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input.device, input.volume, input.mono, deviceSet);
+        std::unique_ptr<audio::AudioRecorder> recorder;
+        if (_cachedRecordingSettings->useWASAPIRecording) {
+            recorder = std::make_unique<audio::WasapiAudioRecorder>();
+        } else {
+            recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+        }
+        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input, deviceSet);
         if (recorder->exists()) {
             if (input.voice) {
                 recorder->markVoice();

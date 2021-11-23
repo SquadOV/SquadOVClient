@@ -31,6 +31,7 @@ SET(SRCS
     src/recorder/pipe/cloud/gcs_storage_client.cpp
     src/recorder/pipe/cloud/s3_storage_client.cpp
     src/recorder/default_flags.cpp
+    src/recorder/audio/wasapi_audio_recorder.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
@@ -94,6 +95,7 @@ SET(HEADERS
     src/recorder/pipe/cloud/s3_storage_client.h
     src/recorder/pipe/cloud_storage_piper.h
     src/recorder/default_flags.h
+    src/recorder/audio/wasapi_audio_recorder.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
@@ -264,3 +266,4 @@ CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.ma
 CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_clipper.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(audio_sanity_checker "src/audio_sanity_checker.cpp" "src/audio_sanity_checker.exe.manifest")

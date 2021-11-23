@@ -153,6 +153,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeUseWASAPIRecording(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useWASAPIRecording = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         toggleRecordingPause(state: RootState) {
 /// #if DESKTOP
             state.currentState.paused = !state.currentState.paused

@@ -132,6 +132,28 @@
                     <v-spacer></v-spacer>
 
                     <v-checkbox
+                        class="my-0 ml-0 mr-4"
+                        :input-value="$store.state.settings.record.useWASAPIRecording"
+                        @change="$store.commit('changeUseWASAPIRecording', arguments[0])"
+                        label="Use Native Recording"
+                        hide-details
+                        dense
+                    >
+                        <template v-slot:append>
+                            <v-tooltip bottom max-width="450px">
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-icon v-on="on" v-bind="attrs">
+                                        mdi-help-circle
+                                    </v-icon>
+                                </template>
+
+                                When enabled, SquadOV will interface directly with native APIs to record audio.
+                                This is necessary for filtering audio by program, and may be more reliable in recording.
+                            </v-tooltip>
+                        </template>
+                    </v-checkbox>
+
+                    <v-checkbox
                         class="ma-0"
                         :input-value="$store.state.settings.record.useAudioDriftCompensation"
                         @change="$store.commit('changeAudioDriftCompensation', arguments[0])"

@@ -10,11 +10,13 @@
 
 #include "shared/games.h"
 #include "renderer/d3d11_overlay_renderer.h"
+#include "shared/json.h"
 
 namespace service::system {
 
 struct AudioDeviceSettings {
     std::string device;
+    std::string id;
     double volume = 1.0;
     bool mono = false;
     bool voice = false;
@@ -33,6 +35,7 @@ struct RecordingSettings {
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
+    bool useWASAPIRecording = true;
 
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;
@@ -108,15 +111,40 @@ public:
     bool isGameEnabled(shared::EGame);
     
     bool loaded() const { return _loaded; }
+    nlohmann::json raw() const { return _raw; }
 
 private:
     std::shared_mutex _mutex;
     LocalSettings _settings;
+
+    // Need to store a raw version because we aren't necessarily going to be
+    // loading up and parsing the entire json file so we need to make sure that
+    // we store the OG so we can still save changes to disk.
+    nlohmann::json _raw;
     bool _loaded = false;
 };
 
 using SettingsPtr = std::unique_ptr<Settings>;
 
 Settings* getCurrentSettings();
+
+}
+
+
+namespace shared::json {
+
+template<>
+struct JsonConverter<service::system::AudioDeviceSettings> {
+    static nlohmann::json to(const service::system::AudioDeviceSettings& v) {
+        nlohmann::json data = {
+            { "device", v.device },
+            { "volume", v.volume },
+            { "mono", v.mono },
+            { "voice", v.voice },
+            { "id", v.id }
+        };
+        return data;
+    }
+};
 
 }

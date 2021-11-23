@@ -15,6 +15,7 @@ declare module 'streamsaver'
 declare module 'player.js'
 declare module 'qrcode'
 declare module 'mixpanel-browser'
+declare module 'funnies'
 
 declare var SQUADOV_API_URL: string
 declare var SQUADOV_SEGMENT_KEY: string

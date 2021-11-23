@@ -41,6 +41,7 @@ function createDefaultOverlaySettings(): SquadOvOverlaySettings {
 
 export interface AudioDeviceSettings {
     device: string
+    id: string
     volume: number
     mono: boolean
     voice: boolean
@@ -49,6 +50,7 @@ export interface AudioDeviceSettings {
 export function createDefaultAudioDevice(): AudioDeviceSettings {
     return {
         device: 'Default Device',
+        id: '',
         volume: 1.0,
         mono: false,
         voice: false,
@@ -65,6 +67,7 @@ export interface SquadOvRecordingSettings {
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
+    useWASAPIRecording: boolean
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
@@ -295,6 +298,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -303,12 +307,14 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -330,6 +336,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -338,12 +345,14 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -365,6 +374,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -373,12 +383,14 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -421,6 +433,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             outputDevices: [
                 {
                     device: 'Default Device',
+                    id: '',
                     volume: 1.0,
                     mono: false,
                     voice: false,
@@ -429,12 +442,14 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             inputDevices: [
                 {
                     device: 'Default Device',
+                    id: '',
                     volume: 1.0,
                     mono: false,
                     voice: true,
                 }
             ],
             usePushToTalk: false,
+            useWASAPIRecording: true,
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
@@ -627,13 +642,17 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
             parsedData.games.wow.minimumTimeSecondsToRecord = 15
         }
+
+        if (parsedData.keybinds.pushToTalk2 === undefined) {
+            parsedData.keybinds.pushToTalk2 = []
+        }
+    
+        if (parsedData.record.useWASAPIRecording === undefined) {
+            parsedData.record.useWASAPIRecording = true
+        }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()
-    }
-
-    if (parsedData.keybinds.pushToTalk2 === undefined) {
-        parsedData.keybinds.pushToTalk2 = []
     }
 
     saveLocalSettings(parsedData, true)

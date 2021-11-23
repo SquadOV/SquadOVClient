@@ -78,7 +78,7 @@ function handleSquirrel() {
 const {app, BrowserWindow, Menu, Tray, ipcMain, net, globalShortcut} = require('electron')
 const path = require('path')
 const fs = require('fs')
-const {spawn} = require('child_process');
+const {spawn, exec} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
@@ -101,6 +101,7 @@ if (app.isPackaged) {
 }
 
 let win
+let setupWindow
 let editorWin
 let tray
 let isQuitting = false
@@ -481,20 +482,8 @@ zeromqServer.on('respond-input-devices', (r) => {
 })
 
 totalCloseCount = 0
-function startClientService() {
-    if (totalCloseCount > 5) {
-        log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
-        if (!!win) {
-            win.webContents.on('did-finish-load', () => {
-                win.webContents.send('service-error')    
-            })
-            win.webContents.send('service-error')
-        }
-        return
-    }
 
-    // Start auxiliary service that'll handle waiting for games to run and
-    // collecting the relevant information and sending it to the database.
+function getClientExePath() {
     // Search for the proper executable file.
     //  1) The file specified by the environment variable: SQUADOV_SERVICE_EXE
     //  2) Relative to the current working directory: resources/service/squadov_client_service.exe
@@ -514,9 +503,27 @@ function startClientService() {
             })
 
             quit()
-            return
+            return ''
         }
     }
+    return exePath
+}
+
+function startClientService() {
+    if (totalCloseCount > 5) {
+        log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
+        if (!!win) {
+            win.webContents.on('did-finish-load', () => {
+                win.webContents.send('service-error')    
+            })
+            win.webContents.send('service-error')
+        }
+        return
+    }
+
+    // Start auxiliary service that'll handle waiting for games to run and
+    // collecting the relevant information and sending it to the database.
+    let exePath = getClientExePath()
 
     log.log("SPAWN PROCESS: " + exePath)
     let child = spawn(exePath, {
@@ -823,7 +830,7 @@ app.on('ready', async () => {
 
     // Do setup flow - will get the user setup with the config file and a host of other things to ensure their settings
     // are good to go for using SquadOV.
-    let setupWindow = new BrowserWindow({
+    setupWindow = new BrowserWindow({
         width: 300,
         height: 300,
         webPreferences: {
@@ -1074,4 +1081,22 @@ ipcMain.on('reload-record-preview', (event) => {
 
 ipcMain.on('enable-record-preview-overlays', (event, enabled) => {
     zeromqServer.enablePreviewGameRecordingStream(enabled)
+})
+
+ipcMain.on('audio-devices-sanity-check', () => {
+    let exePath = getClientExePath()
+
+    // Run a custom mode in the client service executable to do the audio device sanity check.
+    // Note that this will cause the client service to modify the settings JSON file.
+    let sanityExe = path.join(path.dirname(exePath), 'audio_sanity_checker.exe')
+
+    if (fs.existsSync(sanityExe)) {
+        exec(sanityExe, () => {
+            if (!!setupWindow) {
+                setupWindow.webContents.send('finish-audio-devices-sanity-check')
+            }
+        })
+    } else {
+        log.warn('Failed to find audio sanity checker exe: ', sanityExe)
+    }
 })
