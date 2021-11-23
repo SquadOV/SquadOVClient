@@ -22,7 +22,6 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
     LPWSTR deviceId = nullptr;
     IMMDevice* defaultDevice = nullptr;
     LPWSTR defaultDeviceId = nullptr;
-    IPropertyStore* props = nullptr;
 
     if (dir == EAudioDeviceDirection::Input) {
         LOG_INFO("Listing WASAPI Input Audio Devices..." << std::endl);
@@ -59,11 +58,6 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
         if (defaultDeviceId) {
             CoTaskMemFree(defaultDeviceId);
             defaultDeviceId = nullptr;
-        }
-
-        if (props) {
-            props->Release();
-            props = nullptr;
         }
     };
 
@@ -136,24 +130,7 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
             THROW_ERROR("Failed to get audio device ID: " << hr);
         }
 
-        hr = device->OpenPropertyStore(STGM_READ, &props);
-        if (hr != S_OK) {
-            safeCleanup();
-            THROW_ERROR("Failed to get audio device props: " << hr);
-        }
-
-        PROPVARIANT value;
-        PropVariantInit(&value);
-
-        hr = props->GetValue(PKEY_Device_FriendlyName, &value);
-        if (hr != S_OK) {
-            safeCleanup();
-            THROW_ERROR("Failed to get audio device friendly name: " << hr);
-        }
-
-        std::wstring wDeviceName(value.pwszVal);
-        std::string sDeviceName = shared::strings::wcsToUtf8(wDeviceName);
-
+        std::string sDeviceName = getDeviceName(device);
         const auto ourDevice = service::recorder::audio::SingleAudioDevice(sDeviceName, shared::strings::wcsToUtf8(deviceId));
         resp.options.push_back(ourDevice);
 
@@ -174,6 +151,27 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
 
     safeCleanup();
     return resp;
+}
+
+std::string WASAPIInterface::getDeviceName(IMMDevice* device) {
+    CComPtr<IPropertyStore> props = nullptr;
+    HRESULT hr = device->OpenPropertyStore(STGM_READ, &props);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to get audio device props: " << hr);
+        return "";
+    }
+
+    PROPVARIANT value;
+    PropVariantInit(&value);
+
+    hr = props->GetValue(PKEY_Device_FriendlyName, &value);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to get audio device friendly name: " << hr);
+        return "";
+    }
+
+    std::wstring wDeviceName(value.pwszVal);
+    return shared::strings::wcsToUtf8(wDeviceName);
 }
 
 CComPtr<IMMDevice> WASAPIInterface::getDeviceFromName(service::recorder::audio::EAudioDeviceDirection dir, const std::string& name) {
@@ -216,6 +214,30 @@ CComPtr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
         return nullptr;
     }
 
+    return device;
+}
+
+CComPtr<IMMDevice> WASAPIInterface::getDefaultDevice(service::recorder::audio::EAudioDeviceDirection dir) {
+    CComPtr<IMMDeviceEnumerator> audioEnum;
+    HRESULT hr = CoCreateInstance(
+        __uuidof(MMDeviceEnumerator),
+        NULL,
+        CLSCTX_INPROC_SERVER,
+        __uuidof(IMMDeviceEnumerator),
+        (LPVOID*)&audioEnum
+    );
+
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to create IMMDeviceEnumerator: " << hr);
+        return nullptr;
+    }
+
+    CComPtr<IMMDevice> device;
+    hr = audioEnum->GetDefaultAudioEndpoint((dir == service::recorder::audio::EAudioDeviceDirection::Output) ? eRender : eCapture, eConsole, &device);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get default device: " << hr);
+        return nullptr;
+    }
     return device;
 }
 

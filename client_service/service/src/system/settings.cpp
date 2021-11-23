@@ -13,6 +13,16 @@ Settings* getCurrentSettings() {
     return global.get();
 }
 
+AudioDeviceSettings AudioDeviceSettings::createDefault() const {
+    AudioDeviceSettings settings;
+    settings.id = "";
+    settings.device = "System Default Device";
+    settings.mono = mono;
+    settings.voice = voice;
+    settings.volume = volume;
+    return settings;
+}
+
 AudioDeviceSettings AudioDeviceSettings::fromJson(const nlohmann::json& obj) {
     AudioDeviceSettings settings;
     settings.device = obj.value("device", "Default Device");
@@ -48,7 +58,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
-    settings.useWASAPIRecording = obj.value("useWASAPIRecording", true);
+    settings.useWASAPIRecording = obj.value("useWASAPIRecording", false);
     settings.useVfr4 = obj.value("useVfr4", true);
     settings.useWGC2 = obj.value("useWGC2", true);
 

@@ -103,7 +103,7 @@ PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 }
 
 void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet) {
-    LOG_INFO("Load Selected Audio Device: '" << device.device << "' @ " << device.volume << " [Mono: " << device.mono << "]" << std::endl);
+    LOG_INFO("Load Selected Audio Device: '" << device.device << "(" << device.id << ")" << "' @ " << device.volume << " [Mono: " << device.mono << "]" << std::endl);
 
     // Try to find the selected device. If we can't find it then use the default device.
     PaDeviceIndex selectedDevice = paNoDevice;
@@ -151,6 +151,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const ser
     const std::string diName(di->name);
 
     // In the case we want to capture an output device we need to find the equivalent loopback device.
+    std::string selectedName = diName;
     if (dir == EAudioDeviceDirection::Output) {
         const std::string loopbackSuffix = "(loopback)";
         for (auto i = 0; i < Pa_GetDeviceCount(); ++i) {
@@ -160,6 +161,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const ser
                 ldiName.substr(ldiName.size() - loopbackSuffix.size()) == loopbackSuffix) {
 
                 selectedDevice = i;
+                selectedName = ldiName;
                 di = ldi;
                 break;
             }
@@ -167,7 +169,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const ser
     }
 
     // If we've already added this device then it'd be silly to try to record it again.
-    if (deviceSet.find(selectedDevice) != deviceSet.end()) {
+    if (deviceSet.find(selectedName) != deviceSet.end()) {
         LOG_WARNING("...Duplicate device detected. Ignoring." << std::endl);
         return;
     }
@@ -237,7 +239,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const ser
             _initialVolume = device.volume;
             _mono = device.mono;
 
-            deviceSet.insert(_streamParams.device);
+            deviceSet.insert(selectedName);
         }
     }
 }

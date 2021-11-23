@@ -22,6 +22,7 @@ struct AudioDeviceSettings {
     bool voice = false;
 
     static AudioDeviceSettings fromJson(const nlohmann::json& obj);
+    AudioDeviceSettings createDefault() const;
 };
 
 struct RecordingSettings {
@@ -35,7 +36,7 @@ struct RecordingSettings {
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
-    bool useWASAPIRecording = true;
+    bool useWASAPIRecording = false;
 
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;

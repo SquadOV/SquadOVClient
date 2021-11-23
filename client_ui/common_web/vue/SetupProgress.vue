@@ -38,7 +38,7 @@ export default class SetupProgress extends Vue {
     funnies: any = new Funnies()
 
     refreshStatusMessage() {
-        this.statusMessage = this.funnies.message()
+        this.statusMessage = `${this.funnies.message()} (just kidding)`
     }
 
     async generateSettingsFile() {

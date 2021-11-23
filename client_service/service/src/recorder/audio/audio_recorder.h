@@ -28,7 +28,7 @@ inline std::string audioDeviceDirectionToStr(EAudioDeviceDirection dir) {
     return "";
 }
 
-using AudioDeviceSet = std::unordered_set<int>;
+using AudioDeviceSet = std::unordered_set<std::string>;
 
 class AudioRecorder {
 public:

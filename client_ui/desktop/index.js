@@ -1098,5 +1098,8 @@ ipcMain.on('audio-devices-sanity-check', () => {
         })
     } else {
         log.warn('Failed to find audio sanity checker exe: ', sanityExe)
+        if (!!setupWindow) {
+            setupWindow.webContents.send('finish-audio-devices-sanity-check')
+        }
     }
 })

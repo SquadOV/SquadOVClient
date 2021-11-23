@@ -648,7 +648,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         }
     
         if (parsedData.record.useWASAPIRecording === undefined) {
-            parsedData.record.useWASAPIRecording = true
+            parsedData.record.useWASAPIRecording = false
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
