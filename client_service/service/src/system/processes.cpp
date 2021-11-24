@@ -11,12 +11,6 @@ BOOL enumWindowCallback(HWND hwnd, LPARAM param) {
 
     DWORD refPid;
     GetWindowThreadProcessId(hwnd, &refPid);
-
-    if (refPid == 33676) {
-        int i = 0;
-        i += 1;
-    }
-
     if (IsWindowEnabled(hwnd) && IsWindowVisible(hwnd)) {
         data->insert(refPid);
     }

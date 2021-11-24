@@ -3,7 +3,7 @@
         <v-progress-circular class="mb-4" indeterminate size="64">
         </v-progress-circular>
 
-        <div>
+        <div class="text-center mt-2">
             {{ statusMessage }}
         </div>
 

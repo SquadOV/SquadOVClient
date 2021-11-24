@@ -51,8 +51,23 @@
             </v-card>
         </v-dialog>
 
-        <template v-for="(device, index) in internalValue">
-            <div :key="index">
+        <template v-for="(process, index) in internalValue">
+            <div :key="index" class="d-flex align-center">
+                <div
+                    class="selector flex-grow-1"
+                    @click="editProcess(index)"
+                >
+                    <process-record-display
+                        :record="process"
+                    >
+                    </process-record-display>                    
+                </div>
+
+                <v-btn icon color="error" @click="deleteProcess(index)">
+                    <v-icon>
+                        mdi-delete
+                    </v-icon>
+                </v-btn>
             </div>
         </template>
 
@@ -92,6 +107,21 @@ export default class ProcessSelectorSettings extends Vue {
 
     liveProcesses: ProcessRecord[] = []
     selectedProcess: ProcessRecord | null = null
+    processIdxToReplace: number | null = null
+
+    deleteProcess(idx: number) {
+        if (idx < 0 || idx >= this.internalValue.length) {
+            return
+        }
+        
+        this.internalValue.splice(idx, 1)
+        this.syncToValue()
+    }
+
+    editProcess(idx: number) {
+        this.processIdxToReplace = idx
+        this.startAddNewProcess()
+    }
 
     refreshProcesses() {
 ///#if DESKTOP
@@ -107,6 +137,8 @@ export default class ProcessSelectorSettings extends Vue {
 
     cancelProcessSelector() {
         this.showHideProcessSelector = false
+        this.selectedProcess = null
+        this.processIdxToReplace = null
     }
 
     startAddNewProcess() {
@@ -117,11 +149,16 @@ export default class ProcessSelectorSettings extends Vue {
 
     selectProcess() {
         if (!!this.selectedProcess) {
-            this.internalValue.push({
+            let record: ProcessRecord = {
                 name: this.selectedProcess.name,
                 exe: this.selectedProcess.exe,
                 ico: this.selectedProcess.ico,
-            })
+            }
+            if (this.processIdxToReplace === null) {
+                this.internalValue.push(record)
+            } else if (this.processIdxToReplace >= 0 && this.processIdxToReplace < this.internalValue.length) {
+                Vue.set(this.internalValue, this.processIdxToReplace, record)
+            }
         }
 
         this.syncToValue()
