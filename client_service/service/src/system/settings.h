@@ -10,6 +10,7 @@
 
 #include "shared/games.h"
 #include "renderer/d3d11_overlay_renderer.h"
+#include "process_watcher/process/process.h"
 #include "shared/json.h"
 
 namespace service::system {
@@ -37,6 +38,10 @@ struct RecordingSettings {
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
     bool useWASAPIRecording = false;
+
+    bool usePerProcessRecording = false;
+    bool recordGameAudio = true;
+    std::vector<process_watcher::process::ProcessRecord> processesToRecord;
 
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;

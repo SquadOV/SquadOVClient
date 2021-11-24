@@ -2,6 +2,7 @@
 #include "shared/system/win32/hwnd_utils.h"
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
+#include "shared/strings/strings.h"
 
 #include <Windows.h>
 #include <psapi.h>
@@ -52,6 +53,24 @@ OSString Win32SystemProcessInterface::getProcessName(OSPID pid) const {
 
 OSWindow Win32SystemProcessInterface::findWindowForProcessWithMaxDelay(OSPID pid, const std::chrono::milliseconds& maxDelayMs, const std::chrono::milliseconds& step, bool quiet, bool checkWindowSize) const {
     return shared::system::win32::findWindowForProcessWithMaxDelay(pid, maxDelayMs, step, quiet, checkWindowSize);
+}
+
+OSString Win32SystemProcessInterface::getProcessFriendlyName(const std::filesystem::path& path) const {
+    DWORD unk1 = 0;
+    const auto fileInfoSize = GetFileVersionInfoSizeExW(0, path.native().c_str(), &unk1);
+
+    std::vector<char> buffer(fileInfoSize);
+    if (!GetFileVersionInfoExW(0, path.native().c_str(), 0, fileInfoSize, (void*)buffer.data())) {
+        THROW_ERROR("Failed to get EXE info: " << shared::errors::getWin32ErrorAsString());
+    }
+
+    char* infBuffer = nullptr;
+    unsigned int infSize = 0;
+    if (!VerQueryValueA((void*)buffer.data(), "\\StringFileInfo\\000004B0\\ProductName", (void**)&infBuffer, &infSize)) {
+        THROW_ERROR("Failed to query exe info.");
+    }
+
+    return shared::strings::utf8ToWcs(std::string(infBuffer, infSize));
 }
 
 }

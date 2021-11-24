@@ -154,6 +154,29 @@
                     </v-checkbox>
 
                     <v-checkbox
+                        class="my-0 ml-0 mr-4"
+                        v-if="$store.state.settings.record.useWASAPIRecording"
+                        :input-value="$store.state.settings.record.usePerProcessRecording"
+                        @change="$store.commit('changeUseProcessAudioRecording', {enable: arguments[0], game: $store.state.settings.record.recordGameAudio, processes: $store.state.settings.record.processesToRecord})"
+                        label="Use Per-Process Recording"
+                        hide-details
+                        dense
+                    >
+                        <template v-slot:append>
+                            <v-tooltip bottom max-width="450px">
+                                <template v-slot:activator="{on, attrs}">
+                                    <v-icon v-on="on" v-bind="attrs">
+                                        mdi-help-circle
+                                    </v-icon>
+                                </template>
+
+                                When enabled, SquadOV will attempt to record audio directly from the specified processes.
+                                This will only work on Windows 11 and newer versions of Windows 10.
+                            </v-tooltip>
+                        </template>
+                    </v-checkbox>
+
+                    <v-checkbox
                         class="ma-0"
                         :input-value="$store.state.settings.record.useAudioDriftCompensation"
                         @change="$store.commit('changeAudioDriftCompensation', arguments[0])"
@@ -179,17 +202,54 @@
 
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
-                        <div class="d-flex align-center">
-                            <div>
-                                <span class="text-overline font-weight-bold">Output Devices</span>
+                        <template v-if="!$store.state.settings.record.usePerProcessRecording || !$store.state.settings.record.useWASAPIRecording">
+                            <div class="d-flex align-center">
+                                <div>
+                                    <span class="text-overline font-weight-bold">Output Devices</span>
+                                </div>
                             </div>
-                        </div>
 
-                        <multiple-audio-device-settings
-                            :value="$store.state.settings.record.outputDevices"
-                            @input="changeOutputDevices"
-                        >
-                        </multiple-audio-device-settings>
+                            <multiple-audio-device-settings
+                                :value="$store.state.settings.record.outputDevices"
+                                @input="changeOutputDevices"
+                            >
+                            </multiple-audio-device-settings>
+                        </template>
+
+                        <template v-else>
+                            <div class="d-flex align-center">
+                                <div>
+                                    <span class="text-overline font-weight-bold">Processes to Record</span>
+                                </div>
+                            </div>
+
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="$store.state.settings.record.recordGameAudio"
+                                @change="$store.commit('changeUseProcessAudioRecording', {enable: $store.state.settings.record.usePerProcessRecording, game: arguments[0], processes: $store.state.settings.record.processesToRecord})"
+                                label="Record Game Audio"
+                                hide-details
+                                dense
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        Whether to record audio from the game being recorded.
+                                    </v-tooltip>
+                                </template>
+                            </v-checkbox>
+
+                            <process-selector-settings
+                                :value="$store.state.settings.record.processesToRecord"
+                                @input="$store.commit('changeUseProcessAudioRecording', {enable: $store.state.settings.record.usePerProcessRecording, game: $store.state.settings.record.recordGameAudio, processes: arguments[0]})"
+                            >
+                            </process-selector-settings>
+                        </template>
                     </v-col>
 
                     <v-col cols-sm="12" cols-md="6">
@@ -522,6 +582,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import LocalDiskSpaceUsageDisplay from '@client/vue/utility/squadov/local/LocalDiskSpaceUsageDisplay.vue'
 import MultipleAudioDeviceSettings from '@client/vue/utility/squadov/settings/MultipleAudioDeviceSettings.vue'
+import ProcessSelectorSettings from '@client/vue/utility/squadov/settings/ProcessSelectorSettings.vue'
 
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -535,6 +596,7 @@ import { LocalStoragePageId } from '@client/js/pages'
         LoadingContainer,
         LocalDiskSpaceUsageDisplay,
         MultipleAudioDeviceSettings,
+        ProcessSelectorSettings,
     }
 })
 export default class RecordingSettingsItem extends Vue {

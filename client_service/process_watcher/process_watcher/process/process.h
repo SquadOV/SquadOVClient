@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -12,8 +13,24 @@
 #endif
 
 #include "shared/system/interfaces/system_process_interface.h"
+#include "shared/json.h"
 
 namespace process_watcher::process {
+
+struct ProcessRecord {
+    // name: User friendly name to present to the user.
+    std::string name;
+    // The basename of the exe file that we can identify the exe later.
+    // Also what we use the key to cache the icon.
+    std::string exe;
+
+    static ProcessRecord fromJson(const nlohmann::json& obj);
+};
+
+struct LiveProcessRecord: public ProcessRecord {
+    OSPID pid;
+    std::string fullPath;
+};
 
 class Process {
 public:
@@ -52,6 +69,7 @@ public:
 #endif
 
     std::optional<Process> getProcesssRunningByPid(OSPID pid, bool needWindow) const;
+    std::vector<LiveProcessRecord> getList() const;
 
 private:
     // Certain processes we don't want to actually return as "running" until certain conditions are met (i.e. it has an active window).
@@ -66,6 +84,23 @@ private:
 
     std::unordered_map<OSPID, ProcessPtr> _pidToProcess;
     shared::system::SystemProcessInterfacePtr _itf;
+};
+
+}
+
+namespace shared::json {
+
+template<>
+struct JsonConverter<process_watcher::process::LiveProcessRecord> {
+    static nlohmann::json to(const process_watcher::process::LiveProcessRecord& v) {
+        nlohmann::json ret = {
+            { "name" , v.name },
+            { "exe" , v.exe },
+            { "pid" , v.pid },
+            { "fullPath" , v.fullPath }
+        };
+        return ret;
+    }
 };
 
 }

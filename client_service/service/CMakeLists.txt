@@ -247,6 +247,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/client_service/service
         ${CMAKE_SOURCE_DIR}/client_service/service/src
         ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/client_service/process_watcher
         ${CMAKE_SOURCE_DIR}/deps/date/include
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
         ${CMAKE_SOURCE_DIR}/deps/libpng
@@ -254,6 +255,7 @@ if(WIN32)
 
     target_link_libraries(libwgc
         squadov_shared
+        squadov_process_watcher
         date-tz
         png
         dbghelp

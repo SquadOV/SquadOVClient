@@ -9,6 +9,7 @@ public:
     std::vector<OSPID> enumProcesses() const override;
     OSString getProcessName(OSPID pid) const override;
     OSWindow findWindowForProcessWithMaxDelay(OSPID pid, const std::chrono::milliseconds& maxDelayMs = std::chrono::milliseconds(0), const std::chrono::milliseconds& step = std::chrono::milliseconds(1000), bool quiet = false, bool checkWindowSize = true) const override;
+    OSString getProcessFriendlyName(const std::filesystem::path& path) const override;
 };
 
 }

@@ -1103,3 +1103,12 @@ ipcMain.on('audio-devices-sanity-check', () => {
         }
     }
 })
+
+ipcMain.on('request-process-list', () => {
+    zeromqServer.requestProcessList()
+})
+
+zeromqServer.on('respond-process-list', (r) => {
+    console.log(r)
+    win.webContents.send('respond-process-list', JSON.parse(r))
+})

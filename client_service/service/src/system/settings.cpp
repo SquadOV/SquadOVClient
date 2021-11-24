@@ -59,6 +59,14 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
     settings.useWASAPIRecording = obj.value("useWASAPIRecording", false);
+    settings.usePerProcessRecording = obj.value("usePerProcessRecording", false);
+    settings.recordGameAudio = obj.value("recordGameAudio", true);
+    if (obj.find("processesToRecord") != obj.end() && obj.count("processesToRecord") > 0) {
+        for (const auto& o : obj["processesToRecord"]) {
+            settings.processesToRecord.push_back(process_watcher::process::ProcessRecord::fromJson(o));
+        }
+    }
+
     settings.useVfr4 = obj.value("useVfr4", true);
     settings.useWGC2 = obj.value("useWGC2", true);
 

@@ -3,6 +3,8 @@
 #include "shared/errors/error.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "shared/system/interfaces/system_process_interface.h"
+#include "shared/strings/strings.h"
+#include "shared/filesystem/utility.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -30,6 +32,14 @@ process_watcher::process::ProcessPtr createProcess(const shared::system::SystemP
 }
 
 namespace process_watcher::process {
+
+    
+ProcessRecord ProcessRecord::fromJson(const nlohmann::json& obj) {
+    ProcessRecord record;
+    record.name = obj.value("name", "");
+    record.exe = obj.value("exe", "");
+    return record;
+}
 
 void Process::updateName() {
     if (!empty()) {
@@ -117,6 +127,23 @@ std::optional<Process> ProcessRunningState::getProcesssRunningByPid(OSPID pid, b
     } else {
         return checkIfProcessCanBeUsed(it->second.get(), needWindow);
     }
+}
+
+std::vector<LiveProcessRecord> ProcessRunningState::getList() const {
+    std::vector<LiveProcessRecord> ret;
+    for (const auto& p: _pidToProcess) {
+        LiveProcessRecord rec;
+        rec.pid = p.second->pid();
+        rec.fullPath = shared::filesystem::pathUtf8(p.second->path());
+        rec.exe = shared::strings::wcsToUtf8(p.second->name());
+        try {
+            rec.name = shared::strings::wcsToUtf8(_itf->getProcessFriendlyName(p.second->path()));
+        } catch (...) {
+            rec.name = rec.exe;
+        }
+        ret.push_back(rec);
+    }
+    return ret;
 }
 
 }
