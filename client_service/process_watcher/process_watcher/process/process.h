@@ -23,13 +23,13 @@ struct ProcessRecord {
     // The basename of the exe file that we can identify the exe later.
     // Also what we use the key to cache the icon.
     std::string exe;
+    // base64 icon
+    std::string ico;
+    // C++ internals - never serialized.
+    std::string fullPath;
+    OSPID pid;
 
     static ProcessRecord fromJson(const nlohmann::json& obj);
-};
-
-struct LiveProcessRecord: public ProcessRecord {
-    OSPID pid;
-    std::string fullPath;
 };
 
 class Process {
@@ -69,7 +69,7 @@ public:
 #endif
 
     std::optional<Process> getProcesssRunningByPid(OSPID pid, bool needWindow) const;
-    std::vector<LiveProcessRecord> getList() const;
+    std::vector<ProcessRecord> getList() const;
 
 private:
     // Certain processes we don't want to actually return as "running" until certain conditions are met (i.e. it has an active window).
@@ -91,13 +91,12 @@ private:
 namespace shared::json {
 
 template<>
-struct JsonConverter<process_watcher::process::LiveProcessRecord> {
-    static nlohmann::json to(const process_watcher::process::LiveProcessRecord& v) {
+struct JsonConverter<process_watcher::process::ProcessRecord> {
+    static nlohmann::json to(const process_watcher::process::ProcessRecord& v) {
         nlohmann::json ret = {
             { "name" , v.name },
             { "exe" , v.exe },
-            { "pid" , v.pid },
-            { "fullPath" , v.fullPath }
+            { "ico" , v.ico }
         };
         return ret;
     }

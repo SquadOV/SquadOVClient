@@ -12,18 +12,20 @@
                 <v-divider></v-divider>
                 
                 <v-virtual-scroll
+                    class="ma-4"
                     :items="liveProcesses"
                     height="400"
-                    item-height="64"
+                    item-height="32"
                 >
                     <template v-slot:default="{item}">
                         <div
+                            :class="`selector ${(!!selectedProcess && selectedProcess.exe === item.exe) ? 'active-selector' : ''}`"
                             @click="selectedProcess = item"
                         >
-                            <live-process-record-display
+                            <process-record-display
                                 :record="item"
                             >
-                            </live-process-record-display>
+                            </process-record-display>
                         </div>
                     </template>
                 </v-virtual-scroll>
@@ -67,9 +69,8 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
-import { Prop } from 'vue-property-decorator'
-import { ProcessRecord, LiveProcessRecord } from '@client/js/system/settings'
-import LiveProcessRecordDisplay from '@client/vue/utility/system/LiveProcessRecordDisplay.vue'
+import { Prop, Watch } from 'vue-property-decorator'
+import { ProcessRecord } from '@client/js/system/settings'
 import ProcessRecordDisplay from '@client/vue/utility/system/ProcessRecordDisplay.vue'
 
 ///#if DESKTOP
@@ -79,7 +80,6 @@ import { ipcRenderer } from 'electron'
 @Component({
     components: {
         ProcessRecordDisplay,
-        LiveProcessRecordDisplay,
     }
 })
 export default class ProcessSelectorSettings extends Vue {
@@ -90,8 +90,8 @@ export default class ProcessSelectorSettings extends Vue {
 
     showHideProcessSelector: boolean = false
 
-    liveProcesses: LiveProcessRecord[] = []
-    selectedProcess: LiveProcessRecord | null = null
+    liveProcesses: ProcessRecord[] = []
+    selectedProcess: ProcessRecord | null = null
 
     refreshProcesses() {
 ///#if DESKTOP
@@ -116,15 +116,45 @@ export default class ProcessSelectorSettings extends Vue {
     }
 
     selectProcess() {
+        if (!!this.selectedProcess) {
+            this.internalValue.push({
+                name: this.selectedProcess.name,
+                exe: this.selectedProcess.exe,
+                ico: this.selectedProcess.ico,
+            })
+        }
+
+        this.syncToValue()
         this.cancelProcessSelector()
+    }
+
+    @Watch('value')
+    syncFromValue() {
+        this.internalValue = JSON.parse(JSON.stringify(this.value))
+    }
+
+    syncToValue() {
+        this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
     }
 
     mounted() {
 ///#if DESKTOP
-        ipcRenderer.on('respond-process-list', (e: any, resp: LiveProcessRecord[]) => {
-            this.liveProcesses = resp
+        ipcRenderer.on('respond-process-list', (e: any, resp: ProcessRecord[]) => {
+            this.liveProcesses = resp.sort((a: ProcessRecord, b: ProcessRecord) => {
+                let aLower = a.name.toLowerCase()
+                let bLower = b.name.toLowerCase()
+                if (aLower < bLower) {
+                    return -1
+                } else if (aLower > bLower) {
+                    return 1
+                } else {
+                    return 0
+                }
+            })
         })
 ///#endif
+
+        this.syncFromValue()
     }
 }
 
@@ -134,6 +164,18 @@ export default class ProcessSelectorSettings extends Vue {
 
 .process-select-div {
     min-width: 0px;
+}
+
+.selector {
+    cursor: pointer;
+}
+
+.selector:hover {
+    background-color: #919191;
+}
+
+.active-selector {
+    background-color: #919191;
 }
 
 </style>

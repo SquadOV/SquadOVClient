@@ -60,11 +60,7 @@ export function createDefaultAudioDevice(): AudioDeviceSettings {
 export interface ProcessRecord {
     name: string
     exe: string
-}
-
-export interface LiveProcessRecord extends ProcessRecord {
-    pid: number
-    fullPath: string
+    ico: string
 }
 
 export interface SquadOvRecordingSettings {

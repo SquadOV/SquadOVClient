@@ -34,6 +34,7 @@
 #include "shared/http/dns_manager.h"
 #include "shared/system/keys.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "system/processes.h"
 
 #include <algorithm>
 #include <boost/program_options.hpp>
@@ -750,16 +751,7 @@ int main(int argc, char** argv) {
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_PROCESS_LIST, [&zeroMqServerClient](const std::string& msg){
         LOG_INFO("REQUEST PROCESS LIST:" << msg << std::endl);
-        process_watcher::process::ProcessRunningState processState(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
-        processState.update();
-
-        auto list = processState.getList();
-        list.erase(std::remove_if(list.begin(), list.end(), [](const auto& x){
-            // We need to filter these processes and check if they have some valid window.
-            // This way we only present user-facing apps to the user rather than all the System32 apps that the user will never need to know are running.
-            return false;
-        }), list.end());
-
+        const auto list = service::system::getListOfUserFacingProcesses();
         zeroMqServerClient.sendMessage(
             service::zeromq::ZEROMQ_RESPOND_PROCESS_LIST,
             shared::json::JsonConverter<std::remove_const_t<decltype(list)>>::to(list).dump()

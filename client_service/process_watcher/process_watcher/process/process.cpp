@@ -38,6 +38,7 @@ ProcessRecord ProcessRecord::fromJson(const nlohmann::json& obj) {
     ProcessRecord record;
     record.name = obj.value("name", "");
     record.exe = obj.value("exe", "");
+    record.ico = obj.value("ico", "");
     return record;
 }
 
@@ -129,18 +130,24 @@ std::optional<Process> ProcessRunningState::getProcesssRunningByPid(OSPID pid, b
     }
 }
 
-std::vector<LiveProcessRecord> ProcessRunningState::getList() const {
-    std::vector<LiveProcessRecord> ret;
+std::vector<ProcessRecord> ProcessRunningState::getList() const {
+    std::vector<ProcessRecord> ret;
     for (const auto& p: _pidToProcess) {
-        LiveProcessRecord rec;
+        ProcessRecord rec;
         rec.pid = p.second->pid();
         rec.fullPath = shared::filesystem::pathUtf8(p.second->path());
         rec.exe = shared::strings::wcsToUtf8(p.second->name());
         try {
             rec.name = shared::strings::wcsToUtf8(_itf->getProcessFriendlyName(p.second->path()));
         } catch (...) {
+            rec.name = "";
+        }
+        
+        if (rec.name.empty()) {
             rec.name = rec.exe;
         }
+
+        rec.ico = "";
         ret.push_back(rec);
     }
     return ret;

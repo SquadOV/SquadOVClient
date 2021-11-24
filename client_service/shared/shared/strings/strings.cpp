@@ -17,7 +17,6 @@ std::wstring utf8ToWcs(const std::string& str) {
     const std::size_t len = 1 + std::mbsrtowcs(NULL, &cStr, 0, &state);
     std::vector<wchar_t> wstr(len);
     if (wstr.empty()) {
-        THROW_ERROR("Invalid multibyte characters: " << str);
         return L"";
     }
     std::mbsrtowcs(&wstr[0], &cStr, wstr.size(), &state);

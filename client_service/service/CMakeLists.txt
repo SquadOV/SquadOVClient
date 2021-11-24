@@ -35,6 +35,7 @@ SET(SRCS
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
+    src/system/processes.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
@@ -100,6 +101,7 @@ SET(HEADERS
     src/system/settings.h
     src/system/state.h
     src/system/ipc.h
+    src/system/processes.h
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
