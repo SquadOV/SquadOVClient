@@ -22,6 +22,9 @@ SET(SRCS
     src/recorder/image/image.cpp
     src/recorder/image/d3d_image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
+    src/recorder/audio/wasapi_program_recorder.cpp
+    src/recorder/audio/wasapi_audio_recorder.cpp
+    src/recorder/audio/wasapi_audio_client_recorder.cpp
     src/recorder/audio/device.cpp
     src/recorder/audio/win32/wasapi_interface.cpp
     src/recorder/pipe/pipe.cpp
@@ -31,7 +34,6 @@ SET(SRCS
     src/recorder/pipe/cloud/gcs_storage_client.cpp
     src/recorder/pipe/cloud/s3_storage_client.cpp
     src/recorder/default_flags.cpp
-    src/recorder/audio/wasapi_audio_recorder.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
@@ -86,8 +88,11 @@ SET(HEADERS
     src/recorder/audio/audio_packet_properties.h
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
+    src/recorder/audio/wasapi_program_recorder.h
+    src/recorder/audio/wasapi_audio_recorder.h
     src/recorder/audio/device.h
     src/recorder/audio/win32/wasapi_interface.h
+    src/recorder/audio/wasapi_audio_client_recorder.h
     src/recorder/pipe/pipe.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
@@ -96,7 +101,6 @@ SET(HEADERS
     src/recorder/pipe/cloud/s3_storage_client.h
     src/recorder/pipe/cloud_storage_piper.h
     src/recorder/default_flags.h
-    src/recorder/audio/wasapi_audio_recorder.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
@@ -164,10 +168,12 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         libzmq
         civetweb-cpp
         ZLIB::ZLIB
+        WIL::WIL
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid
         sentry
+        mmdevapi
         ${Boost_LIBRARIES}
         ${OPENSSL_LIBRARIES}
         ${FFMPEG_LIBRARIES}

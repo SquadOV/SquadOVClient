@@ -14,14 +14,18 @@
 #include "recorder/encoder/ffmpeg_av_encoder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/wasapi_audio_recorder.h"
+#include "recorder/audio/wasapi_program_recorder.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
 #include "system/win32/message_loop.h"
 #include "shared/math.h"
 #include "shared/filesystem/local_record.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "shared/strings/strings.h"
 #include "vod/process.h"
 #include "recorder/default_flags.h"
+#include "process_watcher/process/process.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -30,6 +34,7 @@
 #include <iostream>
 #include <sstream>
 #include <portaudio.h>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 using namespace std::chrono_literals;
@@ -446,18 +451,47 @@ bool GameRecorder::initializeInputStreams(int flags) {
     }
 
     service::recorder::audio::AudioDeviceSet deviceSet;
+    
+    if (_cachedRecordingSettings->useWASAPIRecording && _cachedRecordingSettings->usePerProcessRecording) {
+        std::unordered_set<OSPID> finalExesToRecord;
 
-    for (const auto& output : _cachedRecordingSettings->outputDevices) {
-        std::unique_ptr<audio::AudioRecorder> recorder;
-        if (_cachedRecordingSettings->useWASAPIRecording) {
-            recorder = std::make_unique<audio::WasapiAudioRecorder>();
-        } else {
-            recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+        if (_cachedRecordingSettings->recordGameAudio) {
+            finalExesToRecord.insert(_process.pid());
         }
-        recorder->loadDevice(audio::EAudioDeviceDirection::Output, output, deviceSet);
-        if (recorder->exists()) {
-            recorder->startRecording();
-            _aoutRecorder.emplace_back(std::move(recorder));
+
+        auto itf = std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>();
+        process_watcher::process::ProcessRunningState processState(itf);
+        processState.update();
+
+        for (const auto& p: _cachedRecordingSettings->processesToRecord) {
+            // Need to find the EXE with a valid window - there could be multiple processes that satisfy this condition.
+            // That's fine! We'll just record all of them to be safe. Yolo.
+            const auto processes = processState.getProcesssRunningByName(shared::strings::utf8ToWcs(p.exe), true);
+            for (const auto& pp: processes) {
+                finalExesToRecord.insert(pp.pid());
+            }
+        }
+
+        for (const auto& exe: finalExesToRecord) {
+            auto recorder = std::make_unique<audio::WasapiProgramRecorder>(exe);
+            if (recorder->exists()) {
+                recorder->startRecording();
+                _aoutRecorder.emplace_back(std::move(recorder));
+            }
+        }
+    } else {
+        for (const auto& output : _cachedRecordingSettings->outputDevices) {
+            std::unique_ptr<audio::AudioRecorder> recorder;
+            if (_cachedRecordingSettings->useWASAPIRecording) {
+                recorder = std::make_unique<audio::WasapiAudioRecorder>();
+            } else {
+                recorder = std::make_unique<audio::PortaudioAudioRecorder>();
+            }
+            recorder->loadDevice(audio::EAudioDeviceDirection::Output, output, deviceSet);
+            if (recorder->exists()) {
+                recorder->startRecording();
+                _aoutRecorder.emplace_back(std::move(recorder));
+            }
         }
     }
 

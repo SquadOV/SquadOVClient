@@ -65,7 +65,7 @@ public:
     bool update();
 
 #ifdef _WIN32
-    std::optional<Process> getProcesssRunningByName(const std::wstring& name, bool needWindow) const;
+    std::vector<Process> getProcesssRunningByName(const std::wstring& name, bool needWindow) const;
 #endif
 
     std::optional<Process> getProcesssRunningByPid(OSPID pid, bool needWindow) const;
@@ -79,7 +79,8 @@ private:
     void clearProcesses();
 
 #ifdef _WIN32
-    std::unordered_map<std::wstring, Process*> _nameToProcess;
+    // Name is not unique
+    std::unordered_map<std::wstring, std::vector<Process*>> _nameToProcess;
 #endif
 
     std::unordered_map<OSPID, ProcessPtr> _pidToProcess;

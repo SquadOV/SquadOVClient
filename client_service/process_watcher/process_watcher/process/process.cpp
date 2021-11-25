@@ -81,7 +81,7 @@ void ProcessRunningState::addProcess(OSPID pid) {
     }
 
     if (!p->empty()) {
-        _nameToProcess[p->name()] = p.get();
+        _nameToProcess[p->name()].push_back(p.get());
     }
 
     _pidToProcess[pid] = p;
@@ -112,13 +112,22 @@ std::optional<Process> ProcessRunningState::checkIfProcessCanBeUsed(const Proces
     return *p;
 }
 
-std::optional<Process> ProcessRunningState::getProcesssRunningByName(const std::wstring& name, bool needWindow) const {
+std::vector<Process> ProcessRunningState::getProcesssRunningByName(const std::wstring& name, bool needWindow) const {
     const auto it = _nameToProcess.find(name);
-    if (it == _nameToProcess.end()) {
-        return std::nullopt;
-    } else {
-        return checkIfProcessCanBeUsed(it->second, needWindow);
+
+    std::vector<Process> ret;
+
+    if (it != _nameToProcess.end()) {
+        for (const auto& p: it->second) {
+            auto pp = checkIfProcessCanBeUsed(p, needWindow);
+            if (!pp) {
+                continue;
+            }
+            ret.push_back(pp.value());
+        }
     }
+
+    return ret;
 }
 
 std::optional<Process> ProcessRunningState::getProcesssRunningByPid(OSPID pid, bool needWindow) const {
