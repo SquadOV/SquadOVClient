@@ -52,22 +52,38 @@
         </v-dialog>
 
         <template v-for="(process, index) in internalValue">
-            <div :key="index" class="d-flex align-center">
-                <div
-                    class="selector flex-grow-1"
-                    @click="editProcess(index)"
-                >
-                    <process-record-display
-                        :record="process"
+            <div :key="index">
+                <div class="d-flex align-center">
+                    <div
+                        class="selector flex-grow-1"
+                        @click="editProcess(index)"
                     >
-                    </process-record-display>                    
+                        <process-record-display
+                            :record="process.process"
+                        >
+                        </process-record-display>                    
+                    </div>
+
+                    <v-btn icon color="error" @click="deleteProcess(index)">
+                        <v-icon>
+                            mdi-delete
+                        </v-icon>
+                    </v-btn>
                 </div>
 
-                <v-btn icon color="error" @click="deleteProcess(index)">
-                    <v-icon>
-                        mdi-delete
-                    </v-icon>
-                </v-btn>
+                <div>
+                    <v-slider
+                        v-model="process.volume"
+                        @input="syncToValue"
+                        inverse-label
+                        :label="volumeToStr(process.volume)"
+                        :min="0.0"
+                        :max="2.0"
+                        :step="0.01"
+                        hide-details
+                    >
+                    </v-slider>
+                </div>
             </div>
         </template>
 
@@ -85,13 +101,14 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { ProcessRecord } from '@client/js/system/settings'
+import { ProcessAudioRecordSettings, ProcessRecord } from '@client/js/system/settings'
 import ProcessRecordDisplay from '@client/vue/utility/system/ProcessRecordDisplay.vue'
 
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
 ///#endif 
 
+// TODO: Is there a way to make this less specific to the audio recording settings?
 @Component({
     components: {
         ProcessRecordDisplay,
@@ -99,15 +116,19 @@ import { ipcRenderer } from 'electron'
 })
 export default class ProcessSelectorSettings extends Vue {
     @Prop({required: true})
-    value!: ProcessRecord[]
+    value!: ProcessAudioRecordSettings[]
 
-    internalValue: ProcessRecord[] = []
+    internalValue: ProcessAudioRecordSettings[] = []
 
     showHideProcessSelector: boolean = false
 
     liveProcesses: ProcessRecord[] = []
     selectedProcess: ProcessRecord | null = null
     processIdxToReplace: number | null = null
+
+    volumeToStr(v: number): string {
+        return `${(v * 100.0).toFixed(0)}%`
+    }
 
     deleteProcess(idx: number) {
         if (idx < 0 || idx >= this.internalValue.length) {
@@ -155,9 +176,12 @@ export default class ProcessSelectorSettings extends Vue {
                 ico: this.selectedProcess.ico,
             }
             if (this.processIdxToReplace === null) {
-                this.internalValue.push(record)
+                this.internalValue.push({
+                    process: record,
+                    volume: 1.0,
+                })
             } else if (this.processIdxToReplace >= 0 && this.processIdxToReplace < this.internalValue.length) {
-                Vue.set(this.internalValue, this.processIdxToReplace, record)
+                this.internalValue[this.processIdxToReplace].process = record
             }
         }
 

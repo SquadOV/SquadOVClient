@@ -244,6 +244,23 @@
                                 </template>
                             </v-checkbox>
 
+                            <div>
+                                <v-slider
+                                    :value="$store.state.settings.record.gameAudioVolume"
+                                    @input="$store.commit('changeGameAudioVolume', arguments[0])"
+                                    inverse-label
+                                    :label="volumeToStr($store.state.settings.record.gameAudioVolume)"
+                                    :min="0.0"
+                                    :max="2.0"
+                                    :step="0.01"
+                                    hide-details
+                                >
+                                    <template v-slot:prepend>
+                                        Game Volume: 
+                                    </template>
+                                </v-slider>
+                            </div>
+
                             <process-selector-settings
                                 :value="$store.state.settings.record.processesToRecord"
                                 @input="$store.commit('changeUseProcessAudioRecording', {enable: $store.state.settings.record.usePerProcessRecording, game: $store.state.settings.record.recordGameAudio, processes: arguments[0]})"
@@ -605,6 +622,10 @@ export default class RecordingSettingsItem extends Vue {
 
     $refs!: {
         loc: LocalDiskSpaceUsageDisplay
+    }
+
+    volumeToStr(v: number): string {
+        return `${(v * 100.0).toFixed(0)}%`
     }
 
     get localManageTo(): any {

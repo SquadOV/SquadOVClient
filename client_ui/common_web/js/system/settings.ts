@@ -63,6 +63,11 @@ export interface ProcessRecord {
     ico: string
 }
 
+export interface ProcessAudioRecordSettings {
+    process: ProcessRecord
+    volume: number
+}
+
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
@@ -76,7 +81,8 @@ export interface SquadOvRecordingSettings {
     useWASAPIRecording: boolean
     usePerProcessRecording: boolean
     recordGameAudio: boolean
-    processesToRecord: ProcessRecord[]
+    gameAudioVolume: number
+    processesToRecord: ProcessAudioRecordSettings[]
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
@@ -326,6 +332,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
                 recordGameAudio: false,
+                gameAudioVolume: 1.0,
                 processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -367,6 +374,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
                 recordGameAudio: false,
+                gameAudioVolume: 1.0,
                 processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -408,6 +416,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
                 recordGameAudio: false,
+                gameAudioVolume: 1.0,
                 processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
@@ -470,6 +479,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useWASAPIRecording: true,
             usePerProcessRecording: false,
             recordGameAudio: false,
+            gameAudioVolume: 1.0,
             processesToRecord: [],
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
@@ -682,6 +692,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         
         if (parsedData.record.processesToRecord === undefined) {
             parsedData.record.processesToRecord = []
+        }
+
+        if (parsedData.record.gameAudioVolume === undefined) {
+            parsedData.record.gameAudioVolume = 1.0
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

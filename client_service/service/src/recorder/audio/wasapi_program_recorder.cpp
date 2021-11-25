@@ -41,7 +41,7 @@ private:
 
 class WasapiProgramRecorderImpl {
 public:
-    explicit WasapiProgramRecorderImpl(OSPID pid);
+    WasapiProgramRecorderImpl(OSPID pid, double volume);
     ~WasapiProgramRecorderImpl();
 
     void startRecording();
@@ -63,8 +63,9 @@ private:
     WasapiAudioClientRecorderPtr _internal;
 };
 
-WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid):
-    _pid(pid)
+WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid, double volume):
+    _pid(pid),
+    _initialVolume(volume)
 {
     // Find the process again - mainly just so we some additional information about what process we're trying to record for debugging.
     auto itf = std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>();
@@ -123,6 +124,7 @@ WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid):
         false,
         true
     );
+    _internal->setVolume(_initialVolume);
 }
 
 WasapiProgramRecorderImpl::~WasapiProgramRecorderImpl() {
@@ -178,8 +180,8 @@ void WasapiProgramRecorderImpl::stop() {
     _internal->stop();
 }
 
-WasapiProgramRecorder::WasapiProgramRecorder(OSPID pid):
-    _impl(new WasapiProgramRecorderImpl(pid))
+WasapiProgramRecorder::WasapiProgramRecorder(OSPID pid, double volume):
+    _impl(new WasapiProgramRecorderImpl(pid, volume))
 {
 }
 

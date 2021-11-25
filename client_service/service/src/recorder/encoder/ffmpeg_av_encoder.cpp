@@ -240,6 +240,11 @@ size_t FfmpegAvEncoderImpl::AudioStreamData::addAudioFrame(const service::record
 
         if (!view.props().isPlanar) {
             memcpy(sourceFrame->data[0], view.offsetBuffer(offset), numSamplesToUse * view.props().numChannels * sizeof(float));
+
+            float* volumeAdjustment = reinterpret_cast<float*>(sourceFrame->data[0]);
+            for (auto i = 0; i < numSamplesToUse * view.props().numChannels; ++i) {
+                volumeAdjustment[i] *= view.volume();
+            }
         } else {
             THROW_ERROR("Planar audio input is not supported.");
         }

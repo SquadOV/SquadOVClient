@@ -27,6 +27,7 @@
 #include "recorder/default_flags.h"
 #include "process_watcher/process/process.h"
 
+#include <boost/functional/hash.hpp>
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
@@ -453,10 +454,11 @@ bool GameRecorder::initializeInputStreams(int flags) {
     service::recorder::audio::AudioDeviceSet deviceSet;
     
     if (_cachedRecordingSettings->useWASAPIRecording && _cachedRecordingSettings->usePerProcessRecording) {
-        std::unordered_set<OSPID> finalExesToRecord;
+        using RecordPair = std::pair<OSPID, double>;
+        std::unordered_set<RecordPair, boost::hash<RecordPair>> finalExesToRecord;
 
         if (_cachedRecordingSettings->recordGameAudio) {
-            finalExesToRecord.insert(_process.pid());
+            finalExesToRecord.insert(std::make_pair(_process.pid(), _cachedRecordingSettings->gameAudioVolume));
         }
 
         auto itf = std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>();
@@ -466,14 +468,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
         for (const auto& p: _cachedRecordingSettings->processesToRecord) {
             // Need to find the EXE with a valid window - there could be multiple processes that satisfy this condition.
             // That's fine! We'll just record all of them to be safe. Yolo.
-            const auto processes = processState.getProcesssRunningByName(shared::strings::utf8ToWcs(p.exe), true);
+            const auto processes = processState.getProcesssRunningByName(shared::strings::utf8ToWcs(p.process.exe), true);
             for (const auto& pp: processes) {
-                finalExesToRecord.insert(pp.pid());
+                finalExesToRecord.insert(std::make_pair(pp.pid(), p.volume));
             }
         }
 
         for (const auto& exe: finalExesToRecord) {
-            auto recorder = std::make_unique<audio::WasapiProgramRecorder>(exe);
+            auto recorder = std::make_unique<audio::WasapiProgramRecorder>(exe.first, exe.second);
             if (recorder->exists()) {
                 recorder->startRecording();
                 _aoutRecorder.emplace_back(std::move(recorder));

@@ -35,6 +35,13 @@ AudioDeviceSettings AudioDeviceSettings::fromJson(const nlohmann::json& obj) {
     return settings;
 }
 
+ProcessAudioRecordSettings ProcessAudioRecordSettings::fromJson(const nlohmann::json& obj) {
+    ProcessAudioRecordSettings settings;
+    settings.process = process_watcher::process::ProcessRecord::fromJson(obj["process"]);
+    settings.volume = obj.value("volume", 1.0);
+    return settings;
+}
+
 RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     RecordingSettings settings;
     settings.resY = obj["resY"].get<int32_t>();
@@ -61,9 +68,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.useWASAPIRecording = obj.value("useWASAPIRecording", false);
     settings.usePerProcessRecording = obj.value("usePerProcessRecording", false);
     settings.recordGameAudio = obj.value("recordGameAudio", true);
+    settings.gameAudioVolume = obj.value("gameAudioVolume", 1.0);
     if (obj.find("processesToRecord") != obj.end() && obj.count("processesToRecord") > 0) {
         for (const auto& o : obj["processesToRecord"]) {
-            settings.processesToRecord.push_back(process_watcher::process::ProcessRecord::fromJson(o));
+            settings.processesToRecord.push_back(ProcessAudioRecordSettings::fromJson(o));
         }
     }
 

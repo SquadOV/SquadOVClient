@@ -26,6 +26,13 @@ struct AudioDeviceSettings {
     AudioDeviceSettings createDefault() const;
 };
 
+struct ProcessAudioRecordSettings {
+    process_watcher::process::ProcessRecord process;
+    double volume = 1.0;
+
+    static ProcessAudioRecordSettings fromJson(const nlohmann::json& obj);
+};
+
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
@@ -41,7 +48,8 @@ struct RecordingSettings {
 
     bool usePerProcessRecording = false;
     bool recordGameAudio = true;
-    std::vector<process_watcher::process::ProcessRecord> processesToRecord;
+    double gameAudioVolume = 1.0;
+    std::vector<ProcessAudioRecordSettings> processesToRecord;
 
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;

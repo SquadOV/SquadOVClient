@@ -11,7 +11,7 @@ class WasapiProgramRecorderImpl;
 // The interface for recording loopback from devices is separate.
 class WasapiProgramRecorder : public AudioRecorder {
 public:
-    explicit WasapiProgramRecorder(OSPID pid);
+    WasapiProgramRecorder(OSPID pid, double volume);
     ~WasapiProgramRecorder();
 
     void startRecording() override;

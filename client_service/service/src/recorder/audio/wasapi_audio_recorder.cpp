@@ -111,6 +111,8 @@ void WasapiAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const servic
     );
 
     if (_internal->exists()) {
+        _initialVolume = device.volume;
+        _internal->setVolume(_initialVolume); 
         deviceSet.insert(selectedDeviceId);
     } else if (!isDefault) {
         loadDevice(dir, device.createDefault(), deviceSet);

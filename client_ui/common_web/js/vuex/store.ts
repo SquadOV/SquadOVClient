@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
-import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings, ProcessRecord} from '@client/js/system/settings'
+import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings, ProcessRecord, ProcessAudioRecordSettings} from '@client/js/system/settings'
 import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
@@ -162,7 +162,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        changeUseProcessAudioRecording(state: RootState, params: {enable: boolean, game: boolean, processes: ProcessRecord[]}) {
+        changeUseProcessAudioRecording(state: RootState, params: {enable: boolean, game: boolean, processes: ProcessAudioRecordSettings[]}) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
@@ -170,6 +170,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.record.usePerProcessRecording = params.enable
             state.settings.record.recordGameAudio = params.game
             state.settings.record.processesToRecord = params.processes
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeGameAudioVolume(state: RootState, v: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.gameAudioVolume = v
             saveLocalSettings(state.settings)
 /// #endif
         },
