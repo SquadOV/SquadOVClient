@@ -21,6 +21,11 @@
                         Are you sure you wish to unlink your Twitch account ({{ twitchToDelete.twitchName }})?
                         You will no longer be a part of or be able to join communities that require a Twitch subscription to the creator. 
                     </template>
+
+                    <template v-if="!!discordToDelete">
+                        Are you sure you wish to unlink your Discord account ({{ discordToDelete.username }}#{{ discordToDelete.discriminator }})?
+                        You will no longer be able to take advantage of all the cool things we do that require a Discord account linked. 
+                    </template>
                 </v-card-text>
 
                 <v-card-actions>
@@ -247,6 +252,18 @@
                 </template>
 
                 <v-list dense>
+                    <v-list-item @click="linkDiscord">
+                        <v-list-item-avatar tile>
+                            <v-img width="32px" max-width="32px" contain :src="$root.generateAssetUri('assets/logos/discord.png')"></v-img>
+                        </v-list-item-avatar>
+
+                        <v-list-item-content>
+                            <v-list-item-title>
+                                Discord
+                            </v-list-item-title>
+                        </v-list-item-content>
+                    </v-list-item>
+
                     <v-list-item @click="linkRiot">
                         <v-list-item-avatar tile>
                             <v-img width="32px" max-width="32px" contain :src="$root.generateAssetUri('assets/logos/riot.png')"></v-img>
@@ -339,6 +356,32 @@
                             </v-btn>
                         </div>
                     </div>
+
+                    <div class="text-overline font-weight-bold mt-4">
+                        Discord Accounts
+                    </div>
+
+                    <div class="d-flex flex-wrap">
+                        <div
+                            class="account-div d-flex align-center"
+                            v-for="(account, idx) in accounts.discord"
+                            :key="`discord-${idx}`"
+                        >
+                            <v-img width="64px" max-width="64px" contain :src="discordAvatar(account)"></v-img>
+
+                            <div class="text-h6 font-weight-bold ml-4">
+                                {{ account.username }}#{{ account.discriminator }}
+                            </div>
+
+                            <v-spacer></v-spacer>
+
+                            <v-btn color="error" icon small class="ml-4" @click="deleteDiscord(account)">
+                                <v-icon>
+                                    mdi-close-circle
+                                </v-icon>
+                            </v-btn>
+                        </div>
+                    </div>
                 </div>
             </template>
         </loading-container>
@@ -375,11 +418,12 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { LinkedAccounts, TwitchAccount } from '@client/js/squadov/accounts'
+import { LinkedAccounts, TwitchAccount, DiscordAccount } from '@client/js/squadov/accounts'
 import { apiClient, ApiData } from '@client/js/api'
 import { RiotAccountData } from '@client/js/valorant/valorant_account'
 import { redirectToRsoLogin } from '@client/js/riot/rso'
 import { redirectToTwitchLogin } from '@client/js/twitch'
+import { redirectToDiscordLogin } from '@client/js/discord'
 import { SquadOVUser, getSquadOVUser } from '@client/js/squadov/user'
 
 @Component({
@@ -411,6 +455,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
 
     riotToDelete: RiotAccountData | null = null
     twitchToDelete: TwitchAccount | null = null
+    discordToDelete: DiscordAccount | null = null
 
     pendingOauthLink: boolean = false
     showHideProgress: boolean = false
@@ -507,6 +552,11 @@ export default class LinkedAccountsSettingsItem extends Vue {
         this.showHideDelete = true
     }
 
+    deleteDiscord(account: DiscordAccount) {
+        this.discordToDelete = account
+        this.showHideDelete = true
+    }
+
     cancelDelete() {
         this.riotToDelete = null
         this.twitchToDelete = null
@@ -519,6 +569,8 @@ export default class LinkedAccountsSettingsItem extends Vue {
             promise = apiClient.deleteRiotAccount(this.$store.state.currentUser.id, this.riotToDelete.puuid)
         } else if (!!this.twitchToDelete) {
             promise = apiClient.deleteMyLinkedTwitchAccount(this.twitchToDelete.twitchUserId)
+        } else if (!!this.discordToDelete) {
+            promise = apiClient.deleteMyLinkedDiscordAccount(this.discordToDelete.id)
         } else {
             this.cancelDelete()
             return
@@ -529,6 +581,7 @@ export default class LinkedAccountsSettingsItem extends Vue {
             if (!!this.accounts) {
                 let idx = !!this.twitchToDelete ? this.accounts.twitch.findIndex((ele: TwitchAccount) => ele.twitchUserId === this.twitchToDelete!.twitchUserId) :
                     !!this.riotToDelete ? this.accounts.riot.findIndex((ele: RiotAccountData) => ele.puuid === this.riotToDelete!.puuid) :
+                    !!this.discordToDelete ? this.accounts.discord.findIndex((ele: DiscordAccount) => ele.id === this.discordToDelete!.id) :
                     -1
 
                 if (idx != -1) {
@@ -536,12 +589,15 @@ export default class LinkedAccountsSettingsItem extends Vue {
                         this.accounts.twitch.splice(idx, 1)
                     } else if (!!this.riotToDelete) {
                         this.accounts.riot.splice(idx, 1)
+                    } else if (!!this.discordToDelete) {
+                        this.accounts.discord.splice(idx, 1)
                     }
                 }
             }
 
             this.twitchToDelete = null
             this.riotToDelete = null
+            this.discordToDelete = null
             this.showHideDelete = false
         }).catch((err: any) => {
             console.error('Failed to unlink account: ', err)
@@ -572,6 +628,18 @@ export default class LinkedAccountsSettingsItem extends Vue {
         this.refreshData()
     }
 
+    linkDiscord() {
+        this.pendingOauthLink = true
+        redirectToDiscordLogin().then((url: string) => {
+            this.$store.commit('setRedirectUrl', url)
+            this.showHideProgress = true
+        }).catch((err: any) => {
+            console.error('Failed to redirect to Discord: ', err)
+        }).finally(() => {
+            this.pendingOauthLink = false
+        })
+    }
+
     linkRiot() {
         this.pendingOauthLink = true
         redirectToRsoLogin(this.$store.state.currentUser.id).then((url: string) => {
@@ -594,6 +662,15 @@ export default class LinkedAccountsSettingsItem extends Vue {
         }).finally(() => {
             this.pendingOauthLink = false
         })
+    }
+
+    discordAvatar(account: DiscordAccount): string {
+        if (!!account.avatar) {
+            return `https://cdn.discordapp.com/avatars/${account.id}/${account.avatar}.png`
+        } else {
+            //@ts-ignore
+            return this.$root.generateAssetUri('assets/logos/discord.png')
+        }
     }
 }
 
