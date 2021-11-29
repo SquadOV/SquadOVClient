@@ -153,10 +153,21 @@
                         </template>
                     </v-checkbox>
 
+                    <v-btn
+                        class="my-0 ml-0 mr-4"
+                        v-if="$store.state.settings.record.useWASAPIRecording && !$store.state.settings.record.perProcessRecordingOsCheck"
+                        color="warning"
+                        dense
+                        @click="showHideOsVerification = true"
+                    >
+                        Enable Per-Process Recording Support
+                    </v-btn>
+
                     <v-checkbox
                         class="my-0 ml-0 mr-4"
                         v-if="$store.state.settings.record.useWASAPIRecording"
                         :input-value="$store.state.settings.record.usePerProcessRecording"
+                        :disabled="!$store.state.settings.record.perProcessRecordingOsCheck"
                         @change="$store.commit('changeUseProcessAudioRecording', {enable: arguments[0], game: $store.state.settings.record.recordGameAudio, processes: $store.state.settings.record.processesToRecord})"
                         label="Use Per-Process Recording"
                         hide-details
@@ -198,7 +209,7 @@
                         </template>
                     </v-checkbox>
                 </div>
-                <v-divider v-if="!mini"></v-divider>
+                <v-divider class="mt-2" v-if="!mini"></v-divider>
 
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
@@ -586,6 +597,42 @@
                 >
                     Something went wrong changin a local recording setting, please try again!
                 </v-snackbar>
+
+                <v-dialog
+                    v-model="showHideOsVerification"
+                    persistent
+                    max-width="40%"
+                >
+                    <v-card>
+                        <v-card-title>
+                            Are you sure your operating system supports this feature?
+                        </v-card-title>
+                        <v-divider></v-divider>
+
+                        <div class="ma-4">
+                            Per-process recording is only available on <span class="font-weight-bold">Windows 11</span> and on certain versions (<span class="font-weight-bold">21H1, 21H2</span>) of Windows 10.
+                            DO NOT ENABLE THIS FEATURE UNLESS YOU ARE SURE THAT YOUR COMPUTER IS FEATURE EQUIVALENT WITH THESE OPERATING SYSTEMS.
+                        </div>
+
+                        <v-card-actions>
+                            <v-btn
+                            color="error"
+                            @click="showHideOsVerification = false"
+                        >
+                            Nevermind!
+                        </v-btn>
+
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            color="success"
+                            @click="confirmOsVerification"
+                        >
+                            Confirm
+                        </v-btn>
+                        </v-card-actions>
+                    </v-card>
+                </v-dialog>
             </v-container>
         </template>
     </loading-container>
@@ -620,8 +667,15 @@ export default class RecordingSettingsItem extends Vue {
     @Prop({type: Boolean, default: false})
     mini!: boolean
 
+    showHideOsVerification: boolean = false
+
     $refs!: {
         loc: LocalDiskSpaceUsageDisplay
+    }
+
+    confirmOsVerification() {
+        this.showHideOsVerification = false
+        this.$store.commit('changePerProcessRecordingOsCheck', true)
     }
 
     volumeToStr(v: number): string {

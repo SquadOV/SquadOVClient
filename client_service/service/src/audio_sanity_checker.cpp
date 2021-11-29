@@ -4,7 +4,9 @@
 #include "shared/strings/strings.h"
 #include "shared/filesystem/common_paths.h"
 #include "recorder/audio/win32/wasapi_interface.h"
+#include "hardware/hardware.h"
 #include <fstream>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 
@@ -65,11 +67,29 @@ int main(int argc, char** argv) {
         sanitize(device, service::recorder::audio::EAudioDeviceDirection::Input);
     }
 
+    LOG_INFO("Checking per-process recording..." << std::endl);
+    const auto sysHw = service::hardware::getSystemHardware();
+    try {
+        const auto majorInt = std::stoi(sysHw.os.majorVersion);
+        const std::unordered_set<std::string> windows10MinorVersionSupport = { "21H1", "21H2" };
+
+        recordingSettings.perProcessRecordingOsCheck = (sysHw.os.name == "Windows")
+            && (
+                ((majorInt == 10) && windows10MinorVersionSupport.find(sysHw.os.minorVersion) != windows10MinorVersionSupport.end()) ||
+                (majorInt == 11)
+            );
+                
+    } catch (std::exception& ex) {
+        LOG_INFO("...Failed to check OS: " << sysHw << "\t" << ex.what() << std::endl);
+        recordingSettings.perProcessRecordingOsCheck = false;
+    }
+
     LOG_INFO("Saving changes to disk..." << std::endl);
     auto rawData = service::system::getCurrentSettings()->raw();
 
     rawData["record"]["outputDevices"] = shared::json::JsonConverter<std::vector<service::system::AudioDeviceSettings>>::to(recordingSettings.outputDevices);
     rawData["record"]["inputDevices"] = shared::json::JsonConverter<std::vector<service::system::AudioDeviceSettings>>::to(recordingSettings.inputDevices);
+    rawData["record"]["perProcessRecordingOsCheck"] = shared::json::JsonConverter<bool>::to(recordingSettings.perProcessRecordingOsCheck);
 
     const auto fpath = shared::filesystem::getSquadOvUserSettingsFile();
     const auto tmpPath = fpath.parent_path() / fs::path("settings.json.tmp");

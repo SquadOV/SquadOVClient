@@ -47,6 +47,7 @@ struct RecordingSettings {
     bool useWASAPIRecording = false;
 
     bool usePerProcessRecording = false;
+    bool perProcessRecordingOsCheck = false;
     bool recordGameAudio = true;
     double gameAudioVolume = 1.0;
     std::vector<ProcessAudioRecordSettings> processesToRecord;

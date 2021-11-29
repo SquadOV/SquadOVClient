@@ -80,6 +80,7 @@ export interface SquadOvRecordingSettings {
     usePushToTalk: boolean
     useWASAPIRecording: boolean
     usePerProcessRecording: boolean
+    perProcessRecordingOsCheck: boolean
     recordGameAudio: boolean
     gameAudioVolume: number
     processesToRecord: ProcessAudioRecordSettings[]
@@ -331,6 +332,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 usePushToTalk: false,
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
                 gameAudioVolume: 1.0,
                 processesToRecord: [],
@@ -373,6 +375,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 usePushToTalk: false,
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
                 gameAudioVolume: 1.0,
                 processesToRecord: [],
@@ -415,6 +418,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 usePushToTalk: false,
                 useWASAPIRecording: true,
                 usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
                 gameAudioVolume: 1.0,
                 processesToRecord: [],
@@ -478,6 +482,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             usePushToTalk: false,
             useWASAPIRecording: true,
             usePerProcessRecording: false,
+            perProcessRecordingOsCheck: false,
             recordGameAudio: false,
             gameAudioVolume: 1.0,
             processesToRecord: [],
@@ -697,6 +702,11 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.record.gameAudioVolume === undefined) {
             parsedData.record.gameAudioVolume = 1.0
         }
+
+        if (parsedData.record.perProcessRecordingOsCheck === undefined) {
+            parsedData.record.perProcessRecordingOsCheck = false
+        }
+
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()

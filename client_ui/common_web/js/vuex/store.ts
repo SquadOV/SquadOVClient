@@ -162,6 +162,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changePerProcessRecordingOsCheck(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.perProcessRecordingOsCheck = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeUseProcessAudioRecording(state: RootState, params: {enable: boolean, game: boolean, processes: ProcessAudioRecordSettings[]}) {
 /// #if DESKTOP
             if (!state.settings) {
