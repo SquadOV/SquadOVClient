@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
-import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings} from '@client/js/system/settings'
+import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings, WowDisabledInstance} from '@client/js/system/settings'
 import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
@@ -381,6 +381,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.games.wow.recordEncounters = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeWowDoNotRecordInstances(state: RootState, v: WowDisabledInstance[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.doNotRecordInstances = v
             saveLocalSettings(state.settings)
 /// #endif
         },

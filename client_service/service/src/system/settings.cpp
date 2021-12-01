@@ -76,6 +76,13 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     return settings;
 }
 
+WowDisabledInstance WowDisabledInstance::fromJson(const nlohmann::json& obj) {
+    WowDisabledInstance ret;
+    ret.id = obj.value("id", -1);
+    ret.release = static_cast<shared::EWowRelease>(obj.value("release", static_cast<int32_t>(shared::EWowRelease::Unknown)));
+    return ret;
+}
+
 WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     WowSettings settings;
     settings.useCombatLogTimeout = obj.value("useCombatLogTimeout", true);
@@ -86,6 +93,14 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     settings.recordKeystones = obj.value("recordKeystones", true);
     settings.recordEncounters = obj.value("recordEncounters", true);
     settings.minimumTimeSecondsToRecord = obj.value("minimumTimeSecondsToRecord", 15);
+    if (obj.find("doNotRecordInstances") != obj.end() && obj.count("doNotRecordInstances") > 0) {
+        for (const auto& o : obj["doNotRecordInstances"]) {
+            settings.doNotRecordInstances.push_back(WowDisabledInstance::fromJson(o));
+
+            const auto& dnr = settings.doNotRecordInstances.back();
+            settings.doNotRecordInstancesCached[dnr.release].insert(dnr.id);
+        }
+    }
     return settings;
 }
 
