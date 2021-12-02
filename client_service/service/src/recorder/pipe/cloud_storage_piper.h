@@ -53,6 +53,7 @@ public:
     std::string sessionId() const override { return _destination.session; }
     void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
+    size_t getUploadedBytes() { return _uploadedBytes; };
     void flush() override;
     
 protected:

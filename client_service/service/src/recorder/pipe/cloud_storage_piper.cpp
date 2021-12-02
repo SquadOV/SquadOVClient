@@ -163,6 +163,9 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
     static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
 
+// Uploadedbytes needs to be more precise
+// add more functionality: Hooking up more visibility of what goes up by second rather than chunk.
+// e.g. If user doesn't upload a full chunk, we woould want to know how much data actualyl was sent.
     for (auto i = 0; i < CLOUD_MAX_RETRIES; ++i) {
         try {
             const auto data = _client->uploadBytes(buffer.data(), requestedBytes, isLast, _uploadedBytes);
@@ -172,7 +175,7 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
             } else {
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
             }
-            _uploadedBytes += bytesSent;        
+            _uploadedBytes += bytesSent;
             if (_totalProgressBytes.has_value() && _progressFn.has_value()) {
                 _progressFn.value()(_uploadedBytes, _totalProgressBytes.value());
             }

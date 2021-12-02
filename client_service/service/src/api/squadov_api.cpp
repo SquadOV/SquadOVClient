@@ -383,8 +383,14 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
 
 service::vod::VodDestination SquadovApi::getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const {
     std::ostringstream path;
-    path << "/v1/vod/" << videoUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
-
+    // Checks if the bucket is for speed check. This is probably unwanted behavior, 
+    // but this is a quick and dirty way for segment upload on speed-check. Plan to fix
+    if(bucket.find("speed-check") != std::string::npos) {
+        path << "/v1/speedcheck/" << videoUuid << "?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+    }
+    else {
+        path << "/v1/vod/" << videoUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+    }
     const auto result = _webClient->get(path.str());
     if (result->status != 200) {
         THROW_ERROR("Failed to get VOD part upload URI: " << result->status);
@@ -435,6 +441,34 @@ std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
+}
+
+// Originally wanted this to be service::speed_check::speedCheckDestination, but didn't make sense. Should rename it.
+service::vod::VodDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const {
+    std::ostringstream path;
+    path << "/v1/speedcheck/" << speedCheckUuid;
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get Speed Check URI: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return service::vod::VodDestination::fromJson(parsedJson);
+}
+
+void SquadovApi::deleteSpeedCheckFile(const std::string& speedCheckUuid) const {
+    std::ostringstream path;
+    path << "/v1/speedcheck/" << speedCheckUuid;
+
+    const auto result = _webClient->del(path.str());
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to delete Speed Check File: " << result->status);
+        return;
+    }
 }
 
 std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {

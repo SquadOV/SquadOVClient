@@ -31,7 +31,6 @@ void FileOutputPiper::start() {
             }
 
             const auto numBytes = _pipe->readFromBuffer();
-
             if (!handleBuffer(buffer, numBytes)) {
                 LOG_WARNING("Failed to handle buffer of size: " << numBytes << std::endl);
                 break;
@@ -62,7 +61,6 @@ void FileOutputPiper::wait() {
 
 FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination) {
     auto pipe = std::make_unique<Pipe>(id);
-
     switch (destination.loc) {
         case service::vod::VodManagerType::FileSystem:
             return std::make_unique<FilesystemPiper>(destination.url, std::move(pipe));

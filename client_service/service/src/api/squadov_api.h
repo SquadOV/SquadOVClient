@@ -4,11 +4,13 @@
 #include "shared/riot/riot.h"
 #include "shared/squadov/session.h"
 #include "shared/squadov/vod.h"
+#include "shared/squadov/speed_check.h"
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
 #include "api/kafka_api.h"
 #include "vod/vod.h"
+#include "speed_check/speed_check.h"
 #include "hardware/hardware.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
@@ -119,6 +121,11 @@ public:
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
     std::string getVodUri(const std::string& videoUuid) const;
     std::string getVodMd5Checksum(const std::string& videoUuid) const;
+
+    // Speed Check
+    service::vod::VodDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
+    // void postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const;
+    void deleteSpeedCheckFile(const std::string& videoUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;

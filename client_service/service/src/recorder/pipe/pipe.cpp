@@ -15,10 +15,10 @@ Pipe::Pipe(const std::string& name) {
 
     _namedPipe = CreateNamedPipeA(
         _filePath.c_str(), // lpName
-        PIPE_ACCESS_INBOUND, // dwOpenMode
+        PIPE_ACCESS_DUPLEX, // dwOpenMode
         PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, // dwPipeMode
         1, // nMaxInstances
-        0, // nOutBufferSize,
+        MAX_BUFFER_SIZE, // nOutBufferSize,
         MAX_BUFFER_SIZE, // nInBufferSize,
         0, // nDefaultTimeOut
         nullptr // lpSecurityAttributes

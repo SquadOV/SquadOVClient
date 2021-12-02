@@ -27,6 +27,8 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/win32/wasapi_interface.h"
 #include "recorder/pipe/cloud_storage_piper.h"
+#include "recorder/pipe/pipe_client.h"
+#include "recorder/pipe/pipe.h"
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
@@ -35,6 +37,7 @@
 #include "shared/system/keys.h"
 #include "shared/http/http_client.h"
 #include "shared/uuid.cpp"
+#include "shared/squadov/speed_check.h"
 
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
@@ -143,36 +146,35 @@ void wowTest(const std::string& log, const std::string& vod, const std::string& 
     handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
 }
 
-// Guess we're adding to it :grimace-emoji:
+// Guess we're adding to the gigantic executable... :grimace-emoji:
 void speedCheck() {
-    // TODO: 
-    // 0) Generate a UUID that we can track and delete at the end
-    std::string pp = "/speedcheck/";
-    std::string uuid = shared::generateUuidv4();
+    const auto uuidFileName = shared::generateUuidv4();
+
+    // TODO: VodDestination should probably be renamed.
+    service::vod::VodDestination speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
+    auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
+    auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
+
+    const service::recorder::pipe::PipePtr& rawPipe = piper->getPipePtr();
+    std::vector<char> writeBuffer (1024*1024*10, 'A');
+    std::thread t([&piper]() {
+        piper->start();
+        std::this_thread::sleep_for(std::chrono::milliseconds(15000)); // Listen for 15 seconds
+    });
+    service::recorder::pipe::PipeClient pipeClient(uuidFileName, writeBuffer);
+    t.join();
+    size_t speed_check_res = piper->getUploadedBytes();
+    LOG_INFO("Check getUploadedBytes: " << speed_check_res << std::endl); // TODO-FIX: This gets called before the final transfer that has a few last bytes
+    // Ideally, it should get the last bytes as well, and then get the UploadedBytes
     
-
-    // 1) Hit the Rust API to grab the session and bucket location; Use HTTPCLIENT stuff
-    // Issue understanding why when we send this up, the path ends up having the uuid *2
+    shared::squadov::SpeedCheckData speedCheckData;
+    speedCheckData.speedMbs = speed_check_res;
+    // TODO: Update SQL database for user with the speedtest results.
+    // Alternatively: Pass it up to the Client, and do a user call. Either works.
     
-    shared::http::HttpClient client("localhost");
-    try{
-        auto resp = client.get(pp);
-        const auto parsedJson = nlohmann::json::parse(resp->body);
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to send HTTP request to get upload destination: " << ex.what() << std::endl);
-    }
-
-    // 2) Pipe data up to the bucket for 10 seconds and get speed check
+    // service::api::getGlobalApi()->postSpeedCheck(speedCheckData, uuidFileName);
     
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    while(true) {
-        // TODO: Pipe data up to destination 
-        if(std::chrono::steady_clock::now() - start > std::chrono::seconds(10))
-            break;
-    }
-
-    // 3) Update SQL database for user with the speedtest; Alternatively, we can return the value to the client and use client to submit sql database
-
+    // service::api::getGlobalApi()->deleteSpeedCheckFile(uuidFileName);
 }
 
 int main(int argc, char** argv) {

@@ -25,6 +25,7 @@ SET(SRCS
     src/recorder/audio/device.cpp
     src/recorder/audio/win32/wasapi_interface.cpp
     src/recorder/pipe/pipe.cpp
+    src/recorder/pipe/pipe_client.cpp
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
     src/recorder/pipe/cloud_storage_piper.cpp
@@ -39,6 +40,7 @@ SET(SRCS
     src/vod/vod_clipper.cpp
     src/vod/process.cpp
     src/vod/vod.cpp
+    src/uploader/uploader.cpp
     src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
@@ -52,6 +54,7 @@ SET(SRCS
     src/hardware/os.cpp
     src/hardware/cpu.cpp
     src/hardware/display.cpp
+    src/speed_check/speed_check.cpp
 )
 
 SET(HEADERS
@@ -87,6 +90,7 @@ SET(HEADERS
     src/recorder/audio/device.h
     src/recorder/audio/win32/wasapi_interface.h
     src/recorder/pipe/pipe.h
+    src/recorder/pipe/pipe_client.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
     src/recorder/pipe/cloud/cloud_storage_client.h
@@ -103,6 +107,7 @@ SET(HEADERS
     src/vod/vod_clipper.h
     src/vod/process.h
     src/vod/vod.h
+    src/uploader/uploader.h
     src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h
@@ -116,6 +121,7 @@ SET(HEADERS
     src/hardware/os.h
     src/hardware/cpu.h
     src/hardware/display.h
+    src/speed_check/speed_check.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
