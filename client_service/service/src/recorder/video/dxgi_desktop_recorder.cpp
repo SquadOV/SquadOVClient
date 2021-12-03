@@ -11,7 +11,7 @@
 
 #include <iostream>
 
-#define LOG_FRAME_TIME 1
+#define LOG_FRAME_TIME 0
 #ifdef _WIN32
 #include <VersionHelpers.h>
 
