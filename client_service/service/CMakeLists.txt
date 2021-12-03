@@ -106,7 +106,6 @@ SET(HEADERS
     src/local/local_data.h
     src/vod/vod_clipper.h
     src/vod/process.h
-    src/vod/vod.h
     src/uploader/uploader.h
     src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h

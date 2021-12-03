@@ -9,7 +9,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
 #include "api/kafka_api.h"
-#include "vod/vod.h"
+#include "uploader/uploader.h"
 #include "speed_check/speed_check.h"
 #include "hardware/hardware.h"
 
@@ -114,8 +114,8 @@ public:
     void associateCsgoDemo(const std::string& viewUuid, const std::string& demoUrl, const shared::TimePoint& demoTimestamp);
 
     // VOD
-    service::vod::VodDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
-    service::vod::VodDestination getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const;
+    service::uploader::UploadDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
+    service::uploader::UploadDestination getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const;
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const;
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
@@ -123,7 +123,7 @@ public:
     std::string getVodMd5Checksum(const std::string& videoUuid) const;
 
     // Speed Check
-    service::vod::VodDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
+    service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
     // void postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const;
     void deleteSpeedCheckFile(const std::string& videoUuid) const;
 

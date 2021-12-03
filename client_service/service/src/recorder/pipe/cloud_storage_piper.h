@@ -3,7 +3,7 @@
 #include "recorder/pipe/file_output_piper.h"
 #include "shared/http/http_client.h"
 #include "recorder/pipe/cloud/cloud_storage_client.h"
-#include "vod/vod.h"
+#include "uploader/uploader.h"
 
 #include <deque>
 #include <mutex>
@@ -24,7 +24,7 @@ namespace service::recorder::pipe {
 struct CloudUploadRequest {
     std::string task;
     std::string file;
-    service::vod::VodDestination destination;
+    service::uploader::UploadDestination destination;
 
     static CloudUploadRequest fromJson(const nlohmann::json& json);
 };
@@ -47,7 +47,7 @@ private:
 
 class CloudStoragePiper : public FileOutputPiper {
 public:
-    CloudStoragePiper(const std::string& videoUuid, const service::vod::VodDestination& destination, PipePtr&& pipe);
+    CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe);
     ~CloudStoragePiper();
 
     std::string sessionId() const override { return _destination.session; }
@@ -66,7 +66,7 @@ private:
     void copyDataIntoInternalBuffer(std::vector<char>& buffer);
 
     std::string _videoUuid;
-    service::vod::VodDestination _destination;
+    service::uploader::UploadDestination _destination;
     size_t _uploadedBytes = 0;
 
     cloud::CloudStorageClientPtr _client;

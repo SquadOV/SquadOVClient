@@ -59,10 +59,10 @@ void FileOutputPiper::wait() {
     }
 }
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination) {
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::uploader::UploadDestination& destination) {
     auto pipe = std::make_unique<Pipe>(id);
     switch (destination.loc) {
-        case service::vod::VodManagerType::FileSystem:
+        case service::uploader::UploadManagerType::FileSystem:
             return std::make_unique<FilesystemPiper>(destination.url, std::move(pipe));
         default:
             return std::make_unique<CloudStoragePiper>(id, destination, std::move(pipe));

@@ -17,14 +17,17 @@ namespace service::recorder::pipe {
 
 class PipeClient {
 public:
-    explicit PipeClient(const std::string& name, std::vector<char> wBuffer);
+    explicit PipeClient(const std::string& name);
     ~PipeClient();
+    void start(std::vector<char> wBuffer);
+    void stop();
 
 private:
     void connectToPipe();
     void handleState();
     void writeDataToPipe(std::vector<char> wBuffer);
     std::string _filePath;
+    bool _stopped = false;
 
 #ifdef _WIN32
     HANDLE _hPipe;

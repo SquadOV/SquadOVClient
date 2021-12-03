@@ -22,7 +22,7 @@ CloudUploadRequest CloudUploadRequest::fromJson(const nlohmann::json& json) {
     CloudUploadRequest ret;
     ret.file = json["file"].get<std::string>();
     ret.task = json["task"].get<std::string>();
-    ret.destination = service::vod::VodDestination::fromJson(json["destination"]);
+    ret.destination = service::uploader::UploadDestination::fromJson(json["destination"]);
     return ret;
 }
 
@@ -48,7 +48,7 @@ std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUpload
     return std::make_pair(output.sessionId(), output.segmentIds());
 }
 
-CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::vod::VodDestination& destination, PipePtr&& pipe):
+CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe):
     FileOutputPiper(std::move(pipe)),
     _videoUuid(videoUuid),
     _destination(destination),
@@ -56,10 +56,10 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
 
     // Create an appropriate storage client based on the input destination location.
     switch (destination.loc) {
-        case service::vod::VodManagerType::S3:
+        case service::uploader::UploadManagerType::S3:
             _client = std::make_unique<cloud::S3StorageClient>(_videoUuid);
             break;
-        case service::vod::VodManagerType::GCS:
+        case service::uploader::UploadManagerType::GCS:
             _client = std::make_unique<cloud::GCSStorageClient>();
             break;
     }

@@ -19,9 +19,9 @@ UploadDestination UploadDestination::fromJson(const nlohmann::json& obj) {
     return dest;
 }
 
+}
+
 std::ostream& operator<<(std::ostream& os, const service::uploader::UploadDestination& x) {
     os << "{url: " << x.url << ", bucket: " << x.bucket << ", session: " << x.session << ", loc: " << static_cast<int>(x.loc) << "}";
     return os;
-}
-
 }

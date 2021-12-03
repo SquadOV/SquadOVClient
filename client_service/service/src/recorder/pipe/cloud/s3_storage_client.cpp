@@ -15,7 +15,7 @@ S3StorageClient::S3StorageClient(const std::string& videoUuid):
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
 }
 
-void S3StorageClient::initializeDestination(const service::vod::VodDestination& destination) {
+void S3StorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
     _destination = destination;
 }
 

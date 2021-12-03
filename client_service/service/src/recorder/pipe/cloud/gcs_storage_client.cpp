@@ -8,7 +8,7 @@ GCSStorageClient::GCSStorageClient() {
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
 }
 
-void GCSStorageClient::initializeDestination(const service::vod::VodDestination& destination) {
+void GCSStorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
     _destination = destination;
 }
 

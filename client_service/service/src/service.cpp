@@ -151,18 +151,27 @@ void speedCheck() {
     const auto uuidFileName = shared::generateUuidv4();
 
     // TODO: VodDestination should probably be renamed.
-    service::vod::VodDestination speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
+    service::uploader::UploadDestination speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
 
-    const service::recorder::pipe::PipePtr& rawPipe = piper->getPipePtr();
-    std::vector<char> writeBuffer (1024*1024*10, 'A');
-    std::thread t([&piper]() {
+    // const service::recorder::pipe::PipePtr& rawPipe = piper->getPipePtr();
+    service::recorder::pipe::PipeClient pipeClient(uuidFileName);
+    std::thread t1([&piper]() {
         piper->start();
-        std::this_thread::sleep_for(std::chrono::milliseconds(15000)); // Listen for 15 seconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // Listen for 15 seconds
+        piper->stop();
     });
-    service::recorder::pipe::PipeClient pipeClient(uuidFileName, writeBuffer);
-    t.join();
+    std::thread t2([&pipeClient] () {
+        std::vector<char> writeBuffer (1024*1024*1000, 'A');
+        pipeClient.start(writeBuffer);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+        pipeClient.stop();
+    });
+    t1.joinable();
+    t2.joinable();
+    t1.join();
+    t2.join();
     size_t speed_check_res = piper->getUploadedBytes();
     LOG_INFO("Check getUploadedBytes: " << speed_check_res << std::endl); // TODO-FIX: This gets called before the final transfer that has a few last bytes
     // Ideally, it should get the last bytes as well, and then get the UploadedBytes

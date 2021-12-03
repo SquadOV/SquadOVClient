@@ -9,12 +9,12 @@ class GCSStorageClient: public CloudStorageClient {
 public:
     GCSStorageClient();
 
-    void initializeDestination(const service::vod::VodDestination& destination) override;
+    void initializeDestination(const service::uploader::UploadDestination& destination) override;
 
     void startNewSegment() override;
     std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) override;
 private:
-    service::vod::VodDestination _destination;
+    service::uploader::UploadDestination _destination;
     shared::http::HttpClientPtr _httpClient;
 };
 

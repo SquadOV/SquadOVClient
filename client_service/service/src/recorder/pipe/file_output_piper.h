@@ -1,7 +1,7 @@
 #pragma once
 
 #include "recorder/pipe/pipe.h"
-#include "vod/vod.h"
+#include "uploader/uploader.h"
 #include "speed_check/speed_check.h"
 #include <filesystem>
 #include <memory>
@@ -25,7 +25,6 @@ public:
     // At least on windows the pipe will have an actual path on disk that
     // we can use.
     const std::string& filePath() const { return _pipe->filePath(); }
-    const PipePtr& getPipePtr() const { return _pipe; }
     virtual std::string sessionId() const { return ""; }
     void appendFromFile(const std::filesystem::path& path);
     void pauseProcessingFromPipe(bool pause);
@@ -50,5 +49,5 @@ private:
 
 using FileOutputPiperPtr = std::unique_ptr<FileOutputPiper>;
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination);
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::uploader::UploadDestination& destination);
 }

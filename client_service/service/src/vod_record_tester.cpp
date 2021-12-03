@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
     service::recorder::GameRecorder recorder(finalProcess.value(), shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
 
-    service::vod::VodDestination destination;
-    destination.loc = service::vod::VodManagerType::FileSystem;
+    service::uploader::UploadDestination destination;
+    destination.loc = service::uploader::UploadManagerType::FileSystem;
     destination.url = outputFname;
     recorder.setFileOutputFromDestination("bobbothebuilder", destination);
     // Wait for it to grab window info

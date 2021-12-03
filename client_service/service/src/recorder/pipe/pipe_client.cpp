@@ -6,7 +6,7 @@
 
 namespace service::recorder::pipe {
 
-PipeClient::PipeClient(const std::string& name, std::vector<char> wBuffer) {
+PipeClient::PipeClient(const std::string& name) {
 
 #ifdef _WIN32
     std::ostringstream pipePath;
@@ -19,13 +19,20 @@ PipeClient::PipeClient(const std::string& name, std::vector<char> wBuffer) {
 
     handleState();
     // Send a message to the pipe server. 
-    
-    writeDataToPipe(wBuffer);
-
     return;
 #else
     throw std::runtime_error("Unsupported OS for Named Pipes");
 #endif
+}
+
+void PipeClient::start(std::vector<char> wBuffer) {
+    while(!_stopped) {
+        writeDataToPipe(wBuffer);
+    }
+}
+
+void PipeClient::stop() {
+    _stopped = true;
 }
 
 void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
@@ -41,9 +48,6 @@ void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
         _tprintf( TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError() ); 
         return;
     }
-
-    printf("\nMessage sent to server, receiving reply as follows:\n");
- 
 }
 
 void PipeClient::handleState() {
@@ -95,6 +99,5 @@ void PipeClient::connectToPipe() {
 }
 
 PipeClient::~PipeClient() {
-    CloseHandle(_hPipe);
 }
 };
