@@ -1,3 +1,5 @@
+#pragma pack_matrix( row_major )
+
 cbuffer VsTransforms : register(b0)
 {
     float4x4 worldXform; 
@@ -20,9 +22,7 @@ struct VS_OUTPUT
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output;
-    output.position.w = 1.0;
-    output.position.xyz = input.position;
-    output.position = mul(output.position, worldXform);
+    output.position = mul(float4(input.position, 1.0), worldXform);
     output.tex = input.tex;
     output.color = input.color;
     return output;
