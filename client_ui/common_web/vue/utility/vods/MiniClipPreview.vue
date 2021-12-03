@@ -82,7 +82,7 @@
             </div>
         </router-link>
         <bulk-tag-display
-            v-if="!!displayClip"
+            v-if="!!displayClip && !hideTags"
             class="mt-1"
             :video-uuid="clip.clip.videoUuid"
             :tags.sync="displayClip.tags"
@@ -123,6 +123,9 @@ export default class MiniClipPreview extends Vue {
 
     @Prop({type: Boolean, default: false})
     hideDetails!: boolean
+
+    @Prop({type: Boolean, default: false})
+    hideTags!: boolean
 
     gameToIcon = gameToIcon
 
