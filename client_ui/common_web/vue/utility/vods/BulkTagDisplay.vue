@@ -65,6 +65,7 @@ import { VodTag } from '@client/js/squadov/vod'
 import TagDisplay from '@client/vue/utility/vods/TagDisplay.vue'
 import TagCreator from '@client/vue/utility/vods/TagCreator.vue'
 import { apiClient, ApiData } from '@client/js/api'
+import { compareString } from '@client/js/cmp'
 
 @Component({
     components: {
@@ -89,7 +90,7 @@ export default class BulkTagDisplay extends Vue {
 
     get sortedTags(): VodTag[] {
         return this.tags.sort((a: VodTag, b: VodTag) => {
-            return ((b.isSelf ? 1 : 0) - (a.isSelf ? 1 : 0)) || (b.count - a.count)
+            return ((b.isSelf ? 1 : 0) - (a.isSelf ? 1 : 0)) || (b.count - a.count) || compareString(a.tag, b.tag)
         })
     }
 
@@ -116,7 +117,7 @@ export default class BulkTagDisplay extends Vue {
                 tagMap.set(t.tag, t)
             }
 
-            this.$emit('update:tags', Array.from(tagMap.values()))
+            this.$emit('update:tags', Array.from(tagMap.values()).filter((ele: VodTag) => ele.count > 0))
             this.tagsToAdd = []
             this.menuShow = false
         }).catch((err: any) => {

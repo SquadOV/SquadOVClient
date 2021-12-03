@@ -114,6 +114,12 @@
                         </div>
                     </div>
 
+                    <bulk-tag-display
+                        :video-uuid="clip.clip.videoUuid"
+                        :tags.sync="clip.tags"
+                    >
+                    </bulk-tag-display>
+
                     <div class="d-flex align-center">
                         <div class="text-body-2">{{ clipTime }}</div><span class="mx-1">&#183;</span>
                         <div class="text-body-2 font-weight-bold">{{ clip.clipper }}</div>
@@ -249,6 +255,7 @@ import VodFavoriteButton from '@client/vue/utility/vods/VodFavoriteButton.vue'
 import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
 import VodDeleteButton from '@client/vue/utility/vods/VodDeleteButton.vue'
+import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
 
 const maxCommentsPerRequest = 20
 
@@ -261,6 +268,7 @@ const maxCommentsPerRequest = 20
         VodWatchlistButton,
         VodDownloadButton,
         VodDeleteButton,
+        BulkTagDisplay,
     }
 })
 export default class ClipView extends mixins(CommonComponent) {
