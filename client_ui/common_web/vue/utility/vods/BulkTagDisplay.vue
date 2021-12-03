@@ -79,6 +79,7 @@ export default class BulkTagDisplay extends Vue {
 
     @Prop({required: true})
     tags!: VodTag[]
+    internalTags: VodTag[] = []
 
     @Prop({default: -1})
     maxTags!: number
@@ -89,7 +90,7 @@ export default class BulkTagDisplay extends Vue {
     addError: boolean = false
 
     get sortedTags(): VodTag[] {
-        return this.tags.sort((a: VodTag, b: VodTag) => {
+        return this.internalTags.sort((a: VodTag, b: VodTag) => {
             return ((b.isSelf ? 1 : 0) - (a.isSelf ? 1 : 0)) || (b.count - a.count) || compareString(a.tag, b.tag)
         })
     }
@@ -99,17 +100,16 @@ export default class BulkTagDisplay extends Vue {
     }
 
     updateTag(idx: number, tag: VodTag) {
-        let newTags = [...this.displayTags]
-        newTags.splice(idx, 1)
-        newTags.push(tag)
-        this.$emit('update:tags', newTags)
+        this.internalTags.splice(idx, 1)
+        this.internalTags.push(tag)
+        this.internalTags = this.internalTags.filter((ele: VodTag) => ele.count > 0)
     }
 
     saveTags() {
         this.tagOpInProgress = true
         apiClient.addTagsToVod(this.videoUuid, this.tagsToAdd).then((resp: ApiData<VodTag[]>) => {
             let tagMap: Map<string, VodTag> = new Map()
-            for (let t of this.tags) {
+            for (let t of this.internalTags) {
                 tagMap.set(t.tag, JSON.parse(JSON.stringify(t)))
             }
 
@@ -117,7 +117,7 @@ export default class BulkTagDisplay extends Vue {
                 tagMap.set(t.tag, t)
             }
 
-            this.$emit('update:tags', Array.from(tagMap.values()).filter((ele: VodTag) => ele.count > 0))
+            this.internalTags = Array.from(tagMap.values()).filter((ele: VodTag) => ele.count > 0)
             this.tagsToAdd = []
             this.menuShow = false
         }).catch((err: any) => {
@@ -125,6 +125,10 @@ export default class BulkTagDisplay extends Vue {
         }).finally(() => {
             this.tagOpInProgress = false
         })
+    }
+
+    mounted() {
+        this.internalTags = JSON.parse(JSON.stringify(this.tags))
     }
 }
 

@@ -1,5 +1,5 @@
 import { SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
-import { VodManifest } from '@client/js/squadov/vod'
+import { VodManifest, VodTag } from '@client/js/squadov/vod'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { LolPlayerMatchSummary, cleanLolPlayerMatchSummaryFromJson } from '@client/js/lol/matches'
 import { TftPlayerMatchSummary, cleanTftPlayerMatchSummaryFromJson } from '@client/js/tft/matches'
@@ -19,6 +19,7 @@ export interface BaseRecentMatch {
     favoriteReason: string | null
     isWatchlist: boolean
     accessToken: string | null
+    tags: VodTag[]
 }
 
 export interface RecentMatch {

@@ -82,10 +82,10 @@
             </div>
         </router-link>
         <bulk-tag-display
-            v-if="!!displayClip && !hideTags"
+            v-if="!hideTags"
             class="mt-1"
             :video-uuid="clip.clip.videoUuid"
-            :tags.sync="displayClip.tags"
+            :tags="clip.tags"
             :max-tags="5"
         >
         </bulk-tag-display>
@@ -113,7 +113,6 @@ import * as pi from '@client/js/pages'
 export default class MiniClipPreview extends Vue {
     @Prop({required: true})
     clip!: VodClip
-    displayClip: VodClip | null = null
 
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
@@ -143,10 +142,6 @@ export default class MiniClipPreview extends Vue {
                 at: this.accessToken,
             }
         }
-    }
-
-    mounted() {
-        this.displayClip = cleanVodClipFromJson(JSON.parse(JSON.stringify(this.clip)))
     }
 }
 

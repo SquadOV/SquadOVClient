@@ -13,11 +13,21 @@
             >
             </v-img>
 
-            <div class="text-center text-caption">
-                {{ match.base.username }} played...
+            <div class="d-flex align-center">
+                <div class="text-center text-caption">
+                    {{ match.base.username }} played...
+                </div>
             </div>
 
             <v-spacer></v-spacer>
+
+            <bulk-tag-display
+                class="flex-grow-1 justify-end"
+                :video-uuid="match.base.vod.videoTracks[0].metadata.videoUuid"
+                :tags="match.base.tags"
+                :max-tags="7"
+            >
+            </bulk-tag-display>
 
             <template v-if="!!match.base.favoriteReason">
                 <div class="text-right text-caption">
@@ -209,6 +219,7 @@ import WowInstanceSummary from '@client/vue/utility/wow/WowInstanceSummary.vue'
 import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMatchSummaryDisplay.vue'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDisplay.vue'
+import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
 
 @Component({
     components: {
@@ -224,6 +235,7 @@ import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDis
         VideoPreviewPlayer,
         CsgoPlayerMatchSummaryDisplay,
         UploadProgressDisplay,
+        BulkTagDisplay,
     }
 })
 export default class RecentMatchDisplay extends Vue {

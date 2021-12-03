@@ -38,8 +38,10 @@ export default class TagDisplay extends Vue {
         let promise
         if (newTag.isSelf) {
             promise = apiClient.deleteTagFromVod(this.tag.videoUuid, this.tag.tagId)
+            newTag.count -= 1
         } else {
             promise = apiClient.addTagsToVod(this.tag.videoUuid, [this.tag.tag])
+            newTag.count += 1
         }
 
         newTag.isSelf = !newTag.isSelf

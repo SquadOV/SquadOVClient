@@ -1684,6 +1684,10 @@ class ApiClient {
         return axios.delete(`v1/vod/${videoUuid}/tag/${tagId}`, this.createWebAxiosConfig())
     }
 
+    getVodTags(videoUuid: string): Promise<ApiData<VodTag[]>> {
+        return axios.get(`v1/vod/${videoUuid}/tag`, this.createWebAxiosConfig())
+    }
+
     // Local API
     async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
         return axios.get('api/vods', {

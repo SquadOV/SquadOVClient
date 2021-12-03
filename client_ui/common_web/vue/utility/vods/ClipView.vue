@@ -116,7 +116,7 @@
 
                     <bulk-tag-display
                         :video-uuid="clip.clip.videoUuid"
-                        :tags.sync="clip.tags"
+                        :tags="clip.tags"
                     >
                     </bulk-tag-display>
 
