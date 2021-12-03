@@ -29,7 +29,8 @@ import {
     ClipComment,
     cleanClipCommentFromJson,
     VodFavoriteResponse,
-    CsgoMatchAccessibleVods
+    CsgoMatchAccessibleVods,
+    VodTag
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -1673,6 +1674,14 @@ class ApiClient {
 
     getSentryDsn(): Promise<ApiData<string>> {
         return axios.get('v1/sentry/web', this.createWebAxiosConfig())
+    }
+
+    addTagsToVod(videoUuid: string, tags: string[]): Promise<ApiData<VodTag[]>> {
+        return axios.post(`v1/vod/${videoUuid}/tag`, tags, this.createWebAxiosConfig())
+    }
+
+    deleteTagFromVod(videoUuid: string, tagId: number): Promise<void> {
+        return axios.delete(`v1/vod/${videoUuid}/tag/${tagId}`, this.createWebAxiosConfig())
     }
 
     // Local API

@@ -78,9 +78,17 @@
                             <div class="text-body-2">{{ clip.comments }}</div>
                         </div>
                     </div>
-                </div>
+                </div>                
             </div>
         </router-link>
+        <bulk-tag-display
+            v-if="!!displayClip"
+            class="mt-1"
+            :video-uuid="clip.clip.videoUuid"
+            :tags.sync="displayClip.tags"
+            :max-tags="5"
+        >
+        </bulk-tag-display>
     </div>
 </template>
 
@@ -89,20 +97,23 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { VodClip } from '@client/js/squadov/vod'
+import { cleanVodClipFromJson, VodClip } from '@client/js/squadov/vod'
 import { standardFormatTime } from '@client/js/time'
 import { gameToIcon } from '@client/js/squadov/game'
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
+import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
     components: {
-        VideoPreviewPlayer
+        VideoPreviewPlayer,
+        BulkTagDisplay,
     }
 })
 export default class MiniClipPreview extends Vue {
     @Prop({required: true})
     clip!: VodClip
+    displayClip: VodClip | null = null
 
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
@@ -129,6 +140,10 @@ export default class MiniClipPreview extends Vue {
                 at: this.accessToken,
             }
         }
+    }
+
+    mounted() {
+        this.displayClip = cleanVodClipFromJson(JSON.parse(JSON.stringify(this.clip)))
     }
 }
 
