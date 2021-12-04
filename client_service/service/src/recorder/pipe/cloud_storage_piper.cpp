@@ -162,7 +162,6 @@ void CloudStoragePiper::tickUploadThread() {
 void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast) {
     static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
-
 // Uploadedbytes needs to be more precise
 // add more functionality: Hooking up more visibility of what goes up by second rather than chunk.
 // e.g. If user doesn't upload a full chunk, we woould want to know how much data actualyl was sent.

@@ -39,7 +39,6 @@ SET(SRCS
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
     src/vod/process.cpp
-    src/vod/vod.cpp
     src/uploader/uploader.cpp
     src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
@@ -54,7 +53,6 @@ SET(SRCS
     src/hardware/os.cpp
     src/hardware/cpu.cpp
     src/hardware/display.cpp
-    src/speed_check/speed_check.cpp
 )
 
 SET(HEADERS
@@ -120,7 +118,6 @@ SET(HEADERS
     src/hardware/os.h
     src/hardware/cpu.h
     src/hardware/display.h
-    src/speed_check/speed_check.h
 )
 
 MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
@@ -269,3 +266,4 @@ CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.ma
 CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_clipper.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(speed_check "src/speed_check.cpp" "src/speed_check.exe.manifest")

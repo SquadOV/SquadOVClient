@@ -146,46 +146,6 @@ void wowTest(const std::string& log, const std::string& vod, const std::string& 
     handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
 }
 
-// Guess we're adding to the gigantic executable... :grimace-emoji:
-void speedCheck() {
-    const auto uuidFileName = shared::generateUuidv4();
-
-    // TODO: VodDestination should probably be renamed.
-    service::uploader::UploadDestination speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
-    auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
-    auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
-
-    // const service::recorder::pipe::PipePtr& rawPipe = piper->getPipePtr();
-    service::recorder::pipe::PipeClient pipeClient(uuidFileName);
-    std::thread t1([&piper]() {
-        piper->start();
-        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); // Listen for 15 seconds
-        piper->stop();
-    });
-    std::thread t2([&pipeClient] () {
-        std::vector<char> writeBuffer (1024*1024*1000, 'A');
-        pipeClient.start(writeBuffer);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-        pipeClient.stop();
-    });
-    t1.joinable();
-    t2.joinable();
-    t1.join();
-    t2.join();
-    size_t speed_check_res = piper->getUploadedBytes();
-    LOG_INFO("Check getUploadedBytes: " << speed_check_res << std::endl); // TODO-FIX: This gets called before the final transfer that has a few last bytes
-    // Ideally, it should get the last bytes as well, and then get the UploadedBytes
-    
-    shared::squadov::SpeedCheckData speedCheckData;
-    speedCheckData.speedMbs = speed_check_res;
-    // TODO: Update SQL database for user with the speedtest results.
-    // Alternatively: Pass it up to the Client, and do a user call. Either works.
-    
-    // service::api::getGlobalApi()->postSpeedCheck(speedCheckData, uuidFileName);
-    
-    // service::api::getGlobalApi()->deleteSpeedCheckFile(uuidFileName);
-}
-
 int main(int argc, char** argv) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
@@ -799,8 +759,6 @@ int main(int argc, char** argv) {
         shared::system::win32::Win32MessageLoop::singleton()->start();
     } else if (mode == "wow_test") {
         wowTest(vm["log"].as<std::string>(), vm["vod"].as<std::string>(), vm["vodTime"].as<std::string>());
-    } else if (mode == "speed_check") {
-        speedCheck();
     } else {
         THROW_ERROR("Unknown Mode: " << mode);
     }

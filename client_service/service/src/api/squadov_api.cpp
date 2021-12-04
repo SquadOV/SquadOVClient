@@ -443,7 +443,6 @@ std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
     return parsedJson.get<std::string>();
 }
 
-// Originally wanted this to be service::speed_check::speedCheckDestination, but didn't make sense. Should rename it.
 service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const {
     std::ostringstream path;
     path << "/v1/speedcheck/" << speedCheckUuid;

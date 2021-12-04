@@ -2,7 +2,6 @@
 
 #include "recorder/pipe/pipe.h"
 #include "uploader/uploader.h"
-#include "speed_check/speed_check.h"
 #include <filesystem>
 #include <memory>
 #include <mutex>

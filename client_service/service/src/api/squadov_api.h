@@ -10,7 +10,6 @@
 #include "shared/wow/instances.h"
 #include "api/kafka_api.h"
 #include "uploader/uploader.h"
-#include "speed_check/speed_check.h"
 #include "hardware/hardware.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"

@@ -26,13 +26,7 @@ PipeClient::PipeClient(const std::string& name) {
 }
 
 void PipeClient::start(std::vector<char> wBuffer) {
-    while(!_stopped) {
-        writeDataToPipe(wBuffer);
-    }
-}
-
-void PipeClient::stop() {
-    _stopped = true;
+    writeDataToPipe(wBuffer);
 }
 
 void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
