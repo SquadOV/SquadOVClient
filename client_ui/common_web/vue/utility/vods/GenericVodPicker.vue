@@ -180,6 +180,7 @@
             v-if="!!value && !!vodTags"
             :video-uuid="value.videoUuid"
             :tags="vodTags"
+            :max-tags="20"
         >
         </bulk-tag-display>
     </div>

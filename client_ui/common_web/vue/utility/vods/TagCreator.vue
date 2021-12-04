@@ -8,6 +8,7 @@
         multiple
         chips
         small-chips
+        deletable-chips
         clearable
         outlined
     >

@@ -117,6 +117,7 @@
                     <bulk-tag-display
                         :video-uuid="clip.clip.videoUuid"
                         :tags="clip.tags"
+                        :max-tags="20"
                     >
                     </bulk-tag-display>
 
