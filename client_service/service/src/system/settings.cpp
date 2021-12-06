@@ -78,6 +78,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.useVfr4 = obj.value("useVfr4", true);
     settings.useWGC2 = obj.value("useWGC2", true);
+    settings.recordMouse = obj.value("recordMouse", true);
 
     settings.useLocalRecording = obj.value("useLocalRecording", false);
     settings.localRecordingLocation =  fs::path(shared::strings::utf8ToWcs(obj["localRecordingLocation"].get<std::string>()));
