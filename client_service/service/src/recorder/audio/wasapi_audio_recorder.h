@@ -5,20 +5,14 @@
 
 namespace service::recorder::audio {
 
-struct PortaudioInitRAII {
-    PortaudioInitRAII();
-    ~PortaudioInitRAII();
-};
+class WasapiAudioRecorderImpl;
 
-using PortaudioInitRAIIPtr = std::unique_ptr<PortaudioInitRAII>;
-
-class PortaudioAudioRecorderImpl;
-class PortaudioAudioRecorder : public AudioRecorder {
+// This class is responsible for recording audio from DEVICES.
+// The interface for recording loopback from processes is separate.
+class WasapiAudioRecorder : public AudioRecorder {
 public:
-    PortaudioAudioRecorder();
-    ~PortaudioAudioRecorder();
-
-    static AudioDeviceResponse getDeviceListing(EAudioDeviceDirection dir);
+    WasapiAudioRecorder();
+    ~WasapiAudioRecorder();
 
     void startRecording() override;
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) override;
@@ -30,7 +24,7 @@ public:
     bool exists() const override;
     const AudioPacketProperties& props() const override;
 private:
-    std::unique_ptr<PortaudioAudioRecorderImpl> _impl;
+    std::unique_ptr<WasapiAudioRecorderImpl> _impl;
 };
 
 }

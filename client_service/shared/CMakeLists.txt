@@ -29,6 +29,8 @@ SET(SRCS
     shared/system/win32/interfaces/win32_system_process_interface.cpp
     shared/url.cpp
     shared/system/keys.cpp
+    shared/image/ico/ico.cpp
+    shared/memory/byte_writer.cpp
 )
 
 SET(HEADERS
@@ -68,6 +70,8 @@ SET(HEADERS
     shared/url.h
     shared/wow/instances.h
     shared/system/keys.h
+    shared/image/ico/ico.h
+    shared/memory/byte_writer.h
 )
 
 add_library(squadov_shared

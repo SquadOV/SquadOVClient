@@ -11,6 +11,7 @@ Currently, we only support development on Windows 10.
 * Yarn
 * [Boost v1.74+](https://sourceforge.net/projects/boost/files/boost-binaries/1.74.0/)
 * Perl
+* Windows 10 SDK 10.0.20348.0
 
 We shall assume that you have downloaded the SquadOVClient repository into `$SRC/SquadOVClient`.
 We will assume all commands are run in Powershell, hence the availability of UNIX-esque commands.
@@ -29,6 +30,7 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `cryptopp:x64-windows`
 * `cryptopp:x64-windows-static`
 * `cryptopp:x64-windows-static-md`
+* `wil:x64-windows`
 
 ## Build SquadOV Client Service
 
