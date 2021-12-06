@@ -72,4 +72,17 @@ bool isWowClassic(EGame game) {
     }
 }
 
+EWowRelease gameToWowRelease(EGame game) {
+    switch (game) {
+        case EGame::WoW:
+            return EWowRelease::Retail;
+        case EGame::WowVanilla:
+            return EWowRelease::Vanilla;
+        case EGame::WowTbc:
+            return EWowRelease::Tbc;
+        default:
+            return EWowRelease::Unknown;
+    }
+}
+
 }

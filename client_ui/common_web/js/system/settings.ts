@@ -4,7 +4,7 @@ import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
-import { allGames, SquadOvGames } from '@client/js/squadov/game'
+import { allGames, SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
 /// #endif
 
 export interface SquadOvOverlay {
@@ -182,6 +182,11 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
     }    
 }
 
+export interface WowDisabledInstance {
+    id: number
+    release: SquadOvWowRelease
+}
+
 export interface WowSettings {
     useCombatLogTimeout: boolean
     timeoutSeconds2: number
@@ -191,6 +196,7 @@ export interface WowSettings {
     recordKeystones: boolean
     recordEncounters: boolean
     minimumTimeSecondsToRecord: number
+    doNotRecordInstances: WowDisabledInstance[]
 }
 
 function createEmptyWowSettings(): WowSettings {
@@ -203,6 +209,7 @@ function createEmptyWowSettings(): WowSettings {
         recordKeystones: true,
         recordEncounters: true,
         minimumTimeSecondsToRecord: 15,
+        doNotRecordInstances: [],
     }
 }
 
@@ -679,6 +686,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.games.wow.minimumTimeSecondsToRecord = 15
         }
 
+        if (parsedData.games.wow.doNotRecordInstances === undefined) {
+            parsedData.games.wow.doNotRecordInstances = []
+        }
+        
         if (parsedData.keybinds.pushToTalk2 === undefined) {
             parsedData.keybinds.pushToTalk2 = []
         }

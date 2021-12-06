@@ -73,6 +73,13 @@ struct KeybindSettings {
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 
+struct WowDisabledInstance {
+    int64_t id;
+    shared::EWowRelease release;
+
+    static WowDisabledInstance fromJson(const nlohmann::json& obj);
+};
+
 struct WowSettings {
     bool useCombatLogTimeout = true;
     int32_t timeoutSeconds2 = 180;
@@ -82,6 +89,12 @@ struct WowSettings {
     bool recordKeystones = true;
     bool recordEncounters = true;
     int32_t minimumTimeSecondsToRecord = 15;
+
+    // This is stored twice: doNotRecordInstances is the raw data stored in the settings JSON.
+    // We also need a better way to query it: first by wow release and second by instance id to see
+    // if it exists in the raw vector.
+    std::vector<WowDisabledInstance> doNotRecordInstances;
+    std::unordered_map<shared::EWowRelease, std::unordered_set<int64_t>> doNotRecordInstancesCached;
 
     static WowSettings fromJson(const nlohmann::json& obj);
 };
