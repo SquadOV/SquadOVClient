@@ -151,6 +151,7 @@ import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import TagCreator from '@client/vue/utility/vods/TagCreator.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { WowGameRelease } from '@client/js/staticData'
+import { createEmptyWowMatchFilters } from '@client/js/wow/filters'
 
 @Component({
     components: {
@@ -196,6 +197,11 @@ export default class RecentMatchFiltersUi extends mixins(CommonFilters) {
         this.syncFromValue()
         if (!!this.savedFilter) {
             this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
+
+        if (!this.internalValue.filters.wow.instances) {
+            this.internalValue.filters.wow.instances = createEmptyWowMatchFilters()
             this.syncToValue()
         }
     }
