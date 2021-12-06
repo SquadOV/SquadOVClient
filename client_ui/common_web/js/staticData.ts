@@ -10,17 +10,14 @@ const LATEST_WOW_PATCH = '9.1.0'
 const LATEST_WOW_VANILLA_PATCH = '1.13.7'
 const LATEST_WOW_TBC_PATCH = '2.5.2'
 
-export enum WowGameRelease {
-    Retail,
-    Vanilla,
-    TBC,
-}
+import { SquadOvWowRelease as WowGameRelease } from '@client/js/squadov/game'
+export { WowGameRelease }
 
 export function wowGameReleaseFromString(s: string | undefined): WowGameRelease {
     if (s == 'vanilla') {
         return WowGameRelease.Vanilla
     } else if (s == 'tbc') {
-        return WowGameRelease.TBC
+        return WowGameRelease.Tbc
     } else {
         return WowGameRelease.Retail
     }
@@ -32,7 +29,7 @@ function wowGameReleaseToStaticFolder(r: WowGameRelease) : string {
             return 'content'
         case WowGameRelease.Vanilla:
             return 'content-vanilla'
-        case WowGameRelease.TBC:
+        case WowGameRelease.Tbc:
             return 'content-tbc'
     }
 }
@@ -144,6 +141,10 @@ class StaticDataClient {
 
     getWowContentEncountersUrl(r: WowGameRelease): string {
         return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/encounters.json`
+    }
+
+    getWowContentInstancesUrl(r: WowGameRelease): string {
+        return `${STATIC_CONTENT_BASE_URL}/wow/${wowGameReleaseToStaticFolder(r)}/instances.json`
     }
 
     getTftLittleLegendIcon(id: string): string {
