@@ -2,6 +2,9 @@
 #include "shared/system/win32/hwnd_utils.h"
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
+#include "shared/strings/strings.h"
+#include "shared/image/ico/ico.h"
+#include "shared/base64/encode.h"
 
 #include <Windows.h>
 #include <psapi.h>
@@ -52,6 +55,39 @@ OSString Win32SystemProcessInterface::getProcessName(OSPID pid) const {
 
 OSWindow Win32SystemProcessInterface::findWindowForProcessWithMaxDelay(OSPID pid, const std::chrono::milliseconds& maxDelayMs, const std::chrono::milliseconds& step, bool quiet, bool checkWindowSize) const {
     return shared::system::win32::findWindowForProcessWithMaxDelay(pid, maxDelayMs, step, quiet, checkWindowSize);
+}
+
+OSString Win32SystemProcessInterface::getProcessFriendlyName(const std::filesystem::path& path) const {
+    DWORD unk1 = 0;
+    const auto fileInfoSize = GetFileVersionInfoSizeExW(0, path.native().c_str(), &unk1);
+
+    std::vector<char> buffer(fileInfoSize);
+    if (!GetFileVersionInfoExW(0, path.native().c_str(), 0, fileInfoSize, (void*)buffer.data())) {
+        return L"";
+    }
+
+    char* infBuffer = nullptr;
+    unsigned int infSize = 0;
+    if (!VerQueryValueA((void*)buffer.data(), "\\StringFileInfo\\000004B0\\ProductName", (void**)&infBuffer, &infSize)) {
+        return L"";
+    }
+
+    return shared::strings::utf8ToWcs(std::string(infBuffer, infSize));
+}
+
+std::string Win32SystemProcessInterface::getBase64EncodedIconForExe(const std::filesystem::path& path) const {
+    HICON icon = ExtractIconW(GetModuleHandle(nullptr), path.native().c_str(), 0);
+    if (!icon) {
+        return "";
+    }
+
+    shared::image::ico::IcoImage image;
+    image.addIcon(icon);
+
+    const auto rawBuffer = image.serialize();
+    // Unnecessary copy but a little too lazy to write new code to get the interface to match up to the existing base64 encoding.
+    const std::string rawBufferStr(rawBuffer.begin(), rawBuffer.end());
+    return shared::base64::encode(rawBufferStr, shared::base64::BASE64_ENCODE_DEFAULT_CHARSET);
 }
 
 }

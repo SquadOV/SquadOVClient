@@ -71,16 +71,16 @@ int main(int argc, char** argv) {
 
     process::ProcessRunningState processes(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
     processes.update();
-    const auto finalProcess = processes.getProcesssRunningByName(wProcessName, false);
+    const auto allProcesses = processes.getProcesssRunningByName(wProcessName, false);
 
-    if (!finalProcess) {
+    if (allProcesses.empty()) {
         std::cerr << "Failed to find process." << std::endl;
         return 1;
     }
 
     const auto outputFname = vm["output"].as<std::string>();
     // Doesn't really matter what game we stick in here yolo.
-    service::recorder::GameRecorder recorder(finalProcess.value(), shared::EGame::Hearthstone);
+    service::recorder::GameRecorder recorder(allProcesses[0], shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
 
     service::vod::VodDestination destination;

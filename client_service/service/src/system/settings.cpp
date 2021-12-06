@@ -13,12 +13,32 @@ Settings* getCurrentSettings() {
     return global.get();
 }
 
+AudioDeviceSettings AudioDeviceSettings::createDefault() const {
+    AudioDeviceSettings settings;
+    settings.id = "";
+    settings.device = "System Default Device";
+    settings.mono = mono;
+    settings.voice = voice;
+    settings.volume = volume;
+    return settings;
+}
+
 AudioDeviceSettings AudioDeviceSettings::fromJson(const nlohmann::json& obj) {
     AudioDeviceSettings settings;
     settings.device = obj.value("device", "Default Device");
     settings.volume = obj.value("volume", 1.0);
     settings.mono = obj.value("mono", false);
     settings.voice = obj.value("voice", false);
+    // Note that if ID is empty that means an error occurred - we need to transition users
+    // to using the ID instead of the name.
+    settings.id = obj.value("id", "");
+    return settings;
+}
+
+ProcessAudioRecordSettings ProcessAudioRecordSettings::fromJson(const nlohmann::json& obj) {
+    ProcessAudioRecordSettings settings;
+    settings.process = process_watcher::process::ProcessRecord::fromJson(obj["process"]);
+    settings.volume = obj.value("volume", 1.0);
     return settings;
 }
 
@@ -45,6 +65,17 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
+    settings.useWASAPIRecording = obj.value("useWASAPIRecording", false);
+    settings.usePerProcessRecording = obj.value("usePerProcessRecording", false);
+    settings.perProcessRecordingOsCheck = obj.value("perProcessRecordingOsCheck", false);
+    settings.recordGameAudio = obj.value("recordGameAudio", true);
+    settings.gameAudioVolume = obj.value("gameAudioVolume", 1.0);
+    if (obj.find("processesToRecord") != obj.end() && obj.count("processesToRecord") > 0) {
+        for (const auto& o : obj["processesToRecord"]) {
+            settings.processesToRecord.push_back(ProcessAudioRecordSettings::fromJson(o));
+        }
+    }
+
     settings.useVfr4 = obj.value("useVfr4", true);
     settings.useWGC2 = obj.value("useWGC2", true);
 
@@ -134,6 +165,7 @@ void Settings::reloadSettingsFromFile() {
     try {
         std::ifstream ifs(fpath);
         const auto obj = nlohmann::json::parse(ifs);
+        _raw = obj;
         _settings = LocalSettings::fromJson(obj);
         _loaded = true;
     } catch (std::exception& ex) {
