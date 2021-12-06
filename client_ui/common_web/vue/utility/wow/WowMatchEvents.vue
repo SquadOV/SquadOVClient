@@ -396,6 +396,10 @@ export default class WowMatchEvents extends mixins(CommonComponent) {
     }
 
     checkFilterPass(ele: WowUserTarget): boolean {
+        if (!wowc.objectHasType(ele.flags)) {
+            return false
+        }
+
         let friendly = wowc.isObjectFriendly(ele.flags)
         let hostile = wowc.isObjectHostile(ele.flags)
         let neutral = wowc.isObjectNeutral(ele.flags)

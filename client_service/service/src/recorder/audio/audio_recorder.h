@@ -1,6 +1,7 @@
 #pragma once
 
 #include "recorder/audio/audio_packet_properties.h"
+#include "system/settings.h"
 
 #include <filesystem>
 #include <memory>
@@ -27,7 +28,7 @@ inline std::string audioDeviceDirectionToStr(EAudioDeviceDirection dir) {
     return "";
 }
 
-using AudioDeviceSet = std::unordered_set<int>;
+using AudioDeviceSet = std::unordered_set<std::string>;
 
 class AudioRecorder {
 public:
@@ -35,7 +36,7 @@ public:
     virtual void startRecording() = 0;
     virtual void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex) = 0;
     virtual void stop() = 0;
-    virtual void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet) = 0;
+    virtual void loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet) = 0;
     virtual double initialVolume() const = 0;
     virtual void setVolume(double volume) = 0;
 

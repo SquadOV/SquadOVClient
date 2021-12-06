@@ -86,17 +86,15 @@
                             class="my-2"
                             v-if="!!recommendedSquads && recommendedSquads.length > 0"
                         >
-                            <div class="ma-2 text-h6 font-weight-bold">Recommend Squads!</div>
+                            <div class="ma-2 text-h6 font-weight-bold">Recommended Squads!</div>
                             <v-divider></v-divider>
                             <v-list-item
                                 v-for="(squad, idx) in recommendedSquads"
                                 :key="`squad-${idx}`"
                             >
                                 <v-list-item-content>
-                                    <v-list-item-title>{{ squad.squadName }}</v-list-item-title>
+                                    <v-list-item-title class="long-text">{{ squad.squadName }}</v-list-item-title>
                                 </v-list-item-content>
-
-                                <v-spacer></v-spacer>
 
                                 <v-list-item-action>
                                     <v-btn color="primary" @click="joinPublicSquad(squad.id)" :loading="joiningPublicSquad">
@@ -112,7 +110,7 @@
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
                             :items-per-page="10"
-                            :page="userPage + 1"
+                            :page="userPage"
                             hide-default-footer
                             hide-default-header
                         >
@@ -197,7 +195,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     showHideCreateSquad: boolean = false
     showHideInviteSquad: boolean = false
     recommendedSquads: Squad[] | null = null
-    userPage: number = 0
+    userPage: number = 1
     joiningPublicSquad: boolean = false
 
     $refs!: {

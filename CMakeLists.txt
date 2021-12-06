@@ -31,6 +31,7 @@ find_package(FFMPEG REQUIRED)
 find_package(RdKafka CONFIG REQUIRED)
 find_package(CARES REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
+find_package(WIL CONFIG REQUIRED)
 
 set(Protobuf_USE_STATIC_LIBS ON)
 set(protobuf_MODULE_COMPATIBLE ON)

@@ -12,7 +12,8 @@ BOOST_DATA_TEST_CASE(
     bdata::make(
     std::vector<std::tuple<std::string,std::string>>{
         {"bob the builder", "Ym9iIHRoZSBidWlsZGVy"},
-        {"123ald;kfja-234alfs;dkjf", "MTIzYWxkO2tmamEtMjM0YWxmcztka2pm"}
+        {"123ald;kfja-234alfs;dkjf", "MTIzYWxkO2tmamEtMjM0YWxmcztka2pm"},
+        {std::string("\x20\0\xA8", 3), "IACo"}
     }),
     data, ref
 )

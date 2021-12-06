@@ -1,178 +1,188 @@
 <template>
-    <div class="d-flex align-center pa-2" v-if="options.length > 0">
-        <div>
-            <v-icon>
-                mdi-eye
-            </v-icon>
-        </div>
-
-        <v-divider vertical class="mx-2"></v-divider>
-
-        <div class="d-flex flex-grow-1">
-            <div
-                v-for="(vod, idx) in options"
-                :key="idx"
-                @click="$emit('input', vod)"
-                class="vod-select-div ml-1"
-            >
-                <slot
-                    name="vod"
-                    v-bind:ivod="vod"
-                    v-bind:selected="value"
-                ></slot>
-            </div>
-        </div>
-
-        <div class="d-flex align-center" v-if="!!value && !this.value.isLocal && !hasFastify && !hasLocal">
-            <div class="text-subtitle-2 font-weight-bold">
-                VOD Processing...
+    <div>
+        <div class="d-flex align-center pa-2" v-if="options.length > 0">
+            <div>
+                <v-icon>
+                    mdi-eye
+                </v-icon>
             </div>
 
-            <v-tooltip bottom :open-delay="100">
-                <template v-slot:activator="{on, attrs}">
-                    <div
-                        v-on="on"
-                        v-bind="attrs"
-                    >
-                        <v-progress-circular
-                            indeterminate size="16"
+            <v-divider vertical class="mx-2"></v-divider>
+
+            <div class="d-flex flex-grow-1">
+                <div
+                    v-for="(vod, idx) in options"
+                    :key="idx"
+                    @click="$emit('input', vod)"
+                    class="vod-select-div ml-1"
+                >
+                    <slot
+                        name="vod"
+                        v-bind:ivod="vod"
+                        v-bind:selected="value"
+                    ></slot>
+                </div>
+            </div>
+
+            <div class="d-flex align-center" v-if="!!value && !this.value.isLocal && !hasFastify && !hasLocal">
+                <div class="text-subtitle-2 font-weight-bold">
+                    VOD Processing...
+                </div>
+
+                <v-tooltip bottom :open-delay="100">
+                    <template v-slot:activator="{on, attrs}">
+                        <div
+                            v-on="on"
+                            v-bind="attrs"
                         >
-                        </v-progress-circular>
+                            <v-progress-circular
+                                indeterminate size="16"
+                            >
+                            </v-progress-circular>
+                        </div>
+                    </template>
+
+                    This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
+                </v-tooltip>
+            </div>
+
+            <template v-if="!!$store.state.currentUser">
+                <v-divider vertical class="mx-2"></v-divider>
+                <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
+                    <!-- delete button -->
+                    <vod-delete-button
+                        v-if="!!value"
+                        :vod="value"
+                        @on-delete="onDeleteFinish"
+                    >
+                    </vod-delete-button>
+
+                    <!-- upload button -->
+                    <v-tooltip bottom>
+                        <template v-slot:activator="{on, attrs}">
+                            <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
+                                <v-icon>
+                                    mdi-upload
+                                </v-icon>
+                            </v-btn>
+                        </template>
+
+                        Upload
+                    </v-tooltip>
+
+                    <div v-if="uploadProgress !== null">
+                        {{ (uploadProgress * 100.0).toFixed(0) }}% 
                     </div>
                 </template>
 
-                This VOD is still being processed. Loading will be slow, the VOD may seem to be incomplete, and/or some features will be disabled until it is finished processing. Check back soon!
-            </v-tooltip>
-        </div>
-
-        <template v-if="!!$store.state.currentUser">
-            <v-divider vertical class="mx-2"></v-divider>
-            <template v-if="!!value && value.userUuid === $store.state.currentUser.uuid && (hasFastify || hasLocal)">
-                <!-- delete button -->
-                <vod-delete-button
+                <!-- download VOD button -->
+                <vod-download-button
                     v-if="!!value"
-                    :vod="value"
-                    @on-delete="onDeleteFinish"
+                    :video-uuid="value.videoUuid"
+                    :track="track"
+                    @on-download="recheckForLocalFile"
                 >
-                </vod-delete-button>
-
-                <!-- upload button -->
+                </vod-download-button>
+                
+                <!-- create clip button -->
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
-                        <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
+                        <div v-on="on" v-bind="attrs">
+                            <v-btn :disabled="!isClippingEnabled || !clippingAllowed" color="success" icon @click="openEditingWindow">
+                                <v-icon>
+                                    mdi-content-cut
+                                </v-icon>
+                            </v-btn>
+                        </div>
+                    </template>
+                    <span v-if="isClippingEnabled && !clippingAllowed"> Unable to clip. </span>
+                    <span v-else-if="isClippingEnabled"> Clip </span>
+                    <span v-else> Go to Desktop Application to create a clip. </span>
+                </v-tooltip>
+
+                <!-- drawing button -->
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="pink accent-2" icon @click="toggleDrawing" :input-value="enableDraw" v-on="on" v-bind="attrs">
                             <v-icon>
-                                mdi-upload
+                                mdi-palette
                             </v-icon>
                         </v-btn>
                     </template>
 
-                    Upload
+                    Draw
                 </v-tooltip>
 
-                <div v-if="uploadProgress !== null">
-                    {{ (uploadProgress * 100.0).toFixed(0) }}% 
-                </div>
-            </template>
+                <!-- clip library button -->
 
-            <!-- download VOD button -->
-            <vod-download-button
-                v-if="!!value"
-                :video-uuid="value.videoUuid"
-                :track="track"
-                @on-download="recheckForLocalFile"
-            >
-            </vod-download-button>
-            
-            <!-- create clip button -->
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <div v-on="on" v-bind="attrs">
-                        <v-btn :disabled="!isClippingEnabled || !clippingAllowed" color="success" icon @click="openEditingWindow">
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <v-btn color="primary" icon @click="openClipWindowForMatch" :disabled="!hasFastify" v-on="on" v-bind="attrs">
                             <v-icon>
-                                mdi-content-cut
+                                mdi-filmstrip
                             </v-icon>
                         </v-btn>
-                    </div>
-                </template>
-                <span v-if="isClippingEnabled && !clippingAllowed"> Unable to clip. </span>
-                <span v-else-if="isClippingEnabled"> Clip </span>
-                <span v-else> Go to Desktop Application to create a clip. </span>
-            </v-tooltip>
+                    </template>
 
-            <!-- drawing button -->
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <v-btn color="pink accent-2" icon @click="toggleDrawing" :input-value="enableDraw" v-on="on" v-bind="attrs">
-                        <v-icon>
-                            mdi-palette
-                        </v-icon>
-                    </v-btn>
-                </template>
+                    Clip Library (Match)
+                </v-tooltip>
 
-                Draw
-            </v-tooltip>
+                <!-- favorite -->
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <div v-on="on" v-bind="attrs">
+                            <vod-favorite-button
+                                v-if="!!value && !disableFavorite && hasFastify"
+                                :vod-uuid="value.videoUuid"
+                            >
+                            </vod-favorite-button>
+                        </div>
+                    </template>
 
-            <!-- clip library button -->
+                    Favorite
+                </v-tooltip>
 
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <v-btn color="primary" icon @click="openClipWindowForMatch" :disabled="!hasFastify" v-on="on" v-bind="attrs">
-                        <v-icon>
-                            mdi-filmstrip
-                        </v-icon>
-                    </v-btn>
-                </template>
+                <!-- watch list -->
+                <v-tooltip bottom>
+                    <template v-slot:activator="{on, attrs}">
+                        <div v-on="on" v-bind="attrs">
+                            <vod-watchlist-button
+                                v-if="!!value && hasFastify"
+                                :vod-uuid="value.videoUuid"
+                            >
+                            </vod-watchlist-button>
+                        </div>
+                    </template>
 
-                Clip Library (Match)
-            </v-tooltip>
+                    Add to Watch List
+                </v-tooltip>
 
-            <!-- favorite -->
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <div v-on="on" v-bind="attrs">
-                        <vod-favorite-button
-                            v-if="!!value && !disableFavorite && hasFastify"
-                            :vod-uuid="value.videoUuid"
-                        >
-                        </vod-favorite-button>
-                    </div>
-                </template>
+            </template>
 
-                Favorite
-            </v-tooltip>
+            <v-snackbar
+                v-model="downloadError"
+                :timeout="5000"
+                color="error"
+            >
+                Failed to download/delete the VOD, please try again later.
+            </v-snackbar>
 
-            <!-- watch list -->
-            <v-tooltip bottom>
-                <template v-slot:activator="{on, attrs}">
-                    <div v-on="on" v-bind="attrs">
-                        <vod-watchlist-button
-                            v-if="!!value && hasFastify"
-                            :vod-uuid="value.videoUuid"
-                        >
-                        </vod-watchlist-button>
-                    </div>
-                </template>
+            <v-snackbar
+                v-model="uploadError"
+                :timeout="5000"
+                color="error"
+            >
+                Failed to upload your locally recorded VOD, please submit a bug report.
+            </v-snackbar>
+        </div>
 
-                Add to Watch List
-            </v-tooltip>
-
-        </template>
-
-        <v-snackbar
-            v-model="downloadError"
-            :timeout="5000"
-            color="error"
+        <bulk-tag-display
+            v-if="!!value && !!vodTags"
+            :video-uuid="value.videoUuid"
+            :tags="vodTags"
+            :max-tags="20"
         >
-            Failed to download/delete the VOD, please try again later.
-        </v-snackbar>
-
-        <v-snackbar
-            v-model="uploadError"
-            :timeout="5000"
-            color="error"
-        >
-            Failed to upload your locally recorded VOD, please submit a bug report.
-        </v-snackbar>
+        </bulk-tag-display>
     </div>
 </template>
 
@@ -194,6 +204,7 @@ import { DownloadUploadProgressCb, manager } from '@client/js/vods/local_manager
 import { MatchVideoSharePermissions } from '@client/js/squadov/share'
 import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
 import VodDeleteButton from '@client/vue/utility/vods/VodDeleteButton.vue'
+const BulkTagDisplay = () => import('@client/vue/utility/vods/BulkTagDisplay.vue')
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -206,6 +217,7 @@ import { IpcResponse } from '@client/js/system/ipc'
         VodWatchlistButton,
         VodDownloadButton,
         VodDeleteButton,
+        BulkTagDisplay,
     }
 })
 export default class GenericVodPicker extends mixins(CommonComponent) {
@@ -236,6 +248,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
     localVodLocation: string | null = null
 
     permissions: MatchVideoSharePermissions | null = null
+    vodTags: vod.VodTag[] | null = null
 
     @Watch('value')
     checkAnalytics(newVod: VodAssociation | null, oldVod: VodAssociation | null) {
@@ -255,6 +268,20 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
             this.permissions = resp.data
         }).catch((err: any) => {
             console.error('Failed to get video share permissions: ', err)
+        })
+    }
+
+    @Watch('value')
+    refreshTags() {
+        this.vodTags = null
+        if (!this.value) {
+            return
+        }
+
+        apiClient.accessToken().getVodTags(this.value.videoUuid).then((resp: ApiData<vod.VodTag[]>) => {
+            this.vodTags = resp.data
+        }).catch((err: any) => {
+            console.error('Failed to get VOD tags: ', err)
         })
     }
 
@@ -462,6 +489,7 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
         this.recheckForLocalFile()
         this.registerCallbacks()
         this.refreshPermissions()
+        this.refreshTags()
     }
 
     beforeDestroy() {

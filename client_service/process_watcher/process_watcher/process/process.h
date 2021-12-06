@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -12,8 +13,24 @@
 #endif
 
 #include "shared/system/interfaces/system_process_interface.h"
+#include "shared/json.h"
 
 namespace process_watcher::process {
+
+struct ProcessRecord {
+    // name: User friendly name to present to the user.
+    std::string name;
+    // The basename of the exe file that we can identify the exe later.
+    // Also what we use the key to cache the icon.
+    std::string exe;
+    // base64 icon
+    std::string ico;
+    // C++ internals - never serialized.
+    std::string fullPath;
+    OSPID pid;
+
+    static ProcessRecord fromJson(const nlohmann::json& obj);
+};
 
 class Process {
 public:
@@ -48,10 +65,11 @@ public:
     bool update();
 
 #ifdef _WIN32
-    std::optional<Process> getProcesssRunningByName(const std::wstring& name, bool needWindow) const;
+    std::vector<Process> getProcesssRunningByName(const std::wstring& name, bool needWindow) const;
 #endif
 
     std::optional<Process> getProcesssRunningByPid(OSPID pid, bool needWindow) const;
+    std::vector<ProcessRecord> getList() const;
 
 private:
     // Certain processes we don't want to actually return as "running" until certain conditions are met (i.e. it has an active window).
@@ -61,11 +79,28 @@ private:
     void clearProcesses();
 
 #ifdef _WIN32
-    std::unordered_map<std::wstring, Process*> _nameToProcess;
+    // Name is not unique
+    std::unordered_map<std::wstring, std::vector<Process*>> _nameToProcess;
 #endif
 
     std::unordered_map<OSPID, ProcessPtr> _pidToProcess;
     shared::system::SystemProcessInterfacePtr _itf;
+};
+
+}
+
+namespace shared::json {
+
+template<>
+struct JsonConverter<process_watcher::process::ProcessRecord> {
+    static nlohmann::json to(const process_watcher::process::ProcessRecord& v) {
+        nlohmann::json ret = {
+            { "name" , v.name },
+            { "exe" , v.exe },
+            { "ico" , v.ico }
+        };
+        return ret;
+    }
 };
 
 }

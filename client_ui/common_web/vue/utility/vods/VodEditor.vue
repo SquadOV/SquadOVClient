@@ -7,6 +7,7 @@
             :current-time="timestamp"
             @update:currentTime="updateTimestampFromPlayer"
             disable-theater
+            disable-popout
             fill
             ref="player"
             :loop-clip="previewClip"
