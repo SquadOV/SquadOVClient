@@ -1,5 +1,6 @@
 export enum RCMessageType {
-    StopAndDestroy
+    StopAndDestroy,
+    GoToTimestamp
 }
 
 export interface RCMessagePacket {
@@ -33,6 +34,13 @@ export class VodRemoteControlContext {
         this._channel.postMessage({
             type: RCMessageType.StopAndDestroy,
             data: undefined,
+        })
+    }
+
+    goToTimestamp(ms: number) {
+        this._channel.postMessage({
+            type: RCMessageType.GoToTimestamp,
+            data: ms,
         })
     }
 }
