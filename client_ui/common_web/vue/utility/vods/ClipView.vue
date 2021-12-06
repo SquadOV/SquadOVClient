@@ -6,6 +6,7 @@
                     class="mb-1 clip-vod"
                     fill
                     disable-theater
+                    disable-popout
                     :vod="clip.clip"
                     :current-time.sync="viewTime"
                     :ready.sync="vodReady"
