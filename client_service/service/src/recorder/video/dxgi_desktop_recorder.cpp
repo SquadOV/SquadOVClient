@@ -92,15 +92,14 @@ void DxgiDesktopRecorder::initialize() {
     dxgiDevice = nullptr;
 
     IDXGIOutput* dxgiOutput = nullptr;
-    DXGI_OUTPUT_DESC outputDesc;
     UINT outputIndex = 0;
     while (dxgiAdapter->EnumOutputs(outputIndex++, &dxgiOutput) != DXGI_ERROR_NOT_FOUND) {
-        hr = dxgiOutput->GetDesc(&outputDesc);
+        hr = dxgiOutput->GetDesc(&_outputDesc);
         if (hr != S_OK) {
             continue;
         }
 
-        if (outputDesc.Monitor == refMonitor) {
+        if (_outputDesc.Monitor == refMonitor) {
             break;
         }
 
@@ -113,7 +112,7 @@ void DxgiDesktopRecorder::initialize() {
     if (hr != S_OK || !dxgiOutput) {
         THROW_ERROR("Failed to get IDXGIOutput.");
     }
-    _rotation = outputDesc.Rotation;
+    _rotation = _outputDesc.Rotation;
 
     hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&_dxgiOutput1);
     if (hr != S_OK) {
@@ -122,8 +121,8 @@ void DxgiDesktopRecorder::initialize() {
 
     reacquireDuplicationInterface();
 
-    _width = static_cast<size_t>(outputDesc.DesktopCoordinates.right - outputDesc.DesktopCoordinates.left);
-    _height = static_cast<size_t>(outputDesc.DesktopCoordinates.bottom - outputDesc.DesktopCoordinates.top);
+    _width = static_cast<size_t>(_outputDesc.DesktopCoordinates.right - _outputDesc.DesktopCoordinates.left);
+    _height = static_cast<size_t>(_outputDesc.DesktopCoordinates.bottom - _outputDesc.DesktopCoordinates.top);
 
     dxgiOutput->Release();
 }
@@ -145,6 +144,40 @@ void DxgiDesktopRecorder::setActiveEncoder(service::recorder::encoder::AvEncoder
     _activeEncoder = encoder;
 }
 
+void DxgiDesktopRecorder::updateMouseState(const DXGI_OUTDUPL_FRAME_INFO& frameInfo) {
+    // If LastMouseUpdateTime has a zero value then that means that there is not a
+    // mouse position update or a shape change so we have nothing to update.
+    if (frameInfo.LastMouseUpdateTime.QuadPart == 0) {
+        return;
+    }
+
+    // Only update the cached position of the pointer if it's visible.
+    _pointer.x = frameInfo.PointerPosition.Position.x;
+    _pointer.y = frameInfo.PointerPosition.Position.y;
+    _pointer.visible = frameInfo.PointerPosition.Visible;
+
+    if (frameInfo.PointerShapeBufferSize > 0) {
+        if (frameInfo.PointerShapeBufferSize != _pointer.buffer.size()) {
+            _pointer.buffer.resize(frameInfo.PointerShapeBufferSize);
+        }
+
+        UINT bufSizeRequired = 0;
+        HRESULT hr = _dupl->GetFramePointerShape(
+            frameInfo.PointerShapeBufferSize,
+            reinterpret_cast<void*>(_pointer.buffer.data()),
+            &bufSizeRequired,
+            &_pointer.shape
+        );
+
+        if (hr != S_OK) {
+            LOG_WARNING("Failed to get frame pointer shape: " << hr << std::endl);
+            _pointer.buffer.clear();
+        }
+
+        _pointer.shapeDirty = true;
+    }
+}
+
 void DxgiDesktopRecorder::startRecording() {
     _recording = true;
     _recordingThread = std::thread([this](){ 
@@ -156,7 +189,9 @@ void DxgiDesktopRecorder::startRecording() {
         cpuFrame.initializeImage(_width, _height);
 
         service::system::getCurrentSettings()->reloadSettingsFromFile();
-        const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw;
+        const auto recSettings = service::system::getCurrentSettings()->recording();
+        const bool useHwFrame = recSettings.useVideoHw;
+        const bool useMouse = recSettings.recordMouse;
 
         int64_t count = 0;
         int64_t numReused = 0;
@@ -225,6 +260,8 @@ void DxgiDesktopRecorder::startRecording() {
             }
 
             const auto postAcquireTm = TickClock::now();
+
+            updateMouseState(frameInfo);
             
             if (!reuseOldFrame) {
                 // I'm not sure why it returns a ID3D11Texture2D but that's what
@@ -237,12 +274,28 @@ void DxgiDesktopRecorder::startRecording() {
                     continue;
                 }
 
+                ID3D11Texture2D* finalTex = nullptr;
+                DXGI_MODE_ROTATION rotation = _rotation;
+                if (useMouse && _pointer.visible && _pointer.shape.Type == DXGI_OUTDUPL_POINTER_SHAPE_TYPE_COLOR) {
+                    // If the mouse is available/visible and we want to actually add the mouse to the video,
+                    // then we need to create a staging D3D11 texture (if necessary) and then draw the cursor texture on
+                    // top of that staging texture before we store it into a texture that we can pass to the rest of our
+                    // pipeline.
+                    renderCursor(tex);
+
+                    finalTex = _renderTexture;
+                    rotation = DXGI_MODE_ROTATION_IDENTITY;
+                } else {
+                    finalTex = tex;
+                }
+
                 if (useHwFrame) {
-                    hwFrame.copyFromSharedGpu(&*_self, tex, _rotation);
+                    hwFrame.copyFromSharedGpu(&*_self, finalTex, rotation);
                 } else {
                     auto immediate = _self->immediateContext();
-                    cpuFrame.loadFromD3d11TextureWithStaging(_self->device(), immediate.context(), tex);
+                    cpuFrame.loadFromD3d11TextureWithStaging(_self->device(), immediate.context(), finalTex);
                 }
+
                 tex->Release();
             } else {
                 ++numReused;
@@ -284,6 +337,102 @@ void DxgiDesktopRecorder::startRecording() {
 
         LOG_INFO("DXGI Stats :: Count: " << count << " Reused: " << numReused << std::endl);
     });
+}
+
+void DxgiDesktopRecorder::renderCursor(ID3D11Texture2D* screen) {
+    D3D11_TEXTURE2D_DESC screenDesc = { 0 };
+    screen->GetDesc(&screenDesc);
+
+    D3D11_TEXTURE2D_DESC renderDesc = { 0 };
+    if (_renderTexture) {
+        _renderTexture->GetDesc(&renderDesc);
+    }
+    
+    const bool needsTextureRefresh = (screenDesc.Width != renderDesc.Width || screenDesc.Height != renderDesc.Height);
+    if (needsTextureRefresh) {
+        renderDesc.Width = screenDesc.Width;
+        renderDesc.Height = screenDesc.Height;
+        renderDesc.MipLevels = 1;
+        renderDesc.ArraySize = 1;
+        renderDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        renderDesc.SampleDesc.Count = 1;
+        renderDesc.Usage = D3D11_USAGE_DEFAULT;
+        renderDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        renderDesc.CPUAccessFlags = 0;
+        renderDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+        HRESULT hr = _self->device()->CreateTexture2D(&renderDesc, nullptr, &_renderTexture);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create texture to render cursor: " << hr);
+            return;
+        }
+    }
+
+    // If we haven't made the pointer model yet, create it here - it's just a quad that we'll move around based on the
+    // pointer's location.
+    if (!_cursorModel) {
+        _cursorModel = service::renderer::createFullScreenQuad(_self->device());
+    }
+
+    // Whenever the cursor moves, we can just modify the transform to go from the full-screen squad that it is by
+    // default to an appropriately sized cursor quad.
+    _cursorModel->clearXform();
+    _cursorModel->setTranslation(
+        DirectX::XMFLOAT3(
+            2.f * (static_cast<float>(_pointer.x) - (_width / 2)) / _width,
+            -2.f * (static_cast<float>(_pointer.y) - (_height / 2)) / _height,
+            0.f
+        )
+    );
+    _cursorModel->setScale(DirectX::XMFLOAT3(static_cast<float>(_pointer.shape.Width) / _width, static_cast<float>(_pointer.shape.Height) / _height, 1.f));
+
+    // The texture in _renderTexture must be initialized properly such that we can
+    // straight copy from the input screen texture without any transformations.
+    if (!_renderer || needsTextureRefresh) {
+        _renderer = std::make_unique<service::recorder::image::D3dImageRendererBundle>(_self.get(), _self.get(), _renderTexture, true);
+        _renderer->forceNoCopy();
+        _renderer->renderer()->addModelToScene(_cursorModel);
+    }
+
+    if (!_cursorTexture || _pointer.shapeDirty) {
+        _cursorTexture = nullptr;
+
+        D3D11_TEXTURE2D_DESC cursorDesc = { 0 };
+        cursorDesc.MipLevels = 1;
+        cursorDesc.ArraySize = 1;
+        cursorDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        cursorDesc.SampleDesc.Count = 1;
+        cursorDesc.SampleDesc.Quality = 0;
+        cursorDesc.Usage = D3D11_USAGE_DEFAULT;
+        cursorDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+        cursorDesc.CPUAccessFlags = 0;
+        cursorDesc.MiscFlags = 0;
+        cursorDesc.Width = _pointer.shape.Width;
+        cursorDesc.Height = _pointer.shape.Height;
+
+        // At this point we need to get the BITMAP data that's inside the PointerCache object into the DirectX texture.
+        // And the way that raw data should be interpreted is very much dependent on the SHAPE_TYPE parameter. There's three options:
+        // (Source: https://docs.microsoft.com/en-us/windows/win32/api/dxgi1_2/ne-dxgi1_2-dxgi_outdupl_pointer_shape_type)
+        //      - DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MONOCHROME (0x1)
+        //      - DXGI_OUTDUPL_POINTER_SHAPE_TYPE_COLOR (0x2)
+        //      - DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MASKED_COLOR (0x4)
+        // The DXGI_OUTDUPL_POINTER_SHAPE_TYPE_COLOR is the most straight-forward as we can just do a straight copy into the DirectX texture.
+        // TODO: DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MONOCHROME and DXGI_OUTDUPL_POINTER_SHAPE_TYPE_MASKED_COLOR are a BIT tricker but it should
+        // theoretically be possible to reproduce their behavior to a close enough degree with an alpha channel.
+        D3D11_SUBRESOURCE_DATA initData;
+        initData.pSysMem = reinterpret_cast<void*>(_pointer.buffer.data());
+        initData.SysMemPitch = _pointer.shape.Pitch;
+        initData.SysMemSlicePitch = 0;
+        HRESULT hr = _self->device()->CreateTexture2D(&cursorDesc, &initData, &_cursorTexture);
+        if (hr != S_OK) {
+            THROW_ERROR("Failed to create cursor texture: " << hr);
+            return;
+        }
+
+        _cursorModel->setTexture(_self->device(), _renderer->context(), _cursorTexture);
+    }
+
+    _renderer->render(screen, _rotation);
 }
 
 void DxgiDesktopRecorder::stopRecording() {

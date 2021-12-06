@@ -48,7 +48,7 @@ D3d11Model::D3d11Model(
         }
     }
 
-    _modelXform = XMMatrixIdentity();
+    clearXform();
 }
 
 D3d11Model::~D3d11Model() {
@@ -141,8 +141,20 @@ void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, 
     context->CopyResource(_shaderTexture, texture);
 }
 
+void D3d11Model::clearXform() {
+    _modelXform = XMMatrixIdentity();
+}
+
+void D3d11Model::setScale(DirectX::XMFLOAT3 scale) {
+    _modelXform = DirectX::XMMatrixScalingFromVector(DirectX::XMLoadFloat3(&scale)) * _modelXform;
+}
+
+void D3d11Model::setTranslation(DirectX::XMFLOAT3 delta) {
+    _modelXform = DirectX::XMMatrixTranslationFromVector(DirectX::XMLoadFloat3(&delta)) * _modelXform;
+}
+
 void D3d11Model::setZRotation(float degrees) {
-    _modelXform = XMMatrixRotationZ(degrees * M_PI / 180.f);
+    _modelXform = XMMatrixRotationZ(degrees * M_PI / 180.f) * _modelXform;
 }
 
 D3d11ModelPtr createFullScreenQuad(ID3D11Device* device) {

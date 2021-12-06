@@ -123,6 +123,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeRecordMouse(state: RootState, b: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.recordMouse = b
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeLocalRecording(state: RootState, params: {use: boolean, loc: string, limit: number}) {
 /// #if DESKTOP
             if (!state.settings) {

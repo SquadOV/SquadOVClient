@@ -62,6 +62,7 @@ export interface SquadOvRecordingSettings {
     useHwEncoder: boolean
     useVfr4: boolean
     useWGC2: boolean
+    recordMouse: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
@@ -292,6 +293,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -327,6 +329,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -362,6 +365,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -418,6 +422,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useHwEncoder: true,
             useVfr4: true,
             useWGC2: true,
+            recordMouse: true,
             outputDevices: [
                 {
                     device: 'Default Device',
@@ -514,6 +519,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.useWGC2 === undefined) {
             parsedData.record.useWGC2 = true
+        }
+
+        if (parsedData.record.recordMouse === undefined) {
+            parsedData.record.recordMouse = true
         }
         
         if (parsedData.record.useLocalRecording === undefined) {

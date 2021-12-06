@@ -13,6 +13,22 @@ D3d11Renderer::D3d11Renderer(D3d11SharedContext* shared):
         THROW_ERROR("Failed to load shader.");
     }
     _shader->initialize(_shared->device());
+
+    D3D11_BLEND_DESC blendDesc;
+    blendDesc.AlphaToCoverageEnable = FALSE;
+    blendDesc.IndependentBlendEnable = FALSE;
+    blendDesc.RenderTarget[0].BlendEnable = TRUE;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+    HRESULT hr = _shared->device()->CreateBlendState(&blendDesc, &_blendState);
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to create blend state: " << hr);
+    }
 }
 
 D3d11Renderer::~D3d11Renderer() {
@@ -90,6 +106,9 @@ bool D3d11Renderer::renderSceneToRenderTarget( ID3D11RenderTargetView* target) {
 
     std::lock_guard<std::mutex> guard(_renderMutex);
     _context->OMSetRenderTargets(1, &target, nullptr);
+
+    FLOAT blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
+    _context->OMSetBlendState(_blendState, blendFactor, 0xffffffff);
     const float clearColor[4] = { 0.f, 1.f, 0.f, 1.f };
     _context->ClearRenderTargetView(target, clearColor);
     return renderScene();

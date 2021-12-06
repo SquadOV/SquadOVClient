@@ -76,6 +76,7 @@ void D3dImageRendererBundle::render(ID3D11Texture2D* image, DXGI_MODE_ROTATION r
     _outputTexture->GetDesc(&textureDesc);
 
     const bool canCopy = 
+        !_forceNoCopy &&
         (imageDesc.Width == textureDesc.Width) &&
         (imageDesc.Height == textureDesc.Height) &&
         (imageDesc.Format == textureDesc.Format) &&
