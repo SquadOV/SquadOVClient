@@ -3,6 +3,8 @@
 #include "shared/errors/error.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "shared/system/interfaces/system_process_interface.h"
+#include "shared/strings/strings.h"
+#include "shared/filesystem/utility.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -30,6 +32,15 @@ process_watcher::process::ProcessPtr createProcess(const shared::system::SystemP
 }
 
 namespace process_watcher::process {
+
+    
+ProcessRecord ProcessRecord::fromJson(const nlohmann::json& obj) {
+    ProcessRecord record;
+    record.name = obj.value("name", "");
+    record.exe = obj.value("exe", "");
+    record.ico = obj.value("ico", "");
+    return record;
+}
 
 void Process::updateName() {
     if (!empty()) {
@@ -70,7 +81,7 @@ void ProcessRunningState::addProcess(OSPID pid) {
     }
 
     if (!p->empty()) {
-        _nameToProcess[p->name()] = p.get();
+        _nameToProcess[p->name()].push_back(p.get());
     }
 
     _pidToProcess[pid] = p;
@@ -101,13 +112,22 @@ std::optional<Process> ProcessRunningState::checkIfProcessCanBeUsed(const Proces
     return *p;
 }
 
-std::optional<Process> ProcessRunningState::getProcesssRunningByName(const std::wstring& name, bool needWindow) const {
+std::vector<Process> ProcessRunningState::getProcesssRunningByName(const std::wstring& name, bool needWindow) const {
     const auto it = _nameToProcess.find(name);
-    if (it == _nameToProcess.end()) {
-        return std::nullopt;
-    } else {
-        return checkIfProcessCanBeUsed(it->second, needWindow);
+
+    std::vector<Process> ret;
+
+    if (it != _nameToProcess.end()) {
+        for (const auto& p: it->second) {
+            auto pp = checkIfProcessCanBeUsed(p, needWindow);
+            if (!pp) {
+                continue;
+            }
+            ret.push_back(pp.value());
+        }
     }
+
+    return ret;
 }
 
 std::optional<Process> ProcessRunningState::getProcesssRunningByPid(OSPID pid, bool needWindow) const {
@@ -117,6 +137,29 @@ std::optional<Process> ProcessRunningState::getProcesssRunningByPid(OSPID pid, b
     } else {
         return checkIfProcessCanBeUsed(it->second.get(), needWindow);
     }
+}
+
+std::vector<ProcessRecord> ProcessRunningState::getList() const {
+    std::vector<ProcessRecord> ret;
+    for (const auto& p: _pidToProcess) {
+        ProcessRecord rec;
+        rec.pid = p.second->pid();
+        rec.fullPath = shared::filesystem::pathUtf8(p.second->path());
+        rec.exe = shared::strings::wcsToUtf8(p.second->name());
+        try {
+            rec.name = shared::strings::wcsToUtf8(_itf->getProcessFriendlyName(p.second->path()));
+        } catch (...) {
+            rec.name = "";
+        }
+        
+        if (rec.name.empty()) {
+            rec.name = rec.exe;
+        }
+
+        rec.ico = "";
+        ret.push_back(rec);
+    }
+    return ret;
 }
 
 }

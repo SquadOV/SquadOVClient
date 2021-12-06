@@ -13,8 +13,8 @@
 
                     <div class="audio-select-div">
                         <v-select
-                            v-model="device.device"
-                            @input="syncToValue"
+                            :value="device.id"
+                            @input="changeSelectedDevice(device, arguments[0])"
                             :items="deviceItems"
                             dense
                             hide-details
@@ -93,7 +93,7 @@ import { AudioDeviceSettings, createDefaultAudioDevice } from '@client/js/system
 import { ipcRenderer } from 'electron'
 ///#endif 
 
-import { AudioDeviceListingResponse } from '@client/js/system/audio'
+import { AudioDeviceListingResponse, SingleAudioDevice, createDefaultSingleAudioDevice } from '@client/js/system/audio'
 
 @Component
 export default class MultipleAudioDeviceSettings extends Vue {
@@ -125,13 +125,13 @@ export default class MultipleAudioDeviceSettings extends Vue {
         this.syncToValue()
     }
 
-    deviceOptions: string[] = []
-    defaultDevice: string = ''
+    deviceOptions: SingleAudioDevice[] = []
+    defaultDevice: SingleAudioDevice = createDefaultSingleAudioDevice()
     get deviceItems(): any[] {
-        return this.deviceOptions.map((ele: string) => {
+        return this.deviceOptions.map((ele: SingleAudioDevice) => {
             return {
-                text: `${ele}${(ele == this.defaultDevice) ? ' [DEFAULT]' : ''}`,
-                value: ele,
+                text: `${ele.name}${(ele.id == this.defaultDevice.id) ? ' [DEFAULT]' : ''}`,
+                value: ele.id,
             }
         })
     }
@@ -151,6 +151,17 @@ export default class MultipleAudioDeviceSettings extends Vue {
         this.internalValue = JSON.parse(JSON.stringify(this.value))
     }
 
+    changeSelectedDevice(oldDevice: AudioDeviceSettings, newId: string) {
+        let newDevice = this.deviceOptions.find((ele: SingleAudioDevice) => ele.id === newId)
+        if (!newDevice) {
+            newDevice = this.defaultDevice
+        }
+
+        oldDevice.device = newDevice.name
+        oldDevice.id = newDevice.id
+        this.syncToValue()
+    }
+
     syncToValue() {
         this.$emit('input', JSON.parse(JSON.stringify(this.internalValue)))
     }
@@ -160,7 +171,7 @@ export default class MultipleAudioDeviceSettings extends Vue {
         if (this.isInput) {
             ipcRenderer.on('respond-input-devices', (e: any, resp: AudioDeviceListingResponse) => {
                 this.deviceOptions = [
-                    'Default Device',
+                    createDefaultSingleAudioDevice(),
                     ...resp.options
                 ]
                 this.defaultDevice = resp.default
@@ -168,7 +179,7 @@ export default class MultipleAudioDeviceSettings extends Vue {
         } else {
             ipcRenderer.on('respond-output-devices', (e: any, resp: AudioDeviceListingResponse) => {
                 this.deviceOptions = [
-                    'Default Device',
+                    createDefaultSingleAudioDevice(),
                     ...resp.options
                 ]
                 this.defaultDevice = resp.default
