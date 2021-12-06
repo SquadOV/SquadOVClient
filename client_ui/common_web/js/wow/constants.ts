@@ -28,6 +28,10 @@ const COMBATLOG_OBJECT_MAINASSIST               = 0x00080000;
 const COMBATLOG_OBJECT_NONE                     = 0x80000000;
 const COMBATLOG_OBJECT_SPECIAL_MASK             = 0xFFFF0000;
 
+export function objectHasType(flags: number): boolean {
+    return ((flags & COMBATLOG_OBJECT_TYPE_MASK) > 0)
+}
+
 export function isObjectFriendly(flags: number): boolean {
     return ((flags & COMBATLOG_OBJECT_REACTION_FRIENDLY) > 0)
 }
