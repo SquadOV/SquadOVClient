@@ -520,6 +520,20 @@ function startClientService() {
         }
         return
     }
+    return exePath
+}
+
+function startClientService() {
+    if (totalCloseCount > 5) {
+        log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
+        if (!!win) {
+            win.webContents.on('did-finish-load', () => {
+                win.webContents.send('service-error')    
+            })
+            win.webContents.send('service-error')
+        }
+        return
+    }
 
     // Start auxiliary service that'll handle waiting for games to run and
     // collecting the relevant information and sending it to the database.
@@ -1110,4 +1124,23 @@ ipcMain.on('request-process-list', () => {
 
 zeromqServer.on('respond-process-list', (r) => {
     win.webContents.send('respond-process-list', JSON.parse(r))
+})
+
+ipcMain.on('user-upload-speed-check', () => {
+    let exePath = getClientExePath()
+
+    // Run a custom mode in the client service executable to do the speed check.
+    let sanityExe = path.join(path.dirname(exePath), 'speed_check.exe')
+    if (fs.existsSync(sanityExe)) {
+        exec(sanityExe, () => {
+            if (!!setupWindow) {
+                setupWindow.webContents.send('finish-user-upload-speed-check')
+            }
+        })
+    } else {
+        log.warn('Failed to find upload speed check exe: ', sanityExe)
+        if (!!setupWindow) {
+            setupWindow.webContents.send('finish-user-upload-speed-check')
+        }
+    }
 })

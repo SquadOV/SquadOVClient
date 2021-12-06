@@ -79,7 +79,6 @@ int main(int argc, char **argv)
         t1.join();
     }
 
-    pipeClient.stop();
     // if (t2.joinable())
     // {
         // t2.join();

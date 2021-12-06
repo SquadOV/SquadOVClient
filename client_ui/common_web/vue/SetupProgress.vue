@@ -66,6 +66,20 @@ export default class SetupProgress extends Vue {
         ipcRenderer.send('logout')
     }
 
+    async userSpeedCheck() {
+        console.log('User speed check to SOV Servers...')
+        // this.refreshStatusMessage()
+
+        let p = new Promise((resolve, reject) => {
+            ipcRenderer.on('finish-user-upload-speed-check', () => {
+                resolve(0)
+            })
+        })
+
+        ipcRenderer.send('user-upload-speed-check')
+        return p
+    }
+
     async doSetupSequence() {
         // 1. The settings.json needs to be generated properly for any of the next steps to happen.
         await this.generateSettingsFile()
@@ -74,6 +88,8 @@ export default class SetupProgress extends Vue {
         //    settings file (for audio devices) and to backfill in the proper ID based on the given audio device name.
         //    The flip side of doing this will allow us to do an audio device sanity check every time we start up.
         await this.audioDeviceSanityCheck() 
+
+        await this.userSpeedCheck()
 
         this.statusMessage = 'Connecting to SquadOV...'
 
