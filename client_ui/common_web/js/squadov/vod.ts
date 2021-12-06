@@ -11,6 +11,14 @@ export interface VodAssociation {
     isLocal: boolean
 }
 
+export interface VodTag {
+    videoUuid: string
+    tagId: number
+    tag: string
+    count: number
+    isSelf: boolean
+}
+
 export interface VodClip {
     clip: VodAssociation
     manifest: VodManifest
@@ -25,6 +33,7 @@ export interface VodClip {
     favoriteReason: string | null
     isWatchlist: boolean
     accessToken: string | null
+    tags: VodTag[]
 }
 
 export interface VodFavoriteResponse {
