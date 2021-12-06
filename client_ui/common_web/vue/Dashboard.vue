@@ -112,7 +112,7 @@
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
                             :items-per-page="10"
-                            :page="userPage + 1"
+                            :page="userPage"
                             hide-default-footer
                             hide-default-header
                         >
@@ -197,7 +197,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     showHideCreateSquad: boolean = false
     showHideInviteSquad: boolean = false
     recommendedSquads: Squad[] | null = null
-    userPage: number = 0
+    userPage: number = 1
     joiningPublicSquad: boolean = false
 
     $refs!: {
