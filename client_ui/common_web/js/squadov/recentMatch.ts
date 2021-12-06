@@ -1,5 +1,5 @@
 import { SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
-import { VodManifest } from '@client/js/squadov/vod'
+import { VodManifest, VodTag } from '@client/js/squadov/vod'
 import { AimlabTaskData, cleanAimlabTaskData } from '@client/js/aimlab/aimlab_task'
 import { LolPlayerMatchSummary, cleanLolPlayerMatchSummaryFromJson } from '@client/js/lol/matches'
 import { TftPlayerMatchSummary, cleanTftPlayerMatchSummaryFromJson } from '@client/js/tft/matches'
@@ -19,6 +19,7 @@ export interface BaseRecentMatch {
     favoriteReason: string | null
     isWatchlist: boolean
     accessToken: string | null
+    tags: VodTag[]
 }
 
 export interface RecentMatch {
@@ -58,6 +59,7 @@ function createEmptyWowGenericMatchFilters(): WowGenericMatchFilters {
 export interface RecentMatchFilters {
     games: SquadOvGames[] | undefined
     wowReleases: SquadOvWowRelease[] | undefined
+    tags: string[] | undefined
     squads: number[] | undefined
     users: number[] | undefined
     timeStart: number | undefined
@@ -73,6 +75,7 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
     return {
         games: undefined,
         wowReleases: undefined,
+        tags: [],
         squads: undefined,
         users: undefined,
         timeStart: undefined,
