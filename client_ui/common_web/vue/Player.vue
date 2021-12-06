@@ -4,6 +4,7 @@
         v-if="!!vod"
         fill
         disable-theater
+        disable-popout
         :vod="vod"
     >
     </video-player>
@@ -28,8 +29,8 @@ export default class Player extends Vue {
     @Prop({required: true})
     vodUuid!: string
 
-    @Prop({required: true})
-    share!: string
+    @Prop()
+    share!: string | null
     hasAccess: boolean = false
     vod: VodAssociation | null = null
 
@@ -43,14 +44,18 @@ export default class Player extends Vue {
 
     @Watch('share')
     requestAccess() {
-        this.hasAccess = false
-        apiClient.exchangeShareAccessToken(this.share).then((resp: ApiData<ShareAccessTokenResponse>) => {
-            apiClient.setTempSessionId(resp.data.key, resp.data.uid.toString())
-            this.hasAccess = true
+        if (!!this.share) {
+            this.hasAccess = false
+            apiClient.exchangeShareAccessToken(this.share).then((resp: ApiData<ShareAccessTokenResponse>) => {
+                apiClient.setTempSessionId(resp.data.key, resp.data.uid.toString())
+                this.hasAccess = true
+                this.requestVod()
+            }).catch((err: any) => {
+                console.error('Failed to exchange access token: ', err)
+            })
+        } else if (!!this.$store.state.currentUser) {
             this.requestVod()
-        }).catch((err: any) => {
-            console.error('Failed to exchange access token: ', err)
-        })
+        }
     }
 
     mounted() {

@@ -60,6 +60,9 @@ public:
         }
     }
 
+    OSString getProcessFriendlyName(const std::filesystem::path& path) const override { return L""; }
+    std::string getBase64EncodedIconForExe(const std::filesystem::path& path) const override { return ""; }
+
 private:
     std::unordered_map<OSPID, TestDatum> _pidMap;
     std::unordered_map<OSString, TestDatum> _nameMap;
@@ -139,16 +142,16 @@ BOOST_AUTO_TEST_CASE(find_process_by_name)
     for (const auto& d: referenceData) {
         {
             const auto p = state.getProcesssRunningByName(d.name, true);
-            BOOST_TEST(p.has_value());
-            BOOST_TEST(p.value().pid() == d.pid);
-            BOOST_CHECK(p.value().name() == d.name);
+            BOOST_TEST(!p.empty());
+            BOOST_TEST(p[0].pid() == d.pid);
+            BOOST_CHECK(p[0].name() == d.name);
         }
 
         {
             const auto p = state.getProcesssRunningByName(d.name, false);
-            BOOST_TEST(p.has_value());
-            BOOST_TEST(p.value().pid() == d.pid);
-            BOOST_CHECK(p.value().name() == d.name);
+            BOOST_TEST(!p.empty());
+            BOOST_TEST(p[0].pid() == d.pid);
+            BOOST_CHECK(p[0].name() == d.name);
         }
     }
 }
@@ -168,14 +171,14 @@ BOOST_AUTO_TEST_CASE(find_process_by_name_no_window)
     for (const auto& d: referenceData) {
         {
             const auto p = state.getProcesssRunningByName(d.name, true);
-            BOOST_TEST(!p.has_value());
+            BOOST_TEST(p.empty());
         }
 
         {
             const auto p = state.getProcesssRunningByName(d.name, false);
-            BOOST_TEST(p.has_value());
-            BOOST_TEST(p.value().pid() == d.pid);
-            BOOST_CHECK(p.value().name() == d.name);
+            BOOST_TEST(!p.empty());
+            BOOST_TEST(p[0].pid() == d.pid);
+            BOOST_CHECK(p[0].name() == d.name);
         }
     }
 }
@@ -197,8 +200,8 @@ BOOST_AUTO_TEST_CASE(find_process_test_process_drop)
     state.update();
 
     for (const auto& d: referenceData) {
-        BOOST_TEST(!state.getProcesssRunningByName(d.name, true));
-        BOOST_TEST(!state.getProcesssRunningByName(d.name, false));
+        BOOST_TEST(state.getProcesssRunningByName(d.name, true).empty());
+        BOOST_TEST(state.getProcesssRunningByName(d.name, false).empty());
         BOOST_TEST(!state.getProcesssRunningByPid(d.pid, true));
         BOOST_TEST(!state.getProcesssRunningByPid(d.pid, false));
     }
@@ -226,8 +229,8 @@ BOOST_AUTO_TEST_CASE(find_process_test_process_add)
     state.update();
 
     for (const auto& d: referenceData) {
-        BOOST_TEST(state.getProcesssRunningByName(d.name, true).has_value());
-        BOOST_TEST(state.getProcesssRunningByName(d.name, false).has_value());
+        BOOST_TEST(!state.getProcesssRunningByName(d.name, true).empty());
+        BOOST_TEST(!state.getProcesssRunningByName(d.name, false).empty());
         BOOST_TEST(state.getProcesssRunningByPid(d.pid, true).has_value());
         BOOST_TEST(state.getProcesssRunningByPid(d.pid, false).has_value());
     }

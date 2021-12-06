@@ -45,6 +45,8 @@ import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
 import CommonComponent from '@client/vue/CommonComponent'
+import { PlayerPageId } from '@client/js/pages'
+import { openPathInNewWindow } from '@client/js/external'
 
 @Component({
     components: {
@@ -75,8 +77,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     @Prop()
     playerHeight!: number
 
-    @Prop({type : Boolean ,default: false})
+    @Prop({type : Boolean, default: false})
     disableTheater! : boolean
+
+    @Prop({type : Boolean, default: false})
+    disablePopout! : boolean
 
     @Prop()
     currentTime!: Date | null
@@ -115,6 +120,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     forceNoVideo: boolean = false
     forceRedraw: number = 0
     syncedInputTs: boolean = false
+    lastTimestamp: number = 0
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -143,6 +149,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                     this.player.dispose()
                     this.player = null
                 }
+                break
+            case RCMessageType.GoToTimestamp:
+                console.log('receive rc packet: ', p)
+                this.goToTimeMs(p.data, false, false)
                 break
         }
     }
@@ -239,12 +249,19 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         this.goToTimeMs(time * 1000.0, false)
     }
 
-    goToTimeMs(tmMs : number, useOffset: boolean) {
+    goToTimeMs(tmMs : number, useOffset: boolean, propagate: boolean = true) {
         if (!this.player || this.player.readyState() < 3) {
             return
         }
 
-        this.player.currentTime(Math.max(Math.floor((tmMs - (useOffset ? this.goToOffset : 0.0)) / 1000.0), 0.0))
+        let newTime = Math.max(Math.floor((tmMs - (useOffset ? this.goToOffset : 0.0)) / 1000.0), 0.0)
+        this.player.currentTime(newTime)
+
+///#if DESKTOP
+        if (propagate) {
+            this.rcContext?.goToTimestamp(newTime * 1000.0)
+        }
+///#endif
     }
 
     get currentVideoSourceUri() : string {
@@ -418,6 +435,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
 
                 this.$emit('update:currentTs', this.player.currentTime())
+                if (Math.abs(this.player.currentTime() - this.lastTimestamp) > 1.0) {
+                    this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
+                    this.lastTimestamp = this.player.currentTime()   
+                }
             }
         })
 
@@ -439,10 +460,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             }
         })
 
+        let controlBar = this.player.getChild('controlBar')!
+        let button = videojs.getComponent('Button')
         if (!this.disableTheater) {
             // Construct a custom "theater mode" button a la YouTube 
-            let button = videojs.getComponent('Button')
-
             //@ts-ignore
             let theaterModeButtonCls = videojs.extend(button, {
                 constructor: function() {
@@ -456,12 +477,40 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             })
             videojs.registerComponent('theaterModeButton', theaterModeButtonCls)
 
-            let controlBar = this.player.getChild('controlBar')!
             let theaterModeButton = controlBar.addChild('theaterModeButton', {}, 16)
             theaterModeButton.on('click', () => {
                 this.$emit('toggle-theater-mode')
             })
         }
+
+///#if DESKTOP
+        if (!this.disablePopout) {
+            // Construct a popout button that'll cause a new window to pop out that contains JUST the video.
+            //@ts-ignore
+            let popoutButtonCls = videojs.extend(button, {
+                constructor: function() {
+                    //@ts-ignore
+                    button.apply(this, arguments)
+                    this.addClass('mdi')
+                    this.addClass('mdi-fix')
+                    this.addClass('mdi-open-in-new')
+                    this.controlText('Popout Video to new Window')
+                },
+            })
+            videojs.registerComponent('popoutButton', popoutButtonCls)
+
+            let popoutButton = controlBar.addChild('popoutButton', {}, 16)
+            popoutButton.on('click', () => {
+                let path = this.$router.resolve({
+                    name: PlayerPageId,
+                    params: {
+                        vodUuid: this.vod!.videoUuid
+                    }
+                })
+                openPathInNewWindow(path.href)
+            })
+        }
+///#endif
 
         let cbar = this.player.getChild('controlBar')
         if (!!cbar) {

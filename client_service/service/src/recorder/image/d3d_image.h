@@ -20,7 +20,10 @@ public:
 
     // Assume that the input image is on the same device as the shared context.
     void render(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation = DXGI_MODE_ROTATION_IDENTITY);
+    void forceNoCopy() { _forceNoCopy = true; }
 
+    service::renderer::D3d11Renderer* renderer() { return _renderer.get(); }
+    ID3D11DeviceContext* context() const { return _context; }
 private:
     ID3D11Texture2D* rawOutputTexture() const;
 
@@ -32,6 +35,7 @@ private:
     ID3D11RenderTargetView* _renderTarget = nullptr;
     ID3D11DeviceContext* _context = nullptr;
     bool _sameDevice = false;
+    bool _forceNoCopy = false;
 };
 
 using D3dImageRendererBundlePtr = std::unique_ptr<D3dImageRendererBundle>;

@@ -141,7 +141,7 @@
             </div>
 
             <div class="d-flex align-center justify-center mt-1 font-caption">
-                It make take a few seconds for the preview to update with your changes.
+                It may take a few seconds for the preview to update with your changes.
             </div>
 
             <!-- Creation control -->

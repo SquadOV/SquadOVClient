@@ -38,7 +38,10 @@
 #include "shared/http/http_client.h"
 #include "shared/uuid.cpp"
 #include "shared/squadov/speed_check.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "system/processes.h"
 
+#include <algorithm>
 #include <boost/program_options.hpp>
 #include <boost/stacktrace.hpp>
 #include <civetweb.h>
@@ -749,6 +752,15 @@ int main(int argc, char** argv) {
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_RELOAD_GAME_RECORDING_STREAM, [&previewStream, &zeroMqServerClient](const std::string& msg){
         LOG_INFO("RELOAD GAME RECORDING STREAM:" << msg << std::endl);
         previewStream.reload();
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_REQUEST_PROCESS_LIST, [&zeroMqServerClient](const std::string& msg){
+        LOG_INFO("REQUEST PROCESS LIST:" << msg << std::endl);
+        const auto list = service::system::getListOfUserFacingProcesses();
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_RESPOND_PROCESS_LIST,
+            shared::json::JsonConverter<std::remove_const_t<decltype(list)>>::to(list).dump()
+        );
     });
 
     const auto mode = vm["mode"].as<std::string>();

@@ -4,7 +4,7 @@ import path from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
-import { allGames, SquadOvGames } from '@client/js/squadov/game'
+import { allGames, SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
 /// #endif
 
 export interface SquadOvOverlay {
@@ -41,6 +41,7 @@ function createDefaultOverlaySettings(): SquadOvOverlaySettings {
 
 export interface AudioDeviceSettings {
     device: string
+    id: string
     volume: number
     mono: boolean
     voice: boolean
@@ -49,10 +50,22 @@ export interface AudioDeviceSettings {
 export function createDefaultAudioDevice(): AudioDeviceSettings {
     return {
         device: 'Default Device',
+        id: '',
         volume: 1.0,
         mono: false,
         voice: false,
     }
+}
+
+export interface ProcessRecord {
+    name: string
+    exe: string
+    ico: string
+}
+
+export interface ProcessAudioRecordSettings {
+    process: ProcessRecord
+    volume: number
 }
 
 export interface SquadOvRecordingSettings {
@@ -62,9 +75,16 @@ export interface SquadOvRecordingSettings {
     useHwEncoder: boolean
     useVfr4: boolean
     useWGC2: boolean
+    recordMouse: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
+    useWASAPIRecording: boolean
+    usePerProcessRecording: boolean
+    perProcessRecordingOsCheck: boolean
+    recordGameAudio: boolean
+    gameAudioVolume: number
+    processesToRecord: ProcessAudioRecordSettings[]
     useLocalRecording: boolean
     localRecordingLocation: string
     maxLocalRecordingSizeGb: number
@@ -163,6 +183,11 @@ export async function changeLocalRecordingSettings(record: SquadOvRecordingSetti
     }    
 }
 
+export interface WowDisabledInstance {
+    id: number
+    release: SquadOvWowRelease
+}
+
 export interface WowSettings {
     useCombatLogTimeout: boolean
     timeoutSeconds2: number
@@ -172,6 +197,7 @@ export interface WowSettings {
     recordKeystones: boolean
     recordEncounters: boolean
     minimumTimeSecondsToRecord: number
+    doNotRecordInstances: WowDisabledInstance[]
 }
 
 function createEmptyWowSettings(): WowSettings {
@@ -184,6 +210,7 @@ function createEmptyWowSettings(): WowSettings {
         recordKeystones: true,
         recordEncounters: true,
         minimumTimeSecondsToRecord: 15,
+        doNotRecordInstances: [],
     }
 }
 
@@ -292,9 +319,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -303,12 +332,19 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
+                usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
+                recordGameAudio: false,
+                gameAudioVolume: 1.0,
+                processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -327,9 +363,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -338,12 +376,19 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
+                usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
+                recordGameAudio: false,
+                gameAudioVolume: 1.0,
+                processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -362,9 +407,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
+                recordMouse: true,
                 outputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: false,
@@ -373,12 +420,19 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 inputDevices: [
                     {
                         device: 'Default Device',
+                        id: '',
                         volume: 1.0,
                         mono: false,
                         voice: true,
                     }
                 ],
                 usePushToTalk: false,
+                useWASAPIRecording: true,
+                usePerProcessRecording: false,
+                perProcessRecordingOsCheck: false,
+                recordGameAudio: false,
+                gameAudioVolume: 1.0,
+                processesToRecord: [],
                 useLocalRecording: false,
                 localRecordingLocation: getDefaultRecordingLocation(),
                 maxLocalRecordingSizeGb: 100,
@@ -418,9 +472,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useHwEncoder: true,
             useVfr4: true,
             useWGC2: true,
+            recordMouse: true,
             outputDevices: [
                 {
                     device: 'Default Device',
+                    id: '',
                     volume: 1.0,
                     mono: false,
                     voice: false,
@@ -429,12 +485,19 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             inputDevices: [
                 {
                     device: 'Default Device',
+                    id: '',
                     volume: 1.0,
                     mono: false,
                     voice: true,
                 }
             ],
             usePushToTalk: false,
+            useWASAPIRecording: true,
+            usePerProcessRecording: false,
+            perProcessRecordingOsCheck: false,
+            recordGameAudio: false,
+            gameAudioVolume: 1.0,
+            processesToRecord: [],
             useLocalRecording: false,
             localRecordingLocation: getDefaultRecordingLocation(),
             maxLocalRecordingSizeGb: 100,
@@ -514,6 +577,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.useWGC2 === undefined) {
             parsedData.record.useWGC2 = true
+        }
+
+        if (parsedData.record.recordMouse === undefined) {
+            parsedData.record.recordMouse = true
         }
         
         if (parsedData.record.useLocalRecording === undefined) {
@@ -627,13 +694,42 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.games.wow.minimumTimeSecondsToRecord === undefined) {
             parsedData.games.wow.minimumTimeSecondsToRecord = 15
         }
+
+        if (parsedData.games.wow.doNotRecordInstances === undefined) {
+            parsedData.games.wow.doNotRecordInstances = []
+        }
+        
+        if (parsedData.keybinds.pushToTalk2 === undefined) {
+            parsedData.keybinds.pushToTalk2 = []
+        }
+    
+        if (parsedData.record.useWASAPIRecording === undefined) {
+            parsedData.record.useWASAPIRecording = false
+        }
+
+        if (parsedData.record.usePerProcessRecording === undefined) {
+            parsedData.record.usePerProcessRecording = false
+        }
+
+        if (parsedData.record.recordGameAudio === undefined) {
+            parsedData.record.recordGameAudio = true
+        }
+        
+        if (parsedData.record.processesToRecord === undefined) {
+            parsedData.record.processesToRecord = []
+        }
+
+        if (parsedData.record.gameAudioVolume === undefined) {
+            parsedData.record.gameAudioVolume = 1.0
+        }
+
+        if (parsedData.record.perProcessRecordingOsCheck === undefined) {
+            parsedData.record.perProcessRecordingOsCheck = false
+        }
+
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()
-    }
-
-    if (parsedData.keybinds.pushToTalk2 === undefined) {
-        parsedData.keybinds.pushToTalk2 = []
     }
 
     saveLocalSettings(parsedData, true)

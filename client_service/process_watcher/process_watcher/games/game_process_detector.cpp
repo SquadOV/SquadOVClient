@@ -30,8 +30,8 @@ std::optional<process::Process> GameProcessDetector::checkIsRunning(const proces
     for (const auto& exe : _exeNames) {
         const process::Process cmpProcess(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>(), exe, 0);
         const auto p = processes.getProcesssRunningByName(cmpProcess.name(), true);
-        if (p) {
-            return p;
+        if (!p.empty()) {
+            return p[0];
         }
     }
     return std::nullopt;

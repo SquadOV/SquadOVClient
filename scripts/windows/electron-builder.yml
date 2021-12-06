@@ -64,6 +64,7 @@ extraResources:
       - "advanced_crash_dump_enabler.exe"
       - "crashpad_handler.exe"
       - "speed_check.exe"
+      - "audio_sanity_checker.exe"
       - "ffmpeg.exe"
       - "shaders/*"
       - "models/*"

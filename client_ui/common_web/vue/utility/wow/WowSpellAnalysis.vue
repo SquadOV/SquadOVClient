@@ -225,6 +225,17 @@ export default class WowSpellAnalysis extends mixins(CommonComponent) {
         graph: TimePeriodGraph
     }
 
+    @Watch('currentTime')
+    adjustSlidingWindowBasedOnTime() {
+        if (!this.currentTime) {
+            return
+        }
+        // When we go outside of the short window of time that we're actually looking at in the graph
+        // we want to adjust the sliding window so that the 'currentTime' is included in the window.
+        let x = this.convertTmToX(this.currentTime)
+        this.$refs.graph.bringIntoView(x)
+    }
+
     get guidSet(): Set<string> {
         return new Set(this.charactersToDisplay.map((ele: WowCharacter) => ele.guid))
     }
@@ -439,6 +450,8 @@ export default class WowSpellAnalysis extends mixins(CommonComponent) {
         } else {
             this.charactersToDisplay = []
         }
+
+        this.adjustSlidingWindowBasedOnTime()
     }
 
     mounted() {
