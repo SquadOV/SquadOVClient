@@ -101,6 +101,21 @@
                             >
                             </wow-filter-ui>
                         </div>
+
+                        <div class="mt-2">
+                            <div class="font-weight-bold">
+                                Instances
+                            </div>
+                            <wow-filter-ui
+                                v-model="internalValue.filters.wow.instances"
+                                @input="syncToValue"
+                                :for-instances="true"
+                                :release="WowGameRelease.Retail"
+                                hide-vod-option
+                                show-enabled
+                            >
+                            </wow-filter-ui>
+                        </div>
                     </div>
                 </v-tab-item>
             </v-tabs>
