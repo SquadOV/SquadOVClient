@@ -88,6 +88,7 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const TwitchOauthHandler = () => import('@client/vue/auth/oauth/TwitchOauthHandler.vue')
+const DiscordOauthHandler = () => import('@client/vue/auth/oauth/DiscordOauthHandler.vue')
 
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const SquadLinkResponsePage = () => import('@client/vue/squads/SquadLinkResponsePage.vue')
@@ -607,6 +608,15 @@ const baseRoutes : any[] = [
                 }),
             },
             {
+                path: 'discord/oauth-callback',
+                component: DiscordOauthHandler,
+                name: pi.DiscordOauthPageId,
+                props: (route : any) => ({
+                    code: route.query.code,
+                    state: route.query.state,
+                }),
+            },
+            {
                 path: 'invite/:inviteUuid/:action',
                 component: SquadInviteResponsePage,
                 name: pi.InviteResponsePageId,
@@ -828,6 +838,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
     // Certain pages should be allowed to be public would be nice to make this somehow less hard-coded or something...
     let isPublic = to.name === pi.RsoOauthPageId
         || to.name === pi.TwitchOauthPageId
+        || to.name === pi.DiscordOauthPageId
         || to.name === pi.InviteResponsePageId 
         || to.name === pi.ShareRedirectPageId
         || to.name === pi.VerifyEmailPageId

@@ -1535,6 +1535,18 @@ class ApiClient {
     submitTwitchOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
         return axios.post(`auth/oauth/twitch`, {code, state, redirectUrl}, this.createWebAxiosConfig())
     }
+
+    getDiscordOauthAuthorizeUrl(): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/oauth/discord`, this.createWebAxiosConfig())
+    }
+
+    submitDiscordOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
+        return axios.post(`auth/oauth/discord`, {code, state, redirectUrl}, this.createWebAxiosConfig())
+    }
+
+    deleteMyLinkedDiscordAccount(discordId: string): Promise<void> {
+        return axios.delete(`v1/users/me/accounts/discord/${discordId}`, this.createWebAxiosConfig())
+    }
     
     getGlobalAppFeatures(): Promise<ApiData<GlobalFlags>> {
         return axios.get('/public/flags', this.createWebAxiosConfig())
