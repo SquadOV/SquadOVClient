@@ -1,14 +1,37 @@
 <template>
     <loading-container :is-loading="!loaded">
         <template v-slot:default="{ loading }">
+            <v-btn
+                v-if="collapseSidePanel"
+                id="reshow-sidebar"
+                @click="collapseSidePanel = false"
+                small
+            >
+                <v-icon>
+                    mdi-chevron-triple-right
+                </v-icon>
+            </v-btn>
+
             <v-container fluid v-if="!loading">
                 <v-row>
-                    <v-col cols="3">
+                    <v-col cols="3" v-if="!collapseSidePanel">
                         <status-display class="mb-4"></status-display>
 
                         <!-- User and squad -->
-                        <div class="text-h6 font-weight-bold">
-                            Welcome back, {{ $store.state.currentUser.username }}!
+                        <div class="d-flex align-center">
+                            <div class="text-h6 font-weight-bold">
+                                Welcome back, {{ $store.state.currentUser.username }}!
+                            </div>
+
+                            <v-btn
+                                @click="collapseSidePanel = true"
+                                small
+                                icon
+                            >
+                                <v-icon>
+                                    mdi-chevron-triple-left
+                                </v-icon>
+                            </v-btn>
                         </div>
                         <v-divider class="mt-2 mb-4"></v-divider>
 
@@ -141,7 +164,7 @@
                         </div>
                     </v-col>
 
-                    <v-col cols="9">
+                    <v-col :cols="collapseSidePanel ? 12 : 9">
                         <!-- Recent recorded games -->
                         <recent-recorded-matches
                             ref="recent"
@@ -197,6 +220,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     recommendedSquads: Squad[] | null = null
     userPage: number = 1
     joiningPublicSquad: boolean = false
+    collapseSidePanel: boolean = false
 
     $refs!: {
         recent: RecentRecordedMatches
@@ -385,6 +409,15 @@ export default class Dashboard extends mixins(CommonComponent) {
 #rec-squads {
     border-radius: 4px;
     border: 1px solid yellow;
+}
+
+#reshow-sidebar {
+    border: 1px solid white;
+    border-radius: 0px 5px 5px 0px;
+    position: absolute;
+    top: calc(10% + 48px);
+    left: -1px;
+    z-index: 10;
 }
 
 </style>
