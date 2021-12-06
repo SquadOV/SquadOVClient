@@ -22,6 +22,9 @@ SET(SRCS
     src/recorder/image/image.cpp
     src/recorder/image/d3d_image.cpp
     src/recorder/audio/portaudio_audio_recorder.cpp
+    src/recorder/audio/wasapi_program_recorder.cpp
+    src/recorder/audio/wasapi_audio_recorder.cpp
+    src/recorder/audio/wasapi_audio_client_recorder.cpp
     src/recorder/audio/device.cpp
     src/recorder/audio/win32/wasapi_interface.cpp
     src/recorder/pipe/pipe.cpp
@@ -34,6 +37,7 @@ SET(SRCS
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
+    src/system/processes.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
@@ -84,8 +88,11 @@ SET(HEADERS
     src/recorder/audio/audio_packet_properties.h
     src/recorder/audio/fixed_size_audio_packet.h
     src/recorder/audio/portaudio_audio_recorder.h
+    src/recorder/audio/wasapi_program_recorder.h
+    src/recorder/audio/wasapi_audio_recorder.h
     src/recorder/audio/device.h
     src/recorder/audio/win32/wasapi_interface.h
+    src/recorder/audio/wasapi_audio_client_recorder.h
     src/recorder/pipe/pipe.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
@@ -98,6 +105,7 @@ SET(HEADERS
     src/system/settings.h
     src/system/state.h
     src/system/ipc.h
+    src/system/processes.h
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
@@ -160,10 +168,12 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         libzmq
         civetweb-cpp
         ZLIB::ZLIB
+        WIL::WIL
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid
         sentry
+        mmdevapi
         ${Boost_LIBRARIES}
         ${OPENSSL_LIBRARIES}
         ${FFMPEG_LIBRARIES}
@@ -245,6 +255,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/client_service/service
         ${CMAKE_SOURCE_DIR}/client_service/service/src
         ${CMAKE_SOURCE_DIR}/client_service/shared
+        ${CMAKE_SOURCE_DIR}/client_service/process_watcher
         ${CMAKE_SOURCE_DIR}/deps/date/include
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
         ${CMAKE_SOURCE_DIR}/deps/libpng
@@ -252,6 +263,7 @@ if(WIN32)
 
     target_link_libraries(libwgc
         squadov_shared
+        squadov_process_watcher
         date-tz
         png
         dbghelp
@@ -264,3 +276,4 @@ CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.ma
 CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_clipper.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(audio_sanity_checker "src/audio_sanity_checker.cpp" "src/audio_sanity_checker.exe.manifest")

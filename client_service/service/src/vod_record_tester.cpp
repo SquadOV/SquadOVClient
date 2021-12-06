@@ -71,16 +71,16 @@ int main(int argc, char** argv) {
 
     process::ProcessRunningState processes(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
     processes.update();
-    const auto finalProcess = processes.getProcesssRunningByName(wProcessName, false);
+    const auto allProcesses = processes.getProcesssRunningByName(wProcessName, false);
 
-    if (!finalProcess) {
+    if (allProcesses.empty()) {
         std::cerr << "Failed to find process." << std::endl;
         return 1;
     }
 
     const auto outputFname = vm["output"].as<std::string>();
     // Doesn't really matter what game we stick in here yolo.
-    service::recorder::GameRecorder recorder(finalProcess.value(), shared::EGame::Hearthstone);
+    service::recorder::GameRecorder recorder(allProcesses[0], shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
 
     service::vod::VodDestination destination;
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);

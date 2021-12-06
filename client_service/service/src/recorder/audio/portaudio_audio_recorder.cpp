@@ -56,7 +56,7 @@ public:
     void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
     void stop();
-    void loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet);
+    void loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet);
     double initialVolume() const;
     void setVolume(double volume);
 
@@ -95,52 +95,6 @@ int gPortaudioCallback(const void* input, void* output, unsigned long frameCount
     return impl->portaudioCallback(input, output, frameCount, timeInfo, statusFlags);
 }
 
-AudioDeviceResponse PortaudioAudioRecorder::getDeviceListing(EAudioDeviceDirection dir) {
-    AudioDeviceResponse response;
-
-    PaDeviceIndex defaultDevice = 
-        (dir == EAudioDeviceDirection::Input) ?
-            Pa_GetDefaultInputDevice() :
-            Pa_GetDefaultOutputDevice();
-
-    if (dir == EAudioDeviceDirection::Input) {
-        LOG_INFO("Listing Input Audio Devices..." << std::endl);
-    } else {
-        LOG_INFO("Listing Output Audio Devices..." << std::endl);
-    }
-
-    for (PaDeviceIndex i = 0; i < Pa_GetDeviceCount() ; ++i) {
-        const PaDeviceInfo* ldi = Pa_GetDeviceInfo(i);
-        const std::string ldiName(ldi->name);
-        if (i == defaultDevice) {
-            response.default = ldiName;
-        }
-
-        const PaHostApiInfo* hostInfo = Pa_GetHostApiInfo(ldi->hostApi);
-        const auto isLoopback = ldiName.find("(loopback)") != std::string::npos;
-
-        if ((dir == EAudioDeviceDirection::Output && ldi->maxOutputChannels == 0) || (dir == EAudioDeviceDirection::Input && ldi->maxInputChannels == 0) || (dir == EAudioDeviceDirection::Input && isLoopback)) {
-            continue;
-        }
-
-        LOG_INFO("FOUND AUDIO DEVICE: '" << ldiName << "' " << hostInfo->name << " " << (i == defaultDevice) << std::endl
-            << "\tCHANNELS: " << ldi->maxInputChannels << " " << ldi->maxOutputChannels << std::endl
-            << "\tSAMPLE RATE:" << ldi->defaultSampleRate << std::endl);
-
-        if (hostInfo->type != paWASAPI) {
-            continue;
-        }
-
-        if (isLoopback) {
-            continue;
-        }
-
-        response.options.push_back(ldiName);
-    }
-
-    return response;
-}
-
 PortaudioAudioRecorderImpl::PortaudioAudioRecorderImpl() {
 }
 
@@ -148,9 +102,8 @@ PortaudioAudioRecorderImpl::~PortaudioAudioRecorderImpl() {
 
 }
 
-void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet) {
-    LOG_INFO("Load Selected Audio Device: '" << selected << "' @ " << volume << " [Mono: " << mono << "]" << std::endl);
-    PortaudioAudioRecorder::getDeviceListing(dir);
+void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet) {
+    LOG_INFO("Load Selected Audio Device: '" << device.device << "(" << device.id << ")" << "' @ " << device.volume << " [Mono: " << device.mono << "]" << std::endl);
 
     // Try to find the selected device. If we can't find it then use the default device.
     PaDeviceIndex selectedDevice = paNoDevice;
@@ -171,7 +124,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
             continue;
         }
 
-        if (ldiName == selected) {
+        if (ldiName == device.device) {
             LOG_INFO("...Found selected device!" << std::endl);
             selectedDevice = i;
             break;
@@ -198,6 +151,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
     const std::string diName(di->name);
 
     // In the case we want to capture an output device we need to find the equivalent loopback device.
+    std::string selectedName = diName;
     if (dir == EAudioDeviceDirection::Output) {
         const std::string loopbackSuffix = "(loopback)";
         for (auto i = 0; i < Pa_GetDeviceCount(); ++i) {
@@ -207,6 +161,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
                 ldiName.substr(ldiName.size() - loopbackSuffix.size()) == loopbackSuffix) {
 
                 selectedDevice = i;
+                selectedName = ldiName;
                 di = ldi;
                 break;
             }
@@ -214,7 +169,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
     }
 
     // If we've already added this device then it'd be silly to try to record it again.
-    if (deviceSet.find(selectedDevice) != deviceSet.end()) {
+    if (deviceSet.find(selectedName) != deviceSet.end()) {
         LOG_WARNING("...Duplicate device detected. Ignoring." << std::endl);
         return;
     }
@@ -241,10 +196,10 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
 
     // Setup packet properties so that we can communicate with the encoder as to what format the packets will be coming in.
     _props.isPlanar = false;
-    _props.numChannels = mono ? 1 : _streamParams.channelCount;
+    _props.numChannels = device.mono ? 1 : _streamParams.channelCount;
     _props.numSamples = 0;
     _props.samplingRate = _sampleRate;
-    _props.forceMono = mono;
+    _props.forceMono = device.mono;
     
     LOG_INFO("Open recording device: " << di->name << " (" << _streamParams.device << "/" << Pa_GetDeviceCount() << ")" << std::endl
         << "\tChannels: " << _streamParams.channelCount << std::endl
@@ -263,13 +218,16 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
                 LOG_WARNING("Fallback from " << _streamParams.channelCount << " to 2 channels." << std::endl);
                 _streamParams.channelCount = 2;
 
-                if (!mono) {
+                if (!device.mono) {
                     _props.numChannels = _streamParams.channelCount;
                 }
                 continue;
             } else if (!usingDefault) {
                 LOG_WARNING("Falling back to default device." << std::endl);
-                loadDevice(dir, "", volume, mono, deviceSet);
+                service::system::AudioDeviceSettings defaultDevice;
+                defaultDevice.volume = device.volume;
+                defaultDevice.mono = device.mono;
+                loadDevice(dir, defaultDevice, deviceSet);
                 break;
             } else {
                 LOG_WARNING("No audio devices to fall back to...ignoring this audio stream." << std::endl);
@@ -277,11 +235,11 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const std
             }
         } else {
             _exists = true;
-            _volume = volume;
-            _initialVolume = volume;
-            _mono = mono;
+            _volume = device.volume;
+            _initialVolume = device.volume;
+            _mono = device.mono;
 
-            deviceSet.insert(_streamParams.device);
+            deviceSet.insert(selectedName);
         }
     }
 }
@@ -411,8 +369,8 @@ bool PortaudioAudioRecorder::exists() const {
     return _impl->exists();
 }
 
-void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const std::string& selected, double volume, bool mono, AudioDeviceSet& deviceSet) {
-    _impl->loadDevice(dir, selected, volume, mono, deviceSet);
+void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet) {
+    _impl->loadDevice(dir, device, deviceSet);
 }
 
 double PortaudioAudioRecorder::initialVolume() const {

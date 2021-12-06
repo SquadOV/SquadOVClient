@@ -3,6 +3,7 @@
 #ifdef _WIN32
 
 #include <Windows.h>
+#include <atlbase.h>
 #include <d3d11.h>
 #include <vector>
 #include "renderer/d3d11_context.h"
@@ -17,6 +18,7 @@ public:
     ~D3d11Renderer();
 
     void initializeRenderer(size_t width, size_t height);
+    void clearModels() { _models.clear(); };
     void addModelToScene(const D3d11ModelPtr& model);
 
     ID3D11Texture2D* createTexture2D(const D3D11_TEXTURE2D_DESC& desc);
@@ -30,6 +32,7 @@ private:
     D3d11SharedContext* _shared = nullptr;
     ID3D11DeviceContext* _context = nullptr;
     D3D11_VIEWPORT _viewport;
+    CComPtr<ID3D11BlendState> _blendState;
 
     void refreshRasterizerState();
     ID3D11RasterizerState* _state = nullptr;

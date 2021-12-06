@@ -293,6 +293,10 @@ class ZeroMQServerClient {
         await this._pub.send(['request-audio-input', ''])
     }
 
+    async requestProcessList() {
+        await this._pub.send(['request-process-list', ''])
+    }
+
     async requestVodDownload(uuid) {
         await this._pub.send(['request-vod-download', JSON.stringify({
             task: uuid,

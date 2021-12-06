@@ -33,6 +33,7 @@
                                                 :access-token="clip.accessToken"
                                                 :clip="clip"
                                                 hide-details
+                                                hide-tags
                                             >
                                             </mini-clip-preview>
                                         </v-col>

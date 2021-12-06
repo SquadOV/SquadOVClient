@@ -319,6 +319,17 @@ export default class TimePeriodGraph extends Vue {
     beforeDestroy() {
         window.removeEventListener('resize', this.graphResize)
     }
+
+    bringIntoView(x: number) {
+        const MARGIN: number = this.maxSpan * 0.01
+        if (x >= (this.zoomStart + MARGIN) && x <= (this.zoomEnd - MARGIN)) {
+            return
+        }
+
+        this.zoomStart = x - MARGIN
+        this.zoomEnd = this.zoomStart + this.maxSpan
+        this.refreshGraph(this.validData, [])
+    }
 }
 
 </script>

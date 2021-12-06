@@ -220,6 +220,21 @@
                         </div>
                     </v-col>
                 </v-row>
+
+                <v-row align="center">
+                    <v-col cols="12">
+                        <div class="text-h6 font-weight-bold mr-1">
+                            Disabled Instances:
+                        </div>
+
+                        <wow-disabled-instances-display
+                            class="mt-2"
+                            :value="$store.state.settings.games.wow.doNotRecordInstances"
+                            @input="$store.commit('changeWowDoNotRecordInstances', arguments[0])"
+                        >
+                        </wow-disabled-instances-display>
+                    </v-col>
+                </v-row>
             </v-tab-item>
 
             <v-tab>
@@ -330,11 +345,13 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import DisabledSupportedGameSelector from '@client/vue/utility/squadov/DisabledSupportedGameSelector.vue'
+import WowDisabledInstancesDisplay from '@client/vue/utility/squadov/settings/wow/WowDisabledInstancesDisplay.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
 
 @Component({
     components: {
-        DisabledSupportedGameSelector
+        DisabledSupportedGameSelector,
+        WowDisabledInstancesDisplay,
     }
 })
 export default class PerGameSettingsItem extends Vue {

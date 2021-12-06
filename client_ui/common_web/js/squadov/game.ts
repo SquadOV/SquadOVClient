@@ -142,6 +142,12 @@ export enum SquadOvWowRelease {
     Tbc,
 }
 
+export const ALL_WOW_RELEASES = [
+    SquadOvWowRelease.Retail,
+    SquadOvWowRelease.Vanilla,
+    SquadOvWowRelease.Tbc,
+]
+
 export function wowReleaseToGame(r: SquadOvWowRelease): SquadOvGames {
     switch (r) {
         case SquadOvWowRelease.Retail:

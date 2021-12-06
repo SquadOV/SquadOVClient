@@ -29,7 +29,8 @@ import {
     ClipComment,
     cleanClipCommentFromJson,
     VodFavoriteResponse,
-    CsgoMatchAccessibleVods
+    CsgoMatchAccessibleVods,
+    VodTag
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -1535,6 +1536,18 @@ class ApiClient {
     submitTwitchOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
         return axios.post(`auth/oauth/twitch`, {code, state, redirectUrl}, this.createWebAxiosConfig())
     }
+
+    getDiscordOauthAuthorizeUrl(): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/oauth/discord`, this.createWebAxiosConfig())
+    }
+
+    submitDiscordOauthAuthorization(code: string, state: string, redirectUrl: string) : Promise<void> {
+        return axios.post(`auth/oauth/discord`, {code, state, redirectUrl}, this.createWebAxiosConfig())
+    }
+
+    deleteMyLinkedDiscordAccount(discordId: string): Promise<void> {
+        return axios.delete(`v1/users/me/accounts/discord/${discordId}`, this.createWebAxiosConfig())
+    }
     
     getGlobalAppFeatures(): Promise<ApiData<GlobalFlags>> {
         return axios.get('/public/flags', this.createWebAxiosConfig())
@@ -1673,6 +1686,18 @@ class ApiClient {
 
     getSentryDsn(): Promise<ApiData<string>> {
         return axios.get('v1/sentry/web', this.createWebAxiosConfig())
+    }
+
+    addTagsToVod(videoUuid: string, tags: string[]): Promise<ApiData<VodTag[]>> {
+        return axios.post(`v1/vod/${videoUuid}/tag`, tags, this.createWebAxiosConfig())
+    }
+
+    deleteTagFromVod(videoUuid: string, tagId: number): Promise<void> {
+        return axios.delete(`v1/vod/${videoUuid}/tag/${tagId}`, this.createWebAxiosConfig())
+    }
+
+    getVodTags(videoUuid: string): Promise<ApiData<VodTag[]>> {
+        return axios.get(`v1/vod/${videoUuid}/tag`, this.createWebAxiosConfig())
     }
 
     // Local API

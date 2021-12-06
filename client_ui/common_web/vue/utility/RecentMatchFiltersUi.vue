@@ -2,6 +2,18 @@
     <div class="full-width">
         <generic-match-filter-ui>
             <div class="d-flex align-center">
+                <div class="font-weight-bold mr-2">
+                    Tags:
+                </div>
+
+                <tag-creator
+                    v-model="internalValue.tags"
+                    @input="syncToValue"
+                >
+                </tag-creator>
+            </div>
+
+            <div class="d-flex align-center mt-1">
                 <game-filter-ui
                     v-model="internalValue.games"
                     @input="syncToValue"
@@ -136,6 +148,7 @@ import UserFilterUi from '@client/vue/utility/squadov/filters/UserFilterUi.vue'
 import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilterUi.vue'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
+import TagCreator from '@client/vue/utility/vods/TagCreator.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { WowGameRelease } from '@client/js/staticData'
 
@@ -148,6 +161,7 @@ import { WowGameRelease } from '@client/js/staticData'
         TimeRangeFilterUi,
         WowReleaseFilterUi,
         WowFilterUi,
+        TagCreator,
     }
 })
 export default class RecentMatchFiltersUi extends mixins(CommonFilters) {

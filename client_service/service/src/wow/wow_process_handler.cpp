@@ -43,7 +43,7 @@ private:
     bool inChallenge() const { return !_currentChallenge.challengeName.empty(); }
     bool inEncounter() const { return !_currentEncounter.encounterName.empty(); }
     bool inArena() const { return !_currentArena.type.empty(); }
-    
+    bool checkIfInstanceIdShouldBeRecorded(int64_t id) const;
 
     // The general story of how we expect these events to play out is as follows:
     // 1) The user starts the combat log via /combatlog and we obtain a COMBAT_LOG_VERSION
@@ -164,6 +164,23 @@ WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
     if (_lastLogTimeoutThread.joinable()) {
         _lastLogTimeoutThread.join();
     }
+}
+
+bool WoWProcessHandlerInstance::checkIfInstanceIdShouldBeRecorded(int64_t id) const {
+    const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+    const auto release = shared::gameToWowRelease(_finalGame);
+
+    const auto releaseIt = wowSettings.doNotRecordInstancesCached.find(release);
+    if (releaseIt == wowSettings.doNotRecordInstancesCached.end()) {
+        return true;
+    }
+
+    const auto instanceIt = releaseIt->second.find(id);
+    if (instanceIt == releaseIt->second.end()) {
+        return true;
+    }
+
+    return false;
 }
 
 void WoWProcessHandlerInstance::detectGameFromProcess() {
@@ -389,7 +406,13 @@ void WoWProcessHandlerInstance::onEncounterStart(const shared::TimePoint& tm, co
         return;
     }
 
-    _currentEncounter = *reinterpret_cast<const game_event_watcher::WoWEncounterStart*>(data);
+    const auto tmpData = *reinterpret_cast<const game_event_watcher::WoWEncounterStart*>(data);
+    if (!checkIfInstanceIdShouldBeRecorded(tmpData.instanceId)) {
+        LOG_INFO("...WoW Instance Recording Disabled: " << tmpData.instanceId << std::endl);
+        return;
+    }
+
+    _currentEncounter = tmpData;
     _matchStartTime = tm;
     LOG_INFO("WoW Encounter Start [" <<  shared::timeToStr(tm) << "]: " << _currentEncounter << std::endl);
     _expectingCombatants = true;
@@ -436,7 +459,13 @@ void WoWProcessHandlerInstance::onChallengeModeStart(const shared::TimePoint& tm
         return;
     }
 
-    _currentChallenge = *reinterpret_cast<const game_event_watcher::WoWChallengeModeStart*>(data);
+    const auto tmpData = *reinterpret_cast<const game_event_watcher::WoWChallengeModeStart*>(data);
+    if (!checkIfInstanceIdShouldBeRecorded(tmpData.instanceId)) {
+        LOG_INFO("...WoW Instance Recording Disabled: " << tmpData.instanceId << std::endl);
+        return;
+    }
+
+    _currentChallenge = tmpData;
     LOG_INFO("WoW Challenge Start [" <<  shared::timeToStr(tm) << "]: " << _currentChallenge << std::endl);
     _expectingCombatants = true;
     if (inMatch() && _currentInstance) {
@@ -656,8 +685,12 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
 void WoWProcessHandlerInstance::onInstanceStart(const shared::TimePoint& tm, const shared::wow::TypedInstanceData& data) {
     // Don't do a lock on the _currentMatchMutex because the only place
     // this gets called is in zone change which already locks that mutex.
-
     if (service::system::getGlobalState()->isPaused() || _currentInstance) {
+        return;
+    }
+
+    if (!checkIfInstanceIdShouldBeRecorded(data.id)) {
+        LOG_INFO("...WoW Instance Recording Disabled: " << data.id << std::endl);
         return;
     }
 

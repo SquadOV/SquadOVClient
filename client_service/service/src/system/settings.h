@@ -10,16 +10,27 @@
 
 #include "shared/games.h"
 #include "renderer/d3d11_overlay_renderer.h"
+#include "process_watcher/process/process.h"
+#include "shared/json.h"
 
 namespace service::system {
 
 struct AudioDeviceSettings {
     std::string device;
+    std::string id;
     double volume = 1.0;
     bool mono = false;
     bool voice = false;
 
     static AudioDeviceSettings fromJson(const nlohmann::json& obj);
+    AudioDeviceSettings createDefault() const;
+};
+
+struct ProcessAudioRecordSettings {
+    process_watcher::process::ProcessRecord process;
+    double volume = 1.0;
+
+    static ProcessAudioRecordSettings fromJson(const nlohmann::json& obj);
 };
 
 struct RecordingSettings {
@@ -29,10 +40,18 @@ struct RecordingSettings {
     bool useHwEncoder = false;
     bool useVfr4 = true;
     bool useWGC2 = true;
+    bool recordMouse = true;
 
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
+    bool useWASAPIRecording = false;
+
+    bool usePerProcessRecording = false;
+    bool perProcessRecordingOsCheck = false;
+    bool recordGameAudio = true;
+    double gameAudioVolume = 1.0;
+    std::vector<ProcessAudioRecordSettings> processesToRecord;
 
     bool useLocalRecording = false;
     std::filesystem::path localRecordingLocation;
@@ -55,6 +74,13 @@ struct KeybindSettings {
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 
+struct WowDisabledInstance {
+    int64_t id;
+    shared::EWowRelease release;
+
+    static WowDisabledInstance fromJson(const nlohmann::json& obj);
+};
+
 struct WowSettings {
     bool useCombatLogTimeout = true;
     int32_t timeoutSeconds2 = 180;
@@ -64,6 +90,12 @@ struct WowSettings {
     bool recordKeystones = true;
     bool recordEncounters = true;
     int32_t minimumTimeSecondsToRecord = 15;
+
+    // This is stored twice: doNotRecordInstances is the raw data stored in the settings JSON.
+    // We also need a better way to query it: first by wow release and second by instance id to see
+    // if it exists in the raw vector.
+    std::vector<WowDisabledInstance> doNotRecordInstances;
+    std::unordered_map<shared::EWowRelease, std::unordered_set<int64_t>> doNotRecordInstancesCached;
 
     static WowSettings fromJson(const nlohmann::json& obj);
 };
@@ -108,15 +140,40 @@ public:
     bool isGameEnabled(shared::EGame);
     
     bool loaded() const { return _loaded; }
+    nlohmann::json raw() const { return _raw; }
 
 private:
     std::shared_mutex _mutex;
     LocalSettings _settings;
+
+    // Need to store a raw version because we aren't necessarily going to be
+    // loading up and parsing the entire json file so we need to make sure that
+    // we store the OG so we can still save changes to disk.
+    nlohmann::json _raw;
     bool _loaded = false;
 };
 
 using SettingsPtr = std::unique_ptr<Settings>;
 
 Settings* getCurrentSettings();
+
+}
+
+
+namespace shared::json {
+
+template<>
+struct JsonConverter<service::system::AudioDeviceSettings> {
+    static nlohmann::json to(const service::system::AudioDeviceSettings& v) {
+        nlohmann::json data = {
+            { "device", v.device },
+            { "volume", v.volume },
+            { "mono", v.mono },
+            { "voice", v.voice },
+            { "id", v.id }
+        };
+        return data;
+    }
+};
 
 }
