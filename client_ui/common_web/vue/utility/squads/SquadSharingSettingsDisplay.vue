@@ -10,6 +10,7 @@
                     <disabled-supported-game-selector
                         v-model="settings.disabledGames"
                         @input="saveSharingSettings"
+                        server-side-only
                     >
                     </disabled-supported-game-selector>
                 </v-tab-item>
@@ -20,6 +21,22 @@
 
                 <v-tab-item>
                     <v-container fluid>
+                        <v-row align="center">
+                            <v-col cols="6">
+                                <div class="d-flex align-center">
+                                    <div class="font-weight-bold mr-1">
+                                        Disabled Releases: 
+                                    </div>
+
+                                    <wow-release-filter-ui
+                                        v-model="settings.wow.disabledReleases"
+                                        @input="saveSharingSettings"
+                                    >
+                                    </wow-release-filter-ui>
+                                </div>
+                            </v-col>
+                        </v-row>
+
                         <v-row align="center">
                             <v-col cols="3">
                                 <v-checkbox
@@ -105,11 +122,13 @@ import { SquadSharingSettings } from '@client/js/squadov/squad'
 import { apiClient, ApiData } from '@client/js/api'
 import DisabledSupportedGameSelector from '@client/vue/utility/squadov/DisabledSupportedGameSelector.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import WowReleaseFilterUi from '@client/vue/utility/squadov/filters/WowReleaseFilterUi.vue'
 
 @Component({
     components: {
         DisabledSupportedGameSelector,
         LoadingContainer,
+        WowReleaseFilterUi,
     }
 })
 export default class SquadSharingSettingsDisplay extends Vue {
