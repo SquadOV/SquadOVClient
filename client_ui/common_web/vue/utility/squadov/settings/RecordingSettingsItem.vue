@@ -123,6 +123,25 @@
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
+
+                        <v-checkbox
+                            class="ma-0"
+                            :input-value="$store.state.settings.record.recordMouse"
+                            @change="$store.commit('changeRecordMouse', arguments[0])"
+                            hide-details
+                            label="Record Cursor (Full-Screen only)"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+                                    When recording in full-screen mode, whether to also capture your cursor.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
                     </v-col>
                 </v-row>
 
