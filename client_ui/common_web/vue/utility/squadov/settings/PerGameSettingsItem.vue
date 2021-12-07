@@ -368,6 +368,7 @@ import { Watch } from 'vue-property-decorator'
 import DisabledSupportedGameSelector from '@client/vue/utility/squadov/DisabledSupportedGameSelector.vue'
 import WowDisabledInstancesDisplay from '@client/vue/utility/squadov/settings/wow/WowDisabledInstancesDisplay.vue'
 import { gameToName, SquadOvGames } from '@client/js/squadov/game'
+import { createDisplayStringFromList } from '@client/js/strings'
 
 @Component({
     components: {
@@ -387,10 +388,7 @@ export default class PerGameSettingsItem extends Vue {
 
     get differenceDisabledGamesString(): string {
         let games = this.differenceDisabledGames.map((ele: SquadOvGames) => gameToName(ele))
-        if (games.length > 1) {
-            games[games.length - 1] = `and ${games[games.length - 1]}`
-        }
-        return games.length > 2 ? games.join(', ') : games.join(' ')
+        return createDisplayStringFromList(games)
     }
 
     get differenceEnabledGames(): SquadOvGames[] {
@@ -400,10 +398,7 @@ export default class PerGameSettingsItem extends Vue {
 
     get differenceEnabledGamesString(): string {
         let games = this.differenceEnabledGames.map((ele: SquadOvGames) => gameToName(ele))
-        if (games.length > 1) {
-            games[games.length - 1] = `and ${games[games.length - 1]}`
-        }
-        return games.length > 2 ? games.join(', ') : games.join(' ')
+        return createDisplayStringFromList(games)
     }
 
     saveDisabledGameChanges() {
