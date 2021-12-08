@@ -10,14 +10,14 @@ export default class CommonFilters extends Vue {
     savedFilter: any = null
 
     loadFromLocal() {
-        if (this.savedFilterLoc !== null) {
+        if (!!this.savedFilterLoc) {
             let storage = getDataStorageSingleton()
             this.savedFilter = storage?.getData(this.savedFilterLoc)
         }
     }
 
     saveToLocal(data: any) {
-        if (this.savedFilterLoc !== null) {
+        if (!!this.savedFilterLoc) {
             let storage = getDataStorageSingleton()
             storage?.setData(this.savedFilterLoc, data)
         }
