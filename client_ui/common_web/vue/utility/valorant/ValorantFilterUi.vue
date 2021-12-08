@@ -74,6 +74,7 @@
                 class="ml-2 mt-0"
                 label="Must have VOD"
                 v-model="internalValue.hasVod"
+                v-if="!hideVodOption"
                 @change="syncToValue"
                 hide-details
                 dense
@@ -86,7 +87,7 @@
 
 import Component, {mixins} from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
-import { ValorantMatchFilters, createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
+import { ValorantMatchFilters, createEmptyValorantMatchFilters, migrateValorantMatchFilters } from '@client/js/valorant/filters'
 import { getValorantContent, ValorantContent } from '@client/js/valorant/valorant_content'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
 import CommonFilters from '@client/vue/utility/CommonFilters'
@@ -99,6 +100,9 @@ import CommonFilters from '@client/vue/utility/CommonFilters'
 export default class ValorantFilterUi extends mixins(CommonFilters) {
     @Prop({required: true})
     value!: ValorantMatchFilters
+
+    @Prop({type: Boolean, default: false})
+    hideVodOption!: boolean
 
     internalValue: ValorantMatchFilters = createEmptyValorantMatchFilters()
 
@@ -140,6 +144,9 @@ export default class ValorantFilterUi extends mixins(CommonFilters) {
             this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
             this.syncToValue()
         }
+
+        migrateValorantMatchFilters(this.internalValue)
+        this.syncToValue()
     }
 }
 

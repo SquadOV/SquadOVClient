@@ -1,5 +1,5 @@
 export interface ValorantMatchFilters {
-    hasVod: boolean
+    hasVod: boolean,
     isRanked: boolean,
     modes: string[]
     maps: string[]
@@ -12,4 +12,8 @@ export function createEmptyValorantMatchFilters(): ValorantMatchFilters {
         modes: [],
         maps: [],
     }
+}
+
+export function migrateValorantMatchFilters(f: ValorantMatchFilters) {
+    let defaultFilter = createEmptyValorantMatchFilters()
 }
