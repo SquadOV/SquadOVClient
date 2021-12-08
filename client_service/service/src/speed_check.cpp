@@ -58,7 +58,7 @@ int main(int argc, char **argv)
     auto speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
-    size_t speed_check_res;
+    double speed_check_res;
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
 
     // setSkipLastCall() is only called for speed_Check, as we don't need to send up the final bytes 
@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     speed_check_res = piper->getUploadedBytes();
 
     // This should calculate out the MB/s
-    auto speed_check_res_mbps = speed_check_res/1024/1024/10;
+    double speed_check_res_mbps = speed_check_res/1024/1024/10;
 
     shared::squadov::SpeedCheckData speedCheckData;
     speedCheckData.speed_mbps = speed_check_res_mbps;
