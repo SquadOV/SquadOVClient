@@ -47,6 +47,7 @@ export interface WowGenericMatchFilters {
     encounters: WowMatchFilters
     keystones: WowMatchFilters
     arenas: WowMatchFilters
+    instances: WowMatchFilters
 }
 
 function createEmptyWowGenericMatchFilters(): WowGenericMatchFilters {
@@ -54,6 +55,7 @@ function createEmptyWowGenericMatchFilters(): WowGenericMatchFilters {
         encounters: createEmptyWowMatchFilters(),
         keystones: createEmptyWowMatchFilters(),
         arenas: createEmptyWowMatchFilters(),
+        instances: createEmptyWowMatchFilters()
     }
 }
 

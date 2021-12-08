@@ -113,6 +113,21 @@
                             >
                             </wow-filter-ui>
                         </div>
+
+                        <div class="mt-2">
+                            <div class="font-weight-bold">
+                                Instances
+                            </div>
+                            <wow-filter-ui
+                                v-model="internalValue.filters.wow.instances"
+                                @input="syncToValue"
+                                :for-instances="true"
+                                :release="WowGameRelease.Retail"
+                                hide-vod-option
+                                show-enabled
+                            >
+                            </wow-filter-ui>
+                        </div>
                     </div>
                 </v-tab-item>
 
@@ -157,6 +172,7 @@ import TagCreator from '@client/vue/utility/vods/TagCreator.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { WowGameRelease } from '@client/js/staticData'
 import { createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
+import { createEmptyWowMatchFilters } from '@client/js/wow/filters'
 
 @Component({
     components: {
@@ -210,7 +226,11 @@ export default class RecentMatchFiltersUi extends mixins(CommonFilters) {
             this.internalValue.filters.valorant = createEmptyValorantMatchFilters()
             this.syncToValue()
         }
-        this.syncToValue()
+
+        if (!this.internalValue.filters.wow.instances) {
+            this.internalValue.filters.wow.instances = createEmptyWowMatchFilters()
+            this.syncToValue()
+        }
     }
 }
 
