@@ -38,7 +38,7 @@
                         <v-menu offset-x :close-on-content-click="false" :key="`squad-${sq.id}`">
                             <template v-slot:activator="{on, attrs}">
                                 <div
-                                    :class="`d-flex justify-space-between align-center pa-2 squad-div ${(sq.id === squadId) ? 'selected-squad' : ''}`"
+                                    :class="`d-flex justify-space-between align-center pa-2 ${(sq.id === squadId) ? 'selected-squad' : ''}`"
                                     v-bind="attrs"
                                     v-on="on"
                                 >
@@ -460,6 +460,8 @@ export default class GameLog extends Vue {
 
 .squad-div {
     background-color: #1E1E1E;
+    overflow-y: auto;
+    max-height: 80vh;
 }
 
 .selected-squad {
