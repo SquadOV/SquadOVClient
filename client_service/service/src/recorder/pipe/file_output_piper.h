@@ -21,6 +21,7 @@ public:
     void start();
     void wait();
     void stop();
+    void stopAndSkipFlush();
     // At least on windows the pipe will have an actual path on disk that
     // we can use.
     const std::string& filePath() const { return _pipe->filePath(); }
@@ -38,6 +39,7 @@ protected:
 
 private:
     bool _running = true;
+    bool _skipFlush = false;
     std::thread _pipeThread;
     PipePtr _pipe;
 

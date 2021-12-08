@@ -29,6 +29,10 @@ void PipeClient::start(std::vector<char> wBuffer) {
     writeDataToPipe(wBuffer);
 }
 
+void PipeClient::stop() {
+    CloseHandle(_hPipe);
+}
+
 void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
     fSuccess = WriteFile(
         _hPipe,                  // pipe handle 
@@ -37,7 +41,7 @@ void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
         NULL,             // bytes written 
         NULL);                  // not overlapped 
 
-    if ( ! fSuccess) 
+    if ( !fSuccess ) 
     {
         _tprintf( TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError() ); 
         return;
@@ -93,5 +97,6 @@ void PipeClient::connectToPipe() {
 }
 
 PipeClient::~PipeClient() {
+    // CloseHandle(_hPipe);
 }
 };

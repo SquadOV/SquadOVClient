@@ -54,6 +54,7 @@ public:
     void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
     size_t getUploadedBytes() { return _uploadedBytes; };
+    void setSkipLastCall(bool skipLastCall) { _skipLastCall = skipLastCall; };
     void flush() override;
     
 protected:
@@ -75,6 +76,7 @@ private:
     std::thread _cloudThread;
     std::vector<std::string> _allSegmentsIds;
     bool _finished = false;
+    bool _skipLastCall = false;
 
     // Random number generator for backoff
     std::random_device _rd;

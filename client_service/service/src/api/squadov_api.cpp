@@ -458,6 +458,18 @@ service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::str
     return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
+void SquadovApi::postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const {
+    std::ostringstream path;
+    path << "/v1/speedcheck/" << speedCheckUuid;
+
+    const auto result = _webClient->post(path.str(), speedCheckData.toJson());
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to delete Speed Check File: " << result->status);
+        return;
+    }
+}
+
 void SquadovApi::deleteSpeedCheckFile(const std::string& speedCheckUuid) const {
     std::ostringstream path;
     path << "/v1/speedcheck/" << speedCheckUuid;

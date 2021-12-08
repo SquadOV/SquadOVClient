@@ -123,7 +123,7 @@ public:
 
     // Speed Check
     service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
-    // void postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const;
+    void postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const;
     void deleteSpeedCheckFile(const std::string& videoUuid) const;
 
 private:

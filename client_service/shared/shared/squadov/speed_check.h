@@ -5,7 +5,8 @@
 namespace shared::squadov {
 
 struct SpeedCheckData {
-    float speedMbs;
+    double speed_mbps;
+    
     nlohmann::json toJson() const;
 };
 

@@ -108,7 +108,7 @@ void CloudStoragePiper::tickUploadThread() {
     std::vector<char> internalBuffer;
     internalBuffer.reserve(CLOUD_BUFFER_SIZE_BYTES);
 
-    while (!_finished) {
+    while (!_finished) { 
 #if LOG_TIME
         const auto taskNow = std::chrono::high_resolution_clock::now();
         const auto oldBufferSize = internalBuffer.size();
@@ -147,7 +147,7 @@ void CloudStoragePiper::tickUploadThread() {
     copyDataIntoInternalBuffer(internalBuffer);
 
     bool first = true;
-    while (first || !internalBuffer.empty()) {
+    while ((first || !internalBuffer.empty()) && !_skipLastCall) {
         sendDataFromBufferWithBackoff(internalBuffer, 0, true);
         first = false;
     }

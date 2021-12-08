@@ -44,13 +44,19 @@ void FileOutputPiper::start() {
                 break;
             }
         }
-
-        flush();
+        if (!_skipFlush) {
+            flush();
+        }
     });
 }
 
 void FileOutputPiper::stop() {
     _running = false;
+}
+
+void FileOutputPiper::stopAndSkipFlush() {
+    _running = false;
+    _skipFlush = true;
 }
 
 void FileOutputPiper::wait() {

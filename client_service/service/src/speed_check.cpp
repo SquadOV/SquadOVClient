@@ -60,42 +60,32 @@ int main(int argc, char **argv)
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
     size_t speed_check_res;
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
-    // const service::recorder::pipe::PipePtr& rawPipe = piper->getPipePtr();
+
+    // setSkipLastCall() is only called for speed_Check, as we don't need to send up the final bytes 
+    piper->setSkipLastCall(true);
     std::thread t1([&piper]() {
         piper->start();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10000)); // Listen for 15 seconds
-        piper->pauseProcessingFromPipe(true);
+        std::this_thread::sleep_for(std::chrono::seconds(10)); // Listen for 10 seconds
+        piper->stopAndSkipFlush(); 
+
     });
-    std::vector<char> writeBuffer(1024 * 1024 * 100, 'A');
+    std::vector<char> writeBuffer(1024 * 1024 * 200, 'A');
     pipeClient.start(writeBuffer);
-    // std::thread t2([&pipeClient]() {
-    //     std::vector<char> writeBuffer(1024 * 1024 * 10, 'A');
-    //     pipeClient.start(writeBuffer);
-    //     std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-    //     pipeClient.stop();
-    // });
     if (t1.joinable())
     {
         t1.join();
     }
-
-    // if (t2.joinable())
-    // {
-        // t2.join();
-    // }
-
+    pipeClient.stop();
+    piper->wait(); 
     speed_check_res = piper->getUploadedBytes();
-    LOG_INFO("Check getUploadedBytes: " << speed_check_res << std::endl); // TODO-FIX: This gets called before the final transfer that has a few last bytes
-    // Ideally, it should get the last bytes as well, and then get the UploadedBytes
+
+    // This should calculate out the MB/s
+    auto speed_check_res_mbps = speed_check_res/1024/1024/10;
 
     shared::squadov::SpeedCheckData speedCheckData;
-    speedCheckData.speedMbs = speed_check_res;
-    // TODO: Update SQL database for user with the speedtest results.
-    // Alternatively: Pass it up to the Client, and do a user call. Either works.
+    speedCheckData.speed_mbps = speed_check_res_mbps;
 
-    // service::api::getGlobalApi()->postSpeedCheck(speedCheckData, uuidFileName);
-
-    // service::api::getGlobalApi()->deleteSpeedCheckFile(uuidFileName);
+    service::api::getGlobalApi()->postSpeedCheck(speedCheckData, uuidFileName);
 
     return 0;
 }
