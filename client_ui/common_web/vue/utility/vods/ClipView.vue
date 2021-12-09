@@ -435,6 +435,7 @@ export default class ClipView extends mixins(CommonComponent) {
     }
 
     @Watch('clipUuid')
+    @Watch('isActive')
     refreshData() {
         this.recheckClipFastify()
 
