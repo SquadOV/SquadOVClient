@@ -80,6 +80,64 @@
                 dense
             ></v-checkbox>
         </div>
+
+        <div class="d-flex align-center mt-2">
+            <div class="mr-1">
+                Rank
+            </div>
+
+            <valorant-rank-selector
+                v-model="internalValue.rankLow"
+                @input="syncToValue"
+            >
+            </valorant-rank-selector>
+
+            <div class="mx-2">
+                -
+            </div>
+
+            <valorant-rank-selector
+                v-model="internalValue.rankHigh"
+                @input="syncToValue"
+            >
+            </valorant-rank-selector>
+
+            <div class="ml-4 mr-1">
+                POV: 
+            </div>
+            <valorant-agent-chooser
+                v-model="internalValue.agentPovs"
+                @input="syncToValue"
+            >
+            </valorant-agent-chooser>
+
+            <div class="ml-4 mr-1">
+                Key Events (POV):
+            </div>
+
+            <valorant-key-event-selector
+                v-model="internalValue.povEvents"
+                @input="syncToValue"
+            >
+            </valorant-key-event-selector>
+        </div>
+
+        <div class="d-flex align-center mt-2">
+            <valorant-team-composition-chooser
+                label="Team 1: "
+                v-model="internalValue.friendlyComposition"
+                @input="syncToValue"
+            >
+            </valorant-team-composition-chooser>
+
+            <valorant-team-composition-chooser
+                class="ml-2"
+                label="Team 2: "
+                v-model="internalValue.enemyComposition"
+                @input="syncToValue"
+            >
+            </valorant-team-composition-chooser>
+        </div>
     </generic-match-filter-ui>
 </template>
 
@@ -91,10 +149,18 @@ import { ValorantMatchFilters, createEmptyValorantMatchFilters, migrateValorantM
 import { getValorantContent, ValorantContent } from '@client/js/valorant/valorant_content'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
 import CommonFilters from '@client/vue/utility/CommonFilters'
+import ValorantAgentChooser from '@client/vue/utility/valorant/ValorantAgentChooser.vue'
+import ValorantTeamCompositionChooser from '@client/vue/utility/valorant/ValorantTeamCompositionChooser.vue'
+import ValorantRankSelector from '@client/vue/utility/valorant/ValorantRankSelector.vue'
+import ValorantKeyEventSelector from '@client/vue/utility/valorant/ValorantKeyEventSelector.vue'
 
 @Component({
     components: {
-        GenericMatchFilterUi
+        GenericMatchFilterUi,
+        ValorantAgentChooser,
+        ValorantTeamCompositionChooser,
+        ValorantRankSelector,
+        ValorantKeyEventSelector,
     }
 })
 export default class ValorantFilterUi extends mixins(CommonFilters) {
