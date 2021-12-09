@@ -1130,6 +1130,7 @@ ipcMain.on('user-upload-speed-check', () => {
     let exePath = getClientExePath()
 
     // Run a custom mode in the client service executable to do the speed check.
+    // This currently seems to stall it for 10 seconds before it proceeds to open the actual application... Not a big fan of that.
     let sanityExe = path.join(path.dirname(exePath), 'speed_check.exe')
     if (fs.existsSync(sanityExe)) {
         exec(sanityExe, () => {

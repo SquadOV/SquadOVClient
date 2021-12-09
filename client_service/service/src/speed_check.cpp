@@ -54,6 +54,12 @@ int main(int argc, char **argv)
         LOG_WARNING("Failed to get current user: " << ex.what() << std::endl);
         std::exit(1);
     }
+    auto speedCheckValue = service::api::getGlobalApi()->getUserSpeedCheck();
+    // This checks if there is a value in the user's speedcheck. If there is, it will return quickly
+    // If not, it will return -1, which signifies that the user has never done a speed check.
+    if(speedCheckValue.speed_mbps >= 0) {
+        return 0;
+    }
     const auto uuidFileName = shared::generateUuidv4();
     auto speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);

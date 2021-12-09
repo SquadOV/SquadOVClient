@@ -458,6 +458,21 @@ service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::str
     return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
+shared::squadov::SpeedCheckData SquadovApi::getUserSpeedCheck() const {
+    std::ostringstream path;
+    path << "/v1/speedcheck";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get Speed Check URI: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return shared::squadov::SpeedCheckData::fromJson(parsedJson);
+}
+
 void SquadovApi::postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const {
     std::ostringstream path;
     path << "/v1/speedcheck/" << speedCheckUuid;

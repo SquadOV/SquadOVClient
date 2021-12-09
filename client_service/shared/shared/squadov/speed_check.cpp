@@ -10,4 +10,10 @@ nlohmann::json SpeedCheckData::toJson() const {
     };
 }
 
+SpeedCheckData SpeedCheckData::fromJson(const nlohmann::json& obj) {
+    SpeedCheckData speedCheckData;
+    speedCheckData.speed_mbps = obj["speed_mbps"].get<double>();
+    return speedCheckData;
+}
+
 }

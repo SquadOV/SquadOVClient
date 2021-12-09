@@ -8,6 +8,7 @@ struct SpeedCheckData {
     double speed_mbps;
     
     nlohmann::json toJson() const;
+    static SpeedCheckData fromJson(const nlohmann::json& obj);
 };
 
 }
