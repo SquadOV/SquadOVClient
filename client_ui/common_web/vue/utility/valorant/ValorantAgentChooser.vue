@@ -5,7 +5,7 @@
             offset-y
             :close-on-content-click="false"
         >
-            <template v-slot:activator>
+            <template v-slot:activator="{on}">
                 <div
                     class="activator"
                     @click="showSelector = true"
@@ -69,6 +69,8 @@ import { Prop } from 'vue-property-decorator'
 import ValorantAgentIcon from '@client/vue/utility/valorant/ValorantAgentIcon.vue'
 import ValorantAgentRoleIcon from '@client/vue/utility/valorant/ValorantAgentRoleIcon.vue'
 import { getProbableRoleFromMultipleAgents, ValorantAgentRole, ALL_VALORANT_AGENT_ROLES, getAgentsFromRole, getAvailableAgents } from '@client/js/valorant/valorant_utility'
+import { compareString } from '@client/js/cmp'
+import { getValorantContent } from '@client/js/valorant/valorant_content'
 
 @Component({
     components: {
@@ -77,7 +79,9 @@ import { getProbableRoleFromMultipleAgents, ValorantAgentRole, ALL_VALORANT_AGEN
     }
 })
 export default class ValorantAgentChooser extends Vue {
-    ALL_VALORANT_AGENTS = getAvailableAgents()
+    ALL_VALORANT_AGENTS = getAvailableAgents().sort((a: string, b: string) => {
+        return compareString(getValorantContent(null).agentIdToName(a), getValorantContent(null).agentIdToName(b))
+    })
     ALL_VALORANT_AGENT_ROLES = ALL_VALORANT_AGENT_ROLES.filter((ele) => ele !== ValorantAgentRole.Unknown)
 
     @Prop({required: true})

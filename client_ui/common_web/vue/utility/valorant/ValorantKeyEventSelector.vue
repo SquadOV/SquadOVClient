@@ -6,6 +6,7 @@
         clearable
         hide-details
         outlined
+        multiple
     >
     </v-select>
 </template>
