@@ -81,6 +81,7 @@ export function cleanSquadInviteLinkFromJson(s: SquadInviteLink) : SquadInviteLi
 export interface SquadInviteLinkData {
     squad: Squad
     inviter: SquadOVUserHandle
+    referral: string
 }
 
 export function cleanSquadInviteLinkDataFromJson(s: SquadInviteLinkData) : SquadInviteLinkData {
