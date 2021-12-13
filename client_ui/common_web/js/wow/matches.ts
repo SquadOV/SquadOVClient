@@ -71,6 +71,7 @@ export const ALL_WOW_INSTANCE_TYPES = [
     WowInstanceType.RaidDungeon,
     WowInstanceType.PVPBattlefield,
     WowInstanceType.ArenaBattlefield,
+    WowInstanceType.Scenario,
 ]
 
 export function wowInstanceTypeToName(t: WowInstanceType): string {
@@ -83,6 +84,8 @@ export function wowInstanceTypeToName(t: WowInstanceType): string {
             return 'Battlegrounds'
         case WowInstanceType.ArenaBattlefield:
             return 'Arena'
+        case WowInstanceType.Scenario:
+            return 'Scenarios'
         default:
             return 'Unknown'
     }

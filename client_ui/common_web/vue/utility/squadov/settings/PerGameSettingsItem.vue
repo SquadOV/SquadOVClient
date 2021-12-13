@@ -180,6 +180,29 @@
                             </template>
                         </v-checkbox>
                     </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.recordScenarios"
+                            @change="$store.commit('changeWowRecordScenarios', arguments[0])"
+                            label="Record Scenarios"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record scenarios in World of Warcraft. Examples of this would be the Legion Timewalking Mage Tower Challenge.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
                 </v-row>
 
                 <v-row align="center">
