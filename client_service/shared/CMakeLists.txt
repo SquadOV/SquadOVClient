@@ -8,6 +8,7 @@ SET(SRCS
     shared/filesystem/common_paths.cpp
     shared/filesystem/utility.cpp
     shared/filesystem/local_record.cpp
+    shared/filesystem/steam_library_folders.cpp
     shared/log/log.cpp
     shared/sqlite/sqlite.cpp
     shared/aimlab/aimlab.cpp
@@ -31,6 +32,7 @@ SET(SRCS
     shared/system/keys.cpp
     shared/image/ico/ico.cpp
     shared/memory/byte_writer.cpp
+    shared/valve/vdf_file.cpp
 )
 
 SET(HEADERS
@@ -45,6 +47,7 @@ SET(HEADERS
     shared/filesystem/common_paths.h
     shared/filesystem/utility.h
     shared/filesystem/local_record.h
+    shared/filesystem/steam_library_folders.h
     shared/log/log.h
     shared/sqlite/sqlite.h
     shared/aimlab/aimlab.h
@@ -72,6 +75,7 @@ SET(HEADERS
     shared/system/keys.h
     shared/image/ico/ico.h
     shared/memory/byte_writer.h
+    shared/valve/vdf_file.h
 )
 
 add_library(squadov_shared
