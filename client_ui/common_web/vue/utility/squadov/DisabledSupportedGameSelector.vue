@@ -1,7 +1,7 @@
 <template>
     <v-item-group class="d-flex flex-wrap align-center justify-center full-width" multiple :value="enabledGames" @change="onChangeEnabledGames">
         <v-item
-            v-for="(game, idx) in allGames"
+            v-for="(game, idx) in displayGames"
             :key="idx"
             :value="game"
             v-slot="{active, toggle}"
@@ -28,24 +28,29 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { SquadOvGames, allGames, gameToName, gameToRect } from '@client/js/squadov/game'
+import { SquadOvGames, allGames, allServerSideGames, gameToName, gameToRect } from '@client/js/squadov/game'
 
 @Component
 export default class DisabledSupportedGameSelector extends Vue {
     @Prop({required: true})
     value!: SquadOvGames[]
 
-    allGames = allGames.sort((a: SquadOvGames, b: SquadOvGames) => {
-        let an = gameToName(a)
-        let bn = gameToName(b)
-        if (an < bn) {
-            return -1
-        } else if (an > bn) {
-            return 1
-        } else {
-            return 0
-        }
-    })
+    @Prop({type: Boolean, default: false})
+    serverSideOnly!: boolean
+
+    get displayGames(): SquadOvGames[] {
+        return (this.serverSideOnly ? allServerSideGames : allGames).sort((a: SquadOvGames, b: SquadOvGames) => {
+            let an = gameToName(a)
+            let bn = gameToName(b)
+            if (an < bn) {
+                return -1
+            } else if (an > bn) {
+                return 1
+            } else {
+                return 0
+            }
+        })
+    }
 
     gameToName = gameToName
 
@@ -61,12 +66,12 @@ export default class DisabledSupportedGameSelector extends Vue {
 
     get enabledGames(): SquadOvGames[] {
         let disabled = new Set(this.value)
-        return allGames.filter((ele: SquadOvGames) => !disabled.has(ele))
+        return this.displayGames.filter((ele: SquadOvGames) => !disabled.has(ele))
     }
 
     onChangeEnabledGames(enabled: SquadOvGames[]) {
         let enabledSet = new Set(enabled)
-        let disabled = allGames.filter((ele: SquadOvGames) => !enabledSet.has(ele))
+        let disabled = this.displayGames.filter((ele: SquadOvGames) => !enabledSet.has(ele))
         this.$emit('input', disabled)
     }
 }
