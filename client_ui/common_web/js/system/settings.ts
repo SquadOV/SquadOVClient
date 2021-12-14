@@ -196,6 +196,7 @@ export interface WowSettings {
     recordDungeons: boolean
     recordKeystones: boolean
     recordEncounters: boolean
+    recordScenarios: boolean
     minimumTimeSecondsToRecord: number
     doNotRecordInstances: WowDisabledInstance[]
 }
@@ -209,6 +210,7 @@ function createEmptyWowSettings(): WowSettings {
         recordDungeons: true,
         recordKeystones: true,
         recordEncounters: true,
+        recordScenarios: true,
         minimumTimeSecondsToRecord: 15,
         doNotRecordInstances: [],
     }
@@ -725,6 +727,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.perProcessRecordingOsCheck === undefined) {
             parsedData.record.perProcessRecordingOsCheck = false
+        }
+
+        if (parsedData.games.wow.recordScenarios === undefined) {
+            parsedData.games.wow.recordScenarios = true
         }
 
     } catch (ex) {

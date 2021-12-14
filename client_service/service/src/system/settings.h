@@ -89,6 +89,7 @@ struct WowSettings {
     bool recordDungeons = true;
     bool recordKeystones = true;
     bool recordEncounters = true;
+    bool recordScenarios = true;
     int32_t minimumTimeSecondsToRecord = 15;
 
     // This is stored twice: doNotRecordInstances is the raw data stored in the settings JSON.

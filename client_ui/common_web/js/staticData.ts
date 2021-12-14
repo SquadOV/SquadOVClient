@@ -5,8 +5,9 @@ const SUPPORTED_WOW_PATCHES = new Set([
     '9.0.2',
     '9.0.5',
     '9.1.0',
+    '9.1.5',
 ])
-const LATEST_WOW_PATCH = '9.1.0'
+const LATEST_WOW_PATCH = '9.1.5'
 const LATEST_WOW_VANILLA_PATCH = '1.13.7'
 const LATEST_WOW_TBC_PATCH = '2.5.2'
 
