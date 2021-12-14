@@ -130,6 +130,25 @@
                         </div>
                     </div>
                 </v-tab-item>
+
+                <v-tab>
+                    <v-img
+                        width="32px"
+                        max-width="32px"
+                        :src="$root.generateAssetUri('assets/valorant-logo.png')"
+                        contain
+                    >
+                    </v-img>
+                </v-tab>
+
+                <v-tab-item>
+                    <valorant-filter-ui
+                        v-model="internalValue.filters.valorant"
+                        @input="syncToValue"
+                        hide-vod-option
+                    >
+                    </valorant-filter-ui>
+                </v-tab-item>
             </v-tabs>
         </generic-match-filter-ui>
     </div>
@@ -147,10 +166,12 @@ import SquadFilterUi from '@client/vue/utility/squadov/filters/SquadFilterUi.vue
 import UserFilterUi from '@client/vue/utility/squadov/filters/UserFilterUi.vue'
 import TimeRangeFilterUi from '@client/vue/utility/squadov/filters/TimeRangeFilterUi.vue'
 import GenericMatchFilterUi from '@client/vue/utility/GenericMatchFilterUi.vue'
+import ValorantFilterUi from '@client/vue/utility/valorant/ValorantFilterUi.vue'
 import WowFilterUi from '@client/vue/utility/wow/WowFilterUi.vue'
 import TagCreator from '@client/vue/utility/vods/TagCreator.vue'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { WowGameRelease } from '@client/js/staticData'
+import { createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
 import { createEmptyWowMatchFilters } from '@client/js/wow/filters'
 
 @Component({
@@ -163,6 +184,7 @@ import { createEmptyWowMatchFilters } from '@client/js/wow/filters'
         WowReleaseFilterUi,
         WowFilterUi,
         TagCreator,
+        ValorantFilterUi,
     }
 })
 export default class RecentMatchFiltersUi extends mixins(CommonFilters) {
@@ -197,6 +219,11 @@ export default class RecentMatchFiltersUi extends mixins(CommonFilters) {
         this.syncFromValue()
         if (!!this.savedFilter) {
             this.internalValue = JSON.parse(JSON.stringify(this.savedFilter))
+            this.syncToValue()
+        }
+
+        if (!this.internalValue.filters.valorant) {
+            this.internalValue.filters.valorant = createEmptyValorantMatchFilters()
             this.syncToValue()
         }
 

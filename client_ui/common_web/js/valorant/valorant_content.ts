@@ -71,6 +71,14 @@ export class ValorantContent {
         this._agentAbilities = abilityData
     }
 
+    agents(): string[] {
+        let agents = []
+        for (const [key, value] of Object.entries(this._agents)) {
+            agents.push(key)
+        }
+        return agents
+    }
+
     agentIdToName(id : string) : string {
         return this._agents[id.toUpperCase()]
     }

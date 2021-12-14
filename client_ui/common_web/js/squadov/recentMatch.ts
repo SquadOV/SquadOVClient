@@ -7,6 +7,7 @@ import { WowChallenge, WowEncounter, WowArena, cleanWowChallengeFromJson, cleanW
 import { ValorantPlayerMatchSummary, cleanValorantPlayerMatchSummary } from '@client/js/valorant/valorant_matches'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
+import { ValorantMatchFilters, createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
 
 export interface BaseRecentMatch {
     matchUuid: string
@@ -70,6 +71,7 @@ export interface RecentMatchFilters {
     onlyWatchlist: boolean
     filters: {
         wow: WowGenericMatchFilters
+        valorant: ValorantMatchFilters
     }
 }
 
@@ -86,6 +88,7 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
         onlyWatchlist: false,
         filters: {
             wow: createEmptyWowGenericMatchFilters(),
+            valorant: createEmptyValorantMatchFilters(),
         }
     }
 }
