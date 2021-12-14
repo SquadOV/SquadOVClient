@@ -6,6 +6,11 @@
                 width="100%"
                 v-if="isDesktop"
             ></local-disk-space-usage-alert>
+            <disabled-games-alert
+                width="100%"
+                v-if="isDesktop"
+            >
+            </disabled-games-alert>
         </v-list>
     </div>
 </template>
@@ -15,11 +20,13 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import EmailVerificationAlert from '@client/vue/utility/squadov/alerts/EmailVerificationAlert.vue'
 import LocalDiskSpaceUsageAlert from '@client/vue/utility/squadov/alerts/LocalDiskSpaceUsageAlert.vue'
+import DisabledGamesAlert from '@client/vue/utility/squadov/alerts/DisabledGamesAlert.vue'
 
 @Component({
     components: {
         EmailVerificationAlert,
         LocalDiskSpaceUsageAlert,
+        DisabledGamesAlert,
     },
 })
 export default class AppAlerts extends Vue {
