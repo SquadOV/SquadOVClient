@@ -128,8 +128,13 @@ export default class VodDownloadButton extends mixins(CommonComponent) {
             return
         }
 
-        apiClient.accessToken().getVodSegment(this.track.segments[0].uri).then((resp : ApiData<string>) => {
-            this.downloadUri = resp.data
+        apiClient.accessToken().getVodSegment(this.track.segments[0].uri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+            this.downloadUri = resp.data.url
+            if (!!resp.data.expiration) {
+                window.setTimeout(() => {
+                    this.refreshDownloadUri()
+                }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
+            }
         }).catch((err: any) => {
             console.error('Failed to get VOD download URI: ', err)
         })
