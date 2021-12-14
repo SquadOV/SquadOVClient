@@ -5,7 +5,6 @@ module.exports.setupFlow =  function(win) {
         let finish = false
         ipcMain.once('finish-setup', (event, arg) => {
             finish = true
-            win.close()
             resolve()
         })
 
