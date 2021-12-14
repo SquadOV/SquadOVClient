@@ -121,6 +121,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     forceRedraw: number = 0
     syncedInputTs: boolean = false
     lastTimestamp: number = 0
+    refreshInterval: number | null = null
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -151,7 +152,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
                 break
             case RCMessageType.GoToTimestamp:
-                console.log('receive rc packet: ', p)
                 this.goToTimeMs(p.data, false, false)
                 break
         }
@@ -302,8 +302,14 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             return
         }
 
-        apiClient.accessToken().getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<string>) => {
-            this.videoUri = resp.data
+        apiClient.accessToken().getVodSegment(this.currentVideoSourceUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+            this.videoUri = resp.data.url
+            if (!!resp.data.expiration) {
+                this.refreshInterval = window.setTimeout(() => {
+                    this.refreshInterval = null
+                    this.refreshVideoSource()
+                }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
+            }
         }).catch((err : any) => {
             console.error('Failed to get final URL for video.')
         })
@@ -681,6 +687,10 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     }
 
     beforeDestroy() {
+        if (this.refreshInterval !== null) {
+            window.clearTimeout(this.refreshInterval)
+        }
+
         if (!!this.player) {
             this.player.dispose()
         }
