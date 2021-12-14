@@ -845,6 +845,9 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         || to.name === pi.PlayerPageId
         || to.name === pi.ForgotPasswordPageId
         || to.name === pi.UserProfileSlugPageId
+        // Link response page should be public and we should let the component itself handle any necessary redirects.
+        // This way we are able to query more information and grab the proper referral link to use.
+        || to.name === pi.LinkResponsePageId
 
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')
