@@ -71,6 +71,8 @@
                                 </wow-character-icon>
                             </template>
                         </div>
+
+                        <slot name="extra"></slot>
                     </v-col>
 
                     <v-col :cols="2" v-if="!mini" align-self="center">

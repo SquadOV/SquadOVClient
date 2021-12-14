@@ -19,6 +19,18 @@
                 {{ instanceName }} ({{ difficulty }})
             </div>
         </template>
+
+        <template v-slot:extra>
+            <div class="d-flex align-center flex-wrap mt-1">
+                <div
+                    v-for="(boss, idx) in bossesToDisplay"
+                    :key="`boss-${idx}`"
+                    class="d-flex align-center mr-2"
+                >
+                    <span class="font-weight-bold">{{ boss.name }}</span>: {{ (boss.currentHp / boss.maxHp * 100.0).toFixed(1) }}%
+                </div>
+            </div>
+        </template>
     </wow-generic-match-summary>
 </template>
 
@@ -29,7 +41,7 @@ import Component from 'vue-class-component'
 import WowGenericMatchSummary from '@client/vue/utility/wow/WowGenericMatchSummary.vue'
 import { ApiData } from '@client/js/api'
 import { Prop, Watch } from 'vue-property-decorator'
-import { WowEncounter } from '@client/js/wow/matches'
+import { WowBossStatus, WowEncounter } from '@client/js/wow/matches'
 import { WowDifficultyData } from '@client/js/wow/difficulty'
 import { WowInstanceData } from '@client/js/wow/instance'
 import { secondsToTimeString } from '@client/js/time'
@@ -65,6 +77,12 @@ export default class WowEncounterSummary extends Vue {
 
     difficultyData: WowDifficultyData | null = null
     instanceData: WowInstanceData | null = null
+
+    get bossesToDisplay(): WowBossStatus[] {
+        return this.encounter.boss.filter((ele: WowBossStatus) => {
+            return !this.encounter.success && ele.currentHp !== null && ele.maxHp !== null
+        })
+    }
 
     get encounterName(): string {
         return this.encounter.encounterName.replace(/"/g, '')
