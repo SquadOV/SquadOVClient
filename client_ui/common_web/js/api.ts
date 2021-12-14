@@ -660,13 +660,12 @@ class ApiClient {
 
     listValorantMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: ValorantMatchFilters}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
