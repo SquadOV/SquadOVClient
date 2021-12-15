@@ -1111,3 +1111,7 @@ ipcMain.on('request-process-list', () => {
 zeromqServer.on('respond-process-list', (r) => {
     win.webContents.send('respond-process-list', JSON.parse(r))
 })
+
+ipcMain.on('force-stop-recording', () => {
+    zeromqServer.forceStopRecording()
+})

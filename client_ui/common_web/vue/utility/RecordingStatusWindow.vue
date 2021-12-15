@@ -96,7 +96,7 @@
                 <v-card-title>
                     Are you sure you wish to manually stop recording?
                 </v-card-title>
-                <v-divider></v-divider>
+                <v-divider class="mb-4"></v-divider>
 
                 <v-card-text>
                     For all games except World of Warcraft, <span class="font-weight-bold">you will lose this recorded VOD.</span>
@@ -107,7 +107,7 @@
 
                 <v-card-actions>
                     <v-checkbox
-                        :value="$store.state.settings.record.needConfirmManualStop"
+                        :input-value="$store.state.settings.record.needConfirmManualStop"
                         @change="$store.commit('changeNeedConfirmManualStop', arguments[0])"
                         dense
                         hide-details
@@ -214,7 +214,7 @@ export default class RecordingStatusWindow extends Vue {
     }
 
     requestStopRecording() {
-        if (this.$store.state.settings.record.needConfirmManualStop) {
+        if (!!this.$store.state.settings.record.needConfirmManualStop) {
             this.showHideStopConfirm = true
         } else {
             this.forceStopRecording()

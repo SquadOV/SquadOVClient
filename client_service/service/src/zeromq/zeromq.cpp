@@ -57,6 +57,7 @@ ZeroMQServerClient::ZeroMQServerClient() {
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_ENABLE_PREVIEW_GAME_RECORDING_STREAM);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_RELOAD_GAME_RECORDING_STREAM);
     _sub.set(zmq::sockopt::subscribe, ZEROMQ_REQUEST_PROCESS_LIST);
+    _sub.set(zmq::sockopt::subscribe, ZEROMQ_FORCE_STOP_RECORDING);
      // Return immediately so that the infinite loop can exit out when needed.
     _sub.set(zmq::sockopt::rcvtimeo, 0);
 

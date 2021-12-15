@@ -23,6 +23,8 @@ public:
     explicit AimlabProcessHandlerInstance(const process_watcher::process::Process& p);
     ~AimlabProcessHandlerInstance();
 
+    void forceStopRecording();
+
 private:
     void onAimlabTaskStart(const shared::TimePoint& eventTime, const void* rawData);
     void onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData);
@@ -53,6 +55,13 @@ AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher
 }
 
 AimlabProcessHandlerInstance::~AimlabProcessHandlerInstance() {
+}
+
+void AimlabProcessHandlerInstance::forceStopRecording() {
+    onAimlabTaskKill(
+        shared::nowUtc(),
+        nullptr
+    );
 }
 
 void AimlabProcessHandlerInstance::backfill() {
@@ -102,11 +111,13 @@ void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eve
         return;
     }
 
-    const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
-    LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Kill" << std::endl
-        << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
-        << "\tMap: " << state->taskMap << std::endl
-        << "\tVersion: " << state->gameVersion << std::endl);
+    if (rawData) {
+        const auto* state = reinterpret_cast<const game_event_watcher::AimlabLogState*>(rawData);
+        LOG_INFO("[" << shared::timeToStr(eventTime) << "] Aim Lab Task Kill" << std::endl
+            << "\tTask: " << state->taskName << " " << state->taskMode << std::endl
+            << "\tMap: " << state->taskMap << std::endl
+            << "\tVersion: " << state->gameVersion << std::endl);
+    }
 
     if (_recorder->isRecording()) {
         const auto vodId = _recorder->currentId();
@@ -228,6 +239,14 @@ void AimlabProcessHandler::onProcessStops() {
     LOG_INFO("STOP AIMLAB" << std::endl);
     service::system::getGlobalState()->markGameRunning(shared::EGame::Aimlab, false);
     _instance.reset(nullptr);
+}
+
+void AimlabProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: Aim Lab" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }

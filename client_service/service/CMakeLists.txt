@@ -101,6 +101,7 @@ SET(HEADERS
     src/recorder/pipe/cloud/s3_storage_client.h
     src/recorder/pipe/cloud_storage_piper.h
     src/recorder/default_flags.h
+    src/recorder/process_record_interface.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
