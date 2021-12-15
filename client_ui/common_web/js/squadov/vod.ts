@@ -120,6 +120,11 @@ export interface VodManifest {
     videoTracks: VodTrack[]
 }
 
+export interface VodSegmentUrl {
+    url: string
+    expiration: Date | null
+}
+
 export function getVideoQualityTrack(v : VodManifest, quality : string) : VodTrack | undefined {
     return v.videoTracks.find((ele : VodTrack) => ele.metadata.id == quality)
 }
@@ -139,4 +144,11 @@ export function cleanVodClipFromJson(c: VodClip) : VodClip {
 export function cleanClipCommentFromJson(c: ClipComment): ClipComment {
     c.tm = new Date(c.tm)
     return c
+}
+
+export function cleanVodSegmentUrlFromJson(s: VodSegmentUrl): VodSegmentUrl {
+    if (!!s.expiration) {
+        s.expiration = new Date(s.expiration)
+    }
+    return s
 }
