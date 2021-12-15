@@ -2,6 +2,7 @@
 
 #include "shared/errors/error.h"
 #include "shared/env.h"
+#include "shared/filesystem/steam_library_folders.h"
 
 #include <boost/preprocessor.hpp>
 #ifdef _WIN32
@@ -121,7 +122,7 @@ std::optional<std::filesystem::path> getSteamInstallFolder() {
 }
 
 std::optional<std::filesystem::path> getCsgoInstallFolder() {
-    const auto steamPath = getSteamInstallFolder();
+    const auto steamPath = shared::filesystem::getSteamLibrarySingleton()->getSteamLibraryPathForGame(shared::filesystem::SteamGame::CSGO);
     if (!steamPath.has_value()) {
         return std::nullopt;
     }
