@@ -473,6 +473,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif  
         },
+        changeNeedConfirmManualStop(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.needConfirmManualStop = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         updateLocalStorageUsage(state: RootState, val: number) {
             state.localDiskSpaceRecordUsageGb = val
         },

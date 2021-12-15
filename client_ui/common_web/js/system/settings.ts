@@ -1,6 +1,6 @@
 /// #if DESKTOP
 import fs from 'fs'
-import path from 'path'
+import path, { parse } from 'path'
 import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
@@ -94,6 +94,7 @@ export interface SquadOvRecordingSettings {
     useVoiceBasicNoiseFilter: boolean
     voiceFilterThresholdDb: number
     useVoiceSpeechNoiseReduction: boolean
+    needConfirmManualStop: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -356,6 +357,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceBasicNoiseFilter: false,
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
+                needConfirmManualStop: true,
             }
         case BaselineLevel.Medium:
             record = {
@@ -400,6 +402,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceBasicNoiseFilter: false,
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
+                needConfirmManualStop: true,
             }
         case BaselineLevel.High:
             record = {
@@ -444,6 +447,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceBasicNoiseFilter: false,
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
+                needConfirmManualStop: true,
             }
     }
 
@@ -509,6 +513,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVoiceBasicNoiseFilter: false,
             voiceFilterThresholdDb: -60,
             useVoiceSpeechNoiseReduction: false,
+            needConfirmManualStop: true,
         },
         keybinds: {
             pushToTalk: [],
@@ -731,6 +736,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.games.wow.recordScenarios === undefined) {
             parsedData.games.wow.recordScenarios = true
+        }
+
+        if (parsedData.record.needConfirmManualStop === undefined) {
+            parsedData.record.needConfirmManualStop = true
         }
 
     } catch (ex) {

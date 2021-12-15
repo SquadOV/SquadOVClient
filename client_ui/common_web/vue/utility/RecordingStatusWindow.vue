@@ -60,7 +60,7 @@
                 tile
                 :color="isPaused ? `success`: `warning`"
                 @click="togglePause"
-                :disabled="isRecording"
+                v-if="!isRecording"
             >
                 <v-icon v-if="isPaused">
                     mdi-play
@@ -71,8 +71,69 @@
                 </v-icon>
             </v-btn>
 
+            <v-btn
+                block
+                icon
+                tile
+                color="error"
+                @click="requestStopRecording"
+                v-else
+            >
+                <v-icon>
+                    mdi-stop
+                </v-icon>
+            </v-btn>
+
             <recording-settings-item mini ref="record"></recording-settings-item>
         </div>
+
+        <v-dialog
+            v-model="showHideStopConfirm"
+            max-width="40%"
+            persistent
+        >
+            <v-card>
+                <v-card-title>
+                    Are you sure you wish to manually stop recording?
+                </v-card-title>
+                <v-divider></v-divider>
+
+                <v-card-text>
+                    For all games except World of Warcraft, <span class="font-weight-bold">you will lose this recorded VOD.</span>
+                    For World of Warcraft, manually stopping the recording will cause your run to be marked as a loss (encounters, keystones, arenas).
+                    You may lose some combat log data.
+                    It is recommended you let SquadOV finish recording on its own.
+                </v-card-text>
+
+                <v-card-actions>
+                    <v-checkbox
+                        :value="$store.state.settings.record.needConfirmManualStop"
+                        @change="$store.commit('changeNeedConfirmManualStop', arguments[0])"
+                        dense
+                        hide-details
+                        label="Show this popup every time."
+                    >
+                    </v-checkbox>
+
+                    <v-btn
+                        class="ml-2"
+                        color="success"
+                        @click="showHideStopConfirm = false"
+                    >
+                        Nevermind!
+                    </v-btn>
+
+                    <v-spacer></v-spacer>
+
+                    <v-btn
+                        color="error"
+                        @click="forceStopRecording"
+                    >
+                        Stop Recording
+                    </v-btn>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-sheet>
 </template>
 
@@ -104,6 +165,7 @@ export default class RecordingStatusWindow extends Vue {
     selectedInput: string = ''
     defaultInput: string = ''
     inputVolume: number = 1.0
+    showHideStopConfirm: boolean = false
 
     $refs!: {
         record: RecordingSettingsItem
@@ -149,6 +211,19 @@ export default class RecordingStatusWindow extends Vue {
     togglePause() {
         this.$store.commit('toggleRecordingPause')
         ipcRenderer.send('change-state-pause', this.isPaused)
+    }
+
+    requestStopRecording() {
+        if (this.$store.state.settings.record.needConfirmManualStop) {
+            this.showHideStopConfirm = true
+        } else {
+            this.forceStopRecording()
+        }
+    }
+
+    forceStopRecording() {
+        this.showHideStopConfirm = false
+        ipcRenderer.send('force-stop-recording')
     }
 }
 
