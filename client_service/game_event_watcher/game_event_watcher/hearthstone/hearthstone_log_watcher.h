@@ -61,11 +61,17 @@ private:
     void onPowerLogChange(const LogLinesDelta& lines);
     void onArenaLogChange(const LogLinesDelta& lines);
 
+    // Note that order here matters. C++ will call destructors in reverse
+    // order of declaration and _powerParser will be invoked directly from
+    // a callback we send to _powerWatcher. Thus, if _powerParser is destroyed first
+    // (i.e. declared after _powerWatcher), then there's a possibility
+    // that we access _powerParser after it's already destructed. Hence why
+    // _powerParser MUST be declared before _powerWatcher.
+    HearthstonePowerLogParser _powerParser;
+
     LogWatcherPtr _primaryWatcher;
     LogWatcherPtr _powerWatcher;
     LogWatcherPtr _arenaWatcher;
-
-    HearthstonePowerLogParser _powerParser;
 };
 
 }
