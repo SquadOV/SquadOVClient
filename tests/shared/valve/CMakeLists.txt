@@ -1,0 +1,1 @@
+GENERATE_TEST("vdf_file_test" "vdf_file_test.cpp")

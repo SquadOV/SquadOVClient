@@ -19,7 +19,7 @@ MACRO(GENERATE_TEST TEST_NAME CPP_NAME)
         dbghelp
     )
 
-    add_test(NAME ${TEST_NAME}_TEST COMMAND ${TEST_NAME})
+    add_test(NAME ${TEST_NAME}_TEST COMMAND ${TEST_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     add_dependencies(squadov_build_tests ${TEST_NAME})
 
     target_compile_definitions(${TEST_NAME} PUBLIC "SQUADOV_TZDATA=${CMAKE_SOURCE_DIR}/resources/tzdata")
