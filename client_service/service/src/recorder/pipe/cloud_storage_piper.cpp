@@ -26,7 +26,7 @@ CloudUploadRequest CloudUploadRequest::fromJson(const nlohmann::json& json) {
     return ret;
 }
 
-std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadProgressFn& progressFn) {
+std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadUploadProgressFn& progressFn) {
     // It's a bit of a roundabout way to do it but create a local system pipe to write the file data to
     // and then just wait for the pipe to finish.
     auto pipe = std::make_unique<Pipe>(req.task);
@@ -69,6 +69,7 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
         return;
     }
 
+    _timeStart = std::chrono::system_clock::now();
     _client->initializeDestination(destination);
     _cloudThread = std::thread(std::bind(&CloudStoragePiper::tickUploadThread, this));
 
@@ -82,9 +83,13 @@ CloudStoragePiper::~CloudStoragePiper() {
     flush();
 }
 
-void CloudStoragePiper::setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes) {
+void CloudStoragePiper::setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn, size_t totalBytes) {
     _progressFn = progressFn;
-    _totalProgressBytes = totalBytes;
+    _totalUploadBytes = totalBytes;
+}
+
+void CloudStoragePiper::setCurlProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) {
+    _client->setProgressCallback(progressFn);
 }
 
 void CloudStoragePiper::copyDataIntoInternalBuffer(std::vector<char>& buffer) {
@@ -147,7 +152,7 @@ void CloudStoragePiper::tickUploadThread() {
     copyDataIntoInternalBuffer(internalBuffer);
 
     bool first = true;
-    while ((first || !internalBuffer.empty()) && !_skipLastCall) {
+    while ((first || !internalBuffer.empty()) && !_skipFlush) {
         sendDataFromBufferWithBackoff(internalBuffer, 0, true);
         first = false;
     }
@@ -162,9 +167,6 @@ void CloudStoragePiper::tickUploadThread() {
 void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast) {
     static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
-// Uploadedbytes needs to be more precise
-// add more functionality: Hooking up more visibility of what goes up by second rather than chunk.
-// e.g. If user doesn't upload a full chunk, we woould want to know how much data actualyl was sent.
     for (auto i = 0; i < CLOUD_MAX_RETRIES; ++i) {
         try {
             const auto data = _client->uploadBytes(buffer.data(), requestedBytes, isLast, _uploadedBytes);
@@ -175,8 +177,9 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
             }
             _uploadedBytes += bytesSent;
-            if (_totalProgressBytes.has_value() && _progressFn.has_value()) {
-                _progressFn.value()(_uploadedBytes, _totalProgressBytes.value());
+            _lastUploadTime = std::chrono::system_clock::now();
+            if (_totalUploadBytes.has_value() && _progressFn.has_value()) {
+                _progressFn.value()(_totalDownloadBytes.value_or(0), _downloadedBytes, _totalUploadBytes.value(), _uploadedBytes);
             }
 
             if (!data.first.empty()) {

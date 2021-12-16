@@ -20,6 +20,23 @@
                 Logout
             </v-btn>
         </template>
+
+        <template v-if="showSpeedCheckPrompt">
+            <v-btn
+                class="mt-2"
+                color="success"
+                @click="finishSpeedCheck"
+            >
+                Continue
+            </v-btn>
+            <v-btn
+                class="mt-2"
+                color="error"
+                @click="reEnableAutomaticUpload"
+            >
+                Revert
+            </v-btn>
+        </template>
     </div>
 </template>
 
@@ -28,7 +45,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { ipcRenderer } from 'electron'
-import { loadLocalSettings } from '@client/js/system/settings'
+import { loadLocalSettings, saveLocalSettings } from '@client/js/system/settings'
 import Funnies from 'funnies'
 
 @Component
@@ -36,6 +53,32 @@ export default class SetupProgress extends Vue {
     statusMessage = 'Loading...'
     showLogout: boolean = false
     funnies: any = new Funnies()
+    showSpeedCheckPrompt: boolean = false
+
+    get ranSpeedCheck(): boolean {
+        if(!!this.$store.state.settings.ranSpeedCheck) {
+            return this.$store.state.settings.ranSpeedCheck
+        } else {
+            return false;
+        }
+    }
+
+    get speedCheckResult(): number {
+        if(!!this.$store.state.settings.speedCheckResult) {
+            return this.$store.state.settings.speedCheckResult
+        } else {
+            return 0
+        }
+    }
+
+    reEnableAutomaticUpload() {
+        this.$store.commit('disableAutomaticUpload', false)
+        this.finishSpeedCheck()
+    }
+
+    finishSpeedCheck() {
+        this.$emit('finishSpeedCheck')
+    }
 
     refreshStatusMessage() {
         this.statusMessage = `${this.funnies.message()} (just kidding)`
@@ -68,8 +111,7 @@ export default class SetupProgress extends Vue {
 
     async userSpeedCheck() {
         console.log('User speed check to SOV Servers...')
-        // this.refreshStatusMessage()
-
+        this.statusMessage = 'Checking your connection speed to SquadOV servers'
         let p = new Promise((resolve, reject) => {
             ipcRenderer.on('finish-user-upload-speed-check', () => {
                 resolve(0)
@@ -78,6 +120,20 @@ export default class SetupProgress extends Vue {
 
         ipcRenderer.send('user-upload-speed-check')
         return p
+    }
+
+    async speedCheckPrompt() {
+        this.showSpeedCheckPrompt = true
+        this.statusMessage = 'Due to slow connection, automatic upload has been turned off.'
+        // In case the user reverts, the local settings need to be reloaded, or old memory will be used on the settings file
+        await this.$store.dispatch('reloadLocalSettings')
+        return new Promise((resolve, reject) => { 
+            this.$on('finishSpeedCheck', () => {
+                resolve(0)
+            })
+        }).then(() => {
+            
+        })
     }
 
     async doSetupSequence() {
@@ -89,7 +145,17 @@ export default class SetupProgress extends Vue {
         //    The flip side of doing this will allow us to do an audio device sanity check every time we start up.
         await this.audioDeviceSanityCheck() 
 
-        await this.userSpeedCheck()
+        // 3. Check if this user has run a speed check on the current computer.
+        if(!this.ranSpeedCheck) {
+            await this.userSpeedCheck()
+            // 3a. Check if result is good enough. If not, prompt user we turn off automatic upload
+            // 8 Mbps is the current threshold.
+            if( this.speedCheckResult < 8 ) {
+                await this.speedCheckPrompt()
+            }
+        }
+        // One last SaveLocalSettings call immediately
+        saveLocalSettings(this.$store.state.settings, true)
 
         this.statusMessage = 'Connecting to SquadOV...'
 

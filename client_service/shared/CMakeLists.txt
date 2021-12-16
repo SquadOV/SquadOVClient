@@ -31,7 +31,6 @@ SET(SRCS
     shared/system/keys.cpp
     shared/image/ico/ico.cpp
     shared/memory/byte_writer.cpp
-    shared/squadov/speed_check.cpp
 )
 
 SET(HEADERS
@@ -54,7 +53,6 @@ SET(HEADERS
     shared/base64/decode.h
     shared/squadov/session.h
     shared/squadov/user.h
-    shared/squadov/speed_check.h
     shared/hearthstone/hearthstone_ratings.h
     shared/errors/error.h
     shared/math.h

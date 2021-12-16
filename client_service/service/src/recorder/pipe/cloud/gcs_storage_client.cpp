@@ -12,6 +12,10 @@ void GCSStorageClient::initializeDestination(const service::uploader::UploadDest
     _destination = destination;
 }
 
+void GCSStorageClient::setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) {
+    _httpClient->addDownloadProgressFn(progressFn);
+}
+
 void GCSStorageClient::startNewSegment() {
 }
 

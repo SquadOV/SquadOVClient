@@ -10,7 +10,7 @@ public:
     explicit S3StorageClient(const std::string& videoUuid);
 
     void initializeDestination(const service::uploader::UploadDestination& destination) override;
-
+    void setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) override;
     void startNewSegment() override;
     std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) override;
 private:

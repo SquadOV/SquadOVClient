@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "uploader/uploader.h"
+#include "shared/http/http_client.h"
 
 namespace service::recorder::pipe::cloud {
 
@@ -13,6 +14,7 @@ public:
 
     virtual void startNewSegment() = 0;
     virtual std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) = 0;
+    virtual void setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) = 0;
 };
 
 using CloudStorageClientPtr = std::unique_ptr<CloudStorageClient>;

@@ -520,20 +520,6 @@ function startClientService() {
         }
         return
     }
-    return exePath
-}
-
-function startClientService() {
-    if (totalCloseCount > 5) {
-        log.log('Close count exceeded threshold - preventing automatic reboot. Please restart SquadOV.')
-        if (!!win) {
-            win.webContents.on('did-finish-load', () => {
-                win.webContents.send('service-error')    
-            })
-            win.webContents.send('service-error')
-        }
-        return
-    }
 
     // Start auxiliary service that'll handle waiting for games to run and
     // collecting the relevant information and sending it to the database.

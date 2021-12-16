@@ -250,6 +250,8 @@ export interface SquadOvLocalSettings {
     minimizeOnClose: boolean
     runOnStartup: boolean
     setupWizardRun: boolean
+    ranSpeedCheck: boolean
+    speedCheckResult: number
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
@@ -459,6 +461,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
+        ranSpeedCheck: false,
+        speedCheckResult: 0,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -520,6 +524,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
+        ranSpeedCheck: false,
+        speedCheckResult: 0,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -569,6 +575,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.setupWizardRun === undefined) {
             parsedData.setupWizardRun = false
+        }
+
+        if (parsedData.ranSpeedCheck === undefined) {
+            parsedData.ranSpeedCheck = false
+        }
+
+        if (parsedData.speedCheckResult === undefined) {
+            parsedData.speedCheckResult = 0
         }
 
         if (parsedData.record.useVfr4 === undefined) {

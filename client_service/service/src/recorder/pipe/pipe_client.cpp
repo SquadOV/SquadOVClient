@@ -12,29 +12,20 @@ PipeClient::PipeClient(const std::string& name) {
     std::ostringstream pipePath;
     pipePath << "\\\\.\\pipe\\" << name;
     _filePath = pipePath.str();
-    dwMode = PIPE_READMODE_BYTE; 
 
-    connectToPipe();
     // The pipe connected; change to message-read mode. 
+    connectToPipe();
 
-    handleState();
     // Send a message to the pipe server. 
-    return;
+    handleState();
+
 #else
     throw std::runtime_error("Unsupported OS for Named Pipes");
 #endif
 }
 
-void PipeClient::start(std::vector<char> wBuffer) {
-    writeDataToPipe(wBuffer);
-}
-
-void PipeClient::stop() {
-    CloseHandle(_hPipe);
-}
-
-void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
-    fSuccess = WriteFile(
+void PipeClient::start(const std::vector<char>& wBuffer) {
+    BOOL fSuccess = WriteFile(
         _hPipe,                  // pipe handle 
         (void*)wBuffer.data(),  // message 
         wBuffer.size(),         // message length 
@@ -43,29 +34,34 @@ void PipeClient::writeDataToPipe(std::vector<char> wBuffer) {
 
     if ( !fSuccess ) 
     {
-        _tprintf( TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError() ); 
+        THROW_ERROR("WriteFile to pipe failed: "<< GetLastError() ); 
         return;
     }
 }
 
+void PipeClient::stop() {
+    if(_hPipe) {
+        CloseHandle(_hPipe);
+        _hPipe = NULL;
+    }
+}
+
 void PipeClient::handleState() {
-    fSuccess = SetNamedPipeHandleState( 
+    BOOL fSuccess = SetNamedPipeHandleState( 
         _hPipe,    // pipe handle 
-        &dwMode,  // new pipe mode 
+        PIPE_READMODE_BYTE,  // new pipe mode 
         NULL,     // don't set maximum bytes 
         NULL);    // don't set maximum time 
-    if ( ! fSuccess) 
-    {
-      _tprintf( TEXT("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError() ); 
-      return;
+    if ( !fSuccess ) {
+      THROW_ERROR("SetNamedPipeHandleState failed: " << GetLastError());
     }
 }
 
 void PipeClient::connectToPipe() {
-    while (1) {
+    for ( int i =0; i < 5; i++ ) {
         _hPipe = CreateFile(
             _filePath.c_str(), // lpFileName
-            GENERIC_READ | GENERIC_WRITE, // dwDesiredAccess
+            GENERIC_WRITE, // dwDesiredAccess
             0, // dwShareMode
             NULL, // lpSecurityAttributes
             OPEN_EXISTING, // dwCreationDisposition
@@ -75,28 +71,33 @@ void PipeClient::connectToPipe() {
 
     // Break if the pipe handle is valid. 
     
-        if (_hPipe != INVALID_HANDLE_VALUE) 
+        if (_hPipe != INVALID_HANDLE_VALUE) {
             break;
+        }
     
         // Exit if an error other than ERROR_PIPE_BUSY occurs. 
     
-        if (GetLastError() != ERROR_PIPE_BUSY) 
-        {
+        if (GetLastError() != ERROR_PIPE_BUSY) {
             THROW_ERROR("Failed to create file: " << GetLastError());
             return;
         }
     
-        // All pipe instances are busy, so wait for 20 seconds. 
-    
-        if ( ! WaitNamedPipe(_filePath.c_str(), 20000)) 
-        { 
-            printf("Could not open pipe: 20 second wait timed out."); 
+        // All pipe instances are busy, so wait for 5 second. 
+        if ( ! WaitNamedPipe(_filePath.c_str(), 1000)) { 
+            LOG_WARNING("Could not open pipe: 5 second wait timed out."); 
             return;
+        }
+
+        if ( i == 4 ) {
+            LOG_WARNING("Unable to Connect to Pipe after 5 tries.")
         }
     }
 }
 
 PipeClient::~PipeClient() {
-    // CloseHandle(_hPipe);
+    if(_hPipe) {
+        CloseHandle(_hPipe);
+        _hPipe = NULL;
+    }
 }
 };

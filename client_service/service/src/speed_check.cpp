@@ -4,9 +4,9 @@
 #include "recorder/pipe/pipe_client.h"
 #include "recorder/pipe/pipe.h"
 #include "shared/http/http_client.h"
-#include "shared/uuid.cpp"
+#include "shared/uuid.h"
+#include "system/settings.h"
 #include "shared/time/ntp_client.h"
-#include "shared/squadov/speed_check.h"
 #include "uploader/uploader.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/filesystem/utility.h"
@@ -18,15 +18,13 @@
 #include <cstdio>
 #include <cstdlib>
 #include <curl/curl.h>
-#include <date/tz.h>
 #include <exception>
 #include <nlohmann/json.hpp>
 #include <thread>
 
 #include "shared/system/win32/hwnd_utils.h"
 
-extern "C"
-{
+extern "C" {
 #include <libavutil/log.h>
 }
 
@@ -34,10 +32,10 @@ extern "C"
 #include <Windows.h>
 #endif
 
-int main(int argc, char **argv)
-{
-    shared::log::Log::initializeGlobalLogger("squadov.log");
+namespace fs = std::filesystem;
 
+int main(int argc, char **argv) {
+    shared::log::Log::initializeGlobalLogger("squadov_speed_check.log");
     // NTP can't be init before the logger since we log stuff inside the NTP client.
     shared::time::NTPClient::singleton()->enable(true);
     shared::time::NTPClient::singleton()->initialize();
@@ -54,44 +52,70 @@ int main(int argc, char **argv)
         LOG_WARNING("Failed to get current user: " << ex.what() << std::endl);
         std::exit(1);
     }
-    auto speedCheckValue = service::api::getGlobalApi()->getUserSpeedCheck();
-    // This checks if there is a value in the user's speedcheck. If there is, it will return quickly
-    // If not, it will return -1, which signifies that the user has never done a speed check.
-    if(speedCheckValue.speed_mbps >= 0) {
-        return 0;
-    }
     const auto uuidFileName = shared::generateUuidv4();
     auto speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
-    double speed_check_res;
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
-
-    // setSkipLastCall() is only called for speed_Check, as we don't need to send up the final bytes 
-    piper->setSkipLastCall(true);
+    // 160MB buffer. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 
+    std::vector<char> writeBuffer(1024 * 1024 * 8 * 20, 'A');
+    double lastUl = 0;
+    piper->setCurlProgressCallback([&lastUl](size_t dltotal, size_t dl, size_t ultotal, size_t ul){
+        lastUl = ul;
+        if(ul == ultotal) {
+            lastUl = 0;
+        }
+    });
+    
     std::thread t1([&piper]() {
         piper->start();
-        std::this_thread::sleep_for(std::chrono::seconds(10)); // Listen for 10 seconds
-        piper->stopAndSkipFlush(); 
-
+        // Listen for 10 seconds
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        // stopAndSkipFlush() is only called for speed_Check, as we don't need to send up the final bytes 
+        piper->stopAndSkipFlush();
     });
-    std::vector<char> writeBuffer(1024 * 1024 * 200, 'A');
     pipeClient.start(writeBuffer);
-    if (t1.joinable())
-    {
+    if (t1.joinable()) {
         t1.join();
     }
     pipeClient.stop();
     piper->wait(); 
-    speed_check_res = piper->getUploadedBytes();
 
-    // This should calculate out the MB/s
-    double speed_check_res_mbps = speed_check_res/1024/1024/10;
+    // This should calculate out the Mb/s
+    double timeSpent = piper->getTimeSpentUploading().count();
+    // Turn into Mega-bits
+    double speedCheckRes = (piper->getUploadedBytes() + lastUl) * 8 / 1024 / 1024;
+    double speedCheckResMbps;
 
-    shared::squadov::SpeedCheckData speedCheckData;
-    speedCheckData.speed_mbps = speed_check_res_mbps;
+    // lastUl lets us know if there was any partial uploads remaining.
+    if(lastUl == 0) {
+        speedCheckResMbps = speedCheckRes/timeSpent;
+    } else {
+        speedCheckResMbps = speedCheckRes/10;
+    }
 
-    service::api::getGlobalApi()->postSpeedCheck(speedCheckData, uuidFileName);
+    service::api::getGlobalApi()->postSpeedCheck(speedCheckResMbps, uuidFileName);
+
+    // We use this data in the settings file to recommend if the user should use automatic upload.
+    LOG_INFO("Saving Speed Check results to disk..." << std::endl);
+    auto rawData = service::system::getCurrentSettings()->raw();
+
+    rawData["ranSpeedCheck"] = shared::json::JsonConverter<bool>::to(true);
+    rawData["speedCheckResult"] = shared::json::JsonConverter<double>::to(speedCheckResMbps);
+    
+    // If the user is uploading slower than 8 Mb/s, disable Automatic Upload.
+    if(speedCheckResMbps < 8) {
+        rawData["record"]["useLocalRecording"] = shared::json::JsonConverter<bool>::to(true);
+    }
+
+    const auto fpath = shared::filesystem::getSquadOvUserSettingsFile();
+    const auto tmpPath = fpath.parent_path() / fs::path("settings.json.tmp");
+    
+    std::ofstream ofs(tmpPath);
+    ofs << std::setw(4) << rawData;
+    ofs.close();
+
+    fs::rename(tmpPath, fpath);
 
     return 0;
 }

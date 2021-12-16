@@ -85,6 +85,7 @@ int main(int argc, char** argv) {
 
     service::uploader::UploadDestination destination;
     destination.loc = service::uploader::UploadManagerType::FileSystem;
+    destination.purpose = service::uploader::UploadPurpose::VOD;
     destination.url = outputFname;
     recorder.setFileOutputFromDestination("bobbothebuilder", destination);
     // Wait for it to grab window info

@@ -381,15 +381,18 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
     }
 }
 
-service::uploader::UploadDestination SquadovApi::getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const {
+service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part) const {
     std::ostringstream path;
-    // Checks if the bucket is for speed check. This is probably unwanted behavior, 
-    // but this is a quick and dirty way for segment upload on speed-check. Plan to fix
-    if(bucket.find("speed-check") != std::string::npos) {
-        path << "/v1/speedcheck/" << videoUuid << "?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
-    }
-    else {
-        path << "/v1/vod/" << videoUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+    switch(uploadPurpose) {
+        case service::uploader::UploadPurpose::VOD:
+            path << "/v1/vod/" << objectUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+            break;
+        case service::uploader::UploadPurpose::SpeedCheck:
+            path << "/v1/speedcheck/" << objectUuid << "?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+            break;
+        default:
+            THROW_ERROR("Failed to find Upload Purpose.")
+            break;
     }
     const auto result = _webClient->get(path.str());
     if (result->status != 200) {
@@ -458,44 +461,22 @@ service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::str
     return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
-shared::squadov::SpeedCheckData SquadovApi::getUserSpeedCheck() const {
-    std::ostringstream path;
-    path << "/v1/speedcheck";
-
-    const auto result = _webClient->get(path.str());
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to get Speed Check URI: " << result->status);
-        return {};
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    return shared::squadov::SpeedCheckData::fromJson(parsedJson);
-}
-
-void SquadovApi::postSpeedCheck(const shared::squadov::SpeedCheckData& speedCheckData, const std::string& speedCheckUuid) const {
+void SquadovApi::postSpeedCheck(const double& speedMbps, const std::string& speedCheckUuid) const {
     std::ostringstream path;
     path << "/v1/speedcheck/" << speedCheckUuid;
 
-    const auto result = _webClient->post(path.str(), speedCheckData.toJson());
+    const nlohmann::json body = {
+        { "speed_mbps", speedMbps }
+    };
+
+    const auto result = _webClient->post(path.str(), body);
 
     if (result->status != 204) {
-        THROW_ERROR("Failed to delete Speed Check File: " << result->status);
+        THROW_ERROR("Failed to post Speed Check to Server: " << result->status);
         return;
     }
 }
 
-void SquadovApi::deleteSpeedCheckFile(const std::string& speedCheckUuid) const {
-    std::ostringstream path;
-    path << "/v1/speedcheck/" << speedCheckUuid;
-
-    const auto result = _webClient->del(path.str());
-
-    if (result->status != 204) {
-        THROW_ERROR("Failed to delete Speed Check File: " << result->status);
-        return;
-    }
-}
 
 std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {
     std::ostringstream path;

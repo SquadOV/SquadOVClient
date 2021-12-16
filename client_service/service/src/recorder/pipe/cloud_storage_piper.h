@@ -13,6 +13,7 @@
 #include <thread>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #define DUMP_CLOUD_REF_VIDEO 0
 #if DUMP_CLOUD_REF_VIDEO
@@ -30,7 +31,7 @@ struct CloudUploadRequest {
 };
 
 // (session, parts)
-std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadProgressFn& progressFn);
+std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadUploadProgressFn& progressFn);
 
 class CloudStoragePacket {
 public:
@@ -51,10 +52,12 @@ public:
     ~CloudStoragePiper();
 
     std::string sessionId() const override { return _destination.session; }
-    void setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes);
+    void setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn, size_t totalBytes);
+    void setCurlProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
     size_t getUploadedBytes() { return _uploadedBytes; };
-    void setSkipLastCall(bool skipLastCall) { _skipLastCall = skipLastCall; };
+    std::chrono::duration<double> getTimeSpentUploading() { return _lastUploadTime-_timeStart; };
+    void skipFlush() { _skipFlush = true; };
     void flush() override;
     
 protected:
@@ -69,6 +72,7 @@ private:
     std::string _videoUuid;
     service::uploader::UploadDestination _destination;
     size_t _uploadedBytes = 0;
+    size_t _downloadedBytes = 0;
 
     cloud::CloudStorageClientPtr _client;
     std::mutex _cloudMutex;
@@ -76,7 +80,9 @@ private:
     std::thread _cloudThread;
     std::vector<std::string> _allSegmentsIds;
     bool _finished = false;
-    bool _skipLastCall = false;
+    bool _skipFlush = false;
+    std::chrono::system_clock::time_point _timeStart;
+    std::chrono::system_clock::time_point _lastUploadTime;
 
     // Random number generator for backoff
     std::random_device _rd;
@@ -86,8 +92,9 @@ private:
     std::ofstream _refVideo;
 #endif 
 
-    std::optional<shared::http::DownloadProgressFn> _progressFn;
-    std::optional<size_t> _totalProgressBytes;
+    std::optional<shared::http::DownloadUploadProgressFn> _progressFn;
+    std::optional<size_t> _totalDownloadBytes;
+    std::optional<size_t> _totalUploadBytes;
 };
 
 }
