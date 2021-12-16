@@ -168,14 +168,14 @@
                                     disable-select
                                     ref="vods"
                                 >
-                                    <template v-slot:actions="{match}">
+                                    <template v-slot:actions="{pov}">
                                         <v-btn
                                             v-if="isOwner"
                                             icon
                                             small
                                             color="error"
                                             class="ml-2"
-                                            @click.stop="removeVideoFromSquad(match.base.vod.videoTracks[0].metadata.videoUuid)"
+                                            @click.stop="removeVideoFromSquad(pov.vod.videoTracks[0].metadata.videoUuid)"
                                             :loading="vodRemovalProgress"
                                         >
                                             <v-icon>
