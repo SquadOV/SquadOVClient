@@ -8,11 +8,19 @@ export interface WowCommonMatch {
     build: string
 }
 
+export interface WowBossStatus {
+    name: string
+    npcId: number
+    currentHp: number | null
+    maxHp: number | null
+}
+
 export interface WowEncounter extends WowCommonMatch {
     encounterId: number
     encounterName: string
     difficulty: number
     numPlayers: number
+    boss: WowBossStatus[]
 }
 
 export function cleanWowEncounterFromJson(e: WowEncounter): WowEncounter {
@@ -71,6 +79,7 @@ export const ALL_WOW_INSTANCE_TYPES = [
     WowInstanceType.RaidDungeon,
     WowInstanceType.PVPBattlefield,
     WowInstanceType.ArenaBattlefield,
+    WowInstanceType.Scenario,
 ]
 
 export function wowInstanceTypeToName(t: WowInstanceType): string {
@@ -83,6 +92,8 @@ export function wowInstanceTypeToName(t: WowInstanceType): string {
             return 'Battlegrounds'
         case WowInstanceType.ArenaBattlefield:
             return 'Arena'
+        case WowInstanceType.Scenario:
+            return 'Scenarios'
         default:
             return 'Unknown'
     }

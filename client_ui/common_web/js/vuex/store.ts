@@ -441,6 +441,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeWowRecordScenarios(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.recordScenarios = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
         changeWowDoNotRecordInstances(state: RootState, v: WowDisabledInstance[]) {
 /// #if DESKTOP
             if (!state.settings) {

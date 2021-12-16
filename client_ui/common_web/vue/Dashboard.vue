@@ -129,6 +129,7 @@
 
                         <!-- Squad member list and status -->
                         <v-data-table
+                            class="squad-member-list"
                             v-if="filteredSquadMembers.length > 0"
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
@@ -136,6 +137,7 @@
                             :page="userPage"
                             hide-default-footer
                             hide-default-header
+                            @click:row="goToUserProfile(arguments[0].userId)"
                         >
                             <template v-slot:item.status="{ item }">
                                 <user-activity-display
@@ -245,6 +247,7 @@ export default class Dashboard extends mixins(CommonComponent) {
             return {
                 status: this.$store.state.status.status[a.userId],
                 member: a.username,
+                userId: a.userId,
             }
         })
     }
@@ -395,6 +398,15 @@ export default class Dashboard extends mixins(CommonComponent) {
             this.joiningPublicSquad = false
         })
     }
+
+    goToUserProfile(userId: number) {
+        this.$router.push({
+            name: pi.UserProfileIdPageId,
+            params: {
+                userId: `${userId}`,
+            }
+        })
+    }
 }
 
 </script>
@@ -418,6 +430,10 @@ export default class Dashboard extends mixins(CommonComponent) {
     top: calc(10% + 48px);
     left: -1px;
     z-index: 10;
+}
+
+.squad-member-list >>> tbody tr :hover {
+    cursor: pointer;
 }
 
 </style>

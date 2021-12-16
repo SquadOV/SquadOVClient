@@ -1,5 +1,5 @@
 import { SquadOVUserHandle } from "@client/js/squadov/user"
-import { SquadOvGames } from "@client/js/squadov/game"
+import { SquadOvGames, SquadOvWowRelease } from "@client/js/squadov/game"
 
 export interface Squad {
     id: number
@@ -81,6 +81,7 @@ export function cleanSquadInviteLinkFromJson(s: SquadInviteLink) : SquadInviteLi
 export interface SquadInviteLinkData {
     squad: Squad
     inviter: SquadOVUserHandle
+    referral: string
 }
 
 export function cleanSquadInviteLinkDataFromJson(s: SquadInviteLinkData) : SquadInviteLinkData {
@@ -89,6 +90,7 @@ export function cleanSquadInviteLinkDataFromJson(s: SquadInviteLinkData) : Squad
 }
 
 export interface SquadWowSharingSettings {
+    disabledReleases: SquadOvWowRelease[]
     disableEncounters: boolean
     disableDungeons: boolean
     disableKeystones: boolean

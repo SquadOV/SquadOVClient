@@ -11,7 +11,7 @@
         @go-to-character="$emit('go-to-character', arguments[0])"
     >
         <div class="text-subtitle-1 font-weight-bold">
-            {{ wowInstanceTypeToName(instance.instanceType) }}
+            {{ displayText }}
         </div>
     </wow-generic-match-summary>
 </template>
@@ -21,8 +21,12 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import WowGenericMatchSummary from '@client/vue/utility/wow/WowGenericMatchSummary.vue'
-import { Prop } from 'vue-property-decorator'
+import { Prop, Watch } from 'vue-property-decorator'
 import { WowInstance, wowInstanceTypeToName } from '@client/js/wow/matches'
+import { staticClient } from '@client/js/staticData'
+import axios from 'axios'
+import { WowContentDatum } from '@client/js/wow/staticCache'
+import { ApiData } from '@client/js/api'
 
 @Component({
     components: {
@@ -52,6 +56,30 @@ export default class WowInstanceSummary extends Vue {
 
     @Prop()
     accessToken!: string | undefined
+
+    instanceName: string | null = null
+
+    get displayText(): string {
+        let instanceType = wowInstanceTypeToName(this.instance.instanceType)
+        if (!!this.instanceName) {
+            return `${this.instanceName} (${instanceType})`
+        } else {
+            return instanceType
+        }
+    }
+
+    @Watch('instance')
+    refreshInstanceName() {
+        axios.get(staticClient.getWowInstanceDataUrl(this.instance.build, this.instance.instanceId)).then((resp: ApiData<WowContentDatum>) => {
+            this.instanceName = resp.data.name
+        }).catch((err: any) => {
+            console.error('Failed to get WoW instance data: ', err)
+        })
+    }
+
+    mounted() {
+        this.refreshInstanceName()
+    }
 }
 
 </script>

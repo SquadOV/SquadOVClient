@@ -6,9 +6,29 @@
             </v-tab>
 
             <v-tab-item>
+                <v-alert
+                    v-if="differenceDisabledGames.length > 0 || differenceEnabledGames.length > 0"
+                    dense
+                    type="warning"
+                >
+                    <div class="d-flex align-center">
+                        <div>
+                            <span v-if="differenceDisabledGames.length">Are you sure you wish to DISABLE recording for {{ differenceDisabledGamesString }}?</span>
+                            <span v-if="differenceEnabledGames.length">Are you sure you wish to ENABLE recording for {{ differenceEnabledGamesString }}?</span>
+                        </div>
+
+                        <v-spacer></v-spacer>
+
+                        <v-btn
+                            @click="saveDisabledGameChanges"
+                        >
+                            Save Changes
+                        </v-btn>
+                    </div>
+                </v-alert>
+
                 <disabled-supported-game-selector
-                    :value="this.$store.state.settings.disabledGames"
-                    @input="onChangeDisabledGames"
+                    v-model="pendingDisabledGames"
                 >
                 </disabled-supported-game-selector>
             </v-tab-item>
@@ -180,6 +200,29 @@
                             </template>
                         </v-checkbox>
                     </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.recordScenarios"
+                            @change="$store.commit('changeWowRecordScenarios', arguments[0])"
+                            label="Record Scenarios"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to record scenarios in World of Warcraft. Examples of this would be the Legion Timewalking Mage Tower Challenge.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
                 </v-row>
 
                 <v-row align="center">
@@ -344,9 +387,11 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Watch } from 'vue-property-decorator'
 import DisabledSupportedGameSelector from '@client/vue/utility/squadov/DisabledSupportedGameSelector.vue'
 import WowDisabledInstancesDisplay from '@client/vue/utility/squadov/settings/wow/WowDisabledInstancesDisplay.vue'
-import { SquadOvGames } from '@client/js/squadov/game'
+import { gameToName, SquadOvGames } from '@client/js/squadov/game'
+import { createDisplayStringFromList } from '@client/js/strings'
 
 @Component({
     components: {
@@ -355,8 +400,41 @@ import { SquadOvGames } from '@client/js/squadov/game'
     }
 })
 export default class PerGameSettingsItem extends Vue {
-    onChangeDisabledGames(disabled: SquadOvGames[]) {
-        this.$store.commit('changeDisabledGames', disabled)
+    // We don't let the users just click on a square to disable to make sure
+    // it's a much more concious effort to disable a game.
+    pendingDisabledGames: SquadOvGames[] = []
+
+    get differenceDisabledGames(): SquadOvGames[] {
+        let existing = new Set([...this.$store.state.settings.disabledGames])
+        return this.pendingDisabledGames.filter((ele: SquadOvGames) => !existing.has(ele))
+    }
+
+    get differenceDisabledGamesString(): string {
+        let games = this.differenceDisabledGames.map((ele: SquadOvGames) => gameToName(ele))
+        return createDisplayStringFromList(games)
+    }
+
+    get differenceEnabledGames(): SquadOvGames[] {
+        let existing = new Set([...this.pendingDisabledGames])
+        return this.$store.state.settings.disabledGames.filter((ele: SquadOvGames) => !existing.has(ele))
+    }
+
+    get differenceEnabledGamesString(): string {
+        let games = this.differenceEnabledGames.map((ele: SquadOvGames) => gameToName(ele))
+        return createDisplayStringFromList(games)
+    }
+
+    saveDisabledGameChanges() {
+        this.$store.commit('changeDisabledGames', this.pendingDisabledGames)
+    }
+
+    @Watch('$store.state.settings.disabledGames')
+    resyncPendingDisabled() {
+        this.pendingDisabledGames = [...this.$store.state.settings.disabledGames]
+    }
+
+    mounted() {
+        this.resyncPendingDisabled()
     }
 }
 

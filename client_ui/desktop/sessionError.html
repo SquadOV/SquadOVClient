@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-eval' 'unsafe-inline' blob:;">
+        <meta http-equiv="Content-Security-Policy" content="script-src https://*.statuspage.io https://www.google-analytics.com 'self' 'unsafe-eval' 'unsafe-inline' blob:;">
 
         <link href="dist/sessionError.css" rel="stylesheet" type="text/css">
         <title>SquadOV - Oops!</title>
@@ -29,6 +29,8 @@
                 </v-main>
             </v-app>            
         </div>
+
+        <script type="text/javascript" src="https://cdn.statuspage.io/se-v2.js"></script>
         <script src="rendererLog.js"></script>
         <script src="dist/sessionError.js"></script>
     </body>

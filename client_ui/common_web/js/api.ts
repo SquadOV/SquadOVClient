@@ -30,7 +30,9 @@ import {
     cleanClipCommentFromJson,
     VodFavoriteResponse,
     CsgoMatchAccessibleVods,
-    VodTag
+    VodTag,
+    VodSegmentUrl,
+    cleanVodSegmentUrlFromJson
 } from '@client/js/squadov/vod'
 import { HearthstoneMatch, HearthstoneMatchLogs, cleanHearthstoneMatchFromJson, cleanHearthstoneMatchLogsFromJson } from '@client/js/hearthstone/hearthstone_match'
 import { HearthstoneEntity } from '@client/js/hearthstone/hearthstone_entity'
@@ -623,9 +625,15 @@ class ApiClient {
         return axios.get(`v1/vod/${videoUuid}`, this.createWebAxiosConfig(true))
     }
 
-    getVodSegment(url : string) : Promise<ApiData<string>> {
+    getVodSegment(url : string) : Promise<ApiData<VodSegmentUrl>> {
         return axios.get(url, {
+            params: {
+                expiration: 1,
+            },
             ...this.createWebAxiosConfig(true, false),
+        }).then((resp: ApiData<VodSegmentUrl>) => {
+            cleanVodSegmentUrlFromJson(resp.data)
+            return resp
         })
     }
 
@@ -660,13 +668,12 @@ class ApiClient {
 
     listValorantMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: ValorantMatchFilters}) : Promise<ApiData<HalResponse<ValorantPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/valorant/user/${params.userId}/accounts/${params.puuid}/matches`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 

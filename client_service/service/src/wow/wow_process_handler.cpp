@@ -608,7 +608,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
 
     // We shouldn't ever need the final WoW condition unless the detect WoW game from process function failed at construction.
     if (game() == shared::EGame::WoW) {
-        path << "9.1.0";
+        path << "9.1.5";
     } else if (game() == shared::EGame::WowVanilla) {
         path << "1.13.7";
     } else if (game() == shared::EGame::WowTbc) {
@@ -675,7 +675,8 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
         if (
             (instanceType == shared::wow::InstanceType::PartyDungeon && wowSettings.recordDungeons) ||
             ((instanceType == shared::wow::InstanceType::ArenaBattlefield) && shared::isWowClassic(_finalGame) && wowSettings.recordArenas) ||
-            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordBattlegrounds)
+            (instanceType == shared::wow::InstanceType::PVPBattlefield && wowSettings.recordBattlegrounds) ||
+            (instanceType == shared::wow::InstanceType::Scenario && wowSettings.recordScenarios)
         ) {
             onInstanceStart(tm, it->second);
         }

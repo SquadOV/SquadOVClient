@@ -2,7 +2,7 @@ import axios from 'axios'
 import { staticClient, getSupportedWowPatch, WowGameRelease } from '@client/js/staticData'
 import { ApiData } from '@client/js/api'
 
-export const LATEST_RETAIL_PATCH_ID = '9.1.0'
+export const LATEST_RETAIL_PATCH_ID = '9.1.5'
 
 interface WowBasicStatic {
     id: string

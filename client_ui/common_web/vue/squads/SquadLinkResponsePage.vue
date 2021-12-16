@@ -57,7 +57,7 @@ import { Prop, Watch } from 'vue-property-decorator'
 import { apiClient, ApiData } from '@client/js/api'
 import { Squad, SquadInviteLinkData } from '@client/js/squadov/squad'
 import { SquadOVUserHandle } from '@client/js/squadov/user'
-import { DashboardPageId } from '@client/js/pages'
+import { DashboardPageId, LoginPageId } from '@client/js/pages'
 
 @Component({
     components: {
@@ -97,6 +97,10 @@ export default class SquadLinkResponsePage extends Vue {
     }
 
     joinSquad() {
+        if (!this.$store.state.currentUser) {
+            return
+        }
+
         this.joining = true
         apiClient.acceptSquadInviteLink(this.linkId).then(() => {
             this.success = true
@@ -112,14 +116,29 @@ export default class SquadLinkResponsePage extends Vue {
     @Watch('linkId')
     getInfoFromSquadInviteLink() {
         apiClient.getSquadInviteLinkData(this.linkId).then((resp: ApiData<SquadInviteLinkData>) => {
-            this.squad = resp.data.squad
-            this.inviter = resp.data.inviter
+            if (!!this.$store.state.currentUser) {
+                this.squad = resp.data.squad
+                this.inviter = resp.data.inviter
+            } else {
+                // Redirect to login with the referral link
+                this.$router.replace({
+                    name: LoginPageId,
+                    query: {
+                        ref: resp.data.referral,
+                        redirect: this.$router.currentRoute.fullPath,
+                    }
+                })
+            }
         }).catch((err: any) => {
             console.error('Failed to get link data: ', err)
         })
     }
 
     mounted() {
+        this.getInfoFromSquadInviteLink()
+    }
+
+    activated() {
         this.getInfoFromSquadInviteLink()
     }
 }

@@ -1,7 +1,7 @@
 <template>
     <v-container fluid class="full-parent-height">
         <div class="d-flex align-center">
-            <v-menu offset-y :disabled="!hasSquadDropdown" v-model="showHideSquadMenu">
+            <v-menu offset-y :disabled="!hasSquadDropdown" :close-on-content-click="false" v-model="showHideSquadMenu">
                 <template v-slot:activator="{on, attrs}">
                     <v-btn
                         text
@@ -24,12 +24,21 @@
                     </v-btn>
                 </template>
 
-                <div dense v-if="!isLoadingAllSquads">
-                    <template v-for="(sq, sIdx) in allSquads">
-                        <v-menu offset-x :key="`squad-${sIdx}`">
+                <div class="squad-div" dense v-if="!isLoadingAllSquads">
+                    <v-text-field
+                        class="ma-2"
+                        v-model="filteredSquadName"
+                        clearable
+                        prepend-icon="mdi-magnify"
+                        hide-details
+                    >
+                    </v-text-field>
+
+                    <template v-for="sq in allFilteredSquads">
+                        <v-menu offset-x :close-on-content-click="false" :key="`squad-${sq.id}`">
                             <template v-slot:activator="{on, attrs}">
                                 <div
-                                    :class="`d-flex justify-space-between align-center pa-2 squad-div ${(sq.id === squadId) ? 'selected-squad' : ''}`"
+                                    :class="`d-flex justify-space-between align-center pa-2 ${(sq.id === squadId) ? 'selected-squad' : ''}`"
                                     v-bind="attrs"
                                     v-on="on"
                                 >
@@ -45,21 +54,32 @@
                                 </div>
                             </template>
 
-                            <v-list dense>
-                                <v-list-item
-                                    v-for="(player, pIdx) in perSquadMembers[sq.id]"
-                                    :key="`member-${sIdx}-${pIdx}`"
-                                    :class="`${(player.userId === userId) ? 'selected-user' : ''}`"
-                                    :to="constructTo(sq, player)"
+                            <div class="squad-div">
+                                <v-text-field
+                                    class="ma-2"
+                                    v-model="filteredMemberName"
+                                    clearable
+                                    prepend-icon="mdi-magnify"
+                                    hide-details
                                 >
-                                    <v-list-item-title>
-                                        {{ player.username }}
-                                    </v-list-item-title>
-                                </v-list-item>
-                            </v-list>
+                                </v-text-field>
+
+                                <v-list dense>
+                                    <v-list-item
+                                        v-for="player in filteredSquadMembers(sq.id)"
+                                        :key="`member-${sq.id}-${player.userId}`"
+                                        :class="`${(player.userId === userId) ? 'selected-user' : ''}`"
+                                        :to="constructTo(sq, player)"
+                                    >
+                                        <v-list-item-title>
+                                            {{ player.username }}
+                                        </v-list-item-title>
+                                    </v-list-item>
+                                </v-list>
+                            </div>
                         </v-menu>
 
-                        <v-divider :key="`div-${sIdx}`"></v-divider>
+                        <v-divider :key="`div-${sq.id}`"></v-divider>
                     </template>
                 </div>
 
@@ -154,6 +174,11 @@ export default class GameLog extends Vue {
 
     showHideSquadMenu: boolean = false
     forceUpdateKey: number = 0
+
+    // Squad and member filters so we can handle the case where we have a shit ton of
+    // either squads or members (some of our squads have 1K members now...wtf)
+    filteredSquadName: string = ''
+    filteredMemberName: string = ''
 
     get routerKey(): string {
         let key = routeLevelToKey(this.$route, 2)
@@ -333,6 +358,39 @@ export default class GameLog extends Vue {
         })
     }
 
+    get allFilteredSquads(): Squad[] {
+        if (!this.allSquads) {
+            return []
+        }
+
+        let filter = this.filteredSquadName.trim().toLowerCase()
+        if (filter.length == 0) {
+            return this.allSquads
+        }
+
+        return this.allSquads.filter((ele: Squad) => ele.squadName.toLowerCase().includes(filter))
+    }
+
+    get filteredSquadMembers(): (id: number) => SquadMembership[] {
+        return (id: number) => {
+            if (!this.perSquadMembers) {
+                return []
+            }
+
+            let members = this.perSquadMembers[id]
+            if (!members) {
+                return []
+            }
+
+            let filter = this.filteredMemberName.trim().toLowerCase()
+            if (filter.length == 0) {
+                return members
+            }
+
+            return members.filter((ele: SquadMembership) => ele.username.toLowerCase().includes(filter))
+        }
+    }
+
     @Watch('userId')
     refreshUser() {
         // This is needed because sometimes we might change the selected user in which case
@@ -402,6 +460,8 @@ export default class GameLog extends Vue {
 
 .squad-div {
     background-color: #1E1E1E;
+    overflow-y: auto;
+    max-height: 80vh;
 }
 
 .selected-squad {

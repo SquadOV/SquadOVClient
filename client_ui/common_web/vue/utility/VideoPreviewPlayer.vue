@@ -121,8 +121,14 @@ export default class VideoPreviewPlayer extends Vue {
                 return
             }
 
-            apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<string>) => {
-                this.videoUri = resp.data
+            apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+                this.videoUri = resp.data.url
+                if (!!resp.data.expiration) {
+                    window.setTimeout(() => {
+                        this.refreshPreviewUri()
+                    }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
+                }
+
                 Vue.nextTick(() => {
                     this.onVideoUriChange()
                 })

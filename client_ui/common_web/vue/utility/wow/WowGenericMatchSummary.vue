@@ -7,7 +7,7 @@
                 :style="style"
             >
                 <v-row no-gutters :class="`${fill ? 'full-parent-height' : ''}`" style="overflow: auto;">
-                    <v-col :cols="mini ? 5 : 2" align-self="center">
+                    <v-col :cols="mini ? 7 : 5" align-self="center">
                         <slot v-bind="{ instanceName }"></slot>
 
                         <div class="text-subtitle-1">
@@ -19,41 +19,60 @@
                         </div>
                     </v-col>
 
-                    <v-col :cols="mini ?  7 : 8" v-if="!!relevantCharacters" align-self="center">
+                    <v-col :cols="5" v-if="!!relevantCharacters" align-self="center">
                         <div class="d-flex align-center flex-wrap">
-                            <wow-character-icon
-                                v-for="(char, idx) in friendlyCharacters"
-                                :char="char"
-                                :friendly-team="friendlyTeam"
-                                armory-link
-                                :player-section="linkToPlayerSection"
-                                :key="`friendly-icon-${idx}`"
-                                :width-height="mini ? 24 : 32"
-                                :patch="match.build"
-                                @go-to-character="$emit('go-to-character', arguments[0])"
-                            >
-                            </wow-character-icon>
+                            <template v-if="showFullCharacters">
+                                <wow-character-icon
+                                    v-for="(char, idx) in friendlyCharacters"
+                                    :char="char"
+                                    :friendly-team="friendlyTeam"
+                                    armory-link
+                                    :player-section="linkToPlayerSection"
+                                    :key="`friendly-icon-${idx}`"
+                                    :width-height="mini ? 24 : 32"
+                                    :patch="match.build"
+                                    @go-to-character="$emit('go-to-character', arguments[0])"
+                                >
+                                </wow-character-icon>
 
-                            <div
-                                v-if="enemyCharacters.length > 0"
-                                class="mx-1 text-overline"
-                            >
-                                VS
-                            </div>
+                                <div
+                                    v-if="enemyCharacters.length > 0"
+                                    class="mx-1 text-overline"
+                                >
+                                    VS
+                                </div>
 
-                            <wow-character-icon
-                                v-for="(char, idx) in enemyCharacters"
-                                :char="char"
-                                :friendly-team="friendlyTeam"
-                                armory-link
-                                :player-section="linkToPlayerSection"
-                                :key="`enemy-icon-${idx}`"
-                                :width-height="mini ? 24 : 32"
-                                :patch="match.build"
-                                @go-to-character="$emit('go-to-character', arguments[0])"
-                            >
-                            </wow-character-icon>
+                                <wow-character-icon
+                                    v-for="(char, idx) in enemyCharacters"
+                                    :char="char"
+                                    :friendly-team="friendlyTeam"
+                                    armory-link
+                                    :player-section="linkToPlayerSection"
+                                    :key="`enemy-icon-${idx}`"
+                                    :width-height="mini ? 24 : 32"
+                                    :patch="match.build"
+                                    @go-to-character="$emit('go-to-character', arguments[0])"
+                                >
+                                </wow-character-icon>
+                            </template>
+
+                            <template v-else>
+                                <wow-character-icon
+                                    v-for="(char, idx) in sameSquadCharacters"
+                                    :char="char"
+                                    :friendly-team="friendlyTeam"
+                                    armory-link
+                                    :player-section="linkToPlayerSection"
+                                    :key="`same-squad-icon-${idx}`"
+                                    :width-height="mini ? 24 : 32"
+                                    :patch="match.build"
+                                    @go-to-character="$emit('go-to-character', arguments[0])"
+                                >
+                                </wow-character-icon>
+                            </template>
                         </div>
+
+                        <slot name="extra"></slot>
                     </v-col>
 
                     <v-col :cols="2" v-if="!mini" align-self="center">
@@ -91,12 +110,16 @@ import { WowCommonMatch } from '@client/js/wow/matches'
 import { VodAssociation } from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import { staticClient } from '@client/js/staticData'
-import { WowCharacter } from '@client/js/wow/character'
+import {
+    WowCharacter,
+    WoWCharacterUserAssociation
+} from '@client/js/wow/character'
 import { WowInstanceData } from '@client/js/wow/instance'
 import { standardFormatTime } from '@client/js/time'
 import WowExpansionIcon from '@client/vue/utility/wow/WowExpansionIcon.vue'
 import WowCharacterIcon from '@client/vue/utility/wow/WowCharacterIcon.vue'
 import axios from 'axios'
+import { compareString } from '@client/js/cmp'
 import * as pi from '@client/js/pages'
 
 @Component({
@@ -133,12 +156,16 @@ export default class WowGenericMatchSummary extends Vue {
     @Prop({type: Boolean, default: false})
     linkToPlayerSection!: boolean
 
+    @Prop({type: Boolean, default: false})
+    showFullCharacters!: boolean
+
     @Prop()
     accessToken!: string | undefined
 
     vod: VodAssociation | null = null
     relevantCharacters: WowCharacter[] | null = null
     instanceData: WowInstanceData | null = null
+    characterAssociations: WoWCharacterUserAssociation[] = []
 
     get friendlyCharacters(): WowCharacter[] {
         if (!this.relevantCharacters) {
@@ -156,6 +183,15 @@ export default class WowGenericMatchSummary extends Vue {
         return this.relevantCharacters.filter((c: WowCharacter) => {
             return c.team != this.friendlyTeam
         })
+    }
+
+    get sameSquadCharacters(): WowCharacter[] {
+        if (!this.relevantCharacters) {
+            return []
+        }
+
+        let okChars = new Set(this.characterAssociations.map((ele: WoWCharacterUserAssociation) => ele.guid))
+        return this.relevantCharacters.filter((ele: WowCharacter) => okChars.has(ele.guid))
     }
 
     get hasVod() : boolean {
@@ -211,12 +247,23 @@ export default class WowGenericMatchSummary extends Vue {
 
     @Watch('match')
     @Watch('userId')
+    refreshCharacterAssociations() {
+        this.characterAssociations = []
+        apiClient.accessToken().listWoWMatchCharacterAssociations(this.userId, this.match.matchUuid).then((resp: ApiData<WoWCharacterUserAssociation[]>) => {
+            this.characterAssociations = resp.data
+        }).catch((err: any) => {
+            console.error('Failed to obtain WoW character associations: ', err)
+        })
+    }
+
+    @Watch('match')
+    @Watch('userId')
     refreshCharacters() {
         this.relevantCharacters = null
         apiClient.accessToken(this.accessToken).listWoWCharactersForMatch(this.match.matchUuid, this.userId).then((resp: ApiData<WowCharacter[]>) => {
             this.relevantCharacters = resp.data
             this.relevantCharacters!.sort((a: WowCharacter, b: WowCharacter) => {
-                return a.team - b.team
+                return (a.team - b.team) || compareString(a.name, b.name)
             })
         }).catch((err: any) => {
             console.error('Failed to get characters for WoW match: ', err)
@@ -236,6 +283,7 @@ export default class WowGenericMatchSummary extends Vue {
     mounted() {
         this.refreshVod()
         this.refreshCharacters()
+        this.refreshCharacterAssociations()
         this.refreshInstanceData()
     }
 }
