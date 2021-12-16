@@ -144,6 +144,9 @@ export default class SetupProgress extends Vue {
             this.$on('finishSpeedCheck', () => {
                 resolve(0)
             })
+        }).then(() => {
+            // One last SaveLocalSettings call immediately, and ignore InProgress
+            saveLocalSettings(this.$store.state.settings, true, true)
         }).finally(() => {
             this.showSpeedCheckPrompt = false
         })
@@ -169,8 +172,6 @@ export default class SetupProgress extends Vue {
         setTimeout(() => {
             this.showLogout = true
         }, 5000)
-        // One last SaveLocalSettings call immediately, and ignore InProgress
-        saveLocalSettings(this.$store.state.settings, true, true)
 
         ipcRenderer.send('finish-setup')
     }

@@ -28,9 +28,7 @@ int main(int argc, char **argv) {
     // NTP can't be init before the logger since we log stuff inside the NTP client.
     shared::time::NTPClient::singleton()->enable(true);
     shared::time::NTPClient::singleton()->initialize();
-
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
-
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
         // Note that setSessionId also does an API call to pull the current user.
@@ -46,6 +44,7 @@ int main(int argc, char **argv) {
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
+
     // 160MB buffer. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 
     std::vector<char> writeBuffer(1024 * 1024 * 160, 'A');
     int lastUl = 0;
@@ -70,6 +69,7 @@ int main(int argc, char **argv) {
         t1.join();
     }
     pipeClient.stop();
+
     // this gives confidence that lastUl won't change underneath us.
     double finalUl = lastUl;
     piper->wait(); 
@@ -77,33 +77,27 @@ int main(int argc, char **argv) {
     // This should calculate out the Mb/s
     double millisecondsSpentUploading = piper->getMillisecondsSpentUploading().count();
     double secondsSpentUploading = millisecondsSpentUploading/1000;
-    // Turn into Mega-bits
     double speedCheckRes = (piper->getUploadedBytes() + finalUl) * 8 / 1024 / 1024;
-    double speedCheckResMbps;
 
     // finalUl lets us know if there was any partial uploads to be included.
-    speedCheckResMbps = speedCheckRes / ((finalUl == 0) ? secondsSpentUploading : 10);
-
+    double speedCheckResMbps = speedCheckRes / ((finalUl == 0) ? secondsSpentUploading : 10);
     service::api::getGlobalApi()->postSpeedCheck(speedCheckResMbps, uuidFileName);
 
     // We use this data in the settings file to recommend if the user should use automatic upload.
     LOG_INFO("Saving Speed Check results to disk..." << std::endl);
     auto rawData = service::system::getCurrentSettings()->raw();
-
     rawData["ranSpeedCheck"] = shared::json::JsonConverter<bool>::to(true);
     rawData["Mbps"] = shared::json::JsonConverter<int>::to(speedCheckResMbps);
+
     // If the user is uploading slower than 8 Mb/s, disable Automatic Upload.
     if(speedCheckResMbps < 8) {
         rawData["record"]["useLocalRecording"] = shared::json::JsonConverter<bool>::to(true);
     }
-
     const auto fpath = shared::filesystem::getSquadOvUserSettingsFile();
     const auto tmpPath = fpath.parent_path() / fs::path("settings.json.tmp");
-    
     std::ofstream ofs(tmpPath);
     ofs << std::setw(4) << rawData;
     ofs.close();
-
     fs::rename(tmpPath, fpath);
 
     return 0;
