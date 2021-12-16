@@ -4,7 +4,7 @@
         <div class="d-flex align-center">
             <v-img
                 class="mr-4"
-                :src="$root.generateAssetUri(gameToIcon(match.base.game))"
+                :src="$root.generateAssetUri(gameToIcon(match.game))"
                 max-width="24px"
                 width="24px"
                 max-height="24px"
@@ -15,7 +15,7 @@
 
             <div class="d-flex align-center">
                 <div class="text-center text-caption">
-                    {{ match.base.username }} played...
+                    {{ pov.username }} played...
                 </div>
             </div>
 
@@ -23,15 +23,15 @@
 
             <bulk-tag-display
                 class="flex-grow-1 justify-end"
-                :video-uuid="match.base.vod.videoTracks[0].metadata.videoUuid"
-                :tags="match.base.tags"
+                :video-uuid="pov.vod.videoTracks[0].metadata.videoUuid"
+                :tags="pov.tags"
                 :max-tags="7"
             >
             </bulk-tag-display>
 
-            <template v-if="!!match.base.favoriteReason">
+            <template v-if="!!pov.favoriteReason">
                 <div class="text-right text-caption">
-                    {{ match.base.favoriteReason }}
+                    {{ pov.favoriteReason }}
                 </div>
 
                 <v-tooltip bottom>
@@ -45,11 +45,11 @@
                         </v-icon>
                     </template>
 
-                    {{ match.base.favoriteReason }}
+                    {{ pov.favoriteReason }}
                 </v-tooltip>
             </template>
 
-            <v-icon v-if="match.base.isWatchlist">
+            <v-icon v-if="pov.isWatchlist">
                 mdi-playlist-check
             </v-icon>
         </div>
@@ -61,9 +61,9 @@
         >
             <video-preview-player
                 v-if="!disablePreview && !forceNoPreview"
-                :vod="match.base.vod"
+                :vod="pov.vod"
                 :use-local-vod="useLocalVodPreview"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
                 class="recent-match-item preview-item"
                 ref="player"
             >
@@ -71,129 +71,129 @@
 
             <aimlab-task-summary-display
                 class="flex-grow-1 recent-match-item"
-                v-if="!!match.aimlabTask && match.base.game == SquadOvGames.AimLab"
-                :task="match.aimlabTask"
-                :user-id="match.base.userId"
+                v-if="!!pov.aimlabTask && match.game == SquadOvGames.AimLab"
+                :task="pov.aimlabTask"
+                :user-id="pov.userId"
                 fill
                 :disable-click="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </aimlab-task-summary-display>
 
             <lol-match-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.lolMatch && match.base.game == SquadOvGames.LeagueOfLegends"
-                :match="match.lolMatch"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.lolMatch && match.game == SquadOvGames.LeagueOfLegends"
+                :match="pov.lolMatch"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </lol-match-summary>
 
             <tft-match-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.tftMatch && match.base.game == SquadOvGames.TeamfightTactics"
-                :match="match.tftMatch"
-                :user-id="match.base.userId"
-                :puuid="match.tftMatch.puuid"
+                v-else-if="!!pov.tftMatch && match.game == SquadOvGames.TeamfightTactics"
+                :match="pov.tftMatch"
+                :user-id="pov.userId"
+                :puuid="pov.tftMatch.puuid"
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </tft-match-summary>
 
             <valorant-player-match-summary-display
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.valorantMatch && match.base.game == SquadOvGames.Valorant"
-                :match="match.valorantMatch"
-                :user-id="match.base.userId"
-                :account="match.valorantMatch.puuid"
+                v-else-if="!!pov.valorantMatch && match.game == SquadOvGames.Valorant"
+                :match="pov.valorantMatch"
+                :user-id="pov.userId"
+                :account="pov.valorantMatch.puuid"
                 fill
                 :mini="!disableMini"
                 :disable-click="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </valorant-player-match-summary-display>
 
             <wow-keystone-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.wowChallenge && match.base.game == SquadOvGames.WorldOfWarcraft"
-                :challenge="match.wowChallenge"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.wowChallenge && match.game == SquadOvGames.WorldOfWarcraft"
+                :challenge="pov.wowChallenge"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </wow-keystone-summary>
 
             <wow-encounter-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.wowEncounter && match.base.game == SquadOvGames.WorldOfWarcraft"
-                :encounter="match.wowEncounter"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.wowEncounter && match.game == SquadOvGames.WorldOfWarcraft"
+                :encounter="pov.wowEncounter"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </wow-encounter-summary>
 
             <wow-arena-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.wowArena && match.base.game == SquadOvGames.WorldOfWarcraft"
-                :arena="match.wowArena"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.wowArena && match.game == SquadOvGames.WorldOfWarcraft"
+                :arena="pov.wowArena"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </wow-arena-summary>
 
             <wow-instance-summary
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.wowInstance && match.base.game == SquadOvGames.WorldOfWarcraft"
-                :instance="match.wowInstance"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.wowInstance && match.game == SquadOvGames.WorldOfWarcraft"
+                :instance="pov.wowInstance"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </wow-instance-summary>
 
             <csgo-player-match-summary-display
                 class="flex-grow-1 recent-match-item"
-                v-else-if="!!match.csgoMatch && match.base.game == SquadOvGames.Csgo"
-                :match="match.csgoMatch"
-                :user-id="match.base.userId"
+                v-else-if="!!pov.csgoMatch && match.game == SquadOvGames.Csgo"
+                :match="pov.csgoMatch"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-link="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </csgo-player-match-summary-display>
 
             <hearthstone-match-summary-display
                 class="flex-grow-1 recent-match-item"
-                v-else-if="match.base.game == SquadOvGames.Hearthstone"
-                :match-id="match.base.matchUuid"
-                :user-id="match.base.userId"
+                v-else-if="match.game == SquadOvGames.Hearthstone"
+                :match-id="match.matchUuid"
+                :user-id="pov.userId"
                 :mini="!disableMini"
                 fill
                 :disable-click="disableClick"
-                :access-token="match.base.accessToken"
+                :access-token="pov.accessToken"
             >
             </hearthstone-match-summary-display>
 
             <upload-progress-display
                 class="ml-2"
                 v-if="showUploadProgress"
-                :video-uuid="match.base.vod.videoTracks[0].metadata.videoUuid"
+                :video-uuid="pov.vod.videoTracks[0].metadata.videoUuid"
             >
             </upload-progress-display>
         </div>
@@ -205,7 +205,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { RecentMatch } from '@client/js/squadov/recentMatch'
+import { RecentMatch, RecentMatchPov } from '@client/js/squadov/recentMatch'
 import { SquadOvGames, gameToIcon } from '@client/js/squadov/game'
 import AimlabTaskSummaryDisplay from '@client/vue/utility/aimlab/AimlabTaskSummaryDisplay.vue'
 import HearthstoneMatchSummaryDisplay from '@client/vue/utility/hearthstone/HearthstoneMatchSummaryDisplay.vue'
@@ -245,6 +245,9 @@ export default class RecentMatchDisplay extends Vue {
     @Prop({required: true})
     match!: RecentMatch
 
+    @Prop({required: true})
+    pov!: RecentMatchPov
+
     @Prop({type: Boolean, default: false})
     disableClick!: boolean
 
@@ -267,13 +270,13 @@ export default class RecentMatchDisplay extends Vue {
     }
 
     onHover() {
-        if (!this.match.base.isLocal || this.useLocalVodPreview) {
+        if (!this.pov.isLocal || this.useLocalVodPreview) {
             this.$refs.player.startPlay()
         }
     }
 
     onLeave() {
-        if (!this.match.base.isLocal || this.useLocalVodPreview) {
+        if (!this.pov.isLocal || this.useLocalVodPreview) {
             this.$refs.player.pausePlay()
         }
     }
