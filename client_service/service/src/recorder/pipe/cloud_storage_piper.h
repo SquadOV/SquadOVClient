@@ -56,7 +56,7 @@ public:
     void setCurlProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn);
     const std::vector<std::string>& segmentIds() const override { return _allSegmentsIds; };
     size_t getUploadedBytes() { return _uploadedBytes; };
-    std::chrono::duration<double> getTimeSpentUploading() { return _lastUploadTime-_timeStart; };
+    std::chrono::milliseconds getMillisecondsSpentUploading() { return std::chrono::duration_cast<std::chrono::milliseconds>(_lastUploadTime-_timeStart); };
     void skipFlush() { _skipFlush = true; };
     void flush() override;
     
@@ -72,7 +72,6 @@ private:
     std::string _videoUuid;
     service::uploader::UploadDestination _destination;
     size_t _uploadedBytes = 0;
-    size_t _downloadedBytes = 0;
 
     cloud::CloudStorageClientPtr _client;
     std::mutex _cloudMutex;
@@ -81,8 +80,8 @@ private:
     std::vector<std::string> _allSegmentsIds;
     bool _finished = false;
     bool _skipFlush = false;
-    std::chrono::system_clock::time_point _timeStart;
-    std::chrono::system_clock::time_point _lastUploadTime;
+    shared::TimePoint _timeStart;
+    shared::TimePoint _lastUploadTime;
 
     // Random number generator for backoff
     std::random_device _rd;
@@ -93,7 +92,6 @@ private:
 #endif 
 
     std::optional<shared::http::DownloadUploadProgressFn> _progressFn;
-    std::optional<size_t> _totalDownloadBytes;
     std::optional<size_t> _totalUploadBytes;
 };
 

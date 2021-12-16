@@ -8,25 +8,14 @@
 #include "system/settings.h"
 #include "shared/time/ntp_client.h"
 #include "uploader/uploader.h"
-#include "shared/filesystem/common_paths.h"
 #include "shared/filesystem/utility.h"
-#include "shared/filesystem/local_record.h"
+#include "shared/filesystem/common_paths.h"
 #include "shared/env.h"
 
 #include <chrono>
-#include <codecvt>
-#include <cstdio>
-#include <cstdlib>
 #include <curl/curl.h>
 #include <exception>
-#include <nlohmann/json.hpp>
 #include <thread>
-
-#include "shared/system/win32/hwnd_utils.h"
-
-extern "C" {
-#include <libavutil/log.h>
-}
 
 #ifdef _WIN32
 #include <Windows.h>
@@ -58,8 +47,10 @@ int main(int argc, char **argv) {
     auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
     // 160MB buffer. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 
-    std::vector<char> writeBuffer(1024 * 1024 * 8 * 20, 'A');
-    double lastUl = 0;
+    std::vector<char> writeBuffer(1024 * 1024 * 160, 'A');
+    int lastUl = 0;
+
+    // This continues running after the piper and pipeClient stop. LastUl continues changing
     piper->setCurlProgressCallback([&lastUl](size_t dltotal, size_t dl, size_t ultotal, size_t ul){
         lastUl = ul;
         if(ul == ultotal) {
@@ -79,20 +70,19 @@ int main(int argc, char **argv) {
         t1.join();
     }
     pipeClient.stop();
+    // this gives confidence that lastUl won't change underneath us.
+    double finalUl = lastUl;
     piper->wait(); 
 
     // This should calculate out the Mb/s
-    double timeSpent = piper->getTimeSpentUploading().count();
+    double millisecondsSpentUploading = piper->getMillisecondsSpentUploading().count();
+    double secondsSpentUploading = millisecondsSpentUploading/1000;
     // Turn into Mega-bits
-    double speedCheckRes = (piper->getUploadedBytes() + lastUl) * 8 / 1024 / 1024;
+    double speedCheckRes = (piper->getUploadedBytes() + finalUl) * 8 / 1024 / 1024;
     double speedCheckResMbps;
 
-    // lastUl lets us know if there was any partial uploads remaining.
-    if(lastUl == 0) {
-        speedCheckResMbps = speedCheckRes/timeSpent;
-    } else {
-        speedCheckResMbps = speedCheckRes/10;
-    }
+    // finalUl lets us know if there was any partial uploads to be included.
+    speedCheckResMbps = speedCheckRes / ((finalUl == 0) ? secondsSpentUploading : 10);
 
     service::api::getGlobalApi()->postSpeedCheck(speedCheckResMbps, uuidFileName);
 
@@ -101,8 +91,7 @@ int main(int argc, char **argv) {
     auto rawData = service::system::getCurrentSettings()->raw();
 
     rawData["ranSpeedCheck"] = shared::json::JsonConverter<bool>::to(true);
-    rawData["speedCheckResult"] = shared::json::JsonConverter<double>::to(speedCheckResMbps);
-    
+    rawData["Mbps"] = shared::json::JsonConverter<int>::to(speedCheckResMbps);
     // If the user is uploading slower than 8 Mb/s, disable Automatic Upload.
     if(speedCheckResMbps < 8) {
         rawData["record"]["useLocalRecording"] = shared::json::JsonConverter<bool>::to(true);

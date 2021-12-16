@@ -251,7 +251,7 @@ export interface SquadOvLocalSettings {
     runOnStartup: boolean
     setupWizardRun: boolean
     ranSpeedCheck: boolean
-    speedCheckResult: number
+    Mbps: number
     anonymousAnalytics: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
@@ -275,9 +275,9 @@ function getDefaultRecordingLocation(): string {
 
 let inProgress: boolean = false
 let saveTimer: number | undefined = undefined
-export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false) {
+export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false, ignoreInProgress: boolean = false) {
 /// #if DESKTOP
-    if (inProgress) {
+    if (inProgress && !ignoreInProgress) {
         return
     }
 
@@ -462,7 +462,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         ranSpeedCheck: false,
-        speedCheckResult: 0,
+        Mbps: 0,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -525,7 +525,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         runOnStartup: true,
         setupWizardRun: false,
         ranSpeedCheck: false,
-        speedCheckResult: 0,
+        Mbps: 0,
         anonymousAnalytics: true,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
@@ -581,8 +581,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.ranSpeedCheck = false
         }
 
-        if (parsedData.speedCheckResult === undefined) {
-            parsedData.speedCheckResult = 0
+        if (parsedData.Mbps === undefined) {
+            parsedData.Mbps = 0
         }
 
         if (parsedData.record.useVfr4 === undefined) {

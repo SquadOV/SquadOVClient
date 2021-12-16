@@ -11,7 +11,6 @@ import Vuetify, {
 } from 'vuetify/lib'
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
-import { initializeAnalyticsContainer } from './analytics/container'
 /// #endif
 Vue.use(Vuetify)
 Vue.use(Vuex)
@@ -19,7 +18,6 @@ Vue.use(Vuex)
 ipcRenderer.invoke('request-app-folder').then((appFolder: string) => {
     process.env.SQUADOV_USER_APP_FOLDER = appFolder
     store.dispatch('reloadLocalSettings')
-    initializeAnalyticsContainer(store)
 })
 
 const store = new Vuex.Store(RootStoreOptions)

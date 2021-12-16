@@ -23,18 +23,29 @@
 
         <template v-if="showSpeedCheckPrompt">
             <v-btn
-                class="mt-2"
+                class="mt-4"
                 color="success"
                 @click="finishSpeedCheck"
             >
-                Continue
+                Save & Continue
             </v-btn>
             <v-btn
-                class="mt-2"
+                v-if="useLocalRecording"
+                class="mt-4"
                 color="error"
-                @click="reEnableAutomaticUpload"
+                x-small
+                @click="userDisagrees"
             >
-                Revert
+                Use Auto Upload
+            </v-btn>
+            <v-btn
+                v-else
+                class="mt-4"
+                color="error"
+                x-small
+                @click="userDisagrees"
+            >
+                Use Local Recording
             </v-btn>
         </template>
     </div>
@@ -54,25 +65,22 @@ export default class SetupProgress extends Vue {
     showLogout: boolean = false
     funnies: any = new Funnies()
     showSpeedCheckPrompt: boolean = false
+    useLocalRecording: boolean = false
 
     get ranSpeedCheck(): boolean {
-        if(!!this.$store.state.settings.ranSpeedCheck) {
-            return this.$store.state.settings.ranSpeedCheck
-        } else {
-            return false;
-        }
+        return this.$store.state.settings.ranSpeedCheck
     }
 
-    get speedCheckResult(): number {
-        if(!!this.$store.state.settings.speedCheckResult) {
-            return this.$store.state.settings.speedCheckResult
-        } else {
-            return 0
-        }
+    get Mbps(): number {
+        return this.$store.state.settings.Mbps
     }
 
-    reEnableAutomaticUpload() {
-        this.$store.commit('disableAutomaticUpload', false)
+    userDisagrees() {
+        this.$store.commit('changeLocalRecording', {
+            use: !this.useLocalRecording,
+            loc: this.$store.state.settings.record.localRecordingLocation,
+            limit: this.$store.state.settings.record.maxLocalRecordingSizeGb
+        })
         this.finishSpeedCheck()
     }
 
@@ -123,16 +131,21 @@ export default class SetupProgress extends Vue {
     }
 
     async speedCheckPrompt() {
-        this.showSpeedCheckPrompt = true
-        this.statusMessage = 'Due to slow connection, automatic upload has been turned off.'
         // In case the user reverts, the local settings need to be reloaded, or old memory will be used on the settings file
         await this.$store.dispatch('reloadLocalSettings')
+        this.showSpeedCheckPrompt = true
+        let speedCheckResults = 'enabled'
+        if( this.Mbps < 8 ) {
+            speedCheckResults = 'disabled'
+            this.useLocalRecording = true
+        }
+        this.statusMessage = `We detected your upload speed to our servers is ${this.Mbps} Mb/s. As a result, we\'ve ${speedCheckResults} automatic upload.`
         return new Promise((resolve, reject) => { 
             this.$on('finishSpeedCheck', () => {
                 resolve(0)
             })
-        }).then(() => {
-            
+        }).finally(() => {
+            this.showSpeedCheckPrompt = false
         })
     }
 
@@ -148,21 +161,16 @@ export default class SetupProgress extends Vue {
         // 3. Check if this user has run a speed check on the current computer.
         if(!this.ranSpeedCheck) {
             await this.userSpeedCheck()
-            // 3a. Check if result is good enough. If not, prompt user we turn off automatic upload
-            // 8 Mbps is the current threshold.
-            if( this.speedCheckResult < 8 ) {
-                await this.speedCheckPrompt()
-            }
+            await this.speedCheckPrompt()
         }
-        // One last SaveLocalSettings call immediately
-        saveLocalSettings(this.$store.state.settings, true)
-
         this.statusMessage = 'Connecting to SquadOV...'
 
         // Temporary measure against the white screen
         setTimeout(() => {
             this.showLogout = true
         }, 5000)
+        // One last SaveLocalSettings call immediately, and ignore InProgress
+        saveLocalSettings(this.$store.state.settings, true, true)
 
         ipcRenderer.send('finish-setup')
     }

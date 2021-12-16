@@ -69,7 +69,7 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
         return;
     }
 
-    _timeStart = std::chrono::system_clock::now();
+    _timeStart = shared::nowUtc();
     _client->initializeDestination(destination);
     _cloudThread = std::thread(std::bind(&CloudStoragePiper::tickUploadThread, this));
 
@@ -177,9 +177,9 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
             }
             _uploadedBytes += bytesSent;
-            _lastUploadTime = std::chrono::system_clock::now();
+            _lastUploadTime = shared::nowUtc();
             if (_totalUploadBytes.has_value() && _progressFn.has_value()) {
-                _progressFn.value()(_totalDownloadBytes.value_or(0), _downloadedBytes, _totalUploadBytes.value(), _uploadedBytes);
+                _progressFn.value()(0, 0, _totalUploadBytes.value(), _uploadedBytes);
             }
 
             if (!data.first.empty()) {

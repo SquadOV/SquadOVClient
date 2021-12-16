@@ -385,15 +385,16 @@ service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const st
     std::ostringstream path;
     switch(uploadPurpose) {
         case service::uploader::UploadPurpose::VOD:
-            path << "/v1/vod/" << objectUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+            path << "/v1/vod/" << objectUuid << "/upload?part=";
             break;
         case service::uploader::UploadPurpose::SpeedCheck:
-            path << "/v1/speedcheck/" << objectUuid << "?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+            path << "/v1/speedcheck/" << objectUuid << "?part=";
             break;
         default:
             THROW_ERROR("Failed to find Upload Purpose.")
             break;
     }
+    path << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
     const auto result = _webClient->get(path.str());
     if (result->status != 200) {
         THROW_ERROR("Failed to get VOD part upload URI: " << result->status);
@@ -461,12 +462,12 @@ service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::str
     return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
-void SquadovApi::postSpeedCheck(const double& speedMbps, const std::string& speedCheckUuid) const {
+void SquadovApi::postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const {
     std::ostringstream path;
     path << "/v1/speedcheck/" << speedCheckUuid;
 
     const nlohmann::json body = {
-        { "speed_mbps", speedMbps }
+        { "speedMbps", speedMbps }
     };
 
     const auto result = _webClient->post(path.str(), body);

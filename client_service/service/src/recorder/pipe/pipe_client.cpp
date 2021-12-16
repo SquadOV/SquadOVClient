@@ -69,7 +69,7 @@ void PipeClient::connectToPipe() {
             NULL // hTemplateFile
         );
 
-    // Break if the pipe handle is valid. 
+        // Break if the pipe handle is valid. 
     
         if (_hPipe != INVALID_HANDLE_VALUE) {
             break;
@@ -82,9 +82,9 @@ void PipeClient::connectToPipe() {
             return;
         }
     
-        // All pipe instances are busy, so wait for 5 second. 
+        // All pipe instances are busy, so wait for 1 second. 
         if ( ! WaitNamedPipe(_filePath.c_str(), 1000)) { 
-            LOG_WARNING("Could not open pipe: 5 second wait timed out."); 
+            LOG_WARNING("Could not open pipe: 1 second wait timed out."); 
             return;
         }
 
@@ -95,9 +95,6 @@ void PipeClient::connectToPipe() {
 }
 
 PipeClient::~PipeClient() {
-    if(_hPipe) {
-        CloseHandle(_hPipe);
-        _hPipe = NULL;
-    }
+    stop();
 }
 };

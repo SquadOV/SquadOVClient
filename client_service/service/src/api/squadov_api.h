@@ -122,7 +122,7 @@ public:
 
     // Speed Check
     service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
-    void postSpeedCheck(const double& speedMbps, const std::string& speedCheckUuid) const;
+    void postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;
