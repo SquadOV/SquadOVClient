@@ -9,22 +9,16 @@ import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@cl
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 import { ValorantMatchFilters, createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
 
-export interface BaseRecentMatch {
-    matchUuid: string
-    isLocal: boolean
-    tm: Date
-    game: SquadOvGames
+export interface RecentMatchPov {
     vod: VodManifest
+    tm: Date
     username: string
     userId: number
     favoriteReason: string | null
     isWatchlist: boolean
-    accessToken: string | null
+    isLocal: boolean
     tags: VodTag[]
-}
-
-export interface RecentMatch {
-    base: BaseRecentMatch
+    accessToken: string | null
 
     aimlabTask?: AimlabTaskData
     // We can skip hearthstone since the summary Vue component pulls the data itself
@@ -36,6 +30,12 @@ export interface RecentMatch {
     wowArena?: WowArena
     wowInstance?: WowInstance
     csgoMatch?: CsgoPlayerMatchSummary
+}
+
+export interface RecentMatch {
+    matchUuid: string
+    game: SquadOvGames
+    povs: RecentMatchPov[]
 }
 
 export interface MatchFavoriteResponse {
@@ -93,8 +93,8 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
     }
 }
 
-export function checkRecentMatchValidity(r: RecentMatch): boolean {
-    switch (r.base.game) {
+export function checkRecentMatchPovValidity(game: SquadOvGames, r: RecentMatchPov): boolean {
+    switch (game) {
         case SquadOvGames.AimLab:
             return !!r.aimlabTask
         case SquadOvGames.WorldOfWarcraft:
@@ -116,9 +116,12 @@ export function checkRecentMatchValidity(r: RecentMatch): boolean {
     }
 }
 
-export function cleanRecentMatchFromJson(r: RecentMatch): RecentMatch {
-    r.base.tm = new Date(r.base.tm)
+export function checkRecentMatchValidity(r: RecentMatch): boolean {
+    return r.povs.some((ele: RecentMatchPov) => checkRecentMatchPovValidity(r.game, ele))
+}
 
+export function cleanRecentMatchPovFromJson(r: RecentMatchPov): RecentMatchPov {
+    r.tm = new Date(r.tm)
     if (!!r.aimlabTask) {
         cleanAimlabTaskData(r.aimlabTask)
     }
@@ -154,6 +157,10 @@ export function cleanRecentMatchFromJson(r: RecentMatch): RecentMatch {
     if (!!r.csgoMatch) {
         cleanCsgoPlayerMatchSummaryFromJson(r.csgoMatch)
     }
+    return r
+}
 
+export function cleanRecentMatchFromJson(r: RecentMatch): RecentMatch {
+    r.povs.forEach(cleanRecentMatchPovFromJson)
     return r
 }

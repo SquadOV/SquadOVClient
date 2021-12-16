@@ -119,17 +119,20 @@ export default class PostGameReport extends mixins(CommonComponent) {
             filters,
             profileId: undefined,
         }).then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
-            resp.data.data.sort((a: RecentMatch, b: RecentMatch) => {
-                return b.base.tm.getTime() - a.base.tm.getTime()
+            // Must have 1 pov
+            let validData = resp.data.data.filter((r: RecentMatch) => {
+                return r.povs.length > 0
+            }).sort((a: RecentMatch, b: RecentMatch) => {
+                return b.povs[0].tm.getTime() - a.povs[0].tm.getTime()
             })
 
-            // Filter out VODs with MP4s so we can be sure that processing happened on that VOD.
-            this.recentMatches = resp.data.data.filter((r: RecentMatch) => {
-                return r.base.isLocal || r.base.vod.videoTracks[0].segments[0].mimeType !== 'video/mp2t'
+            // Filter for VODs with MP4s so we can be sure that processing happened on that VOD.
+            this.recentMatches = validData.filter((r: RecentMatch) => {
+                return r.povs[0].isLocal || r.povs[0].vod.videoTracks[0].segments[0].mimeType !== 'video/mp2t'
             })
 
-            this.processingMatches = resp.data.data.filter((r: RecentMatch) => {
-                return !r.base.isLocal && r.base.vod.videoTracks[0].segments[0].mimeType === 'video/mp2t'
+            this.processingMatches = validData.filter((r: RecentMatch) => {
+                return !r.povs[0].isLocal && r.povs[0].vod.videoTracks[0].segments[0].mimeType === 'video/mp2t'
             })
 
 ///#if DESKTOP
