@@ -176,13 +176,27 @@
             </v-snackbar>
         </div>
 
-        <bulk-tag-display
-            v-if="!!value && !!vodTags"
-            :video-uuid="value.videoUuid"
-            :tags="vodTags"
-            :max-tags="20"
-        >
-        </bulk-tag-display>
+        <div class="d-flex align-center">
+            <v-btn
+                v-if="!!vodProfileHandle"
+                color="primary"
+                small
+                :to="vodProfileTo"
+            >
+                {{ vodProfileHandle.username }}'s profile
+            </v-btn>
+
+            <v-spacer></v-spacer>
+
+            <bulk-tag-display
+                v-if="!!value && !!vodTags"
+                class="flex-grow-1 justify-end"
+                :video-uuid="value.videoUuid"
+                :tags="vodTags"
+                :max-tags="20"
+            >
+            </bulk-tag-display>
+        </div>
     </div>
 </template>
 
@@ -209,6 +223,7 @@ const BulkTagDisplay = () => import('@client/vue/utility/vods/BulkTagDisplay.vue
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
+import { UserProfileHandle } from '@client/js/squadov/user'
 /// #endif
 
 @Component({
@@ -249,6 +264,32 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
 
     permissions: MatchVideoSharePermissions | null = null
     vodTags: vod.VodTag[] | null = null
+
+    vodProfileHandle: UserProfileHandle | null = null
+
+    get vodProfileTo(): any {
+        return {
+            name: pi.UserProfileSlugPageId,
+            params: {
+                profileSlug: this.vodProfileHandle?.slug
+            }
+        }
+    }
+
+    @Watch('value')
+    refreshProfileInformation() {
+        this.vodProfileHandle = null
+
+        if (!this.value) {
+            return
+        }
+
+        apiClient.getUserProfileHandleFromVideoUuid(this.value.videoUuid).then((resp: ApiData<UserProfileHandle>) => {
+            this.vodProfileHandle = resp.data
+        }).catch((err: any) => {
+            console.warn('Failed to get user profile handle from VOD: ', err)
+        })
+    }
 
     @Watch('value')
     checkAnalytics(newVod: VodAssociation | null, oldVod: VodAssociation | null) {
