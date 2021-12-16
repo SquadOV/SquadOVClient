@@ -2,7 +2,7 @@
 
 namespace {
 #ifdef _WIN32
-const std::string aimlabProcessName("AimLab_tb.exe");
+const std::string aimlabProcessName("AimLab.exe");
 #else
 #endif
 
