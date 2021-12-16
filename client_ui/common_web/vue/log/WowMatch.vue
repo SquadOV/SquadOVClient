@@ -155,6 +155,21 @@
                             </wow-spell-analysis>
                         </v-tab-item>
 
+                        <v-tab>
+                            Summary
+                        </v-tab>
+
+                        <v-tab-item>
+                            <wow-match-stat-summary
+                                :match-uuid="matchUuid"
+                                :user-id="userId"
+                                :match-characters="matchCharacters"
+                                :friendly-team="friendlyTeam"
+                                :patch="patch"
+                            >
+                            </wow-match-stat-summary>
+                        </v-tab-item>
+
                         <template v-if="!currentMatch.instance">
                             <v-tab>
                                 Players
@@ -226,6 +241,7 @@ import WowSpellAnalysis from '@client/vue/utility/wow/WowSpellAnalysis.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import WowDeathRecapAnalysis from '@client/vue/utility/wow/WowDeathRecapAnalysis.vue'
 import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
+import WowMatchStatSummary from '@client/vue/utility/wow/WowMatchStatSummary.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
 
@@ -244,7 +260,8 @@ import CommonComponent from '@client/vue/CommonComponent'
         WowSpellAnalysis,
         MatchFavoriteButton,
         WowDeathRecapAnalysis,
-        WowPlayersAnalysis
+        WowPlayersAnalysis,
+        WowMatchStatSummary,
     }
 })
 export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {

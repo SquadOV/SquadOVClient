@@ -79,7 +79,8 @@ import {
 } from '@client/js/wow/events'
 import {
     WowStatQueryParam,
-    WowMatchStatContainer
+    WowMatchStatContainer,
+    WowMatchStatSummaryData
 } from '@client/js/wow/stats'
 import {
     TftPlayerMatchSummary,
@@ -1096,6 +1097,10 @@ class ApiClient {
             cleanWowDeathRecapFromJson(resp.data)
             return resp
         })
+    }
+
+    getWowStatSummary(userId: number, matchUuid: string): Promise<ApiData<WowMatchStatSummaryData>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/summary`, this.createWebAxiosConfig())
     }
 
     getWowFullCharacter(userId: number, matchUuid: string, guid: string): Promise<ApiData<WowFullCharacter>> {
