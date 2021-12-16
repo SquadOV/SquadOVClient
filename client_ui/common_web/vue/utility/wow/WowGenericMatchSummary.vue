@@ -57,6 +57,10 @@
                             </template>
 
                             <template v-else>
+                                <div class="mr-1">
+                                    POV: 
+                                </div>
+
                                 <wow-character-icon
                                     v-for="(char, idx) in sameSquadCharacters"
                                     :char="char"
@@ -190,7 +194,7 @@ export default class WowGenericMatchSummary extends Vue {
             return []
         }
 
-        let okChars = new Set(this.characterAssociations.map((ele: WoWCharacterUserAssociation) => ele.guid))
+        let okChars = new Set(this.characterAssociations.filter((ele: WoWCharacterUserAssociation) => ele.userId === this.userId).map((ele: WoWCharacterUserAssociation) => ele.guid))
         return this.relevantCharacters.filter((ele: WowCharacter) => okChars.has(ele.guid))
     }
 
