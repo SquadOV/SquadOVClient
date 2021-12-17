@@ -3,7 +3,6 @@
         :user-id="userId"
         title=""
         disable-mini
-        disable-select
         profile
         :access-token="accessToken"
     >

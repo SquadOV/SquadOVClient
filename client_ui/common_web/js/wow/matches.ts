@@ -21,6 +21,7 @@ export interface WowEncounter extends WowCommonMatch {
     difficulty: number
     numPlayers: number
     boss: WowBossStatus[]
+    pullNumber: number | null
 }
 
 export function cleanWowEncounterFromJson(e: WowEncounter): WowEncounter {

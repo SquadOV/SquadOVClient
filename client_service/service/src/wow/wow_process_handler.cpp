@@ -9,6 +9,7 @@
 #include "shared/version.h"
 #include "shared/env.h"
 #include "shared/wow/instances.h"
+#include "shared/uuid.h"
 
 #include <atomic>
 #include <unordered_map>
@@ -79,6 +80,7 @@ private:
     void onCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onFinishCombatantInfo(const shared::TimePoint& tm, const void* data);
     void onSpellCastSuccess(const shared::TimePoint& tm, const void* data);
+    void onNewCombatLog(const shared::TimePoint& tm, const void* data);
 
     void onInstanceStart(const shared::TimePoint& tm, const shared::wow::TypedInstanceData& data);
     void onInstanceEnd(const shared::TimePoint& tm);
@@ -127,6 +129,8 @@ private:
     nlohmann::json _debugSendLog;
 #endif
 #endif
+
+    std::string _currentSessionId;
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -153,6 +157,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatantInfo), std::bind(&WoWProcessHandlerInstance::onCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::FinishCombatantInfo), std::bind(&WoWProcessHandlerInstance::onFinishCombatantInfo, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::SpellCastSuccess), std::bind(&WoWProcessHandlerInstance::onSpellCastSuccess, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::NewCombatLog), std::bind(&WoWProcessHandlerInstance::onNewCombatLog, this, std::placeholders::_1, std::placeholders::_2));
 
     if (!_process.empty()) {
         _logWatcher->loadFromExecutable(p.path());
@@ -808,13 +813,13 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     // Use the current challenge/encounter data + combatant info to request a unique match UUID.
     try {
         if (_currentInstance) {
-            _currentMatchViewUuid = service::api::getGlobalApi()->createWowInstanceMatch(_matchStartTime, _currentInstance.value(), _combatLog);
+            _currentMatchViewUuid = service::api::getGlobalApi()->createWowInstanceMatch(_matchStartTime, _currentInstance.value(), _combatLog, _currentSessionId);
         } else if (inChallenge()) {
-            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWChallengeMatch(_matchStartTime, _currentChallenge, _combatLog);
+            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWChallengeMatch(_matchStartTime, _currentChallenge, _combatLog, _currentSessionId);
         } else if (inEncounter()) {
-            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWEncounterMatch(_matchStartTime, _currentEncounter, _combatLog);
+            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWEncounterMatch(_matchStartTime, _currentEncounter, _combatLog, _currentSessionId);
         } else if (inArena()) {
-            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWArenaMatch(_matchStartTime, _currentArena, _combatLog);
+            _currentMatchViewUuid = service::api::getGlobalApi()->createWoWArenaMatch(_matchStartTime, _currentArena, _combatLog, _currentSessionId);
         } else {
             THROW_ERROR("Match start without challenge or encounter or arena or instance." << std::endl);
         }
@@ -888,6 +893,11 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
 
     _currentMatchViewUuid = "";
     forceKillLogTimeoutThread();
+}
+
+void WoWProcessHandlerInstance::onNewCombatLog(const shared::TimePoint& tm, const void* data) {
+    _currentSessionId = shared::generateUuidv4();
+    LOG_INFO("On Detect New WoW Combat Log - Generating new session ID: " << _currentSessionId << std::endl);
 }
 
 WoWProcessHandler::WoWProcessHandler() = default;

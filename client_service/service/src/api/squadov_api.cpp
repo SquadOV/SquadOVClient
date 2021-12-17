@@ -508,11 +508,12 @@ std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWC
     return parsedJson.get<std::string>();
 }
 
-std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const game_event_watcher::WoWCombatLogState& cl) {
+std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
         { "data", encounter.toJson() },
-        { "cl", cl.toJson() }
+        { "cl", cl.toJson() },
+        { "session", sessionId }
     };
 
     std::ostringstream path;
@@ -562,11 +563,12 @@ std::string SquadovApi::finishWoWChallengeMatch(const std::string& matchUuid, co
     return "";
 }
 
-std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const game_event_watcher::WoWCombatLogState& cl) {
+std::string SquadovApi::createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
         { "data", encounter.toJson() },
-        { "cl", cl.toJson() }
+        { "cl", cl.toJson() },
+        { "session", sessionId }
     };
 
     std::ostringstream path;
@@ -616,11 +618,12 @@ std::string SquadovApi::finishWoWEncounterMatch(const std::string& matchUuid, co
     return "";
 }
 
-std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl) {
+std::string SquadovApi::createWoWArenaMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWArenaStart& arena, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
         { "data", arena.toJson() },
-        { "cl", cl.toJson() }
+        { "cl", cl.toJson() },
+        { "session", sessionId }
     };
 
     std::ostringstream path;
@@ -670,11 +673,12 @@ std::string SquadovApi::finishWoWArenaMatch(const std::string& matchUuid, const 
     return "";
 }
 
-std::string SquadovApi::createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl) {
+std::string SquadovApi::createWowInstanceMatch(const shared::TimePoint& timestamp, const shared::wow::TypedInstanceData& data, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
         { "data", shared::json::JsonConverter<shared::wow::TypedInstanceData>::to(data) },
-        { "cl", cl.toJson() }
+        { "cl", cl.toJson() },
+        { "session", sessionId }
     };
 
     std::ostringstream path;
