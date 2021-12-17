@@ -110,75 +110,73 @@
             </recent-match-filters-ui>
         </div>
         
-        <v-list-item-group v-model="selected" multiple>
-            <loading-container :is-loading="!recentMatches">
-                <template v-slot:default="{ loading }">
-                    <template v-if="!loading && recentMatches.length > 0">
-                        <template v-for="(group, gidx) in groupedMatches">
-                            <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
-                                <v-divider class="mr-4"></v-divider>
+        <loading-container :is-loading="!recentMatches">
+            <template v-slot:default="{ loading }">
+                <template v-if="!loading && recentMatches.length > 0">
+                    <template v-for="(group, gidx) in groupedMatches">
+                        <div class="d-flex align-center my-2" :key="`group-header-${gidx}`">
+                            <v-divider class="mr-4"></v-divider>
 
-                                <div class="text-caption">
-                                    Played {{ group.days }}
+                            <div class="text-caption">
+                                Played {{ group.days }}
+                            </div>
+                        </div>
+
+                        <div class="full-width" :key="`group-matches-${gidx}`">
+                            <div
+                                class="pa-0 mb-1"
+                                v-for="(match, idx) in group.matches"
+                                :key="idx"
+                            >
+                                <recent-match-display
+                                    class="mb-4 full-width"
+                                    :match="match"
+                                    :pov="perMatchSelectedPov[match.matchUuid]"
+                                    :use-local-vod-preview="perMatchSelectedPov[match.matchUuid].isLocal"
+                                    :disable-mini="disableMini"
+                                >
+                                </recent-match-display>
+
+                                <div class="d-flex align-center justify-end">
+                                    <template v-if="match.povs.length > 1">
+                                        <div class="mr-1">
+                                            POV:
+                                        </div>
+
+                                        <v-select
+                                            class="mt-0 mr-2 flex-grow-0"
+                                            :value="perMatchSelectedPov[match.matchUuid]"
+                                            @input="$set(perMatchSelectedPov, match.matchUuid, arguments[0])"
+                                            dense
+                                            hide-details
+                                            :items="povSelectionForMatch(match)"
+                                        >
+                                        </v-select>
+                                    </template>
+
+                                    <slot name="actions" v-bind:match="match" v-bind:pov="perMatchSelectedPov[match.matchUuid]">
+                                    </slot>
                                 </div>
                             </div>
-
-                            <div class="full-width" :key="`group-matches-${gidx}`">
-                                <v-list-item
-                                    class="pa-0"
-                                    v-for="(match, idx) in group.matches"
-                                    :key="idx"
-                                    :value="match.base.vod.videoTracks[0].metadata.videoUuid"
-                                >
-                                    <template v-slot="{active}">
-                                        <div class="d-flex align-center full-width">
-                                            <v-list-item-action v-if="inSelectMode">
-                                                <v-checkbox :input-value="active"></v-checkbox>
-                                            </v-list-item-action>
-
-                                            <recent-match-display
-                                                class="mb-4 full-width"
-                                                :match="match"
-                                                :disable-click="inSelectMode"
-                                                :use-local-vod-preview="match.base.isLocal"
-                                                :disable-mini="disableMini"
-                                            >
-                                            </recent-match-display>
-
-                                            <slot name="actions" v-bind:match="match">
-                                            </slot>
-                                        </div>
-                                    </template>
-                                    
-                                </v-list-item>
-                            </div>
-                        </template>
-
-                        <v-btn
-                            v-if="hasNext"
-                            color="primary"
-                            block
-                            @click="loadMoreMatches"
-                            :loading="loading"
-                        >
-                            Load More
-                        </v-btn>
+                        </div>
                     </template>
 
-                    <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
-                        <div class="text-h6">No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends! <b>SquadOV does not record games if was not running on your local machine for the full duration of the match.</b></div>
-                    </div>
+                    <v-btn
+                        v-if="hasNext"
+                        color="primary"
+                        block
+                        @click="loadMoreMatches"
+                        :loading="loading"
+                    >
+                        Load More
+                    </v-btn>
                 </template>
-            </loading-container>
-        </v-list-item-group>
 
-        <v-snackbar
-            v-model="showHideDeleteError"
-            :timeout="5000"
-            color="error"
-        >
-            Failed to delete VODs. Please try again.
-        </v-snackbar>
+                <div class="d-flex justify-center align-center full-parent-height full-width long-text" v-else>
+                    <div class="text-h6">No recently recorded matches found for you or your squadmates! Start playing some games to get SquadOV to automatically record VODs. Don't forget to invite your friends! <b>SquadOV does not record games if was not running on your local machine for the full duration of the match.</b></div>
+                </div>
+            </template>
+        </loading-container>
     </div>
 </template>
 
@@ -189,7 +187,7 @@ const maxTasksPerRequest : number = 10
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
-import { RecentMatch, checkRecentMatchValidity, RecentMatchFilters, createEmptyRecentMatchFilters } from '@client/js/squadov/recentMatch'
+import { RecentMatch, checkRecentMatchValidity, RecentMatchFilters, createEmptyRecentMatchFilters, RecentMatchPov } from '@client/js/squadov/recentMatch'
 import { apiClient, HalResponse, ApiData } from '@client/js/api'
 import { numDaysAgo, numDaysAgoToString } from '@client/js/time'
 import { DataStorageLocation } from '@client/js/system/data_storage'
@@ -240,16 +238,12 @@ export default class RecentRecordedMatches extends Vue {
     accessToken!: string | undefined
 
     recentMatches: RecentMatch[] | null = null
+    perMatchSelectedPov: {[uuid: string]: RecentMatchPov} = {}
+
     lastIndex: number = 0
     nextLink: string | null = null
     filters: RecentMatchFilters = createEmptyRecentMatchFilters()
     loading: boolean = false
-
-    inSelectMode: boolean = false
-    selected: string[] = []
-    deleteInProgress: boolean = false
-    showHideDelete: boolean = false
-    showHideDeleteError: boolean = false
 
     get isUserLocked(): boolean {
         return this.userId !== undefined
@@ -257,20 +251,6 @@ export default class RecentRecordedMatches extends Vue {
 
     get hasNext() : boolean {
         return !!this.nextLink
-    }
-
-    get selectableMatches(): RecentMatch[] {
-        return this.filteredMatches.filter((ele: RecentMatch) => {
-            return ele.base.userId === this.$store.state.currentUser.id
-        })
-    }
-
-    get displayMatches(): RecentMatch[] {
-        if (this.inSelectMode) {
-            return this.selectableMatches
-        } else {
-            return this.filteredMatches
-        }
     }
 
     get filteredMatches() : RecentMatch[] {
@@ -285,8 +265,9 @@ export default class RecentRecordedMatches extends Vue {
 
     get groupedMatches(): GroupedMatch[] {
         let grouped: Map<number, RecentMatch[]> = new Map()
-        this.displayMatches.forEach((ele: RecentMatch) => {
-            let days = numDaysAgo(ele.base.tm)
+        this.filteredMatches.forEach((ele: RecentMatch) => {
+            let avgTime = new Date(ele.povs.map((ele) => ele.tm.getTime()).reduce((a, b) => a + b, 0) / ele.povs.length)
+            let days = numDaysAgo(avgTime)
             if (!grouped.has(days)) {
                 grouped.set(days, [])
             }
@@ -306,24 +287,6 @@ export default class RecentRecordedMatches extends Vue {
         return ret
     }
 
-    get allSelected(): boolean {
-        return this.recentMatches?.length === this.selected.length
-    }
-
-    toggleSelected() {
-        if (this.allSelected) {
-            this.selected = []
-        } else if (!!this.recentMatches) {
-            this.selected = this.recentMatches.map((ele: RecentMatch) => ele.base.vod.videoTracks[0].metadata.videoUuid)
-        } else {
-            this.selected = []
-        }
-    }
-
-    closeSelect() {
-        this.inSelectMode = false
-        this.selected = []
-    }
 
     get finalFilters(): RecentMatchFilters {
         let filters: RecentMatchFilters = JSON.parse(JSON.stringify(this.filters))
@@ -348,7 +311,6 @@ export default class RecentRecordedMatches extends Vue {
         this.recentMatches = null
         this.nextLink = null
         this.lastIndex = 0
-        this.selected = []
         this.loadMoreMatches()
     }
 
@@ -369,7 +331,9 @@ export default class RecentRecordedMatches extends Vue {
                 this.recentMatches = resp.data.data
             } else {
                 this.recentMatches.push(...resp.data.data)
-            }
+            }            
+            
+            this.refreshPovSelection()
             this.lastIndex += resp.data.data.length
             if ("next" in resp.data._links) {
                 this.nextLink = resp.data._links["next"].href
@@ -383,32 +347,55 @@ export default class RecentRecordedMatches extends Vue {
         })
     }
 
-    deleteSelectedVods() {
-        if (this.selected.length === 0) {
+    mounted() {
+        this.refreshData()
+    }
+
+    get povSelectionForMatch(): (match: RecentMatch) => any[] {
+        return (match: RecentMatch) => {
+            return match.povs.map((ele: RecentMatchPov) => {
+                return {
+                    text: ele.username,
+                    value: ele,
+                }
+            })
+        }
+    }
+
+    refreshPovSelection() {
+        if (!this.recentMatches) {
             return
         }
 
-        this.deleteInProgress = true
-        apiClient.deleteVods(this.selected).then(() => {
-            this.refreshData()
-            this.showHideDelete = false
-        }).catch((err: any) => {
-            console.error('Failed to delete VODs: ', err)
-            this.showHideDeleteError = true
-        }).finally(() => {
-            this.deleteInProgress = false
-        })
+        for (let r of this.recentMatches) {
+            if (r.matchUuid in this.perMatchSelectedPov) {
+                continue
+            }
+
+            if (r.povs.length > 0) {
+                Vue.set(this.perMatchSelectedPov, r.matchUuid, r.povs[0])
+            }
+        }
     }
 
     removeContent(videoUuid: string) {
         if (!this.recentMatches) {
             return
         }
-        this.recentMatches = this.recentMatches.filter((ele: RecentMatch) => ele.base.vod.videoTracks[0].metadata.videoUuid !== videoUuid)
-    }
 
-    mounted() {
-        this.refreshData()
+        this.recentMatches.forEach(
+            (ele: RecentMatch) => {
+                ele.povs = ele.povs.filter((ele: RecentMatchPov) => ele.vod.videoTracks[0].metadata.videoUuid !== videoUuid)
+            }
+        )
+
+        this.recentMatches = this.recentMatches.filter((ele: RecentMatch) => ele.povs.length > 0)
+        for (let [uuid, pov] of Object.entries(this.perMatchSelectedPov)) {
+            if (pov.vod.videoTracks[0].metadata.videoUuid === videoUuid) {
+                Vue.delete(this.perMatchSelectedPov, uuid)
+            }
+        }
+        this.refreshPovSelection()
     }
 }
 
