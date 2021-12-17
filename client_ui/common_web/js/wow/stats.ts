@@ -13,3 +13,14 @@ export interface WowStatDatum {
 export interface WowMatchStatContainer {
     [guid: string]: WowStatDatum[] | undefined
 }
+
+export interface WowStatItem {
+    guid: string
+    value: number
+}
+
+export interface WowMatchStatSummaryData {
+    damageDealt: WowStatItem[]
+    damageReceived: WowStatItem[]
+    heals: WowStatItem[]
+}
