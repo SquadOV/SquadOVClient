@@ -316,7 +316,7 @@ export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
 
     get eventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight + 64}px`,
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
         }
     }
 

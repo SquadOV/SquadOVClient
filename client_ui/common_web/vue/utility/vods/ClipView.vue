@@ -124,7 +124,15 @@
 
                     <div class="d-flex align-center">
                         <div class="text-body-2">{{ clipTime }}</div><span class="mx-1">&#183;</span>
-                        <div class="text-body-2 font-weight-bold">{{ clip.clipper }}</div>
+                        <div class="text-body-2 font-weight-bold">
+                            <template v-if="!!vodProfileHandle">
+                                <router-link :to="vodProfileTo">{{ clip.clipper }}</router-link>
+                            </template>
+
+                            <template v-else>
+                                {{ clip.clipper }}
+                            </template>
+                        </div>
                     </div>
                     
                     <div class="long-text text-body-2">{{ clip.description }}</div>
@@ -258,6 +266,7 @@ import VodWatchlistButton from '@client/vue/utility/vods/VodWatchlistButton.vue'
 import VodDownloadButton from '@client/vue/utility/vods/VodDownloadButton.vue'
 import VodDeleteButton from '@client/vue/utility/vods/VodDeleteButton.vue'
 import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
+import { UserProfileHandle } from '@client/js/squadov/user'
 
 const maxCommentsPerRequest = 20
 
@@ -304,11 +313,32 @@ export default class ClipView extends mixins(CommonComponent) {
     commentError: boolean = false
 
     permissions: MatchVideoSharePermissions | null = null
+    vodProfileHandle: UserProfileHandle | null = null
 
     get isClipOwner(): boolean {
         return !!this.$store.state.currentUser &&
             !!this.clip &&
             this.$store.state.currentUser.uuid === this.clip.clip.userUuid
+    }
+
+    get vodProfileTo(): any {
+        return {
+            name: pi.UserProfileSlugPageId,
+            params: {
+                profileSlug: this.vodProfileHandle?.slug
+            }
+        }
+    }
+
+    @Watch('clipUuid')
+    refreshProfileInformation() {
+        this.vodProfileHandle = null
+
+        apiClient.getUserProfileHandleFromVideoUuid(this.clipUuid).then((resp: ApiData<UserProfileHandle>) => {
+            this.vodProfileHandle = resp.data
+        }).catch((err: any) => {
+            console.warn('Failed to get user profile handle from clip: ', err)
+        })
     }
 
     @Watch('clipUuid')
@@ -512,6 +542,7 @@ export default class ClipView extends mixins(CommonComponent) {
 
         this.refreshData()
         this.refreshPermissions()
+        this.refreshProfileInformation()
     }
 
     onDeleteFinish() {
