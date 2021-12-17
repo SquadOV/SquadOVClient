@@ -27,6 +27,7 @@ public:
     CsgoProcessHandlerInstance(const process_watcher::process::Process& p);
     ~CsgoProcessHandlerInstance();
 
+    void forceStopRecording();
 private:
     game_event_watcher::CsgoLogWatcherPtr _logWatcher;
     game_event_watcher::CsgoGsiStateManager _stateManager;
@@ -81,6 +82,16 @@ CsgoProcessHandlerInstance::CsgoProcessHandlerInstance(const process_watcher::pr
 
 CsgoProcessHandlerInstance::~CsgoProcessHandlerInstance() {
     fulfillDemoRequest();
+}
+
+void CsgoProcessHandlerInstance::forceStopRecording() {
+    std::lock_guard guard(_activeGameMutex);
+    _matchState.reset();
+    if (_recorder->isRecording()) {
+        _recorder->stop({});
+    }
+
+    _activeViewUuid.reset();
 }
 
 void CsgoProcessHandlerInstance::fulfillDemoRequest() {
@@ -317,6 +328,14 @@ void CsgoProcessHandler::onProcessStops() {
     LOG_INFO("STOP CS:GO" << std::endl);
     service::system::getGlobalState()->markGameRunning(shared::EGame::CSGO, false);
     _instance.reset(nullptr);
+}
+
+void CsgoProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: CS:GO" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }
