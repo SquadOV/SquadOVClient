@@ -30,7 +30,7 @@
                 Save & Continue
             </v-btn>
             <v-btn
-                v-if="useLocalRecording"
+                v-if="this.$store.state.settings.record.useLocalRecording"
                 class="mt-4"
                 color="error"
                 x-small
@@ -65,19 +65,18 @@ export default class SetupProgress extends Vue {
     showLogout: boolean = false
     funnies: any = new Funnies()
     showSpeedCheckPrompt: boolean = false
-    useLocalRecording: boolean = false
 
     get ranSpeedCheck(): boolean {
         return this.$store.state.settings.ranSpeedCheck
     }
 
-    get Mbps(): number {
-        return this.$store.state.settings.Mbps
+    get speedCheckResultMbps(): number {
+        return this.$store.state.settings.speedCheckResultMbps
     }
 
     userDisagrees() {
         this.$store.commit('changeLocalRecording', {
-            use: !this.useLocalRecording,
+            use: !this.$store.state.settings.record.useLocalRecording,
             loc: this.$store.state.settings.record.localRecordingLocation,
             limit: this.$store.state.settings.record.maxLocalRecordingSizeGb
         })
@@ -135,11 +134,10 @@ export default class SetupProgress extends Vue {
         await this.$store.dispatch('reloadLocalSettings')
         this.showSpeedCheckPrompt = true
         let speedCheckResults = 'enabled'
-        if( this.Mbps < 8 ) {
+        if( this.$store.state.settings.record.useLocalRecording ) {
             speedCheckResults = 'disabled'
-            this.useLocalRecording = true
         }
-        this.statusMessage = `We detected your upload speed to our servers is ${this.Mbps} Mb/s. As a result, we\'ve ${speedCheckResults} automatic upload.`
+        this.statusMessage = `We detected your upload speed to our servers is ${this.speedCheckResultMbps} Mb/s. As a result, we've ${speedCheckResults} automatic upload.`
         return new Promise((resolve, reject) => { 
             this.$on('finishSpeedCheck', () => {
                 resolve(0)

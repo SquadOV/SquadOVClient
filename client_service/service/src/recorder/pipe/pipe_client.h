@@ -7,8 +7,6 @@
 #include <Windows.h>
 #endif
 
-constexpr int MAX_BUFFER_SIZE = 16 * 1024 * 1024;
-
 namespace service::recorder::pipe {
 
 class PipeClient {

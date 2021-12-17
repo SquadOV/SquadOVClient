@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
     LOG_INFO("Saving Speed Check results to disk..." << std::endl);
     auto rawData = service::system::getCurrentSettings()->raw();
     rawData["ranSpeedCheck"] = shared::json::JsonConverter<bool>::to(true);
-    rawData["Mbps"] = shared::json::JsonConverter<int>::to(speedCheckResMbps);
+    rawData["speedCheckResultMbps"] = shared::json::JsonConverter<int>::to(speedCheckResMbps);
 
     // If the user is uploading slower than 8 Mb/s, disable Automatic Upload.
     if(speedCheckResMbps < 8) {
@@ -100,5 +100,8 @@ int main(int argc, char **argv) {
     ofs.close();
     fs::rename(tmpPath, fpath);
 
+    // Calling an exit because the code will have done everything it needs to do at this point.
+    // If the user has really slow internet, they would have to wait until it fully sends the 16MB which is unnecessary at this point
+    std::exit(0);
     return 0;
 }

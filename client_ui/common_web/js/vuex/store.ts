@@ -132,16 +132,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
-        disableAutomaticUpload(state: RootState, b: boolean) {
-/// #if DESKTOP
-            if (!state.settings) {
-                return
-            }
-
-            state.settings.record.useLocalRecording = b
-            saveLocalSettings(state.settings)
-/// #endif
-        },
         changeLocalRecording(state: RootState, params: {use: boolean, loc: string, limit: number}) {
 /// #if DESKTOP
             if (!state.settings) {
