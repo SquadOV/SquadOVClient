@@ -24,6 +24,7 @@ public:
     ValorantProcessHandlerInstance(const process_watcher::process::Process& p);
     ~ValorantProcessHandlerInstance();
 
+    void forceStopRecording();
 private:
     void onValorantMatchStart(const shared::TimePoint& eventTime, const void* rawData);
     void onValorantMatchEnd(const shared::TimePoint& eventTime,const void* rawData);
@@ -71,6 +72,13 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
 }
 
 ValorantProcessHandlerInstance::~ValorantProcessHandlerInstance() {
+}
+
+void ValorantProcessHandlerInstance::forceStopRecording() {
+    if (_recorder->isRecording()) {
+        _recorder->stop({});
+    }
+    _currentMatch.reset(nullptr);
 }
 
 bool ValorantProcessHandlerInstance::recheckOwnsAccount() {
@@ -292,6 +300,14 @@ void ValorantProcessHandler::onProcessStops() {
     LOG_INFO("STOP VALORANT" << std::endl);
     service::system::getGlobalState()->markGameRunning(shared::EGame::Valorant, false);
     _instance.reset(nullptr);
+}
+
+void ValorantProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: Valorant" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }

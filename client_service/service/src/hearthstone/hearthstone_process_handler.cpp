@@ -21,6 +21,7 @@ public:
     HearthstoneProcessHandlerInstance(const process_watcher::process::Process& p);
     ~HearthstoneProcessHandlerInstance();
 
+    void forceStopRecording();
 private:
     void loadMonoMapper();
     void onGameConnect(const shared::TimePoint& eventTime, const void* rawData);
@@ -76,6 +77,14 @@ HearthstoneProcessHandlerInstance::~HearthstoneProcessHandlerInstance() {
     _valid = false;
     if (_watcherThread.joinable()) {
         _watcherThread.join();
+    }
+}
+
+void HearthstoneProcessHandlerInstance::forceStopRecording() {
+    _inGame = false;
+    _currentGame = game_event_watcher::HearthstoneGameConnectionInfo();
+    if (_recorder->isRecording()) {
+        _recorder->stop({});
     }
 }
 
@@ -346,6 +355,14 @@ void HearthstoneProcessHandler::onProcessStops() {
     LOG_INFO("STOP HEARTHSTONE" << std::endl);
     service::system::getGlobalState()->markGameRunning(shared::EGame::Hearthstone, false);
     _instance.reset(nullptr);
+}
+
+void HearthstoneProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: HEARTHSTONE" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }
