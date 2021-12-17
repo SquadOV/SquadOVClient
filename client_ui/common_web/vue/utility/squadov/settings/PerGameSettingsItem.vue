@@ -379,6 +379,38 @@
                     </v-col>
                 </v-row>
             </v-tab-item>
+
+            <v-tab>
+                Other
+            </v-tab>
+
+            <v-tab-item>
+                <v-row align="center">
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.disablePostGamePopup"
+                            @change="$store.commit('changeDisablePostGamePopup', arguments[0])"
+                            label="Disable Post-Game Popup"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Disables the SquadOV pop-up after you exit out of a game.
+                                    Please don't forget about us :(.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+                </v-row>
+            </v-tab-item>
         </v-tabs>
     </div>
 </template>
