@@ -255,6 +255,8 @@ export interface SquadOvLocalSettings {
     ranSpeedCheck: boolean
     speedCheckResultMbps: number
     anonymousAnalytics: boolean
+    hidePostGamePopupUntil: Date | null
+    disablePostGamePopup: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
 }
@@ -466,6 +468,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         ranSpeedCheck: false,
         speedCheckResultMbps: 0,
         anonymousAnalytics: true,
+        hidePostGamePopupUntil: null,
+        disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
     }
@@ -529,6 +533,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         ranSpeedCheck: false,
         speedCheckResultMbps: 0,
         anonymousAnalytics: true,
+        hidePostGamePopupUntil: null,
+        disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
     }
@@ -747,9 +753,21 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.games.wow.recordScenarios = true
         }
 
+        if (parsedData.hidePostGamePopupUntil === undefined) {
+            parsedData.hidePostGamePopupUntil = null
+        }
+
+        if (parsedData.disablePostGamePopup === undefined) {
+            parsedData.disablePostGamePopup = false
+        }
+
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()
+    }
+
+    if (!!parsedData.hidePostGamePopupUntil) {
+        parsedData.hidePostGamePopupUntil = new Date(parsedData.hidePostGamePopupUntil)
     }
 
     saveLocalSettings(parsedData, true)
