@@ -103,10 +103,13 @@ export function timeStringToMilliseconds(ts: string): number {
     let components = ts.split('.')
     if (components.length === 0) {
         return 0
+    } else if (components.length === 1) {
+        // handle cases of mm:ss; where milliseconds are not passed in.
+        components[1] = "000"
     }
 
     let seconds = timeStringToSeconds(components[0])
-    let ms = parseInt(components[1])
+    let ms = parseInt(formatMilliseconds(components[1]))
     return seconds * 1000 + ms
 }
 
@@ -161,4 +164,8 @@ export function numDaysAgoToString(diffDays: number): string {
 export function daysAgo(d: Date): string {
     let diffDays = numDaysAgo(d)
     return numDaysAgoToString(diffDays)
+}
+
+export function formatMilliseconds(ms: string) {
+    return ms.padEnd(3, '0').slice(0, 3)
 }

@@ -11,12 +11,15 @@
                 </v-card-title>
                 <v-divider></v-divider>
 
-                <v-text-field
-                    v-model="code"
-                    label="Authenticator Code"
-                    solo
-                >
-                </v-text-field>
+                <div class="ma-auto" style="max-width: 300px">
+                    <v-otp-input
+                        v-model="code"
+                        length="6"
+                        type="number"
+                        @finish="doVerify"
+                    >
+                    </v-otp-input>
+                </div>
 
                 <v-divider></v-divider>
                 <v-card-actions>
@@ -25,14 +28,6 @@
                         @click="showHide = false"
                     >
                         Cancel
-                    </v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn
-                        color="success"
-                        @click="doVerify"
-                        :disabled="code.length === 0"
-                    >
-                        Submit
                     </v-btn>
                 </v-card-actions>
             </v-card>

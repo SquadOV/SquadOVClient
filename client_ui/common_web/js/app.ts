@@ -988,6 +988,14 @@ ipcRenderer.on('change-recording-games', (_, games) => {
 ipcRenderer.on('post-game-notification', (_, data: { game: SquadOvGames, tm: Date }) => {
     data.tm = new Date(data.tm)
 
+    if (!!store.state.settings?.disablePostGamePopup) {
+        return
+    }
+
+    if (!!store.state.settings?.hidePostGamePopupUntil && data.tm < store.state.settings.hidePostGamePopupUntil) {
+        return
+    }
+
     // Redirect to the post-game report screen.
     // In the case where no games exist on the server then that component will be responsible
     // for displaying something reasonable to the user.

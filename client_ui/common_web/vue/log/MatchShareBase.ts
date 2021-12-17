@@ -15,6 +15,10 @@ export default class MatchShareBase extends Vue {
     @Prop({default: 0})
     inTs!: number
 
+    get vodPickerHeight(): number {
+        return 92
+    }
+
     mounted() {
         if (!isNaN(this.inTs)) {
             this.timestamp = this.inTs

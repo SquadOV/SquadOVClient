@@ -15,8 +15,12 @@ S3StorageClient::S3StorageClient(const std::string& videoUuid):
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
 }
 
-void S3StorageClient::initializeDestination(const service::vod::VodDestination& destination) {
+void S3StorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
     _destination = destination;
+}
+
+void S3StorageClient::setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) {
+    _httpClient->addDownloadProgressFn(progressFn);
 }
 
 void S3StorageClient::startNewSegment() {
@@ -25,7 +29,7 @@ void S3StorageClient::startNewSegment() {
 
     for (auto i = 0; i < MAX_NEW_SEGMENT_TRIES; ++i) {
         try {
-            _destination = service::api::getGlobalApi()->getVodPartUploadUri(_videoUuid, _destination.bucket, _destination.session, _currentPart);
+            _destination = service::api::getGlobalApi()->getObjectPartUploadUri(_videoUuid, _destination.bucket, _destination.session, _destination.purpose, _currentPart);
             return;
         } catch (std::exception& ex) {
             LOG_WARNING("...Failed to get new segment [retrying] " << ex.what() << std::endl);
@@ -65,7 +69,6 @@ std::pair<std::string, size_t> S3StorageClient::uploadBytes(const char* buffer, 
             THROW_ERROR("Failed to obtain AWS part E-Tag.");
             return std::make_pair("", 0);
         }
-
         return std::make_pair(it->second, numBytes);
     }
 }

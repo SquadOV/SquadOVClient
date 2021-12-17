@@ -242,7 +242,7 @@ export default class HearthstoneMatch extends mixins(CommonComponent, MatchShare
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight - 48 + 68}px`,
+            'height': `${this.currentPlayerHeight - 48 + this.vodPickerHeight}px`,
         }
     }
 

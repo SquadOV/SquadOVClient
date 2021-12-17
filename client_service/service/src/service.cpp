@@ -457,7 +457,7 @@ int main(int argc, char** argv) {
             const auto request = service::recorder::pipe::CloudUploadRequest::fromJson(json);
 
             shared::TimePoint lastProgressTm = shared::nowUtc();
-            const auto resp = service::recorder::pipe::uploadToCloud(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dl, size_t total){
+            const auto resp = service::recorder::pipe::uploadToCloud(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dltotal, size_t dl, size_t ultotal, size_t ul){
                 const auto now = shared::nowUtc();
                 const auto threshold = lastProgressTm + std::chrono::seconds(1);
                 if (now > threshold) {
@@ -465,8 +465,8 @@ int main(int argc, char** argv) {
                         service::zeromq::ZEROMQ_CLOUD_UPLOAD_PROGRESS_TOPIC,
                         nlohmann::json{
                             {"task", request.task},
-                            {"download", dl},
-                            {"total", total},
+                            {"upload", ul},
+                            {"total", ultotal},
                             {"done", false}
                         }.dump(),
                         true
@@ -608,7 +608,7 @@ int main(int argc, char** argv) {
                     service::api::getGlobalApi()->getVodUri(request.data),
                     service::api::getGlobalApi()->getVodMd5Checksum(request.data),
                     entry,
-                    [&zeroMqServerClient, &lastProgressTm, request](size_t dl, size_t total) {
+                    [&zeroMqServerClient, &lastProgressTm, request](size_t dltotal, size_t dl, size_t ultotal, size_t ul) {
                         const auto now = shared::nowUtc();
                         const auto threshold = lastProgressTm + std::chrono::seconds(1);
                         if (now > threshold) {
@@ -617,7 +617,7 @@ int main(int argc, char** argv) {
                                 nlohmann::json{
                                     {"task", request.data},
                                     {"download", dl},
-                                    {"total", total},
+                                    {"total", dltotal},
                                     {"done", false}
                                 }.dump(),
                                 true

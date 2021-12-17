@@ -58,6 +58,11 @@ export interface UserProfileBasic {
     accessToken: string | null
 }
 
+export interface UserProfileHandle {
+    username: string
+    slug: string
+}
+
 export function cleanUserProfileBasicFromJson(p: UserProfileBasic): UserProfileBasic {
     p.memberSince = new Date(p.memberSince)
     return p

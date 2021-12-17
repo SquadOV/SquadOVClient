@@ -27,8 +27,7 @@ using HttpResponsePtr = std::unique_ptr<HttpResponse>;
 
 // Returns true if the next interceptor should still be run.
 using ResponseInterceptor = std::function<bool(HttpResponse&)>;
-using DownloadProgressFn = std::function<void(size_t, size_t)>;
-
+using DownloadUploadProgressFn = std::function<void(size_t, size_t, size_t, size_t)>;
 class HttpRequest;
 class HttpClient {
 public:
@@ -48,7 +47,7 @@ public:
     void addResponseInterceptor(const ResponseInterceptor& i) { _responseInterceptors.push_back(i); }
     void clearResponseInterceptors() { _responseInterceptors.clear(); }
 
-    void addDownloadProgressFn(const DownloadProgressFn& fn) { _downloadProgressCallbacks.push_back(fn); }
+    void addDownloadProgressFn(const DownloadUploadProgressFn& fn) { _downloadUploadProgressCallbacks.push_back(fn); }
 
     void setTimeout(long v) { _timeoutSeconds = v; }
     void clearTimeout() { _timeoutSeconds = {}; }
@@ -82,7 +81,7 @@ private:
 
     // Intercepts. Let users modify the response/request as necessary.
     std::vector<ResponseInterceptor> _responseInterceptors;
-    std::vector<DownloadProgressFn> _downloadProgressCallbacks;
+    std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
 };
 
 using HttpClientPtr = std::unique_ptr<HttpClient>;

@@ -253,7 +253,11 @@ export interface SquadOvLocalSettings {
     minimizeOnClose: boolean
     runOnStartup: boolean
     setupWizardRun: boolean
+    ranSpeedCheck: boolean
+    speedCheckResultMbps: number
     anonymousAnalytics: boolean
+    hidePostGamePopupUntil: Date | null
+    disablePostGamePopup: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
 }
@@ -276,9 +280,9 @@ function getDefaultRecordingLocation(): string {
 
 let inProgress: boolean = false
 let saveTimer: number | undefined = undefined
-export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false) {
+export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = false, ignoreInProgress: boolean = false) {
 /// #if DESKTOP
-    if (inProgress) {
+    if (inProgress && !ignoreInProgress) {
         return
     }
 
@@ -465,7 +469,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
+        ranSpeedCheck: false,
+        speedCheckResultMbps: 0,
         anonymousAnalytics: true,
+        hidePostGamePopupUntil: null,
+        disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
     }
@@ -527,7 +535,11 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeOnClose: true,
         runOnStartup: true,
         setupWizardRun: false,
+        ranSpeedCheck: false,
+        speedCheckResultMbps: 0,
         anonymousAnalytics: true,
+        hidePostGamePopupUntil: null,
+        disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
     }
@@ -576,6 +588,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.setupWizardRun === undefined) {
             parsedData.setupWizardRun = false
+        }
+
+        if (parsedData.ranSpeedCheck === undefined) {
+            parsedData.ranSpeedCheck = false
+        }
+
+        if (parsedData.speedCheckResultMbps === undefined) {
+            parsedData.speedCheckResultMbps = 0
         }
 
         if (parsedData.record.useVfr4 === undefined) {
@@ -741,10 +761,22 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.record.needConfirmManualStop === undefined) {
             parsedData.record.needConfirmManualStop = true
         }
+        
+        if (parsedData.hidePostGamePopupUntil === undefined) {
+            parsedData.hidePostGamePopupUntil = null
+        }
+
+        if (parsedData.disablePostGamePopup === undefined) {
+            parsedData.disablePostGamePopup = false
+        }
 
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()
+    }
+
+    if (!!parsedData.hidePostGamePopupUntil) {
+        parsedData.hidePostGamePopupUntil = new Date(parsedData.hidePostGamePopupUntil)
     }
 
     saveLocalSettings(parsedData, true)

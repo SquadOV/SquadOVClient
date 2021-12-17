@@ -52,6 +52,7 @@ import {
     SquadOVUserHandle,
     UserProfileBasic,
     cleanUserProfileBasicFromJson,
+    UserProfileHandle,
 } from '@client/js/squadov/user'
 import {
     RiotSummoner
@@ -79,7 +80,8 @@ import {
 } from '@client/js/wow/events'
 import {
     WowStatQueryParam,
-    WowMatchStatContainer
+    WowMatchStatContainer,
+    WowMatchStatSummaryData
 } from '@client/js/wow/stats'
 import {
     TftPlayerMatchSummary,
@@ -1098,6 +1100,10 @@ class ApiClient {
         })
     }
 
+    getWowStatSummary(userId: number, matchUuid: string): Promise<ApiData<WowMatchStatSummaryData>> {
+        return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/stats/summary`, this.createWebAxiosConfig())
+    }
+
     getWowFullCharacter(userId: number, matchUuid: string, guid: string): Promise<ApiData<WowFullCharacter>> {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/characters/${guid}`, this.createWebAxiosConfig(true))
     }
@@ -1705,6 +1711,10 @@ class ApiClient {
 
     getVodTags(videoUuid: string): Promise<ApiData<VodTag[]>> {
         return axios.get(`v1/vod/${videoUuid}/tag`, this.createWebAxiosConfig())
+    }
+
+    getUserProfileHandleFromVideoUuid(videoUuid: string): Promise<ApiData<UserProfileHandle>> {
+        return axios.get(`v1/vod/${videoUuid}/profile`, this.createWebAxiosConfig())
     }
 
     // Local API

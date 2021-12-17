@@ -490,7 +490,25 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         updateCachedIp(state: RootState, ip: string) {
             state.cachedIp = ip
-        }
+        },
+        changeDisablePostGamePopup(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.disablePostGamePopup = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
+        changeHidePostGamePopupUntil(state: RootState, v: Date | null) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.hidePostGamePopupUntil = v
+            saveLocalSettings(state.settings)
+/// #endif
+        },
     },
     actions: {
         async reloadLocalSettings(context) {

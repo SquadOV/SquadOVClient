@@ -1,7 +1,7 @@
 #pragma once
 
 #include "recorder/pipe/pipe.h"
-#include "vod/vod.h"
+#include "uploader/uploader.h"
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -21,7 +21,7 @@ public:
     void start();
     void wait();
     void stop();
-
+    void stopAndSkipFlush();
     // At least on windows the pipe will have an actual path on disk that
     // we can use.
     const std::string& filePath() const { return _pipe->filePath(); }
@@ -39,6 +39,7 @@ protected:
 
 private:
     bool _running = true;
+    bool _skipFlush = false;
     std::thread _pipeThread;
     PipePtr _pipe;
 
@@ -49,6 +50,5 @@ private:
 
 using FileOutputPiperPtr = std::unique_ptr<FileOutputPiper>;
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination);
-
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::uploader::UploadDestination& destination);
 }
