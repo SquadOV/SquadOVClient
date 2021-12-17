@@ -16,7 +16,7 @@
             </div>
 
             <div class="d-flex align-center text-subtitle-2">
-                {{ instanceName }} ({{ difficulty }})
+                {{ instanceName }} ({{ difficulty }} <span v-if="!!encounter.pullNumber">, Pull: {{ encounter.pullNumber }}</span>)
             </div>
         </template>
 

@@ -28,7 +28,8 @@ enum class EWoWLogEvents {
     // be handled after you start to exepct COMBATANT_INFO events.
     FinishCombatantInfo,
     SpellCastSuccess,
-    ZoneChange
+    ZoneChange,
+    NewCombatLog
 };
 
 struct WoWCombatLogState {
