@@ -282,8 +282,10 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
     LOG_INFO("WoW Combat Log Path: " << combatLogPath << " " << loop << " [Legacy: " << _legacy << "]" << std::endl
         << "\tOld Exists: " << oldExists << "\tNew Exists: " << newExists << "\tIs Old: " << isOldFile << std::endl);
 
-    const auto isLoadingExisting = !legacy && !oldExists && newExists && isOldFile;
-    if (isLoadingExisting) {
+    // We need to check if an old combat log exists because in that case we don't need to do this check
+    // since we'd presumably already have stored the combat log start information.
+    const auto needsCombatLogCheck = !oldExists && newExists && isOldFile;
+    if (needsCombatLogCheck) {
         LOG_INFO("...Loading a potentially large pre-existing combat log -- searching for combat log start." << std::endl);
         // In the very special scenario where we're loading a combat log that already existed with data, then we want to do a preliminary
         // parse to get the combat log start event since this event isn't necessarily repeated.
@@ -318,13 +320,13 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
         // In the legacy case, if the file doesn't already exists then the log watcher will wait for it to
         // exist anwyay. In the non-legacy case, we know that the file is fine since it passed our own time threshold check.
         false,                                                                          // waitForNewFile
-        // Legacy should always go to the end as long as that file already exists because that file would be
-        // detectable as soon as the game starts.
-        //
-        // In the case of non legacy, we want to immediately go to the end only if we're reading in the first log file (!oldExists) and it was detected instantly (isOldFile).
-        (legacy && newExists) || (!legacy && isOldFile && !oldExists),                  // immediatelyGoToEnd
+        // Legacy vs non-legacy desn't matter here. We should never need to immediately go to the end.
+        // If we're reading in a file that already existed and is suddenly being written to then we should
+        // be passing in a position to start reading from. If we're reading in a file that just started
+        // existing, then the passed in position should not be set or set to 0.
+        false,                                                                          // immediatelyGoToEnd
         loop,                                                                           // loop,
-        isLoadingExisting ? position : std::nullopt                                     // initialPosition
+        isOldFile ? position : std::nullopt                                             // initialPosition
     );
     _watcher->disableBatching();
 }
@@ -338,6 +340,10 @@ void WoWLogWatcher::wait() {
 
 void WoWLogWatcher::onCombatLogChange(const LogLinesDelta& lines) {
     for (const auto& ln : lines) {
+        if (ln.empty()) {
+            continue;
+        }
+
         RawWoWCombatLog log;
         log.logLine = _logLine++;
         if (!parseRawCombatLogLine(ln, log, _logPath)) {
