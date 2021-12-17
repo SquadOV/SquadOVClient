@@ -35,6 +35,7 @@
 #include "shared/system/keys.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "system/processes.h"
+#include "recorder/process_record_interface.h"
 
 #include <algorithm>
 #include <boost/program_options.hpp>
@@ -53,6 +54,7 @@
 #include <portaudio.h>
 #include <thread>
 #include <sentry.h>
+#include <vector>
 
 #include "shared/system/win32/hwnd_utils.h"
 
@@ -68,6 +70,7 @@ namespace fs = std::filesystem;
 namespace po = boost::program_options;
 
 process_watcher::ProcessWatcher watcher;
+std::vector<service::recorder::ProcessRecordInterface*> recorderInterfaces;
 
 #ifdef _WIN32
 
@@ -125,16 +128,35 @@ void portaudioLogCallback(const char* log) {
 void defaultMain() {
     const auto flags = service::api::getGlobalApi()->getSessionFeatures();
 
+    auto valorant = std::make_unique<service::valorant::ValorantProcessHandler>();
+    auto aimlab = std::make_unique<service::aimlab::AimlabProcessHandler>();
+    auto hearthstone = std::make_unique<service::hearthstone::HearthstoneProcessHandler>();
+    auto wow = std::make_unique<service::wow::WoWProcessHandler>();
+    auto league = std::make_unique<service::league::LeagueProcessHandler>();
+    auto csgo = std::make_unique<service::csgo::CsgoProcessHandler>();
+
+    // Sketchy? Fuck yes. But the objet that owns these pointers is the prrocess watcher
+    // which will live forever (for better or worse) so this is actually relatively safe.
+    // Note that if that ever changes then we'll have problems.
+    recorderInterfaces = {
+        valorant.get(),
+        aimlab.get(),
+        hearthstone.get(),
+        wow.get(),
+        league.get(),
+        csgo.get()
+    };
+
     // Start process watcher to watch for our supported games.
-    watcher.beginWatchingGame(shared::EGame::Valorant, std::make_unique<service::valorant::ValorantProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::Aimlab, std::make_unique<service::aimlab::AimlabProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::Hearthstone, std::make_unique<service::hearthstone::HearthstoneProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::Valorant, std::move(valorant));
+    watcher.beginWatchingGame(shared::EGame::Aimlab, std::move(aimlab));
+    watcher.beginWatchingGame(shared::EGame::Hearthstone, std::move(hearthstone));
     // Note that this will cover WoW, WoW Classic, and TBC classic (and all other classics into the future) since the way we record
     // WoW will have to be similar for all of them.
-    watcher.beginWatchingGame(shared::EGame::WoW, std::make_unique<service::wow::WoWProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::WoW, std::move(wow));
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
-    watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::make_unique<service::league::LeagueProcessHandler>());
-    watcher.beginWatchingGame(shared::EGame::CSGO, std::make_unique<service::csgo::CsgoProcessHandler>());
+    watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::move(league));
+    watcher.beginWatchingGame(shared::EGame::CSGO, std::move(csgo));
     watcher.start();
 }
 
@@ -756,6 +778,13 @@ int main(int argc, char** argv) {
             service::zeromq::ZEROMQ_RESPOND_PROCESS_LIST,
             shared::json::JsonConverter<std::remove_const_t<decltype(list)>>::to(list).dump()
         );
+    });
+
+    zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_FORCE_STOP_RECORDING, [](const std::string& msg){
+        LOG_INFO("FORCE STOP RECORDING:" << msg << std::endl);
+        for (const auto& rec: recorderInterfaces) {
+            rec->forceStopRecording();
+        }
     });
 
     const auto mode = vm["mode"].as<std::string>();

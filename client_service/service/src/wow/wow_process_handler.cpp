@@ -29,6 +29,7 @@ public:
     void manualVodOverride(const std::filesystem::path& path, const shared::TimePoint& startTime);
     void waitForLogWatcher();
     void onProcessChange(const process_watcher::process::Process& p);
+    void forceStopRecording();
 
     shared::EGame game() const { return _finalGame; }
 
@@ -164,6 +165,10 @@ WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {
     if (_lastLogTimeoutThread.joinable()) {
         _lastLogTimeoutThread.join();
     }
+}
+
+void WoWProcessHandlerInstance::forceStopRecording() {
+    prematurelyEndMatch(shared::nowUtc(), true, true);
 }
 
 bool WoWProcessHandlerInstance::checkIfInstanceIdShouldBeRecorded(int64_t id) const {
@@ -934,6 +939,14 @@ bool WoWProcessHandler::onProcessChange(const process_watcher::process::Process&
 
     _instance->onProcessChange(p);
     return true;
+}
+
+void WoWProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: WOW" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }

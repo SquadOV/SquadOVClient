@@ -30,6 +30,7 @@ public:
 
     void onGameStart();
     void onGameEnd();
+    void forceStopRecording();
 
 private:
     void onLeagueConfig(const shared::TimePoint& eventTime, const void* rawData);
@@ -110,7 +111,7 @@ void LeagueProcessHandlerInstance::onGameStart() {
 void LeagueProcessHandlerInstance::onGameEnd() {
     service::system::getGlobalState()->markGameRunning(_actualGame, false);
 
-    if (service::system::getGlobalState()->isPaused()) {
+    if (service::system::getGlobalState()->isPaused() || _currentMatchUuid.empty()) {
         return;
     }
 
@@ -145,6 +146,13 @@ void LeagueProcessHandlerInstance::onGameEnd() {
     }
     
     _currentMatchUuid.clear();
+}
+
+void LeagueProcessHandlerInstance::forceStopRecording() {
+    _currentMatchUuid.clear();
+    if (_recorder->isRecording()) {
+        _recorder->stop({});
+    }
 }
 
 void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& eventTime, const void* rawData) {
@@ -371,6 +379,14 @@ void LeagueProcessHandler::onProcessStops() {
     LOG_INFO("STOP LEAGUE/TFT" << std::endl);
     _instance->onGameEnd();
     _instance.reset(nullptr);
+}
+
+void LeagueProcessHandler::forceStopRecording() {
+    if (!_instance) {
+        return;
+    }
+    LOG_INFO("Force Stop Recording: LEAGUE/TFT" << std::endl);
+    _instance->forceStopRecording();
 }
 
 }
