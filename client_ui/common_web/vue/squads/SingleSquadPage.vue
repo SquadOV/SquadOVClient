@@ -165,7 +165,6 @@
                                 <recent-recorded-matches
                                     title="Squad VODs"
                                     :squad-id="squadId"
-                                    disable-select
                                     ref="vods"
                                 >
                                     <template v-slot:actions="{pov}">
@@ -194,7 +193,6 @@
                                 <clip-library
                                     title="Squad Clips"
                                     :squad-id="squadId"
-                                    disable-select
                                     ref="clips"
                                 >
                                     <template v-slot:actions="{clip}">

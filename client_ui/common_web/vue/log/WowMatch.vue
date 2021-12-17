@@ -6,7 +6,7 @@
                     <wow-keystone-summary v-if="!!currentMatch.challenge"
                         :challenge="currentMatch.challenge"
                         :user-id="userId"
-                        class="flex-grow-1 mb-4"
+                        class="flex-grow-1 mb-1"
                         disable-link
                         link-to-player-section
                         @go-to-character="viewPlayerGuid = arguments[0]"
@@ -16,9 +16,10 @@
                     <wow-encounter-summary v-else-if="!!currentMatch.encounter"
                         :encounter="currentMatch.encounter"
                         :user-id="userId"
-                        class="flex-grow-1 mb-4"
+                        class="flex-grow-1 mb-1"
                         disable-link
                         link-to-player-section
+                        show-pulls
                         @go-to-character="viewPlayerGuid = arguments[0]"
                     >
                     </wow-encounter-summary>
@@ -26,7 +27,7 @@
                     <wow-arena-summary v-else-if="!!currentMatch.arena"
                         :arena="currentMatch.arena"
                         :user-id="userId"
-                        class="flex-grow-1 mb-4"
+                        class="flex-grow-1 mb-1"
                         disable-link
                         link-to-player-section
                         @go-to-character="viewPlayerGuid = arguments[0]"
@@ -36,7 +37,7 @@
                     <wow-instance-summary v-else-if="!!currentMatch.instance"
                         :instance="currentMatch.instance"
                         :user-id="userId"
-                        class="flex-grow-1 mb-4"
+                        class="flex-grow-1 mb-1"
                         disable-link
                         link-to-player-section
                         @go-to-character="viewPlayerGuid = arguments[0]"
