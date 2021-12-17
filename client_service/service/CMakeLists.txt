@@ -28,6 +28,7 @@ SET(SRCS
     src/recorder/audio/device.cpp
     src/recorder/audio/win32/wasapi_interface.cpp
     src/recorder/pipe/pipe.cpp
+    src/recorder/pipe/pipe_client.cpp
     src/recorder/pipe/file_output_piper.cpp
     src/recorder/pipe/filesystem_piper.cpp
     src/recorder/pipe/cloud_storage_piper.cpp
@@ -42,7 +43,7 @@ SET(SRCS
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
     src/vod/process.cpp
-    src/vod/vod.cpp
+    src/uploader/uploader.cpp
     src/renderer/d3d11_context.cpp
     src/renderer/d3d11_model.cpp
     src/renderer/d3d11_renderer.cpp
@@ -94,6 +95,7 @@ SET(HEADERS
     src/recorder/audio/win32/wasapi_interface.h
     src/recorder/audio/wasapi_audio_client_recorder.h
     src/recorder/pipe/pipe.h
+    src/recorder/pipe/pipe_client.h
     src/recorder/pipe/file_output_piper.h
     src/recorder/pipe/filesystem_piper.h
     src/recorder/pipe/cloud/cloud_storage_client.h
@@ -110,7 +112,7 @@ SET(HEADERS
     src/local/local_data.h
     src/vod/vod_clipper.h
     src/vod/process.h
-    src/vod/vod.h
+    src/uploader/uploader.h
     src/renderer/d3d11_context.h
     src/renderer/d3d11_model.h
     src/renderer/d3d11_renderer.h
@@ -276,4 +278,5 @@ CREATE_SERVICE_EXECUTABLE(wow_finder "src/wow_finder.cpp" "src/wow_finder.exe.ma
 CREATE_SERVICE_EXECUTABLE(vod_record_tester "src/vod_record_tester.cpp" "src/vod_record_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_clipper.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(speed_check "src/speed_check.cpp" "src/speed_check.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(audio_sanity_checker "src/audio_sanity_checker.cpp" "src/audio_sanity_checker.exe.manifest")

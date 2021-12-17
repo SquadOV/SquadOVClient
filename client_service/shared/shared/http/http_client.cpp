@@ -46,7 +46,7 @@ public:
 
     void setTimeout(long timeoutSeconds);
     void setUploadSpeed(size_t bytesPerSec);
-    void addProgressCallbacks(const DownloadProgressFn& fn) { _downloadProgressCallbacks.push_back(fn); }
+    void addProgressCallbacks(const DownloadUploadProgressFn& fn) { _downloadUploadProgressCallbacks.push_back(fn); }
 
     HttpResponsePtr execute();
 
@@ -54,7 +54,7 @@ public:
     void doPost(const nlohmann::json& body, bool forceGzip);
     void doPut(const char* buffer, size_t numBytes);
 
-    void progressCallback(curl_off_t dltotal, curl_off_t dlnow);
+    void progressCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
     void outputToFile(const fs::path& output) { _outputFile = output; }
 private:
     void setJsonBody(const nlohmann::json& body, bool forceGzip);
@@ -64,7 +64,7 @@ private:
     CurlRawBuffer _buffer;
     curl_slist* _headers = nullptr;
     char _errBuffer[CURL_ERROR_SIZE];
-    std::vector<DownloadProgressFn> _downloadProgressCallbacks;
+    std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
     std::optional<fs::path> _outputFile;
 };
 
@@ -109,7 +109,7 @@ size_t curlHeaderCallback(char* buffer, size_t size, size_t nitems, void* userda
 
 int curlProgressCallback(void* clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
     HttpRequest* req = reinterpret_cast<HttpRequest*>(clientp);
-    req->progressCallback(dltotal, dlnow);
+    req->progressCallback(dltotal, dlnow, ultotal, ulnow);
     return CURL_PROGRESSFUNC_CONTINUE;
 }
 
@@ -149,9 +149,9 @@ void HttpRequest::setUploadSpeed(size_t bytesPerSec) {
     curl_easy_setopt(_curl, CURLOPT_MAX_SEND_SPEED_LARGE, static_cast<curl_off_t>(bytesPerSec));
 }
 
-void HttpRequest::progressCallback(curl_off_t dltotal, curl_off_t dlnow) {
-    for (const auto& cb : _downloadProgressCallbacks) {
-        cb(static_cast<size_t>(dlnow), static_cast<size_t>(dltotal));
+void HttpRequest::progressCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow) {
+    for (const auto& cb : _downloadUploadProgressCallbacks) {
+        cb(static_cast<size_t>(dltotal), static_cast<size_t>(dlnow), static_cast<size_t>(ultotal), static_cast<size_t>(ulnow));
     }
 }
 
@@ -178,7 +178,7 @@ HttpResponsePtr HttpRequest::execute() {
     curl_easy_setopt(_curl, CURLOPT_HEADERFUNCTION, curlHeaderCallback);
     curl_easy_setopt(_curl, CURLOPT_XFERINFODATA, this);
     curl_easy_setopt(_curl, CURLOPT_XFERINFOFUNCTION, curlProgressCallback);
-    if (!_downloadProgressCallbacks.empty()) {
+    if (!_downloadUploadProgressCallbacks.empty()) {
         curl_easy_setopt(_curl, CURLOPT_NOPROGRESS, 0);
     }
 
@@ -342,7 +342,7 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
         req->setTimeout(_timeoutSeconds.value());
     }
 
-    for (const auto& cb: _downloadProgressCallbacks) {
+    for (const auto& cb: _downloadUploadProgressCallbacks) {
         req->addProgressCallbacks(cb);
     }
 

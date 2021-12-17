@@ -963,11 +963,11 @@ void GameRecorder::initializeFileOutputPiper() {
     // create an output piper of the appropriate type based on the given URI.
     const auto cloudDestination = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
     const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
-    const auto finalDestination = _cachedRecordingSettings->useLocalRecording ? service::vod::VodDestination::local(localTmpRecord) : cloudDestination;
+    const auto finalDestination = _cachedRecordingSettings->useLocalRecording ? service::uploader::UploadDestination::local(localTmpRecord) : cloudDestination;
     setFileOutputFromDestination(_currentId->videoUuid, finalDestination);
 }
 
-void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, const service::vod::VodDestination& destination) {
+void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, const service::uploader::UploadDestination& destination) {
     LOG_INFO("Output Destination: " << destination << std::endl);
     _outputDestination = destination;
     _outputPiper = pipe::createFileOutputPiper(videoUuid, destination);

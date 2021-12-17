@@ -31,7 +31,6 @@ void FileOutputPiper::start() {
             }
 
             const auto numBytes = _pipe->readFromBuffer();
-
             if (!handleBuffer(buffer, numBytes)) {
                 LOG_WARNING("Failed to handle buffer of size: " << numBytes << std::endl);
                 break;
@@ -45,13 +44,19 @@ void FileOutputPiper::start() {
                 break;
             }
         }
-
-        flush();
+        if (!_skipFlush) {
+            flush();
+        }
     });
 }
 
 void FileOutputPiper::stop() {
     _running = false;
+}
+
+void FileOutputPiper::stopAndSkipFlush() {
+    _running = false;
+    _skipFlush = true;
 }
 
 void FileOutputPiper::wait() {
@@ -60,11 +65,10 @@ void FileOutputPiper::wait() {
     }
 }
 
-FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::vod::VodDestination& destination) {
+FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::uploader::UploadDestination& destination) {
     auto pipe = std::make_unique<Pipe>(id);
-
     switch (destination.loc) {
-        case service::vod::VodManagerType::FileSystem:
+        case service::uploader::UploadManagerType::FileSystem:
             return std::make_unique<FilesystemPiper>(destination.url, std::move(pipe));
         default:
             return std::make_unique<CloudStoragePiper>(id, destination, std::move(pipe));

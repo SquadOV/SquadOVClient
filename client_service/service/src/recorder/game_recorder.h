@@ -10,8 +10,7 @@
 #include "shared/squadov/vod.h"
 #include "shared/time.h"
 #include "system/settings.h"
-#include "vod/vod.h"
-
+#include "uploader/uploader.h"
 #include <deque>
 #include <filesystem>
 #include <functional>
@@ -65,7 +64,7 @@ public:
 
     VodIdentifier startFromSource(const std::filesystem::path& vodPath, const shared::TimePoint& vodStart, const shared::TimePoint& recordStart);
     void stopFromSource(const shared::TimePoint& endTm, const GameRecordEnd& end);
-    void setFileOutputFromDestination(const std::string& videoUuid, const service::vod::VodDestination& destination);
+    void setFileOutputFromDestination(const std::string& videoUuid, const service::uploader::UploadDestination& destination);
 
     bool isRecording() const { return !!_encoder.encoder || std::filesystem::exists(_manualVodPath); }
     const VodIdentifier& currentId() const { return *_currentId; }
@@ -108,7 +107,7 @@ private:
     EncoderDatum _encoder;
     std::unique_ptr<VodIdentifier> _currentId;
 
-    std::optional<service::vod::VodDestination> _outputDestination;
+    std::optional<service::uploader::UploadDestination> _outputDestination;
     pipe::FileOutputPiperPtr _outputPiper;
     std::optional<std::string> _forcedOutputUrl;
     shared::TimePoint _vodStartTime;

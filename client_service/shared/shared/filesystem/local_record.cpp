@@ -220,7 +220,7 @@ void LocalRecordingIndexDb::cleanupLocalEntry(const LocalRecordingIndexEntry& en
     }
 }
 
-void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn) {
+void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadUploadProgressFn& progressFn) {
     const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.uuid) / fs::path(entry.filename);
     fs::create_directories(dlPath.parent_path());
 
