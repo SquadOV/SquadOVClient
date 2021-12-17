@@ -335,7 +335,7 @@ void SquadovApi::uploadHearthstoneArenaDeck(const process_watcher::memory::games
     }
 }
 
-service::vod::VodDestination SquadovApi::createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const {
+service::uploader::UploadDestination SquadovApi::createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const {
     const std::string path = "/v1/vod";
 
     const nlohmann::json body = {
@@ -346,11 +346,11 @@ service::vod::VodDestination SquadovApi::createVodDestinationUri(const std::stri
 
     if (result->status != 200) {
         THROW_ERROR("Failed to create VOD: " << result->status);
-        return service::vod::VodDestination{};
+        return service::uploader::UploadDestination{};
     }
 
     const auto parsedJson = nlohmann::json::parse(result->body);
-    return service::vod::VodDestination::fromJson(parsedJson);
+    return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
 void SquadovApi::associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const {
@@ -381,10 +381,20 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
     }
 }
 
-service::vod::VodDestination SquadovApi::getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const {
+service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part) const {
     std::ostringstream path;
-    path << "/v1/vod/" << videoUuid << "/upload?part=" << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
-
+    switch(uploadPurpose) {
+        case service::uploader::UploadPurpose::VOD:
+            path << "/v1/vod/" << objectUuid << "/upload?part=";
+            break;
+        case service::uploader::UploadPurpose::SpeedCheck:
+            path << "/v1/speedcheck/" << objectUuid << "?part=";
+            break;
+        default:
+            THROW_ERROR("Failed to find Upload Purpose.")
+            break;
+    }
+    path << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
     const auto result = _webClient->get(path.str());
     if (result->status != 200) {
         THROW_ERROR("Failed to get VOD part upload URI: " << result->status);
@@ -392,7 +402,7 @@ service::vod::VodDestination SquadovApi::getVodPartUploadUri(const std::string& 
     }
 
     const auto parsedJson = nlohmann::json::parse(result->body);
-    return service::vod::VodDestination::fromJson(parsedJson);
+    return service::uploader::UploadDestination::fromJson(parsedJson);
 }
 
 void SquadovApi::deleteVod(const std::string& videoUuid) const {
@@ -436,6 +446,38 @@ std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
 }
+
+service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const {
+    std::ostringstream path;
+    path << "/v1/speedcheck/" << speedCheckUuid;
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get Speed Check URI: " << result->status);
+        return {};
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return service::uploader::UploadDestination::fromJson(parsedJson);
+}
+
+void SquadovApi::postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const {
+    std::ostringstream path;
+    path << "/v1/speedcheck/" << speedCheckUuid;
+
+    const nlohmann::json body = {
+        { "speedMbps", speedMbps }
+    };
+
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to post Speed Check to Server: " << result->status);
+        return;
+    }
+}
+
 
 std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {
     std::ostringstream path;

@@ -3,6 +3,7 @@ import { ipcRenderer } from 'electron'
 import path from 'path'
 import fs from 'fs'
 /// #endif
+import { UploadProgress } from '@client/js/system/upload'
 import { DownloadProgress } from '@client/js/system/download'
 import { VodAssociation, VodMetadata, cleanVodAssocationData } from '@client/js/squadov/vod'
 import { apiClient } from '@client/js/api'
@@ -171,17 +172,17 @@ class LocalVodManager {
                 const metadata: VodMetadata = JSON.parse(fs.readFileSync(metadataFname, 'utf8'))
                 const uploadDestination = await apiClient.getVodUploadDestination(vod.videoUuid)
 
-                let progressNotif = async (e: any, info: DownloadProgress) => {
+                let progressNotif = async (e: any, info: UploadProgress) => {
                     if (info.done) {
                         ipcRenderer.removeListener('cloud-upload-progress', progressNotif)
                         if (info.success === false) {
                             throw 'Failed to finish upload: ' + vod.videoUuid
                         }
-                    } else if (info.download !== undefined && info.total !== undefined) {
+                    } else if (info.upload !== undefined && info.total !== undefined) {
                         if (info.total === 0) {
                             this.uploads.notifyProgress(vod.videoUuid, 0.0)
                         } else {
-                            this.uploads.notifyProgress(vod.videoUuid, info.download / info.total)
+                            this.uploads.notifyProgress(vod.videoUuid, info.upload / info.total)
                         }
                     }
                 }

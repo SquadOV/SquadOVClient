@@ -8,7 +8,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
 #include "api/kafka_api.h"
-#include "vod/vod.h"
+#include "uploader/uploader.h"
 #include "hardware/hardware.h"
 
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
@@ -112,13 +112,17 @@ public:
     void associateCsgoDemo(const std::string& viewUuid, const std::string& demoUrl, const shared::TimePoint& demoTimestamp);
 
     // VOD
-    service::vod::VodDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
-    service::vod::VodDestination getVodPartUploadUri(const std::string& videoUuid, const std::string& bucket, const std::string& session, int64_t part) const;
+    service::uploader::UploadDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
+    service::uploader::UploadDestination getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part) const;
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const;
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
     std::string getVodUri(const std::string& videoUuid) const;
     std::string getVodMd5Checksum(const std::string& videoUuid) const;
+
+    // Speed Check
+    service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
+    void postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const;
 
 private:
     SessionIdUpdateCallback _sessionUpdateCallback;

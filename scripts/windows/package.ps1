@@ -6,6 +6,7 @@ cmake --build build-release --config Release --target squadov_client_service
 cmake --build build-release --config Release --target advanced_crash_dump_enabler
 cmake --build build-release --config Release --target csgo_demo_retriever
 cmake --build build-release --config Release --target crashpad_handler
+cmake --build build-release --config Release --target speed_check
 cmake --build build-release --config Release --target audio_sanity_checker
 
 Set-Location -Path .\build-release\bin\x64\Release
