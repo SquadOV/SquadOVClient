@@ -310,6 +310,10 @@ void WoWLogWatcher::loadFromPath(const std::filesystem::path& combatLogPath, boo
         }
     }
 
+    // Tell any watchers that we've found a new combat log - they can do with that information what they will.
+    // But generally, we'll use a single combat log to determine a "session" - probably more reliable than EXE info.
+    notify(static_cast<int>(EWoWLogEvents::NewCombatLog), shared::nowUtc(), nullptr, false);
+
     _watcher = std::make_unique<LogWatcher>(
         combatLogPath,                                                                  // path
         std::bind(&WoWLogWatcher::onCombatLogChange, this, _1),                         // cb
