@@ -366,7 +366,7 @@ export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight + 56}px`,
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
         }
     }
 

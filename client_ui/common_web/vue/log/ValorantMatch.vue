@@ -222,7 +222,7 @@ export default class ValorantMatch extends mixins(CommonComponent, MatchShareBas
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight + 64}px`,
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
         }
     }
 

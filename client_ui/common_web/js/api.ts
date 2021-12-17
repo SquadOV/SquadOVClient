@@ -52,6 +52,7 @@ import {
     SquadOVUserHandle,
     UserProfileBasic,
     cleanUserProfileBasicFromJson,
+    UserProfileHandle,
 } from '@client/js/squadov/user'
 import {
     RiotSummoner
@@ -1705,6 +1706,10 @@ class ApiClient {
 
     getVodTags(videoUuid: string): Promise<ApiData<VodTag[]>> {
         return axios.get(`v1/vod/${videoUuid}/tag`, this.createWebAxiosConfig())
+    }
+
+    getUserProfileHandleFromVideoUuid(videoUuid: string): Promise<ApiData<UserProfileHandle>> {
+        return axios.get(`v1/vod/${videoUuid}/profile`, this.createWebAxiosConfig())
     }
 
     // Local API
