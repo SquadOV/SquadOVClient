@@ -40,7 +40,7 @@ public:
     bool moveLocalFolderTo(const std::filesystem::path& to);
     bool cleanupLocalFolder(double limit);
 
-    void addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadProgressFn& progressFn);
+    void addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadUploadProgressFn& progressFn);
     void addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry);
     void removeLocalEntry(const std::string& uuid);
 

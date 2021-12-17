@@ -22,11 +22,11 @@ CloudUploadRequest CloudUploadRequest::fromJson(const nlohmann::json& json) {
     CloudUploadRequest ret;
     ret.file = json["file"].get<std::string>();
     ret.task = json["task"].get<std::string>();
-    ret.destination = service::vod::VodDestination::fromJson(json["destination"]);
+    ret.destination = service::uploader::UploadDestination::fromJson(json["destination"]);
     return ret;
 }
 
-std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadProgressFn& progressFn) {
+std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUploadRequest& req, const shared::http::DownloadUploadProgressFn& progressFn) {
     // It's a bit of a roundabout way to do it but create a local system pipe to write the file data to
     // and then just wait for the pipe to finish.
     auto pipe = std::make_unique<Pipe>(req.task);
@@ -48,7 +48,7 @@ std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUpload
     return std::make_pair(output.sessionId(), output.segmentIds());
 }
 
-CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::vod::VodDestination& destination, PipePtr&& pipe):
+CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe):
     FileOutputPiper(std::move(pipe)),
     _videoUuid(videoUuid),
     _destination(destination),
@@ -56,10 +56,10 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
 
     // Create an appropriate storage client based on the input destination location.
     switch (destination.loc) {
-        case service::vod::VodManagerType::S3:
+        case service::uploader::UploadManagerType::S3:
             _client = std::make_unique<cloud::S3StorageClient>(_videoUuid);
             break;
-        case service::vod::VodManagerType::GCS:
+        case service::uploader::UploadManagerType::GCS:
             _client = std::make_unique<cloud::GCSStorageClient>();
             break;
     }
@@ -69,6 +69,7 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
         return;
     }
 
+    _timeStart = shared::nowUtc();
     _client->initializeDestination(destination);
     _cloudThread = std::thread(std::bind(&CloudStoragePiper::tickUploadThread, this));
 
@@ -82,9 +83,13 @@ CloudStoragePiper::~CloudStoragePiper() {
     flush();
 }
 
-void CloudStoragePiper::setProgressCallback(const shared::http::DownloadProgressFn& progressFn, size_t totalBytes) {
+void CloudStoragePiper::setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn, size_t totalBytes) {
     _progressFn = progressFn;
-    _totalProgressBytes = totalBytes;
+    _totalUploadBytes = totalBytes;
+}
+
+void CloudStoragePiper::setCurlProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) {
+    _client->setProgressCallback(progressFn);
 }
 
 void CloudStoragePiper::copyDataIntoInternalBuffer(std::vector<char>& buffer) {
@@ -108,7 +113,7 @@ void CloudStoragePiper::tickUploadThread() {
     std::vector<char> internalBuffer;
     internalBuffer.reserve(CLOUD_BUFFER_SIZE_BYTES);
 
-    while (!_finished) {
+    while (!_finished) { 
 #if LOG_TIME
         const auto taskNow = std::chrono::high_resolution_clock::now();
         const auto oldBufferSize = internalBuffer.size();
@@ -147,7 +152,7 @@ void CloudStoragePiper::tickUploadThread() {
     copyDataIntoInternalBuffer(internalBuffer);
 
     bool first = true;
-    while (first || !internalBuffer.empty()) {
+    while ((first || !internalBuffer.empty()) && !_skipFlush) {
         sendDataFromBufferWithBackoff(internalBuffer, 0, true);
         first = false;
     }
@@ -162,7 +167,6 @@ void CloudStoragePiper::tickUploadThread() {
 void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast) {
     static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
-
     for (auto i = 0; i < CLOUD_MAX_RETRIES; ++i) {
         try {
             const auto data = _client->uploadBytes(buffer.data(), requestedBytes, isLast, _uploadedBytes);
@@ -172,9 +176,10 @@ void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer,
             } else {
                 buffer.erase(buffer.begin(), buffer.begin() + bytesSent);
             }
-            _uploadedBytes += bytesSent;        
-            if (_totalProgressBytes.has_value() && _progressFn.has_value()) {
-                _progressFn.value()(_uploadedBytes, _totalProgressBytes.value());
+            _uploadedBytes += bytesSent;
+            _lastUploadTime = shared::nowUtc();
+            if (_totalUploadBytes.has_value() && _progressFn.has_value()) {
+                _progressFn.value()(0, 0, _totalUploadBytes.value(), _uploadedBytes);
             }
 
             if (!data.first.empty()) {
