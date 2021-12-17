@@ -204,7 +204,7 @@ export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {
 
     get roundEventsStyle() : any {
         return {
-            'height': `${this.currentPlayerHeight + 64}px`,
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
         }
     }
 
