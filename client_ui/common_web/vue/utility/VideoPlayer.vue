@@ -152,6 +152,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
                 break
             case RCMessageType.GoToTimestamp:
+                console.log('go to timestamp: ', p.data)
                 this.goToTimeMs(p.data, false, false)
                 break
         }
@@ -255,6 +256,13 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         }
 
         let newTime = Math.max(Math.floor((tmMs - (useOffset ? this.goToOffset : 0.0)) / 1000.0), 0.0)
+        if (!propagate) {
+            // We need to set lastTimestamp here since we don't want a large jump to propagate
+            // another goToTimestamp packet to be sent out via the large time jump detection
+            // in the 'timeupdate' event.
+            this.lastTimestamp = newTime
+        }
+
         this.player.currentTime(newTime)
 
 ///#if DESKTOP
@@ -443,7 +451,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 this.$emit('update:currentTs', this.player.currentTime())
                 if (Math.abs(this.player.currentTime() - this.lastTimestamp) > 1.0) {
                     this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
-                    this.lastTimestamp = this.player.currentTime()   
+                    this.lastTimestamp = this.player.currentTime()
                 }
             }
         })
