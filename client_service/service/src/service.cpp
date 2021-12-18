@@ -399,8 +399,12 @@ int main(int argc, char** argv) {
     game_event_watcher::HearthstoneLogWatcher::enableHearthstoneLogging();
 
     LOG_INFO("Enable CS:GO Logging/GSI" << std::endl);
-    game_event_watcher::CsgoLogWatcher::enableCsgoLogging();
-    game_event_watcher::CsgoGsiListener::enableCsgoGsi();
+    try {
+        game_event_watcher::CsgoLogWatcher::enableCsgoLogging();
+        game_event_watcher::CsgoGsiListener::enableCsgoGsi();
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to enable CS:GO: " << ex.what() << std::endl);
+    }
 
     LOG_INFO("Registering State callbacks" << std::endl);
     service::system::getGlobalState()->addGameRunningCallback([&zeroMqServerClient](const shared::EGameSet& set){

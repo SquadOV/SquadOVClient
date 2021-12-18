@@ -27,6 +27,7 @@ void SteamLibraryFolders::initialize() {
     }
 
     const auto libraryPath = steamPath.value() / fs::path("steamapps") / fs::path("libraryfolders.vdf");
+    LOG_INFO("Loading Steam Library Folders: " << libraryPath << std::endl);
     if (!fs::exists(libraryPath)) {
         LOG_WARNING("...Can't initialize Steam library folders...no libraryfolders.vdf file found: " << libraryPath << std::endl);
         return;
