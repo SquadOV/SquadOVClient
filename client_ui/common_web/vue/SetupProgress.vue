@@ -150,6 +150,26 @@ export default class SetupProgress extends Vue {
         })
     }
 
+    async requestSessionHeartbeat() {
+        this.statusMessage = 'Connecting to SquadOV...'
+
+        // Temporary measure against the white screen
+        let intv = window.setTimeout(() => {
+            this.showLogout = true
+        }, 5000)
+
+        let promise = new Promise((resolve) => {
+            ipcRenderer.once('finish-heartbeat', () => {
+                resolve(0)
+            })
+        })
+        ipcRenderer.send('start-heartbeat')
+        await promise
+
+        window.clearTimeout(intv)
+        this.showLogout = false
+    }
+
     async doSetupSequence() {
         // 1. The settings.json needs to be generated properly for any of the next steps to happen.
         await this.generateSettingsFile()
@@ -159,18 +179,15 @@ export default class SetupProgress extends Vue {
         //    The flip side of doing this will allow us to do an audio device sanity check every time we start up.
         await this.audioDeviceSanityCheck() 
 
-        // 3. Check if this user has run a speed check on the current computer.
+        // 3. Request a session heartbeat. Things after this will require a valid session ID.
+        await this.requestSessionHeartbeat()
+
+        // 4. Check if this user has run a speed check on the current computer.
         if(!this.ranSpeedCheck) {
             await this.userSpeedCheck()
             await this.speedCheckPrompt()
         }
-        this.statusMessage = 'Connecting to SquadOV...'
-
-        // Temporary measure against the white screen
-        setTimeout(() => {
-            this.showLogout = true
-        }, 5000)
-
+        
         ipcRenderer.send('finish-setup')
     }
 

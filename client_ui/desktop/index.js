@@ -851,6 +851,17 @@ app.on('ready', async () => {
 
     log.log('Starting Setup Flow...')
     try {
+        // Note that the setup flow has to request the start of the heartbeat since there's certain parts of it that
+        // rely on having a valid session ID.
+        ipcMain.once('start-heartbeat', () => {
+            // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
+            // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time
+            // and we end up with an invalid session ID.
+            log.log('Start Session Heartbeat...')
+            startSessionHeartbeat(async () => {
+                setupWindow.webContents.send('finish-heartbeat')
+            })
+        })
         await setupFlow(setupWindow)
     } catch (ex) {
         log.log('User exited out of setup...')
@@ -858,30 +869,22 @@ app.on('ready', async () => {
         return
     }
 
-    // For simplicity, we only have the Electron app refresh the session ID instead of having everyone refreshing the session ID
-    // themselves this way we can avoid race conditions where multiple people try to refresh the same session at the same time
-    // and we end up with an invalid session ID.
-    log.log('Start Session Heartbeat...')
-    startSessionHeartbeat(async () => {
-        if (!setupWindow.isDestroyed()) {
-            setupWindow.close()
-        }
+    if (!setupWindow.isDestroyed()) {
+        setupWindow.close()
+    }
+    
+    win.show()
+
+    // At this point we have a valid session because the setup flow now takes care of that back and worth and waiting for the session heartbeat.
+    start()
+
+    if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
+        startClientService()
+        await backendReady
         
-        win.show()
-
-        // Note that all this stuff should be in the session heartbeat callback because we don't really want to 
-        // start the UI and the client service (2 things that require querying the API) until we have a valid session.
-        // This is particularly relevant when we're loading the session from disk.
-        start()
-
-        if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
-            startClientService()
-            await backendReady
-            
-            await requestOutputDevices()
-            await requestInputDevices()
-        }
-    })
+        await requestOutputDevices()
+        await requestInputDevices()
+    }
 })
 
 app.on('window-all-closed', () => {
