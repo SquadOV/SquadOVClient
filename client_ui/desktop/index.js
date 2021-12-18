@@ -1091,7 +1091,10 @@ ipcMain.on('audio-devices-sanity-check', () => {
     let sanityExe = path.join(path.dirname(exePath), 'audio_sanity_checker.exe')
 
     if (fs.existsSync(sanityExe)) {
-        exec(sanityExe, () => {
+        exec(`"${sanityExe}"`, {
+            cwd: path.dirname(sanityExe)
+        }, (error, stdout, stderr) => {
+            console.log(error, stdout, stderr)
             if (!!setupWindow) {
                 setupWindow.webContents.send('finish-audio-devices-sanity-check')
             }
@@ -1123,7 +1126,10 @@ ipcMain.on('user-upload-speed-check', () => {
     // This currently seems to stall it for 10 seconds before it proceeds to open the actual application... Not a big fan of that.
     let sanityExe = path.join(path.dirname(exePath), 'speed_check.exe')
     if (fs.existsSync(sanityExe)) {
-        exec(sanityExe, () => {
+        exec(`"${sanityExe}"`, {
+            cwd: path.dirname(sanityExe)
+        }, (error, stdout, stderr) => {
+            console.log(error, stdout, stderr)
             if (!!setupWindow) {
                 setupWindow.webContents.send('finish-user-upload-speed-check')
             }
