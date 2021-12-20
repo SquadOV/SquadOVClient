@@ -11,6 +11,7 @@
         :link-to-player-section="linkToPlayerSection"
         :access-token="accessToken"
         @go-to-character="$emit('go-to-character', arguments[0])"
+        show-full-characters
     >
         <template v-slot="{ instanceName }">
             <div class="text-subtitle-1 font-weight-bold">
