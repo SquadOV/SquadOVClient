@@ -122,6 +122,32 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     syncedInputTs: boolean = false
     lastTimestamp: number = 0
     refreshInterval: number | null = null
+    currentWatchRangeSeconds: number | null = null
+
+    startWatchAnalyticsRange() {
+        if (!this.player || this.currentWatchRangeSeconds !== null) {
+            return
+        }
+
+        this.currentWatchRangeSeconds = this.player.currentTime()
+    }
+
+    stopWatchAnalyticsRange() {
+        if (!this.player || this.currentWatchRangeSeconds === null) {
+            return
+        }
+
+        let start = this.currentWatchRangeSeconds
+        let end = this.player.currentTime()
+
+        if (!!this.vod) {
+            apiClient.markUserVideoWatchRange(this.vod.videoUuid, start, end).catch((err: any) => {
+                console.warn('Failed to mark user video watch range: ', err)
+            })
+        }
+
+        this.currentWatchRangeSeconds = null
+    }
 
     get parentDivStyle(): any {
         if (this.fill) {
@@ -162,6 +188,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         if (this.isActive && !!this.player && !!this.vod) {
             this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
             this.setNoVideo()
+        } else if (!this.isActive) {
+            this.stopWatchAnalyticsRange()
         }
 
         this.forceRedraw += 1
@@ -262,13 +290,27 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             this.lastTimestamp = newTime
         }
 
+        if (propagate) {
+            // We only want to do the watch ranges if propagate is true
+            // because that means this is an authoritative view of the VOD
+            // and so these events won't be duplicated. We want to first
+            // stop the previous range BEFORE we change the player time
+            // since the previous time is what the user watched up to.
+            this.stopWatchAnalyticsRange()
+        }
+
         this.player.currentTime(newTime)
 
-///#if DESKTOP
         if (propagate) {
+///#if DESKTOP
             this.rcContext?.goToTimestamp(newTime * 1000.0)
-        }
 ///#endif
+
+            // We start the new range AFTER we change the player time
+            // to be represent the new time range.
+            this.startWatchAnalyticsRange()
+        }
+
     }
 
     get currentVideoSourceUri() : string {
@@ -468,12 +510,14 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             if (!!this.player) {
                 this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.PlayVod, '', this.player.currentTime())
             }
+            this.startWatchAnalyticsRange()
         })
 
         this.player.on('pause', () => {
             if (!!this.player) {
                 this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StopVod, '', this.player.currentTime())
             }
+            this.stopWatchAnalyticsRange()
         })
 
         this.player.on('fullscreenchange', () => {
@@ -706,7 +750,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         if (this.refreshInterval !== null) {
             window.clearTimeout(this.refreshInterval)
         }
-
+        
+        this.stopWatchAnalyticsRange()
         if (!!this.player) {
             this.player.dispose()
         }
