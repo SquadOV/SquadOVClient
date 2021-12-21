@@ -1721,6 +1721,13 @@ class ApiClient {
         return axios.get(`v1/wow/users/${userId}/match/${matchUuid}/pulls`, this.createWebAxiosConfig())   
     }
 
+    markUserVideoWatchRange(videoUuid: string, start: number, end: number): Promise<void> {
+        return axios.post(`v1/users/me/analytics/vod/${videoUuid}`, {
+            start,
+            end,
+        }, this.createWebAxiosConfig())
+    }
+
     // Local API
     async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
         return axios.get('api/vods', {
