@@ -97,7 +97,6 @@
                 offset-y
                 :close-on-content-click="false"
                 class="mr-4"
-                key="LoggedIn"
             >
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn icon v-bind="attrs" v-on="on">
@@ -148,24 +147,6 @@
         </template>
 
         <template v-else>
-            <v-menu
-                bottom
-                left
-                offset-y
-                :close-on-content-click="false"
-                class="mr-4"
-                key="loggedOff"
-            >
-                <template v-slot:activator="{ on, attrs }">
-                    <v-btn icon v-bind="attrs" v-on="on">
-                        <v-icon> mdi-history </v-icon>
-                    </v-btn>
-                </template>
-
-                <div class="news-div">
-                    <news-display></news-display>
-                </div>
-            </v-menu>
             <v-btn color="success" :to="registerTo"> Register </v-btn>
         </template>
     </v-app-bar>
