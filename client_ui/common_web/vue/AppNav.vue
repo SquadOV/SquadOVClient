@@ -90,25 +90,24 @@
 
         <download-button v-if="!isDesktop" class="mr-2"></download-button>
 
-        <v-menu
-            bottom
-            left
-            offset-y
-            :close-on-content-click="false"
-            class="mr-4"
-        >
-            <template v-slot:activator="{ on, attrs }">
-                <v-btn icon v-bind="attrs" v-on="on">
-                    <v-icon> mdi-history </v-icon>
-                </v-btn>
-            </template>
-
-            <div class="news-div">
-                <news-display></news-display>
-            </div>
-        </v-menu>
-
         <template v-if="isLoggedIn">
+            <v-menu
+                bottom
+                left
+                offset-y
+                :close-on-content-click="false"
+                class="mr-4"
+            >
+                <template v-slot:activator="{ on, attrs }">
+                    <v-btn icon v-bind="attrs" v-on="on">
+                        <v-icon> mdi-history </v-icon>
+                    </v-btn>
+                </template>
+
+                <div class="news-div">
+                    <news-display></news-display>
+                </div>
+            </v-menu>
             <v-toolbar-title>
                 <v-tooltip :disabled="isDesktop" bottom>
                     <template v-slot:activator="{ on }">

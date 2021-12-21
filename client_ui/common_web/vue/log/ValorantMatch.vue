@@ -22,6 +22,7 @@
                         :full-path="$route.fullPath"
                         :timestamp="timestamp"
                         :user-id="userId"
+                        :is-local="!!vod ? vod.isLocal : false"
                     >
                     </match-share-button>
                 </div>
