@@ -9,6 +9,92 @@
                         mdi-refresh
                     </v-icon>
                 </v-btn>
+
+                <v-spacer></v-spacer>
+
+                <template v-if="enableSelect && $store.state.currentUser.id === userId">
+                    <template v-if="!inSelectMode">
+                        <v-btn
+                            color="primary"
+                            @click="startSelect"
+                        >
+                            Select
+                        </v-btn>
+                    </template>
+
+                    <template v-else>
+                        <v-dialog persistent v-model="showHideDelete" max-width="60%">
+                            <template v-slot:activator="{on, attrs}">
+                                <v-btn
+                                    icon
+                                    color="error"
+                                    :disabled="selected.length === 0"
+                                    v-on="on"
+                                    v-bind="attrs"
+                                >
+                                    <v-icon>
+                                        mdi-delete
+                                    </v-icon>
+                                </v-btn>
+                            </template>
+
+                            <v-card>
+                                <v-card-title>
+                                    Are you sure?
+                                </v-card-title>
+
+                                <v-card-text>
+                                    Are you sure you want to delete {{ selected.length }} VODs?
+                                    This action can not be undone.
+                                </v-card-text>
+
+                                <v-card-actions>
+                                    <v-btn
+                                        color="error"
+                                        @click="showHideDelete = false"
+                                    >
+                                        Cancel
+                                    </v-btn>
+
+                                    <v-spacer></v-spacer>
+
+                                    <v-btn
+                                        color="success"
+                                        @click="deleteSelectedVods"
+                                        :loading="deleteInProgress"
+                                    >
+                                        Delete
+                                    </v-btn>
+                                </v-card-actions>
+                            </v-card>
+                        </v-dialog>
+
+                        <v-btn
+                            @click="toggleSelected"
+                            outlined
+                            class="ml-2"
+                        >
+                            <v-checkbox
+                                :input-value="allSelected"
+                                readonly
+                            >
+                            </v-checkbox>
+
+                            {{ selected.length }} Selected
+                        </v-btn>
+
+                        <v-btn
+                            class="ml-2"
+                            icon
+                            @click="closeSelect"
+                            color="warning"
+                        >
+                            <v-icon>
+                                mdi-close
+                            </v-icon>
+                        </v-btn>
+                    </template>
+                </template>
             </div>
 
             <v-divider class="my-2"></v-divider>
@@ -42,14 +128,28 @@
                                 v-for="(match, idx) in group.matches"
                                 :key="idx"
                             >
-                                <recent-match-display
-                                    class="mb-4 full-width"
-                                    :match="match"
-                                    :pov="perMatchSelectedPov[match.matchUuid]"
-                                    :use-local-vod-preview="perMatchSelectedPov[match.matchUuid].isLocal"
-                                    :disable-mini="disableMini"
+                                <div
+                                    class="d-flex align-center"
+                                    @click="toggleMatchSelectIfInMode(match.matchUuid)"
                                 >
-                                </recent-match-display>
+                                    <v-checkbox
+                                        v-if="inSelectMode"
+                                        :input-value="isMatchSelected(match.matchUuid)"
+                                        @change="selectMatch(match.matchUuid, arguments[0])"
+                                        @click.stop
+                                    >
+                                    </v-checkbox>
+
+                                    <recent-match-display
+                                        class="mb-4 full-width"
+                                        :match="match"
+                                        :pov="perMatchSelectedPov[match.matchUuid]"
+                                        :use-local-vod-preview="perMatchSelectedPov[match.matchUuid].isLocal"
+                                        :disable-mini="disableMini"
+                                        :disable-click="inSelectMode"
+                                    >
+                                    </recent-match-display>
+                                </div>
 
                                 <div class="d-flex align-center justify-end">
                                     <template v-if="match.povs.length > 1">
@@ -91,6 +191,14 @@
                 </div>
             </template>
         </loading-container>
+
+        <v-snackbar
+            v-model="showHideDeleteError"
+            :timeout="5000"
+            color="error"
+        >
+            Failed to delete VODs. Please try again.
+        </v-snackbar>
     </div>
 </template>
 
@@ -148,6 +256,9 @@ export default class RecentRecordedMatches extends Vue {
     @Prop()
     accessToken!: string | undefined
 
+    @Prop({type: Boolean, default: false})
+    enableSelect!: boolean
+
     recentMatches: RecentMatch[] | null = null
     perMatchSelectedPov: {[uuid: string]: RecentMatchPov} = {}
 
@@ -155,6 +266,12 @@ export default class RecentRecordedMatches extends Vue {
     nextLink: string | null = null
     filters: RecentMatchFilters = createEmptyRecentMatchFilters()
     loading: boolean = false
+
+    inSelectMode: boolean = false
+    selected: string[] = []
+    deleteInProgress: boolean = false
+    showHideDelete: boolean = false
+    showHideDeleteError: boolean = false
 
     get isUserLocked(): boolean {
         return this.userId !== undefined
@@ -171,6 +288,14 @@ export default class RecentRecordedMatches extends Vue {
 
         return this.recentMatches.filter((ele: RecentMatch) => {
             return checkRecentMatchValidity(ele)
+        }).filter((ele: RecentMatch) => {
+            if (this.inSelectMode) {
+                return ele.povs.some((ele: RecentMatchPov) => {
+                    return ele.userId === this.$store.state.currentUser.id
+                })
+            } else {
+                return true
+            }
         })
     }
 
@@ -245,6 +370,8 @@ export default class RecentRecordedMatches extends Vue {
             }            
             
             this.refreshPovSelection()
+            this.forcePovSelectionToSelfIfPossible(resp.data.data)
+
             this.lastIndex += resp.data.data.length
             if ("next" in resp.data._links) {
                 this.nextLink = resp.data._links["next"].href
@@ -307,6 +434,101 @@ export default class RecentRecordedMatches extends Vue {
             }
         }
         this.refreshPovSelection()
+    }
+
+    get allSelected(): boolean {
+        return this.recentMatches?.length === this.selected.length
+    }
+
+    toggleSelected() {
+        if (this.allSelected) {
+            this.selected = []
+        } else if (!!this.recentMatches) {
+            this.selected = this.recentMatches.map((ele: RecentMatch) => ele.povs[0].vod.videoTracks[0].metadata.videoUuid)
+        } else {
+            this.selected = []
+        }
+    }
+
+    forcePovSelectionToSelfIfPossible(data: RecentMatch[]) {
+        for (let d of data) {
+            let pov = d.povs.find((ele: RecentMatchPov) => {
+                return ele.userId === this.$store.state.currentUser.id
+            })
+
+            if (!pov) {
+                continue
+            }
+
+            Vue.set(this.perMatchSelectedPov, d.matchUuid, pov)
+        }
+    }
+
+    startSelect() {
+        this.inSelectMode = true
+
+        if (!!this.recentMatches) {
+            this.forcePovSelectionToSelfIfPossible(this.recentMatches)
+        }
+    }
+
+    closeSelect() {
+        this.inSelectMode = false
+        this.selected = []
+    }
+
+    deleteSelectedVods() {
+        if (this.selected.length === 0) {
+            return
+        }
+
+        this.deleteInProgress = true
+        apiClient.deleteVods(this.selected).then(() => {
+            this.refreshData()
+            this.showHideDelete = false
+        }).catch((err: any) => {
+            console.error('Failed to delete VODs: ', err)
+            this.showHideDeleteError = true
+        }).finally(() => {
+            this.deleteInProgress = false
+        })
+    }
+
+    get isMatchSelected(): (matchUuid: string) => boolean {
+        return (matchUuid: string) => {
+            let pov = this.perMatchSelectedPov[matchUuid]
+            if (!pov) {
+                return false
+            }
+            return this.selected.includes(pov.vod.videoTracks[0].metadata.videoUuid)
+        }
+    }
+
+    selectMatch(matchUuid: string, val: boolean) {
+        let pov = this.perMatchSelectedPov[matchUuid]
+        if (!pov) {
+            return
+        }
+        
+        if (val) {
+            this.selected.push(pov.vod.videoTracks[0].metadata.videoUuid)
+        } else {
+            let idx = this.selected.findIndex((ele: string) => ele === pov.vod.videoTracks[0].metadata.videoUuid)
+            if (idx < 0) {
+                return
+            }
+
+            this.selected.splice(idx, 1)
+        }
+    }
+
+    toggleMatchSelectIfInMode(matchUuid: string) {
+        if (!this.inSelectMode) {
+            return
+        }
+
+        let selected = this.isMatchSelected(matchUuid)
+        this.selectMatch(matchUuid, !selected)
     }
 }
 

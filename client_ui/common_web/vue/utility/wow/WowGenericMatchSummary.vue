@@ -31,7 +31,7 @@
                                     :key="`friendly-icon-${idx}`"
                                     :width-height="mini ? 24 : 32"
                                     :patch="match.build"
-                                    :is-self="char.guid === povCharacter.guid"
+                                    :is-self="!!povCharacter ? char.guid === povCharacter.guid : false"
                                     @go-to-character="$emit('go-to-character', arguments[0])"
                                 >
                                 </wow-character-icon>
@@ -53,7 +53,7 @@
                                         :key="`enemy-icon-${idx}`"
                                         :width-height="mini ? 24 : 32"
                                         :patch="match.build"
-                                        :is-self="char.guid === povCharacter.guid"
+                                        :is-self="!!povCharacter ? char.guid === povCharacter.guid : false"
                                         @go-to-character="$emit('go-to-character', arguments[0])"
                                     >
                                     </wow-character-icon>
@@ -71,7 +71,7 @@
                                     :friendly-team="friendlyTeam"
                                     armory-link
                                     :player-section="linkToPlayerSection"
-                                    :key="`same-squad-icon-${idx}`"
+                                    :key="`same-squad-icon`"
                                     :width-height="mini ? 24 : 32"
                                     :patch="match.build"
                                     @go-to-character="$emit('go-to-character', arguments[0])"
