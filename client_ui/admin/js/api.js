@@ -1909,6 +1909,33 @@ class ApiServer {
             return ele
         })
     }
+
+    async getPowerUserCurve(start, end) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT sub.days_active, COUNT(sub.user_id) AS "count"
+            FROM (
+                SELECT dae.user_id AS "user_id", COUNT(DISTINCT dae.tm) AS "days_active"
+                FROM squadov.daily_active_endpoint AS dae
+                WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                GROUP BY dae.user_id
+            ) sub
+            GROUP BY sub.days_active
+            `,
+            [start, end]
+        )
+
+        if (rows.length === 0) {
+            return []
+        }
+        
+        let size = Math.max(...rows.map((ele) => ele.days_active))
+        let arr = new Array(size).fill(0)
+        for (let r of rows) {
+            arr[r.days_active-1] = parseInt(r.count)
+        }
+        return arr
+    }
 }
 
 exports.ApiServer = ApiServer
