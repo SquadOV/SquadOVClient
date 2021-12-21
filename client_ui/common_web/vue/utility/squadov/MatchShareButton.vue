@@ -34,142 +34,179 @@
                 <v-divider></v-divider>
 
                 <div class="pa-4">
-                    <!-- Public share settings -->
-                    <div class="text-overline">
-                        Link Sharing
-                    </div>
-                    <v-divider class="mb-2"></v-divider>
-                    
-                    <v-checkbox
-                        v-if="$store.state.features.enableUserProfiles && isSharedProfile !== null && isSharedProfile.canShare"
-                        :input-value="isSharedProfile.isShared"
-                        @change="toggleSharedToProfile"
-                        label="Shared to Profile"
-                        color="success"
-                        class="mb-2"
-                        hide-details
-                    >
-                    </v-checkbox>
+                    <template v-if="isLocal && !shownLocalWarning">
+                        <div class="text-h5 font-weight-bold text-center">
+                            Others will not be able to see this VOD!
+                        </div>
 
-                    <loading-container :is-loading="isSharedPublic === null">
-                        <template v-slot:default="{ loading }">
-                            <div v-if="!loading">
-                                <template v-if="isSharedPublic">
-                                    <div class="d-flex align-center">
-                                        <v-text-field
-                                            :value="finalShareUrl"
-                                            :success-messages="messages"
-                                            single-line
-                                            outlined
-                                            dense
-                                            readonly
-                                            ref="urlInput"
+                        <div class="d-flex flex-column">
+                            <div>
+                                This VOD was recorded locally and not uploaded to our servers.
+                                Upload the VOD if you wish to share it with your friends.
+                                You can change the "Disable Automatic Upload" setting if your internet upload speed is sufficient.
+                            </div>
+
+                            <v-btn class="mt-4" color="error" @click="shownLocalWarning = true">
+                                Ok, Share Anyway
+                            </v-btn>
+
+                            <v-btn class="mt-2" color="primary" @click="shownLocalWarning = true; showHideShare = false;">
+                                Go Back and Upload
+                            </v-btn>
+
+                            <v-btn class="mt-2" color="secondary" :to="settingsTo">
+                                Change Automatic Upload Settings
+                            </v-btn>
+                        </div>
+                    </template>
+
+                    <template v-else>
+                        <v-banner
+                            v-if="isLocal"
+                            single-line
+                            sticky
+                            color="warning"
+                        >
+                            This is a locally recorded VOD. Others will not see your VOD.
+                        </v-banner>
+                        
+                        <!-- Public share settings -->
+                        <div class="text-overline">
+                            Link Sharing
+                        </div>
+                        <v-divider class="mb-2"></v-divider>
+                        
+                        <v-checkbox
+                            v-if="$store.state.features.enableUserProfiles && isSharedProfile !== null && isSharedProfile.canShare"
+                            :input-value="isSharedProfile.isShared"
+                            @change="toggleSharedToProfile"
+                            label="Shared to Profile"
+                            color="success"
+                            class="mb-2"
+                            hide-details
+                        >
+                        </v-checkbox>
+
+                        <loading-container :is-loading="isSharedPublic === null">
+                            <template v-slot:default="{ loading }">
+                                <div v-if="!loading">
+                                    <template v-if="isSharedPublic">
+                                        <div class="d-flex align-center">
+                                            <v-text-field
+                                                :value="finalShareUrl"
+                                                :success-messages="messages"
+                                                single-line
+                                                outlined
+                                                dense
+                                                readonly
+                                                ref="urlInput"
+                                            >
+                                                <template v-slot:append-outer>
+                                                    <v-btn
+                                                        icon
+                                                        color="success"
+                                                        @click="doCopy"
+                                                    >
+                                                        <v-icon>
+                                                            mdi-content-copy
+                                                        </v-icon>
+                                                    </v-btn>
+                                                </template>
+                                            </v-text-field>
+                                        </div>
+
+                                        <v-checkbox
+                                            v-model="shareTimestamp"
+                                            label="Share Timestamp"
+                                            class="my-2"
+                                            hide-details
                                         >
-                                            <template v-slot:append-outer>
+                                        </v-checkbox>
+
+                                        <div class="d-flex align-center">
+                                            <template v-if="!needConfirmDeleteLink">
                                                 <v-btn
+                                                    text
+                                                    color="error"
+                                                    small
+                                                    @click="needConfirmDeleteLink = true"
+                                                >
+                                                    Delete Link
+                                                </v-btn>
+                                                <v-spacer></v-spacer>
+                                                <facebook-share-button class="mx-1" :url="shareUrl"></facebook-share-button>
+                                                <reddit-share-button class="mx-1" :url="shareUrl"></reddit-share-button>
+                                                <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
+                                            </template>
+                                            
+                                            <template v-else>
+                                                <span class="text-overline">
+                                                    Are you sure you wish to delete this link?
+                                                </span>
+
+                                                <v-btn
+                                                    class="mx-1"
                                                     icon
                                                     color="success"
-                                                    @click="doCopy"
+                                                    small
+                                                    @click="deletePublicLink"
+                                                    :loading="deletingLink"
                                                 >
                                                     <v-icon>
-                                                        mdi-content-copy
+                                                        mdi-check-circle
+                                                    </v-icon>
+                                                </v-btn>
+
+                                                <v-btn
+                                                    class="mx-1"
+                                                    icon
+                                                    color="error"
+                                                    small
+                                                    @click="needConfirmDeleteLink = false"
+                                                    :loading="deletingLink"
+                                                >
+                                                    <v-icon>
+                                                        mdi-close-circle
                                                     </v-icon>
                                                 </v-btn>
                                             </template>
-                                        </v-text-field>
-                                    </div>
+                                        </div>
+                                    </template>
 
-                                    <v-checkbox
-                                        v-model="shareTimestamp"
-                                        label="Share Timestamp"
-                                        class="my-2"
-                                        hide-details
-                                    >
-                                    </v-checkbox>
-
-                                    <div class="d-flex align-center">
-                                        <template v-if="!needConfirmDeleteLink">
+                                    <template v-else>
+                                        <div class="d-flex align-center">
                                             <v-btn
-                                                text
-                                                color="error"
-                                                small
-                                                @click="needConfirmDeleteLink = true"
-                                            >
-                                                Delete Link
-                                            </v-btn>
-                                            <v-spacer></v-spacer>
-                                            <facebook-share-button class="mx-1" :url="shareUrl"></facebook-share-button>
-                                            <reddit-share-button class="mx-1" :url="shareUrl"></reddit-share-button>
-                                            <twitter-share-button class="mx-1" :url="shareUrl"></twitter-share-button> 
-                                        </template>
-                                        
-                                        <template v-else>
-                                            <span class="text-overline">
-                                                Are you sure you wish to delete this link?
-                                            </span>
-
-                                            <v-btn
-                                                class="mx-1"
-                                                icon
+                                                block
                                                 color="success"
-                                                small
-                                                @click="deletePublicLink"
-                                                :loading="deletingLink"
+                                                @click="generatePublicLink"
+                                                :loading="creatingLink"
                                             >
-                                                <v-icon>
-                                                    mdi-check-circle
-                                                </v-icon>
+                                                Create Link
                                             </v-btn>
+                                        </div>
 
-                                            <v-btn
-                                                class="mx-1"
-                                                icon
-                                                color="error"
-                                                small
-                                                @click="needConfirmDeleteLink = false"
-                                                :loading="deletingLink"
-                                            >
-                                                <v-icon>
-                                                    mdi-close-circle
-                                                </v-icon>
-                                            </v-btn>
-                                        </template>
-                                    </div>
-                                </template>
+                                        <div class="text-caption font-weight-bold mt-1">
+                                            {{ warningText }}
+                                        </div>
+                                    </template>
+                                </div>
+                            </template>
+                        </loading-container>
 
-                                <template v-else>
-                                    <div class="d-flex align-center">
-                                        <v-btn
-                                            block
-                                            color="success"
-                                            @click="generatePublicLink"
-                                            :loading="creatingLink"
-                                        >
-                                            Create Link
-                                        </v-btn>
-                                    </div>
-
-                                    <div class="text-caption font-weight-bold mt-1">
-                                        {{ warningText }}
-                                    </div>
-                                </template>
-                            </div>
-                        </template>
-                    </loading-container>
-
-                    <!-- Manual share settings -->
-                    <div class="text-overline mt-2">
-                        Share Settings
-                    </div>
-                    <v-divider class="mb-2"></v-divider>
-        
-                    <share-connections-editor
-                        :match-uuid="matchUuid"
-                        :video-uuid="clipUuid"
-                        :game="game"
-                        :no-clip="noClip"
-                    >
-                    </share-connections-editor>
+                        <!-- Manual share settings -->
+                        <div class="text-overline mt-2">
+                            Share Settings
+                        </div>
+                        <v-divider class="mb-2"></v-divider>
+            
+                        <share-connections-editor
+                            :match-uuid="matchUuid"
+                            :video-uuid="clipUuid"
+                            :game="game"
+                            :no-clip="noClip"
+                        >
+                        </share-connections-editor>
+                    </template>
                 </div>
             </v-card>
         </v-dialog>
@@ -207,6 +244,7 @@ import FacebookShareButton from '@client/vue/utility/squadov/share/FacebookShare
 import TwitterShareButton from '@client/vue/utility/squadov/share/TwitterShareButton.vue'
 import RedditShareButton from '@client/vue/utility/squadov/share/RedditShareButton.vue'
 import { secondsToTimeString } from '@client/js/time'
+import { SettingsPageId } from '@client/js/pages'
 
 @Component({
     components: {
@@ -245,6 +283,9 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     @Prop()
     userId!: number
 
+    @Prop({type: Boolean, default: false})
+    isLocal!: boolean
+
     showHideError: boolean = false
     showHideShare: boolean = false
     shareTimestamp: boolean = false
@@ -260,9 +301,19 @@ export default class MatchShareButton extends mixins(CommonComponent) {
     needConfirmDeleteLink: boolean = false
     deletingLink: boolean = false
     messages: string[] = []
+    shownLocalWarning: boolean = false
 
     $refs!: {
         urlInput: any
+    }
+
+    get settingsTo(): any {
+        return {
+            name: SettingsPageId,
+            query: {
+                inputTab: 5,
+            },
+        }
     }
 
     get finalShareUrl(): string {
@@ -354,6 +405,7 @@ export default class MatchShareButton extends mixins(CommonComponent) {
         this.isSharedPublic = null
         this.isSharedProfile = null
         this.shareUrl = null
+        this.shownLocalWarning = false
 
         let promise = !!this.matchUuid ? apiClient.getMatchShareUrl(this.matchUuid) : apiClient.getClipShareUrl(this.clipUuid!)
         promise.then((resp: ApiData<LinkShareData>) => {
