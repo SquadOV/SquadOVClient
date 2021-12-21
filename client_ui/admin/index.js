@@ -130,8 +130,9 @@ apiRouter.get('/funnel', async function (request, response) {
 apiRouter.get('/pucurve', async function (request, response) {
     start = new Date(parseInt(request.query.start))
     end = new Date(parseInt(request.query.end))
+    mode = parseInt(request.query.mode)
 
-    data = await apiServer.getPowerUserCurve(start, end)
+    data = await apiServer.getPowerUserCurve(start, end, mode)
     response.status(200).json(data)
 })
 

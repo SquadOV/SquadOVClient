@@ -15,6 +15,14 @@
                     mdi-download
                 </v-icon>
             </v-btn>
+
+            <v-select
+                v-model="mode"
+                :items="modeItems"
+                label="Action"
+                hide-details
+            >
+            </v-select>
         </div>
         <v-divider></v-divider>
 
@@ -46,6 +54,7 @@ import 'echarts/lib/component/tooltip'
 export default class PowerUserCurve extends Vue {
     startDate: Date = new Date()
     endDate: Date = new Date()
+    mode: number = 0
 
     data: number[] = []
     graph : any | null = null
@@ -54,14 +63,26 @@ export default class PowerUserCurve extends Vue {
         graphDiv: HTMLElement
     }
 
+    get modeItems(): any[] {
+        return [
+            {
+                text: 'Active',
+                value: 0,
+            },
+            {
+                text: 'Record',
+                value: 1,
+            },
+        ]
+    }
+
     @Watch('startDate')
     @Watch('endDate')
-    @Watch('cohortStart')
-    @Watch('cohortEnd')
+    @Watch('mode')
     refreshData() {
         this.data = []
         
-        getPowerUserCurve(this.startDate, this.endDate).then((resp: number[]) => {
+        getPowerUserCurve(this.startDate, this.endDate, this.mode).then((resp: number[]) => {
             this.data = resp
         }).catch((err: any) => {
             console.error('Failed to get power user curve: ', err)

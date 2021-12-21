@@ -1910,18 +1910,36 @@ class ApiServer {
         })
     }
 
-    async getPowerUserCurve(start, end) {
-        const { rows } = await this.pool.query(
+    async getPowerUserCurve(start, end, mode) {
+        let query
+        if (mode === 0) {
+            query = `
+                SELECT sub.days_active AS "x", COUNT(sub.user_id) AS "count"
+                FROM (
+                    SELECT dae.user_id AS "user_id", COUNT(DISTINCT dae.tm) AS "days_active"
+                    FROM squadov.daily_active_endpoint AS dae
+                    WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                    GROUP BY dae.user_id
+                ) sub
+                GROUP BY sub.days_active
             `
-            SELECT sub.days_active, COUNT(sub.user_id) AS "count"
-            FROM (
-                SELECT dae.user_id AS "user_id", COUNT(DISTINCT dae.tm) AS "days_active"
-                FROM squadov.daily_active_endpoint AS dae
-                WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
-                GROUP BY dae.user_id
-            ) sub
-            GROUP BY sub.days_active
-            `,
+        } else if (mode === 1) {
+            query = `
+                SELECT sub.days_active AS "x", COUNT(sub.user_id) AS "count"
+                FROM (
+                    SELECT v.user_uuid AS "user_id", COUNT(DISTINCT DATE_TRUNC('day', v.end_time)) AS "days_active"
+                    FROM squadov.vods AS v
+                    WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                        AND NOT v.is_clip
+                        AND v.match_uuid IS NOT NULL
+                    GROUP BY v.user_Uuid
+                ) sub
+                GROUP BY sub.days_active
+            `
+        }
+
+        const { rows } = await this.pool.query(
+            query,
             [start, end]
         )
 
@@ -1929,10 +1947,10 @@ class ApiServer {
             return []
         }
         
-        let size = Math.max(...rows.map((ele) => ele.days_active))
+        let size = Math.max(...rows.map((ele) => ele.x))
         let arr = new Array(size).fill(0)
         for (let r of rows) {
-            arr[r.days_active-1] = parseInt(r.count)
+            arr[r.x-1] = parseInt(r.count)
         }
         return arr
     }
