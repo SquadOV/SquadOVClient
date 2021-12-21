@@ -7,7 +7,7 @@
                 <div
                     v-bind="attrs"
                     v-on="on"
-                    :class="`ma-1 ${(char.team === friendlyTeam) ? 'friendly-char' : 'enemy-char'}`"
+                    :class="`ma-1 ${isSelf ? 'pov-icon' : (char.team === friendlyTeam) ? 'friendly-char' : 'enemy-char'}`"
                 >
                     <wow-class-spec-icon
                         v-if="char.specId > 0"
@@ -77,6 +77,9 @@ export default class WowCharacterIcon extends Vue {
     @Prop({required: true})
     patch!: string
 
+    @Prop({type: Boolean, default: false})
+    isSelf!: boolean
+
     get safeClassId(): number {
         if (this.char.classId !== null) {
             return this.char.classId
@@ -127,6 +130,10 @@ export default class WowCharacterIcon extends Vue {
 
 .enemy-char {
     border: 2px solid var(--color-enemy) !important;
+}
+
+.pov-icon {
+    border: 2px solid var(--color-self) !important;
 }
 
 </style>
