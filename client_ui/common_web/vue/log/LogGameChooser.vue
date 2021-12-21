@@ -1,6 +1,7 @@
 <template>
     <recent-recorded-matches
         title="All Games (with VODs)"
+        enable-select
         :user-id="userId"
         disable-mini
     >
