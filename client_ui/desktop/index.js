@@ -163,8 +163,6 @@ if (!singleLock) {
 }
 
 function start() {
-    win.loadFile('index.html')
-
     win.on('minimize', (e) => {
         if (!!appSettings.minimizeToTray) {
             e.preventDefault()
@@ -208,6 +206,7 @@ function start() {
         win.show()
     })
     tray.setContextMenu(contextMenu)
+    return win.loadFile('index.html')
 }
 
 ipcMain.on('request-app-folder', (event) => {
@@ -796,7 +795,9 @@ app.on('ready', async () => {
         await startAutoupdater()
     }
 
+    let hidden = true
     if (!app.commandLine.hasSwitch('hidden')) {
+        hidden = false
         win.show()
     }
 
@@ -840,14 +841,16 @@ app.on('ready', async () => {
         frame: false,
         resizable: false,
         movable: false,
-        icon: iconPath
+        icon: iconPath,
+        show: false,
     })
 
     if (!app.isPackaged) {
         setupWindow.webContents.toggleDevTools()
     }
-    setupWindow.loadFile('setup.html')
-    setupWindow.show()
+    setupWindow.loadFile('setup.html').then(() => {
+        setupWindow.show()
+    })
 
     log.log('Starting Setup Flow...')
     try {
@@ -868,15 +871,17 @@ app.on('ready', async () => {
         quit()
         return
     }
-
-    if (!setupWindow.isDestroyed()) {
-        setupWindow.close()
-    }
     
-    win.show()
-
     // At this point we have a valid session because the setup flow now takes care of that back and worth and waiting for the session heartbeat.
-    start()
+    start().then(() => {
+        if (!setupWindow.isDestroyed()) {
+            setupWindow.close()
+        }
+
+        if (!hidden) {
+            win.show()
+        }
+    })
 
     if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
         startClientService()
