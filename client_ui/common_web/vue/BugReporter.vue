@@ -50,19 +50,31 @@
         </template>
 
         <template v-else>
-            <div class="thankyou d-flex justify-center align-center text-h5">
-                Thanks for your bug report! We're looking into it!
-            </div>
+            <div class="thankyou d-flex justify-center align-center flex-column">
+                <div class="text-h5">
+                    Thanks for your bug report! We're looking into it!
+                </div>
 
-            <v-card-actions>
-                <v-spacer></v-spacer>
+                <div class="mt-2">
+                    Did you know that we have a Discord? Let us know you submitted a bug report there and you'll get a faster reponse (usually).
+                </div>
+
                 <v-btn
+                    class="mt-4"
+                    color="success"
+                    @click="joinDiscord"
+                >
+                    Discord
+                </v-btn>
+
+                <v-btn
+                    class="mt-1"
                     color="primary"
                     @click="cancel"
                 >
                     Close
                 </v-btn>
-            </v-card-actions>
+            </div>
         </template>
 
         <v-snackbar
@@ -85,6 +97,7 @@ import fs from 'fs'
 import path from 'path'
 import process from 'process'
 import glob from 'glob'
+import { openUrlInBrowser } from '@client/js/external'
 
 const MAX_DUMPS_TO_SEND = 5
 
@@ -160,6 +173,10 @@ export default class BugReporter extends Vue {
         }).finally(() => {
             this.inProgress = false
         })
+    }
+
+    joinDiscord() {
+        openUrlInBrowser('https://discord.gg/6Rj5jCVDeC')
     }
 }
 
