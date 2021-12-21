@@ -25,7 +25,7 @@
                     :current="currentTimestamp"
                     :input-events="events"
                     :major-tick-every="majorTicksEvery"
-                    :interval-ticks="intervalTicks"
+                    :interval-ticks="minorIntervalTicks"
                     @go-to-timestamp="updateTimestampFromTimeline"
                     fill
                 >
@@ -42,7 +42,7 @@
                     :current="currentTimestamp"
                     :input-events="events"
                     :major-tick-every="majorTicksEvery"
-                    :interval-ticks="intervalTicks"
+                    :interval-ticks="minorIntervalTicks"
                     :clip-start-handle="clipStart"
                     @update:clipStartHandle="setClipStart"
                     :clip-end-handle="clipEnd"
@@ -295,7 +295,7 @@ const MAX_CLIP_LENGTH_MILLISECONDS = 180000
 @Component({
     components: {
         VideoPlayer,
-        GenericMatchTimeline
+        GenericMatchTimeline,
     }
 })
 export default class VodEditor extends mixins(CommonComponent) {
@@ -329,6 +329,9 @@ export default class VodEditor extends mixins(CommonComponent) {
     metadata: VodMetadata | null = null
 
     clipKey: number = 0
+    numberOfTicks: number = 25.0
+    expectedMaxScreenResolution: number = 1920
+    intervalTicks: number = 5
 
     formValid: boolean = false
     clipTitle: string = ''
@@ -348,13 +351,33 @@ export default class VodEditor extends mixins(CommonComponent) {
         return this.end - this.start
     }
 
+    get minorIntervalTicks(): number {
+        this.intervalTicks = this.calculateMinorTicks()
+        return this.intervalTicks
+    }
+    
     get majorTicksEvery(): number {
-        let ticks = this.videoDurationMs / 30.0
+        this.numberOfTicks = this.calculateMajorTicks()
+        let ticks = this.videoDurationMs / this.numberOfTicks
         return Math.round(ticks)
     }
 
-    get intervalTicks(): number {
-        return 10
+    calculateMajorTicks(): number {
+        if (window.innerWidth >= this.expectedMaxScreenResolution * .95) {
+            return 25.0
+        } else if (window.innerWidth >= this.expectedMaxScreenResolution * .8) {
+            return 20.0
+        } else if (window.innerWidth >= this.expectedMaxScreenResolution * .6) {
+            return 15.0
+        }
+        return 10.0
+    }
+
+    calculateMinorTicks(): number {
+        if(window.innerWidth >= this.expectedMaxScreenResolution * .8) {
+            return 10
+        }
+        return 5
     }
 
     enabled(): boolean {
@@ -424,6 +447,11 @@ export default class VodEditor extends mixins(CommonComponent) {
         return new Date(this.vod.startTime.getTime() + this.currentTimestamp)
     }
 
+    adjustTickers() {
+        this.numberOfTicks = this.calculateMajorTicks()
+        this.intervalTicks = this.calculateMinorTicks()
+    }
+
     resetClip() {
         this.clipStart = 0
         this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_MILLISECONDS, this.end)
@@ -448,6 +476,7 @@ export default class VodEditor extends mixins(CommonComponent) {
     }
     
     mounted() {
+        window.addEventListener('resize', this.adjustTickers);
         this.refreshContext()
     }
 
@@ -457,6 +486,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         }
         this.context = undefined
         this.cancelClip()
+        window.removeEventListener('resize', this.adjustTickers);
     }
 
     get start(): number {

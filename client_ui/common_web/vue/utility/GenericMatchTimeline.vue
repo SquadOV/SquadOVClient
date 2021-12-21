@@ -429,6 +429,7 @@ export default class GenericMatchTimeline extends mixins(CommonComponent) {
 
 .major-tick {
     height: 95%;
+    font-size: 14px;
 }
 
 .minor-tick {
