@@ -46,4 +46,6 @@ export enum AnalyticsAction {
     SetupDoDownload,
     SetupJoinDiscord,
     FinishSetupWizard,
+    // Other Vod
+    VodTimeUpdate,
 }
