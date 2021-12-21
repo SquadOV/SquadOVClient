@@ -19,12 +19,14 @@
                         <canvas ref="qrcode"></canvas>
                     </div>
 
-                    <v-text-field
-                        v-model="code"
-                        label="Code"
-                        solo
-                    >
-                    </v-text-field>
+                    <div class="ma-auto" :style="`max-width: 300px`">
+                        <v-otp-input
+                            :length="6"
+                            :key="counter"
+                            @finish="enable2fa"
+                        >
+                        </v-otp-input>
+                    </div>
                 </div>
 
                 <v-divider></v-divider>
@@ -34,15 +36,6 @@
                         @click="showHide = false"
                     >
                         Cancel
-                    </v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn
-                        color="success"
-                        @click="enable2fa"
-                        :loading="inProgress"
-                        :disabled="code.length === 0"
-                    >
-                        Submit
                     </v-btn>
                 </v-card-actions>
             </v-card>
@@ -98,10 +91,10 @@ export default class EnableMfaDialog extends Vue {
     cb: CallbackFn | null = null
 
     secret: string = ''
-    code: string = ''
     inProgress: boolean = false
     error: boolean = false
     backupCodes: string[] = []
+    counter: number = 0
 
     $refs!: {
         qrcode: HTMLCanvasElement
@@ -111,7 +104,6 @@ export default class EnableMfaDialog extends Vue {
         this.cb = cb
         this.showHide = true
         this.showBackups = false
-        this.code = ''
         this.secret = secret
         this.backupCodes = []
 
@@ -125,9 +117,9 @@ export default class EnableMfaDialog extends Vue {
         })
     }
 
-    enable2fa() {
+    enable2fa(code: string) {
         this.inProgress = true
-        apiClient.enable2fa(this.code, this.secret).then((resp: ApiData<string[]>) => {
+        apiClient.enable2fa(code, this.secret).then((resp: ApiData<string[]>) => {
             this.backupCodes = resp.data
             this.showBackups = true
         }).catch((err: any) => {

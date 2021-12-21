@@ -11,21 +11,26 @@
                 </v-card-title>
                 <v-divider></v-divider>
 
-                <div class="ma-auto" style="max-width: 300px">
+                <div class="ma-auto" :style="`max-width: ${length * 50}px`">
                     <v-otp-input
-                        v-model="code"
-                        length="6"
-                        type="number"
+                        :length="length"
+                        :key="counter"
                         @finish="doVerify"
                     >
                     </v-otp-input>
+                </div>
+
+                <div class="d-flex justify-center align-center text-caption" v-if="!useBackupCode">
+                    <a href="#" @click="useBackupCode = true">
+                        Use Backup Code
+                    </a>
                 </div>
 
                 <v-divider></v-divider>
                 <v-card-actions>
                     <v-btn
                         color="error"
-                        @click="showHide = false"
+                        @click="hide"
                     >
                         Cancel
                     </v-btn>
@@ -47,13 +52,24 @@ export default class MfaAuthDialog extends Vue {
     showHide: boolean = false
     cb: CallbackFn | null = null
 
-    code: string = ''
+    counter: number = 0
+    useBackupCode: boolean = false
 
-    doVerify() {
-        if (!!this.cb) {
-            this.cb(this.code.trim())
-        }
+    get length(): number {
+        return this.useBackupCode ? 10 : 6
+    }
+
+    hide() {
+        this.counter += 1
+        this.useBackupCode = false
         this.showHide = false
+    }
+
+    doVerify(inCode: string) {
+        if (!!this.cb) {
+            this.cb(inCode.trim())
+        }
+        this.hide()
     }
 
     open(cb: CallbackFn) {
