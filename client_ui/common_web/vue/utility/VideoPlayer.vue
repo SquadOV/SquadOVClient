@@ -448,9 +448,18 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
 
                 this.$emit('update:currentTs', this.player.currentTime())
-                if (Math.abs(this.player.currentTime() - this.lastTimestamp) > 1.0) {
+                let diffFromLastTs = Math.abs(this.player.currentTime() - this.lastTimestamp)
+                if (diffFromLastTs > 1.0) {
                     this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
                     this.lastTimestamp = this.player.currentTime()
+
+                    if (!!this.player && diffFromLastTs > 180.0) {
+                        // Our Google analytics session timeout is 5 minutes long.
+                        // So once we reached a good portion of that we want to send an update
+                        // that the session is still active because the user is still watching
+                        // a VOD/clip.
+                        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.VodTimeUpdate, '', this.player.currentTime())
+                    }
                 }
             }
         })
