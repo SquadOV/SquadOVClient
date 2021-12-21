@@ -21,39 +21,43 @@
 
                     <v-col :cols="5" v-if="!!relevantCharacters" align-self="center">
                         <div class="d-flex align-center flex-wrap">
-                            <template v-if="showFullCharacters">
+                            <template v-if="showFullCharacters || !povCharacter">
                                 <wow-character-icon
                                     v-for="(char, idx) in friendlyCharacters"
                                     :char="char"
-                                    :friendly-team="friendlyTeam"
+                                    :friendly-team="useTeams ? friendlyTeam : char.team"
                                     armory-link
                                     :player-section="linkToPlayerSection"
                                     :key="`friendly-icon-${idx}`"
                                     :width-height="mini ? 24 : 32"
                                     :patch="match.build"
+                                    :is-self="char.guid === povCharacter.guid"
                                     @go-to-character="$emit('go-to-character', arguments[0])"
                                 >
                                 </wow-character-icon>
 
-                                <div
-                                    v-if="enemyCharacters.length > 0"
-                                    class="mx-1 text-overline"
-                                >
-                                    VS
-                                </div>
+                                <template v-if="useTeams">
+                                    <div
+                                        v-if="enemyCharacters.length > 0"
+                                        class="mx-1 text-overline"
+                                    >
+                                        VS
+                                    </div>
 
-                                <wow-character-icon
-                                    v-for="(char, idx) in enemyCharacters"
-                                    :char="char"
-                                    :friendly-team="friendlyTeam"
-                                    armory-link
-                                    :player-section="linkToPlayerSection"
-                                    :key="`enemy-icon-${idx}`"
-                                    :width-height="mini ? 24 : 32"
-                                    :patch="match.build"
-                                    @go-to-character="$emit('go-to-character', arguments[0])"
-                                >
-                                </wow-character-icon>
+                                    <wow-character-icon
+                                        v-for="(char, idx) in enemyCharacters"
+                                        :char="char"
+                                        :friendly-team="friendlyTeam"
+                                        armory-link
+                                        :player-section="linkToPlayerSection"
+                                        :key="`enemy-icon-${idx}`"
+                                        :width-height="mini ? 24 : 32"
+                                        :patch="match.build"
+                                        :is-self="char.guid === povCharacter.guid"
+                                        @go-to-character="$emit('go-to-character', arguments[0])"
+                                    >
+                                    </wow-character-icon>
+                                </template>
                             </template>
 
                             <template v-else>
@@ -62,8 +66,8 @@
                                 </div>
 
                                 <wow-character-icon
-                                    v-for="(char, idx) in sameSquadCharacters"
-                                    :char="char"
+                                    is-self
+                                    :char="povCharacter"
                                     :friendly-team="friendlyTeam"
                                     armory-link
                                     :player-section="linkToPlayerSection"
@@ -175,6 +179,11 @@ export default class WowGenericMatchSummary extends Vue {
         if (!this.relevantCharacters) {
             return []
         }
+
+        if (!this.useTeams) {
+            return this.relevantCharacters
+        }
+
         return this.relevantCharacters.filter((c: WowCharacter) => {
             return c.team == this.friendlyTeam
         })
@@ -184,18 +193,28 @@ export default class WowGenericMatchSummary extends Vue {
         if (!this.relevantCharacters) {
             return []
         }
+
+        if (!this.useTeams) {
+            return []
+        }
+
         return this.relevantCharacters.filter((c: WowCharacter) => {
             return c.team != this.friendlyTeam
         })
     }
 
-    get sameSquadCharacters(): WowCharacter[] {
+    get povCharacter(): WowCharacter | null {
         if (!this.relevantCharacters) {
-            return []
+            return null
         }
 
         let okChars = new Set(this.characterAssociations.filter((ele: WoWCharacterUserAssociation) => ele.userId === this.userId).map((ele: WoWCharacterUserAssociation) => ele.guid))
-        return this.relevantCharacters.filter((ele: WowCharacter) => okChars.has(ele.guid))
+        let filtered = this.relevantCharacters.filter((ele: WowCharacter) => okChars.has(ele.guid))
+        if (filtered.length > 0) {
+            return filtered[0]
+        } else {
+            return null
+        }
     }
 
     get hasVod() : boolean {
