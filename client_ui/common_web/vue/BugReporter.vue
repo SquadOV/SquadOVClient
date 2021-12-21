@@ -75,11 +75,6 @@
                     Close
                 </v-btn>
             </div>
-
-            <v-card-actions>
-                <v-spacer></v-spacer>
-                
-            </v-card-actions>
         </template>
 
         <v-snackbar
