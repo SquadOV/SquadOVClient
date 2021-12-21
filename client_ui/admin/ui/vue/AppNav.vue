@@ -49,6 +49,10 @@ export default class AppNav extends Vue {
             to: '/funnel'
         },
         {
+            text: 'Power User Curve',
+            to: '/pucurve'
+        },
+        {
             text: 'Metrics',
             open: true,
             children: [
