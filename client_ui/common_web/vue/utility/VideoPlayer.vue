@@ -152,7 +152,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
                 break
             case RCMessageType.GoToTimestamp:
-                console.log('go to timestamp: ', p.data)
                 this.goToTimeMs(p.data, false, false)
                 break
         }
