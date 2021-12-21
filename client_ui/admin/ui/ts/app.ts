@@ -34,6 +34,7 @@ const CohortInstalledUsers = () => import('@client/vue/cohorts/CohortInstalledUs
 const CohortActiveUsers = () => import('@client/vue/cohorts/CohortActiveUsers.vue')
 const CohortRecordingUsers = () => import('@client/vue/cohorts/CohortRecordingUsers.vue')
 const Funnel = () => import('@client/vue/Funnel.vue')
+const PowerUserCurve = () => import('@client/vue/PowerUserCurve.vue')
 
 const SearchUser = () => import('@client/vue/search/SearchUser.vue')
 const SearchMatch = () => import('@client/vue/search/SearchMatch.vue')
@@ -47,6 +48,10 @@ const baseRoutes : any[] = [
     {
         path: '/funnel',
         component: Funnel,
+    },
+    {
+        path: '/pucurve',
+        component: PowerUserCurve,
     },
     {
         path: '/metrics/active-users',
