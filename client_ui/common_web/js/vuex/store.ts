@@ -128,7 +128,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
-            state.settings.record.recordMouse = b
+            state.settings.record.recordMouse2 = b
             saveLocalSettings(state.settings)
 /// #endif
         },
