@@ -15,19 +15,19 @@
             <v-spacer></v-spacer>
 
             <div class="d-flex align-center">
-                <span :class="`mx-2 dot ${isRecording ? 'recording' : isStorageFull ? 'storageError' : isPaused ? 'paused' : 'available'}`"></span>
+                <span :class="`mx-2 dot ${isRecording ? 'recording' : isPaused ? 'paused' : isStorageFull ? 'storageError' : 'available'}`"></span>
 
                 <span class="mx-2 white--text">
                     <span v-if="isRecording">
                         Recording
                     </span>
 
-                    <span v-else-if="isStorageFull">
-                        Uh oh. Low storage!
-                    </span>
-
                     <span v-else-if="isPaused">
                         Paused
+                    </span>
+
+                    <span v-else-if="isStorageFull">
+                        Uh oh. Low storage!
                     </span>
 
                     <span v-else-if="isInGame">
@@ -91,9 +91,9 @@
             <recording-settings-item mini ref="record"></recording-settings-item>
         </div>
 
-        <v-dialog 
-            v-model="showHideStopConfirm" 
-            max-width="40%" 
+        <v-dialog
+            v-model="showHideStopConfirm"
+            max-width="40%"
             persistent
         >
             <v-card>
@@ -104,8 +104,8 @@
 
                 <v-card-text>
                     For all games except World of Warcraft, <span class="font-weight-bold">you will lose this recorded VOD.</span>
-                    For World of Warcraft, manually stopping the recording will cause your run to be marked as a loss (encounters, keystones, arenas). 
-                    You may lose some combat log data. 
+                    For World of Warcraft, manually stopping the recording will cause your run to be marked as a loss (encounters, keystones, arenas).
+                    You may lose some combat log data.
                     It is recommended you let SquadOV finish recording on its own.
                 </v-card-text>
 
@@ -129,8 +129,8 @@
 
                     <v-spacer></v-spacer>
 
-                    <v-btn 
-                        color="error" 
+                    <v-btn
+                        color="error"
                         @click="forceStopRecording"
                     >
                         Stop Recording
@@ -238,7 +238,7 @@ export default class RecordingStatusWindow extends Vue {
             return
         }
         this.storageGBLeft = this.maxLocalRecordingSizeGb - this.localDiskSpaceRecordUsageGb
-        // If storage is less than 1 GB, we will pause recording and set the Recording status to show low storage warning.
+        // If storage is less than 1 GB, we set the Recording status to show low storage warning.
         if (this.storageGBLeft < 1) {
             this.isStorageFull = true
         } else {
