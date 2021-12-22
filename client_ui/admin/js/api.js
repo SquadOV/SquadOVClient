@@ -1954,6 +1954,120 @@ class ApiServer {
         }
         return arr
     }
+
+    async getReferralFlow(start, end) {
+        // Our endpoint are the referral codes that were used to register users
+        // during this time period.
+        const { rows: referralCodes } = await this.pool.query(
+            `
+            SELECT rc.code, rc.user_id, COUNT(u.id) AS "count"
+            FROM squadov.users AS u
+            INNER JOIN squadov.user_referral_code_usage AS ucu
+                ON ucu.email = u.email
+            INNER JOIN squadov.referral_codes AS rc
+                ON rc.id = ucu.code_id
+            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time  < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+            GROUP BY rc.code, rc.user_id
+            `,
+            [start, end]
+        )
+
+        referralCodes.forEach((ele) => {
+            ele.count = parseInt(ele.count)
+        })
+
+        // For each referral code (source), we need to know what the parent referral code (target) is so we can create the links to attribute the registration back.
+        // 'No Referral' is what we should store as the referral code if no parent referral code is found. We also need to store a 'value' which indicates how many
+        // attributions should be given to each link.
+        let parentReferralCodes = new Map()
+
+        let referralCodesLeftToCheck = referralCodes.filter((ele) => ele.user_id !== null).map((ele) => ele.code)
+        while (referralCodesLeftToCheck.length > 0) {
+            const { rows: parentCodes } = await this.pool.query(
+                `
+                SELECT rc.code AS "code", rc2.code AS "parent", rc2.user_id AS "puserid"
+                FROM squadov.referral_codes AS rc
+                INNER JOIN squadov.users AS u
+                    ON u.id = rc.user_id
+                INNER JOIN squadov.user_referral_code_usage AS ucu
+                    ON ucu.email = u.email
+                INNER JOIN squadov.referral_codes AS rc2
+                    ON rc2.id = ucu.code_id
+                WHERE rc.code = ANY($1::VARCHAR[])
+                `,
+                [referralCodesLeftToCheck]
+            )
+
+            let subMap = new Map(parentCodes.map((r) => [r.code, r.parent]))
+            for (let rc of referralCodesLeftToCheck) {
+                if (subMap.has(rc)) {
+                    parentReferralCodes.set(rc, subMap.get(rc))
+                } else {
+                    parentReferralCodes.set(rc, 'No Referral')
+                }
+            }
+
+            let tmp = new Set()
+            for (let r of parentCodes) {
+                if (r.puserid !== null ) {
+                    if (!parentReferralCodes.has(r.parent)) {
+                        tmp.add(r.parent)
+                    }
+                }
+            }
+
+            referralCodesLeftToCheck = Array.from(tmp)
+        }
+        
+        // Key: "Source::Target", Value: # of users registered
+        let uniqueSegments = new Set(['Registration'])
+        let linkValues = new Map()
+        let remaining = [...referralCodes]
+        while (remaining.length > 0) {
+            const rc = remaining.shift()
+
+            // Should only hapen for 'No Referral' which should not have a parent target links to it.
+            if (!parentReferralCodes.has(rc.code)) {
+                continue
+            }
+
+            let target = parentReferralCodes.get(rc.code)
+            uniqueSegments.add(rc.code)
+            uniqueSegments.add(target)
+
+            let key = `${rc.code}::${target}`
+            if (!linkValues.has(key)) {
+                linkValues.set(key, 0)
+            }
+
+            let val = linkValues.get(key)
+            val += rc.count
+            linkValues.set(key, val)
+
+            remaining.push({
+                code: target,
+                count: rc.count,
+            })
+        }
+
+        // Need to do another pass of the initial referral codes to tie them to the initial registration.
+        for (let rc of referralCodes) {
+            let key = `Registration::${rc.code}`
+            linkValues.set(key, rc.count)
+        }
+
+        return {
+            steps: Array.from(uniqueSegments),
+            links: Array.from(linkValues).map(([key, v]) => {
+                let components = key.split('::')
+                return {
+                    source: components[0],
+                    target: components[1],
+                    value: v,
+                }
+            })
+        }
+    }
 }
 
 exports.ApiServer = ApiServer
