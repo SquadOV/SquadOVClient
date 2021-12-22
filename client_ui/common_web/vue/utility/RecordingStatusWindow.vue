@@ -15,7 +15,7 @@
             <v-spacer></v-spacer>
 
             <div class="d-flex align-center">
-                <span :class="`mx-2 dot ${isRecording ? 'recording' : isPaused ? 'paused' : 'available'}`"></span>
+                <span :class="`mx-2 dot ${isRecording ? 'recording' : isPaused ? 'paused' : isStorageFull ? 'storageError' : 'available'}`"></span>
 
                 <span class="mx-2 white--text">
                     <span v-if="isRecording">
@@ -24,6 +24,10 @@
 
                     <span v-else-if="isPaused">
                         Paused
+                    </span>
+
+                    <span v-else-if="isStorageFull">
+                        Uh oh. Low storage!
                     </span>
 
                     <span v-else-if="isInGame">
@@ -58,7 +62,7 @@
                 block
                 icon
                 tile
-                :color="isPaused ? `success`: `warning`"
+                :color="isPaused ? `success` : `warning`"
                 @click="togglePause"
                 v-if="!isRecording"
             >
@@ -166,6 +170,8 @@ export default class RecordingStatusWindow extends Vue {
     defaultInput: string = ''
     inputVolume: number = 1.0
     showHideStopConfirm: boolean = false
+    storageGBLeft: number = 0
+    isStorageFull: boolean = false
 
     $refs!: {
         record: RecordingSettingsItem
@@ -176,7 +182,7 @@ export default class RecordingStatusWindow extends Vue {
         if (this.expanded) {
             Vue.nextTick(() => {
                 this.$refs.record.refreshFeatureFlags()
-            })            
+            })
         }
     }
 
@@ -196,7 +202,7 @@ export default class RecordingStatusWindow extends Vue {
         return this.$store.state.currentState.runningGames.length > 0
     }
 
-    get isPaused(): boolean  {
+    get isPaused(): boolean {
         return this.$store.state.currentState.paused
     }
 
@@ -205,6 +211,38 @@ export default class RecordingStatusWindow extends Vue {
             return 'mdi-chevron-up'
         } else {
             return 'mdi-chevron-down'
+        }
+    }
+
+    get maxLocalRecordingSizeGb(): number {
+        return this.$store.state.settings.record.maxLocalRecordingSizeGb
+    }
+
+    get localDiskSpaceRecordUsageGb(): number | null {
+///#if DESKTOP
+        return this.$store.state.localDiskSpaceRecordUsageGb
+///#else
+        return null
+///#endif
+    }
+
+    @Watch('$store.state.settings.record.useLocalRecording')
+    @Watch('localDiskSpaceRecordUsageGb')
+    @Watch('maxLocalRecordingSizeGb')
+    checkLocalDiskSpaceRecordUsage() {
+        // First check if user is using local recording or if localDiskSpaceRecordUsageGb is still null
+        if (!this.$store.state.settings.record.useLocalRecording) {
+            this.isStorageFull = false
+            return
+        } else if (this.localDiskSpaceRecordUsageGb === null) {
+            return
+        }
+        this.storageGBLeft = this.maxLocalRecordingSizeGb - this.localDiskSpaceRecordUsageGb
+        // If storage is less than 1 GB, we set the Recording status to show low storage warning.
+        if (this.storageGBLeft < 1) {
+            this.isStorageFull = true
+        } else {
+            this.isStorageFull = false
         }
     }
 
@@ -230,7 +268,6 @@ export default class RecordingStatusWindow extends Vue {
 </script>
 
 <style scoped>
-
 .dot {
     height: 24px;
     width: 24px;
@@ -251,6 +288,10 @@ export default class RecordingStatusWindow extends Vue {
     background-color: green;
 }
 
+.dot.storageError {
+    background-color: darkred;
+}
+
 @keyframes record-pulse {
     0% {
         background-color: #121212;
@@ -260,5 +301,4 @@ export default class RecordingStatusWindow extends Vue {
         background-color: red;
     }
 }
-
 </style>
