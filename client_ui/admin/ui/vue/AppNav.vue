@@ -128,6 +128,10 @@ export default class AppNav extends Vue {
                     text: 'Users',
                     to: '/referrals/users'
                 },
+                {
+                    text: 'Flow',
+                    to: '/referrals/flow'
+                },
             ]
         },
         {
