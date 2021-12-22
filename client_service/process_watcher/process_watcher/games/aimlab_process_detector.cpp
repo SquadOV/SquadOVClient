@@ -3,6 +3,7 @@
 namespace {
 #ifdef _WIN32
 const std::string aimlabProcessName("AimLab.exe");
+const std::string aimlabProcessName2("AimLab_tb.exe");
 #else
 #endif
 
@@ -11,7 +12,7 @@ const std::string aimlabProcessName("AimLab.exe");
 namespace process_watcher::games {
 
 AimlabProcessDetector::AimlabProcessDetector():
-    GameProcessDetector(aimlabProcessName) {
+    GameProcessDetector({aimlabProcessName, aimlabProcessName2}) {
 
 }
 
