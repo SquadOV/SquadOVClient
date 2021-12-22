@@ -34,6 +34,7 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
     _audioClient(client),
     _context(context)
 {
+    LOG_INFO("Loading WASAPI Audio Client Recorder: " << context << std::endl);
     WAVEFORMATEX* pwfx = nullptr;
     HRESULT hr = _audioClient->GetMixFormat(&pwfx);
     if (hr != S_OK) {
@@ -77,6 +78,7 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         return;
     }
 
+    LOG_INFO("...Initializing WASAPU Audio Client: " << context << std::endl);
     hr = _audioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
         isLoopback ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
@@ -110,6 +112,8 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
 
     _exists = true;
     _bufferDuration = static_cast<double>(REFTIMES_PER_SEC) * bufferFrameCount / _pwfx.Format.nSamplesPerSec;
+    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _bufferDuration << "\t" << _pwfx.Format.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.Format.nChannels << " (Channels)" << std::endl);
+    LOG_INFO("....Buffer Frame Count: " << bufferFrameCount << std::endl);
 
     // We set the props that we want here. The only thing we want to keep consistent
     // is the sample rate so we don't have to resample ourselves. Number of channels we keep
@@ -219,7 +223,12 @@ void WasapiAudioClientRecorder::startRecording() {
 
         while (_running) {
             auto packetTime = service::recorder::encoder::AVSyncClock::now();
-            std::this_thread::sleep_for(std::chrono::milliseconds(static_cast<int64_t>(_bufferDuration/REFTIMES_PER_MILLISEC/2.0)));
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(
+                    // We shouldn't ever need the std::min here but just in case to ensure that this loop *actually* finishes.
+                    std::min(static_cast<int64_t>(_bufferDuration/REFTIMES_PER_MILLISEC/2.0, 1000)
+                )
+            ));
 
             uint32_t packetLength = 0;
             hr = _captureClient->GetNextPacketSize(&packetLength);
@@ -278,17 +287,23 @@ void WasapiAudioClientRecorder::setActiveEncoder(service::recorder::encoder::AvE
 
 void WasapiAudioClientRecorder::stop() {
     _running = false;
+    LOG_INFO("...Stopping Audio Client Recorder [Packet Thread]" << std::endl);
     if (_packetThread.joinable()) {
         _packetThread.join();
     }
 
+    LOG_INFO("...Stopping Audio Client Recorder [Recording Thread]" << std::endl);
     if (_recordingThread.joinable()) {
         _recordingThread.join();
     }
+
+    LOG_INFO("...Stopping Audio Client Recorder [Audio Client]" << std::endl);
     HRESULT hr = _audioClient->Stop();
     if (hr != S_OK) {
         printWarning("...Failed to stop audio client", hr);
     }
+
+    LOG_INFO("...Finish Audio Client Recorder Stop" << std::endl);
 }
 
 }
