@@ -126,7 +126,7 @@
 
                         <v-checkbox
                             class="ma-0"
-                            :input-value="$store.state.settings.record.recordMouse"
+                            :input-value="$store.state.settings.record.recordMouse2"
                             @change="$store.commit('changeRecordMouse', arguments[0])"
                             hide-details
                             label="Record Cursor (Full-Screen only)"
