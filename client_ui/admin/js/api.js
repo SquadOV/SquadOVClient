@@ -1536,7 +1536,7 @@ class ApiServer {
             FROM squadov.vods AS v
             INNER JOIN squadov.users AS u
                 ON u.uuid = v.user_uuid
-            INNER JOIN squadov.vod_metadata AS vm
+            LEFT JOIN squadov.vod_metadata AS vm
                 ON vm.video_uuid = v.video_uuid
             LEFT JOIN squadov.share_tokens AS st
                 ON st.match_uuid = v.match_uuid OR st.clip_uuid = v.video_uuid
