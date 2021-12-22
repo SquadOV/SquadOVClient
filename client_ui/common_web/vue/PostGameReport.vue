@@ -17,7 +17,7 @@
                             :key="`recent-${idx}`"
                             :match="rMatch"
                             :style="`animation-delay: ${idx * 0.2}s`"
-                            :use-local-vod-preview="rMatch.base.isLocal"
+                            :use-local-vod-preview="rMatch.povs[0].isLocal"
                         >
 
                         </recent-match-display>
