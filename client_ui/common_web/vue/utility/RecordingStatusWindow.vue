@@ -59,7 +59,6 @@
 
         <div class="pa-2" v-if="expanded">
             <v-btn
-                :disabled="isStorageFull"
                 block
                 icon
                 tile
@@ -234,27 +233,15 @@ export default class RecordingStatusWindow extends Vue {
         // First check if user is using local recording or if localDiskSpaceRecordUsageGb is still null
         if (!this.$store.state.settings.record.useLocalRecording) {
             this.isStorageFull = false
-            if (this.isPaused === true) {
-                // We will toggle unpause so it will start recording again
-                this.togglePause()
-            }
             return
         } else if (this.localDiskSpaceRecordUsageGb === null) {
             return
         }
         this.storageGBLeft = this.maxLocalRecordingSizeGb - this.localDiskSpaceRecordUsageGb
-
         // If storage is less than 1 GB, we will pause recording and set the Recording status to show low storage warning.
         if (this.storageGBLeft < 1) {
-            if (this.isPaused === false) {
-                this.togglePause()
-            }
             this.isStorageFull = true
         } else {
-            // If they make more room, we will unpause the recording
-            if (this.isPaused === true) {
-                this.togglePause()
-            }
             this.isStorageFull = false
         }
     }
