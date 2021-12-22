@@ -226,9 +226,9 @@ void WasapiAudioClientRecorder::startRecording() {
             std::this_thread::sleep_for(
                 std::chrono::milliseconds(
                     // We shouldn't ever need the std::min here but just in case to ensure that this loop *actually* finishes.
-                    std::min(static_cast<int64_t>(_bufferDuration/REFTIMES_PER_MILLISEC/2.0, 1000)
+                    std::min(static_cast<int64_t>(_bufferDuration/REFTIMES_PER_MILLISEC/2.0), int64_t(1000))
                 )
-            ));
+            );
 
             uint32_t packetLength = 0;
             hr = _captureClient->GetNextPacketSize(&packetLength);
