@@ -191,7 +191,7 @@ void DxgiDesktopRecorder::startRecording() {
         service::system::getCurrentSettings()->reloadSettingsFromFile();
         const auto recSettings = service::system::getCurrentSettings()->recording();
         const bool useHwFrame = recSettings.useVideoHw;
-        const bool useMouse = recSettings.recordMouse;
+        const bool useMouse = recSettings.recordMouse2;
 
         int64_t count = 0;
         int64_t numReused = 0;

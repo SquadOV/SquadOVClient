@@ -75,7 +75,7 @@ export interface SquadOvRecordingSettings {
     useHwEncoder: boolean
     useVfr4: boolean
     useWGC2: boolean
-    recordMouse: boolean
+    recordMouse2: boolean
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
@@ -326,7 +326,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
-                recordMouse: true,
+                recordMouse2: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -371,7 +371,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
-                recordMouse: true,
+                recordMouse2: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -416,7 +416,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
-                recordMouse: true,
+                recordMouse2: false,
                 outputDevices: [
                     {
                         device: 'Default Device',
@@ -486,7 +486,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useHwEncoder: true,
             useVfr4: true,
             useWGC2: true,
-            recordMouse: true,
+            recordMouse2: false,
             outputDevices: [
                 {
                     device: 'Default Device',
@@ -606,8 +606,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.record.useWGC2 = true
         }
 
-        if (parsedData.record.recordMouse === undefined) {
-            parsedData.record.recordMouse = true
+        if (parsedData.record.recordMouse2 === undefined) {
+            parsedData.record.recordMouse2 = false
         }
         
         if (parsedData.record.useLocalRecording === undefined) {

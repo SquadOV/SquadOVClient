@@ -40,7 +40,7 @@ struct RecordingSettings {
     bool useHwEncoder = false;
     bool useVfr4 = true;
     bool useWGC2 = true;
-    bool recordMouse = true;
+    bool recordMouse2 = false;
 
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
