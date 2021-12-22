@@ -117,6 +117,7 @@ WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid, double volume):
         return;
     }
 
+    LOG_INFO("...Successfully activated WASAPI process loopback..." << std::endl);
     // At this point we have an audio client so we should be able to do the normal WASAPI recording.
     _internal = std::make_unique<WasapiAudioClientRecorder>(
         completion.client(),
