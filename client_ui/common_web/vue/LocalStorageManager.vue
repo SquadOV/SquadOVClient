@@ -156,6 +156,7 @@
                                             <recent-match-display
                                                 class="mb-4 full-width"
                                                 :match="vodToMatch[vod]"
+                                                :pov="vodToMatch[vod].povs[0]"
                                                 :disable-click="inSelectMode"
                                                 use-local-vod-preview
                                                 disable-mini

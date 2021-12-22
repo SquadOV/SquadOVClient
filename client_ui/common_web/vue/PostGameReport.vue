@@ -18,6 +18,7 @@
                             :match="rMatch"
                             :style="`animation-delay: ${idx * 0.2}s`"
                             :use-local-vod-preview="rMatch.povs[0].isLocal"
+                            :pov="rMatch.povs[0]"
                         >
 
                         </recent-match-display>
