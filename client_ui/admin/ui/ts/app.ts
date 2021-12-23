@@ -43,6 +43,8 @@ const SearchUser = () => import('@client/vue/search/SearchUser.vue')
 const SearchMatch = () => import('@client/vue/search/SearchMatch.vue')
 const SearchVod = () => import('@client/vue/search/SearchVod.vue')
 
+const UserActivityCorrelation = () => import('@client/vue/UserActivityCorrelation.vue')
+
 const baseRoutes : any[] = [
     {
         path: '/',
@@ -135,6 +137,10 @@ const baseRoutes : any[] = [
     {
         path: '/search/vod',
         component: SearchVod,
+    },
+    {
+        path: '/useractivity',
+        component: UserActivityCorrelation,
     }
 ]
 

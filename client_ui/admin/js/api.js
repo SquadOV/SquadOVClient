@@ -1932,7 +1932,7 @@ class ApiServer {
                     WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
                         AND NOT v.is_clip
                         AND v.match_uuid IS NOT NULL
-                    GROUP BY v.user_Uuid
+                    GROUP BY v.user_uuid
                 ) sub
                 GROUP BY sub.days_active
             `
@@ -2091,6 +2091,263 @@ class ApiServer {
             ele.perc = ele.count / total
         })
         return rows
+    }
+
+    async getActivityCorrelation(start, end, mode) {
+        // Y-axis
+        let cte = `
+            SELECT dae.user_id AS "user_id", COUNT(DISTINCT dae.tm) AS "days_active"
+            FROM squadov.daily_active_endpoint AS dae
+            WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+            GROUP BY dae.user_id
+        `
+
+        let primary = `
+            WITH cte AS (
+                ${cte}
+            )
+        `
+
+        switch (mode) {
+            case 0:
+                // Account age
+                primary += `
+                    SELECT DATE_PART('day', NOW() - u.registration_time)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                    FROM cte
+                    INNER JOIN squadov.users AS u
+                        ON u.id = cte.user_id
+                `
+                break
+            case 1:
+                // Days of VOD recordings
+                primary += `
+                    SELECT COUNT(DISTINCT DATE_TRUNC('day', v.end_time))::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                    FROM cte
+                    INNER JOIN squadov.users AS u
+                        ON u.id = cte.user_id
+                    INNER JOIN squadov.vods AS v
+                        ON v.user_uuid = u.uuid
+                    WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                        AND NOT v.is_clip
+                        AND v.match_uuid IS NOT NULL
+                    GROUP BY v.user_uuid, cte.days_active
+                `
+                break
+            case 2:
+                // # of squads
+                primary += `
+                    SELECT COUNT(sra.squad_id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                    FROM cte 
+                    INNER JOIN squadov.squad_role_assignments AS sra
+                        ON sra.user_id = cte.user_id
+                    GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 3:
+                // # of squads not public
+                primary += `
+                    SELECT COUNT(sra.squad_id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                    FROM cte 
+                    INNER JOIN squadov.squad_role_assignments AS sra
+                        ON sra.user_id = cte.user_id
+                    INNER JOIN squadov.squads AS s
+                        ON s.id = sra.squad_id
+                    WHERE NOT s.is_public AND NOT s.is_discoverable
+                    GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 4:
+                // # of squadmates
+                primary += `
+                SELECT COUNT(sra2.user_id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte 
+                INNER JOIN squadov.squad_role_assignments AS sra
+                    ON sra.user_id = cte.user_id
+                INNER JOIN squadov.squad_role_assignments AS sra2
+                    ON sra2.squad_id = sra.squad_id
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 5:
+                // # of squadmates (non-public)
+                primary += `
+                SELECT COUNT(sra2.user_id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte 
+                INNER JOIN squadov.squad_role_assignments AS sra
+                    ON sra.user_id = cte.user_id
+                INNER JOIN squadov.squads AS s
+                    ON s.id = sra.squad_id
+                INNER JOIN squadov.squad_role_assignments AS sra2
+                    ON sra2.squad_id = sra.squad_id
+                WHERE NOT s.is_public AND NOT s.is_discoverable
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 6:
+                // # of VODs
+                primary += `
+                SELECT COUNT(v.video_uuid)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.users AS u
+                    ON u.id = cte.user_id
+                INNER JOIN squadov.vods AS v
+                    ON v.user_uuid = u.uuid
+                WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                    AND NOT v.is_clip
+                    AND v.match_uuid IS NOT NULL
+                GROUP BY v.user_uuid, cte.days_active
+                `
+                break
+            case 7:
+                // # of clips
+                primary += `
+                SELECT COUNT(v.video_uuid)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.users AS u
+                    ON u.id = cte.user_id
+                INNER JOIN squadov.vods AS v
+                    ON v.user_uuid = u.uuid
+                WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                    AND v.is_clip
+                    AND v.match_uuid IS NOT NULL
+                GROUP BY v.user_uuid, cte.days_active
+                `
+                break
+            case 8:
+                // # of share links (no clips)
+                primary += `
+                SELECT COUNT(st.id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.share_tokens AS st
+                    ON st.user_id = cte.user_id
+                WHERE st.clip_uuid IS NULL
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 9:
+                // # of share links (with clips)
+                primary += `
+                SELECT COUNT(st.id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.share_tokens AS st
+                    ON st.user_id = cte.user_id
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 10:
+                // Most played game
+                primary += `
+                SELECT DISTINCT ON (sub.user_id)
+                    CASE
+                        WHEN sub.game = 0 THEN 'Aim Lab'
+                        WHEN sub.game = 1 THEN 'Hearthstone'
+                        WHEN sub.game = 2 THEN 'League of Legends'
+                        WHEN sub.game = 3 THEN 'Teamfight Tactics'
+                        WHEN sub.game = 4 THEN 'Valorant'
+                        WHEN sub.game = 5 THEN 'World of Warcraft'
+                        WHEN sub.game = 6 THEN 'CSGO'
+                        ELSE 'Unknown'
+                    END AS "x",
+                    sub.y::INTEGER AS "y"
+                FROM (
+                    SELECT cte.user_id, m.game, SUM(EXTRACT(EPOCH FROM (v.end_time - v.start_time))) AS "count", cte.days_active::INTEGER AS "y"
+                    FROM cte
+                    INNER JOIN squadov.users AS u
+                        ON u.id = cte.user_id
+                    INNER JOIN squadov.vods AS v
+                        ON v.user_uuid = u.uuid
+                    INNER JOIN squadov.matches AS m
+                        ON m.uuid = v.match_uuid
+                    WHERE NOT v.is_clip
+                        AND v.end_time IS NOT NULL
+                    GROUP BY cte.user_id, cte.days_active, m.game
+                ) sub
+                ORDER BY sub.user_id, sub.count DESC
+                `
+                break
+            case 11:
+                // Internet speed
+                primary += `
+                SELECT ROUND(u.speed_check_mbps)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.users AS u
+                    ON u.id = cte.user_id
+                `
+                break
+            case 12:
+                // CPU
+                primary += `
+                SELECT uhs.cpu->>'brand' AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.user_hardware_specs AS uhs
+                    ON uhs.user_id = cte.user_id
+                `
+                break
+            case 13:
+                // GPU
+                primary += `
+                SELECT uhs.display#>>'{gpus, 0, name}' AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.user_hardware_specs AS uhs
+                    ON uhs.user_id = cte.user_id
+                `
+                break
+            case 14:
+                // Verified
+                primary += `
+                SELECT
+                    CASE u.verified 
+                        WHEN TRUE THEN 'Yes'
+                        ELSE 'No'
+                    END AS "x",
+                    cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.users AS u
+                    ON u.id = cte.user_id
+                `
+                break
+            case 15:
+                // # of squads public
+                primary += `
+                SELECT COUNT(sra.squad_id)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte 
+                INNER JOIN squadov.squad_role_assignments AS sra
+                    ON sra.user_id = cte.user_id
+                INNER JOIN squadov.squads AS s
+                    ON s.id = sra.squad_id
+                WHERE s.is_public AND s.is_discoverable
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+            case 16:
+                // # of hours of VOD recordings
+                primary += `
+                SELECT ROUND(SUM(EXTRACT(EPOCH FROM (v.end_time - v.start_time)))::DOUBLE PRECISION / 60.0 / 60.0)::INTEGER AS "x", cte.days_active::INTEGER AS "y"
+                FROM cte
+                INNER JOIN squadov.users AS u
+                    ON u.id = cte.user_id
+                INNER JOIN squadov.vods AS v
+                    ON v.user_uuid = u.uuid
+                INNER JOIN squadov.matches AS m
+                    ON m.uuid = v.match_uuid
+                WHERE NOT v.is_clip
+                    AND v.end_time IS NOT NULL
+                GROUP BY cte.user_id, cte.days_active
+                `
+                break
+        }
+
+        const { rows } = await this.pool.query(
+            primary,
+            [start, end]
+        )
+
+        return rows.map((ele) => {
+            return {
+                x: ele.x,
+                y: ele.y,
+            }
+        })
     }
 }
 
