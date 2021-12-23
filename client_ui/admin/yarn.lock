@@ -2594,6 +2594,13 @@ ecc-jsbn@~0.1.1:
     jsbn "~0.1.0"
     safer-buffer "^2.1.0"
 
+echarts-simple-transform@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/echarts-simple-transform/-/echarts-simple-transform-1.0.0.tgz#f20dc8066c79d0dcba7a7bf71cb925a8229e76f7"
+  integrity sha512-zidekQFwV7s2rLUBVvum9d7kbhX2uoVWqDNYWv+MciEbjBzlhdvLDzciSgeBNe9bwEiqVfGC6NP99zjo3JXDIg==
+  dependencies:
+    tslib "2.0.3"
+
 echarts@^5.0.2:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/echarts/-/echarts-5.0.2.tgz#1726d17a57cf05d62cd0567b4325e1201a56baf6"

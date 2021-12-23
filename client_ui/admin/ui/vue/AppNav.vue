@@ -53,6 +53,10 @@ export default class AppNav extends Vue {
             to: '/pucurve'
         },
         {
+            text: 'Activity Correlation',
+            to: '/useractivity'
+        },
+        {
             text: 'Metrics',
             open: true,
             children: [
