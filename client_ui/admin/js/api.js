@@ -2068,6 +2068,30 @@ class ApiServer {
             })
         }
     }
+
+    async getReferralBreakdown(start, end) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT COALESCE(rc.code, '[NO REFERRAL CODE]') AS "code", COUNT(u.id) AS "count"
+            FROM squadov.users AS u
+            LEFT JOIN squadov.user_referral_code_usage AS ucu
+                ON ucu.email = u.email
+            LEFT JOIN squadov.referral_codes AS rc
+                ON rc.id = ucu.code_id
+            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time  < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+            GROUP BY rc.code
+            ORDER BY COUNT(u.id) DESC
+            `,
+            [start, end]
+        )
+
+        let total = rows.reduceRight((a, b) => a + parseInt(b.count), 0)
+        rows.forEach((ele) => {
+            ele.count = parseInt(ele.count)
+            ele.perc = ele.count / total
+        })
+        return rows
+    }
 }
 
 exports.ApiServer = ApiServer
