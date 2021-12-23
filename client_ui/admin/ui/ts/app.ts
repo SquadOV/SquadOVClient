@@ -30,6 +30,7 @@ const MetricAverageAge = () => import('@client/vue/metrics/MetricAverageAge.vue'
 const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
 const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
 const ReferralFlow = () => import('@client/vue/referral/ReferralFlow.vue')
+const RegistrationBreakdown = () => import('@client/vue/referral/RegistrationBreakdown.vue')
 
 const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
 const CohortInstalledUsers = () => import('@client/vue/cohorts/CohortInstalledUsers.vue')
@@ -106,6 +107,10 @@ const baseRoutes : any[] = [
     {
         path: '/referrals/flow',
         component: ReferralFlow,
+    },
+    {
+        path: '/referrals/breakdown',
+        component: RegistrationBreakdown,
     },
     {
         path: '/cohorts/installed-users',

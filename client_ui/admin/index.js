@@ -144,6 +144,14 @@ apiRouter.get('/referralflow', async function (request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/referralbreakdown', async function (request, response) {
+    start = new Date(parseInt(request.query.start))
+    end = new Date(parseInt(request.query.end))
+
+    data = await apiServer.getReferralBreakdown(start, end)
+    response.status(200).json(data)
+})
+
 apiRouter.get('/search/user', async function (request, response) {
     search = request.query.search
     data = await apiServer.searchForUser(search)
