@@ -152,6 +152,16 @@ apiRouter.get('/referralbreakdown', async function (request, response) {
     response.status(200).json(data)
 })
 
+apiRouter.get('/breakdown/:breakdown', async function(request, response) {
+    breakdown = parseInt(request.params.breakdown)
+    start = new Date(parseInt(request.query.start))
+    end = new Date(parseInt(request.query.end))
+
+    data = await apiServer.getBreakdown(breakdown, start, end, request.query)
+    response.status(200).json(data)
+})
+
+
 apiRouter.get('/activity', async function (request, response) {
     start = new Date(parseInt(request.query.start))
     end = new Date(parseInt(request.query.end))

@@ -11,6 +11,7 @@ export enum Metrics {
     LostUsers,
     AverageAge,
     Clips,
+    WatchTime,
 }
 
 export interface MetricDatum {
