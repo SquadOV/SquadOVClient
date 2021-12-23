@@ -24,13 +24,18 @@ const MetricSquadInvites = () => import('@client/vue/metrics/MetricSquadInvites.
 const MetricGames = () => import('@client/vue/metrics/MetricGames.vue')
 const MetricVods = () => import('@client/vue/metrics/MetricVods.vue')
 const MetricClips = () => import('@client/vue/metrics/MetricClips.vue')
+const MetricWatchTime = () => import('@client/vue/metrics/MetricWatchTime.vue')
 const MetricLostUsers = () => import('@client/vue/metrics/MetricLostUsers.vue')
 const MetricAverageAge = () => import('@client/vue/metrics/MetricAverageAge.vue')
 
 const ReferralUsers = () => import('@client/vue/referral/ReferralUsers.vue')
 const ReferralCampaigns = () => import('@client/vue/referral/ReferralCampaigns.vue')
 const ReferralFlow = () => import('@client/vue/referral/ReferralFlow.vue')
-const RegistrationBreakdown = () => import('@client/vue/referral/RegistrationBreakdown.vue')
+
+const RegistrationBreakdown = () => import('@client/vue/breakdown/RegistrationBreakdown.vue')
+const BreakdownActiveUserGame = () => import('@client/vue/breakdown/BreakdownActiveUserGame.vue')
+const BreakdownWatchTimeGame = () => import('@client/vue/breakdown/BreakdownWatchTimeGame.vue')
+const BreakdownWatchTimeUser = () => import('@client/vue/breakdown/BreakdownWatchTimeUser.vue')
 
 const KpiDashboard = () => import('@client/vue/KpiDashboard.vue')
 const CohortInstalledUsers = () => import('@client/vue/cohorts/CohortInstalledUsers.vue')
@@ -99,6 +104,10 @@ const baseRoutes : any[] = [
         component: MetricClips,
     },
     {
+        path: '/metrics/watch',
+        component: MetricWatchTime,
+    },
+    {
         path: '/referrals/users',
         component: ReferralUsers,
     },
@@ -111,10 +120,6 @@ const baseRoutes : any[] = [
         component: ReferralFlow,
     },
     {
-        path: '/referrals/breakdown',
-        component: RegistrationBreakdown,
-    },
-    {
         path: '/cohorts/installed-users',
         component: CohortInstalledUsers,
     },
@@ -125,6 +130,22 @@ const baseRoutes : any[] = [
     {
         path: '/cohorts/recording-users',
         component: CohortRecordingUsers,
+    },
+    {
+        path: '/breakdown/registrations',
+        component: RegistrationBreakdown,
+    },
+    {
+        path: '/breakdown/watchtimeuser',
+        component: BreakdownWatchTimeUser,
+    },
+    {
+        path: '/breakdown/watchtimegame',
+        component: BreakdownWatchTimeGame,
+    },
+    {
+        path: '/breakdown/activeusergame',
+        component: BreakdownActiveUserGame,
     },
     {
         path: '/search/users',

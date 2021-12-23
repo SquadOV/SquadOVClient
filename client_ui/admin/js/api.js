@@ -2,6 +2,34 @@ const { Pool, Client } = require('pg')
 const fs = require('fs')
 const bent = require('bent')
 
+function gameToString(input) {
+    let game
+    switch (input) {
+        case 0:
+            game = 'Aim Lab'
+            break
+        case 1:
+            game = 'Hearthstone'
+            break
+        case 2:
+            game = 'League of Legends'
+            break
+        case 3:
+            game = 'Teamfight Tactics'
+            break
+        case 4:
+            game = 'Valorant'
+            break
+        case 5:
+            game = 'World of Warcraft'
+            break
+        case 6:
+            game = 'CSGO'
+            break
+    }
+    return game
+}
+
 class ApiServer {
     constructor(config) {
         this.pool = new Pool({
@@ -827,6 +855,106 @@ class ApiServer {
         })
     }
 
+    async getWatchTime(interval, start, end) {
+        let pgInterval
+        if (interval == 0) {
+            pgInterval = 'day'
+        } else if (interval == 1) {
+            pgInterval = 'week'
+        } else { 
+            pgInterval = 'month'
+        }
+
+        const query = `
+        WITH series(tm) AS (
+            SELECT *
+            FROM generate_series(
+                DATE_TRUNC('day', $1::TIMESTAMPTZ),
+                DATE_TRUNC('day', $2::TIMESTAMPTZ),
+                INTERVAL '1 ${pgInterval}'
+            )
+        )
+        SELECT
+            s.tm AS "tm",
+            g.game AS "game",
+            g.hours AS "hours"
+        FROM series AS s
+        CROSS JOIN LATERAL (
+            SELECT m.game, SUM(vwa.end_seconds - vwa.start_seconds)::FLOAT / 3600.0
+            FROM squadov.vod_watch_analytics AS vwa
+            INNER JOIN squadov.vods AS v
+                ON v.video_uuid = vwa.video_uuid
+            INNER JOIN squadov.matches AS m
+                ON m.uuid = v.match_uuid
+            WHERE NOT v.is_clip
+                AND v.end_time IS NOT NULL
+                AND vwa.tm >= s.tm AND vwa.tm < s.tm + INTERVAL '1 ${pgInterval}'
+            GROUP BY m.game
+        ) AS g(game, hours)
+        `
+
+        const { rows } = await this.pool.query(
+            query,
+            [start, end]
+        )
+
+        // Each row has 'tm', 'game', 'count'.
+        // To return from the API, we want to group all the games in a single row for each instance of 'tm'.
+        let retData = new Map()
+
+        for (let r of rows) {
+            let tmKey = new Date(r.tm).getTime()
+            if (!retData.has(tmKey)) {
+                retData.set(tmKey, {
+                    tm: r.tm,
+                    data: {
+                        'Total': 0,
+                        'Aim Lab': 0,
+                        'CS:GO': 0,
+                        'Hearthstone': 0,
+                        'LoL': 0,
+                        'TFT': 0,
+                        'Valorant': 0,
+                        'WoW': 0,
+                    },
+                    sub: ['Total', 'Aim Lab', 'CS:GO', 'Hearthstone', 'LoL', 'TFT', 'Valorant', 'WoW']
+                })
+            }
+            
+            let d = retData.get(tmKey)
+            let hours = parseFloat(parseFloat(r.hours).toFixed(2))
+            switch (parseInt(r.game)) {
+                case 0:
+                    d.data['Aim Lab'] = hours
+                    break
+                case 1:
+                    d.data['Hearthstone'] = hours
+                    break
+                case 2:
+                    d.data['LoL'] = hours
+                    break
+                case 3:
+                    d.data['TFT'] = hours
+                    break
+                case 4:
+                    d.data['Valorant'] = hours
+                    break
+                case 5:
+                    d.data['WoW'] = hours
+                    break
+                case 6:
+                    d.data['CS:GO'] = hours
+                    break
+            }
+
+            d.data['Total'] += hours
+        }
+
+        return Array.from(retData.values()).sort((a, b) => {
+            return new Date(a.tm).getTime() - new Date(b.tm).getTime()
+        })
+    }
+
     async getViralCoefficient() {
         let data = (await this.pool.query(
             `
@@ -913,6 +1041,20 @@ class ApiServer {
         }
     }
 
+    async getBreakdown(breakdown, start, end, extra) {
+        switch (breakdown) {
+            case 0:
+                return await this.getRegistrationBreakdown(start, end)
+            case 1:
+                return await this.getWatchTimeGameBreakdown(start, end)
+            case 2:
+                return await this.getWatchTimeUserBreakdown(start, end)
+            case 3:
+                return await this.getActiveUserGameBreakdown(start, end)
+
+        }
+    }
+
     async getMetrics(metric, interval, start, end, extra) {
         switch (metric) {
             case 0:
@@ -939,6 +1081,8 @@ class ApiServer {
                 return await this.getAverageAgeKpi(interval, start, end)
             case 11: // Clips
                 return await this.getVods(interval, start, end, extra.useTimeHours === 'true', true)
+            case 12: // Watch time
+                return await this.getWatchTime(interval, start, end)
         }
     }
 
@@ -2069,7 +2213,7 @@ class ApiServer {
         }
     }
 
-    async getReferralBreakdown(start, end) {
+    async getRegistrationBreakdown(start, end) {
         const { rows } = await this.pool.query(
             `
             SELECT COALESCE(rc.code, '[NO REFERRAL CODE]') AS "code", COUNT(u.id) AS "count"
@@ -2090,7 +2234,103 @@ class ApiServer {
             ele.count = parseInt(ele.count)
             ele.perc = ele.count / total
         })
-        return rows
+        return {
+            headers: ['Code', 'Count', 'Percentage'],
+            data: rows.map((ele) => {
+                return [
+                    ele.code,
+                    ele.count,
+                    ele.perc,
+                ]
+            })
+        }
+    }
+
+    async getWatchTimeGameBreakdown(start, end) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT m.game AS "game", SUM(vwa.end_seconds - vwa.start_seconds)::FLOAT / 3600.0 AS "time"
+            FROM squadov.vod_watch_analytics AS vwa
+            INNER JOIN squadov.vods AS v
+                ON v.video_uuid = vwa.video_uuid
+            INNER JOIN squadov.matches AS m
+                ON m.uuid = v.match_uuid
+            WHERE vwa.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND vwa.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                AND NOT v.is_clip
+                    AND v.end_time IS NOT NULL
+            GROUP BY m.game
+            `,
+            [start, end]
+        )
+
+        return {
+            headers: ['Game', 'Time'],
+            data: rows.map((ele) => {
+                return [
+                    gameToString(ele.game),
+                    ele.time,
+                ]
+            })
+        }
+    }
+
+    async getWatchTimeUserBreakdown(start, end) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT u.username AS "username", SUM(vwa.end_seconds - vwa.start_seconds)::FLOAT / 3600.0 AS "time"
+            FROM squadov.vod_watch_analytics AS vwa
+            INNER JOIN squadov.vods AS v
+                ON v.video_uuid = vwa.video_uuid
+            INNER JOIN squadov.users AS u
+                ON u.uuid = v.user_uuid
+            WHERE vwa.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND vwa.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                AND NOT v.is_clip
+                    AND v.end_time IS NOT NULL
+            GROUP BY u.username
+            `,
+            [start, end]
+        )
+
+        return {
+            headers: ['Username', 'Time'],
+            data: rows.map((ele) => {
+                return [
+                    ele.username,
+                    ele.time,
+                ]
+            })
+        }
+    }
+
+    async getActiveUserGameBreakdown(start, end) {
+        const { rows } = await this.pool.query(
+            `
+            SELECT m.game AS "game", COUNT(DISTINCT dae.user_id) AS "count"
+            FROM squadov.daily_active_endpoint AS dae
+            INNER JOIN squadov.users AS u
+                ON u.id = dae.user_id
+            INNER JOIN squadov.vods AS v
+                ON v.user_uuid = u.uuid
+            INNER JOIN squadov.matches AS m
+                ON m.uuid = v.match_uuid
+            WHERE NOT v.is_clip
+                AND v.end_time IS NOT NULL
+                AND dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                AND v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+            GROUP BY m.game
+            `,
+            [start, end]
+        )
+
+        return {
+            headers: ['Game', 'Count'],
+            data: rows.map((ele) => {
+                return [
+                    gameToString(ele.game),
+                    ele.count,
+                ]
+            })
+        }
     }
 
     async getActivityCorrelation(start, end, mode) {

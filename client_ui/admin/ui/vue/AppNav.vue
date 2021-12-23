@@ -97,6 +97,10 @@ export default class AppNav extends Vue {
                     to: '/metrics/vods',
                 },
                 {
+                    text: 'Watch Time',
+                    to: '/metrics/watch',
+                },
+                {
                     text: 'Clips',
                     to: '/metrics/clips',
                 },
@@ -136,11 +140,29 @@ export default class AppNav extends Vue {
                     text: 'Flow',
                     to: '/referrals/flow'
                 },
-                {
-                    text: 'Reg Breakdown',
-                    to: '/referrals/breakdown'
-                },
             ]
+        },
+        {
+            text: 'Breakdowns',
+            open: true,
+            children: [
+                {
+                    text: 'Registrations',
+                    to: '/breakdown/registrations'
+                },
+                {
+                    text: 'Watch Time (User)',
+                    to: '/breakdown/watchtimeuser'
+                },
+                {
+                    text: 'Watch Time (Game)',
+                    to: '/breakdown/watchtimegame'
+                },
+                {
+                    text: 'Active User (Game)',
+                    to: '/breakdown/activeusergame'
+                },
+            ],
         },
         {
             text: 'Search',
