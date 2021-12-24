@@ -38,6 +38,8 @@ export default class VideoPreviewPlayer extends Vue {
         video: HTMLVideoElement
     }
 
+    canPause: boolean = false
+
     get hasPreview(): boolean {
         return !!this.videoUri
     }
@@ -47,7 +49,15 @@ export default class VideoPreviewPlayer extends Vue {
             let el = <HTMLElement>this.player.tech(0).el();
             el.style.opacity = '1.0'
 
-            this.player.play()
+            this.canPause = false
+            let promise = this.player.play()
+            if (!!promise) {
+                promise.finally(() => {
+                    this.canPause = true
+                })
+            } else {
+                this.canPause = true
+            }
         }
     }
 
@@ -65,6 +75,7 @@ export default class VideoPreviewPlayer extends Vue {
             return
         }
 
+        this.canPause = false
         if (!this.player) {
             this.player = videojs(this.$refs.video, {
                 controls: false,
@@ -98,6 +109,10 @@ export default class VideoPreviewPlayer extends Vue {
             }
 
             this.previousTime = tm
+        })
+
+        this.player.on('canplay', () => {
+            this.canPause = true
         })
 
         this.player.volume(0)
