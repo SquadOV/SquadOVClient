@@ -132,14 +132,16 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         this.currentWatchRangeSeconds = this.player.currentTime()
     }
 
-    stopWatchAnalyticsRange() {
+    stopWatchAnalyticsRange(manualStopTime: number | undefined = undefined) {
         if (!this.player || this.currentWatchRangeSeconds === null) {
             return
         }
 
         let start = this.currentWatchRangeSeconds
-        let end = this.player.currentTime()
+        let end = (manualStopTime !== undefined) ? manualStopTime : this.player.currentTime()
+        console.log(start, manualStopTime, this.player.currentTime())
 
+        console.trace()
         if (!!this.vod) {
             apiClient.markUserVideoWatchRange(this.vod.videoUuid, start, end).catch((err: any) => {
                 console.warn('Failed to mark user video watch range: ', err)
@@ -290,25 +292,12 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             this.lastTimestamp = newTime
         }
 
-        if (propagate) {
-            // We only want to do the watch ranges if propagate is true
-            // because that means this is an authoritative view of the VOD
-            // and so these events won't be duplicated. We want to first
-            // stop the previous range BEFORE we change the player time
-            // since the previous time is what the user watched up to.
-            this.stopWatchAnalyticsRange()
-        }
-
         this.player.currentTime(newTime)
 
         if (propagate) {
 ///#if DESKTOP
             this.rcContext?.goToTimestamp(newTime * 1000.0)
 ///#endif
-
-            // We start the new range AFTER we change the player time
-            // to be represent the new time range.
-            this.startWatchAnalyticsRange()
         }
 
     }
@@ -490,8 +479,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 }
 
                 this.$emit('update:currentTs', this.player.currentTime())
+
+                // I'd rather lastTimestamp be an indicator of when the player was actually playing
+                // so we have a better sense of what the pre-seek timestamp was for analytics.
                 let diffFromLastTs = Math.abs(this.player.currentTime() - this.lastTimestamp)
-                if (diffFromLastTs > 1.0) {
+                if (diffFromLastTs > 1.0 && !this.player.seeking()) {
                     this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
                     this.lastTimestamp = this.player.currentTime()
 
@@ -514,10 +506,28 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         })
 
         this.player.on('pause', () => {
+            // Pause events are sent when seeking when the video is playing.
+            if (!!this.player?.seeking()) {
+                return
+            }
+
             if (!!this.player) {
                 this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.StopVod, '', this.player.currentTime())
             }
             this.stopWatchAnalyticsRange()
+        })
+
+        this.player.on('seeking', () => {
+            // If the user did a manual jump then we also need to manually close out the previous range
+            // since otherwise when the user stops playing the VOD we'll get a much longer range (e.g. if they jumped
+            // forward 5 minutes that's an extra 5 minutes of time we add to their watch time). Note that we can't use the
+            // player's currentTime since that'll be inaccurate (it'll be the time we're jumping to) so we use the lastTimestamp instead.
+            this.stopWatchAnalyticsRange(this.lastTimestamp)
+
+            // If the user is still playing the VOD then start a new range.
+            if (!this.player?.paused()) {
+                this.startWatchAnalyticsRange()
+            }
         })
 
         this.player.on('fullscreenchange', () => {
