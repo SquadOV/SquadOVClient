@@ -173,6 +173,16 @@ int main(int argc, char** argv) {
 #endif
     shared::log::Log::initializeGlobalLogger("squadov.log");
 
+    try {
+        const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
+        LOG_INFO("SET TZ FOLDER INSTALL: " << tzDataFolder << std::endl);
+        date::set_install(tzDataFolder);
+        LOG_INFO("...Get TZDB List." << std::endl);
+        date::get_tzdb_list();
+    } catch (std::exception& ex) {
+        LOG_WARNING("...Failed to setup date library timezones [THINGS MAY BREAK ELSEWHERE???]: " << ex.what() << std::endl);
+    }
+
     // NTP can't be init before the logger since we log stuff inside the NTP client.
     shared::time::NTPClient::singleton()->enable(true);
     shared::time::NTPClient::singleton()->initialize();
@@ -241,11 +251,6 @@ int main(int argc, char** argv) {
 
     LOG_INFO("Port Audio Set Debug Logging..." << std::endl);
     PaUtil_SetDebugPrintFunction(portaudioLogCallback);
-
-    const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
-    LOG_INFO("TZ FOLDER: " << tzDataFolder << std::endl);
-    date::set_install(tzDataFolder);
-    date::get_tzdb_list();
 
     // Sanity check the timezone in the logs...
     {
