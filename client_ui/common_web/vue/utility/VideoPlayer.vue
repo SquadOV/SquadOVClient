@@ -139,9 +139,6 @@ export default class VideoPlayer extends mixins(CommonComponent) {
 
         let start = this.currentWatchRangeSeconds
         let end = (manualStopTime !== undefined) ? manualStopTime : this.player.currentTime()
-        console.log(start, manualStopTime, this.player.currentTime())
-
-        console.trace()
         if (!!this.vod) {
             apiClient.markUserVideoWatchRange(this.vod.videoUuid, start, end).catch((err: any) => {
                 console.warn('Failed to mark user video watch range: ', err)
@@ -483,7 +480,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 // I'd rather lastTimestamp be an indicator of when the player was actually playing
                 // so we have a better sense of what the pre-seek timestamp was for analytics.
                 let diffFromLastTs = Math.abs(this.player.currentTime() - this.lastTimestamp)
-                if (diffFromLastTs > 1.0 && !this.player.seeking()) {
+                if (diffFromLastTs > 1.0 && !this.player.seeking() && !this.player.paused()) {
                     this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
                     this.lastTimestamp = this.player.currentTime()
 

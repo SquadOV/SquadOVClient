@@ -436,7 +436,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         }
 
         if (!!this.vod) {
-            this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime(), false)
+            this.$refs.player.goToTimeMs(dt.getTime() - this.vod.startTime.getTime(), false, false)
         }
     }
 
