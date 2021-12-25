@@ -110,6 +110,13 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         return;
     }
 
+    // I'm not sure why this can be 0 but in practice that does seem to be the case when recording audio selectively.
+    // In other cases, it does seem like the frame count does seem to match the sample rate so should be a safe guess
+    // as to a resonable buffer size.
+    if (bufferFrameCount == 0) {
+        bufferFrameCount = _pwfx.Format.nSamplesPerSec;
+    }
+
     _exists = true;
     _bufferDuration = static_cast<double>(REFTIMES_PER_SEC) * bufferFrameCount / _pwfx.Format.nSamplesPerSec;
     LOG_INFO("Success Loading WASAPI [" << context << "]: " << _bufferDuration << "\t" << _pwfx.Format.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.Format.nChannels << " (Channels)" << std::endl);
