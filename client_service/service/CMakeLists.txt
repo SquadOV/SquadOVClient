@@ -35,6 +35,7 @@ SET(SRCS
     src/recorder/pipe/cloud/gcs_storage_client.cpp
     src/recorder/pipe/cloud/s3_storage_client.cpp
     src/recorder/default_flags.cpp
+    src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
     src/system/state.cpp
@@ -104,6 +105,8 @@ SET(HEADERS
     src/recorder/pipe/cloud_storage_piper.h
     src/recorder/default_flags.h
     src/recorder/process_record_interface.h
+    src/recorder/compositor/layers/compositor_layer.h
+    src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
     src/system/settings.h
     src/system/state.h
