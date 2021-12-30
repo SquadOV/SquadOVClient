@@ -92,7 +92,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
-            state.settings.record.useVideoHw = b
+            state.settings.record.useVideoHw2 = b
             saveLocalSettings(state.settings)
 /// #endif
         },

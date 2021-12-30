@@ -47,8 +47,8 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.resY = obj["resY"].get<int32_t>();
     settings.fps = obj["fps"].get<int32_t>();
 
-    // TEMPORARY MEASURE FOR NVIDIA GPUS DUE TO #1260.
-    settings.useVideoHw = obj.value("useVideoHw", true) && !service::system::getGlobalState()->isNvidiaGPU();
+    // This should be false by default to accomodate users with NVIDIA GPUs, see #1260.
+    settings.useVideoHw2 = obj.value("useVideoHw2", false);
 
     settings.useHwEncoder = obj.value("useHwEncoder", true);
 

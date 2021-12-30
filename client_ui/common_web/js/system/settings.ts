@@ -71,7 +71,7 @@ export interface ProcessAudioRecordSettings {
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
-    useVideoHw: boolean
+    useVideoHw2: boolean
     useHwEncoder: boolean
     useVfr4: boolean
     useWGC2: boolean
@@ -322,7 +322,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 30,
-                useVideoHw: true,
+                useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
@@ -367,7 +367,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 60,
-                useVideoHw: true,
+                useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
@@ -412,7 +412,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 1080,
                 fps: 60,
-                useVideoHw: true,
+                useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
                 useWGC2: true,
@@ -482,7 +482,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         record: {
             resY: 1080,
             fps: 60,
-            useVideoHw: true,
+            useVideoHw2: true,
             useHwEncoder: true,
             useVfr4: true,
             useWGC2: true,
@@ -578,8 +578,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.runOnStartup = true
         }
 
-        if (parsedData.record.useVideoHw === undefined) {
-            parsedData.record.useVideoHw = true
+        if (parsedData.record.useVideoHw2 === undefined) {
+            parsedData.record.useVideoHw2 = false
         }
 
         if (parsedData.record.useHwEncoder === undefined) {

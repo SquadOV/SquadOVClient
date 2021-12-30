@@ -420,7 +420,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
             _vcodecContext->width = static_cast<int>(width);
             _vcodecContext->height = static_cast<int>(height);
 
-            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw;
+            canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw2;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = int64_t(6000) * 1000;
             _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;

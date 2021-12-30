@@ -44,7 +44,7 @@ bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWi
     }
 
     service::system::getCurrentSettings()->reloadSettingsFromFile();
-    const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw;
+    const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw2;
 
     auto* ptr = (proc)(info, wnd, shared, useHwFrame);
     if (!ptr) {

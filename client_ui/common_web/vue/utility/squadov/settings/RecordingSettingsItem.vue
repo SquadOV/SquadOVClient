@@ -43,7 +43,7 @@
                     <v-col cols-sm="12" cols-md="3" v-if="!mini">
                         <v-checkbox
                             class="ma-0"
-                            :input-value="$store.state.settings.record.useVideoHw"
+                            :input-value="$store.state.settings.record.useVideoHw2"
                             @change="$store.commit('changeUseVideoHw', arguments[0])"
                             hide-details
                             label="Use GPU Pipeline"

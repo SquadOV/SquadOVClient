@@ -152,6 +152,9 @@ void D3d11VideoProcessor::process(ID3D11Texture2D* input, ID3D11Texture2D* outpu
         }
     }
 
+    _inputDesc = inputDesc;
+    _outputDesc = outputDesc;
+
     // Try to reuse video processor outputs as much as possible.
     auto viewIt = _outputViews.find(output);
     ID3D11VideoProcessorOutputView* outputView = nullptr;

@@ -36,7 +36,7 @@ struct ProcessAudioRecordSettings {
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
-    bool useVideoHw = false;
+    bool useVideoHw2 = false;
     bool useHwEncoder = false;
     bool useVfr4 = true;
     bool useWGC2 = true;
