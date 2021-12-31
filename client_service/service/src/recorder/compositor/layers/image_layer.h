@@ -4,12 +4,9 @@
 
 namespace service::recorder::compositor::layers {
 
-class CompositorClockLayer: public CompositorLayer {
+class ImageLayer: public CompositorLayer {
 public:
-
-private:
+    virtual ID3D11Texture2D* get() const = 0;
 };
-
-using CompositorClockLayerPtr = std::shared_ptr<CompositorClockLayer>;
 
 }

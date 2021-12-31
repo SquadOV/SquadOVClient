@@ -1,5 +1,7 @@
 #pragma once
 
+#include "recorder/compositor/graph/compositor_node.h"
+
 #include <memory>
 
 namespace service::recorder::encoder {
@@ -15,11 +17,10 @@ struct VideoWindowInfo {
     bool init = false;
 };
 
-class VideoRecorder {
+class VideoRecorder: public service::recorder::compositor::graph::CompositorNode {
 public:
     virtual ~VideoRecorder() {}
     virtual void startRecording() = 0;
-    virtual void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) = 0;
     virtual void stopRecording() = 0;
 protected:
     

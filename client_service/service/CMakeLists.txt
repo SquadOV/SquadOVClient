@@ -35,6 +35,12 @@ SET(SRCS
     src/recorder/pipe/cloud/gcs_storage_client.cpp
     src/recorder/pipe/cloud/s3_storage_client.cpp
     src/recorder/default_flags.cpp
+    src/recorder/compositor/graph/texture_context_normalizer_node.cpp
+    src/recorder/compositor/graph/fps_limiter_node.cpp
+    src/recorder/compositor/graph/sink_node.cpp
+    src/recorder/compositor/graph/compositor_node.cpp
+    src/recorder/compositor/layers/clock_layer.cpp
+    src/recorder/compositor/layers/compositor_layer.cpp
     src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
@@ -105,6 +111,12 @@ SET(HEADERS
     src/recorder/pipe/cloud_storage_piper.h
     src/recorder/default_flags.h
     src/recorder/process_record_interface.h
+    src/recorder/compositor/graph/texture_context_normalizer_node.h
+    src/recorder/compositor/graph/fps_limiter_node.h
+    src/recorder/compositor/graph/sink_node.h
+    src/recorder/compositor/graph/compositor_node.h
+    src/recorder/compositor/layers/image_layer.h
+    src/recorder/compositor/layers/clock_layer.h
     src/recorder/compositor/layers/compositor_layer.h
     src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
@@ -244,6 +256,8 @@ if(WIN32)
         src/recorder/image/image.h
         src/recorder/image/d3d_image.cpp
         src/recorder/image/d3d_image.h
+        src/recorder/compositor/graph/compositor_node.h
+        src/recorder/compositor/graph/compositor_node.cpp
         src/renderer/d3d11_context.h
         src/renderer/d3d11_context.cpp
         src/renderer/d3d11_texture.h

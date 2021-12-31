@@ -1,8 +1,12 @@
 #pragma once
 
-#include "recorder/compositor/layers/compositor_clock_layer.h"
+#include "recorder/compositor/layers/clock_layer.h"
 #include "recorder/compositor/layers/compositor_layer.h"
+#include "recorder/encoder/av_encoder.h"
+#include "renderer/d3d11_context.h"
 
+#include <memory>
+#include <mutex>
 #include <vector>
 
 namespace service::recorder::compositor {
@@ -25,12 +29,27 @@ namespace service::recorder::compositor {
 // then we can do an optimization and not do a render call.
 class Compositor {
 public:
-    void setClockLayer(const layers::CompositorClockLayer& layer);
-    void addLayer(const layers::CompositorLayerPtr& layer);
+    explicit Compositor(const service::renderer::D3d11Device device);
 
+    service::renderer::D3d11SharedContext* context() const { return _d3dContext.get(); }
+
+    layers::ClockLayerPtr createClockLayer();
+
+    void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder);
+    
 private:
-    layers::CompositorClockLayer _clockLayer;
+    layers::ClockLayerPtr _clockLayer;
     std::vector<layers::CompositorLayerPtr> _layers;
+
+    service::renderer::D3d11Device _device;
+    service::renderer::D3d11SharedContextPtr _d3dContext;
+
+    service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
+    std::mutex _encoderMutex;
+
+    void tick(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames);
 };
+
+using CompositorPtr = std::unique_ptr<Compositor>;
 
 }

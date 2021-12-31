@@ -15,6 +15,8 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/wasapi_audio_recorder.h"
 #include "recorder/audio/wasapi_program_recorder.h"
+#include "recorder/compositor/graph/texture_context_normalizer_node.h"
+#include "recorder/compositor/graph/sink_node.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -89,10 +91,8 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         << "\tFlags: " << flags << std::endl);
 
 #ifdef _WIN32
-    auto* shared = service::renderer::getSharedD3d11Context();
-
     LOG_INFO("Trying DXGI..." << std::endl);
-    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid(), shared)) {
+    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
         return;
     }
 
@@ -102,7 +102,7 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
     }
 
     LOG_INFO("Trying WGC..." << std::endl);
-    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
         return;
     }
 #endif
@@ -117,8 +117,9 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
         return;
     }
 
-    LOG_INFO("\tSet video recorder encoder..." << std::endl);
-    _vrecorder->setActiveEncoder(data.encoder.get());
+    LOG_INFO("\tSet compositor encoder..." << std::endl);
+    assert(_compositor);
+    _compositor->setActiveEncoder(data.encoder.get());
 
     {
         std::lock_guard guard(_ainMutex);
@@ -155,6 +156,10 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
 
     LOG_INFO("...Start new active encoder." << std::endl);
     data.encoder->start();
+
+    if (_fpsLimiter) {
+        _fpsLimiter->setStartFrameTime(data.encoder->getSyncStartTime());
+    }
 }
 
 void GameRecorder::startNewDvrSegment() {
@@ -384,10 +389,10 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     // This is primarily for the audio inputs so we know how many inputs to expect.
     LOG_INFO("Initialize video stream..." << std::endl);
     data.encoder->initializeVideoStream(
+        _compositor->context(),
         *_cachedRecordingSettings,
         desiredWidth,
-        desiredHeight,
-        data.overlay
+        desiredHeight
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
@@ -430,21 +435,49 @@ bool GameRecorder::areInputStreamsInitialized() const {
     return _streamsInit;
 }
 
+bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
+    _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
+
+    {
+        // First create the clock layer which will be driven by the video recorder (desktop duplication, WGC, GDI, etc.).
+        // Note that we will need to build the graph that flows the video recorder into the the clock layer.
+        auto clockLayer = _compositor->createClockLayer();
+
+        _streamsInit = true;
+        try {
+            createVideoRecorder(info, flags);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
+            _streamsInit = false;
+            return false;
+        }
+        _vrecorder->startRecording();
+
+        // Should we be able to customize this pipeline?
+        auto fpsLimiter = std::make_shared<service::recorder::compositor::graph::FpsLimiterNode>(_cachedRecordingSettings->fps);
+        _vrecorder->setNext(fpsLimiter);
+        _fpsLimiter = fpsLimiter;
+
+        auto textureNormalizer = std::make_shared<service::recorder::compositor::graph::TextureContextNormalizerNode>(_compositor->context());
+        fpsLimiter->setNext(textureNormalizer);
+
+        auto sinkNode = std::make_shared<service::recorder::compositor::graph::SinkNode>();
+        textureNormalizer->setNext(sinkNode);
+
+        clockLayer->setSinkNode(sinkNode);
+    }
+
+    return true;
+}
+
 bool GameRecorder::initializeInputStreams(int flags) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
-    _streamsInit = true;
-    try {
-        createVideoRecorder(*_cachedWindowInfo, flags);
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
-        _streamsInit = false;
-        return false;
-    }
-    _vrecorder->startRecording();
+    _syncClockTime = service::recorder::encoder::AVSyncClock::now();
+    initializeCompositor(*_cachedWindowInfo, flags);
     
     if (!_cachedRecordingSettings->useWASAPIRecording) {
         std::lock_guard guard(_paInitMutex);
