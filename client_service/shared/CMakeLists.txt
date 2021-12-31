@@ -30,6 +30,7 @@ SET(SRCS
     shared/system/win32/interfaces/win32_system_process_interface.cpp
     shared/url.cpp
     shared/system/keys.cpp
+    shared/system/win32/process.cpp
     shared/image/ico/ico.cpp
     shared/memory/byte_writer.cpp
     shared/valve/vdf_file.cpp
@@ -73,6 +74,7 @@ SET(HEADERS
     shared/url.h
     shared/wow/instances.h
     shared/system/keys.h
+    shared/system/win32/process.h
     shared/image/ico/ico.h
     shared/memory/byte_writer.h
     shared/valve/vdf_file.h
