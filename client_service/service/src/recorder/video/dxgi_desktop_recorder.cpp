@@ -207,7 +207,7 @@ void DxgiDesktopRecorder::startRecording() {
                     continue;
                 }
 
-                flowToNext(_self.get(), tex, _rotation);
+                flowToNext(_self.get(), tex, 1, _rotation);
                 tex->Release();
             } else {
                 ++numReused;

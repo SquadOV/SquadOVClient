@@ -119,7 +119,7 @@ void Win32GdiRecorderInstance::startRecording() {
                 // really shouldn't be used in the case where performance is necessary.
                 hwFrame.copyFromCpu(frame);
 
-                flowToNext(service::renderer::getSharedD3d11Context(), hwFrame.rawTexture());
+                flowToNext(service::renderer::getSharedD3d11Context(), hwFrame.rawTexture(), 1);
             }
         }
 

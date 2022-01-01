@@ -107,7 +107,7 @@ void WindowsGraphicsCaptureItf::onFrameArrived(
     winrt::com_ptr<ID3D11Texture2D> frameSurface;
     winrt::check_hresult(access->GetInterface(winrt::guid_of<ID3D11Texture2D>(), frameSurface.put_void()));
 
-    flowToNext(&_self, frameSurface.get(), DXGI_MODE_ROTATION_IDENTITY);
+    flowToNext(&_self, frameSurface.get(), 1, DXGI_MODE_ROTATION_IDENTITY);
     if (changedSize) {
         _framePool.Recreate(_rtDevice, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, _lastSize);
     }
