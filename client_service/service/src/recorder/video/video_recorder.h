@@ -11,6 +11,7 @@ class AvEncoder;
 namespace service::recorder::video {
 
 struct VideoWindowInfo {
+    HWND window;
     size_t width = 0;
     size_t height = 0;
     bool isWindowed = false;

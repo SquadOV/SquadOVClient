@@ -41,6 +41,7 @@ SET(SRCS
     src/recorder/compositor/graph/compositor_node.cpp
     src/recorder/compositor/layers/clock_layer.cpp
     src/recorder/compositor/layers/compositor_layer.cpp
+    src/recorder/compositor/layers/mouse_cursor_layer.cpp
     src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
@@ -118,6 +119,7 @@ SET(HEADERS
     src/recorder/compositor/layers/image_layer.h
     src/recorder/compositor/layers/clock_layer.h
     src/recorder/compositor/layers/compositor_layer.h
+    src/recorder/compositor/layers/mouse_cursor_layer.h
     src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
     src/system/settings.h

@@ -34,6 +34,8 @@ public:
     service::renderer::D3d11SharedContext* context() const { return _d3dContext.get(); }
 
     layers::ClockLayerPtr createClockLayer();
+    void addLayer(const layers::CompositorLayerPtr& layer);
+    void finalizeLayers();
 
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder);
     

@@ -44,7 +44,13 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
         // Use the clock layer directly as the image to send to the encoder.
         texToSend = image;
     } else {
-        // Use a renderer to combine the layers together with the clock layer.
+        // Update layers at the current point in time (just in case they are animated, e.g. the mouse cursor).
+        const auto tm = service::recorder::encoder::AVSyncClock::now();
+        for (const auto& layer: _layers) {
+            layer->updateAt(tm);
+        }
+
+        // Do our rendering loop
     }
 
     // Finally send the image to the encoder. We could theoretically
@@ -64,6 +70,16 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
 void Compositor::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
     std::lock_guard<std::mutex> guard(_encoderMutex);
     _activeEncoder = encoder;
+}
+
+void Compositor::addLayer(const layers::CompositorLayerPtr& layer) {
+    _layers.push_back(layer);
+}
+
+void Compositor::finalizeLayers() {
+    if (_layers.empty()) {
+        return;
+    }
 }
 
 }

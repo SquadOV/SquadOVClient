@@ -17,6 +17,7 @@
 #include "recorder/audio/wasapi_program_recorder.h"
 #include "recorder/compositor/graph/texture_context_normalizer_node.h"
 #include "recorder/compositor/graph/sink_node.h"
+#include "recorder/compositor/layers/mouse_cursor_layer.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -333,6 +334,7 @@ void GameRecorder::loadCachedInfo() {
             HWND wnd = shared::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
             LOG_INFO("...Found Window! Detecting monitor and resolution..." << std::endl);
             if (wnd) {
+                ret.window = wnd;
                 while (true) {
                     if (!IsIconic(wnd)) {
                         HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
@@ -374,9 +376,6 @@ void GameRecorder::clearCachedInfo() {
 
 GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
     EncoderDatum data;
-
-    LOG_INFO("Create overlay renderer" << std::endl);
-    data.overlay = std::make_shared<service::renderer::D3d11OverlayRenderer>(_cachedRecordingSettings->overlays, _game);
 
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
@@ -438,7 +437,7 @@ bool GameRecorder::areInputStreamsInitialized() const {
 bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
     _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
 
-    {
+    if (_compositor) {
         // First create the clock layer which will be driven by the video recorder (desktop duplication, WGC, GDI, etc.).
         // Note that we will need to build the graph that flows the video recorder into the the clock layer.
         auto clockLayer = _compositor->createClockLayer();
@@ -465,8 +464,29 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
         textureNormalizer->setNext(sinkNode);
 
         clockLayer->setSinkNode(sinkNode);
+    } else {
+        THROW_ERROR("Failed to allocate memory for compositor.");
+        return false;
     }
 
+    // Add in the different layers for the overlay if it exists and is enabled.
+    if (_cachedRecordingSettings->overlays.enabled) {
+        // Parse through the overlay settings and for each layer create a new layer object.
+        // Note that a 'layer' may actually be composed of multiple things we want to render.
+        // I don't remember why I did it this way, bite me.
+    }
+
+    // Mouse cursor layer should be last since it makes more sense that it should be rendered
+    // on top of everything (game, overlay, etc).
+    if (_cachedRecordingSettings->recordMouse2) {
+        // The mouse layer needs to know which window we're currently trying to record (the image that's being
+        // sent to the clock layer) so that it knows how to properly position the mouse with respect to the
+        // game image.
+        auto mouseLayer = std::make_shared<service::recorder::compositor::layers::MouseCursorLayer>(_cachedWindowInfo->window);
+        _compositor->addLayer(mouseLayer);
+    }
+
+    _compositor->finalizeLayers();
     return true;
 }
 
@@ -1048,11 +1068,9 @@ void GameRecorder::overrideResolution(size_t width, size_t height) {
 }
 
 void GameRecorder::enableOverlay(bool enable) {
-    if (!_encoder.overlay) {
-        return;
+    for (const auto& layer: _overlayLayers) {
+        layer->enable(enable);
     }
-
-    _encoder.overlay->enable(enable);
 }
 
 }

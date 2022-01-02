@@ -7,6 +7,7 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/file_output_piper.h"
 #include "renderer/d3d11_overlay_renderer.h"
+#include "recorder/compositor/layers/compositor_layer.h"
 #include "recorder/compositor/graph/fps_limiter_node.h"
 #include "compositor/compositor.h"
 #include "shared/squadov/vod.h"
@@ -87,7 +88,6 @@ private:
             audio::EAudioDeviceDirection,
             std::unordered_map<size_t, size_t>
         > audioEncoderIndex;
-        service::renderer::D3d11OverlayRendererPtr overlay;
 
         bool hasEncoder() const { return !!encoder; }
     };
@@ -175,6 +175,8 @@ private:
     std::optional<size_t> _overrideWidth;
     std::optional<size_t> _overrideHeight;
 
+    // Various layers and nodes of the compositor that we need control of.
+    std::vector<service::recorder::compositor::layers::CompositorLayerPtr> _overlayLayers;
     service::recorder::compositor::graph::FpsLimiterNodePtr _fpsLimiter;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
