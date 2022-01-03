@@ -17,6 +17,7 @@ extern "C" {
 #include "shared/env.h"
 #include "system/win32/message_loop.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "shared/system/win32/process.h"
 #include "vod/process.h"
 
 namespace po = boost::program_options;
@@ -40,6 +41,8 @@ int main(int argc, char** argv) {
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
+
+    shared::system::win32::elevateProcessPriority(ABOVE_NORMAL_PRIORITY_CLASS);
 
     bool fastify = false;
     po::options_description desc("Options");

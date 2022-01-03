@@ -9,7 +9,7 @@
 #include <vector>
 
 #include "shared/games.h"
-#include "renderer/d3d11_overlay_renderer.h"
+#include "recorder/compositor/layers/overlay_layers.h"
 #include "process_watcher/process/process.h"
 #include "shared/json.h"
 
@@ -58,7 +58,7 @@ struct RecordingSettings {
     double maxLocalRecordingSizeGb = 1.0;
 
     int32_t vodEndDelaySeconds = 0;
-    service::renderer::OverlaySettings overlays;
+    service::recorder::compositor::layers::OverlaySettings overlays;
     bool useAudioDriftCompensation = false;
 
     bool useVoiceBasicNoiseFilter = false;
