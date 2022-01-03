@@ -91,7 +91,8 @@ private:
         bool hasEncoder() const { return !!encoder; }
     };
 
-    void createVideoRecorder(const video::VideoWindowInfo& info, int flags);
+    // Returns whether to allow an additional mouse recording
+    bool createVideoRecorder(const video::VideoWindowInfo& info, int flags);
     void updateWindowInfo();
     std::unique_ptr<VodIdentifier> createNewVodIdentifier() const;
     void initializeFileOutputPiper();

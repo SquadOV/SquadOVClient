@@ -2,6 +2,7 @@
 
 #include "recorder/compositor/layers/compositor_layer.h"
 #include "shared/games.h"
+#include "shared/color.h"
 
 #include <nlohmann/json.hpp>
 #include <vector>

@@ -42,6 +42,7 @@ SET(SRCS
     src/recorder/compositor/layers/clock_layer.cpp
     src/recorder/compositor/layers/mouse_cursor_layer.cpp
     src/recorder/compositor/layers/overlay_layers.cpp
+    src/recorder/compositor/layers/gdi_shape_layer.cpp
     src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
@@ -58,8 +59,6 @@ SET(SRCS
     src/renderer/d3d11_shader.cpp
     src/renderer/d3d11_video_processor.cpp
     src/renderer/d3d11_texture.cpp
-    src/renderer/d3d11_overlay_layer.cpp
-    src/renderer/d3d11_overlay_component.cpp
     src/hardware/hardware.cpp
     src/hardware/os.cpp
     src/hardware/cpu.cpp
@@ -120,6 +119,7 @@ SET(HEADERS
     src/recorder/compositor/layers/compositor_layer.h
     src/recorder/compositor/layers/mouse_cursor_layer.h
     src/recorder/compositor/layers/overlay_layers.h
+    src/recorder/compositor/layers/gdi_shape_layer.h
     src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
     src/system/settings.h
@@ -137,8 +137,6 @@ SET(HEADERS
     src/renderer/d3d11_shader.h
     src/renderer/d3d11_video_processor.h
     src/renderer/d3d11_texture.h
-    src/renderer/d3d11_overlay_layer.h
-    src/renderer/d3d11_overlay_component.h
     src/hardware/hardware.h
     src/hardware/os.h
     src/hardware/cpu.h

@@ -18,6 +18,7 @@
 #include "recorder/compositor/graph/texture_context_normalizer_node.h"
 #include "recorder/compositor/graph/sink_node.h"
 #include "recorder/compositor/layers/mouse_cursor_layer.h"
+#include "recorder/compositor/layers/overlay_layers.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -84,7 +85,7 @@ GameRecorder::~GameRecorder() {
     }
 }
 
-void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
+bool GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
         << "\tInit: " << info.init << std::endl
@@ -94,21 +95,22 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
 #ifdef _WIN32
     LOG_INFO("Trying DXGI..." << std::endl);
     if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
-        return;
+        return true;
     }
 
     LOG_INFO("Trying GDI..." << std::endl);
     if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
-        return;
+        return true;
     }
 
     LOG_INFO("Trying WGC..." << std::endl);
     if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
-        return;
+        return false;
     }
 #endif
 
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
+    return true;
 }
 
 void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
@@ -437,14 +439,16 @@ bool GameRecorder::areInputStreamsInitialized() const {
 bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
     _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
 
+    bool allowMouse = true;
     if (_compositor) {
         // First create the clock layer which will be driven by the video recorder (desktop duplication, WGC, GDI, etc.).
         // Note that we will need to build the graph that flows the video recorder into the the clock layer.
         auto clockLayer = _compositor->createClockLayer();
 
         _streamsInit = true;
+
         try {
-            createVideoRecorder(info, flags);
+            allowMouse = createVideoRecorder(info, flags);
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
             _streamsInit = false;
@@ -486,12 +490,17 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
             if (layer.games.find(_game) == layer.games.end()) {
                 continue;
             }
+
+            const auto newLayers = service::recorder::compositor::layers::createCompositorLayersForOverlayLayer(layer);
+            for (const auto& nl: newLayers) {
+                _compositor->addLayer(nl);
+            }
         }
     }
 
     // Mouse cursor layer should be last since it makes more sense that it should be rendered
     // on top of everything (game, overlay, etc).
-    if (_cachedRecordingSettings->recordMouse2) {
+    if (_cachedRecordingSettings->recordMouse2 && allowMouse) {
         // The mouse layer needs to know which window we're currently trying to record (the image that's being
         // sent to the clock layer) so that it knows how to properly position the mouse with respect to the
         // game image.

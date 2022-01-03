@@ -43,16 +43,21 @@ void MouseCursorLayer::customRender(ID3D11Texture2D* output, IDXGISurface1* surf
         return;
     }
 
+    // It doesn't really matter if this function call fails. We only use it to check the hotspot
+    // and if that's 0 whatever.
+    ICONINFO iconInfo = { 0 };
+    GetIconInfo(info.hCursor, &iconInfo);
+
     if (!DrawIconEx(
-        hdc,                                    // hdc
-        cursorPosition.x - windowRes.left,      // xLeft
-        cursorPosition.y - windowRes.top,       // yTop
-        info.hCursor,                           // hIcon (cursor equivalent to icon)
-        0,                                      // cxWidth
-        0,                                      // cyWidth
-        0,                                      // istepIfAniCur
-        nullptr,                                // hbrFlickerFreeDraw
-        DI_NORMAL | DI_DEFAULTSIZE              // diFlags
+        hdc,                                                        // hdc
+        cursorPosition.x - windowRes.left - iconInfo.xHotspot,      // xLeft
+        cursorPosition.y - windowRes.top - iconInfo.yHotspot,       // yTop
+        info.hCursor,                                               // hIcon (cursor equivalent to icon)
+        0,                                                          // cxWidth
+        0,                                                          // cyWidth
+        0,                                                          // istepIfAniCur
+        nullptr,                                                    // hbrFlickerFreeDraw
+        DI_NORMAL | DI_DEFAULTSIZE                                  // diFlags
     )) {
         LOG_WARNING("Failed to draw cursor: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return;
