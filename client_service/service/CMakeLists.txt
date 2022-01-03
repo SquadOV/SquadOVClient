@@ -40,8 +40,8 @@ SET(SRCS
     src/recorder/compositor/graph/sink_node.cpp
     src/recorder/compositor/graph/compositor_node.cpp
     src/recorder/compositor/layers/clock_layer.cpp
-    src/recorder/compositor/layers/compositor_layer.cpp
     src/recorder/compositor/layers/mouse_cursor_layer.cpp
+    src/recorder/compositor/layers/overlay_layers.cpp
     src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
@@ -58,7 +58,6 @@ SET(SRCS
     src/renderer/d3d11_shader.cpp
     src/renderer/d3d11_video_processor.cpp
     src/renderer/d3d11_texture.cpp
-    src/renderer/d3d11_overlay_renderer.cpp
     src/renderer/d3d11_overlay_layer.cpp
     src/renderer/d3d11_overlay_component.cpp
     src/hardware/hardware.cpp
@@ -89,6 +88,7 @@ SET(HEADERS
     src/recorder/encoder/ffmpeg_av_encoder.h
     src/recorder/encoder/ffmpeg_utils.h
     src/recorder/encoder/av_encoder.h
+    src/recorder/encoder/av_sync.h
     src/recorder/encoder/ffmpeg_video_swap_chain.h
     src/recorder/image/image.h
     src/recorder/image/d3d_image.h
@@ -116,10 +116,10 @@ SET(HEADERS
     src/recorder/compositor/graph/fps_limiter_node.h
     src/recorder/compositor/graph/sink_node.h
     src/recorder/compositor/graph/compositor_node.h
-    src/recorder/compositor/layers/image_layer.h
     src/recorder/compositor/layers/clock_layer.h
     src/recorder/compositor/layers/compositor_layer.h
     src/recorder/compositor/layers/mouse_cursor_layer.h
+    src/recorder/compositor/layers/overlay_layers.h
     src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
     src/system/settings.h
@@ -137,7 +137,6 @@ SET(HEADERS
     src/renderer/d3d11_shader.h
     src/renderer/d3d11_video_processor.h
     src/renderer/d3d11_texture.h
-    src/renderer/d3d11_overlay_renderer.h
     src/renderer/d3d11_overlay_layer.h
     src/renderer/d3d11_overlay_component.h
     src/hardware/hardware.h
@@ -260,6 +259,7 @@ if(WIN32)
         src/recorder/image/d3d_image.h
         src/recorder/compositor/graph/compositor_node.h
         src/recorder/compositor/graph/compositor_node.cpp
+        src/recorder/encoder/av_sync.h
         src/renderer/d3d11_context.h
         src/renderer/d3d11_context.cpp
         src/renderer/d3d11_texture.h

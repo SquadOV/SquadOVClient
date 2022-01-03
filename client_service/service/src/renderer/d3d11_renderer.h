@@ -20,6 +20,7 @@ public:
     void initializeRenderer(size_t width, size_t height);
     void clearModels() { _models.clear(); };
     void addModelToScene(const D3d11ModelPtr& model);
+    ID3D11Device* device() const;
 
     ID3D11Texture2D* createTexture2D(const D3D11_TEXTURE2D_DESC& desc);
     ID3D11RenderTargetView* createRenderTarget(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC& desc);

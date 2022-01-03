@@ -1,5 +1,6 @@
 #include "recorder/compositor/compositor.h"
 #include "shared/log/log.h"
+#include "shared/errors/error.h"
 
 namespace service::recorder::compositor {
 
@@ -10,6 +11,7 @@ Compositor::Compositor(const service::renderer::D3d11Device device) {
         nullptr,
         device
     );
+    _renderer = std::make_unique<service::renderer::D3d11Renderer>(_d3dContext.get());
 }
 
 layers::ClockLayerPtr Compositor::createClockLayer() {
@@ -37,20 +39,48 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
     // use the WARP software rasterizer in the case of using the CPU).
     ID3D11Texture2D* texToSend = nullptr;
 
-    // Note that every layer from the various layers must create a ID3D11Texture2D with the following properties:
-    //  1) The texture must be shared (i.e. have the flag D3D11_RESOURCE_MISC_SHARED)
-    //  2) The texture must be created on the same device/context as the compositor.
+    
     if (_layers.empty()) {
         // Use the clock layer directly as the image to send to the encoder.
         texToSend = image;
     } else {
+        // This needs to be first since it also will set some state in the renderer which the layers may need.
+        reinitOutputTexture(image);
+
         // Update layers at the current point in time (just in case they are animated, e.g. the mouse cursor).
+        // Note that the clock layer should've updated itself and prepared itself for rendering so we don't have to do that.
+        bool requiresRender = false;
         const auto tm = service::recorder::encoder::AVSyncClock::now();
         for (const auto& layer: _layers) {
-            layer->updateAt(tm);
+            layer->updateAt(tm, _renderer.get());
+            requiresRender |= layer->need3dRender();
         }
 
-        // Do our rendering loop
+        // Do our rendering loop here. Assume the scene is already setup in the finalizeLayers
+        // step so the only thing to do here is to actually do the 'render'. Note that if no
+        // layers actually need the renderer then we can just use a regular CopyResource to do the
+        // job of copying the base texture to the output texture instead.
+        if (requiresRender) {
+            _renderer->renderSceneToRenderTarget(_outputRenderTarget.get());
+        } else {
+            auto immediate = _d3dContext->immediateContext();
+            immediate.context()->CopyResource(_outputTexture.get(), image);
+        }
+
+        HDC hdc;
+        HRESULT hr = _outputSurface->GetDC(false, &hdc);
+        if (hr != S_OK) {
+            LOG_ERROR("Failed to get DC for composition: "<< hr);
+            return;
+        }
+
+        // Do a final custom rendering loop here on the output texture just for things that use GDI instead.
+        for (const auto& layer: _layers) {
+            layer->customRender(_outputTexture.get(), _outputSurface.get(), hdc);
+        }
+
+        _outputSurface->ReleaseDC(nullptr);
+        texToSend = _outputTexture.get();
     }
 
     // Finally send the image to the encoder. We could theoretically
@@ -67,8 +97,51 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
     }
 }
 
+void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
+    // We assume that the input texture must match the specs of the output texture.
+    D3D11_TEXTURE2D_DESC inputDesc;
+    input->GetDesc(&inputDesc);
+
+    D3D11_TEXTURE2D_DESC outputDesc = { 0 };
+    if (_outputTexture) {
+        _outputTexture->GetDesc(&outputDesc);
+    }
+
+    if (inputDesc.Width == outputDesc.Width 
+        && inputDesc.Height == outputDesc.Height
+        && inputDesc.Format == outputDesc.Format) {
+        return;
+    }
+
+    outputDesc = inputDesc;
+
+    // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
+    // MiscFlags should have D3D11_RESOURCE_MISC_GDI_COMPATIBLE since we use some GDI rendering functions (e.g. the mouse cursor).
+    // Everything else should stay default since you can't CPU read/stage a render target.
+    outputDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    outputDesc.Usage = D3D11_USAGE_DEFAULT;
+    outputDesc.CPUAccessFlags = 0;
+    outputDesc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    _outputTexture.attach(_renderer->createTexture2D(outputDesc));
+
+    HRESULT hr = _outputTexture->QueryInterface(__uuidof(IDXGISurface1), (void**)&_outputSurface);        
+    if (hr != S_OK) {
+        THROW_ERROR("Failed to get IDXGISurface1 for compositor" << hr);
+        return;
+    }
+
+    D3D11_RENDER_TARGET_VIEW_DESC targetDesc;
+    targetDesc.Format = outputDesc.Format;
+    targetDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+    targetDesc.Texture2D.MipSlice = 0;
+
+    _outputRenderTarget.attach(_renderer->createRenderTarget(_outputTexture.get(), targetDesc));
+    _renderer->initializeRenderer(outputDesc.Width, outputDesc.Height);
+}
+
 void Compositor::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
-    std::lock_guard<std::mutex> guard(_encoderMutex);
+    std::lock_guard guard(_encoderMutex);
     _activeEncoder = encoder;
 }
 
@@ -77,8 +150,15 @@ void Compositor::addLayer(const layers::CompositorLayerPtr& layer) {
 }
 
 void Compositor::finalizeLayers() {
+    // Don't need to do this step is layers is empty because we're otherwise just
+    // copying the texture straight to the destination.
     if (_layers.empty()) {
         return;
+    }
+
+    _clockLayer->finalizeAssetsForRenderer(_renderer.get());
+    for (const auto& l: _layers) {
+        l->finalizeAssetsForRenderer(_renderer.get());
     }
 }
 

@@ -470,10 +470,23 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
     }
 
     // Add in the different layers for the overlay if it exists and is enabled.
-    if (_cachedRecordingSettings->overlays.enabled) {
+    const auto& overlaySettings = _cachedRecordingSettings->overlays;
+    if (overlaySettings.enabled) {
         // Parse through the overlay settings and for each layer create a new layer object.
         // Note that a 'layer' may actually be composed of multiple things we want to render.
         // I don't remember why I did it this way, bite me.
+        for (size_t i = 0; i < overlaySettings.layers.size(); ++i) {
+            const auto realIdx = overlaySettings.layers.size() - 1 - i;
+            const auto& layer = overlaySettings.layers[i];
+
+            if (!layer.enabled) {
+                continue;
+            }
+
+            if (layer.games.find(_game) == layer.games.end()) {
+                continue;
+            }
+        }
     }
 
     // Mouse cursor layer should be last since it makes more sense that it should be rendered

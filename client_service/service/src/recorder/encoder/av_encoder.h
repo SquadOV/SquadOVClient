@@ -5,9 +5,9 @@
 #include <memory>
 #include "recorder/image/image.h"
 #include "recorder/audio/audio_packet_view.h"
-#include "renderer/d3d11_overlay_renderer.h"
 #include "renderer/d3d11_context.h"
 #include "shared/squadov/vod.h"
+#include "recorder/encoder/av_sync.h"
 #include "system/settings.h"
 
 #ifdef _WIN32
@@ -15,8 +15,6 @@
 #endif
 
 namespace service::recorder::encoder {
-
-using AVSyncClock = std::chrono::high_resolution_clock;
 
 struct AudioStreamProperties {
     size_t encoderIndex = 0;

@@ -4,7 +4,6 @@
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
 #include "renderer/d3d11_video_processor.h"
-#include "renderer/d3d11_overlay_renderer.h"
 
 #include <memory>
 #include <mutex>

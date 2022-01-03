@@ -6,7 +6,6 @@
 #include "recorder/video/video_recorder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/file_output_piper.h"
-#include "renderer/d3d11_overlay_renderer.h"
 #include "recorder/compositor/layers/compositor_layer.h"
 #include "recorder/compositor/graph/fps_limiter_node.h"
 #include "compositor/compositor.h"

@@ -4,10 +4,12 @@
 #include "recorder/compositor/layers/compositor_layer.h"
 #include "recorder/encoder/av_encoder.h"
 #include "renderer/d3d11_context.h"
+#include "renderer/d3d11_renderer.h"
 
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <wil/com.h>
 
 namespace service::recorder::compositor {
 
@@ -49,7 +51,15 @@ private:
     service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
     std::mutex _encoderMutex;
 
+    // DirectX rendering state
+    service::renderer::D3d11RendererPtr _renderer;
+    // The output texture the renderer will render to
+    wil::com_ptr<ID3D11Texture2D> _outputTexture;
+    wil::com_ptr<IDXGISurface1> _outputSurface;
+    wil::com_ptr<ID3D11RenderTargetView> _outputRenderTarget;
+
     void tick(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames);
+    void reinitOutputTexture(ID3D11Texture2D* input);
 };
 
 using CompositorPtr = std::unique_ptr<Compositor>;
