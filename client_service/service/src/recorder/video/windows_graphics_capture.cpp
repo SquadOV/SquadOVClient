@@ -9,7 +9,7 @@
 namespace service::recorder::video {
 namespace {
 
-typedef service::recorder::video::VideoRecorder* (__cdecl *WGCPROC)(const service::recorder::video::VideoWindowInfo&, HWND, service::renderer::D3d11SharedContext*, bool);
+typedef service::recorder::video::VideoRecorder* (__cdecl *WGCPROC)(const service::recorder::video::VideoWindowInfo&, HWND);
 
 WGCPROC getLoaderFunc() {
     static HINSTANCE lib = LoadLibrary(TEXT("libwgc.dll"));
@@ -25,7 +25,7 @@ WGCPROC getLoaderFunc() {
 
 }
 
-bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid, service::renderer::D3d11SharedContext* shared) {
+bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid) {
     if (!IsWindows10OrGreater()) {
         LOG_INFO("Rejecting Windows Graphics Capture: Not Windows 10" << std::endl);
         return false;
@@ -43,10 +43,7 @@ bool tryInitializeWindowsGraphicsCapture(VideoRecorderPtr& output, const VideoWi
         return false;
     }
 
-    service::system::getCurrentSettings()->reloadSettingsFromFile();
-    const bool useHwFrame = service::system::getCurrentSettings()->recording().useVideoHw2;
-
-    auto* ptr = (proc)(info, wnd, shared, useHwFrame);
+    auto* ptr = (proc)(info, wnd);
     if (!ptr) {
         LOG_INFO("Rejecting WGC: Failed to create interface." << std::endl);
         return false;

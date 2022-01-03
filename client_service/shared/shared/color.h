@@ -1,5 +1,6 @@
 #pragma once
 
+#include <wingdi.h>
 #include <string>
 #include <regex>
 
@@ -28,6 +29,16 @@ struct ColorRgba {
 
         return ret;
     }
+
+#ifdef _WIN32
+    COLORREF toGdiColor() const {
+        return RGB(
+            static_cast<int>(r * 255.f),
+            static_cast<int>(g * 255.f),
+            static_cast<int>(b * 255.f)
+        );
+    }
+#endif
 };
 
 }

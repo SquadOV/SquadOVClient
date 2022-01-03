@@ -25,7 +25,9 @@ D3d11ImmediateContextGuard::~D3d11ImmediateContextGuard() {
     }
 }
 
-D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Device device) {
+D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Device device):
+    _deviceClass(device)
+{
     UINT deviceFlags = 
 #ifndef NDEBUG
         D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT
