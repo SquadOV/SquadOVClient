@@ -99,13 +99,21 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         }
     }
 
-    LOG_INFO("...Initializing WASAPU Audio Client: " << context << std::endl);
+    LOG_INFO("...Retrieving device period." << std::endl);
+    REFERENCE_TIME requestedDuration = 0;
+    hr = _audioClient->GetDevicePeriod(nullptr, &requestedDuration);
+    if (hr != S_OK) {
+        printWarning("...Failed to get device period...using default" , hr);
+        requestedDuration = REFTIMES_PER_SEC;
+    }
+
+    LOG_INFO("...Initializing WASAPU Audio Client: " << context << std::endl); 
     hr = _audioClient->Initialize(
         AUDCLNT_SHAREMODE_SHARED,
-        isLoopback ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
-        REFTIMES_PER_SEC,
+        (isLoopback ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0) | AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+        requestedDuration,
         0,
-        &_pwfx,
+        (_pwfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE) ? &_ewfx.Format : &_pwfx,
         nullptr
     );
 
@@ -114,10 +122,17 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         return;
     }
 
-    uint32_t bufferFrameCount = 0;
-    hr = _audioClient->GetBufferSize(&bufferFrameCount);
+    // We need to create the event that will let us wait until MS tells us
+    // there's an audio buffer available.
+    _eventCallback = CreateEvent(NULL, false, false, NULL);
+    if (!_eventCallback) {
+        printWarning("...Failed to create event callback", E_FAIL);
+        return;
+    }
+
+    hr = _audioClient->SetEventHandle(_eventCallback);
     if (hr != S_OK) {
-        printWarning("...Failed to get buffer size", hr);
+        printWarning("...Failed to set event handle", hr);
         return;
     }
 
@@ -131,17 +146,8 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         return;
     }
 
-    // I'm not sure why this can be 0 but in practice that does seem to be the case when recording audio selectively.
-    // In other cases, it does seem like the frame count does seem to match the sample rate so should be a safe guess
-    // as to a resonable buffer size.
-    if (bufferFrameCount == 0) {
-        bufferFrameCount = _pwfx.nSamplesPerSec;
-    }
-
     _exists = true;
-    _bufferDuration = static_cast<double>(REFTIMES_PER_SEC) * bufferFrameCount / _pwfx.nSamplesPerSec;
-    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _bufferDuration << "\t" << _pwfx.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.nChannels << " (Channels)" << std::endl);
-    LOG_INFO("....Buffer Frame Count: " << bufferFrameCount << std::endl);
+    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _pwfx.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.nChannels << " (Channels)" << std::endl);
 
     // We set the props that we want here. The only thing we want to keep consistent
     // is the sample rate so we don't have to resample ourselves. Number of channels we keep
@@ -152,6 +158,12 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
     _props.numSamples = 0;
     _props.forceMono = mono;
     _props.isPlanar = false;
+}
+
+WasapiAudioClientRecorder::~WasapiAudioClientRecorder() {
+    if (_eventCallback) {
+        CloseHandle(_eventCallback);
+    }
 }
 
 void WasapiAudioClientRecorder::printWarning(const std::string& msg, HRESULT hr) const {
@@ -259,12 +271,11 @@ void WasapiAudioClientRecorder::startRecording() {
 
         while (_running) {
             auto packetTime = service::recorder::encoder::AVSyncClock::now();
-            std::this_thread::sleep_for(
-                std::chrono::milliseconds(
-                    // We shouldn't ever need the std::min here but just in case to ensure that this loop *actually* finishes.
-                    std::min(static_cast<int64_t>(_bufferDuration/REFTIMES_PER_MILLISEC/2.0), int64_t(1000))
-                )
-            );
+            DWORD retval = WaitForSingleObject(_eventCallback, 2000);
+            if (retval != WAIT_OBJECT_0) {
+                printWarning("...Timed out in waiting for callback", E_FAIL);
+                continue;
+            }
 
             uint32_t packetLength = 0;
             hr = _captureClient->GetNextPacketSize(&packetLength);

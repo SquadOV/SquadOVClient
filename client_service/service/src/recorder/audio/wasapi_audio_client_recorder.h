@@ -23,6 +23,7 @@ class WasapiAudioClientRecorder {
 
 public:
     WasapiAudioClientRecorder(CComPtr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback);
+    ~WasapiAudioClientRecorder();
 
     void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
@@ -44,7 +45,6 @@ private:
     std::atomic<bool> _running = false;
 
     CComPtr<IAudioCaptureClient> _captureClient;
-    double _bufferDuration = 0.0;
 
     // For sending data for encoding
     service::recorder::encoder::AvEncoder* _encoder = nullptr;
@@ -59,6 +59,7 @@ private:
 
     std::thread _recordingThread;
     std::thread _packetThread;
+    HANDLE _eventCallback = 0;
 };
 
 using WasapiAudioClientRecorderPtr = std::unique_ptr<WasapiAudioClientRecorder>;
