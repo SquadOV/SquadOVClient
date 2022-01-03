@@ -132,15 +132,24 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         this.currentWatchRangeSeconds = this.player.currentTime()
     }
 
-    stopWatchAnalyticsRange(manualStopTime: number | undefined = undefined) {
+    stopWatchAnalyticsRange(videoUuid: string | undefined = undefined, manualStopTime: number | undefined = undefined) {
         if (!this.player || this.currentWatchRangeSeconds === null) {
             return
         }
 
         let start = this.currentWatchRangeSeconds
         let end = (manualStopTime !== undefined) ? manualStopTime : this.player.currentTime()
-        if (!!this.vod) {
-            apiClient.markUserVideoWatchRange(this.vod.videoUuid, start, end).catch((err: any) => {
+
+        if (end <= start) {
+            if (end != start) {
+                console.warn('Invalid range...start after end: ', start, end)
+            }
+            return
+        }
+
+        let finalVideoUuid = !!videoUuid ? videoUuid : this.vod?.videoUuid
+        if (!!finalVideoUuid) {
+            apiClient.markUserVideoWatchRange(finalVideoUuid, start, end).catch((err: any) => {
                 console.warn('Failed to mark user video watch range: ', err)
             })
         }
@@ -197,6 +206,12 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     @Watch('vod')
     refreshPlaylist(newVod: vod.VodAssociation | null | undefined, oldVod: vod.VodAssociation | null | undefined) {
         this.manifest = null
+///#if DESKTOP
+        if (!!this.rcContext) {
+            this.rcContext.close()
+        }
+///#endif
+
         this.rcContext = null
         this.forceNoVideo = false
         if (!this.hasVideo) {
@@ -222,6 +237,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
         //    HAVE_ENOUGH_DATA (numeric value 4) The user agent estimates that enough data is available for playback to proceed uninterrupted.
 
         if (!!oldVod && !!this.player && this.player.readyState() >= 2) {
+            this.stopWatchAnalyticsRange(oldVod.videoUuid, undefined)
             let desiredVideoTime = this.player.currentTime()
             this.pinnedTimeStamp = new Date(oldVod.startTime.getTime() + desiredVideoTime * 1000)
             this.pinnedPlaying = !this.player.paused()
@@ -519,7 +535,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             // since otherwise when the user stops playing the VOD we'll get a much longer range (e.g. if they jumped
             // forward 5 minutes that's an extra 5 minutes of time we add to their watch time). Note that we can't use the
             // player's currentTime since that'll be inaccurate (it'll be the time we're jumping to) so we use the lastTimestamp instead.
-            this.stopWatchAnalyticsRange(this.lastTimestamp)
+            this.stopWatchAnalyticsRange(undefined, this.lastTimestamp)
 
             // If the user is still playing the VOD then start a new range.
             if (!this.player?.paused()) {
