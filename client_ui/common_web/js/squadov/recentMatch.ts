@@ -111,6 +111,8 @@ export function checkRecentMatchPovValidity(game: SquadOvGames, r: RecentMatchPo
             return true
         case SquadOvGames.Csgo:
             return !!r.csgoMatch
+        case SquadOvGames.Ff14:
+            return false
         case SquadOvGames.Unknown:
             return false
     }

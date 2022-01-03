@@ -11,6 +11,7 @@ SET(SRCS
     src/hearthstone/hearthstone_process_handler.cpp
     src/wow/wow_process_handler.cpp
     src/league/league_process_handler.cpp
+    src/ff14/ff14_process_handler.cpp
     src/recorder/game_recorder.cpp
     src/recorder/game_preview_stream.cpp
     src/recorder/video/win32_gdi_recorder.cpp
@@ -72,6 +73,7 @@ SET(HEADERS
     src/hearthstone/hearthstone_process_handler.h
     src/wow/wow_process_handler.h
     src/league/league_process_handler.h
+    src/ff14/ff14_process_handler.h
     src/recorder/game_recorder.h
     src/recorder/game_preview_stream.h
     src/recorder/video/video_recorder.h

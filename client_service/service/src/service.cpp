@@ -10,6 +10,7 @@
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
 #include "league/league_process_handler.h"
+#include "ff14/ff14_process_handler.h"
 #include "system/state.h"
 #include "system/ipc.h"
 #include "zeromq/zeromq.h"
@@ -134,6 +135,7 @@ void defaultMain() {
     auto wow = std::make_unique<service::wow::WoWProcessHandler>();
     auto league = std::make_unique<service::league::LeagueProcessHandler>();
     auto csgo = std::make_unique<service::csgo::CsgoProcessHandler>();
+    auto ff14 = std::make_unique<service::ff14::Ff14ProcessHandler>();
 
     // Sketchy? Fuck yes. But the objet that owns these pointers is the prrocess watcher
     // which will live forever (for better or worse) so this is actually relatively safe.
@@ -144,7 +146,8 @@ void defaultMain() {
         hearthstone.get(),
         wow.get(),
         league.get(),
-        csgo.get()
+        csgo.get(),
+        ff14.get()
     };
 
     // Start process watcher to watch for our supported games.
@@ -157,6 +160,7 @@ void defaultMain() {
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::move(league));
     watcher.beginWatchingGame(shared::EGame::CSGO, std::move(csgo));
+    watcher.beginWatchingGame(shared::EGame::Ff14, std::move(ff14));
     watcher.start();
 }
 
