@@ -86,7 +86,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
     settings.vodEndDelaySeconds = obj["vodEndDelaySeconds"].get<int32_t>();
     if (obj.count("overlays") > 0) {
-        settings.overlays = service::renderer::OverlaySettings::fromJson(obj["overlays"]);
+        settings.overlays = service::recorder::compositor::layers::OverlaySettings::fromJson(obj["overlays"]);
     }
     settings.useAudioDriftCompensation = obj.value("useAudioDriftCompensation", true);
 

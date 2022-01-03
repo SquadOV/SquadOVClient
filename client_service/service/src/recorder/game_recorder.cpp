@@ -15,6 +15,10 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/wasapi_audio_recorder.h"
 #include "recorder/audio/wasapi_program_recorder.h"
+#include "recorder/compositor/graph/texture_context_normalizer_node.h"
+#include "recorder/compositor/graph/sink_node.h"
+#include "recorder/compositor/layers/mouse_cursor_layer.h"
+#include "recorder/compositor/layers/overlay_layers.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -81,7 +85,7 @@ GameRecorder::~GameRecorder() {
     }
 }
 
-void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
+bool GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int flags) {
     LOG_INFO("Attempting to create video recorder: " << std::endl
         << "\tResolution: " << info.width << "x" << info.height << std::endl
         << "\tInit: " << info.init << std::endl
@@ -89,25 +93,24 @@ void GameRecorder::createVideoRecorder(const video::VideoWindowInfo& info, int f
         << "\tFlags: " << flags << std::endl);
 
 #ifdef _WIN32
-    auto* shared = service::renderer::getSharedD3d11Context();
-
     LOG_INFO("Trying DXGI..." << std::endl);
-    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid(), shared)) {
-        return;
+    if (flags & FLAG_DXGI_RECORDING && video::tryInitializeDxgiDesktopRecorder(_vrecorder, info, _process.pid())) {
+        return true;
     }
 
     LOG_INFO("Trying GDI..." << std::endl);
     if (flags & FLAG_GDI_RECORDING && video::tryInitializeWin32GdiRecorder(_vrecorder, info, _process.pid())) {
-        return;
+        return true;
     }
 
     LOG_INFO("Trying WGC..." << std::endl);
-    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid(), shared)) {
-        return;
+    if (flags & FLAG_WGC_RECORDING && video::tryInitializeWindowsGraphicsCapture(_vrecorder, info, _process.pid())) {
+        return false;
     }
 #endif
 
     THROW_ERROR("Failed to create GameRecorder instance: " << shared::gameToString(_game));
+    return true;
 }
 
 void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
@@ -117,8 +120,9 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
         return;
     }
 
-    LOG_INFO("\tSet video recorder encoder..." << std::endl);
-    _vrecorder->setActiveEncoder(data.encoder.get());
+    LOG_INFO("\tSet compositor encoder..." << std::endl);
+    assert(_compositor);
+    _compositor->setActiveEncoder(data.encoder.get());
 
     {
         std::lock_guard guard(_ainMutex);
@@ -155,6 +159,10 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
 
     LOG_INFO("...Start new active encoder." << std::endl);
     data.encoder->start();
+
+    if (_fpsLimiter) {
+        _fpsLimiter->setStartFrameTime(data.encoder->getSyncStartTime());
+    }
 }
 
 void GameRecorder::startNewDvrSegment() {
@@ -328,6 +336,7 @@ void GameRecorder::loadCachedInfo() {
             HWND wnd = shared::system::win32::findWindowForProcessWithMaxDelay(_process.pid(), std::chrono::milliseconds(0));
             LOG_INFO("...Found Window! Detecting monitor and resolution..." << std::endl);
             if (wnd) {
+                ret.window = wnd;
                 while (true) {
                     if (!IsIconic(wnd)) {
                         HMONITOR refMonitor = MonitorFromWindow(wnd, MONITOR_DEFAULTTOPRIMARY);
@@ -370,9 +379,6 @@ void GameRecorder::clearCachedInfo() {
 GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
     EncoderDatum data;
 
-    LOG_INFO("Create overlay renderer" << std::endl);
-    data.overlay = std::make_shared<service::renderer::D3d11OverlayRenderer>(_cachedRecordingSettings->overlays, _game);
-
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
@@ -384,10 +390,10 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     // This is primarily for the audio inputs so we know how many inputs to expect.
     LOG_INFO("Initialize video stream..." << std::endl);
     data.encoder->initializeVideoStream(
+        _compositor->context(),
         *_cachedRecordingSettings,
         desiredWidth,
-        desiredHeight,
-        data.overlay
+        desiredHeight
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
@@ -430,21 +436,90 @@ bool GameRecorder::areInputStreamsInitialized() const {
     return _streamsInit;
 }
 
+bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
+    _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
+
+    bool allowMouse = true;
+    if (_compositor) {
+        // First create the clock layer which will be driven by the video recorder (desktop duplication, WGC, GDI, etc.).
+        // Note that we will need to build the graph that flows the video recorder into the the clock layer.
+        auto clockLayer = _compositor->createClockLayer();
+
+        _streamsInit = true;
+
+        try {
+            allowMouse = createVideoRecorder(info, flags);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
+            _streamsInit = false;
+            return false;
+        }
+        _vrecorder->startRecording();
+
+        // Should we be able to customize this pipeline?
+        auto fpsLimiter = std::make_shared<service::recorder::compositor::graph::FpsLimiterNode>(_cachedRecordingSettings->fps);
+        _vrecorder->setNext(fpsLimiter);
+        _fpsLimiter = fpsLimiter;
+
+        auto textureNormalizer = std::make_shared<service::recorder::compositor::graph::TextureContextNormalizerNode>(_compositor->context());
+        fpsLimiter->setNext(textureNormalizer);
+
+        auto sinkNode = std::make_shared<service::recorder::compositor::graph::SinkNode>();
+        textureNormalizer->setNext(sinkNode);
+
+        clockLayer->setSinkNode(sinkNode);
+    } else {
+        THROW_ERROR("Failed to allocate memory for compositor.");
+        return false;
+    }
+
+    // Add in the different layers for the overlay if it exists and is enabled.
+    const auto& overlaySettings = _cachedRecordingSettings->overlays;
+    if (overlaySettings.enabled) {
+        // Parse through the overlay settings and for each layer create a new layer object.
+        // Note that a 'layer' may actually be composed of multiple things we want to render.
+        // I don't remember why I did it this way, bite me.
+        for (size_t i = 0; i < overlaySettings.layers.size(); ++i) {
+            const auto realIdx = overlaySettings.layers.size() - 1 - i;
+            const auto& layer = overlaySettings.layers[i];
+
+            if (!layer.enabled) {
+                continue;
+            }
+
+            if (layer.games.find(_game) == layer.games.end()) {
+                continue;
+            }
+
+            const auto newLayers = service::recorder::compositor::layers::createCompositorLayersForOverlayLayer(layer);
+            for (const auto& nl: newLayers) {
+                _compositor->addLayer(nl);
+            }
+        }
+    }
+
+    // Mouse cursor layer should be last since it makes more sense that it should be rendered
+    // on top of everything (game, overlay, etc).
+    if (_cachedRecordingSettings->recordMouse2 && allowMouse) {
+        // The mouse layer needs to know which window we're currently trying to record (the image that's being
+        // sent to the clock layer) so that it knows how to properly position the mouse with respect to the
+        // game image.
+        auto mouseLayer = std::make_shared<service::recorder::compositor::layers::MouseCursorLayer>(_cachedWindowInfo->window);
+        _compositor->addLayer(mouseLayer);
+    }
+
+    _compositor->finalizeLayers();
+    return true;
+}
+
 bool GameRecorder::initializeInputStreams(int flags) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
-    _streamsInit = true;
-    try {
-        createVideoRecorder(*_cachedWindowInfo, flags);
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to create video recorder: " << ex.what() << std::endl);
-        _streamsInit = false;
-        return false;
-    }
-    _vrecorder->startRecording();
+    _syncClockTime = service::recorder::encoder::AVSyncClock::now();
+    initializeCompositor(*_cachedWindowInfo, flags);
     
     if (!_cachedRecordingSettings->useWASAPIRecording) {
         std::lock_guard guard(_paInitMutex);
@@ -1015,11 +1090,9 @@ void GameRecorder::overrideResolution(size_t width, size_t height) {
 }
 
 void GameRecorder::enableOverlay(bool enable) {
-    if (!_encoder.overlay) {
-        return;
+    for (const auto& layer: _overlayLayers) {
+        layer->enable(enable);
     }
-
-    _encoder.overlay->enable(enable);
 }
 
 }

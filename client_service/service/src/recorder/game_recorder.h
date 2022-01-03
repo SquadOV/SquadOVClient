@@ -6,7 +6,9 @@
 #include "recorder/video/video_recorder.h"
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/pipe/file_output_piper.h"
-#include "renderer/d3d11_overlay_renderer.h"
+#include "recorder/compositor/layers/compositor_layer.h"
+#include "recorder/compositor/graph/fps_limiter_node.h"
+#include "compositor/compositor.h"
 #include "shared/squadov/vod.h"
 #include "shared/time.h"
 #include "system/settings.h"
@@ -85,18 +87,20 @@ private:
             audio::EAudioDeviceDirection,
             std::unordered_map<size_t, size_t>
         > audioEncoderIndex;
-        service::renderer::D3d11OverlayRendererPtr overlay;
 
         bool hasEncoder() const { return !!encoder; }
     };
 
-    void createVideoRecorder(const video::VideoWindowInfo& info, int flags);
+    // Returns whether to allow an additional mouse recording
+    bool createVideoRecorder(const video::VideoWindowInfo& info, int flags);
     void updateWindowInfo();
     std::unique_ptr<VodIdentifier> createNewVodIdentifier() const;
     void initializeFileOutputPiper();
 
     bool areInputStreamsInitialized() const;
     bool initializeInputStreams(int flags);
+    bool initializeCompositor(const video::VideoWindowInfo& info, int flags);
+
     EncoderDatum createEncoder(const std::string& outputFname);
 
     process_watcher::process::Process _process;
@@ -111,9 +115,11 @@ private:
     pipe::FileOutputPiperPtr _outputPiper;
     std::optional<std::string> _forcedOutputUrl;
     shared::TimePoint _vodStartTime;
+    service::recorder::encoder::AVSyncClock::time_point _syncClockTime;
     std::mutex _stopMutex;
 
     void switchToNewActiveEncoder(const EncoderDatum& data);
+    service::recorder::compositor::CompositorPtr _compositor;
     video::VideoRecorderPtr _vrecorder;
 
     std::mutex _paInitMutex;
@@ -168,6 +174,10 @@ private:
     // Debug Variables if we ever feel like overriding the width and height.
     std::optional<size_t> _overrideWidth;
     std::optional<size_t> _overrideHeight;
+
+    // Various layers and nodes of the compositor that we need control of.
+    std::vector<service::recorder::compositor::layers::CompositorLayerPtr> _overlayLayers;
+    service::recorder::compositor::graph::FpsLimiterNodePtr _fpsLimiter;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

@@ -2,6 +2,7 @@
 
 #include "recorder/image/image.h"
 #include "recorder/encoder/av_encoder.h"
+#include "renderer/d3d11_context.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "shared/log/log.h"
 
@@ -14,12 +15,9 @@
 
 namespace fs = std::filesystem;
 
-#define LOG_FRAME_TIME 0
 #ifdef _WIN32
 
 namespace service::recorder::video {
-
-using TickClock = std::chrono::high_resolution_clock;
 
 Win32GdiRecorderInstance::Win32GdiRecorderInstance(HWND window):
     _window(window) {
@@ -38,11 +36,6 @@ void Win32GdiRecorderInstance::stopRecording() {
     }
 }
 
-void Win32GdiRecorderInstance::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
-    std::lock_guard<std::mutex> guard(_encoderMutex);
-    _activeEncoder = encoder;
-}
-
 void Win32GdiRecorderInstance::startRecording() {
     _recording = true;
     _recordingThread = std::thread([this](){ 
@@ -50,6 +43,7 @@ void Win32GdiRecorderInstance::startRecording() {
         HDC hdcMem = CreateCompatibleDC(hdcWindow);
         HBITMAP hbm = nullptr;
         service::recorder::image::Image frame;
+        service::recorder::image::D3dImage hwFrame(service::renderer::getSharedD3d11Context());
 
         BITMAPFILEHEADER   bmfHeader;
         BITMAPINFOHEADER   bi;
@@ -65,10 +59,7 @@ void Win32GdiRecorderInstance::startRecording() {
         bmfHeader.bfOffBits = (DWORD)sizeof(BITMAPFILEHEADER) + (DWORD)sizeof(BITMAPINFOHEADER);
         bmfHeader.bfType = 0x4D42; //BM  
 
-        const auto recordStart = TickClock::now();
-
         while(_recording) {
-            const auto startFrame = TickClock::now();
   
             RECT rcClient;
             GetClientRect(_window, &rcClient);
@@ -89,6 +80,7 @@ void Win32GdiRecorderInstance::startRecording() {
                     }
                     hbm = CreateCompatibleBitmap(hdcWindow, width, height);
                     frame.initializeImage(width, height);
+                    hwFrame.initializeImage(width, height, true);
                     bi.biWidth = width;
                     // Make bitmaps draw normally (i.e. Y=0 is the top of image...)
                     bi.biHeight = -height;
@@ -120,26 +112,15 @@ void Win32GdiRecorderInstance::startRecording() {
                         DIB_RGB_COLORS);
                 } else {
                     LOG_WARNING("BitBlt failed." << std::endl);
+                    continue;
                 }
-            }
-            const auto endCapture = TickClock::now();
-#if LOG_FRAME_TIME
-            const auto gdiElapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(endCapture - startFrame).count();
-#endif
 
-            {
-                std::lock_guard<std::mutex> guard(_encoderMutex);
-                if (_activeEncoder && frame.isInit()) {
-                    _activeEncoder->addVideoFrame(frame);
-                }
-            }
+                // Is this slow and inefficient? Yes. But this is the GDI pipeline which
+                // really shouldn't be used in the case where performance is necessary.
+                hwFrame.copyFromCpu(frame);
 
-            const auto endFrame = TickClock::now();
-            const auto numNs = std::chrono::duration_cast<std::chrono::nanoseconds>(endFrame - startFrame);
-            
-#if LOG_FRAME_TIME
-            LOG_INFO("Frame Time - GDI:" << gdiElapsed * 1.0e-6 << " + Queue Encode:" << (numMs - gdiElapsed) * 1.0e-6  << std::endl);
-#endif
+                flowToNext(service::renderer::getSharedD3d11Context(), hwFrame.rawTexture(), 1);
+            }
         }
 
         DeleteObject(hbm);

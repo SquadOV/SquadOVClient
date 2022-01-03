@@ -98,16 +98,15 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay);
-    void setOverlayRenderer(const service::renderer::D3d11OverlayRendererPtr& renderer);
+    void initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
-    void addVideoFrame(const service::recorder::image::Image& frame);
+    AVSyncClock::time_point getSyncStartTime() const;
+
 #ifdef _WIN32
-    void addVideoFrame(ID3D11Texture2D* image);
+    void addVideoFrame(ID3D11Texture2D* image, size_t numFrames);
 #endif
 
     void getVideoDimensions(size_t& width, size_t& height);
-    service::recorder::image::Image getFrontBuffer() const;
 
     void initializeAudioStream();
     size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
@@ -141,8 +140,7 @@ private:
     const AVCodec* _vcodec = nullptr;
     AVCodecContext* _vcodecContext = nullptr;
     int64_t _vFrameNum = 0;
-    long long numVideoFramesToEncode();
-    void videoSwapAndEncode();
+    void videoEncodeFrame(AVFrame* frame, size_t numFrames);
 
     // Audio Output
     const AVCodec* _acodec = nullptr;
@@ -338,6 +336,10 @@ FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
     avformat_free_context(_avcontext);
 }
 
+AVSyncClock::time_point FfmpegAvEncoderImpl::getSyncStartTime() const {
+    return _syncStartTime;
+}
+
 void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st) {
     // Encode video frame.
     auto ret = avcodec_send_frame(cctx, frame);
@@ -379,7 +381,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) {
+void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -394,7 +396,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
         {"libopenh264", VideoStreamContext::CPU, false }
     };
 
-    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
     const auto canUseGpu = FfmpegGPUVideoSwapChain::isSupported(d3d, width, height);
     auto immediate = d3d->immediateContext();
 
@@ -576,7 +577,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::system::Recording
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
     _videoSwapChain->initializeGpuSupport(d3d);
-    _videoSwapChain->initializeOverlay(overlay);
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = settings.fps;
     _useVfr4 = settings.useVfr4;
@@ -741,65 +741,27 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
     return _astreams.size() - 1;
 }
 
-void FfmpegAvEncoderImpl::addVideoFrame(const service::recorder::image::Image& frame) {
+void FfmpegAvEncoderImpl::addVideoFrame(ID3D11Texture2D* image, size_t numFrames) {
     std::shared_lock<std::shared_mutex> guard(_runningMutex);
-    if (!_running) {
+    if (!_running || !numFrames) {
         return;
     }
-    
-    if (!numVideoFramesToEncode()) {
-        return;
-    }
-
-    _videoSwapChain->receiveCpuFrame(frame);
 
     if (_running) {
         ++_receivedVideoFrames;
     }
 
-    videoSwapAndEncode();
+    videoEncodeFrame(_videoSwapChain->receiveGpuFrame(image), numFrames);
 }
 
-void FfmpegAvEncoderImpl::addVideoFrame(ID3D11Texture2D* image) {
-    std::shared_lock<std::shared_mutex> guard(_runningMutex);
-    if (!_running) {
+
+void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEncode) {
+    if (!frame) {
+        LOG_WARNING("Invalid frame [nullptr] - ignoring." << std::endl);
         return;
     }
 
-    if (!numVideoFramesToEncode()) {
-        return;
-    }
-
-    _videoSwapChain->receiveGpuFrame(image);
-    
-    if (_running) {
-        ++_receivedVideoFrames;
-    }
-
-    videoSwapAndEncode();
-}
-
-long long FfmpegAvEncoderImpl::numVideoFramesToEncode() {
-    // This gets called every time we receive a video frame. In the case where the frame is too early
-    // to be considered the next frame, we just do nothing (encode 0 frames). In the case where too much
-    // time has elapsed, then it's possible that we want to encode *multiple* frames. In that case
-    // we use the same incoming frame multiple times and just have duplicate frames in the output.
-    const auto refFrameTime = _syncStartTime + std::chrono::nanoseconds(_nsPerFrame * _vFrameNum);
-    const auto now = AVSyncClock::now();
-
-    if (now < refFrameTime) {
-        return 0;
-    } else {
-        // We should note that refFrameTime is the time at which we should add a new frame. Thus, any time PAST refFrameTime indicates that
-        // at least 1 frame should be added. Thus, we want to use a CEIL instead of a FLOOR here to represent that fact.
-        const auto elapsedFrames = std::ceil(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count()) / _nsPerFrame.count());
-        return static_cast<long long>(elapsedFrames);
-    }
-}
-
-void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     // Get this number again just in case it took us awhile to receive the frame.
-    const auto numFramesToEncode = numVideoFramesToEncode();
     if (numFramesToEncode >= _fps) {
         LOG_WARNING("Encoding > 1 second worth of frames at a single time: " << numFramesToEncode << std::endl);
     } else if (!numFramesToEncode) {
@@ -811,16 +773,7 @@ void FfmpegAvEncoderImpl::videoSwapAndEncode() {
     // I.e. when we're at frame 0 and we want to encode 1 frame,
     // start at frame 0 and not at frame 1.
     const auto desiredFrameNum = _vFrameNum + numFramesToEncode;
-
-    _videoSwapChain->swap();
-
-    AVFrame* frame = _videoSwapChain->getFrontBufferFrame();
-    if (_videoSwapChain->hasValidFrontBuffer()) {
-        ++_processedVideoFrames;
-    } else {
-        LOG_WARNING("Invalid front buffer...ignoring." << std::endl);
-        return;
-    }
+    ++_processedVideoFrames;
 
     bool forceFrame0 = false;
     const int64_t duration = desiredFrameNum - _vFrameNum;
@@ -932,10 +885,6 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
             encode(_acodecContext, _aframe, _astream);
         }
     }
-}
-
-service::recorder::image::Image FfmpegAvEncoderImpl::getFrontBuffer() const {
-    return _videoSwapChain->cpuCopyFrontBuffer();
 }
 
 void FfmpegAvEncoderImpl::open() {
@@ -1068,6 +1017,10 @@ void FfmpegAvEncoderImpl::stop() {
         << "\tVideo Frames: [Receive: " << _receivedVideoFrames  << "] [Process: " << _processedVideoFrames << "]" << std::endl
     );
 
+    const auto numSecondsElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(AVSyncClock::now() - _syncStartTime).count() * 1.0e-3;
+    const auto estimatedFps = _receivedVideoFrames / numSecondsElapsed;
+    LOG_INFO("\tEstimated FPS: " << estimatedFps << std::endl);
+
     for (size_t s = 0; s < _astreams.size(); ++s) {
         LOG_INFO("\tAudio Samples [" << s 
             << "]: Receive - " << _astreams[s]->receivedSamples
@@ -1076,6 +1029,7 @@ void FfmpegAvEncoderImpl::stop() {
             << ":: Encoded - " << _astreams[s]->encodedSamples
         << std::endl);
     }
+
 
     // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
     // because something is wrong there......
@@ -1135,26 +1089,18 @@ FfmpegAvEncoder::FfmpegAvEncoder(const std::string& streamUrl):
 
 FfmpegAvEncoder::~FfmpegAvEncoder() = default;
 
-void FfmpegAvEncoder::addVideoFrame(const service::recorder::image::Image& frame) {
-    _impl->addVideoFrame(frame);
-}
-
 #ifdef _WIN32
-void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image) {
-    _impl->addVideoFrame(image);
+void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image, size_t numFrames) {
+    _impl->addVideoFrame(image, numFrames);
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) {
-    _impl->initializeVideoStream(settings, width, height, overlay);
+void FfmpegAvEncoder::initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
+    _impl->initializeVideoStream(d3d, settings, width, height);
 }
 
 VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
     return _impl->getVideoStreamContext();
-}
-
-service::recorder::image::Image FfmpegAvEncoder::getFrontBuffer() const {
-    return _impl->getFrontBuffer();
 }
 
 void FfmpegAvEncoder::open() {
@@ -1191,6 +1137,10 @@ size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacke
 
 void FfmpegAvEncoder::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
     _impl->addAudioFrame(view, encoderIdx, tm);
+}
+
+AVSyncClock::time_point FfmpegAvEncoder::getSyncStartTime() const {
+    return _impl->getSyncStartTime();
 }
 
 }

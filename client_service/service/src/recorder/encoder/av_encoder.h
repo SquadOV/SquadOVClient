@@ -5,8 +5,9 @@
 #include <memory>
 #include "recorder/image/image.h"
 #include "recorder/audio/audio_packet_view.h"
-#include "renderer/d3d11_overlay_renderer.h"
+#include "renderer/d3d11_context.h"
 #include "shared/squadov/vod.h"
+#include "recorder/encoder/av_sync.h"
 #include "system/settings.h"
 
 #ifdef _WIN32
@@ -14,8 +15,6 @@
 #endif
 
 namespace service::recorder::encoder {
-
-using AVSyncClock = std::chrono::high_resolution_clock;
 
 struct AudioStreamProperties {
     size_t encoderIndex = 0;
@@ -39,16 +38,15 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(const service::system::RecordingSettings& settings, size_t width, size_t height, const service::renderer::D3d11OverlayRendererPtr& overlay) = 0;
+    virtual void initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
+    virtual AVSyncClock::time_point getSyncStartTime() const = 0;
     
-    virtual void addVideoFrame(const service::recorder::image::Image& frame) = 0;
 #ifdef _WIN32
-    virtual void addVideoFrame(ID3D11Texture2D* image) = 0;
+    virtual void addVideoFrame(ID3D11Texture2D* image, size_t numFrames) = 0;
 #endif
 
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;
-    virtual service::recorder::image::Image getFrontBuffer() const = 0;
 
     virtual void initializeAudioStream() = 0;
     virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) = 0;
