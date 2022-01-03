@@ -36,6 +36,9 @@ private:
     void printWarning(const std::string& msg, HRESULT hr) const;
     void handleData(const SyncTime& tm, const BYTE* data, uint32_t numFrames);
 
+    bool isPcm() const;
+    bool isFloat() const;
+
     CComPtr<IAudioClient> _audioClient;
     std::string _context;
     std::atomic<bool> _running = false;
@@ -50,7 +53,8 @@ private:
     std::atomic<double> _volume = 1.0;
     bool _exists = false;
     AudioPacketProperties _props;
-    WAVEFORMATEXTENSIBLE _pwfx;
+    WAVEFORMATEX _pwfx = { 0 };
+    WAVEFORMATEXTENSIBLE _ewfx = { 0 };
     AudioPacketQueue _packetQueue;
 
     std::thread _recordingThread;

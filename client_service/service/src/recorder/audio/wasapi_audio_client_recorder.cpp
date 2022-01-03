@@ -61,21 +61,42 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         }
     };
 
-    _pwfx = *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pwfx);
-    CoTaskMemFree(pwfx);
+    _pwfx = *pwfx;
 
-    if (_pwfx.Format.wFormatTag != WAVE_FORMAT_EXTENSIBLE) {
+    if (_pwfx.wFormatTag != WAVE_FORMAT_EXTENSIBLE &&
+        _pwfx.wFormatTag != WAVE_FORMAT_IEEE_FLOAT &&
+        _pwfx.wFormatTag != WAVE_FORMAT_PCM) {
         printWarning("...Unsupported format tag", pwfx->wFormatTag);
+        CoTaskMemFree(pwfx);
         return;
     }
 
-    // Also need to do a check to make sure the subformat is supported.
-    if (_pwfx.SubFormat != KSDATAFORMAT_SUBTYPE_PCM && _pwfx.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
-        wchar_t guid[64] = { 0 };
-        StringFromGUID2(_pwfx.SubFormat, guid, 64);
+    if (_pwfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+        _ewfx = *reinterpret_cast<WAVEFORMATEXTENSIBLE*>(pwfx);
+        // Also need to do a check to make sure the subformat is supported.
+        if (_ewfx.SubFormat != KSDATAFORMAT_SUBTYPE_PCM && _ewfx.SubFormat != KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
+            wchar_t guid[64] = { 0 };
+            StringFromGUID2(_ewfx.SubFormat, guid, 64);
 
-        printWarning("...Unsupported subformat: " + shared::strings::wcsToUtf8(std::wstring(guid)), 0);
-        return;
+            printWarning("...Unsupported subformat: " + shared::strings::wcsToUtf8(std::wstring(guid)), 0);
+            CoTaskMemFree(pwfx);
+            return;
+        }
+    }
+
+    CoTaskMemFree(pwfx);
+
+    // Also check bits per sample. PCM supports 8 and 16, Float supports 32 and 64.
+    if (isPcm()) {
+        if (_pwfx.wBitsPerSample != 8 && _pwfx.wBitsPerSample != 16) {
+            printWarning("...Unsupported number of bytes for PCM: " + std::to_string(_pwfx.wBitsPerSample), 0);
+            return;
+        }
+    } else if (isFloat()) {
+        if (_pwfx.wBitsPerSample != 32 && _pwfx.wBitsPerSample != 64) {
+            printWarning("...Unsupported number of bytes for float: " + std::to_string(_pwfx.wBitsPerSample), 0);
+            return;
+        }
     }
 
     LOG_INFO("...Initializing WASAPU Audio Client: " << context << std::endl);
@@ -84,7 +105,7 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         isLoopback ? AUDCLNT_STREAMFLAGS_LOOPBACK : 0,
         REFTIMES_PER_SEC,
         0,
-        &_pwfx.Format,
+        &_pwfx,
         nullptr
     );
 
@@ -114,19 +135,19 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
     // In other cases, it does seem like the frame count does seem to match the sample rate so should be a safe guess
     // as to a resonable buffer size.
     if (bufferFrameCount == 0) {
-        bufferFrameCount = _pwfx.Format.nSamplesPerSec;
+        bufferFrameCount = _pwfx.nSamplesPerSec;
     }
 
     _exists = true;
-    _bufferDuration = static_cast<double>(REFTIMES_PER_SEC) * bufferFrameCount / _pwfx.Format.nSamplesPerSec;
-    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _bufferDuration << "\t" << _pwfx.Format.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.Format.nChannels << " (Channels)" << std::endl);
+    _bufferDuration = static_cast<double>(REFTIMES_PER_SEC) * bufferFrameCount / _pwfx.nSamplesPerSec;
+    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _bufferDuration << "\t" << _pwfx.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.nChannels << " (Channels)" << std::endl);
     LOG_INFO("....Buffer Frame Count: " << bufferFrameCount << std::endl);
 
     // We set the props that we want here. The only thing we want to keep consistent
     // is the sample rate so we don't have to resample ourselves. Number of channels we keep
     // consistent too and let the encoder go down to whatever number of channels it wants to encode.
-    _props.samplingRate = _pwfx.Format.nSamplesPerSec;
-    _props.numChannels = mono ? 1 : _pwfx.Format.nChannels;
+    _props.samplingRate = _pwfx.nSamplesPerSec;
+    _props.numChannels = mono ? 1 : _pwfx.nChannels;
     // Will be filled in on a per-packet basis.
     _props.numSamples = 0;
     _props.forceMono = mono;
@@ -148,7 +169,7 @@ void WasapiAudioClientRecorder::handleData(const SyncTime& tm, const BYTE* data,
 
         // Note that audioSamplesPerFrame is literally how many samples across ALL channels we can pack into a packet.
         props.numSamples = std::min(static_cast<size_t>(numFrames), AudioPacket::N / props.numChannels);
-        props.numChannels = _pwfx.Format.nChannels;
+        props.numChannels = _pwfx.nChannels;
 
         // Our process of getting this data into an audio packet is two fold - mainly just to make sure we maximize re-usage of
         // code. If this turns out to be a performance issue we can re-evaluate.
@@ -157,24 +178,24 @@ void WasapiAudioClientRecorder::handleData(const SyncTime& tm, const BYTE* data,
         //  2) If the desired data is supposed to be mono, then we create a separate audio packet and use the packet from #1 as a view.
         AudioPacket packet(props, tm);
 
-        const auto indexStart = framesRead * _pwfx.Format.nChannels * _pwfx.Format.wBitsPerSample/8;
+        const auto indexStart = framesRead * _pwfx.nChannels * _pwfx.wBitsPerSample/8;
         const BYTE* subData = &data[indexStart];
         size_t outIndex = 0;
         for (auto i = 0; i < props.numSamples; ++i) {
             for (auto c = 0; c < props.numChannels; ++c) {
-                const auto sampleIndex = (i * props.numChannels + c) * _pwfx.Format.wBitsPerSample/8;
+                const auto sampleIndex = (i * props.numChannels + c) * _pwfx.wBitsPerSample/8;
                 const BYTE* sampleData = &subData[sampleIndex];
 
-                if (_pwfx.SubFormat == KSDATAFORMAT_SUBTYPE_PCM) {
-                    if (_pwfx.Format.wBitsPerSample == 8) {
+                if (isPcm()) {
+                    if (_pwfx.wBitsPerSample == 8) {
                         writeAudioSampleToBuffer<int8_t>(sampleData, packet.buffer()[outIndex]);
-                    } else if (_pwfx.Format.wBitsPerSample == 16) {
+                    } else if (_pwfx.wBitsPerSample == 16) {
                         writeAudioSampleToBuffer<int16_t>(sampleData, packet.buffer()[outIndex]);
                     }
-                } else if (_pwfx.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) {
-                    if (_pwfx.Format.wBitsPerSample == 32) {
+                } else if (isFloat()) {
+                    if (_pwfx.wBitsPerSample == 32) {
                         writeAudioSampleToBuffer<float>(sampleData, packet.buffer()[outIndex]);
-                    } else if (_pwfx.Format.wBitsPerSample == 64) {
+                    } else if (_pwfx.wBitsPerSample == 64) {
                         writeAudioSampleToBuffer<double>(sampleData, packet.buffer()[outIndex]);
                     }
                 }
@@ -198,6 +219,14 @@ void WasapiAudioClientRecorder::handleData(const SyncTime& tm, const BYTE* data,
         numFrames -= static_cast<uint32_t>(props.numSamples);
         framesRead += props.numSamples;
     }
+}
+
+bool WasapiAudioClientRecorder::isPcm() const {
+    return _pwfx.wFormatTag == WAVE_FORMAT_PCM || (_pwfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE && _ewfx.SubFormat == KSDATAFORMAT_SUBTYPE_PCM);
+}
+
+bool WasapiAudioClientRecorder::isFloat() const {
+    return _pwfx.wFormatTag == WAVE_FORMAT_IEEE_FLOAT || (_pwfx.wFormatTag == WAVE_FORMAT_EXTENSIBLE && _ewfx.SubFormat == KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
 }
 
 void WasapiAudioClientRecorder::startRecording() {
