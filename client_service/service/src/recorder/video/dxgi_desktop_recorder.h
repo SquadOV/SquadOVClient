@@ -10,9 +10,11 @@
 #include <atlbase.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
+#include <dxgi1_5.h>
 #include <thread>
 #include <mutex>
 #include <vector>
+#include <wil/com.h>
 
 namespace service::recorder::video {
 
@@ -38,8 +40,9 @@ private:
     DWORD _pid = 0;
 
     // DX11 and DXGI related pointers.
-    IDXGIOutputDuplication* _dupl = nullptr;
-    IDXGIOutput1* _dxgiOutput1 = nullptr;
+    wil::com_ptr<IDXGIOutput1> _dxgiOutput1;
+    wil::com_ptr<IDXGIOutput5> _dxgiOutput5;
+    wil::com_ptr<IDXGIOutputDuplication> _dupl;
     DXGI_OUTPUT_DESC _outputDesc;
 
     DXGI_MODE_ROTATION _rotation;

@@ -25,7 +25,9 @@ public:
     ID3D11Texture2D* createTexture2D(const D3D11_TEXTURE2D_DESC& desc);
     ID3D11RenderTargetView* createRenderTarget(ID3D11Resource* resource, const D3D11_RENDER_TARGET_VIEW_DESC& desc);
 
+    void prepRenderTargetForRender(ID3D11DeviceContext* context, ID3D11RenderTargetView* target);
     bool renderSceneToRenderTarget(ID3D11RenderTargetView* target);
+    void noClear() { _clearBeforeRender = false; }
 
 private:
     bool renderScene();
@@ -42,6 +44,8 @@ private:
     // Scene
     std::vector<D3d11ModelPtr> _models;
     D3d11ShaderPtr _shader;
+
+    bool _clearBeforeRender = true;
 };
 
 using D3d11RendererPtr = std::unique_ptr<D3d11Renderer>;

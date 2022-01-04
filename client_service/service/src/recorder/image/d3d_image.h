@@ -46,7 +46,7 @@ public:
     ~D3dImage();
 
     bool isInit() const { return _init; };
-    void initializeImage(size_t width, size_t height, bool shared = false);
+    void initializeImage(size_t width, size_t height, bool shared = false, DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM);
     void copyFromCpu(const Image& image);
     void copyFromGpu(ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation = DXGI_MODE_ROTATION_IDENTITY);
     void copyFromSharedGpu(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, DXGI_MODE_ROTATION rotation = DXGI_MODE_ROTATION_IDENTITY);
@@ -57,11 +57,13 @@ public:
     Image cpuImage();
     ID3D11Texture2D* rawTexture() const { return _hwTexture; }
     service::renderer::D3d11SharedContext* context() const { return _shared; }
+    DXGI_FORMAT format() const { return _format; }
 private:
     service::renderer::D3d11SharedContext* _shared = nullptr;
     bool _init = false;
     size_t _width = 0;
     size_t _height = 0;
+    DXGI_FORMAT _format = DXGI_FORMAT_UNKNOWN;
 
     std::unordered_map<service::renderer::D3d11SharedContext*, D3dImageRendererBundlePtr> _renderBundles;
     D3dImageRendererBundle* getRendererBundle(service::renderer::D3d11SharedContext* context);
