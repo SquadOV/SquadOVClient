@@ -4,6 +4,7 @@
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_texture.h"
 #include "shared/log/log.h"
+#include "shared/system/win32/hwnd_utils.h"
 
 #include <atomic>
 #include <iostream>
@@ -61,8 +62,15 @@ WindowsGraphicsCaptureItf::WindowsGraphicsCaptureItf(HWND window):
 	auto interopFactory = activationFactory.as<IGraphicsCaptureItemInterop>();
 	winrt::check_hresult(interopFactory->CreateForWindow(_window, winrt::guid_of<ABI::Windows::Graphics::Capture::IGraphicsCaptureItem>(), reinterpret_cast<void**>(winrt::put_abi(_item))));
 
+    // We need to determine what format we want the texture in. If we're doing HDR capture then we want R16G16B16A16Float.
+    // If we want SDR capture then we can just use B8G8R8A8UIntNormalized.
+    HMONITOR monitor = MonitorFromWindow(_window, MONITOR_DEFAULTTOPRIMARY);
+    _format = shared::system::win32::isHDREnabledForMonitor(monitor) ?
+        winrt::Windows::Graphics::DirectX::DirectXPixelFormat::R16G16B16A16Float :
+        winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized;
+
     _lastSize = _item.Size();
-    _framePool = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(_rtDevice, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, _lastSize);
+    _framePool = winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool::CreateFreeThreaded(_rtDevice, _format, 1, _lastSize);
     _frameArrived = _framePool.FrameArrived(winrt::auto_revoke, { this, &WindowsGraphicsCaptureItf::onFrameArrived });
     _session = _framePool.CreateCaptureSession(_item);
 }
@@ -109,7 +117,7 @@ void WindowsGraphicsCaptureItf::onFrameArrived(
 
     flowToNext(&_self, frameSurface.get(), 1, DXGI_MODE_ROTATION_IDENTITY);
     if (changedSize) {
-        _framePool.Recreate(_rtDevice, winrt::Windows::Graphics::DirectX::DirectXPixelFormat::B8G8R8A8UIntNormalized, 1, _lastSize);
+        _framePool.Recreate(_rtDevice, _format, 1, _lastSize);
     }
 }
 

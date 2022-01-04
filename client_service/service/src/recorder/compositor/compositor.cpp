@@ -177,13 +177,11 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
         _tonemapper = std::make_unique<DirectX::ToneMapPostProcess>(_d3dContext->device());
         _tonemapper->SetOperator(DirectX::ToneMapPostProcess::Reinhard);
         _tonemapper->SetTransferFunction(DirectX::ToneMapPostProcess::SRGB);
-        _tonemapper->SetExposure(0.0);
+        _tonemapper->SetExposure(0.0f);
     } else {
         _tonemapper.reset();
     }
     _renderer->initializeRenderer(outputDesc.Width, outputDesc.Height);
-
-
 }
 
 void Compositor::setActiveEncoder(service::recorder::encoder::AvEncoder* encoder) {
