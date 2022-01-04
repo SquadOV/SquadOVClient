@@ -15,14 +15,9 @@ namespace service::recorder::encoder {
 //   
 
 FfmpegCPUVideoSwapChain::~FfmpegCPUVideoSwapChain() {
-    if (_frontSws) {
-        sws_freeContext(_frontSws);
-        _frontSws = nullptr;
-    }
-
-    if (_backSws) {
-        sws_freeContext(_backSws);
-        _backSws = nullptr;
+    if (_sws) {
+        sws_freeContext(_sws);
+        _sws = nullptr;
     }
 
     if (_frame) {
@@ -46,45 +41,7 @@ void FfmpegCPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef*) 
         THROW_ERROR("Failed to get CPU frame buffer.");
     }
 
-    _overlay->initializeGpu();
-    _frontBuffer = std::make_unique<service::recorder::image::Image>();
-    _backBuffer = std::make_unique<service::recorder::image::Image>();
-}
-
-service::recorder::image::Image FfmpegCPUVideoSwapChain::cpuCopyFrontBuffer() const {
-    std::lock_guard<std::mutex> guard(_frontMutex);
-    service::recorder::image::Image image;
-    if (_frontBuffer->isInit()) {
-        image.initializeImage(_frontBuffer->width(), _frontBuffer->height());
-        image.copyFrom(*_frontBuffer);
-    }
-    return image;
-}
-
-bool FfmpegCPUVideoSwapChain::hasValidFrontBuffer() const {
-    std::lock_guard<std::mutex> fguard(_frontMutex);
-    return _frontBuffer->isInit();
-}
-
-void FfmpegCPUVideoSwapChain::swap() {
-    std::lock_guard<std::mutex> fguard(_frontMutex);
-    std::lock_guard<std::mutex> bguard(_backMutex);
-    if (!_backBufferDirty) {
-        return;
-    }
-    _frontBuffer.swap(_backBuffer);
-    std::swap(_frontSws, _backSws);
-    _backBufferDirty = false;
-}
-
-AVFrame* FfmpegCPUVideoSwapChain::getFrontBufferFrame() {
-    std::lock_guard<std::mutex> guard(_frontMutex);
-    if (_frontBuffer->isInit()) {
-        const auto* inputBuffer = _frontBuffer->buffer();
-        const int inputBufferStride[1] = { static_cast<int>(_frontBuffer->width() * _frontBuffer->bytesPerPixel()) };
-        sws_scale(_frontSws, &inputBuffer, inputBufferStride, 0, static_cast<int>(_frontBuffer->height()), _frame->data, _frame->linesize);
-    }
-    return _frame;
+    _buffer = std::make_unique<service::recorder::image::Image>();
 }
 
 size_t FfmpegCPUVideoSwapChain::frameWidth() const {
@@ -102,15 +59,15 @@ size_t FfmpegCPUVideoSwapChain::frameHeight() const {
 }
 
 void FfmpegCPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
-    if (_backBuffer->width() != width || _backBuffer->height() != height) {
-        _backBuffer->initializeImage(width, height);
+    if (_buffer->width() != width || _buffer->height() != height) {
+        _buffer->initializeImage(width, height);
 
-        if (!!_backSws) {
-            sws_freeContext(_backSws);
-            _backSws = nullptr;
+        if (!!_sws) {
+            sws_freeContext(_sws);
+            _sws = nullptr;
         }
 
-        _backSws = sws_getContext(
+        _sws = sws_getContext(
             static_cast<int>(width),
             static_cast<int>(height),
             AV_PIX_FMT_BGRA,
@@ -123,47 +80,42 @@ void FfmpegCPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
             nullptr
         );
 
-        if (!_backSws) {
+        if (!_sws) {
             THROW_ERROR("Failed to create SWS context.");
         }
-
-        _overlay->reinitializeRenderer(width, height);
     }
 }
 
-void FfmpegCPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
-    std::lock_guard<std::mutex> guard(_backMutex);
-    reinitBackBuffer(frame.width(), frame.height());
-
-    if (_overlay) {
-        _overlay->render(_backBuffer, frame);
-    } else {
-        _backBuffer->copyFrom(frame);
-    }
-    _backBufferDirty = true;
+AVFrame* FfmpegCPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
+    return process(frame);
 }
 
 #ifdef _WIN32
-void FfmpegCPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
+AVFrame* FfmpegCPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
     if (!isGpuInit()) {
         THROW_ERROR("Swap chain not initialized for GPU usage.");
     }
 
     D3D11_TEXTURE2D_DESC desc;
     frame->GetDesc(&desc);
-
-    std::lock_guard<std::mutex> guard(_backMutex);
     reinitBackBuffer(desc.Width, desc.Height);
 
-    if (_overlay) {
-        _overlay->render(_backBuffer, frame, _shared);
-    } else {
-        auto immediate = _shared->immediateContext();
-        _backBuffer->loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frame);
-    }
-    _backBufferDirty = true;
+    auto immediate = _shared->immediateContext();
+    _buffer->loadFromD3d11TextureWithStaging(_shared->device(), immediate.context(), frame);
+    return process(*_buffer);
 }
 #endif
+
+AVFrame* FfmpegCPUVideoSwapChain::process(const service::recorder::image::Image& input) {
+    if (!input.isInit() || !_sws) {
+        return nullptr;
+    }
+
+    const auto* inputBuffer = input.buffer();
+    const int inputBufferStride[1] = { static_cast<int>(input.width() * input.bytesPerPixel()) };
+    sws_scale(_sws, &inputBuffer, inputBufferStride, 0, static_cast<int>(input.height()), _frame->data, _frame->linesize);
+    return _frame;
+}
 
 //
 // GPU
@@ -205,44 +157,9 @@ void FfmpegGPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef* h
         THROW_ERROR("Formats besides NV12 not supported.");
     }
 
-    _overlay->initializeGpu();
     _processor = std::make_unique<service::renderer::D3d11VideoProcessor>(_shared);
     _processor->setFfmpegColorspace(_frame->colorspace);
-    _frontBuffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
-    _backBuffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
-}
-
-AVFrame* FfmpegGPUVideoSwapChain::getFrontBufferFrame() {
-    std::lock_guard<std::mutex> guard(_frontMutex);
-
-    if (_frontBuffer->isInit()) {
-        // Copy from the front buffer to the frame's texture using D3D11's video processing capabilities
-        // to ensure that we're able to convert to NV12 properly.
-        auto* frameTexture = reinterpret_cast<ID3D11Texture2D*>(_frame->data[0]);
-        _processor->process(_frontBuffer->rawTexture(), frameTexture);
-    }
-
-    return _frame;
-}
-
-void FfmpegGPUVideoSwapChain::swap() {
-    std::lock_guard<std::mutex> fguard(_frontMutex);
-    std::lock_guard<std::mutex> bguard(_backMutex);
-    if (!_backBufferDirty) {
-        return;
-    }
-    _frontBuffer.swap(_backBuffer);
-    _backBufferDirty = false;
-}
-
-service::recorder::image::Image FfmpegGPUVideoSwapChain::cpuCopyFrontBuffer() const {
-    std::lock_guard<std::mutex> fguard(_frontMutex);
-    return _frontBuffer->cpuImage();
-}
-
-bool FfmpegGPUVideoSwapChain::hasValidFrontBuffer() const {
-    std::lock_guard<std::mutex> fguard(_frontMutex);
-    return _frontBuffer->isInit();
+    _buffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
 }
 
 bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height) {
@@ -276,38 +193,32 @@ size_t FfmpegGPUVideoSwapChain::frameHeight() const {
 }
 
 void FfmpegGPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
-    if (_backBuffer->width() != width || _backBuffer->height() != height) {
-        _backBuffer->initializeImage(width, height, true);
-        _overlay->reinitializeRenderer(width, height);
+    if (_buffer->width() != width || _buffer->height() != height) {
+        _buffer->initializeImage(width, height, true);
     }
 }
 
-void FfmpegGPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
-    std::lock_guard<std::mutex> guard(_backMutex);
+AVFrame* FfmpegGPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
     reinitBackBuffer(frame.width(), frame.height());
 
-    if (_overlay) {
-        _overlay->render(_backBuffer, frame);
-    } else {
-        _backBuffer->copyFromCpu(frame);
-    }
-    _backBufferDirty = true;
+    _buffer->copyFromCpu(frame);
+    return process(_buffer->rawTexture());
 }
 
 #ifdef _WIN32
-void FfmpegGPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
-    D3D11_TEXTURE2D_DESC desc;
-    frame->GetDesc(&desc);
-
-    std::lock_guard<std::mutex> guard(_backMutex);
-    reinitBackBuffer(desc.Width, desc.Height);
-    if (_overlay) {
-        _overlay->render(_backBuffer, frame, _shared);
-    } else {
-        _backBuffer->copyFromGpu(frame);
-    }
-    _backBufferDirty = true;
+AVFrame* FfmpegGPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
+    return process(frame);
 }
 #endif
+
+AVFrame* FfmpegGPUVideoSwapChain::process(ID3D11Texture2D* input) {
+    if (!_processor) {
+        return nullptr;
+    }
+
+    auto* frameTexture = reinterpret_cast<ID3D11Texture2D*>(_frame->data[0]);
+    _processor->process(input, frameTexture);
+    return _frame;
+}
 
 }

@@ -35,6 +35,7 @@
 #include "shared/http/dns_manager.h"
 #include "shared/system/keys.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "shared/system/win32/process.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
 
@@ -176,6 +177,8 @@ int main(int argc, char** argv) {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
     shared::log::Log::initializeGlobalLogger("squadov.log");
+
+    shared::system::win32::elevateProcessPriority(ABOVE_NORMAL_PRIORITY_CLASS);
 
     try {
         const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();

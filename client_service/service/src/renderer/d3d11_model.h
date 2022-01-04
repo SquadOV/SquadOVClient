@@ -4,6 +4,8 @@
 #include <windows.h>
 #include <d3d11.h>
 #include <directxmath.h>
+
+#include <atomic>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -40,6 +42,9 @@ public:
     unsigned int numIndices() const { return _numIndices; }
     DirectX::XMMATRIX getModelXform() const { return _modelXform; }
 
+    void setVisibility(bool v) { _visible = v; }
+    bool visible() const { return _visible; }
+
 private:
     size_t _numVertices = 0;
     size_t _numIndices = 0;
@@ -47,6 +52,7 @@ private:
 
     ID3D11Buffer* _vertexBuffer = nullptr;
     ID3D11Buffer* _indexBuffer = nullptr;
+    std::atomic<bool> _visible = true;
 
     void freeShaderResource();
 
