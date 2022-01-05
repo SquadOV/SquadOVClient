@@ -133,7 +133,7 @@
                             v-if="filteredSquadMembers.length > 0"
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
-                            :items-per-page="10"
+                            :items-per-page="USERS_PER_PAGE"
                             :page="userPage"
                             hide-default-footer
                             hide-default-header
@@ -184,11 +184,11 @@
 
 import Component, {mixins} from 'vue-class-component'
 import CommonComponent from '@client/vue/CommonComponent'
-import { Watch, Prop } from 'vue-property-decorator'
+import { Watch } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
 import { Squad, SquadMembership } from '@client/js/squadov/squad'
 import { apiClient, ApiData } from '@client/js/api'
-import { TrackedUserStatsManager } from '@client/js/squadov/status'
+import { SquadOvActivity, TrackedUserStatsManager, TrackedUserStatus } from '@client/js/squadov/status'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import StatusDisplay from '@client/vue/utility/squadov/StatusDisplay.vue'
 import NewsDisplay from '@client/vue/utility/squadov/NewsDisplay.vue'
@@ -198,6 +198,10 @@ import UserActivityDisplay from '@client/vue/utility/squadov/UserActivityDisplay
 import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecordedPlaytimeWidget.vue'
 import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
+import { compareString, compareUserStatus } from '@client/js/cmp'
+
+const LARGE_SQUAD_THRESHOLD: number = 50
+const USERS_PER_PAGE: number = 10
 
 @Component({
     components: {
@@ -213,6 +217,7 @@ import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
     }
 })
 export default class Dashboard extends mixins(CommonComponent) {
+    USERS_PER_PAGE = USERS_PER_PAGE
     preselectedSquad: string | null = null
     mySquads: SquadMembership[] = []
     selectedSquad: SquadMembership | undefined | null = null
@@ -264,24 +269,35 @@ export default class Dashboard extends mixins(CommonComponent) {
     get filteredSquadMembers(): SquadMembership[] {
         return this.squadMembers
             .filter((ele: SquadMembership) => ele.userId !== this.$store.state.currentUser.id)
-            .sort((a: SquadMembership, b: SquadMembership) => {
-                if (a.username < b.username) {
-                    return -1
-                } else if (a.username > b.username) {
-                    return 1
+            .filter((ele: SquadMembership) => {
+                if (this.squadMembers.length > LARGE_SQUAD_THRESHOLD) {
+                    let status = this.$store.state.status.status[ele.userId]
+                    if (status === undefined) {
+                        return false
+                    }
+                    return status.activity != SquadOvActivity.Offline
                 } else {
-                    return 0
+                    return true
                 }
+            })
+            .sort((a: SquadMembership, b: SquadMembership) => {
+                let aStatus: TrackedUserStatus | undefined = this.$store.state.status.status[a.userId]
+                let bStatus: TrackedUserStatus | undefined = this.$store.state.status.status[b.userId]
+
+                let aActivity = !!aStatus ? aStatus.activity : SquadOvActivity.Offline
+                let bActivity = !!bStatus ? bStatus.activity : SquadOvActivity.Offline
+
+                return compareUserStatus(aActivity, bActivity) || compareString(a.username, b.username)
             })
     }
 
-    @Watch('filteredSquadMembers')
+    @Watch('squadMembers')
     resubscribeToStatus(newMembers: SquadMembership[], oldMembers: SquadMembership[]) {
         let newSet: Set<number> = new Set(newMembers.map((ele: SquadMembership) => ele.userId))
         let oldSet: Set<number> = new Set(oldMembers.map((ele: SquadMembership) => ele.userId))
 
-        let unsubUsers = oldMembers.filter((ele: SquadMembership) => !newSet.has(ele.userId)).map((ele: SquadMembership) => ele.userId)
-        let subUsers = newMembers.filter((ele: SquadMembership) => !oldSet.has(ele.userId)).map((ele: SquadMembership) => ele.userId)
+        let unsubUsers = oldMembers.filter((ele: SquadMembership) => !newSet.has(ele.userId) && ele.userId !== this.$store.state.currentUser.id).map((ele: SquadMembership) => ele.userId)
+        let subUsers = newMembers.filter((ele: SquadMembership) => !oldSet.has(ele.userId) && ele.userId !== this.$store.state.currentUser.id).map((ele: SquadMembership) => ele.userId)
 
         //@ts-ignore
         let tracker: TrackedUserStatsManager = this.$root.statusTracker

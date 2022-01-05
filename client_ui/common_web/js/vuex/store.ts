@@ -11,7 +11,9 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { computeFileFolderSizeGb } from '@client/js/system/settings'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
-    strict: true,
+    // Absolutely do not use strict here. We do a lot of mutations (particularly for user state)
+    // and it slows things down BY A LOT.
+    strict: false,
     state: {
         currentUser: null,
         attemptUserLoad: false,
