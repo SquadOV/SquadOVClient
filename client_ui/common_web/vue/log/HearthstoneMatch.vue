@@ -47,6 +47,13 @@
                             :enable-draw="enableDraw"
                             :go-to-offset="1000"
                             :current-ts.sync="timestamp"
+                            :match-uuid="matchId"
+                            :game="SquadOvGames.Hearthstone"
+                            :permissions="matchPermissions"
+                            :full-path="$route.fullPath"
+                            :timestamp="timestamp"
+                            :user-id="userId"
+                            :is-local="!!vod ? vod.isLocal : false"
                         >
                         </video-player>
 

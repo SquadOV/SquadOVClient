@@ -38,6 +38,14 @@
                         :current-time.sync="vodTime"
                         :enable-draw="enableDraw"
                         :current-ts.sync="timestamp"
+                        :match-uuid="taskId"
+                        :game="SquadOvGames.AimLab"
+                        :graphql-stats="statPermissions"
+                        :permissions="matchPermissions"
+                        :full-path="$route.fullPath"
+                        :timestamp="timestamp"
+                        :user-id="userId"
+                        :is-local="!!vod ? vod.isLocal : false"
                     >
                     </video-player>
 

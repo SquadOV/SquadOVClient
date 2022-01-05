@@ -39,6 +39,13 @@
                             :current-time.sync="vodTime"
                             :enable-draw="enableDraw"
                             :current-ts.sync="timestamp"
+                            :match-uuid="matchUuid"
+                            :game="SquadOvGames.Valorant"
+                            :permissions="matchPermissions"
+                            :full-path="$route.fullPath"
+                            :timestamp="timestamp"
+                            :user-id="userId"
+                            :is-local="!!vod ? vod.isLocal : false"
                         >
                         </video-player>
 
