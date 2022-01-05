@@ -12,24 +12,26 @@
                     mdi-close
                 </v-icon>
             </v-btn>
-            <div id="stuff">
+            <div id="contentButtons">
                 <v-row justify="center">
                     <v-btn
-                        class="buttons"
                         color="white"
+                        class="buttons"
                         @click="rewatchVideo"
                         icon
                         x-large
+                        min-height="144px"
+                        plain
                     >
-                        <v-icon x-large>
+                        <v-icon size="144px">
                             mdi-replay
                         </v-icon>
                     </v-btn>
                 </v-row>
                 <v-row justify="center">
                     <match-share-button
-                        class="buttons"
                         v-if="!!matchUuid"
+                        class="buttons"
                         :match-uuid="matchUuid"
                         :game="game"
                         :permissions="permissions"
@@ -38,15 +40,17 @@
                         :user-id="userId"
                         :is-local="isLocal"
                         :graphqlStats="graphqlStats"
+                        :shareBtnText="false"
                     >
                     </match-share-button>
                     <match-share-button
-                        class="buttons"
                         v-else-if="!!clipUuid"
+                        class="buttons"
                         :clip-uuid="clipUuid"
                         :permissions="permissions"
                         :full-path="$route.fullPath"
                         :timestamp="timestamp"
+                        :shareBtnText="false"
                         no-clip
                     >
                     </match-share-button>
@@ -156,11 +160,10 @@ export default class VideoEndOverlay extends Vue {
     backdrop-filter: blur(6px);
 }
 
-#stuff {
+#contentButtons {
     position: absolute;
-    top: 50%;
-    width: 100%;
-    height: 100%;
+    top: 40%;
+    width: 99%;
 }
 
 .closeButton {
@@ -170,6 +173,6 @@ export default class VideoEndOverlay extends Vue {
 }
 
 .buttons {
-    margin-bottom: 10px;
+    margin-bottom: 25px;
 }
 </style>
