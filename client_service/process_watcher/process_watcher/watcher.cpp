@@ -1,5 +1,4 @@
 #include "process_watcher/watcher.h"
-#include "process_watcher/games/game_process_detector.h"
 #include "process_watcher/process/process.h"
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
@@ -72,15 +71,18 @@ void ProcessWatcher::start() {
 }
 
 std::optional<process::Process> isGameRunning(shared::EGame game) {
-    process::ProcessRunningState processState(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
-    processState.update();
-
     const auto detector = games::createDetectorForGame(game);
     if (!detector) {
         LOG_WARNING("...Failed to create detector for game: " << shared::gameToString(game) << std::endl);
         return std::nullopt;
     }
-    return detector->checkIsRunning(processState);
+    return isProcessRunning(*detector);
+}
+
+std::optional<process::Process> isProcessRunning(const games::GameProcessDetector& detector) {
+    process::ProcessRunningState processState(std::make_shared<shared::system::win32::interfaces::Win32SystemProcessInterface>());
+    processState.update();
+    return detector.checkIsRunning(processState);
 }
 
 }

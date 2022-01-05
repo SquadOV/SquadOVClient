@@ -38,6 +38,7 @@
 #include "shared/system/win32/process.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
+#include "system/notification_hub.h"
 
 #include <algorithm>
 #include <boost/program_options.hpp>
@@ -213,19 +214,23 @@ int main(int argc, char** argv) {
         enablePaDebugLogs = true;
     }
 
-    // Do sanity check of DNS.
-    shared::http::getDnsManager();
-
+    LOG_INFO("Checking system hardware..." << std::endl);
     const auto sysHw = service::hardware::getSystemHardware();
     LOG_INFO(sysHw << std::endl);
 
     // Initialize the DNS manager at the very beginning before any network calls are done and we start
     // making calls to CURL/C-ARES.
+    LOG_INFO("Checking DNS..." << std::endl);
     shared::http::getDnsManager();
 
     // Initialize global state and start to listen to messages coming via ZeroMQ about
     // how to update certain state.
+    LOG_INFO("Initializing global state..." << std::endl);
     service::system::getGlobalState();
+
+    // Initialize notification hub.
+    LOG_INFO("Initializing notification HUB..." << std::endl);
+    service::system::getNotificationHub();
 
     // Need to detect NVIDIA GPUs here to deal with #1260. We need to disable use gpu pipeline for nvidia users because
     // what the fuck MSI.
@@ -801,6 +806,14 @@ int main(int argc, char** argv) {
         for (const auto& rec: recorderInterfaces) {
             rec->forceStopRecording();
         }
+    });
+
+    LOG_INFO("Setting callback to notification hub..." << std::endl);
+    service::system::getNotificationHub()->addCallback([&zeroMqServerClient](const service::system::NotificationMessage& m){
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_NOTIFY_ERROR,
+            shared::json::JsonConverter<std::remove_const_t<std::remove_reference_t<decltype(m)>>>::to(m).dump()
+        );
     });
 
     const auto mode = vm["mode"].as<std::string>();
