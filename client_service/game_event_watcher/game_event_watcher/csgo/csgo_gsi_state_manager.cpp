@@ -4,7 +4,7 @@
 namespace game_event_watcher {
 
 bool CsgoMatchState::isSupported() const {
-    return (mode == "casual" || mode == "competitive");
+    return (mode == "casual" || mode == "competitive" || "scrimcomp2v2");
 }
 
 CsgoWeaponState CsgoWeaponState::from(const CsgoGsiWeaponPacket& packet) {
