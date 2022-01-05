@@ -1,7 +1,7 @@
 <template>
     <div v-if="!!permissions && permissions.canShare">
         <v-btn
-            text
+            :text="shareBtnText"
             color="primary"
             @click="onShow"
         >
@@ -285,6 +285,9 @@ export default class MatchShareButton extends mixins(CommonComponent) {
 
     @Prop({type: Boolean, default: false})
     isLocal!: boolean
+
+    @Prop({default: true})
+    shareBtnText!: boolean
 
     showHideError: boolean = false
     showHideShare: boolean = false
