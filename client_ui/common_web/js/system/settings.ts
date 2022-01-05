@@ -346,7 +346,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: true,
+                useWASAPIRecording: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -391,7 +391,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: true,
+                useWASAPIRecording: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -436,7 +436,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: true,
+                useWASAPIRecording: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -506,7 +506,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 }
             ],
             usePushToTalk: false,
-            useWASAPIRecording: true,
+            useWASAPIRecording: false,
             usePerProcessRecording: false,
             perProcessRecordingOsCheck: false,
             recordGameAudio: false,

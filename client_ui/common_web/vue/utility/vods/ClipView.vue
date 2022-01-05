@@ -11,6 +11,11 @@
                     :current-time.sync="viewTime"
                     :ready.sync="vodReady"
                     :current-ts.sync="timestamp"
+                    :clip-uuid="clipUuid"
+                    :permissions="permissions"
+                    :full-path="$route.fullPath"
+                    :timestamp="timestamp"
+                    no-clip
                 >
                 </video-player>
 
