@@ -47,6 +47,7 @@ public:
 
     D3d11ImmediateContextGuard immediateContext();
     ID3D11DeviceContext* deferredContext();
+    D3d11Device deviceClass() const { return _deviceClass; }
 
     void execute(ID3D11DeviceContext* deferredContext);
     void execute(ID3D11CommandList* list);
@@ -55,6 +56,7 @@ private:
     ID3D11Device1* _device1 = nullptr;
     ID3D11DeviceContext* _context = nullptr;
     std::recursive_mutex _contextMutex;
+    D3d11Device _deviceClass;
 };
 
 using D3d11SharedContextPtr = std::unique_ptr<D3d11SharedContext>;

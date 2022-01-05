@@ -80,6 +80,13 @@ void D3d11Renderer::addModelToScene(const D3d11ModelPtr& model) {
     _models.push_back(model);
 }
 
+ID3D11Device* D3d11Renderer::device() const {
+    if (!_shared) {
+        return nullptr;
+    }
+    return _shared->device();
+}
+
 ID3D11Texture2D* D3d11Renderer::createTexture2D(const D3D11_TEXTURE2D_DESC& desc) {
     ID3D11Texture2D* texture = nullptr;
     HRESULT hr = _shared->device()->CreateTexture2D(&desc, nullptr, &texture);
@@ -120,6 +127,10 @@ bool D3d11Renderer::renderScene() {
 
     // Stupid simple rendering loop because our use-cases aren't super fancy at the moment.
     for (const auto& model : _models) {
+        if (!model->visible()) {
+            continue;
+        }
+
         // Load the model's vertex/index buffers.
         model->render(_context);
 
