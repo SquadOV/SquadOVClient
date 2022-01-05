@@ -141,7 +141,7 @@ void Ff14ProcessHandlerInstance::checkAndFindLogSetup() {
         }
     }
     
-    if (useDefaultPath) {
+    if (useDefaultPath || !fs::exists(_networkLogDir)) {
         LOG_WARNING("FF14 Plugin Config Path not found...assuming default." << std::endl);
         _networkLogDir = actDir / fs::path("FFXIVLogs");
     }
