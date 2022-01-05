@@ -9,6 +9,23 @@
                 ref="overlay"
             >
             </video-draw-overlay>
+            <video-end-overlay
+                v-if="showEndOverlay"
+                @replayVOD="replayVOD"
+                @closeOverlay="closeOverlay"
+                ref="endOverlay"
+                :clip-uuid="clipUuid"
+                :permissions="permissions"
+                :full-path="$route.fullPath"
+                :timestamp="timestamp"
+                no-clip
+                :match-uuid="matchUuid"
+                :game="game"
+                :user-id="userId"
+                :is-local="isLocal"
+                :graphql-stats="graphqlStats"
+                >
+            </video-end-overlay>
         </div>
 
         <v-row class="empty-container" justify="center" align="center" v-else>
@@ -38,6 +55,7 @@ import { Parser as M3u8Parser } from 'm3u8-parser'
 import VideoDrawOverlay from '@client/vue/utility/VideoDrawOverlay.vue'
 import { RCMessagePacket, RCMessageType, VodRemoteControlContext } from '@client/js/vods/remote'
 import playerjs from 'player.js'
+import VideoEndOverlay from '@client/vue/utility/VideoEndOverlay.vue'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -47,13 +65,50 @@ import { IpcResponse } from '@client/js/system/ipc'
 import CommonComponent from '@client/vue/CommonComponent'
 import { PlayerPageId } from '@client/js/pages'
 import { openPathInNewWindow } from '@client/js/external'
+import { MatchVideoSharePermissions } from '@client/js/squadov/share'
+import { SquadOvGames } from '@client/js/squadov/game'
+import { StatPermission } from '@client/js/stats/statPrimitives'
 
 @Component({
     components: {
-        VideoDrawOverlay
+        VideoDrawOverlay,
+        VideoEndOverlay,
     }
 })
 export default class VideoPlayer extends mixins(CommonComponent) {
+    //Props to pass down to Overlay
+    @Prop()
+    matchUuid!: string | undefined
+
+    @Prop()
+    clipUuid!: string | undefined
+
+    @Prop()
+    game!: SquadOvGames
+
+    @Prop({required: true})
+    permissions!: MatchVideoSharePermissions | null
+
+    @Prop({type: Boolean, default: false})
+    noClip!: boolean
+
+    @Prop()
+    graphqlStats!: StatPermission[]
+
+    @Prop({required: true})
+    fullPath!: string
+
+    @Prop({default: 0})
+    timestamp!: number
+
+    @Prop()
+    userId!: number
+
+    @Prop({type: Boolean, default: false})
+    isLocal!: boolean
+
+    // End of props that need to be passed down to VideoEndOverlay
+
     @Prop({required: true})
     vod! : vod.VodAssociation | null | undefined
     
@@ -114,6 +169,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     $refs!: {
         video: HTMLVideoElement
         overlay: VideoDrawOverlay
+        endOverlay: VideoEndOverlay
     }
     hasMadeProgress: boolean = false
     rcContext: VodRemoteControlContext | null = null
@@ -123,6 +179,11 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     lastTimestamp: number = 0
     refreshInterval: number | null = null
     currentWatchRangeSeconds: number | null = null
+    showEndOverlay = false
+
+    closeOverlay() {
+        this.showEndOverlay = false
+    }
 
     startWatchAnalyticsRange() {
         if (!this.player || this.currentWatchRangeSeconds !== null) {
@@ -495,7 +556,12 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             }
         })
 
+        this.player.on('ended', () => {
+            this.showEndOverlay = true
+        })
+
         this.player.on('play', () => {
+            this.showEndOverlay = false
             if (!!this.player) {
                 this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.PlayVod, '', this.player.currentTime())
             }
@@ -613,6 +679,24 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             newParent.appendChild(this.$refs.overlay.$el)
             this.player.pause()
         })
+    }
+
+    @Watch('player')
+    @Watch('showEndOverlay')
+    refreshEndOverlay() {
+        Vue.nextTick(() => {
+            if (!this.player || !this.showEndOverlay) {
+                return
+            }
+            let newParent = this.player.el()
+            newParent.appendChild(this.$refs.endOverlay.$el)
+            this.player.pause()
+        })
+    }
+
+    replayVOD() {
+        this.closeOverlay()
+        this.player?.play()
     }
 
     handleKeypress(e: KeyboardEvent) {
