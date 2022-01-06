@@ -7,6 +7,8 @@
 #include "process_watcher/watcher.h"
 #include "system/state.h"
 #include "system/notification_hub.h"
+#include "game_event_watcher/ff14/ff14_log_watcher.h"
+#include "api/combat_log_client.h"
 
 #include <boost/algorithm/string.hpp>
 #include <rapidxml.hpp>
@@ -26,14 +28,23 @@ private:
     void loadGameVersion();
     void checkAndFindLogSetup();
 
+    void onChangeZone(const shared::TimePoint& tm, const void* data);
+    void onChangePrimaryPlayer(const shared::TimePoint& tm, const void* data);
+    void onAddCombatant(const shared::TimePoint& tm, const void* data);
+    void onCombatLogLine(const shared::TimePoint& tm, const void* data);
+
     process_watcher::process::Process _process;
     std::string _gameVersion;
     fs::path _networkLogDir;
+    game_event_watcher::Ff14LogWatcherPtr _logWatcher;
+    api::CombatLogClientPtr _combatLogClient;
 };
 
 Ff14ProcessHandlerInstance::Ff14ProcessHandlerInstance(const process_watcher::process::Process& p):
     _process(p)
 {
+    _combatLogClient = std::make_unique<api::CombatLogClient>(api::CombatLogEndpoint::Ff14);
+
     // Check FF14 game version. We'll store this information in conjunction with our logs since it might be
     // useful information later on (and maybe for parsing stuff as well just in case things change in the format).
     loadGameVersion();
@@ -42,6 +53,12 @@ Ff14ProcessHandlerInstance::Ff14ProcessHandlerInstance(const process_watcher::pr
     checkAndFindLogSetup();
 
     // At this point we can start monitoring the log file for changes.
+    _logWatcher = std::make_unique<game_event_watcher::Ff14LogWatcher>(true, shared::nowUtc());
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::ChangeZone), std::bind(&Ff14ProcessHandlerInstance::onChangeZone, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::ChangePrimaryPlayer), std::bind(&Ff14ProcessHandlerInstance::onChangePrimaryPlayer, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::AddCombatant), std::bind(&Ff14ProcessHandlerInstance::onAddCombatant, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::CombatLogLine), std::bind(&Ff14ProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
+    _logWatcher->loadFromParentFolder(_networkLogDir);
 }
 
 Ff14ProcessHandlerInstance::~Ff14ProcessHandlerInstance() {
@@ -159,6 +176,26 @@ void Ff14ProcessHandlerInstance::checkAndFindLogSetup() {
     }
 
     LOG_INFO("FF14 ACT Log Path: " << _networkLogDir << std::endl);
+}
+
+void Ff14ProcessHandlerInstance::onChangeZone(const shared::TimePoint& tm, const void* data) {
+    // Check if we're entering a relevant zone that we potentially wish to record.
+}
+
+void Ff14ProcessHandlerInstance::onChangePrimaryPlayer(const shared::TimePoint& tm, const void* data) {
+
+}
+
+void Ff14ProcessHandlerInstance::onAddCombatant(const shared::TimePoint& tm, const void* data) {
+
+}
+
+void Ff14ProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, const void* data) {
+    // Batch combat log line data and send to server for processing.
+    const game_event_watcher::LogLinesDelta* logLines = reinterpret_cast<const game_event_watcher::LogLinesDelta*>(data);
+    for (const auto& ln: *logLines) {
+        _combatLogClient->addLine(ln);
+    }
 }
 
 void Ff14ProcessHandlerInstance::cleanup() {

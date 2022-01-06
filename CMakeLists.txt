@@ -67,7 +67,6 @@ find_package(Boost 1.74.0 REQUIRED
         date_time
         unit_test_framework
 )
-MESSAGE(STATUS "BOOST LIBS ${Boost_LIBRARIES}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)

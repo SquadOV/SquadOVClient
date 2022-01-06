@@ -3,6 +3,7 @@ SET(SRCS
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
     src/api/local_api.cpp
+    src/api/combat_log_client.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
     src/csgo/csgo_process_handler.cpp
@@ -72,6 +73,7 @@ SET(HEADERS
     src/api/kafka_api.h
     src/api/league_ingame_api.h
     src/api/local_api.h
+    src/api/combat_log_client.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
     src/csgo/csgo_process_handler.h
