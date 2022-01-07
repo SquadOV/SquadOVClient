@@ -20,6 +20,10 @@ export class VodRemoteControlContext {
         this._messageListeners = []
     }
 
+    close() {
+        this._channel.close()
+    }
+
     addListener(m: (a: RCMessagePacket) => void) {
         this._messageListeners.push(m)
     }
