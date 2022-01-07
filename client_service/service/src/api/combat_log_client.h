@@ -9,12 +9,16 @@
 #include <vector>
 
 #include "shared/time.h"
+#include "shared/http/http_client.h"
+#include "shared/json.h"
 
 namespace service::api {
 
 enum class CombatLogEndpoint {
     Ff14
 };
+
+std::string combatLogEndpointToPath(CombatLogEndpoint ep);
 
 class CombatLogClient {
 public:
@@ -33,10 +37,13 @@ public:
     void start();
 private:
     CombatLogEndpoint _endpoint;
+    std::string _endpointPath;
+
     std::vector<std::string> _buffer;
     std::thread _uploadThread;
     bool _running = false;
     std::unordered_map<std::string, std::string> _metadata;
+    std::unique_ptr<shared::http::HttpClient> _webClient;
 
     bool isBufferFull() const;
 

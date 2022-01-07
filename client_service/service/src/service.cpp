@@ -31,6 +31,7 @@
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
+#include "api/aws_api.h"
 #include "hardware/hardware.h"
 #include "shared/http/dns_manager.h"
 #include "shared/system/keys.h"
@@ -297,12 +298,6 @@ int main(int argc, char** argv) {
     });
     zeroMqServerClient.start();
 
-    service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
-        LOG_INFO("SEND SESSION ID: " << sessionId << std::endl);
-        zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
-        service::api::getGlobalApi()->setSessionId(sessionId);
-    });
-
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
         // Note that setSessionId also does an API call to pull the current user.
@@ -332,6 +327,9 @@ int main(int argc, char** argv) {
     fs::create_directories(shared::filesystem::getSquadOvDvrSessionFolder());
 
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+
+    LOG_INFO("Initializing AWS API..." << std::endl);
+    service::api::getAwsApi();
 
 #ifdef NDEBUG
     const auto features = service::api::getGlobalApi()->getSessionFeatures();

@@ -1,4 +1,6 @@
 #include "api/combat_log_client.h"
+#include "api/squadov_api.h"
+#include "shared/log/log.h"
 
 #include <nlohmann/json.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -7,10 +9,23 @@
 
 namespace service::api {
 
+std::string combatLogEndpointToPath(CombatLogEndpoint ep) {
+    switch (ep) {
+        case CombatLogEndpoint::Ff14:
+            return "/ff14";
+    }
+    return "";
+}
+
 CombatLogClient::CombatLogClient(CombatLogEndpoint endpoint):
     _endpoint(endpoint)
 {
+    _endpointPath = combatLogEndpointToPath(_endpoint);
+    LOG_INFO("Combat Logging to Path: " << _endpointPath);
 
+    const auto hostname = service::api::getGlobalApi()->getCombatLogApiConfiguration();
+    LOG_INFO("Combat Logging to Hostname: " << hostname << std::endl);
+    _webClient = std::make_unique<shared::http::HttpClient>(hostname);
 }
 
 CombatLogClient::~CombatLogClient() {
@@ -40,7 +55,6 @@ void CombatLogClient::start() {
         workingBuffer.reserve(_maxBufferSize);
 
         std::vector<char> compressedBuffer;
-
         while (_running) {
             nlohmann::json dataToSend;
             {
@@ -95,7 +109,7 @@ void CombatLogClient::start() {
             }
 
             // Finally, HTTP POST the data up to our servers. Our servers will take care of putting it onto a proper
-            // queue for processing.
+            // queue for processing. We use the AWS API to sign the request since we use AWS IAM as the way to authenticate requests.
         }
     });
 }

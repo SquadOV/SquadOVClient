@@ -3,6 +3,7 @@ SET(SRCS
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
     src/api/local_api.cpp
+    src/api/aws_api.cpp
     src/api/combat_log_client.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
@@ -73,6 +74,7 @@ SET(HEADERS
     src/api/kafka_api.h
     src/api/league_ingame_api.h
     src/api/local_api.h
+    src/api/aws_api.h
     src/api/combat_log_client.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
@@ -177,6 +179,9 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CARES_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
+        aws-cpp-sdk-core
+        aws-cpp-sdk-cognito-identity
+        aws-cpp-sdk-identity-management
     )
 
     target_link_libraries(${EXE_NAME}
@@ -193,6 +198,9 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         civetweb-cpp
         ZLIB::ZLIB
         WIL::WIL
+        aws-cpp-sdk-core
+        aws-cpp-sdk-cognito-identity
+        aws-cpp-sdk-identity-management
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid

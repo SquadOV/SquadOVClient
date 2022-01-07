@@ -7,7 +7,6 @@
 #ifdef _WIN32
 
 #include <Windows.h>
-#include <atlbase.h>
 #include <d3d11.h>
 #include <dxgi1_2.h>
 #include <thread>

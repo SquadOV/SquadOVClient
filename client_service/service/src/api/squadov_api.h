@@ -8,6 +8,7 @@
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
 #include "api/kafka_api.h"
+#include "api/aws_api.h"
 #include "uploader/uploader.h"
 #include "hardware/hardware.h"
 
@@ -25,6 +26,7 @@
 #include <random>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 
 namespace service::api {
 
@@ -36,7 +38,8 @@ class SquadovApi {
 public:
     SquadovApi();
 
-    void setSessionIdUpdateCallback(const SessionIdUpdateCallback& cb) { _sessionUpdateCallback = cb; }
+    int64_t addSessionIdUpdateCallback(const SessionIdUpdateCallback& cb);
+    void removeSessionIdUpdateCallback(int64_t idx);
     void setSessionId(const std::string& key);
 
     int64_t getSessionUserId() const;
@@ -124,8 +127,17 @@ public:
     service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
     void postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const;
 
+    // AWS
+    AwsCognitoCredentials getAwsCredentials() const;
+
+    // Combat Log
+    std::string getCombatLogApiConfiguration() const;
+
+    std::chrono::milliseconds generateRandomBackoff(int64_t base, size_t tryCount) const;
 private:
-    SessionIdUpdateCallback _sessionUpdateCallback;
+    int64_t _sessionUpdateCbCounter = 0;
+    std::unordered_map<int64_t, SessionIdUpdateCallback> _sessionUpdateCallback;
+    std::mutex _sessionUpdateMutex;
 
     std::unique_ptr<shared::http::HttpClient> _webClient;
 
@@ -143,7 +155,7 @@ private:
     mutable std::mutex _randomMutex;
     mutable std::mt19937 _rdGen;
     std::uniform_real_distribution<> _rdDist;
-    std::chrono::milliseconds generateRandomBackoff(int64_t base, size_t tryCount) const;
+    
 };
 
 using SquadovApiPtr = std::unique_ptr<SquadovApi>;

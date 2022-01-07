@@ -5,7 +5,7 @@
 #include "shared/log/log.h"
 #include "recorder/audio/wasapi_audio_client_recorder.h"
 
-#include <atlbase.h>
+#include <wil/com.h>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
 
@@ -31,7 +31,7 @@ private:
     service::system::AudioDeviceSettings _inDevice;
 
     // WASAPI recording
-    CComPtr<IMMDevice> _device;
+    wil::com_ptr<IMMDevice> _device;
     WasapiAudioClientRecorderPtr _internal;
 };
 
@@ -87,7 +87,7 @@ void WasapiAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const servic
         return;
     }
 
-    CComPtr<IAudioClient> audioClient;
+    wil::com_ptr<IAudioClient> audioClient;
     hr = _device->Activate(
         __uuidof(IAudioClient),
         CLSCTX_ALL,
@@ -105,7 +105,7 @@ void WasapiAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const servic
 
     _internal = std::make_unique<WasapiAudioClientRecorder>(
         audioClient,
-        service::recorder::audio::win32::WASAPIInterface::getDeviceName(_device),
+        service::recorder::audio::win32::WASAPIInterface::getDeviceName(_device.get()),
         device.mono,
         dir == EAudioDeviceDirection::Output
     );

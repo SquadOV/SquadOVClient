@@ -52,12 +52,15 @@ public:
 
     void doDelete();
     void doPost(const nlohmann::json& body, bool forceGzip);
+    void doPost(const std::vector<char>& body, bool forceGzip);
     void doPut(const char* buffer, size_t numBytes);
 
     void progressCallback(curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow);
     void outputToFile(const fs::path& output) { _outputFile = output; }
 private:
     void setJsonBody(const nlohmann::json& body, bool forceGzip);
+    void setRawPostBody(const char* body, size_t numBytes, const std::string& contentType, bool forceGzip);
+
     void setRawBuffer(const char* buffer, size_t size);
 
     CURL* _curl = nullptr;
@@ -217,14 +220,19 @@ void HttpRequest::doDelete() {
 }
 
 void HttpRequest::setJsonBody(const nlohmann::json& body, bool forceGzip) {
-    if (body.is_null()) {
+    const std::string jsonBody = body.dump();
+    setRawPostBody(jsonBody.c_str(), jsonBody.size(), "application/json", forceGzip);
+}
+
+void HttpRequest::setRawPostBody(const char* body, size_t numBytes, const std::string& contentType, bool forceGzip) {
+    if (numBytes == 0) {
         curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, 0);
     } else {
-        _headers = curl_slist_append(_headers, "Content-Type: application/json");
+        std::ostringstream contentTypeHeader;
+        contentTypeHeader << "Content-Type: " << contentType;
+        _headers = curl_slist_append(_headers, contentTypeHeader.str().c_str());
 
-        const std::string jsonBody = body.dump();
-        // TODO: Make this GZIP functionality more general?
-        if (forceGzip || jsonBody.size() > MAX_RAW_JSON_POST_BYTES_SIZE) {
+        if (forceGzip || numBytes > MAX_RAW_JSON_POST_BYTES_SIZE) {
             _headers = curl_slist_append(_headers, "Content-Encoding: gzip");
 
             std::vector<char> gzipBuffer;
@@ -232,15 +240,14 @@ void HttpRequest::setJsonBody(const nlohmann::json& body, bool forceGzip) {
             boost::iostreams::filtering_ostream outputStream;
             outputStream.push(boost::iostreams::gzip_compressor{});
             outputStream.push(gzipDevice);
-            outputStream << jsonBody << std::flush;
+            outputStream << std::string_view(body, numBytes) << std::flush;
             outputStream.pop();
 
-            LOG_INFO("Post CURL JSON GZIP: " << gzipBuffer.size() << std::endl);
             curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, gzipBuffer.size());
             curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, gzipBuffer.data());
         } else {
-            curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, jsonBody.size());
-            curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, jsonBody.c_str());
+            curl_easy_setopt(_curl, CURLOPT_POSTFIELDSIZE, numBytes);
+            curl_easy_setopt(_curl, CURLOPT_COPYPOSTFIELDS, body);
         }
         curl_easy_setopt(_curl, CURLOPT_HTTPHEADER, _headers);
     }
@@ -249,6 +256,11 @@ void HttpRequest::setJsonBody(const nlohmann::json& body, bool forceGzip) {
 void HttpRequest::doPost(const nlohmann::json& body, bool forceGzip) {
     curl_easy_setopt(_curl, CURLOPT_POST, 1);
     setJsonBody(body, forceGzip);
+}
+
+void HttpRequest::doPost(const std::vector<char>& body, bool forceGzip) {
+    curl_easy_setopt(_curl, CURLOPT_POST, 1);
+    setRawPostBody(body.data(), body.size(), "application/octet-stream", forceGzip);
 }
 
 void HttpRequest::setRawBuffer(const char* buffer, size_t size) {
@@ -309,6 +321,12 @@ HttpResponsePtr HttpClient::get(const std::string& path) const {
 HttpResponsePtr HttpClient::post(const std::string& path, const nlohmann::json& body, bool forceGzip) const {
     return sendRequest(path, [&body, forceGzip](HttpRequest& req){
         req.doPost(body, forceGzip);
+    });
+}
+
+HttpResponsePtr HttpClient::post(const std::string& path, const std::vector<char>& buffer, bool forceGzip) const {
+    return sendRequest(path, [&buffer, forceGzip](HttpRequest& req){
+        req.doPost(buffer, forceGzip);
     });
 }
 
