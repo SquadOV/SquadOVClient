@@ -105,26 +105,33 @@ ID3D11RenderTargetView* D3d11Renderer::createRenderTarget(ID3D11Resource* resour
     return view;
 }
 
-bool D3d11Renderer::renderSceneToRenderTarget( ID3D11RenderTargetView* target) {
+void D3d11Renderer::prepRenderTargetForRender(ID3D11DeviceContext* context, ID3D11RenderTargetView* target) {
+    context->OMSetRenderTargets(1, &target, nullptr);
+
+    FLOAT blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
+    context->OMSetBlendState(_blendState.get(), blendFactor, 0xffffffff);
+    if (_clearBeforeRender) {
+        const float clearColor[4] = { 0.f, 1.f, 0.f, 1.f };
+        context->ClearRenderTargetView(target, clearColor);
+    }
+
+    context->RSSetViewports(1, &_viewport);
+    context->RSSetState(_state);
+}
+
+bool D3d11Renderer::renderSceneToRenderTarget(ID3D11RenderTargetView* target) {
     if (!target) {
         LOG_WARNING("Received nullptr for render target." << std::endl);
         return false;
     }
 
     std::lock_guard<std::mutex> guard(_renderMutex);
-    _context->OMSetRenderTargets(1, &target, nullptr);
-
-    FLOAT blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
-    _context->OMSetBlendState(_blendState.get(), blendFactor, 0xffffffff);
-    const float clearColor[4] = { 0.f, 1.f, 0.f, 1.f };
-    _context->ClearRenderTargetView(target, clearColor);
+    prepRenderTargetForRender(_context, target);
+ 
     return renderScene();
 }
 
 bool D3d11Renderer::renderScene() {
-    _context->RSSetViewports(1, &_viewport);
-    _context->RSSetState(_state);
-
     // Stupid simple rendering loop because our use-cases aren't super fancy at the moment.
     for (const auto& model : _models) {
         if (!model->visible()) {

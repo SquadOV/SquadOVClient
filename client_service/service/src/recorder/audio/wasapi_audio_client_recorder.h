@@ -41,7 +41,9 @@ private:
     std::atomic<bool> _running = false;
 
     wil::com_ptr<IAudioCaptureClient> _captureClient;
-    double _bufferDuration = 0.0;
+    
+    bool isPcm() const;
+    bool isFloat() const;
 
     // For sending data for encoding
     service::recorder::encoder::AvEncoder* _encoder = nullptr;
@@ -50,11 +52,13 @@ private:
     std::atomic<double> _volume = 1.0;
     bool _exists = false;
     AudioPacketProperties _props;
-    WAVEFORMATEXTENSIBLE _pwfx;
+    WAVEFORMATEX _pwfx = { 0 };
+    WAVEFORMATEXTENSIBLE _ewfx = { 0 };
     AudioPacketQueue _packetQueue;
 
     std::thread _recordingThread;
     std::thread _packetThread;
+    HANDLE _eventCallback = 0;
 };
 
 using WasapiAudioClientRecorderPtr = std::unique_ptr<WasapiAudioClientRecorder>;

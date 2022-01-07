@@ -201,6 +201,8 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         aws-cpp-sdk-core
         aws-cpp-sdk-cognito-identity
         aws-cpp-sdk-identity-management
+        Microsoft::DirectXMath
+        Microsoft::DirectXTK
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid

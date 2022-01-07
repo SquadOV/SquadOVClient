@@ -45,7 +45,7 @@ struct RecordingSettings {
     std::vector<AudioDeviceSettings> outputDevices;
     std::vector<AudioDeviceSettings> inputDevices;
     bool usePushToTalk = false;
-    bool useWASAPIRecording = false;
+    bool useWASAPIRecording2 = false;
 
     bool usePerProcessRecording = false;
     bool perProcessRecordingOsCheck = false;

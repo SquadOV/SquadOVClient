@@ -79,7 +79,7 @@ export interface SquadOvRecordingSettings {
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
-    useWASAPIRecording: boolean
+    useWASAPIRecording2: boolean
     usePerProcessRecording: boolean
     perProcessRecordingOsCheck: boolean
     recordGameAudio: boolean
@@ -346,7 +346,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: false,
+                useWASAPIRecording2: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -391,7 +391,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: false,
+                useWASAPIRecording2: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -436,7 +436,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording: false,
+                useWASAPIRecording2: false,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -506,7 +506,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 }
             ],
             usePushToTalk: false,
-            useWASAPIRecording: false,
+            useWASAPIRecording2: false,
             usePerProcessRecording: false,
             perProcessRecordingOsCheck: false,
             recordGameAudio: false,
@@ -730,8 +730,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.keybinds.pushToTalk2 = []
         }
     
-        if (parsedData.record.useWASAPIRecording === undefined) {
-            parsedData.record.useWASAPIRecording = false
+        if (parsedData.record.useWASAPIRecording2 === undefined) {
+            parsedData.record.useWASAPIRecording2 = false
         }
 
         if (parsedData.record.usePerProcessRecording === undefined) {
