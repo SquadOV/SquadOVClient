@@ -2,11 +2,18 @@
 
 #ifdef _WIN32
 
+#include <d3d11.h>
+#include <d3d11_1.h>
+#include <dxgi1_6.h>
 #include <thread>
 #include <iostream>
 #include <VersionHelpers.h>
+#include <wil/com.h>
+
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
+
+#pragma comment(lib, "dxgi")
 
 namespace shared::system::win32 {
 namespace {
@@ -147,10 +154,64 @@ bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {
         (std::abs(wndHeight - monitorHeight) <= margin);
 }
 
+bool isHDREnabledForMonitor(HMONITOR monitor) {
+    if (!IsWindows10OrGreater()) {
+        return false;
+    }
+
+    wil::com_ptr<IDXGIFactory1> factory;
+    wil::com_ptr<IDXGIAdapter1> adapter;
+    HRESULT hr = S_OK;
+    UINT lastAdapterIndex = 0;
+
+    hr = CreateDXGIFactory1(__uuidof(IDXGIFactory1), (void**)(&factory));
+    if (hr != S_OK) {
+        LOG_ERROR("Failed to create DXGI factory [HDR monitor check]: " << hr);
+        return false;
+    }
+
+    while (factory->EnumAdapters1(lastAdapterIndex++, &adapter) != DXGI_ERROR_NOT_FOUND) {
+        DXGI_ADAPTER_DESC1 desc;
+        adapter->GetDesc1(&desc);
+
+        DXGI_OUTPUT_DESC outputDesc;
+        UINT outputIndex = 0;
+        wil::com_ptr<IDXGIOutput> dxgiOutput;
+
+        while (adapter->EnumOutputs(outputIndex++, &dxgiOutput) != DXGI_ERROR_NOT_FOUND) {
+            hr = dxgiOutput->GetDesc(&outputDesc);
+            if (hr != S_OK) {
+                continue;
+            }
+
+            if (outputDesc.Monitor != monitor) {
+                continue;
+            }
+
+            // At this point we've find the adapter/output combination for the monitor.
+            // We want to get the IDXGIOutput6 interface to call GetDesc1 to get the monitor's
+            // color space and use that to determine whether or not the monitor is using HDR.
+            wil::com_ptr<IDXGIOutput6> dxgiOutput6;
+            hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput6), (void**)&dxgiOutput6);
+            if (hr != S_OK) {
+                LOG_WARNING("Failed to get IDXGIOutput6...assuming no HDR support: " << hr << std::endl);
+                return false;
+            }
+
+            DXGI_OUTPUT_DESC1 odesc;
+            dxgiOutput6->GetDesc1(&odesc);
+
+            if (odesc.ColorSpace == DXGI_COLOR_SPACE_RGB_FULL_G22_NONE_P709) {
+                return false;
+            } else {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
-bool operator==(const RECT& a, const RECT& b) {
-    return a.left == b.left && a.right == b.right && a.top == b.top && a.bottom == b.bottom;   
 }
 
 std::ostream& operator<<(std::ostream& os, const RECT& a) {
