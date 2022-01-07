@@ -65,7 +65,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.usePushToTalk = obj.value("usePushToTalk", false);
-    settings.useWASAPIRecording = obj.value("useWASAPIRecording", false);
+    settings.useWASAPIRecording2 = obj.value("useWASAPIRecording2", false);
     settings.usePerProcessRecording = obj.value("usePerProcessRecording", false);
     settings.perProcessRecordingOsCheck = obj.value("perProcessRecordingOsCheck", false);
     settings.recordGameAudio = obj.value("recordGameAudio", true);

@@ -152,7 +152,7 @@
 
                     <v-checkbox
                         class="my-0 ml-0 mr-4"
-                        :input-value="$store.state.settings.record.useWASAPIRecording"
+                        :input-value="$store.state.settings.record.useWASAPIRecording2"
                         @change="$store.commit('changeUseWASAPIRecording', arguments[0])"
                         label="Use Native Recording"
                         hide-details
@@ -174,7 +174,7 @@
 
                     <v-btn
                         class="my-0 ml-0 mr-4"
-                        v-if="$store.state.settings.record.useWASAPIRecording && !$store.state.settings.record.perProcessRecordingOsCheck"
+                        v-if="$store.state.settings.record.useWASAPIRecording2 && !$store.state.settings.record.perProcessRecordingOsCheck"
                         color="warning"
                         dense
                         @click="showHideOsVerification = true"
@@ -184,7 +184,7 @@
 
                     <v-checkbox
                         class="my-0 ml-0 mr-4"
-                        v-if="$store.state.settings.record.useWASAPIRecording"
+                        v-if="$store.state.settings.record.useWASAPIRecording2"
                         :input-value="$store.state.settings.record.usePerProcessRecording"
                         :disabled="!$store.state.settings.record.perProcessRecordingOsCheck"
                         @change="$store.commit('changeUseProcessAudioRecording', {enable: arguments[0], game: $store.state.settings.record.recordGameAudio, processes: $store.state.settings.record.processesToRecord})"
@@ -232,7 +232,7 @@
 
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
-                        <template v-if="!$store.state.settings.record.usePerProcessRecording || !$store.state.settings.record.useWASAPIRecording">
+                        <template v-if="!$store.state.settings.record.usePerProcessRecording || !$store.state.settings.record.useWASAPIRecording2">
                             <div class="d-flex align-center">
                                 <div>
                                     <span class="text-overline font-weight-bold">Output Devices</span>

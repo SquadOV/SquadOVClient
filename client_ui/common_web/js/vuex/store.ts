@@ -169,7 +169,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
-            state.settings.record.useWASAPIRecording = v
+            state.settings.record.useWASAPIRecording2 = v
             saveLocalSettings(state.settings)
 /// #endif
         },
