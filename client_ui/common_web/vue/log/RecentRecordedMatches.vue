@@ -179,8 +179,8 @@
                         v-if="hasNext"
                         color="primary"
                         block
-                        @click="loadMoreMatches"
-                        :loading="loading"
+                        :loading="dataLoading"
+                        @click="loadMoreMatches()"
                     >
                         Load More
                     </v-btn>
@@ -265,7 +265,8 @@ export default class RecentRecordedMatches extends Vue {
     lastIndex: number = 0
     nextLink: string | null = null
     filters: RecentMatchFilters = createEmptyRecentMatchFilters()
-    loading: boolean = false
+    queuedFilters: RecentMatchFilters | null = null
+    dataLoading: boolean = false
 
     inSelectMode: boolean = false
     selected: string[] = []
@@ -343,24 +344,33 @@ export default class RecentRecordedMatches extends Vue {
     }
 
     @Watch('finalFilters', { deep: true })
-    refreshData() {
+    refreshData(filters: RecentMatchFilters | undefined = undefined) {
         this.recentMatches = null
         this.nextLink = null
         this.lastIndex = 0
-        this.loadMoreMatches()
+
+        // It takes a bit for the matches to load and loadMoreMatches will ignore requests
+        // if something is already loading. What we want to do instead is to queue up requests
+        // if something is already loading with the most recent filters.
+        let filterToUse = !!filters ? filters : this.finalFilters
+        if (this.dataLoading) {
+            this.queuedFilters = JSON.parse(JSON.stringify(filterToUse))
+        } else {
+            this.loadMoreMatches(filterToUse)
+        }
     }
 
-    loadMoreMatches() {
-        if (this.loading) {
+    loadMoreMatches(filters: RecentMatchFilters | undefined = undefined) {
+        if (this.dataLoading) {
             return
         }
 
-        this.loading = true
+        this.dataLoading = true
         apiClient.accessToken(this.accessToken).listMyRecentMatches({
             next: this.nextLink,
             start: this.lastIndex,
             end: this.lastIndex + maxTasksPerRequest,
-            filters: this.finalFilters,
+            filters: !!filters ? filters : this.finalFilters,
             profileId: this.profile ? this.userId : undefined,
         }).then((resp : ApiData<HalResponse<RecentMatch[]>>) => {
             if (!this.recentMatches) {
@@ -381,7 +391,11 @@ export default class RecentRecordedMatches extends Vue {
         }).catch((err : any) => {
             console.error('Failed to list recent SquadOV matches: ' + err);
         }).finally(() => {
-            this.loading = false
+            this.dataLoading = false
+            if (!!this.queuedFilters) {
+                this.refreshData(this.queuedFilters)
+                this.queuedFilters = null
+            }
         })
     }
 
