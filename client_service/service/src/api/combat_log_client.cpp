@@ -154,7 +154,7 @@ void CombatLogClient::start() {
                 }
 
                 const auto response = _httpClient->MakeRequest(request);
-                if (!response || response->HasClientError() || response->GetResponseCode() == Aws::Http::HttpResponseCode::OK) {
+                if (!response || response->HasClientError() || response->GetResponseCode() != Aws::Http::HttpResponseCode::OK) {
                     LOG_WARNING("Failed to make combat log POST request." << std::endl);
                     continue;
                 }
