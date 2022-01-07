@@ -16,6 +16,7 @@ enum class EGame {
     CSGO,
     WowVanilla,
     WowTbc,
+    Ff14,
     Unknown
 };
 

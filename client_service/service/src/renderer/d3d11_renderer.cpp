@@ -115,7 +115,7 @@ bool D3d11Renderer::renderSceneToRenderTarget( ID3D11RenderTargetView* target) {
     _context->OMSetRenderTargets(1, &target, nullptr);
 
     FLOAT blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
-    _context->OMSetBlendState(_blendState, blendFactor, 0xffffffff);
+    _context->OMSetBlendState(_blendState.get(), blendFactor, 0xffffffff);
     const float clearColor[4] = { 0.f, 1.f, 0.f, 1.f };
     _context->ClearRenderTargetView(target, clearColor);
     return renderScene();

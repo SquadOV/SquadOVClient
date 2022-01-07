@@ -22,6 +22,8 @@ std::string gameToString(EGame game) {
         return "World of Warcraft Classic";
     case EGame::WowTbc:
         return "Burning Crusade Classic";
+    case EGame::Ff14:
+        return "Final Fantasy 14";
     }
     return "";
 }
@@ -46,6 +48,8 @@ std::string gameToIconString(EGame game) {
         return "wowc";
     case EGame::WowTbc:
         return "tbc";
+    case EGame::Ff14:
+        return "ff14";
     }
     return "";
 }

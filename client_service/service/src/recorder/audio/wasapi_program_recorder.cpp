@@ -10,7 +10,6 @@
 #include "recorder/audio/fixed_size_audio_packet.h"
 #include "recorder/audio/wasapi_audio_client_recorder.h"
 
-#include <atlbase.h>
 #include <audioclientactivationparams.h>
 #include <audioclient.h>
 #include <mmdeviceapi.h>
@@ -28,14 +27,14 @@ public:
 
     void wait();
     bool success() const { return _success; }
-    CComPtr<IAudioClient> client() const { return _audioClient; }
+    wil::com_ptr<IAudioClient> client() const { return _audioClient; }
 
     // Called by windows to notify us that recording was successfully activated.
     STDMETHOD(ActivateCompleted)(IActivateAudioInterfaceAsyncOperation* activateOperation);
 
 private:
     wil::unique_event_nothrow _completeEvent;
-    CComPtr<IAudioClient> _audioClient;
+    wil::com_ptr<IAudioClient> _audioClient;
     bool _success = false;
 };
 

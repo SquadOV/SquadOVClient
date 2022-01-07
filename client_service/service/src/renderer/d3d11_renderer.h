@@ -3,7 +3,7 @@
 #ifdef _WIN32
 
 #include <Windows.h>
-#include <atlbase.h>
+#include <wil/com.h>
 #include <d3d11.h>
 #include <vector>
 #include "renderer/d3d11_context.h"
@@ -33,7 +33,7 @@ private:
     D3d11SharedContext* _shared = nullptr;
     ID3D11DeviceContext* _context = nullptr;
     D3D11_VIEWPORT _viewport;
-    CComPtr<ID3D11BlendState> _blendState;
+    wil::com_ptr<ID3D11BlendState> _blendState;
 
     void refreshRasterizerState();
     ID3D11RasterizerState* _state = nullptr;

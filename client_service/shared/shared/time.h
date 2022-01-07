@@ -15,6 +15,7 @@ TimePoint zeroTime();
 TimePoint nowUtc();
 TimePoint strToTime(const std::string& dt, const std::string& format = "%F %T");
 TimePoint isoStrToTime(const std::string& dt);
+TimePoint isoStrWithTimeZoneToTime(const std::string& dt);
 LocalTimePoint strToLocalTime(const std::string& dt, const std::string& format = "%F %T");
 
 template<typename T>

@@ -2,6 +2,7 @@
 
 #include "shared/games.h"
 #include "process_watcher/handler.h"
+#include "process_watcher/games/game_process_detector.h"
 
 #include <optional>
 #include <shared_mutex>
@@ -24,5 +25,6 @@ private:
 };
 
 std::optional<process::Process> isGameRunning(shared::EGame game);
+std::optional<process::Process> isProcessRunning(const games::GameProcessDetector& detector);
 
 }

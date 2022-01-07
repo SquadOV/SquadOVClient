@@ -50,6 +50,10 @@ TimePoint isoStrToTime(const std::string& dt) {
     return strToTime(dt, "%FT%TZ");
 }
 
+TimePoint isoStrWithTimeZoneToTime(const std::string& dt) {
+    return strToTime(dt, "%FT%T%Ez");
+}
+
 std::string fnameTimeToStr(const TimePoint& tm) {
     return date::format("%F-%H.%M.%S", tm);
 }

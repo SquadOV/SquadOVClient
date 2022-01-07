@@ -4,6 +4,7 @@
 #include "shared/errors/error.h"
 #include <codecvt>
 #include <fstream>
+#include <sstream>
 #include <iterator>
 
 #ifdef _WIN32
@@ -120,6 +121,15 @@ void readBinaryData(std::vector<char>& data, const std::filesystem::path& from) 
 
     data.reserve(fileEnd);
     data.insert(data.begin(), std::istream_iterator<char>(stream), std::istream_iterator<char>());
+}
+
+std::string readTextFile(const std::filesystem::path& from) {
+    std::ifstream inp(from);
+
+    std::ostringstream ret;
+    ret << inp.rdbuf();
+    
+    return ret.str();;
 }
 
 size_t getFolderSizeBytes(const std::filesystem::path& path) {

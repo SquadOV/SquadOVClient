@@ -55,6 +55,7 @@ public:
     HttpResponsePtr download(const std::string& path, const std::filesystem::path& output) const;
     HttpResponsePtr get(const std::string& path) const;
     HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false) const;
+    HttpResponsePtr post(const std::string& path, const std::vector<char>& buffer, bool forceGzip = false) const;
     HttpResponsePtr put(const std::string& path, const char* buffer, size_t numBytes) const;
     HttpResponsePtr del(const std::string& path) const;
 

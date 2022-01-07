@@ -8,6 +8,8 @@ SET(SRCS
     process_watcher/games/aimlab_process_detector.cpp
     process_watcher/games/wow_process_detector.cpp
     process_watcher/games/league_process_detector.cpp
+    process_watcher/games/ff14_process_detector.cpp
+    process_watcher/games/act_process_detector.cpp
     process_watcher/memory/module_memory_mapper.cpp
     process_watcher/memory/pe_mapper.cpp
     process_watcher/memory/mono_memory_mapper.cpp
@@ -57,6 +59,8 @@ SET(HEADERS
     process_watcher/games/aimlab_process_detector.h
     process_watcher/games/wow_process_detector.h
     process_watcher/games/league_process_detector.h
+    process_watcher/games/ff14_process_detector.h
+    process_watcher/games/act_process_detector.h
     process_watcher/memory/module_memory_mapper.h
     process_watcher/memory/pe_mapper.h
     process_watcher/memory/mono_memory_mapper.h

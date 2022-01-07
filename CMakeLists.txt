@@ -32,6 +32,10 @@ find_package(RdKafka CONFIG REQUIRED)
 find_package(CARES REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(WIL CONFIG REQUIRED)
+find_package(aws-cpp-sdk-core REQUIRED)
+find_package(aws-cpp-sdk-cognito-identity REQUIRED)
+find_package(aws-cpp-sdk-identity-management REQUIRED)
+
 
 set(Protobuf_USE_STATIC_LIBS ON)
 set(protobuf_MODULE_COMPATIBLE ON)
@@ -67,7 +71,6 @@ find_package(Boost 1.74.0 REQUIRED
         date_time
         unit_test_framework
 )
-MESSAGE(STATUS "BOOST LIBS ${Boost_LIBRARIES}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)
