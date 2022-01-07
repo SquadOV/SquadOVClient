@@ -31,6 +31,8 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `cryptopp:x64-windows-static`
 * `cryptopp:x64-windows-static-md`
 * `wil:x64-windows`
+* `directxtk:x64-windows`
+* `directxmath:x64-windows`
 
 ## Build SquadOV Client Service
 

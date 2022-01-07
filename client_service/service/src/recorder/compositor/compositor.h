@@ -10,6 +10,7 @@
 #include <mutex>
 #include <vector>
 #include <wil/com.h>
+#include <DirectXTK/PostProcess.h>
 
 namespace service::recorder::compositor {
 
@@ -53,10 +54,11 @@ private:
 
     // DirectX rendering state
     service::renderer::D3d11RendererPtr _renderer;
-    // The output texture the renderer will render to
+    // The output texture that we will pass down the pipeline
     wil::com_ptr<ID3D11Texture2D> _outputTexture;
     wil::com_ptr<IDXGISurface1> _outputSurface;
     wil::com_ptr<ID3D11RenderTargetView> _outputRenderTarget;
+    std::unique_ptr<DirectX::ToneMapPostProcess> _tonemapper;
 
     void tick(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames);
     void reinitOutputTexture(ID3D11Texture2D* input);

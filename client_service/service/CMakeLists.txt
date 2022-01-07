@@ -186,6 +186,8 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         civetweb-cpp
         ZLIB::ZLIB
         WIL::WIL
+        Microsoft::DirectXMath
+        Microsoft::DirectXTK
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid

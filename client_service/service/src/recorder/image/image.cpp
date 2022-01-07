@@ -61,6 +61,7 @@ void Image::loadFromD3d11Texture(ID3D11DeviceContext* context, ID3D11Texture2D* 
         THROW_ERROR("Failed to map texture: " << hr);
     }
 
+    // TODO: This doesn't work if the input texture is floating point.
     const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
     uint8_t* dst = buffer();
 

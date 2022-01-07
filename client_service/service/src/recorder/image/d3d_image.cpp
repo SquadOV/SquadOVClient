@@ -149,21 +149,22 @@ void D3dImage::releaseTextureIfExists() {
     }
 }
 
-void D3dImage::initializeImage(size_t width, size_t height, bool shared) {
+void D3dImage::initializeImage(size_t width, size_t height, bool shared, DXGI_FORMAT format) {
     releaseTextureIfExists();
 
     _width = width;
     _height = height;
+    _format = format;
 
     D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
     sharedDesc.Width = width;
     sharedDesc.Height = height;
     sharedDesc.MipLevels = 1;
     sharedDesc.ArraySize = 1;
-    sharedDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sharedDesc.Format = format;
     sharedDesc.SampleDesc.Count = 1;
     sharedDesc.Usage = D3D11_USAGE_DEFAULT;
-    sharedDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    sharedDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
     sharedDesc.CPUAccessFlags = 0;
     sharedDesc.MiscFlags = shared ? D3D11_RESOURCE_MISC_SHARED : 0;
 

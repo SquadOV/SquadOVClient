@@ -33,14 +33,13 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
         return;
     }
     assert(imageContext == context());
-
+    HRESULT hr = S_OK;
     // The output image needs to be the same resolution as the clock layer. Note
     // that the image we want to send will *always* come from a D3D11 texture (since we'll
     // use the WARP software rasterizer in the case of using the CPU).
     ID3D11Texture2D* texToSend = nullptr;
 
-    
-    if (_layers.empty()) {
+    if (_layers.empty() && !_tonemapper) {
         // Use the clock layer directly as the image to send to the encoder.
         texToSend = image;
     } else {
@@ -56,19 +55,50 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
             requiresRender |= layer->need3dRender();
         }
 
+        // First we copy the texture to the output texture. This effectively replaces
+        // the need for the renderer to do a 'clear' operation. Note that in the case
+        // of an HDR input texture, the tonemapping operation does the copy for us.
+        auto immediate = _d3dContext->immediateContext();
+        if (!_tonemapper) {
+            immediate.context()->CopyResource(_outputTexture.get(), image);
+        } else {
+            D3D11_TEXTURE2D_DESC hdrDesc;
+            image->GetDesc(&hdrDesc);
+
+            // Create the SRV for the input texture.
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+            srvDesc.Format = hdrDesc.Format;
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Texture2D.MostDetailedMip = 0;
+            srvDesc.Texture2D.MipLevels = 1;
+
+            // Not a big fan of creating the SRV on every frame...but I don't think it's expensive and it seems
+            // like it's probably a reasonable thing to do.
+            // See: https://stackoverflow.com/questions/38851449/creating-shader-resource-view-performance
+            wil::com_ptr<ID3D11ShaderResourceView> hdrSrv;
+            hr = _d3dContext->device()->CreateShaderResourceView(image, &srvDesc, &hdrSrv);
+            if (hr != S_OK) {
+                THROW_ERROR("Failed to create shader resource view.");
+            }
+
+            _renderer->prepRenderTargetForRender(immediate.context(), _outputRenderTarget.get());
+            _tonemapper->SetHDRSourceTexture(hdrSrv.get());
+            _tonemapper->Process(immediate.context());
+
+            ID3D11ShaderResourceView* nullsrv[] = { nullptr };
+            immediate.context()->PSSetShaderResources(0, 1, nullsrv);
+        }
+
         // Do our rendering loop here. Assume the scene is already setup in the finalizeLayers
         // step so the only thing to do here is to actually do the 'render'. Note that if no
         // layers actually need the renderer then we can just use a regular CopyResource to do the
         // job of copying the base texture to the output texture instead.
         if (requiresRender) {
             _renderer->renderSceneToRenderTarget(_outputRenderTarget.get());
-        } else {
-            auto immediate = _d3dContext->immediateContext();
-            immediate.context()->CopyResource(_outputTexture.get(), image);
         }
 
         HDC hdc;
-        HRESULT hr = _outputSurface->GetDC(false, &hdc);
+        hr = _outputSurface->GetDC(false, &hdc);
         if (hr != S_OK) {
             LOG_ERROR("Failed to get DC for composition: "<< hr);
             return;
@@ -115,6 +145,9 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
 
     outputDesc = inputDesc;
 
+    // Need to manually set the format since the input format could be floating point
+    // and we don't want that.
+    outputDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
     // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
     // MiscFlags should have D3D11_RESOURCE_MISC_GDI_COMPATIBLE since we use some GDI rendering functions (e.g. the mouse cursor).
     // Everything else should stay default since you can't CPU read/stage a render target.
@@ -137,6 +170,17 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
     targetDesc.Texture2D.MipSlice = 0;
 
     _outputRenderTarget.attach(_renderer->createRenderTarget(_outputTexture.get(), targetDesc));
+    // This technically isn't super accurate but for the purposes of our use cases where we don't really
+    // expect any formats aside from DXGI_FORMAT_B8G8R8A8_UNORM and DXGI_FORMAT_R16G16B16A16_FLOAT (where
+    // the latter is only the case for HDR) this is fine.
+    if (inputDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM) {
+        _tonemapper = std::make_unique<DirectX::ToneMapPostProcess>(_d3dContext->device());
+        _tonemapper->SetOperator(DirectX::ToneMapPostProcess::Reinhard);
+        _tonemapper->SetTransferFunction(DirectX::ToneMapPostProcess::SRGB);
+        _tonemapper->SetExposure(0.0f);
+    } else {
+        _tonemapper.reset();
+    }
     _renderer->initializeRenderer(outputDesc.Width, outputDesc.Height);
 }
 
@@ -150,12 +194,6 @@ void Compositor::addLayer(const layers::CompositorLayerPtr& layer) {
 }
 
 void Compositor::finalizeLayers() {
-    // Don't need to do this step is layers is empty because we're otherwise just
-    // copying the texture straight to the destination.
-    if (_layers.empty()) {
-        return;
-    }
-
     _clockLayer->finalizeAssetsForRenderer(_renderer.get());
     for (const auto& l: _layers) {
         l->finalizeAssetsForRenderer(_renderer.get());

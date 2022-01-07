@@ -31,15 +31,6 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, DWORD pid):
 }
 
 DxgiDesktopRecorder::~DxgiDesktopRecorder() {
-    if (!!_dupl) {
-        _dupl->Release();
-        _dupl = nullptr;
-    }
-
-    if (!!_dxgiOutput1) {
-        _dxgiOutput1->Release();
-        _dxgiOutput1 = nullptr;
-    }
 }
 
 void DxgiDesktopRecorder::initialize() {
@@ -69,21 +60,19 @@ void DxgiDesktopRecorder::initialize() {
 
     _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, refMonitor);
 
-    IDXGIDevice* dxgiDevice = nullptr;
+    wil::com_ptr<IDXGIDevice> dxgiDevice;
     HRESULT hr = _self->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIDevice.");
     }
 
-    IDXGIAdapter* dxgiAdapter = nullptr;
+    wil::com_ptr<IDXGIAdapter> dxgiAdapter;
     hr = dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get IDXGIAdapter.");
     }
-    dxgiDevice->Release();
-    dxgiDevice = nullptr;
 
-    IDXGIOutput* dxgiOutput = nullptr;
+    wil::com_ptr<IDXGIOutput> dxgiOutput;
     UINT outputIndex = 0;
     while (dxgiAdapter->EnumOutputs(outputIndex++, &dxgiOutput) != DXGI_ERROR_NOT_FOUND) {
         hr = dxgiOutput->GetDesc(&_outputDesc);
@@ -95,12 +84,9 @@ void DxgiDesktopRecorder::initialize() {
             break;
         }
 
-        dxgiOutput->Release();
-        dxgiOutput = nullptr;
+        dxgiOutput.reset();
     }
 
-    dxgiAdapter->Release();
-    dxgiAdapter = nullptr;
     if (hr != S_OK || !dxgiOutput) {
         THROW_ERROR("Failed to get IDXGIOutput.");
     }
@@ -111,24 +97,37 @@ void DxgiDesktopRecorder::initialize() {
         THROW_ERROR("Failed to get IDXGIOutput1.");
     }
 
+    hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput5), (void**)&_dxgiOutput5);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get IDXGIOutput5...assuming non-Windows 10 [no HDR support]: " << hr << std::endl);
+        _dxgiOutput5.reset();
+    }
+
     reacquireDuplicationInterface();
 
     _width = static_cast<size_t>(_outputDesc.DesktopCoordinates.right - _outputDesc.DesktopCoordinates.left);
     _height = static_cast<size_t>(_outputDesc.DesktopCoordinates.bottom - _outputDesc.DesktopCoordinates.top);
-
-    dxgiOutput->Release();
 }
 
 void DxgiDesktopRecorder::reacquireDuplicationInterface() {
-    if (!!_dupl) {
-        _dupl->Release();
-        _dupl = nullptr;        
-    }
+    _dupl.reset();
 
-    HRESULT hr = _dxgiOutput1->DuplicateOutput(_self->device(), &_dupl);
+    std::vector<DXGI_FORMAT> formats = {
+        // This is the default on non-HDR screens
+        DXGI_FORMAT_B8G8R8A8_UNORM,
+        // This seems to be what gets used on HDR screens (at least on Windows 10?)
+        DXGI_FORMAT_R16G16B16A16_FLOAT
+    };
+
+    HRESULT hr = _dxgiOutput5 ?
+        _dxgiOutput5->DuplicateOutput1(_self->device(), 0, formats.size(), formats.data(), &_dupl) :
+        _dxgiOutput1->DuplicateOutput(_self->device(), &_dupl);
     if (hr != S_OK) {
         THROW_ERROR("Failed to duplicate output: " << hr);
     }
+
+    DXGI_OUTDUPL_DESC duplDesc;
+    _dupl->GetDesc(&duplDesc);
 }
 
 void DxgiDesktopRecorder::startRecording() {
@@ -138,7 +137,7 @@ void DxgiDesktopRecorder::startRecording() {
         int64_t numReused = 0;
         
         while (_recording) {
-            IDXGIResource* desktopResource = nullptr;
+            wil::com_ptr<IDXGIResource> desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
             bool reuseOldFrame = false;
 
@@ -212,12 +211,6 @@ void DxgiDesktopRecorder::startRecording() {
             } else {
                 ++numReused;
             }
-
-            if (desktopResource) {
-                desktopResource->Release();
-                desktopResource = nullptr;
-            }
-
             ++count;
         }
 

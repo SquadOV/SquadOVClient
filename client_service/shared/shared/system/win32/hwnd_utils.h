@@ -12,10 +12,10 @@ HWND findWindowForProcessWithMaxDelay(DWORD pid, const std::chrono::milliseconds
 bool isWindowTopmost(HWND wnd);
 bool isFullscreen(HWND wnd, HMONITOR monitor, int margin);
 bool isProcessForeground(DWORD pid);
+bool isHDREnabledForMonitor(HMONITOR monitor);
 
 }
 
-bool operator==(const RECT& a, const RECT& b);
 std::ostream& operator<<(std::ostream& os, const RECT& a);
 
 #endif

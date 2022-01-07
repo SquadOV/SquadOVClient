@@ -15,8 +15,8 @@ void TextureContextNormalizerNode::receiveTexture(service::renderer::D3d11Shared
     D3D11_TEXTURE2D_DESC desc;
     image->GetDesc(&desc);
 
-    if (desc.Height != _newImage->height() || desc.Width != _newImage->width()) {
-        _newImage->initializeImage(desc.Width, desc.Height, true);
+    if (desc.Height != _newImage->height() || desc.Width != _newImage->width() || desc.Format != _newImage->format()) {
+        _newImage->initializeImage(desc.Width, desc.Height, true, desc.Format);
     }
 
     // In the case that one DirectX context is on the CPU and the other is on the GPU then we need to do a
