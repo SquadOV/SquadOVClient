@@ -32,15 +32,11 @@ find_package(RdKafka CONFIG REQUIRED)
 find_package(CARES REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(WIL CONFIG REQUIRED)
-<<<<<<< HEAD
 find_package(aws-cpp-sdk-core REQUIRED)
 find_package(aws-cpp-sdk-cognito-identity REQUIRED)
 find_package(aws-cpp-sdk-identity-management REQUIRED)
-
-=======
 find_package(directxmath CONFIG REQUIRED)
 find_package(directxtk CONFIG REQUIRED)
->>>>>>> master
 
 set(Protobuf_USE_STATIC_LIBS ON)
 set(protobuf_MODULE_COMPATIBLE ON)
