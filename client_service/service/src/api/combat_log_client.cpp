@@ -1,11 +1,14 @@
 #include "api/combat_log_client.h"
 #include "api/squadov_api.h"
 #include "shared/log/log.h"
+#include "shared/base64/encode.h"
 
 #include <nlohmann/json.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
+
+#include <sstream>
 
 #include <aws/core/http/standard/StandardHttpRequest.h>
 #include <aws/core/http/URI.h>
@@ -43,6 +46,12 @@ CombatLogClient::~CombatLogClient() {
 void CombatLogClient::setMetadata(const std::string& key, const std::string& value) {
     std::lock_guard guard(_mutex);
     _metadata[key] = value;
+}
+
+void CombatLogClient::setPartitionId(const std::string& id) {
+    std::lock_guard guard(_mutex);
+    _partitionId = id;
+    _sequenceId = 0;
 }
 
 void CombatLogClient::addLine(const std::string& line) {
@@ -113,7 +122,7 @@ void CombatLogClient::start() {
                 outputStream.pop();
             }
 
-
+            const auto seqId = _sequenceId++;
             for (int i = 0; i < 3; ++i) {
                 Aws::Http::URI uri;
                 uri.SetScheme(Aws::Http::Scheme::HTTPS);
@@ -127,6 +136,17 @@ void CombatLogClient::start() {
                     uri,
                     Aws::Http::HttpMethod::HTTP_POST
                 );
+
+                request->SetHeaderValue("partition", Aws::String(_partitionId));
+                request->SetHeaderValue("sequence", Aws::String(std::to_string(seqId)));
+
+                auto bodyStream = std::make_shared<std::stringstream>();
+
+                // For Kinesis-PutRecord, the data needs to be base64-encoded and not over 1MB.
+                // I'm going to assume that we're never going to run into a situation where the data we send is greater than 1MB.
+                // Knock on wood.
+                *bodyStream << shared::base64::encode(std::string_view(compressedBuffer.data(), compressedBuffer.size()), shared::base64::BASE64_ENCODE_DEFAULT_CHARSET);
+                request->AddContentBody(bodyStream);
                 
                 if (!_signer->SignRequest(*request)) {
                     LOG_WARNING("Failed to sign combat log POST request." << std::endl);

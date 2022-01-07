@@ -33,6 +33,7 @@ public:
     // Any additional data that must be sent along with each batch of combat logs
     // (e.g. the match uuid, etc.) should be set as metadata.
     void setMetadata(const std::string& key, const std::string& value);
+    void setPartitionId(const std::string& id);
 
     void addLine(const std::string& line);
     void start();
@@ -63,6 +64,9 @@ private:
 
     std::shared_ptr<Aws::Http::HttpClient> _httpClient;
     std::shared_ptr<Aws::Client::AWSAuthV4Signer> _signer;
+
+    int64_t _sequenceId = 0;
+    std::string _partitionId;
 };
 
 using CombatLogClientPtr = std::unique_ptr<CombatLogClient>;

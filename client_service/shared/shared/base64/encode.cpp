@@ -36,7 +36,7 @@ std::string encodeBlock(std::string_view input, const char charset[65]) {
 
 }
 
-std::string encode(const std::string& input, const char charset[65]) {
+std::string encode(std::string_view input, const char charset[65]) {
     // 3 character blocks get converted into 4 character base64 blocks.
     // If there's characters leftover at the end (the input size isn't divisible by 3) then we just convert the character(s)
     // that are there and skip padding the output.
