@@ -25,6 +25,7 @@ public:
 
 private:
     HWND _window;
+    winrt::Windows::Graphics::DirectX::DirectXPixelFormat _format = winrt::Windows::Graphics::DirectX::DirectXPixelFormat::Unknown;
 
     std::atomic_bool _running = false;
 
