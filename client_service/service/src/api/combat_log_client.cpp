@@ -7,6 +7,9 @@
 #include <boost/iostreams/filtering_stream.hpp>
 #include <boost/iostreams/filter/zlib.hpp>
 
+#include <aws/core/http/standard/StandardHttpRequest.h>
+#include <aws/core/http/URI.h>
+
 namespace service::api {
 
 std::string combatLogEndpointToPath(CombatLogEndpoint ep) {
@@ -23,9 +26,11 @@ CombatLogClient::CombatLogClient(CombatLogEndpoint endpoint):
     _endpointPath = combatLogEndpointToPath(_endpoint);
     LOG_INFO("Combat Logging to Path: " << _endpointPath);
 
-    const auto hostname = service::api::getGlobalApi()->getCombatLogApiConfiguration();
-    LOG_INFO("Combat Logging to Hostname: " << hostname << std::endl);
-    _webClient = std::make_unique<shared::http::HttpClient>(hostname);
+    _hostname = service::api::getGlobalApi()->getCombatLogApiConfiguration();
+    LOG_INFO("Combat Logging to Hostname: " << _hostname << std::endl);
+
+    _httpClient = service::api::getAwsApi()->createHttpClient();
+    _signer = service::api::getAwsApi()->createSigner("apigateway");
 }
 
 CombatLogClient::~CombatLogClient() {
@@ -108,8 +113,34 @@ void CombatLogClient::start() {
                 outputStream.pop();
             }
 
-            // Finally, HTTP POST the data up to our servers. Our servers will take care of putting it onto a proper
-            // queue for processing. We use the AWS API to sign the request since we use AWS IAM as the way to authenticate requests.
+
+            for (int i = 0; i < 3; ++i) {
+                Aws::Http::URI uri;
+                uri.SetScheme(Aws::Http::Scheme::HTTPS);
+                uri.SetAuthority(Aws::String(_hostname));
+                uri.AddPathSegments(_endpointPath);
+
+                // Finally, HTTP POST the data up to our servers. Our servers will take care of putting it onto a proper
+                // queue for processing. We use the AWS API to sign the request since we use AWS IAM as the way to authenticate requests.
+                // Since we know we're using AWS we can just directly create AWS HTTP requests and sign them and send them up.
+                auto request = std::make_shared<Aws::Http::Standard::StandardHttpRequest>(
+                    uri,
+                    Aws::Http::HttpMethod::HTTP_POST
+                );
+                
+                if (!_signer->SignRequest(*request)) {
+                    LOG_WARNING("Failed to sign combat log POST request." << std::endl);
+                    continue;
+                }
+
+                const auto response = _httpClient->MakeRequest(request);
+                if (!response || response->HasClientError() || response->GetResponseCode() == Aws::Http::HttpResponseCode::OK) {
+                    LOG_WARNING("Failed to make combat log POST request." << std::endl);
+                    continue;
+                }
+
+                break;
+            }
         }
     });
 }

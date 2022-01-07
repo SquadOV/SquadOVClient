@@ -5,6 +5,7 @@
 
 #include <aws/core/utils/logging/ConsoleLogSystem.h>
 #include <aws/core/utils/logging/FormattedLogSystem.h>
+#include <aws/core/http/windows/WinHttpSyncHttpClient.h>
 #include <aws/auth/credentials.h>
 #include <aws/cognito-identity/model/GetCredentialsForIdentityRequest.h>
 
@@ -138,23 +139,10 @@ AwsAuthenticatedApi::~AwsAuthenticatedApi() {
     Aws::ShutdownAPI(_options);
 }
 
-void AwsAuthenticatedApi::onSessionUpdated(bool checkInProgress) {
-    // checkInProgress should only ever be set to false if we fail to get credentials from AWS
-    // and we're just retrying after a certain amount of time.
-    if (checkInProgress) {
-        bool expected = false;
-        // If _updateInProgress == expected (false), then we set _updateInProgress = true.
-        // compare_exchange_strong will return true in this case.
-        //
-        // If _updateInProgress != expected, then expected = true and compare_exchange_strong
-        // will return false.
-        if (!_updateInProgress.compare_exchange_strong(expected, true)) {
-            return;
-        }
-    }
-
+void AwsAuthenticatedApi::onSessionUpdated() {
     std::lock_guard guard(_credentialMutex);
     const auto credentials = service::api::getGlobalApi()->getAwsCredentials();
+    _lastCredentials = credentials;
 
     Aws::Client::ClientConfiguration clientConfig;
     clientConfig.region = Aws::String(credentials.region);
@@ -177,6 +165,23 @@ void AwsAuthenticatedApi::onSessionUpdated(bool checkInProgress) {
 
     const auto creds = _credentialProvider->GetAWSCredentials();
     LOG_INFO("Refresh AWS Credentials: " << creds.GetAWSAccessKeyId() << std::endl);
+}
+
+std::shared_ptr<Aws::Http::HttpClient> AwsAuthenticatedApi::createHttpClient() const {
+    std::shared_lock guard(_credentialMutex);
+
+    Aws::Client::ClientConfiguration clientConfig;
+    clientConfig.region = Aws::String(_lastCredentials.region);
+    return std::make_shared<Aws::Http::WinHttpSyncHttpClient>(clientConfig);
+}
+
+std::shared_ptr<Aws::Client::AWSAuthV4Signer> AwsAuthenticatedApi::createSigner(const std::string& serviceName) const {
+    std::shared_lock guard(_credentialMutex);
+    return std::make_shared<Aws::Client::AWSAuthV4Signer>(
+        _credentialProvider,
+        serviceName.c_str(),
+        Aws::String(_lastCredentials.region)
+    );
 }
 
 }

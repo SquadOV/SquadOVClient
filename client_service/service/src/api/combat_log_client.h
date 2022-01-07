@@ -11,6 +11,7 @@
 #include "shared/time.h"
 #include "shared/http/http_client.h"
 #include "shared/json.h"
+#include "api/aws_api.h"
 
 namespace service::api {
 
@@ -43,7 +44,7 @@ private:
     std::thread _uploadThread;
     bool _running = false;
     std::unordered_map<std::string, std::string> _metadata;
-    std::unique_ptr<shared::http::HttpClient> _webClient;
+    std::string _hostname;
 
     bool isBufferFull() const;
 
@@ -59,6 +60,9 @@ private:
 
     // 
     shared::TimePoint _lastUploadTime = shared::zeroTime();
+
+    std::shared_ptr<Aws::Http::HttpClient> _httpClient;
+    std::shared_ptr<Aws::Client::AWSAuthV4Signer> _signer;
 };
 
 using CombatLogClientPtr = std::unique_ptr<CombatLogClient>;

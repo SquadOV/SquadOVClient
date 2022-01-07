@@ -6,6 +6,8 @@
 #include <shared_mutex>
 
 #include <aws/core/Aws.h>
+#include <aws/core/auth/AWSAuthSigner.h>
+#include <aws/core/http/HttpClient.h>
 #include <aws/identity-management/auth/CognitoCachingCredentialsProvider.h>
 #include <aws/identity-management/auth/PersistentCognitoIdentityProvider.h>
 
@@ -49,16 +51,17 @@ public:
     AwsAuthenticatedApi();
     ~AwsAuthenticatedApi();
 
+    std::shared_ptr<Aws::Http::HttpClient> createHttpClient() const; 
+    std::shared_ptr<Aws::Client::AWSAuthV4Signer> createSigner(const std::string& serviceName) const;
 private:
-    void onSessionUpdated(bool checkInProgress = true);
+    void onSessionUpdated();
     int64_t _sessionUpdateCbId = 0;
 
-    std::shared_mutex _credentialMutex;
+    mutable std::shared_mutex _credentialMutex;
     Aws::SDKOptions _options;
+    AwsCognitoCredentials _lastCredentials;
     std::shared_ptr<ManualCognitoIdentityProvider> _identityProvider;
     std::shared_ptr<Aws::Auth::CognitoCachingAuthenticatedCredentialsProvider> _credentialProvider;
-    std::atomic<int64_t> _retryCount = 0;
-    std::atomic<bool> _updateInProgress = false;
 };
 
 AwsAuthenticatedApi* getAwsApi();
