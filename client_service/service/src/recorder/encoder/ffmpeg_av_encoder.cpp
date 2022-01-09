@@ -364,10 +364,6 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
             packet.pts = packet.dts;
         }
 
-        if (!packet.duration && frame && frame->pkt_duration) {
-            packet.duration = frame->pkt_duration;
-        }
-
         {
             std::lock_guard<std::mutex> guard(_encodeMutex);
             _packetQueue.push_back(packet);
@@ -776,10 +772,26 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
     ++_processedVideoFrames;
 
     bool forceFrame0 = false;
-    const int64_t duration = desiredFrameNum - _vFrameNum;
+    
+    int64_t startEncodingFrame = _vFrameNum;
+    int64_t frameStepSize = 1;
+
     if (_useVfr4) {
         forceFrame0 = (_vFrameNum == 0 && desiredFrameNum > 1);
-        _vFrameNum = desiredFrameNum - 1;
+
+        // For some god awful reason, if we try to jump the pts by 600 frames or more,
+        // the processing step will fail and ffmpeg will freak the fuck out and just write
+        // each frame in rapid fire succession ignoring the jump once we convert to mp4.
+        // Therefore, in case that happens we'll break the number of frames into smaller chunks
+        // to force ffmpeg to behave. Note that we use 400 here instead of 600 just in case
+        // I'm off in my estimation since it was ~600 frames on my machine but could be different
+        // on machines in the wild.
+        if (numFramesToEncode > 400) {
+            startEncodingFrame = (desiredFrameNum - 1) - (numFramesToEncode / 200) * 200;
+            frameStepSize = 200;
+        } else {
+            startEncodingFrame = desiredFrameNum - 1;
+        }
     }
 
     service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
@@ -787,13 +799,11 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
 
     if (forceFrame0) {
         frame->pts = 0;
-        frame->pkt_duration = 1;
         encode(_vcodecContext, frame, _vstream);
     }
 
-    for (; _vFrameNum < desiredFrameNum; ++_vFrameNum) {
+    for (_vFrameNum = startEncodingFrame; _vFrameNum < desiredFrameNum; _vFrameNum += frameStepSize) {
         frame->pts = _vFrameNum;
-        frame->pkt_duration = duration;
         encode(_vcodecContext, frame, _vstream);
     }
 }
