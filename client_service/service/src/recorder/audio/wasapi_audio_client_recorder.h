@@ -23,6 +23,7 @@ class WasapiAudioClientRecorder {
 
 public:
     WasapiAudioClientRecorder(wil::com_ptr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback);
+    ~WasapiAudioClientRecorder();
 
     void startRecording();
     void setActiveEncoder(service::recorder::encoder::AvEncoder* encoder, size_t encoderIndex);
