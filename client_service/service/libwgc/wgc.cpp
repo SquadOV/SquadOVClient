@@ -76,6 +76,7 @@ WindowsGraphicsCaptureItf::WindowsGraphicsCaptureItf(HWND window):
 }
 
 void WindowsGraphicsCaptureItf::stopRecording() {
+    std::lock_guard guard(_runningMutex);
     _running = false;
     if (_frameArrived) {
         _frameArrived.revoke();
@@ -96,11 +97,13 @@ void WindowsGraphicsCaptureItf::stopRecording() {
 
 void WindowsGraphicsCaptureItf::onFrameArrived(
     const winrt::Windows::Graphics::Capture::Direct3D11CaptureFramePool& sender,
-    const winrt::Windows::Foundation::IInspectable& args) {
-
+    const winrt::Windows::Foundation::IInspectable& args)
+{
+    std::lock_guard guard(_runningMutex);
     if (!_running) {
         return;
     }
+    
 
     auto frame = sender.TryGetNextFrame();
     auto frameContentSize = frame.ContentSize();
@@ -115,7 +118,10 @@ void WindowsGraphicsCaptureItf::onFrameArrived(
     winrt::com_ptr<ID3D11Texture2D> frameSurface;
     winrt::check_hresult(access->GetInterface(winrt::guid_of<ID3D11Texture2D>(), frameSurface.put_void()));
 
-    flowToNext(&_self, frameSurface.get(), 1, DXGI_MODE_ROTATION_IDENTITY);
+    if (_running) {
+        flowToNext(&_self, frameSurface.get(), 1, DXGI_MODE_ROTATION_IDENTITY);
+    }
+
     if (changedSize) {
         _framePool.Recreate(_rtDevice, _format, 1, _lastSize);
     }
