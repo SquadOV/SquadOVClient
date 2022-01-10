@@ -175,6 +175,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/libcpuid/libcpuid
         ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
         ${CMAKE_SOURCE_DIR}/deps/rapidxml
+        ${CMAKE_SOURCE_DIR}/deps/half/include
         ${OPENSSL_INCLUDE_DIR}
         ${CARES_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
@@ -203,6 +204,8 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         aws-cpp-sdk-identity-management
         Microsoft::DirectXMath
         Microsoft::DirectXTK
+        Microsoft::DirectXTex
+        Microsoft::DirectX-Guids Microsoft::DirectX-Headers
         RdKafka::rdkafka RdKafka::rdkafka++
         oatpp
         cpuid
@@ -296,6 +299,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/deps/date/include
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
         ${CMAKE_SOURCE_DIR}/deps/libpng
+        ${CMAKE_SOURCE_DIR}/deps/half/include
     )
 
     target_link_libraries(libwgc
@@ -304,6 +308,8 @@ if(WIN32)
         date-tz
         png
         dbghelp
+        Microsoft::DirectXTex
+        Microsoft::DirectX-Guids Microsoft::DirectX-Headers
         ${Boost_LIBRARIES}
     )
 endif()

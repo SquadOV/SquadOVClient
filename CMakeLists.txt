@@ -37,6 +37,8 @@ find_package(aws-cpp-sdk-cognito-identity REQUIRED)
 find_package(aws-cpp-sdk-identity-management REQUIRED)
 find_package(directxmath CONFIG REQUIRED)
 find_package(directxtk CONFIG REQUIRED)
+find_package(directxtex CONFIG REQUIRED)
+find_package(directx-headers CONFIG REQUIRED)
 
 set(Protobuf_USE_STATIC_LIBS ON)
 set(protobuf_MODULE_COMPATIBLE ON)

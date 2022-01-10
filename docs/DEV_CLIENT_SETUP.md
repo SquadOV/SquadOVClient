@@ -34,6 +34,8 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `aws-sdk-cpp[core,cognito-identity,identity-management]:x64-windows`
 * `directxtk:x64-windows`
 * `directxmath:x64-windows`
+* `directxtex:x64-windows`
+* `directx-headers:x64-windows`
 
 ## Build SquadOV Client Service
 

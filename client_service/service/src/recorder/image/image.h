@@ -25,9 +25,9 @@ public:
     size_t numBytesPerRow() const { return width() * bytesPerPixel(); }
     size_t width() const { return _width; }
     size_t height() const { return _height; }
-    size_t bytesPerPixel() const { return 4; }
+    size_t bytesPerPixel() const;
 
-    void initializeImage(size_t width, size_t height);
+    void initializeImage(size_t width, size_t height, DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM);
     void copyFrom(const Image& img);
     void saveToFile(const std::filesystem::path& path) const;
     void loadFromFile(const std::filesystem::path& path);
@@ -39,6 +39,7 @@ public:
 #endif
 
     void fillAlpha(uint8_t v);
+    DXGI_FORMAT format() const { return _format; }
 
 private:
     size_t _width = 0;
@@ -46,6 +47,7 @@ private:
     std::unique_ptr<uint8_t[]> _buffer;
 
 #ifdef _WIN32
+    DXGI_FORMAT _format = DXGI_FORMAT_UNKNOWN;
     ID3D11Texture2D* _stagingTexture = nullptr;
 #endif
 };

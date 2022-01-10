@@ -181,7 +181,7 @@ void D3dImage::initializeImage(size_t width, size_t height, bool shared, DXGI_FO
 }
 
 void D3dImage::copyFromCpu(const Image& image) {
-    refreshInputTexture(image.width(), image.height());
+    refreshInputTexture(image.width(), image.height(), image.format());
 
     D3D11_BOX box;
     box.left = 0;
@@ -221,13 +221,13 @@ void D3dImage::copyFromSharedGpu(service::renderer::D3d11SharedContext* imageCon
     bundle->render(image, rotation);
 }
 
-ID3D11Texture2D* D3dImage::createStagingTexture(size_t width, size_t height, bool forCpu) {
+ID3D11Texture2D* D3dImage::createStagingTexture(size_t width, size_t height, bool forCpu, DXGI_FORMAT format) {
     D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
     sharedDesc.Width = width;
     sharedDesc.Height = height;
     sharedDesc.MipLevels = 1;
     sharedDesc.ArraySize = 1;
-    sharedDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sharedDesc.Format = format;
     sharedDesc.SampleDesc.Count = 1;
     sharedDesc.Usage = forCpu ? D3D11_USAGE_STAGING : D3D11_USAGE_DEFAULT;
     sharedDesc.BindFlags = 0;
@@ -249,12 +249,12 @@ void D3dImage::releaseInputTextureIfExists() {
     }
 }
 
-void D3dImage::refreshInputTexture(size_t width, size_t height) {
+void D3dImage::refreshInputTexture(size_t width, size_t height, DXGI_FORMAT format) {
     bool needsRefresh = true;
     if (_inputTexture) {
         D3D11_TEXTURE2D_DESC desc;
         _inputTexture->GetDesc(&desc);
-        needsRefresh = (desc.Width != width || desc.Height != height);
+        needsRefresh = (desc.Width != width || desc.Height != height || desc.Format != format);
     }
 
     if (!needsRefresh) {
@@ -262,7 +262,7 @@ void D3dImage::refreshInputTexture(size_t width, size_t height) {
     }
 
     releaseInputTextureIfExists();
-    _inputTexture = createStagingTexture(width, height, false);
+    _inputTexture = createStagingTexture(width, height, false, format);
 }
 
 void D3dImage::releaseOutputTextureIfExists() {

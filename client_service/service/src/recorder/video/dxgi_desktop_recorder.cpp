@@ -211,6 +211,7 @@ void DxgiDesktopRecorder::startRecording() {
             } else {
                 ++numReused;
             }
+
             ++count;
         }
 

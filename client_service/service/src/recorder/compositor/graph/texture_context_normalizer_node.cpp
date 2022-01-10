@@ -16,6 +16,7 @@ void TextureContextNormalizerNode::receiveTexture(service::renderer::D3d11Shared
     image->GetDesc(&desc);
 
     if (desc.Height != _newImage->height() || desc.Width != _newImage->width() || desc.Format != _newImage->format()) {
+        LOG_INFO("Reinitializing normalized texture: " << desc.Width << "x" << desc.Height << " [" << desc.Format << "]" << std::endl);
         _newImage->initializeImage(desc.Width, desc.Height, true, desc.Format);
     }
 
@@ -29,8 +30,8 @@ void TextureContextNormalizerNode::receiveTexture(service::renderer::D3d11Shared
         // we'll also remove the rotation in the input texture (if any).
         _newImage->copyFromSharedGpu(imageContext, image, rotation);
     } else if (_context->deviceClass() == service::renderer::D3d11Device::CPU) {
-        if (desc.Height != _tmpImage->height() || desc.Width != _tmpImage->width()) {
-            _tmpImage->initializeImage(desc.Width, desc.Height);
+        if (desc.Height != _tmpImage->height() || desc.Width != _tmpImage->width() || desc.Format != _tmpImage->format()) {
+            _tmpImage->initializeImage(desc.Width, desc.Height, desc.Format);
         }
 
         // It's theoretically possible to support rotations but that seems like a lot of work I don't want to do.

@@ -29,9 +29,10 @@ Image::~Image() {
 #endif
 }
 
-void Image::initializeImage(size_t width, size_t height) {
+void Image::initializeImage(size_t width, size_t height, DXGI_FORMAT format) {
     _width = width;
     _height = height;
+    _format = format;
     
     _buffer.reset(new uint8_t[numBytes()]);
     memset(_buffer.get(), 0, numBytes());
@@ -42,6 +43,14 @@ void Image::copyFrom(const Image& img) {
     assert(height() == img.height());
     assert(bytesPerPixel() == img.bytesPerPixel());
     std::memcpy(_buffer.get(), img.buffer(), numBytes());
+}
+
+size_t Image::bytesPerPixel() const {
+    if (_format == DXGI_FORMAT_B8G8R8A8_UNORM) {
+        return 4;
+    } else {
+        return 8;
+    }
 }
 
 void Image::fillAlpha(uint8_t v) {
@@ -61,10 +70,11 @@ void Image::loadFromD3d11Texture(ID3D11DeviceContext* context, ID3D11Texture2D* 
         THROW_ERROR("Failed to map texture: " << hr);
     }
 
-    // TODO: This doesn't work if the input texture is floating point.
+    D3D11_TEXTURE2D_DESC desc;
+    texture->GetDesc(&desc);
+
     const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
     uint8_t* dst = buffer();
-
     for (size_t r = 0; r < _height; ++r) {
         std::memcpy(dst, src, numBytesPerRow());
         src += mappedData.RowPitch;
@@ -91,6 +101,7 @@ void Image::loadFromD3d11TextureWithStaging(ID3D11Device* device, ID3D11DeviceCo
     }
 
     if (requiresStagingCreation) {
+        assert(_format == desc.Format);
         D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
         sharedDesc.Width = desc.Width;
         sharedDesc.Height = desc.Height;
@@ -154,7 +165,6 @@ void Image::loadFromFile(const std::filesystem::path& path) {
     if (!png_image_finish_read(&image, nullptr, buffer(), numBytesPerRow(), nullptr)) {
         throw std::runtime_error("Failed to read PNG data.");
     }
-
 }
 
 }
