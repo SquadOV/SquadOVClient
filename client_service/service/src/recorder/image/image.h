@@ -6,6 +6,7 @@
 
 #ifdef _WIN32
 #include <d3d11.h>
+#include <DirectXTex.h>
 #endif
 
 namespace service::recorder::image {
@@ -47,6 +48,7 @@ private:
 
 #ifdef _WIN32
     ID3D11Texture2D* _stagingTexture = nullptr;
+    std::shared_ptr<DirectX::ScratchImage> _scratchImage;
 #endif
 };
 

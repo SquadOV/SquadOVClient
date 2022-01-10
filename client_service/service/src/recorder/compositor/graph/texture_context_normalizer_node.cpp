@@ -16,6 +16,7 @@ void TextureContextNormalizerNode::receiveTexture(service::renderer::D3d11Shared
     image->GetDesc(&desc);
 
     if (desc.Height != _newImage->height() || desc.Width != _newImage->width() || desc.Format != _newImage->format()) {
+        LOG_INFO("Reinitializing normalized texture: " << desc.Width << "x" << desc.Height << " [" << desc.Format << "]" << std::endl);
         _newImage->initializeImage(desc.Width, desc.Height, true, desc.Format);
     }
 
