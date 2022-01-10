@@ -71,10 +71,10 @@ private:
     void releaseTextureIfExists();
     ID3D11Texture2D* _hwTexture = nullptr;
 
-    ID3D11Texture2D* createStagingTexture(size_t width, size_t height, bool forCpu);
+    ID3D11Texture2D* createStagingTexture(size_t width, size_t height, bool forCpu, DXGI_FORMAT format = DXGI_FORMAT_B8G8R8A8_UNORM);
 
     void releaseInputTextureIfExists();
-    void refreshInputTexture(size_t width, size_t height);
+    void refreshInputTexture(size_t width, size_t height, DXGI_FORMAT format);
     ID3D11Texture2D* _inputTexture = nullptr;
 
     void releaseOutputTextureIfExists();

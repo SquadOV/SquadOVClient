@@ -29,9 +29,10 @@ Image::~Image() {
 #endif
 }
 
-void Image::initializeImage(size_t width, size_t height) {
+void Image::initializeImage(size_t width, size_t height, DXGI_FORMAT format) {
     _width = width;
     _height = height;
+    _format = format;
     
     _buffer.reset(new uint8_t[numBytes()]);
     memset(_buffer.get(), 0, numBytes());
@@ -42,6 +43,14 @@ void Image::copyFrom(const Image& img) {
     assert(height() == img.height());
     assert(bytesPerPixel() == img.bytesPerPixel());
     std::memcpy(_buffer.get(), img.buffer(), numBytes());
+}
+
+size_t Image::bytesPerPixel() const {
+    if (_format == DXGI_FORMAT_B8G8R8A8_UNORM) {
+        return 4;
+    } else {
+        return 8;
+    }
 }
 
 void Image::fillAlpha(uint8_t v) {
@@ -64,31 +73,11 @@ void Image::loadFromD3d11Texture(ID3D11DeviceContext* context, ID3D11Texture2D* 
     D3D11_TEXTURE2D_DESC desc;
     texture->GetDesc(&desc);
 
-    uint8_t* src = nullptr;
-    unsigned int rowPitch = 0;
-    if (desc.Format == DXGI_FORMAT_B8G8R8A8_UNORM) {
-        src = reinterpret_cast<uint8_t*>(mappedData.pData);
-        rowPitch = mappedData.RowPitch;
-    } else {
-        DirectX::Image dimg;
-        dimg.format = desc.Format;
-        dimg.width = desc.Width;
-        dimg.height = desc.Height;
-        dimg.rowPitch = mappedData.RowPitch;
-        dimg.slicePitch = mappedData.DepthPitch;
-        dimg.pixels = reinterpret_cast<uint8_t*>(mappedData.pData);
-
-        DirectX::Convert(dimg, DXGI_FORMAT_B8G8R8A8_UNORM, DirectX::TEX_FILTER_DEFAULT, DirectX::TEX_THRESHOLD_DEFAULT, *_scratchImage);
-
-        auto* simg = _scratchImage->GetImage(0, 0, 0);
-        src = simg->pixels;
-        rowPitch = simg->rowPitch;
-    }
-
+    const uint8_t* src = reinterpret_cast<const uint8_t*>(mappedData.pData);
     uint8_t* dst = buffer();
     for (size_t r = 0; r < _height; ++r) {
         std::memcpy(dst, src, numBytesPerRow());
-        src += rowPitch;
+        src += mappedData.RowPitch;
         dst += numBytesPerRow();
     }
     context->Unmap(texture, 0);
@@ -112,6 +101,7 @@ void Image::loadFromD3d11TextureWithStaging(ID3D11Device* device, ID3D11DeviceCo
     }
 
     if (requiresStagingCreation) {
+        assert(_format == desc.Format);
         D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
         sharedDesc.Width = desc.Width;
         sharedDesc.Height = desc.Height;
@@ -132,8 +122,6 @@ void Image::loadFromD3d11TextureWithStaging(ID3D11Device* device, ID3D11DeviceCo
         if (device->CreateTexture2D(&sharedDesc, nullptr, &_stagingTexture) != S_OK) {
             THROW_ERROR("Failed to create staging texture.");
         }
-
-        _scratchImage = std::make_shared<DirectX::ScratchImage>();
     }
 
     context->CopyResource(_stagingTexture, texture);
@@ -177,7 +165,6 @@ void Image::loadFromFile(const std::filesystem::path& path) {
     if (!png_image_finish_read(&image, nullptr, buffer(), numBytesPerRow(), nullptr)) {
         throw std::runtime_error("Failed to read PNG data.");
     }
-
 }
 
 }
