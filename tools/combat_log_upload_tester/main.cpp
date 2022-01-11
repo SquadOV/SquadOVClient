@@ -27,5 +27,16 @@ int main(int argc, char** argv) {
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
+
+    service::api::CombatLogClient client(service::api::CombatLogEndpoint::Ff14);
+    client.start();
+
+    std::ifstream file(fs::path(vm["log"].as<std::string>());
+    std::string line;
+    while (file.is_open() && std::getline(file, line)) {
+        client.addLine(line);
+    }
+
+    client.flush();
     return 0;
 }

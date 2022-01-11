@@ -31,7 +31,10 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `cryptopp:x64-windows-static`
 * `cryptopp:x64-windows-static-md`
 * `wil:x64-windows`
-* `aws-sdk-cpp[core,cognito-identity,identity-management]:x64-windows`
+* `aws-sdk-cpp:x64-windows`
+* `aws-sdk-cpp[core]:x64-windows`
+* `aws-sdk-cpp[cognito-identity]:x64-windows`
+* `aws-sdk-cpp[identity-management]:x64-windows`
 * `directxtk:x64-windows`
 * `directxmath:x64-windows`
 * `directxtex:x64-windows`

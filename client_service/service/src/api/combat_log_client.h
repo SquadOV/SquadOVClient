@@ -3,6 +3,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -37,17 +38,20 @@ public:
 
     void addLine(const std::string& line);
     void start();
+    void flush();
 private:
     CombatLogEndpoint _endpoint;
     std::string _endpointPath;
 
     std::vector<std::string> _buffer;
     std::thread _uploadThread;
-    bool _running = false;
+    bool _running = false;  
     std::unordered_map<std::string, std::string> _metadata;
     std::string _hostname;
 
     bool isBufferFull() const;
+    bool populateData(nlohmann::json& data, bool wait);
+    void sendData(const nlohmann::json& data, std::vector<char>& buffer);
 
     // We need to control access to the buffer.
     mutable std::mutex _mutex;
