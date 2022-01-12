@@ -1,6 +1,7 @@
 #include "api/combat_log_client.h"
 #include "api/squadov_api.h"
 #include "shared/log/log.h"
+#include "shared/errors/error.h"
 #include "shared/base64/encode.h"
 
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -32,7 +33,7 @@ CombatLogClient::CombatLogClient(CombatLogEndpoint endpoint):
     LOG_INFO("Combat Logging to Hostname: " << _hostname << std::endl);
 
     _httpClient = service::api::getAwsApi()->createHttpClient();
-    _signer = service::api::getAwsApi()->createSigner("apigateway");
+    _signer = service::api::getAwsApi()->createSigner("execute-api");
 }
 
 CombatLogClient::~CombatLogClient() {
@@ -146,17 +147,15 @@ void CombatLogClient::sendData(const nlohmann::json& data, std::vector<char>& bu
 
     const auto seqId = _sequenceId++;
     for (int i = 0; i < 3; ++i) {
-        Aws::Http::URI uri;
-        uri.SetScheme(Aws::Http::Scheme::HTTPS);
-        uri.SetAuthority(Aws::String(_hostname));
-        uri.AddPathSegments(_endpointPath);
+        std::stringstream uri;
+        uri << "https://" << _hostname  << _endpointPath;
 
         // Finally, HTTP POST the data up to our servers. Our servers will take care of putting it onto a proper
         // queue for processing. We use the AWS API to sign the request since we use AWS IAM as the way to authenticate requests.
         // Since we know we're using AWS we can just directly create AWS HTTP requests and sign them and send them up.
         auto request = std::make_shared<Aws::Http::Standard::StandardHttpRequest>(
-            uri,
-            Aws::Http::HttpMethod::HTTP_POST
+            Aws::Http::URI(uri.str()),
+            Aws::Http::HttpMethod::HTTP_PUT
         );
 
         request->SetHeaderValue("partition", Aws::String(_partitionId));
@@ -169,15 +168,29 @@ void CombatLogClient::sendData(const nlohmann::json& data, std::vector<char>& bu
         // Knock on wood.
         *bodyStream << shared::base64::encode(std::string_view(buffer.data(), buffer.size()), shared::base64::BASE64_ENCODE_DEFAULT_CHARSET);
         request->AddContentBody(bodyStream);
+
+        {
+            bodyStream->seekg(0, bodyStream->end);
+            const auto streamSize = bodyStream->tellg();
+            bodyStream->seekg(0, bodyStream->beg);
+            request->SetContentLength(Aws::String(std::to_string(streamSize)));
+        }
+
+        request->SetResponseStreamFactory(Aws::Utils::Stream::DefaultResponseStreamFactoryMethod);
         
         if (!_signer->SignRequest(*request)) {
-            LOG_WARNING("Failed to sign combat log POST request." << std::endl);
+            LOG_WARNING("Failed to sign combat log PUT request." << std::endl);
             continue;
         }
 
         const auto response = _httpClient->MakeRequest(request);
         if (!response || response->HasClientError() || response->GetResponseCode() != Aws::Http::HttpResponseCode::OK) {
-            LOG_WARNING("Failed to make combat log POST request." << std::endl);
+            LOG_WARNING("Failed to make combat log PUT request." << std::endl);
+
+            std::ostringstream tmp;
+            tmp << response->GetResponseBody().rdbuf();
+            LOG_WARNING("...Body: " << tmp.str() << std::endl);
+            LOG_WARNING("...Err: " << response->GetClientErrorMessage() << std::endl);
             continue;
         }
 

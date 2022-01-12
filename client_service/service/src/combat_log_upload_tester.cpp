@@ -1,8 +1,9 @@
-#include "game_event_watcher/wow/wow_log_watcher.h"
 #include "shared/log/log.h"
 #include "shared/time.h"
 #include "shared/filesystem/common_paths.h"
+#include "shared/env.h"
 #include "api/combat_log_client.h"
+#include "api/squadov_api.h"
 
 #include <boost/program_options.hpp>
 #include <filesystem>
@@ -11,7 +12,6 @@
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
-using namespace game_event_watcher;
 
 int main(int argc, char** argv) {
     shared::log::Log::initializeGlobalLogger("combat_log_upload_tester.log");
@@ -19,6 +19,8 @@ int main(int argc, char** argv) {
     const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();
     date::set_install(tzDataFolder);
     date::get_tzdb_list();
+
+    service::api::getGlobalApi()->setSessionId(shared::getEnv("SQUADOV_SESSION_ID"));
 
     po::options_description desc("Options");
     desc.add_options()
@@ -29,9 +31,10 @@ int main(int argc, char** argv) {
     po::notify(vm);
 
     service::api::CombatLogClient client(service::api::CombatLogEndpoint::Ff14);
+    client.setPartitionId("boba");
     client.start();
 
-    std::ifstream file(fs::path(vm["log"].as<std::string>());
+    std::ifstream file(fs::path(vm["log"].as<std::string>()));
     std::string line;
     while (file.is_open() && std::getline(file, line)) {
         client.addLine(line);

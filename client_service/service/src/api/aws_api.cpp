@@ -172,6 +172,7 @@ std::shared_ptr<Aws::Http::HttpClient> AwsAuthenticatedApi::createHttpClient() c
 
     Aws::Client::ClientConfiguration clientConfig;
     clientConfig.region = Aws::String(_lastCredentials.region);
+    clientConfig.requestTimeoutMs = 10000;
     return std::make_shared<Aws::Http::WinHttpSyncHttpClient>(clientConfig);
 }
 
