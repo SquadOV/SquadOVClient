@@ -1,7 +1,7 @@
 Write-Host "Begin Packaging Windows SquadOV"
 
 Set-Location -Path ..\..
-cmake -S . -B build-release -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=A:\Git\vcpkg\scripts\buildsystems\vcpkg.cmake
+cmake -S . -B build-release -G "Visual Studio 16 2019" -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_PATH\scripts\buildsystems\vcpkg.cmake"
 cmake --build build-release --config Release --target squadov_client_service
 cmake --build build-release --config Release --target advanced_crash_dump_enabler
 cmake --build build-release --config Release --target csgo_demo_retriever
