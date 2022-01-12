@@ -24,6 +24,8 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 
 * `openssl:x64-windows`
 * `librdkafka:x64-windows`
+* `librdkafka[ssl]:x64-windows`
+* `librdkafka[zstd]:x64-windows`
 * `c-ares:x64-windows`
 * `openssl:x64-windows-static`
 * `openssl:x64-windows-static-md`

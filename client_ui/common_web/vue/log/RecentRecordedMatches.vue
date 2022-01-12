@@ -4,7 +4,7 @@
             <div class="d-flex text-h6 align-center">
                 {{ title }}
 
-                <v-btn icon @click="refreshData">
+                <v-btn icon @click="refreshData()">
                     <v-icon>
                         mdi-refresh
                     </v-icon>
