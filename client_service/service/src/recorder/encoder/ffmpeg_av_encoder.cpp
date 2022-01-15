@@ -792,8 +792,9 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
         // I'm off in my estimation since it was ~600 frames on my machine but could be different
         // on machines in the wild.
         if (numFramesToEncode > 400) {
-            startEncodingFrame = (desiredFrameNum - 1) - (numFramesToEncode / 200) * 200;
-            frameStepSize = 200;
+            constexpr int64_t STEP_SIZE = 200;
+            startEncodingFrame = (desiredFrameNum - 1) - ((numFramesToEncode - 1) / STEP_SIZE) * STEP_SIZE;
+            frameStepSize = STEP_SIZE;
         } else {
             startEncodingFrame = desiredFrameNum - 1;
         }
@@ -810,6 +811,10 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
         frame->pts = _vFrameNum;
         encode(_vcodecContext, frame, _vstream);
     }
+
+    // This is necessary when frameStepSize > 1. At the end, we want _vFrameNum to be equal to desiredFrameNum.
+    // If frameStepSize > 1, then the last frame will be desiredFrameNum - 1 + frameStepSize instead.
+    _vFrameNum = desiredFrameNum;
 }
 
 void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {
