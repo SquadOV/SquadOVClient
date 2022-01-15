@@ -31,7 +31,6 @@ public:
     virtual size_t frameWidth() const = 0;
     virtual size_t frameHeight() const = 0;
 
-    virtual AVFrame* receiveCpuFrame(const service::recorder::image::Image& frame) = 0;
 #ifdef _WIN32
     virtual AVFrame* receiveGpuFrame(ID3D11Texture2D* frame) = 0;
 #endif
@@ -51,7 +50,6 @@ public:
     size_t frameWidth() const override;
     size_t frameHeight() const override;
 
-    AVFrame* receiveCpuFrame(const service::recorder::image::Image& frame) override;
 #ifdef _WIN32
     AVFrame* receiveGpuFrame(ID3D11Texture2D* frame) override;
 #endif
@@ -74,7 +72,6 @@ public:
     size_t frameWidth() const override;
     size_t frameHeight() const override;
 
-    AVFrame* receiveCpuFrame(const service::recorder::image::Image& frame) override;
 #ifdef _WIN32
     AVFrame* receiveGpuFrame(ID3D11Texture2D* frame) override;
 #endif
@@ -82,9 +79,6 @@ public:
 private:
     AVFrame* _frame = nullptr;
     AVFrame* process(ID3D11Texture2D* input);
-
-    service::recorder::image::D3dImagePtr _buffer;
-    void reinitBackBuffer(size_t width, size_t height);
 
     service::renderer::D3d11VideoProcessorPtr _processor;
 };

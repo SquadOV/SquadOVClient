@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
         ("duration", po::value<int>()->default_value(30), "Length of the final VOD to record")
         ("delay", po::value<int>()->default_value(25), "Delay between when we start DVR and when we want to start recording.")
         ("offset", po::value<int>()->default_value(15), "How many seconds into the DVR we should use in the output VOD")
+        ("loop", po::value<int>()->default_value(1), "Number of times to loop DVR recording")
         ("width", po::value<size_t>()->default_value(1920), "width of output")
         ("height", po::value<size_t>()->default_value(1080), "height of output")
         ("output", po::value<std::string>()->required(), "VOD output file.")
@@ -97,6 +98,7 @@ int main(int argc, char** argv) {
     const auto mode = vm["mode"].as<std::string>();
     const auto width = vm["width"].as<size_t>();
     const auto height = vm["height"].as<size_t>();
+    const auto loop = vm["loop"].as<int>();
     recorder.overrideResolution(width, height);
 
     std::thread workerThread;
@@ -123,15 +125,21 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         const auto delay = vm["delay"].as<int>();
         const auto offset = vm["offset"].as<int>();
-        workerThread = std::thread([&recorder, duration, delay, offset](){
-            LOG_INFO("START DVR" << std::endl);
-            recorder.startDvrSession();
-            std::this_thread::sleep_for(std::chrono::seconds(delay));
-            LOG_INFO("DO JOIN" << std::endl);
-            recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING);
-            std::this_thread::sleep_for(std::chrono::seconds(duration));
-            LOG_INFO("STOP RECORDING" << std::endl);
-            recorder.stop({}, true);
+        workerThread = std::thread([&recorder, duration, delay, offset, loop, destination](){
+            for (auto i = 0; i < loop; ++i) {
+                LOG_INFO("START DVR" << std::endl);
+                recorder.startDvrSession();
+                std::this_thread::sleep_for(std::chrono::seconds(delay));
+                LOG_INFO("DO JOIN" << std::endl);
+                recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING);
+                std::this_thread::sleep_for(std::chrono::seconds(duration));
+                LOG_INFO("STOP RECORDING" << std::endl);
+                recorder.stop({}, true);
+
+                std::stringstream str;
+                str << "bobbothebuilder" << i;
+                recorder.setFileOutputFromDestination(str.str(), destination);
+            }
         });
     } else if (mode == "DVRRACE") {
         std::mutex mutex;
