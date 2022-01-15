@@ -210,6 +210,7 @@ private:
     bool _canStart = true;
 
     bool _doPostVideoFlush = true;
+    service::renderer::D3d11SharedContext* _d3d = nullptr;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -322,8 +323,7 @@ FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
 }
 
 FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
-    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
-    auto immediate = d3d->immediateContext();
+    auto immediate = _d3d->immediateContext();
 
     avcodec_free_context(&_vcodecContext);
     av_frame_free(&_aframe);
@@ -392,12 +392,15 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
         {"libopenh264", VideoStreamContext::CPU, false }
     };
 
-    const auto canUseGpu = FfmpegGPUVideoSwapChain::isSupported(d3d, width, height);
+    LOG_INFO("Check can use GPU..." << std::endl);
+    const auto canUseGpu = (d3d->deviceClass() == service::renderer::D3d11Device::GPU) && FfmpegGPUVideoSwapChain::isSupported(d3d, width, height);
+    LOG_INFO("..." << canUseGpu << std::endl);
     auto immediate = d3d->immediateContext();
 
     bool foundEncoder = false;
     bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
+        LOG_INFO("Checking Encoder: " << enc.name << std::endl);
         try {
             if (enc.isGpuEncoder && !settings.useHwEncoder) {
                 LOG_INFO("Skipping " << enc.name << " since user has disabled GPU encoding." << std::endl);
@@ -577,6 +580,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
     _fps = settings.fps;
     _useVfr4 = settings.useVfr4;
     _nsPerFrame = std::chrono::nanoseconds(static_cast<size_t>(1.0 / settings.fps * 1.0e+9));
+    _d3d = d3d;
+    assert(_d3d);
 }
 
 void FfmpegAvEncoderImpl::initializeAudioStream() {
@@ -794,8 +799,7 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
         }
     }
 
-    service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
-    auto immediate = d3d->immediateContext();
+    auto immediate = _d3d->immediateContext();
 
     if (forceFrame0) {
         frame->pts = 0;
@@ -1044,8 +1048,7 @@ void FfmpegAvEncoderImpl::stop() {
     // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
     // because something is wrong there......
     if (_doPostVideoFlush) {
-        service::renderer::D3d11SharedContext* d3d = service::renderer::getSharedD3d11Context();
-        auto immediate = d3d->immediateContext();
+        auto immediate = _d3d->immediateContext();
 
         encode(_vcodecContext, nullptr, _vstream);
     }
