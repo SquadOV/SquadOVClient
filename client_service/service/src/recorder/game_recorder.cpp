@@ -261,25 +261,30 @@ void GameRecorder::startDvrSession(int flags, bool autoTick) {
             std::this_thread::sleep_for(step);
             timeSinceLastDvrSegment += step;
         }
-
+        
+        LOG_INFO("On DVR Thread Finish Start..." << std::endl);
         if (_dvrEncoder.hasEncoder()) {
             _dvrEncoder.encoder->stop();
         }
+        LOG_INFO("...Finish DVR Thread." << std::endl);
     });
 }
 
 std::string GameRecorder::stopDvrSession() {
     _dvrRunning = false;
+    LOG_INFO("...Joining DVR Thread." << std::endl);
     if (_dvrThread.joinable()) {
         _dvrThread.join();
         _dvrThread = {};
     }
 
+    LOG_INFO("...Found DVR Segments: " << _dvrSegments.size() << std::endl);
     if (!_dvrSegments.empty()) {
         _dvrSegments.back().endTime = shared::nowUtc();
     }
 
     const auto id = _dvrSessionId;
+    LOG_INFO("...Found DVR Session Id: " << id << std::endl);
     _dvrSessionId.clear();
     return id;
 }
@@ -700,6 +705,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         
         // This should be here because we don't want to destruct it too soon or else we won't have switched to the new
         // active encoder and we'll thus risk sending info to an invalid pointer.
+        LOG_INFO("Destroying DVR Encoder..." << std::endl);
         _dvrEncoder = {};
         LOG_INFO("DVR Backfill Session: " << sessionId << std::endl);
 

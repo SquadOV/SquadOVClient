@@ -39,13 +39,15 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
     // use the WARP software rasterizer in the case of using the CPU).
     ID3D11Texture2D* texToSend = nullptr;
 
+    // This needs to be first since it also will set some state in the renderer which the layers may need.
+    // This will also create the tonemapper if necessary. This theoretically will allocate some unnecessary
+    // resources sometimes but that shoulld be fine since it won't happen very often.
+    reinitOutputTexture(image);
+
     if (_layers.empty() && !_tonemapper) {
         // Use the clock layer directly as the image to send to the encoder.
         texToSend = image;
     } else {
-        // This needs to be first since it also will set some state in the renderer which the layers may need.
-        reinitOutputTexture(image);
-
         // Update layers at the current point in time (just in case they are animated, e.g. the mouse cursor).
         // Note that the clock layer should've updated itself and prepared itself for rendering so we don't have to do that.
         bool requiresRender = false;

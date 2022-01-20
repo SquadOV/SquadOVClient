@@ -86,10 +86,6 @@ void FfmpegCPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
     }
 }
 
-AVFrame* FfmpegCPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
-    return process(frame);
-}
-
 #ifdef _WIN32
 AVFrame* FfmpegCPUVideoSwapChain::receiveGpuFrame(ID3D11Texture2D* frame) {
     if (!isGpuInit()) {
@@ -159,7 +155,6 @@ void FfmpegGPUVideoSwapChain::initialize(AVCodecContext* context, AVBufferRef* h
 
     _processor = std::make_unique<service::renderer::D3d11VideoProcessor>(_shared);
     _processor->setFfmpegColorspace(_frame->colorspace);
-    _buffer = std::make_unique<service::recorder::image::D3dImage>(_shared);
 }
 
 bool FfmpegGPUVideoSwapChain::isSupported(service::renderer::D3d11SharedContext* shared, size_t width, size_t height) {
@@ -190,19 +185,6 @@ size_t FfmpegGPUVideoSwapChain::frameHeight() const {
         return 0;
     }
     return _frame->height;
-}
-
-void FfmpegGPUVideoSwapChain::reinitBackBuffer(size_t width, size_t height) {
-    if (_buffer->width() != width || _buffer->height() != height) {
-        _buffer->initializeImage(width, height, true);
-    }
-}
-
-AVFrame* FfmpegGPUVideoSwapChain::receiveCpuFrame(const service::recorder::image::Image& frame) {
-    reinitBackBuffer(frame.width(), frame.height());
-
-    _buffer->copyFromCpu(frame);
-    return process(_buffer->rawTexture());
 }
 
 #ifdef _WIN32
