@@ -6,12 +6,14 @@
 
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
-#include <boost/iostreams/filter/zlib.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 #include <sstream>
 
 #include <aws/core/http/standard/StandardHttpRequest.h>
 #include <aws/core/http/URI.h>
+
+#define DEBUG_TO_DISK 0
 
 namespace service::api {
 
@@ -84,7 +86,6 @@ void CombatLogClient::start() {
             // to the combat log client can do so without having to wait for compression and HTTP requests to finish
             // since at this point we're no longer touching the raw buffer, but rather the JSON structure that we want
             // to send.
-            compressedBuffer.clear();
             sendData(dataToSend, compressedBuffer);
         }
 
@@ -111,7 +112,7 @@ bool CombatLogClient::populateData(nlohmann::json& data, bool wait) {
     const auto now = shared::nowUtc();
     // If the buffer isn't full then we want to check to see if the timeout happened and only in the case
     // where the timeout hasn't happened do we want to skip and wait again.
-    if (!bufferIsFull) {
+    if (!bufferIsFull && wait) {
         const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(now - _lastUploadTime);
         if (elapsedMs < _timeout) {
             return false;
@@ -137,15 +138,25 @@ bool CombatLogClient::populateData(nlohmann::json& data, bool wait) {
 
 void CombatLogClient::sendData(const nlohmann::json& data, std::vector<char>& buffer) {
     {
+        buffer.clear();
         auto compressedDevice = boost::iostreams::back_inserter(buffer);
         boost::iostreams::filtering_ostream outputStream;
-        outputStream.push(boost::iostreams::zlib_compressor{});
+        outputStream.push(boost::iostreams::gzip_compressor{});
         outputStream.push(compressedDevice);
         outputStream << data.dump() << std::flush;
         outputStream.pop();
     }
 
     const auto seqId = _sequenceId++;
+    
+#if DEBUG_TO_DISK
+    {
+        std::ofstream file("test_raw" + std::to_string(seqId) + ".zip", std::ios_base::binary);
+        file.write(buffer.data(), buffer.size());
+        file.close();
+    }
+#endif
+
     for (int i = 0; i < 3; ++i) {
         std::stringstream uri;
         uri << "https://" << _hostname  << _endpointPath;
@@ -163,10 +174,14 @@ void CombatLogClient::sendData(const nlohmann::json& data, std::vector<char>& bu
 
         auto bodyStream = std::make_shared<std::stringstream>();
 
-        // For Kinesis-PutRecord, the data needs to be base64-encoded and not over 1MB.
+        // For Kinesis-PutRecord, the amount of data we send can't go over 1MB.
         // I'm going to assume that we're never going to run into a situation where the data we send is greater than 1MB.
         // Knock on wood.
-        *bodyStream << shared::base64::encode(std::string_view(buffer.data(), buffer.size()), shared::base64::BASE64_ENCODE_DEFAULT_CHARSET);
+        //
+        // We also technically need to send as base64...but I think the base64 encoding is happening somewhere else for us
+        // automatically. If I try to base64 encode the string here, by the time it gets to processing it's base64 encoded
+        // twice. I'm assuming API gateway is doing some auto-magic for us.
+        *bodyStream << std::string_view(buffer.data(), buffer.size());
         request->AddContentBody(bodyStream);
 
         {

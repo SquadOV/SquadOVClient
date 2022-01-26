@@ -506,10 +506,7 @@ class ApiClient {
     }
 
     getMySquadMates(squads: number[] | undefined): Promise<ApiData<SquadOVUserHandle[]>> {
-        return axios.get(`v1/users/me/squadmates`, {
-            params: {
-                squads
-            },
+        return axios.post(`v1/users/me/squadmates`, {squads}, {
             ...this.createWebAxiosConfig()
         })
     }
@@ -645,13 +642,12 @@ class ApiClient {
 
     allAimlabTaskData(params : {next : string | null, userId : number, start : number, end : number, filters: AimlabMatchFilters}) : Promise<ApiData<HalResponse<AimlabTaskData[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/aimlab/user/${params.userId!}`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/aimlab/user/${params.userId!}`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -719,32 +715,30 @@ class ApiClient {
 
     listHearthstoneMatchesForPlayer(params : {next : string | null, userId : number, start : number, end : number, filter : HearthstoneGameType[], aux: HearthstoneMatchFilters}) : Promise<ApiData<HalResponse<string[]>>> {
         return !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/hearthstone/user/${params.userId!}/match`, {
+            axios.post(params.next, {
+                filter: params.filter,
+                ...params.aux,
+            }, this.createWebAxiosConfig()) :
+            axios.post(`v1/hearthstone/user/${params.userId!}/match`, {
+                filter: params.filter,
+                ...params.aux,
+            }, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start,
                     end: params.end,
-                    filter: JSON.stringify(params.filter),
-                    ...params.aux,
                 }
             })
     }
 
     listHearthstoneMatchesForArenaRun(collectionUuid: string, userId: number, filters: HearthstoneMatchFilters): Promise<ApiData<string[]>> {
-        return axios.get(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, {
-            params: {
-                ...filters
-            },
+        return axios.post(`v1/hearthstone/user/${userId}/arena/${collectionUuid}/matches`, filters, {
             ...this.createWebAxiosConfig()
         })
     }
 
     listHearthstoneMatchesForDuelRun(collectionUuid: string, userId: number, filters: HearthstoneMatchFilters): Promise<ApiData<string[]>> {
-        return axios.get(`v1/hearthstone/user/${userId}/duels/${collectionUuid}/matches`, {
-            params: {
-                ...filters
-            },
+        return axios.post(`v1/hearthstone/user/${userId}/duels/${collectionUuid}/matches`, filters, {
             ...this.createWebAxiosConfig()
         })
     }
@@ -871,13 +865,12 @@ class ApiClient {
 
     listTftMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: TftMatchFilters}) : Promise<ApiData<HalResponse<TftPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/tft/user/${params.userId}/accounts/${params.puuid}/matches`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/tft/user/${params.userId}/accounts/${params.puuid}/matches`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -907,13 +900,12 @@ class ApiClient {
 
     listLolMatchesForPlayer(params : {next : string | null, userId: number, puuid : string, start : number, end : number, filters: LolMatchFilters}) : Promise<ApiData<HalResponse<LolPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/lol/user/${params.userId}/accounts/${params.puuid}/matches`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/lol/user/${params.userId}/accounts/${params.puuid}/matches`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -976,13 +968,12 @@ class ApiClient {
 
     listWoWEncountersForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowEncounter[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/encounters`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/wow/users/${params.userId}/characters/${params.guid}/encounters`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -994,13 +985,12 @@ class ApiClient {
 
     listWoWChallengesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowChallenge[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/challenges`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/wow/users/${params.userId}/characters/${params.guid}/challenges`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -1012,13 +1002,12 @@ class ApiClient {
 
     listWoWArenasForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowArena[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/arena`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/wow/users/${params.userId}/characters/${params.guid}/arena`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -1030,13 +1019,12 @@ class ApiClient {
 
     listWoWInstancesForCharacter(params : {next : string | null, userId : number, guid: string, start : number, end : number, filters: WowMatchFilters}): Promise<ApiData<HalResponse<WowInstance[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/wow/users/${params.userId}/characters/${params.guid}/instance`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/wow/users/${params.userId}/characters/${params.guid}/instance`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 
@@ -1421,13 +1409,12 @@ class ApiClient {
 
     listCsgoMatchesForPlayer(params : {next : string | null, userId: number, start : number, end : number, filters: CsgoMatchFilters}) : Promise<ApiData<HalResponse<CsgoPlayerMatchSummary[]>>> {
         let promise = !!params.next ?
-            axios.get(params.next, this.createWebAxiosConfig()) :
-            axios.get(`v1/csgo/user/${params.userId}/match`, {
+            axios.post(params.next, params.filters, this.createWebAxiosConfig()) :
+            axios.post(`v1/csgo/user/${params.userId}/match`, params.filters, {
                 ...this.createWebAxiosConfig(),
                 params: {
                     start: params.start!,
                     end: params.end!,
-                    ...params.filters,
                 }
             })
 

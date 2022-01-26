@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     po::notify(vm);
 
     service::api::CombatLogClient client(service::api::CombatLogEndpoint::Ff14);
-    client.setPartitionId("boba");
+    client.setPartitionId("ff14_boba");
     client.start();
 
     std::ifstream file(fs::path(vm["log"].as<std::string>()));
