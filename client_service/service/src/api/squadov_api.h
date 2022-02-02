@@ -113,7 +113,7 @@ public:
 
     // VOD
     service::uploader::UploadDestination createVodDestinationUri(const std::string& videoUuid, const std::string& containerFormat) const;
-    service::uploader::UploadDestination getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part) const;
+    service::uploader::UploadDestination getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part, bool needsAccel) const;
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const;
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;

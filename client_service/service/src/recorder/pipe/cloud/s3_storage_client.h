@@ -18,6 +18,7 @@ private:
     service::uploader::UploadDestination _destination;
     shared::http::HttpClientPtr _httpClient;
     size_t _currentPart = 1;
+    bool _needsTransferAcceleration = false;
 };
 
 }
