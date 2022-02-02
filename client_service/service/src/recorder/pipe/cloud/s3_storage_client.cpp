@@ -16,7 +16,7 @@ S3StorageClient::S3StorageClient(const std::string& videoUuid):
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
 
     service::system::getCurrentSettings()->reloadSettingsFromFile();
-    _needsTransferAcceleration = (service::system::getCurrentSettings()->speedCheckResultMbps() < 8.0);
+    _needsTransferAcceleration = (service::system::getCurrentSettings()->speedCheckResultMbps() < 16.0);
 }
 
 void S3StorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
