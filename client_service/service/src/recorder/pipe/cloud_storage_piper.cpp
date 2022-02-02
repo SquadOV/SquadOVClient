@@ -40,7 +40,7 @@ std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUpload
     }
 
     const auto inputPath = fs::path(inputFname);
-    CloudStoragePiper output(req.task, req.destination, std::move(pipe));
+    CloudStoragePiper output(req.task, req.destination, std::move(pipe), true);
     output.setProgressCallback(progressFn, fs::file_size(inputPath));
     output.appendFromFile(inputPath);
     output.sendNullBuffer();
@@ -48,7 +48,7 @@ std::pair<std::string, std::vector<std::string>> uploadToCloud(const CloudUpload
     return std::make_pair(output.sessionId(), output.segmentIds());
 }
 
-CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe):
+CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe, bool allowAcceleration):
     FileOutputPiper(std::move(pipe)),
     _videoUuid(videoUuid),
     _destination(destination),
@@ -57,7 +57,7 @@ CloudStoragePiper::CloudStoragePiper(const std::string& videoUuid, const service
     // Create an appropriate storage client based on the input destination location.
     switch (destination.loc) {
         case service::uploader::UploadManagerType::S3:
-            _client = std::make_unique<cloud::S3StorageClient>(_videoUuid);
+            _client = std::make_unique<cloud::S3StorageClient>(_videoUuid, allowAcceleration);
             break;
         case service::uploader::UploadManagerType::GCS:
             _client = std::make_unique<cloud::GCSStorageClient>();

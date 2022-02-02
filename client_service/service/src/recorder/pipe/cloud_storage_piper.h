@@ -48,7 +48,7 @@ private:
 
 class CloudStoragePiper : public FileOutputPiper {
 public:
-    CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe);
+    CloudStoragePiper(const std::string& videoUuid, const service::uploader::UploadDestination& destination, PipePtr&& pipe, bool allowAcceleration);
     ~CloudStoragePiper();
 
     std::string sessionId() const override { return _destination.session; }

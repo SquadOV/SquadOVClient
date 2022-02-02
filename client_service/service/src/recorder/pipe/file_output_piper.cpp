@@ -71,7 +71,7 @@ FileOutputPiperPtr createFileOutputPiper(const std::string& id, const service::u
         case service::uploader::UploadManagerType::FileSystem:
             return std::make_unique<FilesystemPiper>(destination.url, std::move(pipe));
         default:
-            return std::make_unique<CloudStoragePiper>(id, destination, std::move(pipe));
+            return std::make_unique<CloudStoragePiper>(id, destination, std::move(pipe), false);
     }
 
     THROW_ERROR("Unsupported location for output: " << destination);

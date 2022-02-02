@@ -9,14 +9,16 @@ const auto MAX_NEW_SEGMENT_TRIES = 5;
 
 }
 
-S3StorageClient::S3StorageClient(const std::string& videoUuid):
+S3StorageClient::S3StorageClient(const std::string& videoUuid, bool allowAcceleration):
     _videoUuid(videoUuid) 
 {
     _httpClient = std::make_unique<shared::http::HttpClient>("");
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
 
-    service::system::getCurrentSettings()->reloadSettingsFromFile();
-    _needsTransferAcceleration = (service::system::getCurrentSettings()->speedCheckResultMbps() < 16.0);
+    if (allowAcceleration) {
+        service::system::getCurrentSettings()->reloadSettingsFromFile();
+        _needsTransferAcceleration = (service::system::getCurrentSettings()->speedCheckResultMbps() < 16.0);
+    }
 }
 
 void S3StorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
