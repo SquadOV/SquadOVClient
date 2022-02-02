@@ -99,20 +99,21 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
             _renderer->renderSceneToRenderTarget(_outputRenderTarget.get());
         }
 
-        HDC hdc;
-        hr = _outputSurface->GetDC(false, &hdc);
-        if (hr != S_OK) {
-            LOG_ERROR("Failed to get DC for composition: "<< hr);
-            return;
-        }
+        if (!_layers.empty()) {
+            HDC hdc;
+            hr = _outputSurface->GetDC(false, &hdc);
+            if (hr == S_OK) {
+                // Do a final custom rendering loop here on the output texture just for things that use GDI instead.
+                for (const auto& layer: _layers) {
+                    layer->customRender(_outputTexture.get(), _outputSurface.get(), hdc);
+                }
 
-        // Do a final custom rendering loop here on the output texture just for things that use GDI instead.
-        for (const auto& layer: _layers) {
-            layer->customRender(_outputTexture.get(), _outputSurface.get(), hdc);
+                _outputSurface->ReleaseDC(nullptr);
+            } else {
+                LOG_ERROR("Failed to get DC for composition: " << hr << std::endl);
+            }
+            texToSend = _outputTexture.get();
         }
-
-        _outputSurface->ReleaseDC(nullptr);
-        texToSend = _outputTexture.get();
     }
 
     // Finally send the image to the encoder. We could theoretically
