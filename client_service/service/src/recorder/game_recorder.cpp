@@ -770,6 +770,11 @@ void GameRecorder::stopInputs() {
         recorder->stop();
     }
 
+    if (_compositor) {
+        LOG_INFO("...Clear compositor." << std::endl);
+        _compositor.reset(nullptr);
+    }
+
     LOG_INFO("\tOK" << std::endl);
     _aoutRecorder.clear();
 

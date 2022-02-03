@@ -104,8 +104,12 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
             hr = _outputSurface->GetDC(false, &hdc);
             if (hr == S_OK) {
                 // Do a final custom rendering loop here on the output texture just for things that use GDI instead.
-                for (const auto& layer: _layers) {
-                    layer->customRender(_outputTexture.get(), _outputSurface.get(), hdc);
+                try {
+                    for (const auto& layer: _layers) {
+                        layer->customRender(_outputTexture.get(), _outputSurface.get(), hdc);
+                    }
+                } catch (std::exception& ex) {
+                    LOG_WARNING("Failure while doing custom render with GDI: " << ex.what() << std::endl);
                 }
 
                 _outputSurface->ReleaseDC(nullptr);
@@ -162,6 +166,10 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
     outputDesc.Usage = D3D11_USAGE_DEFAULT;
     outputDesc.CPUAccessFlags = 0;
     outputDesc.MiscFlags = D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    // These two must be set this way to be compatible with using the D3D11_RESOURCE_MISC_GDI_COMPATIBLE flag.
+    outputDesc.MipLevels = 1;
+    outputDesc.SampleDesc.Count = 1;
 
     _outputTexture.attach(_renderer->createTexture2D(outputDesc));
 

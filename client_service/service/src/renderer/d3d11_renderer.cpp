@@ -91,6 +91,7 @@ ID3D11Texture2D* D3d11Renderer::createTexture2D(const D3D11_TEXTURE2D_DESC& desc
     ID3D11Texture2D* texture = nullptr;
     HRESULT hr = _shared->device()->CreateTexture2D(&desc, nullptr, &texture);
     if (hr != S_OK) {
+        LOG_WARNING("Failed to create texture: " << hr << std::endl);
         return nullptr;
     }
     return texture;
@@ -100,6 +101,7 @@ ID3D11RenderTargetView* D3d11Renderer::createRenderTarget(ID3D11Resource* resour
     ID3D11RenderTargetView* view = nullptr;
     HRESULT hr = _shared->device()->CreateRenderTargetView(resource, &desc, &view);
     if (hr != S_OK) {
+        LOG_WARNING("Failed to create render target view: " << hr << std::endl);
         return nullptr;
     }
     return view;
