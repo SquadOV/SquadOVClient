@@ -14,7 +14,8 @@ FileOutputPiper::FileOutputPiper(PipePtr&& pipe):
 }
 
 FileOutputPiper::~FileOutputPiper() {
-
+    stopAndSkipFlush();
+    wait();
 }
 
 void FileOutputPiper::start() {

@@ -110,7 +110,8 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
 
                 _outputSurface->ReleaseDC(nullptr);
             } else {
-                LOG_ERROR("Failed to get DC for composition: " << hr << std::endl);
+                LOG_ERROR("Failed to get DC for composition...forcing reinit on next tick: " << hr << std::endl);
+                _forceReinit = true;
             }
             texToSend = _outputTexture.get();
         }
@@ -140,12 +141,15 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
         _outputTexture->GetDesc(&outputDesc);
     }
 
-    if (inputDesc.Width == outputDesc.Width 
+    if (!_forceReinit
+        && inputDesc.Width == outputDesc.Width 
         && inputDesc.Height == outputDesc.Height
         && inputDesc.Format == outputDesc.Format) {
         return;
     }
 
+    LOG_INFO("Initializing Compositor Output Texture: " << inputDesc.Width << "x" << inputDesc.Height << " [" << inputDesc.Format << "]" << std::endl);
+    _forceReinit = false;
     outputDesc = inputDesc;
 
     // Need to manually set the format since the input format could be floating point
