@@ -16,6 +16,11 @@
 #define DEBUG_TO_DISK 0
 
 namespace service::api {
+namespace {
+
+const std::string LOG_FLUSH_LINE = "//SQUADOV_COMBAT_LOG_FLUSH";
+
+}
 
 std::string combatLogEndpointToPath(CombatLogEndpoint ep) {
     switch (ep) {
@@ -43,6 +48,8 @@ CombatLogClient::~CombatLogClient() {
 }
 
 void CombatLogClient::flush() {
+    addLine(LOG_FLUSH_LINE);
+    
     _running = false;
     if (_uploadThread.joinable()) {
         _uploadThread.join();
