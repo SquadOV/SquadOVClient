@@ -62,8 +62,6 @@ private:
 
     void tick(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames);
     void reinitOutputTexture(ID3D11Texture2D* input);
-
-    bool _forceReinit = false;
 };
 
 using CompositorPtr = std::unique_ptr<Compositor>;

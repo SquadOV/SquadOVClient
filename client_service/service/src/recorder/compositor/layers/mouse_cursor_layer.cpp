@@ -19,7 +19,7 @@ void MouseCursorLayer::customRender(ID3D11Texture2D* output, IDXGISurface1* surf
         LOG_WARNING("Failed to get cursor info: " << shared::errors::getWin32ErrorAsString() << std::endl);
         return;
     }
-    
+
     const bool isVisible = _enabled && (info.flags & CURSOR_SHOWING);
     if (!isVisible) {
         return;
@@ -47,6 +47,10 @@ void MouseCursorLayer::customRender(ID3D11Texture2D* output, IDXGISurface1* surf
     // and if that's 0 whatever.
     ICONINFO iconInfo = { 0 };
     GetIconInfo(info.hCursor, &iconInfo);
+
+    // Delet the bitmaps right away since we don't need them.
+    DeleteObject(iconInfo.hbmColor);
+    DeleteObject(iconInfo.hbmMask);
 
     if (!DrawIconEx(
         hdc,                                                        // hdc
