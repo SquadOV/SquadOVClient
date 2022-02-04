@@ -2,6 +2,7 @@
 #include "shared/log/log.h"
 #include "game_event_watcher/wow/wow_log_watcher.h"
 #include "api/squadov_api.h"
+#include "api/kafka_api.h"
 #include "shared/time.h"
 #include "recorder/game_recorder.h"
 #include "system/state.h"
@@ -131,6 +132,7 @@ private:
 #endif
 
     std::string _currentSessionId;
+    service::api::KafkaApiPtr _kafka;
 };
 
 WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::process::Process& p):
@@ -339,9 +341,9 @@ void WoWProcessHandlerInstance::onCombatLogLine(const shared::TimePoint& tm, con
 
     if (inMatch()) {
         const auto flags = service::api::getGlobalApi()->getSessionFeatures();
-        if (flags.allowWowCombatLogUpload) {
+        if (flags.allowWowCombatLogUpload && _kafka) {
             try {
-                service::api::getKafkaApi()->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
+                _kafka->uploadWoWCombatLogLine(_currentMatchViewUuid, log);
 
 #ifndef NDEBUG
 #if TEST_DUMP
@@ -800,8 +802,11 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
     if (!hasValidCombatLog()) {
         return;
     }
+    
 
     LOG_INFO("WoW Match Start [" << shared::timeToStr(tm) << "::" << shared::timeToStr(_matchStartTime) << "] - VIEW " << _currentMatchViewUuid << std::endl);
+    _kafka = std::make_unique<service::api::KafkaApi>();
+    _kafka->initialize();
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
@@ -890,6 +895,11 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
     };
     LOG_INFO("Sending SQUADOV_END_COMBAT_LOG " << hasValidCombatLog() << std::endl);
     onCombatLogLine(endLog.timestamp, (void*)&endLog);
+
+    if (_kafka) {
+        _kafka->flush();
+        _kafka.reset();
+    }
 
     _currentMatchViewUuid = "";
     forceKillLogTimeoutThread();

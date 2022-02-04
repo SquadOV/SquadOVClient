@@ -34,5 +34,4 @@ private:
 };
 using KafkaApiPtr = std::unique_ptr<KafkaApi>;
 
-KafkaApi* getKafkaApi();
 }
