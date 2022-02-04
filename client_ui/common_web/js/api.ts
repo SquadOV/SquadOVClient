@@ -1258,7 +1258,7 @@ class ApiClient {
     getVodUploadDestination(vodUuid: string): Promise<ApiData<VodDestination>> {
         return axios.get(`v1/vod/${vodUuid}/upload`, {
             params: {
-                accel: this._useTransferAccel
+                accel: this._useTransferAccel ? 1 : 0
             },
             ...this.createWebAxiosConfig()
         })
@@ -1276,7 +1276,7 @@ class ApiClient {
             game
         }, {
             params: {
-                accel: this._useTransferAccel
+                accel: this._useTransferAccel ? 1 : 0
             },
             ...this.createWebAxiosConfig()
         }).then(async (resp: ApiData<ClipResponse>) => {
