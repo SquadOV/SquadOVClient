@@ -5,6 +5,7 @@ import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@c
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 import { allGames, SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
+import { apiClient } from '@client/js/api'
 /// #endif
 
 export interface SquadOvOverlay {
@@ -777,6 +778,11 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
     if (!!parsedData.hidePostGamePopupUntil) {
         parsedData.hidePostGamePopupUntil = new Date(parsedData.hidePostGamePopupUntil)
+    }
+
+    // THIS IS DUPLICATED WITH C++?
+    if (parsedData.speedCheckResultMbps < 16.0) {
+        apiClient.enableTransferAccel()
     }
 
     saveLocalSettings(parsedData, true)
