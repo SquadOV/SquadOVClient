@@ -467,7 +467,12 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->rc_max_rate = container->codecContext->bit_rate;
                 container->codecContext->rc_buffer_size = container->codecContext->rc_max_rate * 2;
                 container->codecContext->gop_size = container->codecContext->time_base.den * 5;
-                container->codecContext->max_b_frames = 3;
+
+                if (c == "h264_amf") {
+                    container->codecContext->max_b_frames = 0;
+                } else {
+                    container->codecContext->max_b_frames = 3;
+                }
 
                 av_dict_set(&options, "preset", "medium", 0);
                 if (c == "h264_amf") {
