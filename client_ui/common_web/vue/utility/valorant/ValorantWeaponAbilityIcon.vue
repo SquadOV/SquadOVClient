@@ -62,6 +62,8 @@ export default class ValorantWeaponAbilityIcon extends Vue {
             return `assets/valorant/agents/${this.agentName}/${this.equipId}.png`
         } else if (this.equipType == 'Bomb') {
             return 'assets/valorant/bomb/explode.png'
+        } else if (this.equipType == 'Melee') {
+            return `assets/valorant/weapons/Melee.png` 
         }
         return ''
     }
