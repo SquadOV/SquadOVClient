@@ -264,8 +264,13 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         setFeatureFlags(state: RootState, flags: FeatureFlags) {
             state.features = flags
         },
-        setUserActivityStatus(state: RootState, params: {userId: number, status: TrackedUserStatus}) {
-            Vue.set(state.status.status, params.userId, params.status)
+        bulkUpdateUserActivityStatus(state: RootState, params: { [userId: number] : TrackedUserStatus }) {
+            for (let [userId, st] of Object.entries(params)) {
+                state.status.status[parseInt(userId)] = st
+            }
+
+            //@ts-ignore
+            state.status.status.__ob__.dep.notify()
         },
         changeVodEndDelaySeconds(state: RootState, v: number) {
 /// #if DESKTOP

@@ -133,8 +133,6 @@
                             v-if="filteredSquadMembers.length > 0"
                             :headers="squadTableHeaders"
                             :items="squadTableItems"
-                            :items-per-page="USERS_PER_PAGE"
-                            :page="userPage"
                             hide-default-footer
                             hide-default-header
                             @click:row="goToUserProfile(arguments[0].userId)"
@@ -145,16 +143,14 @@
                                 >
                                 </user-activity-display>
                             </template>
-
-                            <template v-slot:footer="{props}">
-                                <v-pagination
-                                    v-if="props.pagination.itemsLength > props.pagination.itemsPerPage"
-                                    :length="Math.ceil(props.pagination.itemsLength / props.pagination.itemsPerPage)"
-                                    v-model="userPage"
-                                >
-                                </v-pagination>
-                            </template>
                         </v-data-table>
+
+                        <v-pagination
+                            v-if="filteredSquadMembers.length > USERS_PER_PAGE"
+                            :length="Math.ceil(filteredSquadMembers.length / USERS_PER_PAGE)"
+                            v-model="userPage"
+                        >
+                        </v-pagination>
 
                         <div class="d-flex justify-center long-text text-subtitle-1" v-else>Nobody's here just yet. Invite your friends!</div>
 
@@ -248,7 +244,8 @@ export default class Dashboard extends mixins(CommonComponent) {
     }
 
     get squadTableItems(): any[] {
-        return this.filteredSquadMembers.map((a: SquadMembership) => {
+        let subset = this.filteredSquadMembers.slice(USERS_PER_PAGE * (this.userPage - 1), USERS_PER_PAGE * this.userPage)
+        return subset.map((a: SquadMembership) => {
             return {
                 status: this.$store.state.status.status[a.userId],
                 member: a.username,

@@ -171,13 +171,8 @@ export class TrackedUserStatsManager {
 
     receiveMessage(e: MessageEvent) {
         let status: TrackedUserStatusContainer = JSON.parse(e.data)
-        console.log('Receive status update: ', status)
-        for (let [userId, st] of Object.entries(status.status)) {
-            this._store.commit('setUserActivityStatus', {
-                userId: parseInt(userId),
-                status: st,
-            })
-        }
+        console.log('Receive status update: ', Object.entries(status.status).length)
+        this._store.commit('bulkUpdateUserActivityStatus', status.status)
     }
 
     disconnect() {
