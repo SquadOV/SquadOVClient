@@ -31,6 +31,7 @@ export class TrackedUserStatsManager {
     _messageQueue: string[]
     _reconnectCount: number
     _errorCount: number
+    _updateQueue: TrackedUserStatusContainer[]
 
     constructor(store: Store<RootState>) {
         this._store = store
@@ -47,6 +48,23 @@ export class TrackedUserStatsManager {
         this._messageQueue = []
         this._reconnectCount = 0
         this._errorCount = 0
+        this._updateQueue = []
+
+        setInterval(() => {
+            if (this._updateQueue.length === 0) {
+                return
+            }
+
+            let container = this._updateQueue[0]
+            for (let i = 1; i < this._updateQueue.length; ++i) {
+                for (let [userId, st] of Object.entries(this._updateQueue[i].status)) {
+                    container.status[parseInt(userId)] = st
+                }
+            }
+
+            this._store.commit('bulkUpdateUserActivityStatus', container.status)
+            this._updateQueue = []
+        }, 5000)
     }
 
     changeCurrentUserId(userId: number | undefined) {
@@ -172,7 +190,7 @@ export class TrackedUserStatsManager {
     receiveMessage(e: MessageEvent) {
         let status: TrackedUserStatusContainer = JSON.parse(e.data)
         console.log('Receive status update: ', Object.entries(status.status).length)
-        this._store.commit('bulkUpdateUserActivityStatus', status.status)
+        this._updateQueue.push(status)
     }
 
     disconnect() {
