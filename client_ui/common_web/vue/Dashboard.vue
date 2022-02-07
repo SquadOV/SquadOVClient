@@ -266,26 +266,6 @@ export default class Dashboard extends mixins(CommonComponent) {
     get filteredSquadMembers(): SquadMembership[] {
         return this.squadMembers
             .filter((ele: SquadMembership) => ele.userId !== this.$store.state.currentUser.id)
-            .filter((ele: SquadMembership) => {
-                if (this.squadMembers.length > LARGE_SQUAD_THRESHOLD) {
-                    let status = this.$store.state.status.status[ele.userId]
-                    if (status === undefined) {
-                        return false
-                    }
-                    return status.activity != SquadOvActivity.Offline
-                } else {
-                    return true
-                }
-            })
-            .sort((a: SquadMembership, b: SquadMembership) => {
-                let aStatus: TrackedUserStatus | undefined = this.$store.state.status.status[a.userId]
-                let bStatus: TrackedUserStatus | undefined = this.$store.state.status.status[b.userId]
-
-                let aActivity = !!aStatus ? aStatus.activity : SquadOvActivity.Offline
-                let bActivity = !!bStatus ? bStatus.activity : SquadOvActivity.Offline
-
-                return compareUserStatus(aActivity, bActivity) || compareString(a.username, b.username)
-            })
     }
 
     @Watch('squadMembers')
