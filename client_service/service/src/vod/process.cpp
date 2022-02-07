@@ -35,6 +35,8 @@ void processRawLocalVod(const fs::path& from, const fs::path& to) {
     bp::child c(
         ffmpegPath.native(),
         "-y",
+        "-probesize", "100M",
+        "-analyzeduration", "100M",
         "-i", from.native(),
         "-c:v", "copy",
         "-c:a", "copy",

@@ -90,6 +90,7 @@ export const AGENT_ROLE_MAPPING = [
     {id: 'A3BFB853-43B2-7238-A4F1-AD90E9E46BCC', role: ValorantAgentRole.Duelist},
     {id: '8E253930-4C05-31DD-1B6C-968525494517', role: ValorantAgentRole.Controller},
     {id: 'ADD6443A-41BD-E414-F6AD-E58D267F4E95', role: ValorantAgentRole.Duelist},
+    {id: 'BB2A4828-46EB-8CD1-E765-15848195D751', role: ValorantAgentRole.Duelist},
 ]
 
 const agentToRole = new Map(AGENT_ROLE_MAPPING.map((ele) => [ele.id, ele.role]))

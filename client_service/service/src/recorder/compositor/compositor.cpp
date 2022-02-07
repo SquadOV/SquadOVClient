@@ -145,8 +145,7 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* input) {
     }
 
     if (inputDesc.Width == outputDesc.Width 
-        && inputDesc.Height == outputDesc.Height
-        && inputDesc.Format == outputDesc.Format) {
+        && inputDesc.Height == outputDesc.Height) {
         return;
     }
 
