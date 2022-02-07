@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     const auto uuidFileName = shared::generateUuidv4();
     auto speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
     auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
-    auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe));
+    auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe), false);
     service::recorder::pipe::PipeClient pipeClient(uuidFileName);
 
     // 160MB buffer. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 

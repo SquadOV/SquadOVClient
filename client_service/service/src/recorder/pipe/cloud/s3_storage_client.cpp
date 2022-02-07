@@ -1,5 +1,6 @@
 #include "recorder/pipe/cloud/s3_storage_client.h"
 #include "api/squadov_api.h"
+#include "system/settings.h"
 
 namespace service::recorder::pipe::cloud {
 namespace {
@@ -8,11 +9,16 @@ const auto MAX_NEW_SEGMENT_TRIES = 5;
 
 }
 
-S3StorageClient::S3StorageClient(const std::string& videoUuid):
+S3StorageClient::S3StorageClient(const std::string& videoUuid, bool allowAcceleration):
     _videoUuid(videoUuid) 
 {
     _httpClient = std::make_unique<shared::http::HttpClient>("");
     _httpClient->setHeaderKeyValue("content-type", "application/octet-stream");
+
+    if (allowAcceleration) {
+        service::system::getCurrentSettings()->reloadSettingsFromFile();
+        _needsTransferAcceleration = (service::system::getCurrentSettings()->speedCheckResultMbps() < 16.0);
+    }
 }
 
 void S3StorageClient::initializeDestination(const service::uploader::UploadDestination& destination) {
@@ -29,7 +35,7 @@ void S3StorageClient::startNewSegment() {
 
     for (auto i = 0; i < MAX_NEW_SEGMENT_TRIES; ++i) {
         try {
-            _destination = service::api::getGlobalApi()->getObjectPartUploadUri(_videoUuid, _destination.bucket, _destination.session, _destination.purpose, _currentPart);
+            _destination = service::api::getGlobalApi()->getObjectPartUploadUri(_videoUuid, _destination.bucket, _destination.session, _destination.purpose, _currentPart, _needsTransferAcceleration);
             return;
         } catch (std::exception& ex) {
             LOG_WARNING("...Failed to get new segment [retrying] " << ex.what() << std::endl);

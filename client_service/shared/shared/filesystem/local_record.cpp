@@ -11,7 +11,7 @@
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/files.h>
 #include <cryptopp/md5.h>
-#include <cryptopp/hex.h>
+#include <cryptopp/base64.h>
 
 namespace fs = std::filesystem;
 namespace shared::filesystem {
@@ -245,7 +245,7 @@ void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const s
             CryptoPP::FileSource file(
                 dlPath.c_str(),
                 true,
-                new CryptoPP::HashFilter(hash, new CryptoPP::HexEncoder(new CryptoPP::StringSink(digest)))
+                new CryptoPP::HashFilter(hash, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(digest)))
             );
 
             boost::algorithm::trim(digest);

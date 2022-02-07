@@ -14,6 +14,7 @@
 #ifdef _WIN32
 #include <VersionHelpers.h>
 
+#define DISABLE_ALT_TAB_PROTECTION 0
 using namespace std::chrono_literals;
 
 namespace service::recorder::video {
@@ -35,6 +36,7 @@ DxgiDesktopRecorder::~DxgiDesktopRecorder() {
 
 void DxgiDesktopRecorder::initialize() {
     LOG_INFO("Initialize DXGI..." << std::endl);
+#if !DISABLE_ALT_TAB_PROTECTION
     // Wait for the window to become unminimized so that we can grab the correct monitor.
     while (IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) {
         LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
@@ -49,6 +51,7 @@ void DxgiDesktopRecorder::initialize() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500ms));
     }
+#endif
 
     LOG_INFO("Continuing DXGI initialization since window/process is foreground..." << std::endl);
     // IDXGIOutput represents a monitor output. We need to grab the output that
@@ -183,6 +186,7 @@ void DxgiDesktopRecorder::startRecording() {
                 }
             }
 
+#if !DISABLE_ALT_TAB_PROTECTION
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
             if (IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) {
@@ -190,6 +194,7 @@ void DxgiDesktopRecorder::startRecording() {
                 // Don't just skip the frame as they may cause us to de-sync?
                 reuseOldFrame = true;
             }
+#endif
 
             // Need a check to see if reuseOldFrame is not already true because otherwise
             // we could use frameInfo without it being initialized and run into a win32 error.

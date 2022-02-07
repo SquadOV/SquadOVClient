@@ -30,6 +30,8 @@ void GdiShapeLayer::customRender(ID3D11Texture2D* output, IDXGISurface1* surface
         const auto& rect = std::get<GdiRectangleData>(_shape);
         Rectangle(hdc, rect.left * desc.Width, rect.top * desc.Height, rect.right * desc.Width, rect.bottom * desc.Height);
     }
+
+    SelectObject(hdc, nullptr);
 }
 
 }

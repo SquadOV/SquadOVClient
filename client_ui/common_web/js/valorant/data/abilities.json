@@ -100,5 +100,11 @@
         "Ability1": "Headhunter",
         "Ability2": "Rendezvous",
         "Ultimate": "Tour De Force"
+    },
+    "Neon": {
+        "GrenadeAbility": "Fast Lane",
+        "Ability1": "Relay Bolt",
+        "Ability2": "High Gear",
+        "Ultimate": "Overdrive"
     }
 }

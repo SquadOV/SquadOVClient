@@ -442,10 +442,12 @@ bool GameRecorder::areInputStreamsInitialized() const {
 }
 
 bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
+    LOG_INFO("Initialize compositor [Use GPU: " << _cachedRecordingSettings->useVideoHw2 << "]" << std::endl);
     _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
 
     bool allowMouse = true;
     if (_compositor) {
+        LOG_INFO("...Creating clock layer." << std::endl);
         // First create the clock layer which will be driven by the video recorder (desktop duplication, WGC, GDI, etc.).
         // Note that we will need to build the graph that flows the video recorder into the the clock layer.
         auto clockLayer = _compositor->createClockLayer();
@@ -462,13 +464,16 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
         _vrecorder->startRecording();
 
         // Should we be able to customize this pipeline?
+        LOG_INFO("...Creating FPS limiter." << std::endl);
         auto fpsLimiter = std::make_shared<service::recorder::compositor::graph::FpsLimiterNode>(_cachedRecordingSettings->fps);
         _vrecorder->setNext(fpsLimiter);
         _fpsLimiter = fpsLimiter;
 
+        LOG_INFO("...Creating texture normalizer." << std::endl);
         auto textureNormalizer = std::make_shared<service::recorder::compositor::graph::TextureContextNormalizerNode>(_compositor->context());
         fpsLimiter->setNext(textureNormalizer);
 
+        LOG_INFO("...Creating sink node." << std::endl);
         auto sinkNode = std::make_shared<service::recorder::compositor::graph::SinkNode>();
         textureNormalizer->setNext(sinkNode);
 
@@ -480,7 +485,9 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
 
     // Add in the different layers for the overlay if it exists and is enabled.
     const auto& overlaySettings = _cachedRecordingSettings->overlays;
+    LOG_INFO("Checking if overlay enabled: " << overlaySettings.enabled);
     if (overlaySettings.enabled) {
+        LOG_INFO("...Num overlay layers: " << overlaySettings.layers.size() << std::endl);
         // Parse through the overlay settings and for each layer create a new layer object.
         // Note that a 'layer' may actually be composed of multiple things we want to render.
         // I don't remember why I did it this way, bite me.
@@ -505,6 +512,7 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
 
     // Mouse cursor layer should be last since it makes more sense that it should be rendered
     // on top of everything (game, overlay, etc).
+    LOG_INFO("Check Record Mouse: " << (_cachedRecordingSettings->recordMouse2 && allowMouse) << std::endl);
     if (_cachedRecordingSettings->recordMouse2 && allowMouse) {
         // The mouse layer needs to know which window we're currently trying to record (the image that's being
         // sent to the clock layer) so that it knows how to properly position the mouse with respect to the
@@ -861,6 +869,13 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         LOG_INFO("Stop primary encoder..." << std::endl);
         _encoder.encoder->stop();
         _encoder = {};
+    }
+
+    // Need to clear the compositor after the encoder since the encoder will
+    // be using the compositor's D3D context.
+    if (_compositor) {
+        LOG_INFO("...Clear compositor." << std::endl);
+        _compositor.reset(nullptr);
     }
 
     if (_outputPiper) {

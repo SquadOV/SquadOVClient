@@ -393,7 +393,7 @@ void SquadovApi::associateVod(const shared::squadov::VodAssociation& association
     }
 }
 
-service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part) const {
+service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const std::string& objectUuid, const std::string& bucket, const std::string& session, service::uploader::UploadPurpose uploadPurpose, int64_t part, bool needsAccel) const {
     std::ostringstream path;
     switch(uploadPurpose) {
         case service::uploader::UploadPurpose::VOD:
@@ -406,7 +406,7 @@ service::uploader::UploadDestination SquadovApi::getObjectPartUploadUri(const st
             THROW_ERROR("Failed to find Upload Purpose.")
             break;
     }
-    path << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session;
+    path << part << "&bucket=" << shared::url::urlEncode(bucket) << "&session=" << session << "&accel=" << needsAccel;
     const auto result = _webClient->get(path.str());
     if (result->status != 200) {
         THROW_ERROR("Failed to get VOD part upload URI: " << result->status);

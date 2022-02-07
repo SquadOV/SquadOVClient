@@ -1,5 +1,5 @@
 <template>
-    <v-select
+    <v-autocomplete
         label="Games"
         :value="sortedValue"
         @input="changeValue"
@@ -40,7 +40,7 @@
                 </v-img>
             </div>
         </template>
-    </v-select>
+    </v-autocomplete>
 </template>
 
 <script lang="ts">

@@ -168,6 +168,7 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
         }
     }
 
+    settings.speedCheckResultMbps = obj.value("speedCheckResultMbps", 0.0);
     return settings;
 }
 
@@ -190,29 +191,34 @@ void Settings::reloadSettingsFromFile() {
     }
 }
 
-RecordingSettings Settings::recording() {
+RecordingSettings Settings::recording() const {
     std::shared_lock lock(_mutex);
     return _settings.record;
 }
 
-KeybindSettings Settings::keybinds() {
+KeybindSettings Settings::keybinds() const {
     std::shared_lock lock(_mutex);
     return _settings.keybinds;
 }
 
-WowSettings Settings::wowSettings() {
+WowSettings Settings::wowSettings() const {
     std::shared_lock lock(_mutex);
     return _settings.games.wow;
 }
 
-ValorantSettings Settings::valorantSettings() {
+ValorantSettings Settings::valorantSettings() const {
     std::shared_lock lock(_mutex);
     return _settings.games.valorant;
 }
 
-bool Settings::isGameEnabled(shared::EGame game) {
+bool Settings::isGameEnabled(shared::EGame game) const {
     std::shared_lock lock(_mutex);
     return (_settings.disabledGames.find(game) == _settings.disabledGames.end());
+}
+
+double Settings::speedCheckResultMbps() const {
+    std::shared_lock lock(_mutex);
+    return _settings.speedCheckResultMbps;
 }
 
 }

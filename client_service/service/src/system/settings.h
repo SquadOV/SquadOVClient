@@ -121,6 +121,7 @@ struct LocalSettings {
     RecordingSettings record;
     KeybindSettings keybinds;
     PerGameSettings games;
+    double speedCheckResultMbps = 0.0;
     std::unordered_set<shared::EGame> disabledGames;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
@@ -132,19 +133,21 @@ public:
 
     void reloadSettingsFromFile();
 
-    RecordingSettings recording();
-    KeybindSettings keybinds();
+    double speedCheckResultMbps() const;
 
-    WowSettings wowSettings();
-    ValorantSettings valorantSettings();
+    RecordingSettings recording() const;
+    KeybindSettings keybinds() const;
 
-    bool isGameEnabled(shared::EGame);
+    WowSettings wowSettings() const;
+    ValorantSettings valorantSettings() const;
+
+    bool isGameEnabled(shared::EGame) const;
     
     bool loaded() const { return _loaded; }
     nlohmann::json raw() const { return _raw; }
 
 private:
-    std::shared_mutex _mutex;
+    mutable std::shared_mutex _mutex;
     LocalSettings _settings;
 
     // Need to store a raw version because we aren't necessarily going to be

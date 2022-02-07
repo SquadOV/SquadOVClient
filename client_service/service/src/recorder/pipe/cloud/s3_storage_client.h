@@ -7,7 +7,7 @@ namespace service::recorder::pipe::cloud {
 
 class S3StorageClient: public CloudStorageClient {
 public:
-    explicit S3StorageClient(const std::string& videoUuid);
+    S3StorageClient(const std::string& videoUuid, bool allowAcceleration);
 
     void initializeDestination(const service::uploader::UploadDestination& destination) override;
     void setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) override;
@@ -18,6 +18,7 @@ private:
     service::uploader::UploadDestination _destination;
     shared::http::HttpClientPtr _httpClient;
     size_t _currentPart = 1;
+    bool _needsTransferAcceleration = false;
 };
 
 }

@@ -426,7 +426,14 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
             _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;
             _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 2;
             _vcodecContext->thread_count = 0;
-            _vcodecContext->max_b_frames = 3;
+
+            if (enc.name == "h264_amf") {
+                // Not sure why but this having this option > 0 causes issues using the AMD AMF encoder.
+                _vcodecContext->max_b_frames = 0;
+                _doPostVideoFlush = false;
+            } else {
+                _vcodecContext->max_b_frames = 3;
+            }
             
             if (canUseHwAccel) {
                 AVBufferRef* hwContextRef = av_hwdevice_ctx_alloc(AV_HWDEVICE_TYPE_D3D11VA);
@@ -476,12 +483,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
                 _vcodecContext->hw_device_ctx = hwContextRef;
                 _vcodecContext->hw_frames_ctx = frameContextRef;
                 _vcodecContext->colorspace = AVCOL_SPC_BT709;
-
-                // Not sure why but this having this option > 0 causes issues using the AMD AMF encoder.
-                if (enc.name == "h264_amf") {
-                    _vcodecContext->max_b_frames = 0;
-                    _doPostVideoFlush = false;
-                }
             }
 
             // We're going to specify time in ms (instead of frames) so set the timebase to 1ms.

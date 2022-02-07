@@ -193,6 +193,7 @@ class ApiClient {
     _accessToken: string | null
     _useAccessToken: boolean
     _localApiPort: number | null
+    _useTransferAccel: boolean
 
     constructor() {
         this._sessionId = null
@@ -201,6 +202,7 @@ class ApiClient {
         this._localApiPort = null
         this._accessToken = null
         this._useAccessToken = false
+        this._useTransferAccel = false
     }
 
     setSessionId(s : string) {
@@ -214,6 +216,10 @@ class ApiClient {
         } else {
             this._tempUserId = null
         }
+    }
+
+    enableTransferAccel() {
+        this._useTransferAccel = true
     }
 
     setAccessToken(s: string | null) {
@@ -1238,7 +1244,12 @@ class ApiClient {
     }
 
     getVodUploadDestination(vodUuid: string): Promise<ApiData<VodDestination>> {
-        return axios.get(`v1/vod/${vodUuid}/upload`, this.createWebAxiosConfig())
+        return axios.get(`v1/vod/${vodUuid}/upload`, {
+            params: {
+                accel: this._useTransferAccel ? 1 : 0
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
     createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {
@@ -1251,7 +1262,12 @@ class ApiClient {
             title,
             description,
             game
-        }, this.createWebAxiosConfig()).then(async (resp: ApiData<ClipResponse>) => {
+        }, {
+            params: {
+                accel: this._useTransferAccel ? 1 : 0
+            },
+            ...this.createWebAxiosConfig()
+        }).then(async (resp: ApiData<ClipResponse>) => {
             // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
             // doing a resumable upload here but I think the clip should be small enough to just upload it
             // all in one go.

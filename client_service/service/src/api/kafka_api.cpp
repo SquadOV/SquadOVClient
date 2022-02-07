@@ -134,9 +134,4 @@ void KafkaApi::genericKafkaProduce(const shared::TimePoint& tm, const std::strin
     }
 }
 
-KafkaApi* getKafkaApi() {
-    static KafkaApiPtr global = std::make_unique<KafkaApi>();
-    return global.get();
-}
-
 }

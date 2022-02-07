@@ -1,5 +1,5 @@
 <template>
-    <v-select
+    <v-autocomplete
         label="Squads"
         :value="value"
         @input="changeValue"
@@ -13,7 +13,7 @@
         :loading="!availableSquads"
         dense
     >
-    </v-select>
+    </v-autocomplete>
 </template>
 
 <script lang="ts">

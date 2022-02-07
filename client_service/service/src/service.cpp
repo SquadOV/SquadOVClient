@@ -98,10 +98,6 @@ void onSquadovExit() {
 
 void onSquadovTerminate() {
     LOG_ERROR("SquadOV Termination Detected" << std::endl);
-
-    // Make sure we flush Kafka first to ensure all the pending messages get sent.
-    service::api::getKafkaApi()->flush();
-
     LOG_FLUSH();
 }
 
@@ -361,9 +357,6 @@ int main(int argc, char** argv) {
         LOG_WARNING("Sentry disabled from server side feature flags or no crashpad handler exists..." << std::endl);
     }
 #endif
-
-    LOG_INFO("Initialize Kafka API" << std::endl);
-    service::api::getKafkaApi()->initialize();
 
     zeroMqServerClient.addHandler(service::zeromq::ZEROMQ_CHANGE_PAUSE_TOPIC, [](const std::string& msg) {
         const auto json = nlohmann::json::parse(msg);
