@@ -116,8 +116,9 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
             } else {
                 LOG_ERROR("Failed to get DC for composition...: " << hr << std::endl);
             }
-            texToSend = _outputTexture.get();
         }
+
+        texToSend = _outputTexture.get();
     }
 
     // Finally send the image to the encoder. We could theoretically
