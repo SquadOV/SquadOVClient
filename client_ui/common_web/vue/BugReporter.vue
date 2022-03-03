@@ -1,6 +1,42 @@
 <template>
     <v-card>
-        <template v-if="!submitted">
+        <template v-if="!hasCheckedKb">
+            <div class="thankyou d-flex justify-center align-center flex-column">
+                <div class="text-h5">
+                    Have you checked the SquadOV help center?
+                </div>
+
+                <div class="mt-2 mx-8">
+                    You'll find our FAQ there as well as a ton of help on how to use the app. Check it out! You'll probably find what you're looking for.
+                    If not, continue with submitting the report and we'll look into it.
+                </div>
+
+                <v-btn
+                    class="my-8"
+                    color="success"
+                    @click="goToHelpCenter"
+                >
+                    Go to Help Center
+                </v-btn>
+
+                <v-btn
+                    class="mt-4"
+                    color="primary"
+                    @click="hasCheckedKb = true"
+                >
+                    I still need help!
+                </v-btn>
+
+                <v-btn
+                    class="mt-1"
+                    @click="cancel"
+                >
+                    Nevermind.
+                </v-btn>
+            </div>
+        </template>
+
+        <template v-else-if="!submitted">
             <v-card-title>
                 Tell us more!
             </v-card-title>
@@ -56,7 +92,7 @@
                 </div>
 
                 <div class="mt-2">
-                    Did you know that we have a Discord? Let us know you submitted a bug report there and you'll get a faster reponse (usually).
+                    Did you know that we have a Discord? Let us know you submitted a bug report there and you'll get a faster response (usually).
                 </div>
 
                 <v-btn
@@ -103,6 +139,7 @@ const MAX_DUMPS_TO_SEND = 5
 
 @Component
 export default class BugReporter extends Vue {
+    hasCheckedKb: boolean = false
     formValid: boolean = false
     title: string = ''
     description: string = ''
@@ -121,6 +158,7 @@ export default class BugReporter extends Vue {
         this.submitted = false
         this.title = ''
         this.description = ''
+        this.hasCheckedKb = false
     }
 
     submit() {
@@ -177,6 +215,10 @@ export default class BugReporter extends Vue {
 
     joinDiscord() {
         openUrlInBrowser('https://discord.gg/6Rj5jCVDeC')
+    }
+
+    goToHelpCenter() {
+        openUrlInBrowser('https://support.squadov.gg')
     }
 }
 
