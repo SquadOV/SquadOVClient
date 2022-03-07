@@ -349,7 +349,7 @@
                                         </v-icon>
                                     </template>
 
-                                    Record spike rush Valorant games.
+                                    Record deathmatch Valorant games.
                                 </v-tooltip>
                             </template>
                         </v-checkbox>
