@@ -163,9 +163,18 @@ void VodClipper::openInput() {
     }
 
     _inputContext = nullptr;
+
+    AVDictionary* options = nullptr;
+
+    // To parallel what we have setup for video processing already.
+    av_dict_set(&options, "analyzeduration", "100000000", 0);
+    av_dict_set(&options, "probesize", "100000000", 0);
+    
     if (avformat_open_input(&_inputContext, _request.source.c_str(), _inputFormat, nullptr) < 0) {
+        av_dict_free(&options);
         THROW_ERROR("Failed to allocate input AV context.");
     }
+    av_dict_free(&options);
 
     if (avformat_find_stream_info(_inputContext, nullptr) < 0) {
         THROW_ERROR("Failed to find input stream info.");
