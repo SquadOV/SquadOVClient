@@ -78,6 +78,7 @@ bool isGameMap(EValorantMap map) {
         case EValorantMap::CharacterSelect:
         case EValorantMap::Init:
         case EValorantMap::Unknown:
+        case EValorantMap::MainMenu:
             return false;
     }    
 
