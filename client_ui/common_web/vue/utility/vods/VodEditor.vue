@@ -463,9 +463,6 @@ export default class VodEditor extends mixins(CommonComponent) {
             return
         }
         this.context = new VodEditorContext(this.videoUuid)
-        this.context.addTimeSyncListener((e: Date) => {
-            this.updateTimestampFromContext(e)
-        })
         this.context.requestVodAssociation().then((v: VodAssociation) => {
             this.vod = v
             this.resetClip()

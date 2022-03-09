@@ -180,6 +180,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     refreshInterval: number | null = null
     currentWatchRangeSeconds: number | null = null
     showEndOverlay = false
+    cumulativeWatchTime: number = 0
 
     closeOverlay() {
         this.showEndOverlay = false
@@ -557,16 +558,21 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                 // I'd rather lastTimestamp be an indicator of when the player was actually playing
                 // so we have a better sense of what the pre-seek timestamp was for analytics.
                 let diffFromLastTs = Math.abs(this.player.currentTime() - this.lastTimestamp)
-                if (diffFromLastTs > 1.0 && !this.player.seeking() && !this.player.paused()) {
+                if (diffFromLastTs > 1.0) {
                     this.rcContext?.goToTimestamp(this.player.currentTime() * 1000.0)
                     this.lastTimestamp = this.player.currentTime()
 
-                    if (!!this.player && diffFromLastTs > 180.0) {
-                        // Our Google analytics session timeout is 5 minutes long.
-                        // So once we reached a good portion of that we want to send an update
-                        // that the session is still active because the user is still watching
-                        // a VOD/clip.
-                        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.VodTimeUpdate, '', this.player.currentTime())
+                    if (!this.player.seeking() && !this.player.paused()) {
+                        this.cumulativeWatchTime += diffFromLastTs
+
+                        if (!!this.player && this.cumulativeWatchTime > 180.0) {
+                            // Our Google analytics session timeout is 5 minutes long.
+                            // So once we reached a good portion of that we want to send an update
+                            // that the session is still active because the user is still watching
+                            // a VOD/clip.
+                            this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.VodTimeUpdate, '', this.player.currentTime())
+                            this.cumulativeWatchTime = 0.0
+                        }
                     }
                 }
             }
