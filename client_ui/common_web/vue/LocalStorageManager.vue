@@ -160,19 +160,26 @@
                                         >
                                         </video-preview-player>
 
-                                        <template v-if="!!vodToMatch[vod]">
-                                            <recent-match-display
-                                                class="mb-4 full-width"
-                                                :match="vodToMatch[vod]"
-                                                :pov="vodToMatch[vod].povs[0]"
-                                                :disable-click="inSelectMode"
-                                                disable-preview
-                                                use-local-vod-preview
-                                                disable-mini
-                                                show-upload-progress
-                                            >
-                                            </recent-match-display>
-                                        </template>
+                                        <recent-match-display
+                                            v-if="!!vodToMatch[vod]"
+                                            class="mb-4 full-width"
+                                            :match="vodToMatch[vod]"
+                                            :pov="vodToMatch[vod].povs[0]"
+                                            :disable-click="inSelectMode"
+                                            disable-preview
+                                            use-local-vod-preview
+                                            disable-mini
+                                            show-upload-progress
+                                        >
+                                        </recent-match-display>
+
+                                        <div v-else-if="vodToMatch[vod] === undefined">
+                                            Match data loading...
+                                        </div>
+
+                                        <div v-else-if="vodToMatch[vod] === null">
+                                            Match data could not be found (could be a clip).
+                                        </div>
                                     </div>
                                 </template>
                                 
