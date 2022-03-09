@@ -147,25 +147,33 @@
                                 :value="vod"
                             >
                                 <template v-slot="{active}">
-                                    <template v-if="!!vodToMatch[vod]">
-                                        <div class="d-flex align-center full-width">
-                                            <v-list-item-action v-if="inSelectMode">
-                                                <v-checkbox :input-value="active"></v-checkbox>
-                                            </v-list-item-action>
+                                    <div class="d-flex align-center full-width">
+                                        <v-list-item-action v-if="inSelectMode">
+                                            <v-checkbox :input-value="active"></v-checkbox>
+                                        </v-list-item-action>
 
+                                        <video-preview-player
+                                            class="preview-item"
+                                            :vod-uuid="vod"
+                                            use-local-vod
+                                            :ref="vod"
+                                        >
+                                        </video-preview-player>
+
+                                        <template v-if="!!vodToMatch[vod]">
                                             <recent-match-display
                                                 class="mb-4 full-width"
                                                 :match="vodToMatch[vod]"
                                                 :pov="vodToMatch[vod].povs[0]"
                                                 :disable-click="inSelectMode"
+                                                disable-preview
                                                 use-local-vod-preview
                                                 disable-mini
                                                 show-upload-progress
-                                                :ref="vod"
                                             >
                                             </recent-match-display>
-                                        </div>
-                                    </template>
+                                        </template>
+                                    </div>
                                 </template>
                                 
                             </v-list-item>
@@ -201,6 +209,7 @@ import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import LocalDiskSpaceUsageDisplay from '@client/vue/utility/squadov/local/LocalDiskSpaceUsageDisplay.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
+import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 import RecentMatchDisplay from '@client/vue/utility/RecentMatchDisplay.vue'
 import { apiClient, ApiData } from '@client/js/api'
 import { RecentMatch } from '@client/js/squadov/recentMatch'
@@ -221,11 +230,12 @@ const MAX_VODS_PER_REQUEST = 10
         LocalDiskSpaceUsageDisplay,
         LoadingContainer,
         RecentMatchDisplay,
+        VideoPreviewPlayer,
     }
 })
 export default class LocalStorageManager extends Vue {
     localVods: string[] | null = null
-    vodToMatch: { [uuid: string]: RecentMatch | undefined } = {}
+    vodToMatch: { [uuid: string]: RecentMatch | undefined | null } = {}
 
     start: number = 0
     end: number = MAX_VODS_PER_REQUEST
@@ -265,8 +275,8 @@ export default class LocalStorageManager extends Vue {
 ///#if DESKTOP
         for (let v of this.selected) {
             //@ts-ignore
-            let ele: RecentMatchDisplay = this.$refs[v][0]
-            ele.destroyPreview()
+            let ele: VideoPreviewPlayer = this.$refs[v][0]
+            ele.$destroy()
         }
 
         setTimeout(() => {
@@ -307,6 +317,7 @@ export default class LocalStorageManager extends Vue {
             return
         }
 
+        console.log('Sync match: ', this.localVods)
         for (let vod of this.localVods) {
             if (vod in this.vodToMatch) {
                 continue
@@ -316,6 +327,7 @@ export default class LocalStorageManager extends Vue {
                 Vue.set(this.vodToMatch, vod, resp.data)
             }).catch((err: any) => {
                 console.error('Failed to get match data for video: ', err)
+                Vue.set(this.vodToMatch, vod, null)
             })
         }
     }
@@ -367,3 +379,17 @@ export default class LocalStorageManager extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+.preview-item {
+    width: 200px;
+    min-width: 200px;
+    max-width: 200px;
+
+    height: 125px;
+    min-height: 125px;
+    max-height: 125px;
+}
+
+</style>

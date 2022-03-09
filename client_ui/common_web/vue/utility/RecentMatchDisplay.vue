@@ -270,12 +270,20 @@ export default class RecentMatchDisplay extends Vue {
     }
 
     onHover() {
+        if (!this.$refs.player) {
+            return
+        }
+
         if (!this.pov.isLocal || this.useLocalVodPreview) {
             this.$refs.player.startPlay()
         }
     }
 
     onLeave() {
+        if (!this.$refs.player) {
+            return
+        }
+        
         if (!this.pov.isLocal || this.useLocalVodPreview) {
             this.$refs.player.pausePlay()
         }

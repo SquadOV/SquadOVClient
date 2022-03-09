@@ -32,6 +32,9 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     @Prop()
     accessToken!: string | null | undefined
 
+    @Prop()
+    vodUuid!: string | undefined
+
     videoUri: string | null = null
     player: videojs.Player | null = null
     previousTime: number = 10000000000
@@ -98,6 +101,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
 
         // Just in case videoUri and audioUri got set earlier.
         if (!!this.videoUri) {
+            console.log('Using Video Preview: ', this.videoUri)
             this.player.src([
                 {
                     src: this.videoUri,
@@ -130,9 +134,10 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     }
 
     @Watch('vod')
+    @Watch('vodUuid')
     refreshPreviewUri() {
         if (this.useLocalVod) {
-            ipcRenderer.invoke('check-vod-local', this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
+            ipcRenderer.invoke('check-vod-local', this.vodUuid || this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
                 this.videoUri = resp.data
                 Vue.nextTick(() => {
                     this.onVideoUriChange()
@@ -165,7 +170,9 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     }
 
     mounted() {
-        this.refreshPreviewUri()
+        Vue.nextTick(() => {
+            this.refreshPreviewUri()
+        })
     }
 
     beforeDestroy() {

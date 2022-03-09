@@ -595,7 +595,7 @@ std::vector<LocalRecordingIndexEntry> LocalRecordingIndexDb::getAllLocalEntries(
     }
 
     std::sort(ret.begin(), ret.end(), [](const LocalRecordingIndexEntry& a, const LocalRecordingIndexEntry& b){
-        return a.lastWriteTime < b.lastWriteTime;
+        return a.lastWriteTime > b.lastWriteTime;
     });
 
     return ret;
