@@ -48,6 +48,7 @@ private:
     DXGI_OUTPUT_DESC _outputDesc;
 
     DXGI_MODE_ROTATION _rotation;
+    HMONITOR _refMonitor;
 };
 
 bool tryInitializeDxgiDesktopRecorder(VideoRecorderPtr& output, const VideoWindowInfo& info, DWORD pid);

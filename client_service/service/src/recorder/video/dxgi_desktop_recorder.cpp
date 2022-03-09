@@ -119,12 +119,12 @@ void DxgiDesktopRecorder::initialize() {
     LOG_INFO("Continuing DXGI initialization since window/process is foreground..." << std::endl);
     // IDXGIOutput represents a monitor output. We need to grab the output that
     // corresponds to the monitor the input window is on.
-    HMONITOR refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
-    if (!refMonitor) {
+    _refMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
+    if (!_refMonitor) {
         THROW_ERROR("Failed to get reference monitor.");
     }
 
-    _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, refMonitor);
+    _self = std::make_unique<service::renderer::D3d11SharedContext>(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, _refMonitor);
 
     wil::com_ptr<IDXGIDevice> dxgiDevice;
     HRESULT hr = _self->device()->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
@@ -146,7 +146,7 @@ void DxgiDesktopRecorder::initialize() {
             continue;
         }
 
-        if (_outputDesc.Monitor == refMonitor) {
+        if (_outputDesc.Monitor == _refMonitor) {
             break;
         }
 
@@ -206,6 +206,14 @@ void DxgiDesktopRecorder::startRecording() {
             wil::com_ptr<IDXGIResource> desktopResource = nullptr;
             DXGI_OUTDUPL_FRAME_INFO frameInfo;
             bool reuseOldFrame = false;
+
+            // Check if the window somehow drifted to another monitor in which case we should reinitialize.
+            HMONITOR testMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
+            if (testMonitor != _refMonitor) {
+                LOG_WARNING("Detected monitor drift..." << std::endl);
+                initialize();
+                createDefaultTexture();
+            }
 
             // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
             /*
