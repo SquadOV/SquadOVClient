@@ -253,6 +253,7 @@ void HttpRequest::doPost(const nlohmann::json& body, bool forceGzip) {
 
 void HttpRequest::setRawBuffer(const char* buffer, size_t size) {
     if (size == 0) {
+        LOG_INFO("...Settin a buffer of size 0 for HTTP raw buffer - ignoring." << std::endl);
         return;
     }
 
@@ -262,7 +263,12 @@ void HttpRequest::setRawBuffer(const char* buffer, size_t size) {
 
     curl_easy_setopt(_curl, CURLOPT_READDATA, &_buffer);
     curl_easy_setopt(_curl, CURLOPT_READFUNCTION, curlReadCallback);
-    curl_easy_setopt(_curl, CURLOPT_INFILESIZE, size);
+    if (curl_easy_setopt(_curl, CURLOPT_INFILESIZE, size) != CURLE_OK) {
+        LOG_WARNING("Failed to set CURL file size [INFILESIZE]: " << size << std::endl);
+        if (curl_easy_setopt(_curl, CURLOPT_INFILESIZE_LARGE, size) != CURLE_OK) {
+            LOG_WARNING("Failed to set CURL file size [INFILESIZE_LARGE]: " << size << std::endl);
+        }
+    }
 }
 
 void HttpRequest::doPut(const char* buffer, size_t numBytes) {
