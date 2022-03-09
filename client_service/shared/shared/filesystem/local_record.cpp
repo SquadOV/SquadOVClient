@@ -227,14 +227,16 @@ void LocalRecordingIndexDb::rebuildDatabase() {
 
                         const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
                         const fs::path wNotifPath = _initFolder.value() / fs::path(wNotifFname);
-                        if (notif->Action == FILE_ACTION_REMOVED || notif->Action == FILE_ACTION_RENAMED_OLD_NAME) {
-                            LOG_INFO("[DB UPDATE] Removed/Renamed File: " << wNotifPath << std::endl);
-                            removeFileFromDatabase(wNotifPath);
-                        } else {
-                            LOG_INFO("[DB UPDATE] New/Updated File: " << wNotifPath << std::endl);
-                            const auto newEntry = buildEntryFromFile(wNotifPath);
-                            if (newEntry) {
-                                addEntryToDatabase(newEntry.value());
+                        if (fs::is_regular_file(wNotifPath)) {
+                            if (notif->Action == FILE_ACTION_REMOVED || notif->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+                                LOG_INFO("[DB UPDATE] Removed/Renamed File: " << wNotifPath << std::endl);
+                                removeFileFromDatabase(wNotifPath);
+                            } else {
+                                LOG_INFO("[DB UPDATE] New/Updated File: " << wNotifPath << std::endl);
+                                const auto newEntry = buildEntryFromFile(wNotifPath);
+                                if (newEntry) {
+                                    addEntryToDatabase(newEntry.value());
+                                }
                             }
                         }
 
