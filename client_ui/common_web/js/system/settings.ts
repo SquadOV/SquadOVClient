@@ -72,6 +72,7 @@ export interface ProcessAudioRecordSettings {
 export interface SquadOvRecordingSettings {
     resY: number
     fps: number
+    bitrateKbps: number
     useVideoHw2: boolean
     useHwEncoder: boolean
     useVfr4: boolean
@@ -323,6 +324,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 30,
+                bitrateKbps: 6000,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -368,6 +370,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 720,
                 fps: 60,
+                bitrateKbps: 6000,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -413,6 +416,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             record = {
                 resY: 1080,
                 fps: 60,
+                bitrateKbps: 6000,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -483,6 +487,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         record: {
             resY: 1080,
             fps: 60,
+            bitrateKbps: 6000,
             useVideoHw2: true,
             useHwEncoder: true,
             useVfr4: true,
@@ -769,6 +774,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.disablePostGamePopup === undefined) {
             parsedData.disablePostGamePopup = false
+        }
+
+        if (parsedData.record.bitrateKbps === undefined) {
+            parsedData.record.bitrateKbps = 6000
         }
 
     } catch (ex) {

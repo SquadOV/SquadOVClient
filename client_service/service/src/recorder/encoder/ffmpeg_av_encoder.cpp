@@ -422,9 +422,9 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
 
             canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw2;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
-            _vcodecContext->bit_rate = int64_t(6000) * 1000;
-            _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;
-            _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 2;
+            _vcodecContext->bit_rate = static_cast<int64_t>(settings.bitrateKbps) * 1000;
+            _vcodecContext->rc_max_rate = _vcodecContext->bit_rate * 1.5;
+            _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 4;
             _vcodecContext->thread_count = 0;
 
             if (enc.name == "h264_amf") {
@@ -432,7 +432,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
                 _vcodecContext->max_b_frames = 0;
                 _doPostVideoFlush = false;
             } else {
-                _vcodecContext->max_b_frames = 3;
+                _vcodecContext->max_b_frames = 2;
             }
             
             if (canUseHwAccel) {
@@ -515,29 +515,19 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
                 }
 
                 {
-                    // CRF/CQ
+                    // Per-encoder settings. Mainly for VBR.
                     if (enc.name == "h264_mf") {
-                        av_dict_set_int(&options, "quality", 50, 0);
+                        // FFmpeg uses the bitrate as the mean bit rate to use.
+                        av_dict_set(&options, "rate_control", "pc_vbr", 0);
                     } else if (enc.name == "h264_nvenc") {
-                        av_dict_set_int(&options, "qp", 30, 0);
+                        // bit_rate => averageBitRate
+                        // rc_max_rate => maxBitRate
+                        // rc_buffer_size => vbvBufferSize
+                        av_dict_set(&options, "rc", "vbr", 0);
                     } else if (enc.name == "h264_amf") {
-                        av_dict_set_int(&options, "qp_i", 30, 0);
-                        av_dict_set_int(&options, "qp_p", 30, 0);
-                        av_dict_set_int(&options, "qp_b", 30, 0);
+                        av_dict_set(&options, "rc", "vbr_peak", 0);
                     } else if (enc.name == "libopenh264") {
-                        _vcodecContext->qmin = 20;
-                        _vcodecContext->qmax = 30;
-                    }
-
-                    // Rate control
-                    if (enc.name == "h264_mf") {
-                        av_dict_set(&options, "rate_control", "quality", 0);
-                    } else if (enc.name == "h264_nvenc") {
-                        av_dict_set(&options, "rc", "constqp", 0);
-                    } else if (enc.name == "h264_amf") {
-                        av_dict_set(&options, "rc", "cqp", 0);
-                    } else if (enc.name == "libopenh264") {
-                        av_dict_set(&options, "rc_mode", "quality", 0);
+                        av_dict_set(&options, "rc_mode", "bitrate", 0);
                     }
                 }
             }

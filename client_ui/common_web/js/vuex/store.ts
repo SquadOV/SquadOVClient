@@ -25,6 +25,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             allowRecordUpload: false,
             allowWowCombatLogUpload: false,
             enableUserProfiles: false,
+            maxBitrateKbps: 0,
         },
 /// #if DESKTOP
         settings: null,
@@ -69,6 +70,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         setSettings(state: RootState, settings: SquadOvLocalSettings) {
 /// #if DESKTOP
             state.settings = settings
+/// #endif
+        },
+        changeRecordSettingQuality(state: RootState, res: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.bitrateKbps = res
+            saveLocalSettings(state.settings)
 /// #endif
         },
         changeRecordSettingRes(state: RootState, res: number) {

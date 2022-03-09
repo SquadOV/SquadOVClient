@@ -331,6 +331,7 @@ void GameRecorder::loadCachedInfo() {
         const auto features = service::api::getGlobalApi()->getSessionFeatures();
         _cachedRecordingSettings->resY = std::min(_cachedRecordingSettings->resY, features.maxRecordPixelY);
         _cachedRecordingSettings->fps = std::min(_cachedRecordingSettings->fps, features.maxRecordFps);
+        _cachedRecordingSettings->bitrateKbps = std::min(_cachedRecordingSettings->bitrateKbps, features.maxBitrateKbps);
         _cachedRecordingSettings->useLocalRecording = _cachedRecordingSettings->useLocalRecording || !features.allowRecordUpload;
     }
 

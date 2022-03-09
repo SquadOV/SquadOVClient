@@ -46,6 +46,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     RecordingSettings settings;
     settings.resY = obj["resY"].get<int32_t>();
     settings.fps = obj["fps"].get<int32_t>();
+    settings.bitrateKbps = obj["bitrateKbps"].get<int32_t>();
 
     // This should be false by default to accomodate users with NVIDIA GPUs, see #1260.
     settings.useVideoHw2 = obj.value("useVideoHw2", false);

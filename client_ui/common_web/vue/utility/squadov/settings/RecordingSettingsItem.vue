@@ -10,7 +10,7 @@
                 <v-row>
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
-                            <span class="text-overline font-weight-bold mr-4">Quality:</span>
+                            <span class="text-overline font-weight-bold mr-4">Resolution:</span>
                             <v-btn-toggle :value="resY" @change="changeResY" mandatory rounded dense>
                                 <v-btn
                                     v-for="res in resolutionItems"
@@ -21,6 +21,19 @@
                                     {{ res }}p
                                 </v-btn>
                             </v-btn-toggle>
+                        </div>
+
+                        <div class="d-flex align-center mt-4">
+                            <span class="text-overline font-weight-bold mr-4">Quality:</span>
+                            <v-select
+                                dense
+                                :value="quality"
+                                @input="changeQuality"
+                                :items="qualityItems"
+                                hide-details=""
+                                outlined
+                            >
+                            </v-select>
                         </div>
                     </v-col>
 
@@ -712,6 +725,44 @@ export default class RecordingSettingsItem extends Vue {
 
     changeInputDevices(val: AudioDeviceSettings[]) {
         this.$store.commit('changeInputDevice', val)
+    }
+
+    get quality(): number {
+        return this.$store.state.settings.record.bitrateKbps
+    }
+
+    changeQuality(val: number) {
+        this.$store.commit('changeRecordSettingQuality', val)
+    }
+
+    get qualityItems(): any[] {
+        return [
+            {
+                text: 'Ultra-High (9000 kbps)',
+                value: 9000,
+            },
+            {
+                text: 'High (6000 kbps)',
+                value: 6000,
+            },
+            {
+                text: 'Medium (4000 kbps)',
+                value: 4000,
+            },
+            {
+                text: 'Low (2000 kbps)',
+                value: 2000,
+            },
+            {
+                text: 'Very Low (1000 kbps)',
+                value: 1000,
+            },
+        ].map((ele) => {
+            return {
+                disabled: (ele.value > this.$store.state.features.maxBitrateKbps),
+                ...ele
+            }
+        })
     }
 
     get resY(): number {

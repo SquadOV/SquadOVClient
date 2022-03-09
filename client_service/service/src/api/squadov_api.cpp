@@ -124,6 +124,7 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     shared::squadov::FeatureFlags flags;
     flags.maxRecordPixelY = parsedJson["maxRecordPixelY"].get<int>();
     flags.maxRecordFps = parsedJson["maxRecordFps"].get<int>();
+    flags.maxBitrateKbps = parsedJson["maxBitrateKbps"].get<int>();
     flags.allowRecordUpload = parsedJson["allowRecordUpload"].get<bool>();
     flags.allowWowCombatLogUpload = parsedJson["allowWowCombatLogUpload"].get<bool>();
     flags.disableSentry = parsedJson.value("disableSentry", true);
