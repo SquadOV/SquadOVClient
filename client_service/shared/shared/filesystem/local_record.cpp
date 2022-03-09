@@ -49,6 +49,10 @@ LocalRecordingIndexDb::LocalRecordingIndexDb() {
 }
 
 LocalRecordingIndexDb::~LocalRecordingIndexDb() {
+    _watchRunning = false;
+    if (_watchThread.joinable()) {
+        _watchThread.join();
+    }
 }
 
 void LocalRecordingIndexDb::initializeFromFolder(const fs::path& parentFolder) {

@@ -29,9 +29,72 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, DWORD pid):
     TCHAR windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
     LOG_INFO("DXGI Desktop Duplication Recording Window: " << windowTitle << "[" << _width << "x" << _height << "]" << std::endl);
+
+    createDefaultTexture();
 }
 
 DxgiDesktopRecorder::~DxgiDesktopRecorder() {
+}
+
+void DxgiDesktopRecorder::createDefaultTexture() {
+    LOG_INFO("Creating DXGI default texture [tmp]..." << std::endl);
+    D3D11_TEXTURE2D_DESC desc = { 0 };
+    desc.Width = _width;
+    desc.Height = _height;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage = D3D11_USAGE_DYNAMIC;
+    desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    desc.MiscFlags = 0;
+
+    wil::com_ptr<ID3D11Texture2D> tmpTexture;
+    HRESULT hr = _self->device()->CreateTexture2D(&desc, nullptr, &tmpTexture);
+    if (hr != S_OK || !tmpTexture) {
+        LOG_ERROR("Failed to create default texture [tmp].");
+        return;
+    }
+
+    D3D11_MAPPED_SUBRESOURCE mappedData;
+
+    const auto immediate = _self->immediateContext();
+    hr = immediate.context()->Map(tmpTexture.get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+    if (hr != S_OK) {
+        LOG_ERROR("Failed to map default texture: " << hr);
+        return;
+    }
+
+    uint8_t* dst = reinterpret_cast<uint8_t*>(mappedData.pData);
+    for (size_t r = 0; r < _height; ++r) {
+        std::memset(dst, 0, mappedData.RowPitch);
+        dst += mappedData.RowPitch;
+    }
+    immediate.context()->Unmap(tmpTexture.get(), 0);
+
+    LOG_INFO("...Successfully created default texture [tmp]." << std::endl);
+
+    D3D11_TEXTURE2D_DESC sharedDesc = { 0 };
+    sharedDesc.Width = _width;
+    sharedDesc.Height = _height;
+    sharedDesc.MipLevels = 1;
+    sharedDesc.ArraySize = 1;
+    sharedDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    sharedDesc.SampleDesc.Count = 1;
+    sharedDesc.Usage = D3D11_USAGE_DEFAULT;
+    sharedDesc.BindFlags = 0;
+    sharedDesc.CPUAccessFlags = 0;
+    sharedDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;
+
+    hr = _self->device()->CreateTexture2D(&sharedDesc, nullptr, &_defaultTexture);
+    if (hr != S_OK || !_defaultTexture) {
+        LOG_ERROR("Failed to create default texture [default].");
+        return;
+    }
+
+    immediate.context()->CopyResource(_defaultTexture.get(), tmpTexture.get());
+    LOG_INFO("...Successfully created default texture [default]." << std::endl);
 }
 
 void DxgiDesktopRecorder::initialize() {
@@ -186,6 +249,7 @@ void DxgiDesktopRecorder::startRecording() {
                 }
             }
 
+            bool isAltTabbed = false;
 #if !DISABLE_ALT_TAB_PROTECTION
             // We really only care about recording when the user is playing the game so
             // when the window is minimized just ignore what's been recorded.
@@ -193,6 +257,7 @@ void DxgiDesktopRecorder::startRecording() {
                 // Re-use old frames here to try and prevent ourselves from grabbing the desktop.
                 // Don't just skip the frame as they may cause us to de-sync?
                 reuseOldFrame = true;
+                isAltTabbed = true;
             }
 #endif
 
@@ -213,6 +278,8 @@ void DxgiDesktopRecorder::startRecording() {
 
                 flowToNext(_self.get(), tex, 1, _rotation);
                 tex->Release();
+            } else if (isAltTabbed && _defaultTexture) {
+                flowToNext(_self.get(), _defaultTexture.get(), 1, _rotation);
             } else {
                 ++numReused;
             }
