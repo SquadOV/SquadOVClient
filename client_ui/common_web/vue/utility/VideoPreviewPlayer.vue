@@ -1,5 +1,5 @@
 <template>
-    <div @mouseover="startPlay" @mouseout="pausePlay"> 
+    <div @mouseover="startPlay" @mouseout="pausePlay" :key="forceRedraw"> 
         <video class="video-js vjs-fill" ref="video">
         </video>
     </div>
@@ -8,20 +8,21 @@
 <script lang="ts">
 
 import Vue from 'vue'
-import Component from 'vue-class-component'
+import Component, {mixins} from 'vue-class-component'
 import { Prop, Watch } from 'vue-property-decorator'
 import * as vod from '@client/js/squadov/vod'
 import { apiClient, ApiData } from '@client/js/api'
 import videojs from 'video.js'
 import 'video.js/dist/video-js.css' 
 
+import CommonComponent from '@client/vue/CommonComponent'
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 /// #endif
 
 @Component
-export default class VideoPreviewPlayer extends Vue {
+export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     @Prop({required: true})
     vod!: vod.VodManifest
 
@@ -39,9 +40,23 @@ export default class VideoPreviewPlayer extends Vue {
     }
 
     canPause: boolean = false
+    forceRedraw: number = 0
 
     get hasPreview(): boolean {
         return !!this.videoUri
+    }
+
+    @Watch('isActive')
+    onActiveChange() {
+        this.forceRedraw += 1
+        if (this.isActive) {
+            Vue.nextTick(() => {
+                this.refreshPreviewUri()
+            })
+        } else if (!!this.player) {
+            this.player.dispose()
+            this.player = null
+        }
     }
 
     startPlay() {
@@ -71,10 +86,6 @@ export default class VideoPreviewPlayer extends Vue {
     }
 
     onVideoUriChange() {
-        if (!this.$refs.video) {
-            return
-        }
-
         this.canPause = false
         if (!this.player) {
             this.player = videojs(this.$refs.video, {

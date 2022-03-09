@@ -256,8 +256,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     onActiveChange() {
         if (this.isActive && !!this.player && !!this.vod) {
             this.reactivateTimestamp = new Date(this.vod.startTime.getTime() + this.player.currentTime() * 1000)
-            this.setNoVideo()
         } else if (!this.isActive) {
+            this.setNoVideo()
             this.stopWatchAnalyticsRange()
         }
 

@@ -5,10 +5,13 @@
 #include <filesystem>
 #include <functional>
 #include <memory>
-#include <mutex>
+#include <shared_mutex>
 #include <optional>
-#include <sqlite3.h>
+#include <unordered_map>
+#include <thread>
 #include <vector>
+
+#include <Windows.h>
 
 namespace shared::filesystem {
 
@@ -24,16 +27,18 @@ struct CleanupLocalRecordRequest {
 
 struct LocalRecordingIndexEntry {
     std::string uuid;
-    std::string filename;
-    shared::TimePoint startTm;
-    shared::TimePoint endTm;
-    shared::TimePoint cacheTm;
+    std::filesystem::path root;
+    std::filesystem::path relative;
+    shared::TimePoint lastWriteTime;
     size_t diskBytes;
+
+    std::filesystem::path fullPath() const;
 };
 
 class LocalRecordingIndexDb {
 public:
     static LocalRecordingIndexDb* singleton();
+    LocalRecordingIndexDb();
     ~LocalRecordingIndexDb();
 
     void initializeFromFolder(const std::filesystem::path& parentFolder);
@@ -42,26 +47,32 @@ public:
 
     void addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadUploadProgressFn& progressFn);
     void addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry);
-    void removeLocalEntry(const std::string& uuid);
+    void removeVideoFromDatabase(const std::string& uuid);
+    size_t currentSizeBytes() const;
 
     std::vector<LocalRecordingIndexEntry> getAllLocalEntries() const;
     std::optional<LocalRecordingIndexEntry> getOldestLocalEntry() const;
     std::optional<LocalRecordingIndexEntry> getEntryForUuid(const std::string& uuid) const;
 
-    std::filesystem::path getEntryPath(const LocalRecordingIndexEntry& entry) const;
-    std::filesystem::path getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const;
-
 private:
-    std::optional<std::pair<std::filesystem::path, std::filesystem::path>> migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const;
-    void cleanupLocalEntry(const LocalRecordingIndexEntry& entry) const;
-    void migrateDatabase() const;
+    void migrateToV2() const;
+    void rebuildDatabase();
+    bool addMetadataToFile(const std::filesystem::path& path, const std::string& videoUuid) const;
+    std::optional<LocalRecordingIndexEntry> buildEntryFromFile(const std::filesystem::path& path) const;
 
-    mutable std::recursive_mutex _dbMutex;
     std::optional<std::filesystem::path> _initFolder;
-    sqlite3* _db = nullptr;
 
-    void release();
+    mutable std::shared_mutex _dbMutex;
+    std::unordered_map<std::string, LocalRecordingIndexEntry> _uuidDatabase;
+    std::unordered_map<std::string, LocalRecordingIndexEntry> _pathDatabase;
 
+    void removeFileFromDatabase(const std::filesystem::path& path);
+    void removeEntryFromDatabase(const LocalRecordingIndexEntry& entry);
+    void addEntryToDatabase(const LocalRecordingIndexEntry& entry);
+
+    // Incremental database updates
+    std::thread _watchThread;
+    bool _watchRunning = false;
 };
 using LocalRecordingIndexDbPtr = std::unique_ptr<LocalRecordingIndexDb>;
 

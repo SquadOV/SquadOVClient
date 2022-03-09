@@ -915,19 +915,10 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
                         // We need to process this VOD locally (aka do the equivalent of the server side fastify).
                         shared::filesystem::LocalRecordingIndexEntry entry;
                         entry.uuid = association.videoUuid;
-                        entry.filename = "video.mp4";
-                        entry.cacheTm = shared::nowUtc();
-                        entry.startTm = association.startTime;
-                        entry.endTm = association.endTime;
-                        entry.diskBytes = fs::file_size(processedPath);
+                        entry.relative = entry.uuid + ".mp4";
 
                         // After that's complete, we can finally add this file to the local index.
                         singleton->addLocalEntryFromFilesystem(processedPath, entry);
-
-                        const auto finalPathParentDir = singleton->getEntryPath(entry).parent_path();
-                        const auto metadataFname = finalPathParentDir / fs::path("metadata.json");
-                        std::ofstream metadataOut(metadataFname);
-                        metadataOut << metadata.toJson().dump(4);
 
                         // Need to cleanup the local recording folder after adding a new entry.
                         singleton->cleanupLocalFolder(maxLocalSize);

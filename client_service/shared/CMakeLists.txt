@@ -102,4 +102,5 @@ target_include_directories(squadov_shared
 target_link_libraries(squadov_shared
     sentry
     cryptopp-static
+    Propsys
 )

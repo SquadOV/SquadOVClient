@@ -6,30 +6,38 @@
 #include "shared/sqlite/sqlite.h"
 #include "shared/time.h"
 #include "shared/http/http_client.h"
+#include "shared/uuid.h"
+#include "shared/strings/strings.h"
 
 #include <boost/algorithm/string.hpp>
 #define CRYPTOPP_ENABLE_NAMESPACE_WEAK 1
 #include <cryptopp/files.h>
 #include <cryptopp/md5.h>
 #include <cryptopp/base64.h>
+#include <ShObjIdl.h>
+#include <objbase.h>
+#include <propvarutil.h>
+#include <functional>
+#include <wil/com.h>
 
+using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 namespace shared::filesystem {
 namespace {
 
-constexpr int CURRENT_DB_VERSION = 1;
-
-LocalRecordingIndexEntry getLocalEntryFromSqlStatement(shared::sqlite::SqlStatement& stmt) {
-    LocalRecordingIndexEntry data;
-    data.uuid = stmt.getColumn<std::string>(0);
-    data.filename = stmt.getColumn<std::string>(1);
-    data.startTm = shared::unixMsToTime(stmt.getColumn<long long>(2));
-    data.endTm = shared::unixMsToTime(stmt.getColumn<long long>(3));
-    data.cacheTm = shared::unixMsToTime(stmt.getColumn<long long>(4));
-    data.diskBytes = static_cast<size_t>(stmt.getColumn<long long>(5));
-    return data;
+PROPERTYKEY getSquadOvVideoPropertyKey() {
+    PROPERTYKEY key = { 0 };
+    IIDFromString(L"{2adb913e-d026-4198-9931-a737d1e78fc3}", &key.fmtid);
+    key.pid = PID_FIRST_USABLE;
+    return key;
 }
 
+constexpr auto BUFFER_NUM_BYTES = 16384;
+
+}
+
+std::filesystem::path LocalRecordingIndexEntry::fullPath() const {
+    return root / relative;
 }
 
 LocalRecordingIndexDb* LocalRecordingIndexDb::singleton() {
@@ -37,71 +45,311 @@ LocalRecordingIndexDb* LocalRecordingIndexDb::singleton() {
     return s.get();
 }
 
+LocalRecordingIndexDb::LocalRecordingIndexDb() {
+}
+
 LocalRecordingIndexDb::~LocalRecordingIndexDb() {
-    release();
 }
 
 void LocalRecordingIndexDb::initializeFromFolder(const fs::path& parentFolder) {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
-    if (_initFolder.has_value() && _initFolder.value() == parentFolder) {
+    const auto absParentFolder = fs::absolute(parentFolder);
+    if (_initFolder.has_value() && _initFolder.value() == absParentFolder) {
         return;
     }
 
-    release();
-
-    if (!fs::exists(parentFolder)) {
-        fs::create_directories(parentFolder);   
+    if (!fs::exists(absParentFolder)) {
+        fs::create_directories(absParentFolder);   
     }
 
-    const auto indexFile = parentFolder / fs::path("index.db");
-    LOG_INFO("Initializing local recording database: " << indexFile << std::endl);
-    if (sqlite3_open(shared::filesystem::pathUtf8(indexFile).c_str(), &_db) != SQLITE_OK) {
-        THROW_ERROR("Failed to open database.");
-    }
-    migrateDatabase();
-
-    _initFolder = parentFolder;
+    _initFolder = absParentFolder;
+    migrateToV2();
+    rebuildDatabase();
 }
 
-void LocalRecordingIndexDb::migrateDatabase() const {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
-    int existing_version = 0;
+void LocalRecordingIndexDb::migrateToV2() const {
+    if (!_initFolder) {
+        return;
+    }
+
+    LOG_INFO("Executing migration of local storage to V2..." << std::endl);
+    // We previously used an SQLite database to index what videos a user stored on their machine. This system sucked so much.
+    // Migrate to our new system where we build up the database ourself based on videos we find in the folder.
+    const auto indexFile = _initFolder.value() / fs::path("index.db");
+    if (!fs::exists(indexFile)) {
+        LOG_INFO("...Already migrated." << std::endl);
+        return;
+    }
+
+    // Absolutely ditch the Sqlite database and ignore what's in it since we can rebuild everything we need from what's on the
+    // user's filesystem. Quite simply, within _initFolder, there will be a bunch of folders with UUID names and within them, a file called
+    // video.mp4. If such a format exists, then we can assume that the video.mp4 is some video stored in our server's database as well.
+    // Thus, we're able to find all videos that need to be migrated.
+    try {
+        for (const auto& entry : fs::directory_iterator(_initFolder.value())) {
+            if (!entry.is_directory()) {
+                continue;
+            }
+
+            LOG_INFO("Checking Migration Folder: " << entry << std::endl);
+            const std::string videoUuid = shared::filesystem::pathUtf8(entry.path().filename());
+            if (!shared::isValidUuid(videoUuid)) {
+                LOG_INFO("...Invalid UUID: " << videoUuid << std::endl);
+                continue;
+            }
+
+            const fs::path videoFile = entry / fs::path("video.mp4");
+            if (!fs::exists(videoFile)) {
+                LOG_INFO("...Video File Doesn't Exist." << std::endl);
+                continue;
+            }
+
+            // The migration is simple - simply add the metadata to the video file in the way we'd expect.
+            if (!addMetadataToFile(videoFile, videoUuid)) {
+                LOG_WARNING("...Failed to add metadata to file: " << videoFile << std::endl);
+            }
+        }
+    } catch (std::exception& ex) {
+        // I mean...if there's an error here then chances are we'll never be able to migrate them properly.
+        LOG_WARNING("...Something went wrong trying to migrate videos: " << ex.what() << std::endl);
+    }
+
+    fs::remove(indexFile);
+}
+
+bool LocalRecordingIndexDb::addMetadataToFile(const std::filesystem::path& path, const std::string& videoUuid) const {
+    const auto absPath = fs::absolute(path);
+    wil::com_ptr<IPropertyStore> props = nullptr;
+    HRESULT hr = SHGetPropertyStoreFromParsingName(
+        absPath.native().c_str(),
+        nullptr,
+        GPS_READWRITE,
+        IID_PPV_ARGS(&props)
+    );
+
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get prop store [rw] for: " << absPath << std::endl);
+        return false;
+    }
+
+    std::wstring wideVideoUuid = shared::strings::utf8ToWcs(videoUuid);
+
+    PROPVARIANT value = {0};
+    hr = InitPropVariantFromString(wideVideoUuid.c_str(), &value);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to init prop value: " << absPath << std::endl);
+        return false;
+    }
+
+    hr = props->SetValue(getSquadOvVideoPropertyKey(), value);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to set prop value: " << absPath << std::endl);
+        return false;
+    }
+
+    hr = props->Commit();
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to commit prop value to filesystem: " << absPath << std::endl);
+        return false;
+    }
+    return true;
+}
+
+void LocalRecordingIndexDb::rebuildDatabase() {
+    if (!_initFolder) {
+        LOG_ERROR("Rebuilding database without a folder specified." << std::endl);
+        return;
+    }
+
+    LOG_INFO("Rebuilding Local Database...:" << _initFolder.value() << std::endl);
     {
-        std::ostringstream sql;
-        sql << R"|(
-            PRAGMA user_version
-        )|";
-
-        shared::sqlite::SqlStatement stmt(_db, sql.str());
-        stmt.next();
-        existing_version = stmt.getColumn<int>(0);
+        std::lock_guard guard(_dbMutex);
+        _uuidDatabase.clear();
+        _pathDatabase.clear();
     }
-    LOG_INFO("Local Record Index Db Version: " << existing_version << std::endl);
 
-    if (existing_version < 1) {
-        std::ostringstream sql;
-        sql << R"|(
-            CREATE TABLE local_vod_entries (
-                uuid TEXT PRIMARY KEY,
-                filename TEXT NOT NULL,
-                start_time INTEGER NOT NULL,
-                end_time INTEGER NOT NULL,
-                cache_time INTEGER NOT NULL,
-                disk_bytes INTEGER NOT NULL
+    for (const auto& entry : fs::recursive_directory_iterator(_initFolder.value())) {
+        if (!entry.is_regular_file()) {
+            continue;
+        }
+
+        const auto dbEntry = buildEntryFromFile(entry);
+        if (!dbEntry) {
+            continue;
+        }
+
+        addEntryToDatabase(dbEntry.value());
+    }
+
+    LOG_INFO("Restarting watch thread..." << std::endl);
+    _watchRunning = false;
+    if (_watchThread.joinable()) {
+        _watchThread.join();
+    }
+    _watchRunning = true;
+    _watchThread = std::thread([this](){
+        HANDLE hDir = CreateFileW(     
+            _initFolder.value().native().c_str(),
+            FILE_LIST_DIRECTORY,
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
+            NULL,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+            NULL
+        );
+
+        std::unique_ptr<BYTE, decltype(&_aligned_free)> buffer((BYTE*)_aligned_malloc(BUFFER_NUM_BYTES, sizeof(BYTE)), _aligned_free);
+        while (_watchRunning) {
+            OVERLAPPED overlap = { 0 };
+            BOOL ok = ReadDirectoryChangesW(
+                hDir,
+                buffer.get(),
+                BUFFER_NUM_BYTES,
+                TRUE,
+                FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_ATTRIBUTES,
+                nullptr,
+                &overlap,
+                nullptr
             );
-        )|";
-        shared::sqlite::SqlStatement stmt(_db, sql.str());
-        stmt.next();
+
+            if (!ok) {
+                LOG_WARNING("Failed to setup incremental update watch: " << _initFolder.value() << std::endl);
+                std::this_thread::sleep_for(128ms);
+                continue;
+            }
+
+            DWORD bytesTransferred = 0;
+
+            while (_watchRunning) {
+                if (GetOverlappedResultEx(hDir, &overlap, &bytesTransferred, 200, TRUE)) {
+                    BYTE* rawNotif = buffer.get();
+                    while (!!rawNotif && _watchRunning) {
+                        FILE_NOTIFY_INFORMATION* notif = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(rawNotif);
+
+                        const std::wstring wNotifFname(notif->FileName, notif->FileNameLength / sizeof(wchar_t));
+                        const fs::path wNotifPath = _initFolder.value() / fs::path(wNotifFname);
+                        if (notif->Action == FILE_ACTION_REMOVED || notif->Action == FILE_ACTION_RENAMED_OLD_NAME) {
+                            LOG_INFO("[DB UPDATE] Removed/Renamed File: " << wNotifPath << std::endl);
+                            removeFileFromDatabase(wNotifPath);
+                        } else {
+                            LOG_INFO("[DB UPDATE] New/Updated File: " << wNotifPath << std::endl);
+                            const auto newEntry = buildEntryFromFile(wNotifPath);
+                            if (newEntry) {
+                                addEntryToDatabase(newEntry.value());
+                            }
+                        }
+
+                        if (notif->NextEntryOffset == 0) {
+                            break;
+                        }
+                        rawNotif += notif->NextEntryOffset;
+                    }
+                    break;
+                }
+            }
+            
+            std::this_thread::sleep_for(16ms);
+        }
+
+        CloseHandle(hDir);
+    });
+}
+
+void LocalRecordingIndexDb::addEntryToDatabase(const LocalRecordingIndexEntry& entry) {
+    std::lock_guard guard(_dbMutex);
+    _uuidDatabase[entry.uuid] = entry;
+    _pathDatabase[shared::filesystem::pathUtf8(entry.relative)] = entry;
+}
+
+void LocalRecordingIndexDb::removeVideoFromDatabase(const std::string& uuid) {
+    const auto toRemove = getEntryForUuid(uuid);
+    if (toRemove) {
+        removeEntryFromDatabase(toRemove.value());
+    }
+}
+
+void LocalRecordingIndexDb::removeFileFromDatabase(const std::filesystem::path& path) {
+    LocalRecordingIndexEntry toRemove;
+
+    {
+        std::shared_lock guard(_dbMutex);
+        const auto absPath = fs::absolute(path);
+        const auto relPath = fs::relative(absPath, _initFolder.value());
+
+        const auto it = _pathDatabase.find(shared::filesystem::pathUtf8(relPath));
+        if (it == _pathDatabase.end()) {
+            return;
+        }
+
+        toRemove = it->second;
     }
 
-    if (existing_version != CURRENT_DB_VERSION) {
-        std::ostringstream sql;
-        sql << "PRAGMA user_version = " << CURRENT_DB_VERSION;
-        shared::sqlite::SqlStatement stmt(_db, sql.str());
-        stmt.next();
+    removeEntryFromDatabase(toRemove);
+}
+
+void LocalRecordingIndexDb::removeEntryFromDatabase(const LocalRecordingIndexEntry& entry) {
+    std::lock_guard guard(_dbMutex);
+
+    {
+        const auto it = _pathDatabase.find(shared::filesystem::pathUtf8(entry.relative));
+        if (it != _pathDatabase.end()) {
+            _pathDatabase.erase(it);
+        }
     }
 
-    LOG_INFO("Successful migration to: " << CURRENT_DB_VERSION << std::endl);
+    {
+        const auto it = _uuidDatabase.find(entry.uuid);
+        if (it != _uuidDatabase.end()) {
+            _uuidDatabase.erase(it);
+        }
+    }
+
+    if (fs::exists(entry.fullPath())) {
+        fs::remove_all(entry.fullPath());
+    }
+}
+
+std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::buildEntryFromFile(const std::filesystem::path& path) const {
+    const auto absPath = fs::absolute(path);
+    wil::com_ptr<IPropertyStore> props = nullptr;
+    HRESULT hr = SHGetPropertyStoreFromParsingName(
+        absPath.native().c_str(),
+        nullptr,
+        GPS_DEFAULT,
+        IID_PPV_ARGS(&props)
+    );
+
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get prop store [build] for: " << absPath << std::endl);
+        return std::nullopt;
+    }
+
+    PROPERTYKEY key = getSquadOvVideoPropertyKey();
+    PROPVARIANT value = { 0 };
+    hr = props->GetValue(key, &value);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get prop value for: " << absPath << std::endl);
+        return std::nullopt;
+    }
+
+    if (!IsPropVariantString(value)) {
+        LOG_WARNING("Found file with invalid prop variant:" << absPath << std::endl);
+        return std::nullopt;
+    }
+
+    std::wstring videoUuid(value.pwszVal);
+    std::string utf8VideoUuid = shared::strings::wcsToUtf8(videoUuid);
+    if (!shared::isValidUuid(utf8VideoUuid)) {
+        LOG_WARNING("Found Invalid UUID: " << absPath << "\t" << utf8VideoUuid << std::endl);
+        return std::nullopt;
+    }
+
+    LocalRecordingIndexEntry ret;
+    ret.uuid = utf8VideoUuid;
+    ret.root = _initFolder.value();
+    ret.relative = fs::relative(absPath, _initFolder.value());
+    ret.diskBytes = fs::file_size(absPath);
+    ret.lastWriteTime = shared::filesystem::timeOfLastFileWrite(absPath);
+    return ret;
 }
 
 bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
@@ -110,60 +358,99 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
         return true;
     }
 
-    // (source , destination)
-    std::vector<std::pair<fs::path, fs::path>> migrationTasks;
-    try {
-        const auto oldFolder = _initFolder.value();
-        const auto entries = getAllLocalEntries();
-        for (const auto& e : entries) {
-            const auto task = migrateLocalEntry(e, to);
-            if (task) {
-                migrationTasks.push_back(task.value());
-            }
-        }
-
-        release();
-
-        const auto oldIndex = oldFolder / fs::path("index.db");
-        const auto newIndex = to / fs::path("index.db");
-        fs::copy(oldIndex, newIndex);
-        migrationTasks.push_back(std::make_pair(oldIndex, newIndex));
-    } catch (std::exception& ex) {
-        LOG_WARNING("Failed to migrate local entry: " << ex.what() << std::endl);
-
-        // In the case of failure, we remove all the new destination paths.
-        for (const auto& kvp : migrationTasks) {
-            fs::remove_all(kvp.second);
-        }
-
+    const auto absTo = fs::absolute(to);
+    if (fs::canonical(absTo.root_path()) == fs::canonical(absTo)) {
+        LOG_WARNING("Can not switch local recording location to a root path: " << absTo << std::endl);
         return false;
     }
 
-    // In the case of success, we remove all the old source destination paths.
-    for (const auto& kvp : migrationTasks) {
-        fs::remove_all(kvp.first);
+    // (source , destination)
+    std::vector<std::pair<fs::path, fs::path>> migrationTasks;
+    std::vector<std::pair<fs::path, fs::path>> completedTasks;
+
+    // Stop the watch first or else the delete at the end gets picked up.
+    _watchRunning = false;
+    if (_watchThread.joinable()) {
+        _watchThread.join();
     }
 
-    initializeFromFolder(to);
+    {
+        std::shared_lock guard(_dbMutex);
+        for (const auto& kvp: _uuidDatabase) {
+            const auto from = kvp.second.root / kvp.second.relative;
+            const auto to = absTo / kvp.second.relative;
+            migrationTasks.push_back(std::make_pair(from, to));
+        }
+    }
+
+    // Now that we've tracked all the source/destination files, we want to go through and start copying
+    // the files to their new destination. If this all succeeds, then great, remove the old files. If it fails,
+    // we want to remove the files we copied over already.
+    try {
+        for (const auto& task: migrationTasks) {
+            if (!fs::exists(task.first)) {
+                continue;
+            }
+            fs::create_directories(task.second.parent_path());
+            fs::copy_file(task.first, task.second, fs::copy_options::overwrite_existing);
+            completedTasks.push_back(task);
+        }
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to move local folder: " << ex.what() << std::endl);
+        try {
+            for (const auto& task: completedTasks) {
+                fs::remove_all(task.second);
+            }
+        } catch (std::exception& ex2) {
+            LOG_ERROR("MIGRATION FAILURE RECOVERY FAILED [INITIAL]: " << ex2.what() << std::endl);
+        }
+        return false;
+    }
+
+    completedTasks.clear();
+
+    // Now do another run where we delete the original videos. If this fails then this run fails.
+    // We *MUST* cleanup properly as well.
+    const auto oldFolder = _initFolder.value();
+    try {
+        for (const auto& task: migrationTasks) {
+            if (!fs::exists(task.first)) {
+                continue;
+            }
+            fs::remove_all(task.first);
+            completedTasks.push_back(task);
+        }
+
+        // If the initialization fails then we still want to clean up as well.
+        initializeFromFolder(absTo);
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to delete original video(s): " << ex.what() << std::endl);
+        try {
+            for (const auto& task: completedTasks) {
+                fs::copy_file(task.second, task.first, fs::copy_options::overwrite_existing);
+            }
+
+            for (const auto& task: migrationTasks) {
+                fs::remove_all(task.second);
+            }
+        } catch (std::exception& ex2) {
+            LOG_ERROR("MIGRATION FAILURE RECOVERY FAILED [CLEANUP]: " << ex2.what() << std::endl);
+        }
+
+        initializeFromFolder(oldFolder);
+        return false;
+    }
+     
     return true;
 }
 
-std::optional<std::pair<fs::path, fs::path>> LocalRecordingIndexDb::migrateLocalEntry(const LocalRecordingIndexEntry& entry, const std::filesystem::path& to) const {
-    const auto source = getEntryPath(entry);
-    const auto dest = getEntryPath(to, entry);
-
-    if (!fs::exists(source.parent_path())) {
-        // If the source path doesn't exist, then something is fucked up. The user probably
-        // did some manual moving around outside of SquadOV...ideally we'd have some better way to recover.
-        return std::nullopt;
-    } else {
-        if (fs::exists(dest.parent_path())) {
-            fs::remove_all(dest.parent_path());
-        }
-        fs::copy(source.parent_path(), dest.parent_path());
+size_t LocalRecordingIndexDb::currentSizeBytes() const {
+    std::shared_lock guard(_dbMutex);
+    size_t dbSize = 0;
+    for (const auto& kvp: _uuidDatabase) {
+        dbSize += kvp.second.diskBytes;
     }
-    
-    return std::make_pair(source.parent_path(), dest.parent_path());
+    return dbSize;
 }
 
 bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
@@ -173,15 +460,15 @@ bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
     }
 
     try {
-        double currentSize = getFolderSizeBytes(_initFolder.value()) / 1024.0 / 1024.0 / 1024.0;
+        double currentSize = currentSizeBytes() / 1024.0 / 1024.0 / 1024.0;
         while (currentSize > limit) {
             const auto entry = getOldestLocalEntry();
-            if (!entry.has_value()) {
+            if (!entry) {
                 break;
             }
 
             const auto val = entry.value();
-            cleanupLocalEntry(val);
+            removeVideoFromDatabase(val.uuid);
             currentSize -= val.diskBytes / 1024.0 / 1024.0 / 1024.0;
         }
 
@@ -190,38 +477,11 @@ bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
         LOG_WARNING("Failed to cleanup local entries: " << ex.what() << std::endl);
         return false;
     }
-}
-
-void LocalRecordingIndexDb::removeLocalEntry(const std::string& uuid) {
-    auto entry = getEntryForUuid(uuid);
-    if (!entry.has_value()) {
-        return;
-    }
-    cleanupLocalEntry(entry.value());
-}
-
-void LocalRecordingIndexDb::cleanupLocalEntry(const LocalRecordingIndexEntry& entry) const {
-    const auto folder = getEntryPath(entry).parent_path();
-    if (fs::exists(folder)) {
-        fs::remove_all(folder);
-    }
-
-    std::ostringstream sql;
-    sql << R"|(
-        DELETE FROM local_vod_entries
-        WHERE uuid = ?)|";
-
-    shared::sqlite::SqlStatement stmt(_db, sql.str());
-    stmt.bindParameter(1, entry.uuid);
-    stmt.next();
-
-    if (stmt.fail()) {
-        THROW_ERROR("Failed to delete local entry from index DB: " << stmt.errMsg());
-    }
+    return true;
 }
 
 void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadUploadProgressFn& progressFn) {
-    const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.uuid) / fs::path(entry.filename);
+    const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.relative);
     fs::create_directories(dlPath.parent_path());
 
     bool success = false;
@@ -262,13 +522,19 @@ void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const s
         return;
     }
 
-    auto sizedEntry = entry;
-    sizedEntry.diskBytes = fs::file_size(dlPath);
-    addLocalEntryFromFilesystem(dlPath, sizedEntry);
+    addLocalEntryFromFilesystem(dlPath, entry);
+    fs::remove_all(dlPath);
 }
 
 void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::path& file, const LocalRecordingIndexEntry& entry) {
-    const auto outputPath = getEntryPath(entry);
+    addMetadataToFile(file, entry.uuid);
+
+    LocalRecordingIndexEntry canonicalEntry = entry;
+    canonicalEntry.root = _initFolder.value();
+    canonicalEntry.lastWriteTime = shared::filesystem::timeOfLastFileWrite(file);
+    canonicalEntry.diskBytes = fs::file_size(file);
+
+    const auto outputPath = canonicalEntry.fullPath();
     const auto parentDir = outputPath.parent_path();
     fs::create_directories(parentDir);
 
@@ -283,116 +549,56 @@ void LocalRecordingIndexDb::addLocalEntryFromFilesystem(const std::filesystem::p
     }
 
     if (!failure) {
-        std::ostringstream sql;
-        sql << R"|(
-            INSERT INTO local_vod_entries (
-                uuid,
-                filename,
-                start_time,
-                end_time,
-                cache_time,
-                disk_bytes
-            )
-            VALUES (
-                ?, ?, ?, ?, ?, ?
-            )
-            ON CONFLICT DO NOTHING
-        )|";
-
-        shared::sqlite::SqlStatement stmt(_db, sql.str());
-        stmt.bindParameter(1, entry.uuid);
-        stmt.bindParameter(2, entry.filename);
-        stmt.bindParameter(3, shared::timeToUnixMs(entry.startTm));
-        stmt.bindParameter(4, shared::timeToUnixMs(entry.endTm));
-        stmt.bindParameter(5, shared::timeToUnixMs(entry.cacheTm));
-        stmt.bindParameter(6, static_cast<int64_t>(entry.diskBytes));
-        stmt.next();
-
-        if (stmt.fail()) {
-            LOG_WARNING("Failed to add local entry: " << stmt.errMsg() << " [" << file << "]");
-            failure = true;
-        }
-    }
-
-    if (failure) {
+        addEntryToDatabase(canonicalEntry);
+    } else {
         fs::remove_all(parentDir);
     }
 
     fs::remove(file);
 }
 
-std::filesystem::path LocalRecordingIndexDb::getEntryPath(const std::filesystem::path& parent, const LocalRecordingIndexEntry& entry) const {
-    return parent / fs::path(entry.uuid) / fs::path(entry.filename);
-}
-
-std::filesystem::path LocalRecordingIndexDb::getEntryPath(const LocalRecordingIndexEntry& entry) const {
-    if (!_initFolder.has_value()) {
-        return {};
-    }
-
-    return getEntryPath(_initFolder.value(), entry);
-}
-
 std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getOldestLocalEntry() const {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
+    std::shared_lock guard(_dbMutex);
 
-    std::ostringstream sql;
-    sql << R"|(
-        SELECT *
-        FROM local_vod_entries
-        ORDER BY cache_time ASC
-        LIMIT 1)|";
+    shared::TimePoint oldestTime = shared::nowUtc();
+    std::optional<LocalRecordingIndexEntry> oldestEntry;
 
-    shared::sqlite::SqlStatement stmt(_db, sql.str());
-    if (stmt.next()) {
-        return getLocalEntryFromSqlStatement(stmt);
-    } else {
-        return {};
+    for (const auto& kvp: _uuidDatabase) {
+        if (kvp.second.lastWriteTime < oldestTime) {
+            oldestTime = kvp.second.lastWriteTime;
+            oldestEntry = kvp.second;
+        }
     }
+
+    return oldestEntry;
 }
 
 std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::getEntryForUuid(const std::string& uuid) const {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
+    std::shared_lock guard(_dbMutex);
 
-    std::ostringstream sql;
-    sql << R"|(
-        SELECT *
-        FROM local_vod_entries
-        WHERE uuid = ?)|";
-
-    shared::sqlite::SqlStatement stmt(_db, sql.str());
-    stmt.bindParameter(1, uuid);
-    if (stmt.next()) {
-        return getLocalEntryFromSqlStatement(stmt);
-    } else {
-        return {};
+    const auto it = _uuidDatabase.find(uuid);
+    if (it == _uuidDatabase.end()) {
+        return std::nullopt;
     }
+
+    return it->second;
 }
 
 std::vector<LocalRecordingIndexEntry> LocalRecordingIndexDb::getAllLocalEntries() const {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
-    std::vector<LocalRecordingIndexEntry> entries;
+    std::shared_lock guard(_dbMutex);
 
-    std::ostringstream sql;
-    sql << R"|(
-        SELECT *
-        FROM local_vod_entries
-        ORDER BY cache_time DESC
-    )|";
+    std::vector<LocalRecordingIndexEntry> ret;
+    ret.reserve(_uuidDatabase.size());
 
-    shared::sqlite::SqlStatement stmt(_db, sql.str());
-    while (stmt.next()) {
-        entries.push_back(getLocalEntryFromSqlStatement(stmt));
+    for (const auto& kvp: _uuidDatabase) {
+        ret.push_back(kvp.second);
     }
-    return entries;
-}
 
-void LocalRecordingIndexDb::release() {
-    std::lock_guard<std::recursive_mutex> guard(_dbMutex);
-    if (_db) {
-        sqlite3_close(_db);
-    }
-    _initFolder.reset();
+    std::sort(ret.begin(), ret.end(), [](const LocalRecordingIndexEntry& a, const LocalRecordingIndexEntry& b){
+        return a.lastWriteTime < b.lastWriteTime;
+    });
+
+    return ret;
 }
 
 bool changeLocalRecordLocation(const fs::path& from, const fs::path& to) {

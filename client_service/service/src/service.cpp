@@ -600,11 +600,7 @@ int main(int argc, char** argv) {
 
                 shared::filesystem::LocalRecordingIndexEntry entry;
                 entry.uuid = request.data;
-                entry.filename = "video.mp4";
-                entry.startTm = vodAssoc.startTime;
-                entry.endTm = vodAssoc.endTime;
-                entry.cacheTm = shared::nowUtc();
-                entry.diskBytes = 0;
+                entry.relative = entry.uuid + ".mp4";
 
                 shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(settings->recording().localRecordingLocation);
                 
@@ -672,7 +668,7 @@ int main(int argc, char** argv) {
                 const auto entry = singleton->getEntryForUuid(request.data);
 
                 if (entry.has_value()) {
-                    resp.data = shared::filesystem::pathUtf8(singleton->getEntryPath(entry.value()));
+                    resp.data = shared::filesystem::pathUtf8(entry->fullPath());
                     resp.success = true;
                 } else {
                     resp.success = false;
@@ -702,7 +698,7 @@ int main(int argc, char** argv) {
             resp.task = request.task;
             try {
                 singleton->initializeFromFolder(settings->recording().localRecordingLocation);
-                singleton->removeLocalEntry(request.data);
+                singleton->removeVideoFromDatabase(request.data);
                 resp.success = true;
             } catch (std::exception& ex) {
                 LOG_WARNING("Failed to delete local VOD: " << ex.what() << std::endl);
