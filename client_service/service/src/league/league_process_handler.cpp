@@ -198,9 +198,9 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
         LOG_INFO("Obtained local PUUID: " << _localPuuid << std::endl);
 
         if (_actualGame == shared::EGame::TFT) {
-            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName, _localPuuid);
+            _ownsAccount = service::api::getGlobalApi()->verifyTftAccountOwnership(_activePlayerSummonerName, _localPuuid, _cfg.platformId);
         } else {
-            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName, _localPuuid);
+            _ownsAccount = service::api::getGlobalApi()->verifyLeagueOfLegendsAccountOwnership(_activePlayerSummonerName, _localPuuid, _cfg.platformId);
         }
         
         LOG_INFO("\tDetermined Game: " << shared::gameToString(_actualGame) << std::endl);

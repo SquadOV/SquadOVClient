@@ -325,8 +325,10 @@ int main(int argc, char** argv) {
 
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
 
+    /* NOT NEEDED UNTIL FF14
     LOG_INFO("Initializing AWS API..." << std::endl);
     service::api::getAwsApi();
+    */
 
 #ifdef NDEBUG
     const auto features = service::api::getGlobalApi()->getSessionFeatures();

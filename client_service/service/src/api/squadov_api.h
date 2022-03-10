@@ -100,13 +100,13 @@ public:
     // League of Legends
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;
     void finishLeagueOfLegendsMatch(const std::string& matchUuid) const;
-    bool verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName, const std::string& puuid) const;
+    bool verifyLeagueOfLegendsAccountOwnership(const std::string& summonerName, const std::string& puuid, const std::string& platformId) const;
     void requestLeagueOfLegendsBackfill(const std::string& summonerName, const std::string& platform) const;
 
     // TFT
     std::string createNewTftMatch(const std::string& region, const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;
     void finishTftMatch(const std::string& matchUuid) const;
-    bool verifyTftAccountOwnership(const std::string& summonerName, const std::string& puuid) const;
+    bool verifyTftAccountOwnership(const std::string& summonerName, const std::string& puuid, const std::string& platformId) const;
     void requestTftBackfill(const std::string& summonerName, const std::string& region) const;
 
     // CS:GO
