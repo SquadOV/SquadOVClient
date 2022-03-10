@@ -35,6 +35,7 @@
 #include "shared/system/keys.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "shared/system/win32/process.h"
+#include "shared/squadov/vod.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
 
@@ -483,10 +484,15 @@ int main(int argc, char** argv) {
             const auto session = resp.first;
             const auto& parts = resp.second;
 
+            const auto someMetadata = shared::squadov::generateVodMetadataFromFile(fs::path(request.file));
+            const auto metadata = someMetadata ? someMetadata.value() : shared::squadov::VodMetadata{};
+            LOG_INFO("...Computed VOD Metadata: " << metadata.toJson() << std::endl);
+
             nlohmann::json retData;
             retData["task"] = request.task;
             retData["success"] = !session.empty();
             retData["session"] = session;
+            retData["metadata"] =  metadata.toJson();
 
             if (!parts.empty()) {
                 retData["parts"] = nlohmann::json::array();

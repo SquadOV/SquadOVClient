@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shared/time.h"
+#include <filesystem>
 #include <string>
 #include <nlohmann/json.hpp>
 #include <optional>
@@ -37,5 +38,7 @@ struct VodMetadata {
     std::string id;
     nlohmann::json toJson() const;
 };
+
+std::optional<VodMetadata> generateVodMetadataFromFile(const std::filesystem::path& fname);
 
 }

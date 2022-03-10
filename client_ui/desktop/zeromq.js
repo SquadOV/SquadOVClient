@@ -143,6 +143,7 @@ class ZeroMQServerClient {
                         resolve({
                             session: parsedResp.session,
                             parts: parsedResp.parts,
+                            metadata: parsedResp.metadata,
                         })
                     } else {
                         reject('Failure in VOD upload to cloud.')

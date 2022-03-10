@@ -163,13 +163,6 @@ class LocalVodManager {
         this.uploads.notifyProgress(vod.videoUuid, 0.0)
         setTimeout(async () => {
             try {
-                const metadataFname = path.join(path.dirname(localLoc), 'metadata.json')
-
-                if (!fs.existsSync(metadataFname)) {
-                    throw 'Could not find metadta filename : ' + metadataFname
-                }
-
-                const metadata: VodMetadata = JSON.parse(fs.readFileSync(metadataFname, 'utf8'))
                 const uploadDestination = await apiClient.getVodUploadDestination(vod.videoUuid)
 
                 let progressNotif = async (e: any, info: UploadProgress) => {
@@ -192,9 +185,11 @@ class LocalVodManager {
                 let newAssociation: VodAssociation = cleanVodAssocationData(JSON.parse(JSON.stringify(vod)))
                 newAssociation.isLocal = false
 
-                metadata.bucket = uploadDestination.data.bucket
-                metadata.sessionId = uploadDestination.data.session
-                await apiClient.associateVod(newAssociation, metadata, uploadData.session, uploadData.parts)
+                uploadData.metadata.videoUuid = newAssociation.videoUuid
+                uploadData.metadata.bucket = uploadDestination.data.bucket
+                uploadData.metadata.sessionId = uploadDestination.data.session
+                uploadData.metadata.id = 'source'
+                await apiClient.associateVod(newAssociation, uploadData.metadata, uploadData.session, uploadData.parts)
                 this.uploads.finish(vod.videoUuid)
             } catch (ex) {
                 console.error('Failed to complete upload: ', ex)

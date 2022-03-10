@@ -97,10 +97,12 @@ target_include_directories(squadov_shared
     ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
     ${CARES_INCLUDE_DIR}
     ${Boost_INCLUDE_DIRS}
+    ${FFMPEG_INCLUDE_DIR}
 )
 
 target_link_libraries(squadov_shared
     sentry
     cryptopp-static
     Propsys
+    ${FFMPEG_LIBRARIES}
 )
