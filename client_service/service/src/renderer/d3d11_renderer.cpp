@@ -111,7 +111,7 @@ void D3d11Renderer::prepRenderTargetForRender(ID3D11DeviceContext* context, ID3D
     context->OMSetRenderTargets(1, &target, nullptr);
 
     FLOAT blendFactor[4] = {0.f, 0.f, 0.f, 0.f};
-    context->OMSetBlendState(_blendState, blendFactor, 0xffffffff);
+    context->OMSetBlendState(_blendState.get(), blendFactor, 0xffffffff);
     if (_clearBeforeRender) {
         const float clearColor[4] = { 0.f, 1.f, 0.f, 1.f };
         context->ClearRenderTargetView(target, clearColor);

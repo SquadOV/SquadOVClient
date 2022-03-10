@@ -75,7 +75,7 @@ function handleSquirrel() {
 }
 */
 
-const {app, BrowserWindow, Menu, Tray, ipcMain, net, globalShortcut} = require('electron')
+const {app, BrowserWindow, Menu, Tray, ipcMain, Notification} = require('electron')
 const path = require('path')
 const fs = require('fs')
 const {spawn, exec} = require('child_process');
@@ -1147,5 +1147,21 @@ ipcMain.on('user-upload-speed-check', () => {
         if (!!setupWindow) {
             setupWindow.webContents.send('finish-user-upload-speed-check')
         }
+    }
+})
+
+if (process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    app.setAppUserModelId(process.execPath)
+}
+
+zeromqServer.on('squadov-notify-error', (r) => {
+    let err = JSON.parse(r)
+    if (err.display === 0) {
+        // Native Notification
+        console.log(err.title)
+        new Notification({
+            title: err.title,
+            body: err.message,
+        }).show()
     }
 })

@@ -16,6 +16,7 @@ std::string pathUtf8(const std::filesystem::path& path);
 std::filesystem::path generateTimestampBackupFileName(const std::filesystem::path& fname);
 void pruneFilesystemPaths(std::vector<std::filesystem::path>& paths, int maxKeep);
 void readBinaryData(std::vector<char>& data, const std::filesystem::path& from);
+std::string readTextFile(const std::filesystem::path& from);
 size_t getFolderSizeBytes(const std::filesystem::path& path);
 
 }

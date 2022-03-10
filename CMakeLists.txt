@@ -32,6 +32,9 @@ find_package(RdKafka CONFIG REQUIRED)
 find_package(CARES REQUIRED)
 find_package(cryptopp CONFIG REQUIRED)
 find_package(WIL CONFIG REQUIRED)
+find_package(aws-cpp-sdk-core REQUIRED)
+find_package(aws-cpp-sdk-cognito-identity REQUIRED)
+find_package(aws-cpp-sdk-identity-management REQUIRED)
 find_package(directxmath CONFIG REQUIRED)
 find_package(directxtk CONFIG REQUIRED)
 find_package(directxtex CONFIG REQUIRED)
@@ -71,7 +74,6 @@ find_package(Boost 1.74.0 REQUIRED
         date_time
         unit_test_framework
 )
-MESSAGE(STATUS "BOOST LIBS ${Boost_LIBRARIES}")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)

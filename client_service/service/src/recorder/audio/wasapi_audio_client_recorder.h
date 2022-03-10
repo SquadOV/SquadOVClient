@@ -4,7 +4,7 @@
 #include "recorder/audio/audio_packet_view.h"
 #include "recorder/audio/fixed_size_audio_packet.h"
 
-#include <atlbase.h>
+#include <wil/com.h>
 #include <audioclient.h>
 
 #include <atomic>
@@ -22,7 +22,7 @@ class WasapiAudioClientRecorder {
     using SyncTime = service::recorder::encoder::AVSyncClock::time_point;
 
 public:
-    WasapiAudioClientRecorder(CComPtr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback);
+    WasapiAudioClientRecorder(wil::com_ptr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback);
     ~WasapiAudioClientRecorder();
 
     void startRecording();
@@ -37,14 +37,14 @@ private:
     void printWarning(const std::string& msg, HRESULT hr) const;
     void handleData(const SyncTime& tm, const BYTE* data, uint32_t numFrames);
 
-    bool isPcm() const;
-    bool isFloat() const;
-
-    CComPtr<IAudioClient> _audioClient;
+    wil::com_ptr<IAudioClient> _audioClient;
     std::string _context;
     std::atomic<bool> _running = false;
 
-    CComPtr<IAudioCaptureClient> _captureClient;
+    wil::com_ptr<IAudioCaptureClient> _captureClient;
+    
+    bool isPcm() const;
+    bool isFloat() const;
 
     // For sending data for encoding
     service::recorder::encoder::AvEncoder* _encoder = nullptr;

@@ -10,6 +10,7 @@ SET(SRCS
     game_event_watcher/hearthstone/hearthstone_power_log_parser.cpp
     game_event_watcher/wow/wow_log_watcher.cpp
     game_event_watcher/league/league_log_watcher.cpp
+    game_event_watcher/ff14/ff14_log_watcher.cpp
     game_event_watcher/logs/log_watcher.cpp
 )
 
@@ -25,6 +26,7 @@ SET(HEADERS
     game_event_watcher/hearthstone/hearthstone_power_log_parser.h
     game_event_watcher/wow/wow_log_watcher.h
     game_event_watcher/league/league_log_watcher.h
+    game_event_watcher/ff14/ff14_log_watcher.h
     game_event_watcher/logs/log_watcher.h
 )
 

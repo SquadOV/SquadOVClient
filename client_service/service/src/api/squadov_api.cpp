@@ -3,6 +3,7 @@
 #include "shared/env.h"
 #include "shared/errors/error.h"
 #include "shared/url.h"
+#include "shared/json.h"
 
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -70,6 +71,17 @@ std::string SquadovApi::getSentryDsn() const {
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
+}
+
+int64_t SquadovApi::addSessionIdUpdateCallback(const SessionIdUpdateCallback& cb) {
+    std::lock_guard guard(_sessionUpdateMutex);
+    const auto id = _sessionUpdateCbCounter++;
+    _sessionUpdateCallback[id] = cb;
+    return id;
+}
+
+void SquadovApi::removeSessionIdUpdateCallback(int64_t idx) {
+    _sessionUpdateCallback.erase(idx);
 }
 
 void SquadovApi::setSessionId(const std::string& key) {
@@ -845,7 +857,7 @@ void SquadovApi::finishLeagueOfLegendsMatch(const std::string& matchUuid) const 
     std::ostringstream path;
     path << "/v1/lol/match/" << matchUuid << "/finish";
 
-    const auto result = _webClient->post(path.str(), {});
+    const auto result = _webClient->post(path.str(), nlohmann::json{});
     if (result->status != 200) {
         THROW_ERROR("Failed to finish LoL match: " << result->status);
         return;
@@ -893,7 +905,7 @@ void SquadovApi::finishTftMatch(const std::string& matchUuid) const {
     std::ostringstream path;
     path << "/v1/tft/match/" << matchUuid << "/finish";
 
-    const auto result = _webClient->post(path.str(), {});
+    const auto result = _webClient->post(path.str(), nlohmann::json{});
     if (result->status != 200) {
         THROW_ERROR("Failed to finish TFT match: " << result->status);
         return;
@@ -974,6 +986,32 @@ void SquadovApi::associateCsgoDemo(const std::string& viewUuid, const std::strin
     if (result->status != 204) {
         THROW_ERROR("Failed to associate CSGO demo: " << result->status);
     }
+}
+
+AwsCognitoCredentials SquadovApi::getAwsCredentials() const {
+    std::ostringstream path;
+    path << "/v1/aws/credentials";
+    
+    const auto result = _webClient->get(path.str());
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get AWS credentials: " << result->status);
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return shared::json::JsonConverter<AwsCognitoCredentials>::from(parsedJson);
+}
+
+std::string SquadovApi::getCombatLogApiConfiguration() const {
+    std::ostringstream path;
+    path << "/v1/cl/config";
+    
+    const auto result = _webClient->get(path.str());
+    if (result->status != 200) {
+        THROW_ERROR("Failed to get combat log api config: " << result->status);
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return parsedJson.get<std::string>();
 }
 
 SquadovApi* getGlobalApi() {

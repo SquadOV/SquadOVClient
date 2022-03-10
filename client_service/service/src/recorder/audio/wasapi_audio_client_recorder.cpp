@@ -30,7 +30,7 @@ void writeAudioSampleToBuffer(const BYTE* data, float& output) {
 
 }
 
-WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback):
+WasapiAudioClientRecorder::WasapiAudioClientRecorder(wil::com_ptr<IAudioClient> client, const std::string& context, bool mono, bool isLoopback):
     _audioClient(client),
     _context(context)
 {
@@ -41,7 +41,7 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(CComPtr<IAudioClient> clien
         printWarning("...Failed to get mix format [attempting to use default output endpoint wave format]", hr);
 
         const auto defaultDevice = service::recorder::audio::win32::WASAPIInterface::getDefaultDevice(service::recorder::audio::EAudioDeviceDirection::Output);
-        CComPtr<IAudioClient> defaultAudioClient;
+        wil::com_ptr<IAudioClient> defaultAudioClient;
         hr = defaultDevice->Activate(
             __uuidof(IAudioClient),
             CLSCTX_ALL,

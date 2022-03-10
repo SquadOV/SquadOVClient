@@ -3,6 +3,8 @@ SET(SRCS
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
     src/api/local_api.cpp
+    src/api/aws_api.cpp
+    src/api/combat_log_client.cpp
     src/aimlab/aimlab_db_interface.cpp
     src/aimlab/aimlab_process_handler.cpp
     src/csgo/csgo_process_handler.cpp
@@ -11,6 +13,7 @@ SET(SRCS
     src/hearthstone/hearthstone_process_handler.cpp
     src/wow/wow_process_handler.cpp
     src/league/league_process_handler.cpp
+    src/ff14/ff14_process_handler.cpp
     src/recorder/game_recorder.cpp
     src/recorder/game_preview_stream.cpp
     src/recorder/video/win32_gdi_recorder.cpp
@@ -48,6 +51,7 @@ SET(SRCS
     src/system/settings.cpp
     src/system/state.cpp
     src/system/processes.cpp
+    src/system/notification_hub.cpp
     src/zeromq/zeromq.cpp
     src/local/local_data.cpp
     src/vod/vod_clipper.cpp
@@ -70,6 +74,8 @@ SET(HEADERS
     src/api/kafka_api.h
     src/api/league_ingame_api.h
     src/api/local_api.h
+    src/api/aws_api.h
+    src/api/combat_log_client.h
     src/aimlab/aimlab_db_interface.h
     src/aimlab/aimlab_process_handler.h
     src/csgo/csgo_process_handler.h
@@ -78,6 +84,7 @@ SET(HEADERS
     src/hearthstone/hearthstone_process_handler.h
     src/wow/wow_process_handler.h
     src/league/league_process_handler.h
+    src/ff14/ff14_process_handler.h
     src/recorder/game_recorder.h
     src/recorder/game_preview_stream.h
     src/recorder/video/video_recorder.h
@@ -126,6 +133,7 @@ SET(HEADERS
     src/system/state.h
     src/system/ipc.h
     src/system/processes.h
+    src/system/notification_hub.h
     src/zeromq/zeromq.h
     src/local/local_data.h
     src/vod/vod_clipper.h
@@ -166,11 +174,15 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/libzmq/include
         ${CMAKE_SOURCE_DIR}/deps/libcpuid/libcpuid
         ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
+        ${CMAKE_SOURCE_DIR}/deps/rapidxml
         ${CMAKE_SOURCE_DIR}/deps/half/include
         ${OPENSSL_INCLUDE_DIR}
         ${CARES_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
+        aws-cpp-sdk-core
+        aws-cpp-sdk-cognito-identity
+        aws-cpp-sdk-identity-management
     )
 
     target_link_libraries(${EXE_NAME}
@@ -187,6 +199,9 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         civetweb-cpp
         ZLIB::ZLIB
         WIL::WIL
+        aws-cpp-sdk-core
+        aws-cpp-sdk-cognito-identity
+        aws-cpp-sdk-identity-management
         Microsoft::DirectXMath
         Microsoft::DirectXTK
         Microsoft::DirectXTex
@@ -306,3 +321,4 @@ CREATE_SERVICE_EXECUTABLE(manual_clipper "src/manual_clipper.cpp" "src/manual_cl
 CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d3d11_image_tester.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(speed_check "src/speed_check.cpp" "src/speed_check.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(audio_sanity_checker "src/audio_sanity_checker.cpp" "src/audio_sanity_checker.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(combat_log_upload_tester "src/combat_log_upload_tester.cpp" "src/combat_log_upload_tester.exe.manifest")

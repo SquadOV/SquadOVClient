@@ -154,7 +154,7 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
 }
 
 std::string WASAPIInterface::getDeviceName(IMMDevice* device) {
-    CComPtr<IPropertyStore> props = nullptr;
+    wil::com_ptr<IPropertyStore> props = nullptr;
     HRESULT hr = device->OpenPropertyStore(STGM_READ, &props);
     if (hr != S_OK) {
         THROW_ERROR("Failed to get audio device props: " << hr);
@@ -174,7 +174,7 @@ std::string WASAPIInterface::getDeviceName(IMMDevice* device) {
     return shared::strings::wcsToUtf8(wDeviceName);
 }
 
-CComPtr<IMMDevice> WASAPIInterface::getDeviceFromName(service::recorder::audio::EAudioDeviceDirection dir, const std::string& name) {
+wil::com_ptr<IMMDevice> WASAPIInterface::getDeviceFromName(service::recorder::audio::EAudioDeviceDirection dir, const std::string& name) {
     // When getting a device by name we have to pretty much go through the list of devices and find the one with a name that matches. F U N.
     try {
         const auto choices = getDeviceListing(dir);
@@ -190,8 +190,8 @@ CComPtr<IMMDevice> WASAPIInterface::getDeviceFromName(service::recorder::audio::
     return nullptr;
 }
 
-CComPtr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
-    CComPtr<IMMDeviceEnumerator> audioEnum;
+wil::com_ptr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
+    wil::com_ptr<IMMDeviceEnumerator> audioEnum;
     HRESULT hr = CoCreateInstance(
         __uuidof(MMDeviceEnumerator),
         NULL,
@@ -207,7 +207,7 @@ CComPtr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
 
     const auto wId = shared::strings::utf8ToWcs(id);
 
-    CComPtr<IMMDevice> device;
+    wil::com_ptr<IMMDevice> device;
     hr = audioEnum->GetDevice(wId.c_str(), &device);
     if (hr != S_OK) {
         LOG_WARNING("Failed to get device from ID: " << hr);
@@ -217,8 +217,8 @@ CComPtr<IMMDevice> WASAPIInterface::getDeviceFromId(const std::string& id) {
     return device;
 }
 
-CComPtr<IMMDevice> WASAPIInterface::getDefaultDevice(service::recorder::audio::EAudioDeviceDirection dir) {
-    CComPtr<IMMDeviceEnumerator> audioEnum;
+wil::com_ptr<IMMDevice> WASAPIInterface::getDefaultDevice(service::recorder::audio::EAudioDeviceDirection dir) {
+    wil::com_ptr<IMMDeviceEnumerator> audioEnum;
     HRESULT hr = CoCreateInstance(
         __uuidof(MMDeviceEnumerator),
         NULL,
@@ -232,7 +232,7 @@ CComPtr<IMMDevice> WASAPIInterface::getDefaultDevice(service::recorder::audio::E
         return nullptr;
     }
 
-    CComPtr<IMMDevice> device;
+    wil::com_ptr<IMMDevice> device;
     hr = audioEnum->GetDefaultAudioEndpoint((dir == service::recorder::audio::EAudioDeviceDirection::Output) ? eRender : eCapture, eConsole, &device);
     if (hr != S_OK) {
         LOG_WARNING("Failed to get default device: " << hr);

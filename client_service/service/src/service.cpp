@@ -10,6 +10,7 @@
 #include "hearthstone/hearthstone_process_handler.h"
 #include "wow/wow_process_handler.h"
 #include "league/league_process_handler.h"
+#include "ff14/ff14_process_handler.h"
 #include "system/state.h"
 #include "system/ipc.h"
 #include "zeromq/zeromq.h"
@@ -30,6 +31,7 @@
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
+#include "api/aws_api.h"
 #include "hardware/hardware.h"
 #include "shared/http/dns_manager.h"
 #include "shared/system/keys.h"
@@ -38,6 +40,7 @@
 #include "shared/squadov/vod.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
+#include "system/notification_hub.h"
 
 #include <algorithm>
 #include <boost/program_options.hpp>
@@ -132,6 +135,7 @@ void defaultMain() {
     auto wow = std::make_unique<service::wow::WoWProcessHandler>();
     auto league = std::make_unique<service::league::LeagueProcessHandler>();
     auto csgo = std::make_unique<service::csgo::CsgoProcessHandler>();
+    auto ff14 = std::make_unique<service::ff14::Ff14ProcessHandler>();
 
     // Sketchy? Fuck yes. But the objet that owns these pointers is the prrocess watcher
     // which will live forever (for better or worse) so this is actually relatively safe.
@@ -142,7 +146,8 @@ void defaultMain() {
         hearthstone.get(),
         wow.get(),
         league.get(),
-        csgo.get()
+        csgo.get(),
+        ff14.get()
     };
 
     // Start process watcher to watch for our supported games.
@@ -155,6 +160,7 @@ void defaultMain() {
     // Note that this covers both League of Legends and Teamfight Tactics as they both share the same game executable.
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::move(league));
     watcher.beginWatchingGame(shared::EGame::CSGO, std::move(csgo));
+    watcher.beginWatchingGame(shared::EGame::Ff14, std::move(ff14));
     watcher.start();
 }
 
@@ -206,19 +212,23 @@ int main(int argc, char** argv) {
         enablePaDebugLogs = true;
     }
 
-    // Do sanity check of DNS.
-    shared::http::getDnsManager();
-
+    LOG_INFO("Checking system hardware..." << std::endl);
     const auto sysHw = service::hardware::getSystemHardware();
     LOG_INFO(sysHw << std::endl);
 
     // Initialize the DNS manager at the very beginning before any network calls are done and we start
     // making calls to CURL/C-ARES.
+    LOG_INFO("Checking DNS..." << std::endl);
     shared::http::getDnsManager();
 
     // Initialize global state and start to listen to messages coming via ZeroMQ about
     // how to update certain state.
+    LOG_INFO("Initializing global state..." << std::endl);
     service::system::getGlobalState();
+
+    // Initialize notification hub.
+    LOG_INFO("Initializing notification HUB..." << std::endl);
+    service::system::getNotificationHub();
 
     // Need to detect NVIDIA GPUs here to deal with #1260. We need to disable use gpu pipeline for nvidia users because
     // what the fuck MSI.
@@ -285,12 +295,6 @@ int main(int argc, char** argv) {
     });
     zeroMqServerClient.start();
 
-    service::api::getGlobalApi()->setSessionIdUpdateCallback([&zeroMqServerClient](const std::string& sessionId){
-        LOG_INFO("SEND SESSION ID: " << sessionId << std::endl);
-        zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_SESSION_ID_TOPIC, sessionId);
-        service::api::getGlobalApi()->setSessionId(sessionId);
-    });
-
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
         // Note that setSessionId also does an API call to pull the current user.
@@ -320,6 +324,9 @@ int main(int argc, char** argv) {
     fs::create_directories(shared::filesystem::getSquadOvDvrSessionFolder());
 
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
+
+    LOG_INFO("Initializing AWS API..." << std::endl);
+    service::api::getAwsApi();
 
 #ifdef NDEBUG
     const auto features = service::api::getGlobalApi()->getSessionFeatures();
@@ -792,6 +799,14 @@ int main(int argc, char** argv) {
         for (const auto& rec: recorderInterfaces) {
             rec->forceStopRecording();
         }
+    });
+
+    LOG_INFO("Setting callback to notification hub..." << std::endl);
+    service::system::getNotificationHub()->addCallback([&zeroMqServerClient](const service::system::NotificationMessage& m){
+        zeroMqServerClient.sendMessage(
+            service::zeromq::ZEROMQ_NOTIFY_ERROR,
+            shared::json::JsonConverter<std::remove_const_t<std::remove_reference_t<decltype(m)>>>::to(m).dump()
+        );
     });
 
     const auto mode = vm["mode"].as<std::string>();

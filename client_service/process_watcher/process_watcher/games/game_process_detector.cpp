@@ -6,6 +6,7 @@
 #include "process_watcher/games/wow_process_detector.h"
 #include "process_watcher/games/league_process_detector.h"
 #include "process_watcher/games/csgo_process_detector.h"
+#include "process_watcher/games/ff14_process_detector.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 
 #include <algorithm>
@@ -53,6 +54,8 @@ std::unique_ptr<GameProcessDetector> createDetectorForGame(shared::EGame game) {
             return std::make_unique<LeagueProcessDetector>();
         case shared::EGame::CSGO:
             return std::make_unique<CsgoProcessDetector>();
+        case shared::EGame::Ff14:
+            return std::make_unique<Ff14ProcessDetector>();
     }
     return nullptr;
 }

@@ -8,6 +8,7 @@ export enum SquadOvGames {
     Csgo,
     WowVanilla,
     WowTbc,
+    Ff14,
     Unknown,
 }
 
@@ -22,6 +23,7 @@ export let allGames = [
     // these two are client side only
     SquadOvGames.WowVanilla,
     SquadOvGames.WowTbc,
+    SquadOvGames.Ff14,
 ]
 
 export let allServerSideGames = [
@@ -32,6 +34,7 @@ export let allServerSideGames = [
     SquadOvGames.Valorant,
     SquadOvGames.WorldOfWarcraft,
     SquadOvGames.Csgo,
+    SquadOvGames.Ff14,
 ]
 
 export function gameToRect(game: SquadOvGames): string {
@@ -54,6 +57,8 @@ export function gameToRect(game: SquadOvGames): string {
             return 'assets/games/wow_vanilla_rect_small.jpg'
         case SquadOvGames.WowTbc:
             return 'assets/games/wow_tbc_rect_small.jpg'
+        case SquadOvGames.Ff14:
+            return 'assets/games/ff14_rect_small.jpg'
         case SquadOvGames.Unknown:
             return ''
     }
@@ -79,6 +84,8 @@ export function gameToIcon(game: SquadOvGames): string {
             return 'assets/wowc-logo.png'
         case SquadOvGames.WowTbc:
             return 'assets/tbc-logo.png'
+        case SquadOvGames.Ff14:
+            return 'assets/ff14-logo'
         case SquadOvGames.Unknown:
             return ''
     }
@@ -104,6 +111,8 @@ export function gameToName(game: SquadOvGames): string {
             return 'World of Warcraft Classic'
         case SquadOvGames.WowTbc:
             return 'Burning Crusade Classic'
+        case SquadOvGames.Ff14:
+            return 'Final Fantasy 14'
         case SquadOvGames.Unknown:
             return 'Unknown'
     }
@@ -129,6 +138,8 @@ export function gameShorthandToGame(str: string): SquadOvGames {
             return SquadOvGames.WowVanilla
         case 'tbc':
             return SquadOvGames.WowTbc
+        case 'ff14':
+            return SquadOvGames.Ff14
     }
     return SquadOvGames.Unknown
 }
