@@ -29,24 +29,6 @@
             >
                 Save & Continue
             </v-btn>
-            <v-btn
-                v-if="this.$store.state.settings.record.useLocalRecording"
-                class="mt-4"
-                color="error"
-                x-small
-                @click="userDisagrees"
-            >
-                Use Auto Upload
-            </v-btn>
-            <v-btn
-                v-else
-                class="mt-4"
-                color="error"
-                x-small
-                @click="userDisagrees"
-            >
-                Use Local Recording
-            </v-btn>
         </template>
     </div>
 </template>
