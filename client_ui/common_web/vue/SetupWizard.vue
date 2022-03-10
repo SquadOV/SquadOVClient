@@ -53,42 +53,6 @@
                                     </v-img>
                                 </v-item>
 
-                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                    <v-img
-                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                        :width="imageWidth"
-                                        :max-width="imageWidth"
-                                        :src="$root.generateAssetUri('assets/lol_box.jpg')"
-                                        contain
-                                        @click="toggle"
-                                    >
-                                    </v-img>
-                                </v-item>
-
-                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                    <v-img
-                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                        :width="imageWidth"
-                                        :max-width="imageWidth"
-                                        :src="$root.generateAssetUri('assets/tft_box.jpg')"
-                                        contain
-                                        @click="toggle"
-                                    >
-                                    </v-img>
-                                </v-item>
-
-                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Riot">
-                                    <v-img
-                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                        :width="imageWidth"
-                                        :max-width="imageWidth"
-                                        :src="$root.generateAssetUri('assets/valorant_box.jpg')"
-                                        contain
-                                        @click="toggle"
-                                    >
-                                    </v-img>
-                                </v-item>
-
                                 <v-item v-slot="{active, toggle}" :value="DynamicSteps.Wow">
                                     <v-img
                                         :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
@@ -130,54 +94,7 @@
                         :key="`content-${idx}`"
                         :step="idx + 2"
                     >
-                        <template v-if="st == DynamicSteps.Riot">
-                            SquadOV uses Riot's official API to obtain details about your matches.
-                            To best ensure your privacy, we require that all users link their Riot account to SquadOV before we automatically record matches for any Riot game.
-
-                            <div class="d-flex justify-center mt-4">
-                                <div class="d-flex align-center" v-if="!!riotAccounts">
-                                    <riot-account-chooser
-                                        v-model="selectedRiotAccount"
-                                        @on-account-change="refreshRiotAccounts"
-                                        :options.sync="riotAccounts"
-                                    >
-                                    </riot-account-chooser>
-
-                                    <v-btn icon @click="refreshRiotAccounts">
-                                        <v-icon>
-                                            mdi-refresh
-                                        </v-icon>
-                                    </v-btn>
-                                </div>
-
-                                <v-progress-circular size="64" indeterminate v-else></v-progress-circular>
-                            </div>
-
-                            <div class="mt-4">
-                                You can always come back to this later by going to the game logs page for any supported Riot Games game.
-                                <b>Recordings for League of Legends and Teamfight Tactics do not work for SEA (Garena).</b>
-                            </div>
-
-                            <div class="mt-4 d-flex justify-center">
-                                <v-checkbox
-                                    v-model="doneRiot"
-                                    label="I've linked my Riot account because if I don't, SquadOV won't record anything (for real)!"
-                                    color="success"
-                                    hide-details
-                                >
-                                </v-checkbox>
-                            </div>
-
-                            <setup-wizard-stepper
-                                class="mt-4"
-                                v-model="step"
-                                :total-steps="totalSteps"
-                                :can-go-next="canGoNext"
-                            >
-                            </setup-wizard-stepper>
-                        </template>
-
-                        <template v-else-if="st == DynamicSteps.Wow">
+                        <template v-if="st == DynamicSteps.Wow">
                             SquadOV depends on World of Warcraft's combat logs to determine when you are raiding, running keystones, or competing in the arena.
                             To ensure World of Warcraft is properly setup, ensure:
 
