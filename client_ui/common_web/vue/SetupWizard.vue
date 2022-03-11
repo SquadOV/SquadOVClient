@@ -36,54 +36,11 @@
                         </p>
 
                         <div class="d-flex flex-column justify-center align-center">
-                            <div class="text-h6">
-                                Select the games you want to setup SquadOV for (all Riot games will be selected if you select one of them)!
-                            </div>
-
-                            <v-item-group class="d-flex flex-wrap justify-center align-center" multiple v-model="gameSteps">
-                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Csgo">
-                                    <v-img
-                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                        :width="imageWidth"
-                                        :max-width="imageWidth"
-                                        :src="$root.generateAssetUri('assets/csgo_box.jpg')"
-                                        contain
-                                        @click="toggle"
-                                    >
-                                    </v-img>
-                                </v-item>
-
-                                <v-item v-slot="{active, toggle}" :value="DynamicSteps.Wow">
-                                    <v-img
-                                        :class="`game ${active ? 'chosen-game' : 'not-chosen-game'} mx-2`"
-                                        :width="imageWidth"
-                                        :max-width="imageWidth"
-                                        :src="$root.generateAssetUri('assets/wow_box.jpg')"
-                                        contain
-                                        @click="toggle"
-                                    >
-                                    </v-img>
-                                </v-item>
-                            </v-item-group>
-
-                            <div class="text-subtitle-2">
-                                If you don't see a supported game here, it means that SquadOV does not require any additional setup to record it!
-                            </div>
-
-                            <v-checkbox
-                                class="mt-4"
-                                v-model="doneSelect"
-                                label="I've selected the games I want SquadOV to record going forward (and I know that games I played in the past won't have VODs)!"
-                                color="success"
-                                hide-details
-                            >
-                            </v-checkbox>
-
                             <setup-wizard-stepper
                                 class="mt-4"
                                 v-model="step"
                                 :total-steps="totalSteps"
-                                :can-go-next="canGoNext"
+                                :can-go-next="true"
                             >
                             </setup-wizard-stepper>
                         </div>
@@ -94,79 +51,7 @@
                         :key="`content-${idx}`"
                         :step="idx + 2"
                     >
-                        <template v-if="st == DynamicSteps.Wow">
-                            SquadOV depends on World of Warcraft's combat logs to determine when you are raiding, running keystones, or competing in the arena.
-                            To ensure World of Warcraft is properly setup, ensure:
-
-                            <ol class="mt-4">
-                                <li>
-                                    You have an automatic combat logger addon installed.
-                                    We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon if you're playing retail.
-                                    We recommend using the <a href="#" @click="goToAcl">AutoCombatLogger</a> addon if you're playing classic (TBC or Vanilla).
-                                </li>
-                                <li>
-                                    In your World of Warcraft settings menu, enable the <b>Advanced Combat Logging</b> option under the "System" and "Network" submenus.
-                                </li>
-                            </ol>
-
-                            <div class="mt-4">
-                                <b>You must also disable any other addons (or their features) that may enable the combat log (Method Raid Tools, LoggerHead, Arena Combat Logger, etc.).</b>
-                            </div>
-
-                            <div class="mt-4 d-flex justify-center">
-                                <v-checkbox
-                                    v-model="doneWow"
-                                    label="I've installed the Simple Combat Logger addon and enabled Advanced Combat Logging. I'm all good to go!"
-                                    color="success"
-                                    hide-details
-                                >
-                                </v-checkbox>
-                            </div>
-
-                            <setup-wizard-stepper
-                                class="mt-4"
-                                v-model="step"
-                                :total-steps="totalSteps"
-                                :can-go-next="canGoNext"
-                            >
-                            </setup-wizard-stepper>
-                        </template>
-
-                        <template v-else-if="st == DynamicSteps.Csgo">
-                            SquadOV works out of the box with CS:GO.
-                            <b>However</b>, you should be aware that we do modify your autoexec file to achieve our automatic recording and squad sync.
-                            In particular we add these lines to your autoexec.cfg:
-
-                            <pre>
-    con_logfile squadov.log
-    con_timestamp 1
-                            </pre>
-                            If these settings already existed in your autoexec, they have been overwritten.
-                            These settings are crucial for getting SquadOV to work with CS:GO.
-
-                            Don't know what we're talking about? You can ignore everything we just said! Enjoy!
-                            <b>Note that we do not currently support FaceIT or ESEA.</b>
-
-                            <div class="mt-4 d-flex justify-center">
-                                <v-checkbox
-                                    v-model="doneCsgo"
-                                    label="Yup, read all that and I know that my autoexec is going to change!"
-                                    color="success"
-                                    hide-details
-                                >
-                                </v-checkbox>
-                            </div>
-
-                            <setup-wizard-stepper
-                                class="mt-4"
-                                v-model="step"
-                                :total-steps="totalSteps"
-                                :can-go-next="canGoNext"
-                            >
-                            </setup-wizard-stepper>
-                        </template>
-
-                        <template v-else-if="st == DynamicSteps.Squad">
+                        <template v-if="st == DynamicSteps.Squad">
                             SquadOV is all about squads which lets you easily sync VODs and view each other's recorded footage.
                             SquadOV is better with friends!
 
