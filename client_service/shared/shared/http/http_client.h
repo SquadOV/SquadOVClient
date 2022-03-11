@@ -28,6 +28,7 @@ using HttpResponsePtr = std::unique_ptr<HttpResponse>;
 // Returns true if the next interceptor should still be run.
 using ResponseInterceptor = std::function<bool(HttpResponse&)>;
 using DownloadUploadProgressFn = std::function<void(size_t, size_t, size_t, size_t)>;
+
 class HttpRequest;
 class HttpClient {
 public:
@@ -84,6 +85,8 @@ private:
     std::vector<ResponseInterceptor> _responseInterceptors;
     std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
 };
+
+bool downloadFileToLocation(const std::string& uri, const std::filesystem::path& dlPath, const DownloadUploadProgressFn& progressFn);
 
 using HttpClientPtr = std::unique_ptr<HttpClient>;
 

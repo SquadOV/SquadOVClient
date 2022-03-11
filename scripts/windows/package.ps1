@@ -8,6 +8,7 @@ cmake --build build-release --config Release --target csgo_demo_retriever
 cmake --build build-release --config Release --target crashpad_handler
 cmake --build build-release --config Release --target speed_check
 cmake --build build-release --config Release --target audio_sanity_checker
+cmake --build build-release --config Release --target automated_game_setup
 
 Set-Location -Path .\build-release\bin\x64\Release
 Set-Location -Path ..\..\..\..\client_ui\common_web

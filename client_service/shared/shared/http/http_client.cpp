@@ -2,6 +2,7 @@
 
 #include "shared/constants.h"
 #include "shared/log/log.h"
+#include "shared/errors/error.h"
 #include "shared/filesystem/utility.h"
 #include "shared/http/dns_manager.h"
 
@@ -141,6 +142,9 @@ HttpRequest::HttpRequest(const std::string& uri, const Headers& headers, bool al
 
     // Prefer IPv4 just in case there's issues with connecting to our servers via IPv6.
     curl_easy_setopt(_curl, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+
+    // Should follow redirects if any
+    curl_easy_setopt(_curl, CURLOPT_FOLLOWLOCATION, 1L);
 }
 
 void HttpRequest::setTimeout(long timeoutSeconds) {
@@ -406,6 +410,31 @@ void HttpClient::tickRateLimit() const {
 
     std::unique_lock<std::shared_mutex> guard(_rateLimitMutex);
     _lastRequestTime = shared::nowUtc();
+}
+
+bool downloadFileToLocation(const std::string& uri, const std::filesystem::path& dlPath, const DownloadUploadProgressFn& progressFn) {
+    fs::create_directories(dlPath.parent_path());
+
+    bool success = false;
+    for (int tries = 0; tries < 3 && !success; ++tries) {
+        LOG_INFO("Try " << tries << " to download: " << uri << std::endl);
+        fs::remove(dlPath);
+
+        shared::http::HttpClient client(uri);
+        if (progressFn) {
+            client.addDownloadProgressFn(progressFn);
+        }
+
+        const auto resp = client.download("", dlPath);
+        if (resp->status != 200) {
+            LOG_ERROR("Failed to download URI: " << resp->body << std::endl);
+            continue;
+        }
+
+        success = true;
+        break;
+    }
+    return success;
 }
 
 }

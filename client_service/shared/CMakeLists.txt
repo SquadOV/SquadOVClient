@@ -31,9 +31,12 @@ SET(SRCS
     shared/url.cpp
     shared/system/keys.cpp
     shared/system/win32/process.cpp
+    shared/system/install.cpp
     shared/image/ico/ico.cpp
     shared/memory/byte_writer.cpp
     shared/valve/vdf_file.cpp
+    shared/wow/toc.cpp
+    shared/wow/wtf.cpp
 )
 
 SET(HEADERS
@@ -71,8 +74,11 @@ SET(HEADERS
     shared/system/win32/hwnd_utils.h
     shared/system/win32/interfaces/win32_system_process_interface.h
     shared/system/interfaces/system_process_interface.h
+    shared/system/install.h
     shared/url.h
     shared/wow/instances.h
+    shared/wow/toc.h
+    shared/wow/wtf.h
     shared/system/keys.h
     shared/system/win32/process.h
     shared/image/ico/ico.h
@@ -104,5 +110,6 @@ target_link_libraries(squadov_shared
     sentry
     cryptopp-static
     Propsys
+    libzip::zip libzippp::libzippp
     ${FFMPEG_LIBRARIES}
 )

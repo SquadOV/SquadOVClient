@@ -39,13 +39,11 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { ipcRenderer } from 'electron'
 import { loadLocalSettings, saveLocalSettings } from '@client/js/system/settings'
-import Funnies from 'funnies'
 
 @Component
 export default class SetupProgress extends Vue {
     statusMessage = 'Loading...'
     showLogout: boolean = false
-    funnies: any = new Funnies()
     showSpeedCheckPrompt: boolean = false
 
     get ranSpeedCheck(): boolean {
@@ -69,20 +67,16 @@ export default class SetupProgress extends Vue {
         this.$emit('finishSpeedCheck')
     }
 
-    refreshStatusMessage() {
-        this.statusMessage = `${this.funnies.message()} (just kidding)`
-    }
-
     async generateSettingsFile() {
         console.log('Generating settings file...')
-        this.refreshStatusMessage()
+        this.statusMessage = `Generating settings file...`
         let settings = await loadLocalSettings()
         return settings
     }
 
     async audioDeviceSanityCheck() {
         console.log('Audio device sanity check...')
-        this.refreshStatusMessage()
+        this.statusMessage = `Checking audio devices...`
 
         let p = new Promise((resolve, reject) => {
             ipcRenderer.on('finish-audio-devices-sanity-check', () => {
@@ -100,7 +94,7 @@ export default class SetupProgress extends Vue {
 
     async userSpeedCheck() {
         console.log('User speed check to SOV Servers...')
-        this.statusMessage = 'Checking your connection speed to SquadOV servers'
+        this.statusMessage = 'Checking your upload speed...'
         let p = new Promise((resolve, reject) => {
             ipcRenderer.on('finish-user-upload-speed-check', () => {
                 resolve(0)
@@ -119,7 +113,7 @@ export default class SetupProgress extends Vue {
         if( this.$store.state.settings.record.useLocalRecording ) {
             speedCheckResults = 'disabled'
         }
-        this.statusMessage = `We detected your upload speed to our servers is ${this.speedCheckResultMbps} Mb/s. As a result, we've ${speedCheckResults} automatic upload.`
+        this.statusMessage = `We detected your upload speed to our servers is ${this.speedCheckResultMbps} mb/s. As a result, we've ${speedCheckResults} automatic upload.`
         return new Promise((resolve, reject) => { 
             this.$on('finishSpeedCheck', () => {
                 resolve(0)
@@ -152,6 +146,19 @@ export default class SetupProgress extends Vue {
         this.showLogout = false
     }
 
+    async automatedGameSetup() {
+        console.log('Doing automated game setup')
+        this.statusMessage = 'Setting up SquadOV...'
+        let p = new Promise((resolve, reject) => {
+            ipcRenderer.on('finish-automated-game-setup', () => {
+                resolve(0)
+            })
+        })
+
+        ipcRenderer.send('request-automated-game-setup')
+        return p
+    }
+
     async doSetupSequence() {
         // 1. The settings.json needs to be generated properly for any of the next steps to happen.
         await this.generateSettingsFile()
@@ -164,7 +171,10 @@ export default class SetupProgress extends Vue {
         // 3. Request a session heartbeat. Things after this will require a valid session ID.
         await this.requestSessionHeartbeat()
 
-        // 4. Check if this user has run a speed check on the current computer.
+        // 4. Automated game setup
+        await this.automatedGameSetup()
+
+        // 5. Check if this user has run a speed check on the current computer.
         if(!this.ranSpeedCheck) {
             await this.userSpeedCheck()
             await this.speedCheckPrompt()

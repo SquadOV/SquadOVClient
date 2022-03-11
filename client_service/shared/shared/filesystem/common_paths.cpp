@@ -113,6 +113,8 @@ std::optional<std::filesystem::path> getSteamInstallFolder() {
     DWORD count = 1024;
     DWORD dwType = REG_SZ;
     res = RegGetValueW(key, L"", L"SteamPath", RRF_RT_REG_SZ, &dwType, path, &count);
+    RegCloseKey(key);
+    
     if (res != ERROR_SUCCESS) {
         LOG_WARNING("Failed to get Steam Path: " << res << std::endl);
         return std::nullopt;

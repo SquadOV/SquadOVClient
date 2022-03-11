@@ -41,6 +41,7 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 * `directxmath:x64-windows`
 * `directxtex:x64-windows`
 * `directx-headers:x64-windows`
+* `libzippp:x64-windows`
 
 ## Build SquadOV Client Service
 

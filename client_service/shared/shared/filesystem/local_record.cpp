@@ -488,44 +488,29 @@ bool LocalRecordingIndexDb::cleanupLocalFolder(double limit) {
 
 void LocalRecordingIndexDb::addLocalEntryFromUri(const std::string& uri, const std::string& md5Checksum, const LocalRecordingIndexEntry& entry, const shared::http::DownloadUploadProgressFn& progressFn) {
     const auto dlPath = shared::filesystem::getSquadOvTempFolder()  / fs::path(entry.relative);
-    fs::create_directories(dlPath.parent_path());
-
-    bool success = false;
-    for (int tries = 0; tries < 3 && !success; ++tries) {
-        LOG_INFO("Try " << tries << " to download: " << uri << std::endl);
-        fs::remove(dlPath);
-
-        shared::http::HttpClient client(uri);
-        client.addDownloadProgressFn(progressFn);
-        const auto resp = client.download("", dlPath);
-        if (resp->status != 200) {
-            THROW_ERROR("Failed to download URI: " << resp->body << std::endl);
-        }
-
-        // If we are given a valid checksum then we need to check to make sure that the file we downloaded
-        // has the correct md5 checksum to ensure file integrity.
-        if (!md5Checksum.empty()) {
-            CryptoPP::Weak::MD5 hash;
-            std::string digest;
-            
-            CryptoPP::FileSource file(
-                dlPath.c_str(),
-                true,
-                new CryptoPP::HashFilter(hash, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(digest)))
-            );
-
-            boost::algorithm::trim(digest);
-            success = boost::iequals(digest, md5Checksum);
-            LOG_INFO("...Comparing MD5 :: " << digest << " [Computed] vs " << md5Checksum << " [Reference]...Success - " << success << std::endl);
-        } else {
-            success = true;
-            break;
-        }
+    if (!shared::http::downloadFileToLocation(uri, dlPath, progressFn)) {
+        THROW_ERROR("Failed to download file: " << uri << std::endl);
+        return;
     }
 
-    if (!success) {
-        THROW_ERROR("Failed to download VOD (md5?)");
-        return;
+    // If we are given a valid checksum then we need to check to make sure that the file we downloaded
+    // has the correct md5 checksum to ensure file integrity.
+    if (!md5Checksum.empty()) {
+        CryptoPP::Weak::MD5 hash;
+        std::string digest;
+        
+        CryptoPP::FileSource file(
+            dlPath.c_str(),
+            true,
+            new CryptoPP::HashFilter(hash, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(digest)))
+        );
+
+        boost::algorithm::trim(digest);
+        LOG_INFO("...Comparing MD5 :: " << digest << " [Computed] vs " << md5Checksum << " [Reference] " << std::endl);
+        if (!boost::iequals(digest, md5Checksum)) {
+            THROW_ERROR("Md5 Checksum Failed on VOD Download.");
+            return;
+        }
     }
 
     addLocalEntryFromFilesystem(dlPath, entry);

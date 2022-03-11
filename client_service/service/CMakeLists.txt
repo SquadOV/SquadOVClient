@@ -168,7 +168,6 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/curl/curl
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
         ${CMAKE_SOURCE_DIR}/deps/sqlite3
-        ${CMAKE_SOURCE_DIR}/deps/libpng
         ${CMAKE_SOURCE_DIR}/deps/portaudio/include
         ${CMAKE_SOURCE_DIR}/deps/cppzmq
         ${CMAKE_SOURCE_DIR}/deps/libzmq/include
@@ -298,7 +297,6 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/client_service/process_watcher
         ${CMAKE_SOURCE_DIR}/deps/date/include
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
-        ${CMAKE_SOURCE_DIR}/deps/libpng
         ${CMAKE_SOURCE_DIR}/deps/half/include
     )
 
@@ -322,3 +320,4 @@ CREATE_SERVICE_EXECUTABLE(d3d11_image_tester "src/d3d11_image_tester.cpp" "src/d
 CREATE_SERVICE_EXECUTABLE(speed_check "src/speed_check.cpp" "src/speed_check.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(audio_sanity_checker "src/audio_sanity_checker.cpp" "src/audio_sanity_checker.exe.manifest")
 CREATE_SERVICE_EXECUTABLE(combat_log_upload_tester "src/combat_log_upload_tester.cpp" "src/combat_log_upload_tester.exe.manifest")
+CREATE_SERVICE_EXECUTABLE(automated_game_setup "src/automated_game_setup.cpp" "src/automated_game_setup.exe.manifest")

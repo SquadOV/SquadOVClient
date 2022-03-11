@@ -162,6 +162,7 @@ if (!singleLock) {
     })
 }
 
+postStart = false
 function start() {
     win.on('minimize', (e) => {
         if (!!appSettings.minimizeToTray) {
@@ -747,7 +748,7 @@ function startSessionHeartbeat(onBeat) {
 
                     // Need to make sure we recover from the session error page when we successfully reconnect
                     // to the server.
-                    if (!!win && !win.webContents.getURL().includes('index.html')) {
+                    if (!!win && !win.webContents.getURL().includes('index.html') && postStart) {
                         win.loadFile('index.html')
                     }
                     
@@ -881,6 +882,8 @@ app.on('ready', async () => {
         if (!hidden) {
             win.show()
         }
+
+        postStart = true
     })
 
     if (!parseInt(process.env.SQUADOV_MANUAL_SERVICE)) {
@@ -1146,6 +1149,29 @@ ipcMain.on('user-upload-speed-check', () => {
         log.warn('Failed to find upload speed check exe: ', sanityExe)
         if (!!setupWindow) {
             setupWindow.webContents.send('finish-user-upload-speed-check')
+        }
+    }
+})
+
+ipcMain.on('request-automated-game-setup', () => {
+    let exePath = getClientExePath()
+
+    // Run a custom mode in the client service executable to do the speed check.
+    // This currently seems to stall it for 10 seconds before it proceeds to open the actual application... Not a big fan of that.
+    let sanityExe = path.join(path.dirname(exePath), 'automated_game_setup.exe')
+    if (fs.existsSync(sanityExe)) {
+        exec(`"${sanityExe}"`, {
+            cwd: path.dirname(sanityExe)
+        }, (error, stdout, stderr) => {
+            console.log(error, stdout, stderr)
+            if (!!setupWindow) {
+                setupWindow.webContents.send('finish-automated-game-setup')
+            }
+        })
+    } else {
+        log.warn('Failed to find game setup exe: ', sanityExe)
+        if (!!setupWindow) {
+            setupWindow.webContents.send('finish-automated-game-setup')
         }
     }
 })

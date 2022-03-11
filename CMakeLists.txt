@@ -77,6 +77,8 @@ find_package(Boost 1.74.0 REQUIRED
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_subdirectory(deps)
+
+    find_package(libzippp CONFIG REQUIRED)
 endif()
 add_subdirectory(client_service)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)

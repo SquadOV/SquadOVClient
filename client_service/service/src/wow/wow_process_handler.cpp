@@ -11,6 +11,8 @@
 #include "shared/env.h"
 #include "shared/wow/instances.h"
 #include "shared/uuid.h"
+#include "shared/system/install.h"
+#include "system/notification_hub.h"
 
 #include <atomic>
 #include <unordered_map>
@@ -163,6 +165,27 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 
     if (!_process.empty()) {
         _logWatcher->loadFromExecutable(p.path());
+
+        const auto release = shared::gameToWowRelease(_finalGame);
+        if (!shared::system::hasWowCombatLogAddonInstalled(_process.path(), release)) {
+            LOG_WARNING("No Combat Log Addon Installed." << std::endl);
+            DISPLAY_NOTIFICATION(
+                service::system::NotificationSeverity::Error,
+                service::system::NotificationDisplayType::NativeNotification,
+                "SquadOV :: WoW Configuration",
+                "No valid combat log addon installed. Please check our support site (https://support.squadov.gg) for instructions."
+            );
+        }
+
+        if (!shared::system::hasWowAdvancedCombatLoggingTurnedOn(_process.path())) {
+            LOG_WARNING("Advanced combat log not turned on." << std::endl);
+            DISPLAY_NOTIFICATION(
+                service::system::NotificationSeverity::Error,
+                service::system::NotificationDisplayType::NativeNotification,
+                "SquadOV :: WoW Configuration",
+                "Advanced combat logging not turned on. Please check our support site (https://support.squadov.gg) for instructions."
+            );
+        }
     } else {
         LOG_WARNING("Empty process. May or may not be an error?" << std::endl);
     }

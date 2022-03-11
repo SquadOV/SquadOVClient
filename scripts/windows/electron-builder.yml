@@ -65,6 +65,7 @@ extraResources:
       - "crashpad_handler.exe"
       - "speed_check.exe"
       - "audio_sanity_checker.exe"
+      - "automated_game_setup.exe"
       - "ffmpeg.exe"
       - "shaders/*"
       - "models/*"

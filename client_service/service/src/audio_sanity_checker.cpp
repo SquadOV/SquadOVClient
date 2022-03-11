@@ -1,5 +1,4 @@
 #include "shared/log/log.h"
-#include "shared/time/ntp_client.h"
 #include "system/settings.h"
 #include "shared/strings/strings.h"
 #include "shared/filesystem/common_paths.h"
@@ -48,10 +47,6 @@ void sanitize(service::system::AudioDeviceSettings& device, service::recorder::a
 int main(int argc, char** argv) {
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     shared::log::Log::initializeGlobalLogger("audio_sanity.log");
-
-    // NTP can't be init before the logger since we log stuff inside the NTP client.
-    shared::time::NTPClient::singleton()->enable(true);
-    shared::time::NTPClient::singleton()->initialize();
 
     LOG_INFO("Starting Audio Sanity Checker..." << std::endl);
     service::system::getCurrentSettings()->reloadSettingsFromFile();
