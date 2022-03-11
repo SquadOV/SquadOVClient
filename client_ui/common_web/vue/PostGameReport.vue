@@ -152,7 +152,7 @@ export default class PostGameReport extends mixins(CommonComponent) {
             if (this.recentMatches.length > 0 || this.processingMatches.length > 0) {
                 ipcRenderer.send('request-restore')
             } else {
-                //this.$router.back()
+                this.$router.back()
             }
 ///#endif
         }).catch((err : any) => {
