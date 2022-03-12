@@ -31,7 +31,7 @@ private:
     std::thread _recordingThread;
     service::renderer::D3d11SharedContextPtr _self;
 
-    void initialize();
+    void initialize(bool checkRunning);
     void reacquireDuplicationInterface();
     void createDefaultTexture();
 

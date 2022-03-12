@@ -24,7 +24,7 @@ DxgiDesktopRecorder::DxgiDesktopRecorder(HWND window, DWORD pid):
     _pid(pid) {
 
     // Need to initialize immediately to detect if DXGI isn't supported so we can error out appropriately.
-    initialize();
+    initialize(false);
 
     TCHAR windowTitle[1024];
     GetWindowTextA(_window, windowTitle, 1024);
@@ -97,11 +97,11 @@ void DxgiDesktopRecorder::createDefaultTexture() {
     LOG_INFO("...Successfully created default texture [default]." << std::endl);
 }
 
-void DxgiDesktopRecorder::initialize() {
+void DxgiDesktopRecorder::initialize(bool checkRunning) {
     LOG_INFO("Initialize DXGI..." << std::endl);
 #if !DISABLE_ALT_TAB_PROTECTION
     // Wait for the window to become unminimized so that we can grab the correct monitor.
-    while (IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) {
+    while ((IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) && (!checkRunning || _recording)) {
         LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
 
         TCHAR windowTitle[1024];
@@ -114,6 +114,11 @@ void DxgiDesktopRecorder::initialize() {
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500ms));
     }
+
+    if (checkRunning && !_recording) {
+        return;
+    }
+
 #endif
 
     LOG_INFO("Continuing DXGI initialization since window/process is foreground..." << std::endl);
@@ -211,8 +216,15 @@ void DxgiDesktopRecorder::startRecording() {
             HMONITOR testMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
             if (testMonitor != _refMonitor) {
                 LOG_WARNING("Detected monitor drift..." << std::endl);
-                initialize();
-                createDefaultTexture();
+                initialize(true);
+
+                if (_recording) {
+                    createDefaultTexture();
+                }
+            }
+
+            if (!_recording) {
+                break;
             }
 
             // MSDN recommends calling ReleaseFrame right before AcquireNextFrame for performance reasons.
