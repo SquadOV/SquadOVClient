@@ -125,6 +125,10 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
         }).filter((ele: VodAssociation | null) => !!ele)
     }
 
+    get friendlyPovSet(): Set<string> {
+        return new Set(this.friendlyPovs.map((ele: VodAssociation) => ele.videoUuid))
+    }
+
     get enemyPovs(): VodAssociation[] {
         if (!this.currentSteamId) {
             return []
