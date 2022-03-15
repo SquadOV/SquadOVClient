@@ -1086,7 +1086,7 @@ class ApiServer {
         }
     }
 
-    async getCohortSize(interval, start, end) {
+    async getCohortSize(interval, start, end, onlyActive) {
         let pgInterval
         if (interval == 0) {
             pgInterval = 'day'
@@ -1107,10 +1107,13 @@ class ApiServer {
         )
         SELECT
             s.tm AS "cohort_key",
-            COUNT(u.id) AS "count"
+            COUNT(DISTINCT u.id) AS "count"
         FROM series AS s
         LEFT JOIN squadov.users AS u
             ON u.registration_time >= s.tm AND u.registration_time < s.tm + INTERVAL '1 ${pgInterval}'
+        ${
+            onlyActive ? 'INNER JOIN squadov.daily_active_endpoint AS dae ON dae.user_id = u.id' : ''
+        }
         GROUP BY cohort_key
         `
 
@@ -1169,7 +1172,7 @@ class ApiServer {
             [start, end]
         )
 
-        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortSizes = await this.getCohortSize(interval, start, end, false)
         let cohortData = new Map()
         for (let [key, size] of cohortSizes) {
             cohortData.set(key, {
@@ -1243,7 +1246,7 @@ class ApiServer {
             [start, end]
         )
 
-        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortSizes = await this.getCohortSize(interval, start, end, true)
         let cohortData = new Map()
         for (let [key, size] of cohortSizes) {
             cohortData.set(key, {
@@ -1318,7 +1321,7 @@ class ApiServer {
             [start, end]
         )
 
-        let cohortSizes = await this.getCohortSize(interval, start, end)
+        let cohortSizes = await this.getCohortSize(interval, start, end, true)
         let cohortData = new Map()
         for (let [key, size] of cohortSizes) {
             cohortData.set(key, {
