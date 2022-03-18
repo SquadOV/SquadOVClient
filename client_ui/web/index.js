@@ -5,6 +5,7 @@ const path = require('path')
 const ejs = require('ejs')
 const fs = require('fs')
 const bent = require('bent')
+const { escape } = require('html-escaper')
 app.set('view engine', 'ejs');
 app.use('/dist', express.static(__dirname + '/dist'))
 app.use('/assets', express.static(__dirname + '/assets'))
@@ -38,6 +39,7 @@ app.get('*', async function (request, response) {
             try {
                 const resp = await bent(apiUrl, 'GET', 200)(`/meta?share=${p}`)
                 meta = await resp.json()
+                meta.metaTitle = escape(meta.metaTitle)
             } catch (e) {
                 console.log('Failed to get share meta for: ', p)
                 hasTwitterCard = false

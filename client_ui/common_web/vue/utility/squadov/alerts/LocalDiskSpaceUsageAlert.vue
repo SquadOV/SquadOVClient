@@ -36,7 +36,10 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
+
+///#if DESKTOP
 import checkDiskSpace from 'check-disk-space'
+///#endif
 import * as pi from '@client/js/pages'
 
 @Component
@@ -90,12 +93,14 @@ export default class LocalDiskSpaceUsageAlert extends Vue {
             this.showStorageWarning = true
         }
 
+///#if DESKTOP
         checkDiskSpace(this.$store.state.settings.record.localRecordingLocation).then((ds: any) => {
             this.diskSpaceGBLeft = ds.free / 1024.0 / 1024.0 / 1024.0
             if (this.diskSpaceGBLeft < 10 && !this.isAlarmMute) {
                 this.showStorageWarning = true
             }
         })
+///#endif
     }
 
     muteAlert() {
