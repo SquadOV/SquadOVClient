@@ -1441,7 +1441,7 @@ class ApiClient {
     }
 
     getCsgoMatchData(matchUuid: string, userId: number): Promise<ApiData<CsgoFullMatchData>> {
-        return axios.get(`v1/csgo/user/${userId}/match/${matchUuid}`, this.createWebAxiosConfig()).then((resp: ApiData<CsgoFullMatchData>) => {
+        return axios.get(`v1/csgo/user/${userId}/match/${matchUuid}`, this.createWebAxiosConfig(true)).then((resp: ApiData<CsgoFullMatchData>) => {
             cleanCsgoFullMatchDataFromJson(resp.data)
             return resp
         })
