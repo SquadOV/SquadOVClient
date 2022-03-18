@@ -97,6 +97,7 @@ export interface SquadOvRecordingSettings {
     voiceFilterThresholdDb: number
     useVoiceSpeechNoiseReduction: boolean
     needConfirmManualStop: boolean
+    useCbr: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -368,6 +369,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
+                useCbr: false,
             }
         case BaselineLevel.Medium:
             record = {
@@ -414,6 +416,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
+                useCbr: false,
             }
         case BaselineLevel.High:
             record = {
@@ -460,6 +463,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 voiceFilterThresholdDb: -60,
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
+                useCbr: false,
             }
     }
 
@@ -532,6 +536,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             voiceFilterThresholdDb: -60,
             useVoiceSpeechNoiseReduction: false,
             needConfirmManualStop: true,
+            useCbr: false,
         },
         keybinds: {
             pushToTalk: [],
@@ -791,6 +796,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.games.wow.showAddonWarnings === undefined) {
             parsedData.games.wow.showAddonWarnings = true
+        }
+
+        if (parsedData.record.useCbr === undefined) {
+            parsedData.record.useCbr = false
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

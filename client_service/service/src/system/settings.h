@@ -65,6 +65,8 @@ struct RecordingSettings {
     bool useVoiceBasicNoiseFilter = false;
     int32_t voiceFilterThresholdDb = -60;
     bool useVoiceSpeechNoiseReduction = false;
+    
+    bool useCbr = false;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

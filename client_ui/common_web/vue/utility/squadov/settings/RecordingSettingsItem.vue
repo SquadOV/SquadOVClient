@@ -34,6 +34,27 @@
                                 outlined
                             >
                             </v-select>
+
+                            <v-checkbox
+                                class="ma-0"
+                                :input-value="$store.state.settings.record.useCbr"
+                                @change="$store.commit('changeUseCbr', arguments[0])"
+                                hide-details
+                                label="Use CBR"
+                                v-if="!mini"
+                            >
+                                <template v-slot:append>
+                                    <v-tooltip bottom max-width="450px">
+                                        <template v-slot:activator="{on, attrs}">
+                                            <v-icon v-on="on" v-bind="attrs">
+                                                mdi-help-circle
+                                            </v-icon>
+                                        </template>
+
+                                        Whether to use a constant (instead a variable one) bitrate for your videos. This may result in higher quality and larger videos.
+                                    </v-tooltip>
+                                </template>
+                            </v-checkbox>
                         </div>
                     </v-col>
 

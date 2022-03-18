@@ -94,6 +94,7 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.useVoiceBasicNoiseFilter = obj.value("useVoiceBasicNoiseFilter", false);
     settings.voiceFilterThresholdDb = obj.value("voiceFilterThresholdDb", -60);
     settings.useVoiceSpeechNoiseReduction = obj.value("useVoiceSpeechNoiseReduction", false);
+    settings.useCbr = obj.value("useCbr", false);
     return settings;
 }
 

@@ -514,7 +514,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
                     av_dict_set(&options, "profile", "high", 0);
                 }
 
-                {
+                if (!settings.useCbr) {
+                    LOG_INFO("...Using VBR." << std::endl);
                     // Per-encoder settings. Mainly for VBR.
                     if (enc.name == "h264_mf") {
                         // FFmpeg uses the bitrate as the mean bit rate to use.
@@ -526,6 +527,21 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
                         av_dict_set(&options, "rc", "vbr", 0);
                     } else if (enc.name == "h264_amf") {
                         av_dict_set(&options, "rc", "vbr_peak", 0);
+                    } else if (enc.name == "libopenh264") {
+                        av_dict_set(&options, "rc_mode", "bitrate", 0);
+                    }
+                } else {
+                    LOG_INFO("...Using CBR." << std::endl);
+                    if (enc.name == "h264_mf") {
+                        // FFmpeg uses the bitrate as the mean bit rate to use.
+                        av_dict_set(&options, "rate_control", "cbr", 0);
+                    } else if (enc.name == "h264_nvenc") {
+                        // bit_rate => averageBitRate
+                        // rc_max_rate => maxBitRate
+                        // rc_buffer_size => vbvBufferSize
+                        av_dict_set(&options, "rc", "cbr", 0);
+                    } else if (enc.name == "h264_amf") {
+                        av_dict_set(&options, "rc", "cbr", 0);
                     } else if (enc.name == "libopenh264") {
                         av_dict_set(&options, "rc_mode", "bitrate", 0);
                     }
