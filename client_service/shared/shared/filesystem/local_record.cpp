@@ -370,6 +370,11 @@ bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
         return false;
     }
 
+    if (!fs::is_empty(absTo)) {
+        LOG_WARNING("Can not switch to a folder that's non-empty: " << absTo << std::endl);
+        return false;
+    }
+
     // (source , destination)
     std::vector<std::pair<fs::path, fs::path>> migrationTasks;
     std::vector<std::pair<fs::path, fs::path>> completedTasks;

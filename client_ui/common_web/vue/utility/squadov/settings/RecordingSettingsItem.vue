@@ -627,7 +627,7 @@
                     :timeout="5000"
                     color="error"
                 >
-                    Something went wrong changin a local recording setting, please try again!
+                    Something went wrong changing a local recording setting. You can not change the local recording folder to a root directory or a non-empty folder.
                 </v-snackbar>
 
                 <v-dialog
