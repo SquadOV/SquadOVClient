@@ -15,9 +15,9 @@
         <div class="d-flex align-center">
             <div>
                 Local Storage location is running low. You only have
-                {{ Math.round(storageGBLeft * 100) / 100 }}GB left. Either
-                delete existing videos from Library > Local or permit SquadOV to
-                use more space.
+                {{ Math.round(Math.min(storageGBLeft, diskSpaceGBLeft) * 100) / 100 }}GB left. Either
+                delete existing videos from Library > Local, permit SquadOV to
+                use more space, or clean up space on your hard drive.
             </div>
 
             <v-spacer></v-spacer>
@@ -36,13 +36,16 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
+import checkDiskSpace from 'check-disk-space'
 import * as pi from '@client/js/pages'
 
 @Component
 export default class LocalDiskSpaceUsageAlert extends Vue {
     localDiskSpaceUsageAlertHeight: number = 45
     showStorageWarning: boolean = false
+    showDiskSpaceWarning: boolean = false
     storageGBLeft: number = 0
+    diskSpaceGBLeft: number = 999999999
 
     get maxLocalRecordingSizeGb(): number {
         return this.$store.state.settings.record.maxLocalRecordingSizeGb
@@ -86,6 +89,13 @@ export default class LocalDiskSpaceUsageAlert extends Vue {
         if ((this.storageGBLeft < 10 || storagePercentLeft < 10) && !this.isAlarmMute) {
             this.showStorageWarning = true
         }
+
+        checkDiskSpace(this.$store.state.settings.record.localRecordingLocation).then((ds: any) => {
+            this.diskSpaceGBLeft = ds.free / 1024.0 / 1024.0 / 1024.0
+            if (this.diskSpaceGBLeft < 10 && !this.isAlarmMute) {
+                this.showStorageWarning = true
+            }
+        })
     }
 
     muteAlert() {

@@ -352,6 +352,37 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings->fps = std::min(_cachedRecordingSettings->fps, features.maxRecordFps);
         _cachedRecordingSettings->bitrateKbps = std::min(_cachedRecordingSettings->bitrateKbps, features.maxBitrateKbps);
         _cachedRecordingSettings->useLocalRecording = _cachedRecordingSettings->useLocalRecording || !features.allowRecordUpload;
+
+        if (_cachedRecordingSettings->useLocalRecording) {
+#ifdef _WIN32
+            ULARGE_INTEGER freeBytesForCaller = {0};
+            ULARGE_INTEGER totalBytes = {0};
+            ULARGE_INTEGER freeBytes = {0};
+            if (GetDiskFreeSpaceExW(
+                _cachedRecordingSettings->localRecordingLocation.native().c_str(),
+                &freeBytesForCaller,
+                &totalBytes,
+                &freeBytes)) {
+                LOG_INFO("Performing Local Recording: " << _cachedRecordingSettings->localRecordingLocation << std::endl
+                    << "\tFree Bytes For Caller (GB): " << freeBytesForCaller.QuadPart / 1024.0 / 1024.0 / 1024.0 << std::endl
+                    << "\tTotal Bytes (GB): " << totalBytes.QuadPart / 1024.0 / 1024.0 / 1024.0 << std::endl
+                    << "\tFree Bytes (GB): " << freeBytes.QuadPart / 1024.0 / 1024.0 / 1024.0 << std::endl
+                );
+
+                if ((freeBytesForCaller.QuadPart  / 1024.0 / 1024.0 / 1024.0) <= 10.0) {
+                    LOG_WARNING("!!! LOW DISK SPACE FOR LOCAL RECORDING !!!" << std::endl);
+                    DISPLAY_NOTIFICATION(
+                        service::system::NotificationSeverity::Error,
+                        service::system::NotificationDisplayType::NativeNotification,
+                        "SquadOV :: Low Disk Space",
+                        "You have local recording turned on and are running out of space on your hard drive. Your VODs may not be saved!"
+                    );
+                }
+            } else {
+                LOG_WARNING("Failed to measure disk space on user machine: " << shared::errors::getWin32ErrorAsString() << std::endl);
+            }
+#endif
+        }
     }
 
     if (!_process.empty() && (!_cachedWindowInfo || !_cachedWindowInfo->init)) {
