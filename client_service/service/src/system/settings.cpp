@@ -127,6 +127,7 @@ WowSettings WowSettings::fromJson(const nlohmann::json& obj) {
     settings.recordEncounters = obj.value("recordEncounters", true);
     settings.recordScenarios = obj.value("recordScenarios", true);
     settings.minimumTimeSecondsToRecord = obj.value("minimumTimeSecondsToRecord", 15);
+    settings.showAddonWarnings = obj.value("showAddonWarnings", true);
     if (obj.find("doNotRecordInstances") != obj.end() && obj.count("doNotRecordInstances") > 0) {
         for (const auto& o : obj["doNotRecordInstances"]) {
             settings.doNotRecordInstances.push_back(WowDisabledInstance::fromJson(o));

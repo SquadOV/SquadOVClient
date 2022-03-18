@@ -223,6 +223,29 @@
                             </template>
                         </v-checkbox>
                     </v-col>
+
+                    <v-col cols="3">
+                        <v-checkbox
+                            class="ma-0 squeeze"
+                            :input-value="$store.state.settings.games.wow.showAddonWarnings"
+                            @change="$store.commit('changeWowShowAddonWarnings', arguments[0])"
+                            label="Show Addon Warnings"
+                            hide-details
+                            dense
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    Whether to warn you if you have an unexpected or not recommended combat log addon setup. Only turn this off if you know what you're doing.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
                 </v-row>
 
                 <v-row align="center">

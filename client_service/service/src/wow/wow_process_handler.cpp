@@ -167,7 +167,8 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
         _logWatcher->loadFromExecutable(p.path());
 
         const auto release = shared::gameToWowRelease(_finalGame);
-        if (!shared::system::hasWowCombatLogAddonInstalled(_process.path(), release)) {
+        const auto clAddons = shared::system::hasWowCombatLogAddonInstalled(_process.path(), release);
+        if (clAddons.empty()) {
             LOG_WARNING("No Combat Log Addon Installed." << std::endl);
             DISPLAY_NOTIFICATION(
                 service::system::NotificationSeverity::Error,
@@ -175,6 +176,22 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
                 "SquadOV :: WoW Configuration",
                 "No valid combat log addon installed. Please check our support site (https://support.squadov.gg) for instructions."
             );
+        } else {
+            bool hasRec = false;
+            for (const auto& cl: clAddons) {
+                LOG_INFO("Found CL Addon: " << cl << std::endl);
+                hasRec |= shared::system::isRecommendedCombatLogAddon(cl, release);
+            }
+
+            const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
+            if (!hasRec && wowSettings.showAddonWarnings) {
+                DISPLAY_NOTIFICATION(
+                    service::system::NotificationSeverity::Error,
+                    service::system::NotificationDisplayType::NativeNotification,
+                    "SquadOV :: WoW Configuration",
+                    "You are not using the recommended combat log addon. Unless you know what you're doing, please check our support site (https://support.squadov.gg) for instructions. You can turn this warning off in SquadOV's settings."
+                );
+            }
         }
 
         if (!shared::system::hasWowAdvancedCombatLoggingTurnedOn(_process.path())) {

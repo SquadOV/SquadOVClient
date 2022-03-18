@@ -202,6 +202,7 @@ export interface WowSettings {
     recordScenarios: boolean
     minimumTimeSecondsToRecord: number
     doNotRecordInstances: WowDisabledInstance[]
+    showAddonWarnings: boolean
 }
 
 function createEmptyWowSettings(): WowSettings {
@@ -216,6 +217,7 @@ function createEmptyWowSettings(): WowSettings {
         recordScenarios: true,
         minimumTimeSecondsToRecord: 15,
         doNotRecordInstances: [],
+        showAddonWarnings: true,
     }
 }
 
@@ -785,6 +787,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.useHwAccel === undefined) {
             parsedData.useHwAccel = true
+        }
+
+        if (parsedData.games.wow.showAddonWarnings === undefined) {
+            parsedData.games.wow.showAddonWarnings = true
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

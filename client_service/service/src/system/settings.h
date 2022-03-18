@@ -92,6 +92,7 @@ struct WowSettings {
     bool recordEncounters = true;
     bool recordScenarios = true;
     int32_t minimumTimeSecondsToRecord = 15;
+    bool showAddonWarnings = true;
 
     // This is stored twice: doNotRecordInstances is the raw data stored in the settings JSON.
     // We also need a better way to query it: first by wow release and second by instance id to see

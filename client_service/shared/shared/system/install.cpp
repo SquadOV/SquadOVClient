@@ -149,13 +149,13 @@ std::optional<fs::path> getExecutableInstalledPath(shared::EGame game) {
     return exeLocation;
 }
 
-bool hasWowCombatLogAddonInstalled(const std::filesystem::path& exePath, shared::EWowRelease release) {
+std::vector<std::string> hasWowCombatLogAddonInstalled(const std::filesystem::path& exePath, shared::EWowRelease release) {
     const fs::path addonDirectory = exePath.parent_path() / fs::path("Interface") / fs::path("Addons");
     if (!fs::exists(addonDirectory)) {
-        return false;   
+        return {};   
     }
 
-    bool ret = false;
+    std::vector<std::string> ret;
     for (const auto& entry : fs::directory_iterator(addonDirectory)) {
         if (!entry.is_directory()) {
             continue;
@@ -191,11 +191,11 @@ bool hasWowCombatLogAddonInstalled(const std::filesystem::path& exePath, shared:
             while (std::getline(f, line)) {
                 if (std::regex_search(line, COMBAT_LOGGING_REGEX)) {
                     LOG_INFO("\tFOUND COMBAT LOG ADDON." << std::endl);
-                    if (ret) {
+                    if (!ret.empty()) {
                         LOG_WARNING("!!!!!!! FOUND A DUPLICATE COMBAT LOGGING ADDON !!!!!!!" << std::endl);
                     }
                     goNext = true;
-                    ret = true;
+                    ret.push_back(shared::filesystem::pathUtf8(entry.path().filename()));
                     break;
                 }
             }
@@ -206,6 +206,18 @@ bool hasWowCombatLogAddonInstalled(const std::filesystem::path& exePath, shared:
         }
     }
     return ret;
+}
+
+bool isRecommendedCombatLogAddon(const std::string& addon, shared::EWowRelease release) {
+    const std::string cmpString = boost::algorithm::trim_copy(addon);
+    switch (release) {
+        case shared::EWowRelease::Retail:
+            return cmpString == "SimpleCombatLogger";
+        case shared::EWowRelease::Tbc:
+        case shared::EWowRelease::Vanilla:
+            return cmpString == "AutoCombatLogger";
+    }
+    return false;
 }
 
 void installCombatLogAddonForWow(const std::filesystem::path& exePath, shared::EWowRelease release) {

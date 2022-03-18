@@ -538,7 +538,16 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.useHwAccel = v
             saveLocalSettings(state.settings)
 /// #endif            
-        }
+        },
+        changeWowShowAddonWarnings(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.games.wow.showAddonWarnings = v
+            saveLocalSettings(state.settings)
+/// #endif            
+        },
     },
     actions: {
         async reloadLocalSettings(context) {
