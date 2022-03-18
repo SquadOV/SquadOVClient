@@ -40,6 +40,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         displayInviteFriendPopUp: false,
         forceHideNav: false,
         cachedIp: null,
+        requiresRestart: false,
     },
     mutations: {
         attemptUserLoad(state: RootState, b: boolean) {
@@ -528,6 +529,16 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeUseHwAccel(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.requiresRestart = true
+            state.settings.useHwAccel = v
+            saveLocalSettings(state.settings)
+/// #endif            
+        }
     },
     actions: {
         async reloadLocalSettings(context) {

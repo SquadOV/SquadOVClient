@@ -262,6 +262,7 @@ export interface SquadOvLocalSettings {
     disablePostGamePopup: boolean
     disabledGames: SquadOvGames[]
     games: PerGameSettings
+    useHwAccel: boolean
 }
 
 function getSettingsFname() : string {
@@ -481,6 +482,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
+        useHwAccel: true,
     }
 /// #else
     return {
@@ -548,6 +550,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         disablePostGamePopup: false,
         disabledGames: [],
         games: createEmptyPerGameSettings(),
+        useHwAccel: true,
     }
 /// #endif
 }
@@ -780,6 +783,9 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.record.bitrateKbps = 6000
         }
 
+        if (parsedData.useHwAccel === undefined) {
+            parsedData.useHwAccel = true
+        }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
         parsedData = await generateDefaultSettings()

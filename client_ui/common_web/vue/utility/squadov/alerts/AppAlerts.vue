@@ -11,6 +11,12 @@
                 v-if="isDesktop"
             >
             </disabled-games-alert>
+
+            <requires-restart-alert
+                width="100%"
+                v-if="isDesktop"
+            >
+            </requires-restart-alert>
         </v-list>
     </div>
 </template>
@@ -21,12 +27,14 @@ import Component from 'vue-class-component'
 import EmailVerificationAlert from '@client/vue/utility/squadov/alerts/EmailVerificationAlert.vue'
 import LocalDiskSpaceUsageAlert from '@client/vue/utility/squadov/alerts/LocalDiskSpaceUsageAlert.vue'
 import DisabledGamesAlert from '@client/vue/utility/squadov/alerts/DisabledGamesAlert.vue'
+import RequiresRestartAlert from '@client/vue/utility/squadov/alerts/RequiresRestartAlert.vue'
 
 @Component({
     components: {
         EmailVerificationAlert,
         LocalDiskSpaceUsageAlert,
         DisabledGamesAlert,
+        RequiresRestartAlert,
     },
 })
 export default class AppAlerts extends Vue {

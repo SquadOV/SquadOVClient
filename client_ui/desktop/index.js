@@ -106,35 +106,52 @@ let editorWin
 let tray
 let isQuitting = false
 
+const hwAccelDisableFname = path.join(getAppDataFolder(), '.disableHwAccel')
+function loadHwAccelSettings() {
+    if (fs.existsSync(hwAccelDisableFname)) {
+        console.log('Disabling HW Acceleration')
+        app.disableHardwareAcceleration()
+    }
+}
+
 let appSettings = null
 function loadAppSettings() {
     const fname = path.join(process.env.SQUADOV_USER_APP_FOLDER, 'settings.json')
     if (fs.existsSync(fname)) {
         const data = fs.readFileSync(fname)
         appSettings = JSON.parse(data)
-    }
 
-    if (app.isPackaged) {
-        const appFolder = path.dirname(process.execPath)
-        const updateExe = path.resolve(appFolder , '..', 'Update.exe')
-        const exeName = path.basename(process.execPath)
-
-        /*
-        app.setLoginItemSettings({
-            openAtLogin: appSettings.runOnStartup === true,
-            path: updateExe,
-            args: [
-                '--processStart', `"${exeName}"`,
-                '--process-start-args', '"--hidden"'
-            ]
-        })
-        */
-        app.setLoginItemSettings({
-            openAtLogin: appSettings.runOnStartup === true,
-            args: [
-                '--hidden'
-            ]
-        })
+        // HW acceleration change only gets changed upon the next restart.
+        if (!appSettings.useHwAccel && appSettings.useHwAccel !== undefined) {
+            fs.closeSync(fs.openSync(hwAccelDisableFname, 'w'))
+        } else if (fs.existsSync(hwAccelDisableFname)) {
+            fs.rmSync(hwAccelDisableFname)
+        }
+    
+        if (app.isPackaged) {
+            const appFolder = path.dirname(process.execPath)
+            const updateExe = path.resolve(appFolder , '..', 'Update.exe')
+            const exeName = path.basename(process.execPath)
+    
+            /*
+            app.setLoginItemSettings({
+                openAtLogin: appSettings.runOnStartup === true,
+                path: updateExe,
+                args: [
+                    '--processStart', `"${exeName}"`,
+                    '--process-start-args', '"--hidden"'
+                ]
+            })
+            */
+            app.setLoginItemSettings({
+                openAtLogin: appSettings.runOnStartup === true,
+                args: [
+                    '--hidden'
+                ]
+            })
+        }
+    } else {
+        console.log('No Settings File Found.')
     }
 }
 
@@ -768,6 +785,7 @@ function startSessionHeartbeat(onBeat) {
     }
 }
 
+loadHwAccelSettings()
 app.on('ready', async () => {
     await zeromqServer.start()
     zeromqServer.run()

@@ -44,6 +44,15 @@
                     label="Send Anonymous Usage Data to SquadOV"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="$store.state.settings.useHwAccel"
+                    @change="$store.commit('changeUseHwAccel', arguments[0])"
+                    dense
+                    hide-details
+                    label="Use Hardware Acceleration (UI Only)"
+                >
+                </v-checkbox>
             </v-tab-item>
 
              <v-tab>

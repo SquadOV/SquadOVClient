@@ -23,4 +23,5 @@ export interface RootState {
     displayInviteFriendPopUp: boolean
     forceHideNav: boolean
     cachedIp: string | null
+    requiresRestart: boolean
 }
