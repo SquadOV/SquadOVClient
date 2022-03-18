@@ -334,6 +334,8 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
+
+            window.localStorage.setItem('muteDisabledGamesAlert', 'false')
             state.settings.disabledGames = games
             saveLocalSettings(state.settings)
 /// #endif

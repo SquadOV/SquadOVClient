@@ -50,11 +50,11 @@ export default class DisabledGamesAlert extends Vue {
     }
 
     muteAlert() {
-        window.sessionStorage.setItem('muteDisabledGamesAlert', 'true')
+        window.localStorage.setItem('muteDisabledGamesAlert', 'true')
     }
 
     get isAlarmMute() {
-        return (window.sessionStorage.getItem('muteDisabledGamesAlert') == 'true' ? true : false)
+        return (window.localStorage.getItem('muteDisabledGamesAlert') == 'true' ? true : false)
     }
 
     get disabledGameNames(): string[] {

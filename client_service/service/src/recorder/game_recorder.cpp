@@ -27,6 +27,7 @@
 #include "shared/filesystem/local_record.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "shared/strings/strings.h"
+#include "system/notification_hub.h"
 #include "vod/process.h"
 #include "recorder/default_flags.h"
 #include "process_watcher/process/process.h"
@@ -77,6 +78,24 @@ GameRecorder::GameRecorder(
     shared::EGame game):
     _process(process),
     _game(game) {
+
+    if (!isGameEnabled()) {
+        DISPLAY_NOTIFICATION(
+            service::system::NotificationSeverity::Error,
+            service::system::NotificationDisplayType::NativeNotification,
+            "SquadOV :: Disabled Game Recording",
+            "You have disabled " << shared::gameToString(_game) << " recording. No VODs will be recorded."
+        );
+    }
+
+    if (service::system::getGlobalState()->isPaused()) {
+        DISPLAY_NOTIFICATION(
+            service::system::NotificationSeverity::Error,
+            service::system::NotificationDisplayType::NativeNotification,
+            "SquadOV :: Paused Game Recording",
+            "You have recording paused. No VODs will be recorded until you turn it back on."
+        );
+    }
 }
 
 GameRecorder::~GameRecorder() {
