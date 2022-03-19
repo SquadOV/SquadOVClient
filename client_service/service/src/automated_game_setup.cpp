@@ -15,7 +15,7 @@ int main(int argc, char** argv) {
     const auto wowRetailPath = shared::system::getExecutableInstalledPath(shared::EGame::WoW);
     if (wowRetailPath) {
         LOG_INFO("...WoW Retail Installed: " << wowRetailPath.value() << std::endl);
-        if (!shared::system::hasWowCombatLogAddonInstalled(wowRetailPath.value(), shared::EWowRelease::Retail)) {
+        if (shared::system::hasWowCombatLogAddonInstalled(wowRetailPath.value(), shared::EWowRelease::Retail).empty()) {
             LOG_INFO("\t...No Combat Log Addon Installed - Installing." << std::endl);
             shared::system::installCombatLogAddonForWow(wowRetailPath.value(), shared::EWowRelease::Retail);
         }
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     const auto wowTbcPath = shared::system::getExecutableInstalledPath(shared::EGame::WowTbc);
     if (wowTbcPath) {
         LOG_INFO("...WoW TBC Installed: " << wowTbcPath.value() << std::endl);
-        if (!shared::system::hasWowCombatLogAddonInstalled(wowTbcPath.value(), shared::EWowRelease::Tbc)) {
+        if (shared::system::hasWowCombatLogAddonInstalled(wowTbcPath.value(), shared::EWowRelease::Tbc).empty()) {
             LOG_INFO("\t...No Combat Log Addon Installed - Installing." << std::endl);
             shared::system::installCombatLogAddonForWow(wowTbcPath.value(), shared::EWowRelease::Tbc);
         }
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     const auto wowVanillaPath = shared::system::getExecutableInstalledPath(shared::EGame::WowVanilla);
     if (wowVanillaPath) {
         LOG_INFO("...WoW Vanilla Installed: " << wowVanillaPath.value() << std::endl);
-        if (!shared::system::hasWowCombatLogAddonInstalled(wowVanillaPath.value(), shared::EWowRelease::Vanilla)) {
+        if (shared::system::hasWowCombatLogAddonInstalled(wowVanillaPath.value(), shared::EWowRelease::Vanilla).empty()) {
             LOG_INFO("\t...No Combat Log Addon Installed - Installing." << std::endl);
             shared::system::installCombatLogAddonForWow(wowVanillaPath.value(), shared::EWowRelease::Vanilla);
         }
