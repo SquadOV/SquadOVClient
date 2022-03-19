@@ -914,7 +914,7 @@ static int finalize_frame(H264Context *h, AVFrame *dst, H264Picture *out, int *g
                                  out->qscale_table,
                                  out->motion_val,
                                  NULL,
-                                 h->mb_width, h->mb_height, h->mb_stride, 1);
+                                 out->mb_width, out->mb_height, out->mb_stride, 1);
         }
     }
 
@@ -975,7 +975,7 @@ static int h264_decode_frame(AVCodecContext *avctx, void *data,
         return send_next_delayed_frame(h, pict, got_frame, 0);
 
     if (av_packet_get_side_data(avpkt, AV_PKT_DATA_NEW_EXTRADATA, NULL)) {
-        int side_size;
+        buffer_size_t side_size;
         uint8_t *side = av_packet_get_side_data(avpkt, AV_PKT_DATA_NEW_EXTRADATA, &side_size);
         ff_h264_decode_extradata(side, side_size,
                                  &h->ps, &h->is_avc, &h->nal_length_size,

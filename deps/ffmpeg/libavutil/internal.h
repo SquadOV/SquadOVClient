@@ -102,6 +102,8 @@
 #define FF_ALLOC_TYPED_ARRAY(p, nelem)  (p = av_malloc_array(nelem, sizeof(*p)))
 #define FF_ALLOCZ_TYPED_ARRAY(p, nelem) (p = av_mallocz_array(nelem, sizeof(*p)))
 
+#define FF_PTR_ADD(ptr, off) ((off) ? (ptr) + (off) : (ptr))
+
 #include "libm.h"
 
 /**
@@ -297,6 +299,13 @@ int avpriv_dict_set_timestamp(AVDictionary **dict, const char *key, int64_t time
 #define FF_PSEUDOPAL AV_PIX_FMT_FLAG_PSEUDOPAL
 #else
 #define FF_PSEUDOPAL 0
+#endif
+
+// Temporary typedef to simplify porting all AVBufferRef users to size_t
+#if FF_API_BUFFER_SIZE_T
+typedef int buffer_size_t;
+#else
+typedef size_t buffer_size_t;
 #endif
 
 #endif /* AVUTIL_INTERNAL_H */

@@ -1088,10 +1088,11 @@ typedef struct AVStream {
     void        *unused7;
     AVProbeData  unused6;
     int64_t      unused5[16+1];
-    void         *unused2;
-    int          unused3;
-    unsigned int unused4;
 #endif
+    AVIndexEntry *index_entries; /**< Only used if the format does not
+                                    support seeking natively. */
+    int nb_index_entries;
+    unsigned int index_entries_allocated_size;
 
     /**
      * Stream Identifier
@@ -1184,7 +1185,11 @@ typedef struct AVProgram {
                                          change dynamically at runtime. */
 
 typedef struct AVChapter {
+#if FF_API_CHAPTER_ID_INT
     int id;                 ///< unique ID to identify the chapter
+#else
+    int64_t id;             ///< unique ID to identify the chapter
+#endif
     AVRational time_base;   ///< time base in which the start/end timestamps are specified
     int64_t start, end;     ///< chapter start/end time in time_base units
     AVDictionary *metadata;
@@ -2083,7 +2088,11 @@ int av_stream_add_side_data(AVStream *st, enum AVPacketSideDataType type,
  * @return pointer to fresh allocated data or NULL otherwise
  */
 uint8_t *av_stream_new_side_data(AVStream *stream,
+#if FF_API_BUFFER_SIZE_T
                                  enum AVPacketSideDataType type, int size);
+#else
+                                 enum AVPacketSideDataType type, size_t size);
+#endif
 /**
  * Get side information from stream.
  *
@@ -2094,7 +2103,11 @@ uint8_t *av_stream_new_side_data(AVStream *stream,
  * @return pointer to data if present or NULL otherwise
  */
 uint8_t *av_stream_get_side_data(const AVStream *stream,
+#if FF_API_BUFFER_SIZE_T
                                  enum AVPacketSideDataType type, int *size);
+#else
+                                 enum AVPacketSideDataType type, size_t *size);
+#endif
 
 AVProgram *av_new_program(AVFormatContext *s, int id);
 

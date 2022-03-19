@@ -388,7 +388,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
     const EncoderChoice encodersToUse[] = {
         {"h264_nvenc", VideoStreamContext::GPU, true },
         {"h264_amf", VideoStreamContext::GPU, true },
-        {"h264_mf", VideoStreamContext::CPU, false },
+        //{"h264_mf", VideoStreamContext::CPU, false },
         {"libopenh264", VideoStreamContext::CPU, false }
     };
 

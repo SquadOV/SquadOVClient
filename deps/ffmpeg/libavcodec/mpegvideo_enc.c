@@ -509,9 +509,13 @@ FF_ENABLE_DEPRECATION_WARNINGS
     if (!s->fixed_qscale &&
         avctx->bit_rate * av_q2d(avctx->time_base) >
             avctx->bit_rate_tolerance) {
+        double nbt = avctx->bit_rate * av_q2d(avctx->time_base) * 5;
         av_log(avctx, AV_LOG_WARNING,
                "bitrate tolerance %d too small for bitrate %"PRId64", overriding\n", avctx->bit_rate_tolerance, avctx->bit_rate);
-        avctx->bit_rate_tolerance = 5 * avctx->bit_rate * av_q2d(avctx->time_base);
+        if (nbt <= INT_MAX) {
+            avctx->bit_rate_tolerance = nbt;
+        } else
+            avctx->bit_rate_tolerance = INT_MAX;
     }
 
     if (avctx->rc_max_rate &&
@@ -627,7 +631,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
 #if FF_API_PRIVATE_OPT
     FF_DISABLE_DEPRECATION_WARNINGS
     if (avctx->mpeg_quant)
-        s->mpeg_quant = avctx->mpeg_quant;
+        s->mpeg_quant = 1;
     FF_ENABLE_DEPRECATION_WARNINGS
 #endif
 
@@ -1008,8 +1012,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
     if (CONFIG_H263_ENCODER && s->out_format == FMT_H263)
         ff_h263_encode_init(s);
     if (CONFIG_MSMPEG4_ENCODER && s->msmpeg4_version)
-        if ((ret = ff_msmpeg4_encode_init(s)) < 0)
-            return ret;
+        ff_msmpeg4_encode_init(s);
     if ((CONFIG_MPEG1VIDEO_ENCODER || CONFIG_MPEG2VIDEO_ENCODER)
         && s->out_format == FMT_MPEG1)
         ff_mpeg1_encode_init(s);
@@ -1365,23 +1368,20 @@ static int skip_check(MpegEncContext *s, Picture *p, Picture *ref)
     return 0;
 }
 
-static int encode_frame(AVCodecContext *c, AVFrame *frame)
+static int encode_frame(AVCodecContext *c, AVFrame *frame, AVPacket *pkt)
 {
-    AVPacket pkt = { 0 };
     int ret;
     int size = 0;
-
-    av_init_packet(&pkt);
 
     ret = avcodec_send_frame(c, frame);
     if (ret < 0)
         return ret;
 
     do {
-        ret = avcodec_receive_packet(c, &pkt);
+        ret = avcodec_receive_packet(c, pkt);
         if (ret >= 0) {
-            size += pkt.size;
-            av_packet_unref(&pkt);
+            size += pkt->size;
+            av_packet_unref(pkt);
         } else if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
             return ret;
     } while (ret >= 0);
@@ -1392,6 +1392,7 @@ static int encode_frame(AVCodecContext *c, AVFrame *frame)
 static int estimate_best_b_count(MpegEncContext *s)
 {
     const AVCodec *codec = avcodec_find_encoder(s->avctx->codec_id);
+    AVPacket *pkt;
     const int scale = s->brd_scale;
     int width  = s->width  >> scale;
     int height = s->height >> scale;
@@ -1401,6 +1402,10 @@ static int estimate_best_b_count(MpegEncContext *s)
     int ret = 0;
 
     av_assert0(scale >= 0 && scale <= 3);
+
+    pkt = av_packet_alloc();
+    if (!pkt)
+        return AVERROR(ENOMEM);
 
     //emms_c();
     //s->next_picture_ptr->quality;
@@ -1453,8 +1458,10 @@ static int estimate_best_b_count(MpegEncContext *s)
             break;
 
         c = avcodec_alloc_context3(NULL);
-        if (!c)
-            return AVERROR(ENOMEM);
+        if (!c) {
+            ret = AVERROR(ENOMEM);
+            goto fail;
+        }
 
         c->width        = width;
         c->height       = height;
@@ -1472,10 +1479,11 @@ static int estimate_best_b_count(MpegEncContext *s)
         if (ret < 0)
             goto fail;
 
+
         s->tmp_frames[0]->pict_type = AV_PICTURE_TYPE_I;
         s->tmp_frames[0]->quality   = 1 * FF_QP2LAMBDA;
 
-        out_size = encode_frame(c, s->tmp_frames[0]);
+        out_size = encode_frame(c, s->tmp_frames[0], pkt);
         if (out_size < 0) {
             ret = out_size;
             goto fail;
@@ -1490,7 +1498,7 @@ static int estimate_best_b_count(MpegEncContext *s)
                                      AV_PICTURE_TYPE_P : AV_PICTURE_TYPE_B;
             s->tmp_frames[i + 1]->quality   = is_p ? p_lambda : b_lambda;
 
-            out_size = encode_frame(c, s->tmp_frames[i + 1]);
+            out_size = encode_frame(c, s->tmp_frames[i + 1], pkt);
             if (out_size < 0) {
                 ret = out_size;
                 goto fail;
@@ -1500,7 +1508,7 @@ static int estimate_best_b_count(MpegEncContext *s)
         }
 
         /* get the delayed frames */
-        out_size = encode_frame(c, NULL);
+        out_size = encode_frame(c, NULL, pkt);
         if (out_size < 0) {
             ret = out_size;
             goto fail;
@@ -1516,9 +1524,14 @@ static int estimate_best_b_count(MpegEncContext *s)
 
 fail:
         avcodec_free_context(&c);
-        if (ret < 0)
-            return ret;
+        av_packet_unref(pkt);
+        if (ret < 0) {
+            best_b_count = ret;
+            break;
+        }
     }
+
+    av_packet_free(&pkt);
 
     return best_b_count;
 }
@@ -1686,7 +1699,8 @@ no_output_pic:
             // input is not a shared pix -> reuse buffer for current_pix
             s->current_picture_ptr = s->reordered_input_picture[0];
             for (i = 0; i < 4; i++) {
-                s->new_picture.f->data[i] += INPLACE_OFFSET;
+                if (s->new_picture.f->data[i])
+                    s->new_picture.f->data[i] += INPLACE_OFFSET;
             }
         }
         ff_mpeg_unref_picture(s->avctx, &s->current_picture);
@@ -2006,6 +2020,7 @@ FF_ENABLE_DEPRECATION_WARNINGS
             break;
             default:
                 av_log(avctx, AV_LOG_ERROR, "vbv buffer overflow\n");
+                s->stuffing_bits = 0;
             }
             flush_put_bits(&s->pb);
             s->frame_bits  = put_bits_count(&s->pb);

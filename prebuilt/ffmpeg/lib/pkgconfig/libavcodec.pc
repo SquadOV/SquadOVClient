@@ -5,9 +5,9 @@ includedir=../../prebuilt/ffmpeg/include
 
 Name: libavcodec
 Description: FFmpeg codec library
-Version: 58.129.100
+Version: 58.134.100
 Requires: 
-Requires.private: libswresample >= 3.8.100, libavutil >= 56.67.100
+Requires.private: libswresample >= 3.9.100, libavutil >= 56.70.100
 Conflicts:
 Libs: -L${libdir}  -lavcodec 
 Libs.private: -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/libvpx/lib/x64 vpxmt.lib -libpath:../../prebuilt/opus/lib opus.lib -libpath:../../prebuilt/openh264/lib openh264.lib mfplat.lib mfuuid.lib ole32.lib strmiids.lib ole32.lib user32.lib

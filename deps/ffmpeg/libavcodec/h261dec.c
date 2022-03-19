@@ -608,10 +608,7 @@ retry:
     }
 
     if (s->width != avctx->coded_width || s->height != avctx->coded_height) {
-        ParseContext pc = s->parse_context; // FIXME move this demuxing hack to libavformat
-        s->parse_context.buffer = 0;
         ff_mpv_common_end(s);
-        s->parse_context = pc;
     }
 
     if (!s->context_initialized) {
@@ -681,6 +678,6 @@ AVCodec ff_h261_decoder = {
     .close          = h261_decode_end,
     .decode         = h261_decode_frame,
     .capabilities   = AV_CODEC_CAP_DR1,
-    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE | FF_CODEC_CAP_INIT_CLEANUP,
+    .caps_internal  = FF_CODEC_CAP_INIT_THREADSAFE,
     .max_lowres     = 3,
 };

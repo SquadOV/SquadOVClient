@@ -157,21 +157,22 @@ void VodClipper::encode(OutputStreamContainer* container, AVFrame* frame) {
 }
 
 void VodClipper::openInput() {
-    _inputFormat = av_find_input_format("mp4");
+    _inputFormat = av_find_input_format(_request.inputFormat.c_str());
     if (!_inputFormat) {
-        THROW_ERROR("Failed to find the MP4 input format.");
+        THROW_ERROR("Failed to find the input format:" << _request.inputFormat);
     }
 
     _inputContext = nullptr;
 
     AVDictionary* options = nullptr;
-
     // To parallel what we have setup for video processing already.
     av_dict_set(&options, "analyzeduration", "100000000", 0);
     av_dict_set(&options, "probesize", "100000000", 0);
-    
-    if (avformat_open_input(&_inputContext, _request.source.c_str(), _inputFormat, nullptr) < 0) {
-        av_dict_free(&options);
+    if (_request.inputFormat == "mpegts") {
+        av_dict_set(&options, "scan_all_pmts", "1", 0);
+    }
+
+    if (avformat_open_input(&_inputContext, _request.source.c_str(), _inputFormat, &options) < 0) {
         THROW_ERROR("Failed to allocate input AV context.");
     }
     av_dict_free(&options);
@@ -208,6 +209,9 @@ void VodClipper::openOutput() {
     if (avformat_alloc_output_context2(&_outputContext, _outputFormat, nullptr, nullptr) < 0) {
         THROW_ERROR("Failed to allocate output AV context.");
     }
+
+    const std::string utf8Output = shared::filesystem::pathUtf8(_output);
+    _outputContext->url = av_strndup(utf8Output.c_str(), utf8Output.size());
 }
 
 void VodClipper::openInputOutputCodecPairs() {
@@ -244,15 +248,15 @@ shared::squadov::VodMetadata VodClipper::run() {
         THROW_ERROR("Failed to open video for output: " << path);
     }
 
-    // I can't figure out why we can't successfully write the trailer with the faststart flag.
-    // I'm assuming this clip is going to go through the same video processing pipeline as regular
-    // VODS though so it's probably fine.
-    if (avformat_write_header(_outputContext, nullptr) < 0) {
-        THROW_ERROR("Failed to write header");
-    }
-
     av_dump_format(_inputContext, 0, _request.source.c_str(), 0);
     av_dump_format(_outputContext, 0, path.c_str(), 1);
+
+    AVDictionary* hopts = nullptr;
+    av_dict_set(&hopts, "movflags", "faststart", 0);
+    if (avformat_write_header(_outputContext, &hopts) < 0) {
+        THROW_ERROR("Failed to write header");
+    }
+    av_dict_free(&hopts);
 
     AVPacket packet;
     AVFrame* frame = av_frame_alloc();
@@ -273,80 +277,99 @@ shared::squadov::VodMetadata VodClipper::run() {
             const auto* inputContainer = it->second.first.get();
             auto* outputContainer = it->second.second.get();
 
-            av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, inputContainer->codecContext->time_base);
-            int ret = avcodec_send_packet(inputContainer->codecContext, &packet);
-            if (ret < 0) {
-                THROW_ERROR("Failed to decode frame.");
-                break;
-            }
+            if (_request.fullCopy) {
+                av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, outputContainer->stream->time_base);
+                if (outputContainer->lastDts != AV_NOPTS_VALUE && packet.dts <= outputContainer->lastDts) {
+                    if (packet.pts >= packet.dts) {
+                        packet.pts = std::max(packet.pts, outputContainer->lastDts + 1);
+                    }
+                    packet.dts = outputContainer->lastDts + 1;
+                }
 
-            while (true) {
-                ret = avcodec_receive_frame(inputContainer->codecContext, frame);
-                if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
-                    break;
-                } else if (ret < 0) {
-                    THROW_ERROR("Failed to receive decoded frame.");
+                if (packet.dts > packet.pts) {
+                    packet.pts = packet.dts;
+                }
+
+                outputContainer->lastDts = packet.dts;
+                if (av_interleaved_write_frame(_outputContext, &packet) < 0) {
+                    THROW_ERROR("Failed to write to output.");
+                }
+            } else {
+                av_packet_rescale_ts(&packet, _inputContext->streams[streamIndex]->time_base, inputContainer->codecContext->time_base);    
+                int ret = avcodec_send_packet(inputContainer->codecContext, &packet);
+                if (ret < 0) {
+                    THROW_ERROR("Failed to decode frame.");
                     break;
                 }
 
-                if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.start, AVRational{1, CLIPPING_TIME_BASE}) < 0) {
-                    continue;
-                } else if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.end, AVRational{1, CLIPPING_TIME_BASE}) >= 0)  {
-                    finished = true;
-                    break;
-                }
-
-                if (!outputContainer->firstFrame) {
-                    outputContainer->startPts = frame->best_effort_timestamp;
-                    outputContainer->firstFrame = true;
-                }
-
-                frame->pts = av_rescale_q(frame->best_effort_timestamp - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->codecContext->time_base);
-                
-                if (streamType == AVMEDIA_TYPE_VIDEO) {
-                    encode(outputContainer, frame);
-                } else {
-                    const auto numConverted = swr_convert(
-                        outputContainer->swr,
-                        outputContainer->samplesStorage,
-                        static_cast<int>(outputContainer->maxSamples),
-                        (const uint8_t**)&frame->data[0],
-                        frame->nb_samples
-                    );
-
-                    const auto newFifoSize = av_audio_fifo_space(outputContainer->fifo) + numConverted;
-                    if (av_audio_fifo_realloc(outputContainer->fifo, newFifoSize) < 0) {
-                        THROW_ERROR("Failed to reallocate FIFO queue.");
+                while (true) {
+                    ret = avcodec_receive_frame(inputContainer->codecContext, frame);
+                    if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF) {
+                        break;
+                    } else if (ret < 0) {
+                        THROW_ERROR("Failed to receive decoded frame.");
+                        break;
                     }
 
-                    if (av_audio_fifo_write(outputContainer->fifo, (void**)outputContainer->samplesStorage, numConverted) < numConverted) {
-                        THROW_ERROR("Failed to write to FIFO queue.");
+                    if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.start, AVRational{1, CLIPPING_TIME_BASE}) < 0) {
+                        continue;
+                    } else if (av_compare_ts(frame->best_effort_timestamp, inputContainer->codecContext->time_base, _request.end, AVRational{1, CLIPPING_TIME_BASE}) >= 0)  {
+                        finished = true;
+                        break;
                     }
 
-                    if (!outputAudioFrame) {
-                        outputAudioFrame = av_frame_alloc();
-                        outputAudioFrame->nb_samples = outputContainer->codecContext->frame_size;
-                        outputAudioFrame->channel_layout = outputContainer->codecContext->channel_layout;
-                        outputAudioFrame->format = outputContainer->codecContext->sample_fmt;
-                        outputAudioFrame->sample_rate = outputContainer->codecContext->sample_rate;
-                        if (av_frame_get_buffer(outputAudioFrame, 0) < 0) {
-                            THROW_ERROR("Failed to get audio buffer.");
-                        }
+                    if (!outputContainer->firstFrame) {
+                        outputContainer->startPts = frame->best_effort_timestamp;
+                        outputContainer->firstFrame = true;
                     }
 
-                    if (av_frame_make_writable(outputAudioFrame) < 0) {
-                        THROW_ERROR("Failed to make output audio frame writable.");
-                    }
+                    frame->pts = av_rescale_q(frame->best_effort_timestamp - outputContainer->startPts, inputContainer->codecContext->time_base, outputContainer->codecContext->time_base);
+                    
+                    if (streamType == AVMEDIA_TYPE_VIDEO) {
+                        encode(outputContainer, frame);
+                    } else {
+                        const auto numConverted = swr_convert(
+                            outputContainer->swr,
+                            outputContainer->samplesStorage,
+                            static_cast<int>(outputContainer->maxSamples),
+                            (const uint8_t**)&frame->data[0],
+                            frame->nb_samples
+                        );
 
-                    const auto frameSize = outputContainer->codecContext->frame_size;
-                    if (av_audio_fifo_size(outputContainer->fifo) >= frameSize) {
-                        if (av_audio_fifo_read(outputContainer->fifo, (void**)outputAudioFrame->data, frameSize) < frameSize) {
-                            THROW_ERROR("Failed to read from FIFO queue.");
+                        const auto newFifoSize = av_audio_fifo_space(outputContainer->fifo) + numConverted;
+                        if (av_audio_fifo_realloc(outputContainer->fifo, newFifoSize) < 0) {
+                            THROW_ERROR("Failed to reallocate FIFO queue.");
                         }
 
-                        outputAudioFrame->pts = audioPts;
-                        audioPts += frameSize;
-                        encode(outputContainer, outputAudioFrame);
+                        if (av_audio_fifo_write(outputContainer->fifo, (void**)outputContainer->samplesStorage, numConverted) < numConverted) {
+                            THROW_ERROR("Failed to write to FIFO queue.");
+                        }
+
+                        if (!outputAudioFrame) {
+                            outputAudioFrame = av_frame_alloc();
+                            outputAudioFrame->nb_samples = outputContainer->codecContext->frame_size;
+                            outputAudioFrame->channel_layout = outputContainer->codecContext->channel_layout;
+                            outputAudioFrame->format = outputContainer->codecContext->sample_fmt;
+                            outputAudioFrame->sample_rate = outputContainer->codecContext->sample_rate;
+                            if (av_frame_get_buffer(outputAudioFrame, 0) < 0) {
+                                THROW_ERROR("Failed to get audio buffer.");
+                            }
+                        }
+
+                        if (av_frame_make_writable(outputAudioFrame) < 0) {
+                            THROW_ERROR("Failed to make output audio frame writable.");
+                        }
+
+                        const auto frameSize = outputContainer->codecContext->frame_size;
+                        if (av_audio_fifo_size(outputContainer->fifo) >= frameSize) {
+                            if (av_audio_fifo_read(outputContainer->fifo, (void**)outputAudioFrame->data, frameSize) < frameSize) {
+                                THROW_ERROR("Failed to read from FIFO queue.");
+                            }
+
+                            outputAudioFrame->pts = audioPts;
+                            audioPts += frameSize;
+                            encode(outputContainer, outputAudioFrame);
+                        }
                     }
                 }
             }
@@ -412,7 +435,7 @@ shared::squadov::VodMetadata VodClipper::run() {
 std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* stream) const {
     auto container = std::make_unique<InputStreamContainer>();
 
-    AVCodec* decoder = avcodec_find_decoder(stream->codecpar->codec_id);
+    const AVCodec* decoder = avcodec_find_decoder(stream->codecpar->codec_id);
     if (!decoder) {
         THROW_ERROR("Failed to find decoder for input stream.");
     }
@@ -440,7 +463,6 @@ std::unique_ptr<InputStreamContainer> VodClipper::handleInputStream(AVStream* st
 std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AVStream* stream, const InputStreamContainer& icontainer) const {
     const auto isVideo = (stream->codecpar->codec_type == AVMEDIA_TYPE_VIDEO);
     auto container = std::make_unique<OutputStreamContainer>();
-
     std::vector<std::string> codecsToTry;
     AVCodec* codec = nullptr;
     if (isVideo) {
@@ -453,6 +475,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
         codecsToTry = { "aac" };
     }
 
+    unsigned int codecTag = 0;
     for (const auto& c: codecsToTry) {
         try {
             codec = avcodec_find_encoder_by_name(c.c_str());
@@ -505,6 +528,11 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->time_base = AVRational{1, container->codecContext->sample_rate};
             }
 
+            codecTag = container->codecContext->codec_tag;
+            if (_request.fullCopy && avcodec_parameters_to_context(container->codecContext, stream->codecpar) < 0) {
+                THROW_ERROR("Failed to copy stream parameters to codec context.");
+            }
+
             if (_outputFormat->flags & AVFMT_GLOBALHEADER) {
                 container->codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
             }
@@ -532,6 +560,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
     if (avcodec_parameters_from_context(ostream->codecpar, container->codecContext) < 0) {
         THROW_ERROR("Failed to copy context parameters to encoding stream.")
     }
+    ostream->codecpar->codec_tag = codecTag;
 
     if (stream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO) {
         container->swr = swr_alloc_set_opts(nullptr,
@@ -586,6 +615,8 @@ VodClipRequest VodClipRequest::fromJson(const nlohmann::json& obj) {
     clip.source = obj["source"].get<std::string>();
     clip.start = obj["start"].get<int64_t>();
     clip.end = obj["end"].get<int64_t>();
+    clip.fullCopy = false;
+    clip.inputFormat = "mp4";
     return clip;
 }
 

@@ -522,7 +522,7 @@ static int asf_read_stream_properties(AVFormatContext *s, int64_t size)
         tag1                             = avio_rl32(pb);
         avio_skip(pb, 20);
         if (sizeX > 40) {
-            if (size < sizeX - 40)
+            if (size < sizeX - 40 || sizeX - 40 > INT_MAX - AV_INPUT_BUFFER_PADDING_SIZE)
                 return AVERROR_INVALIDDATA;
             st->codecpar->extradata_size = ffio_limit(pb, sizeX - 40);
             st->codecpar->extradata      = av_mallocz(st->codecpar->extradata_size +
@@ -1690,11 +1690,11 @@ static int asf_read_seek(AVFormatContext *s, int stream_index,
             asf->index_read = -1;
     }
 
-    if (asf->index_read > 0 && st->internal->index_entries) {
+    if (asf->index_read > 0 && st->index_entries) {
         int index = av_index_search_timestamp(st, pts, flags);
         if (index >= 0) {
             /* find the position */
-            uint64_t pos = st->internal->index_entries[index].pos;
+            uint64_t pos = st->index_entries[index].pos;
 
             /* do the seek */
             av_log(s, AV_LOG_DEBUG, "SEEKTO: %"PRId64"\n", pos);

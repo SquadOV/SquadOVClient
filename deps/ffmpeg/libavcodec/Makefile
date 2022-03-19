@@ -29,6 +29,7 @@ HEADERS = ac3_parser.h                                                  \
 OBJS = ac3_parser.o                                                     \
        adts_parser.o                                                    \
        allcodecs.o                                                      \
+       avcodec.o                                                        \
        avdct.o                                                          \
        avpacket.o                                                       \
        avpicture.o                                                      \
@@ -37,6 +38,7 @@ OBJS = ac3_parser.o                                                     \
        bitstream_filters.o                                              \
        bsf.o                                                            \
        codec_desc.o                                                     \
+       codec_par.o                                                      \
        d3d11va.o                                                        \
        decode.o                                                         \
        dirac.o                                                          \
@@ -1205,7 +1207,6 @@ SKIPHEADERS-$(CONFIG_MEDIAFOUNDATION)  += mf_utils.h
 SKIPHEADERS-$(CONFIG_NVDEC)            += nvdec.h
 SKIPHEADERS-$(CONFIG_NVENC)            += nvenc.h
 SKIPHEADERS-$(CONFIG_QSV)              += qsv.h qsv_internal.h
-SKIPHEADERS-$(CONFIG_QSVDEC)           += qsvdec.h
 SKIPHEADERS-$(CONFIG_QSVENC)           += qsvenc.h
 SKIPHEADERS-$(CONFIG_XVMC)             += xvmc.h
 SKIPHEADERS-$(CONFIG_VAAPI)            += vaapi_decode.h vaapi_hevc.h vaapi_encode.h
@@ -1220,7 +1221,6 @@ TESTPROGS = avpacket                                                    \
             imgconvert                                                  \
             jpeg2000dwt                                                 \
             mathops                                                    \
-            options                                                     \
             utils                                                       \
 
 TESTPROGS-$(CONFIG_CABAC)                 += cabac

@@ -148,7 +148,7 @@ static const AVOption options[] = {
     { "middle",       "",                                   0,                    AV_OPT_TYPE_CONST, { .i64 = 2 }, 0, 0,       VE, "b_ref_mode" },
 #endif
     { "a53cc",        "Use A53 Closed Captions (if available)", OFFSET(a53_cc),   AV_OPT_TYPE_BOOL,  { .i64 = 1 }, 0, 1,       VE },
-    { "s12m_tc",      "Use timecode (if available)",        OFFSET(s12m_tc),      AV_OPT_TYPE_BOOL,  { .i64 = 1 }, 0, 1,       VE },
+    { "s12m_tc",      "Use timecode (if available)",        OFFSET(s12m_tc),      AV_OPT_TYPE_BOOL,  { .i64 = 0 }, 0, 1,       VE },
     { "dpb_size",     "Specifies the DPB size used for encoding (0 means automatic)",
                                                             OFFSET(dpb_size),     AV_OPT_TYPE_INT,   { .i64 = 0 }, 0, INT_MAX, VE },
 #ifdef NVENC_HAVE_MULTIPASS
@@ -237,7 +237,7 @@ AVCodec ff_hevc_nvenc_encoder = {
     .defaults       = defaults,
     .pix_fmts       = ff_nvenc_pix_fmts,
     .capabilities   = AV_CODEC_CAP_DELAY | AV_CODEC_CAP_HARDWARE |
-                      AV_CODEC_CAP_ENCODER_FLUSH,
+                      AV_CODEC_CAP_ENCODER_FLUSH | AV_CODEC_CAP_DR1,
     .caps_internal  = FF_CODEC_CAP_INIT_CLEANUP,
     .wrapper_name   = "nvenc",
     .hw_configs     = ff_nvenc_hw_configs,

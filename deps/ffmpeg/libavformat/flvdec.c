@@ -142,7 +142,7 @@ static void add_keyframes_index(AVFormatContext *s)
     av_assert0(flv->last_keyframe_stream_index <= s->nb_streams);
     stream = s->streams[flv->last_keyframe_stream_index];
 
-    if (stream->internal->nb_index_entries == 0) {
+    if (stream->nb_index_entries == 0) {
         for (i = 0; i < flv->keyframe_count; i++) {
             av_log(s, AV_LOG_TRACE, "keyframe filepositions = %"PRId64" times = %"PRId64"\n",
                    flv->keyframe_filepositions[i], flv->keyframe_times[i] * 1000);
@@ -453,9 +453,13 @@ static int parse_keyframes_index(AVFormatContext *s, AVIOContext *ioc, int64_t m
         }
 
         for (i = 0; i < arraylen && avio_tell(ioc) < max_pos - 1; i++) {
+            double d;
             if (avio_r8(ioc) != AMF_DATA_TYPE_NUMBER)
                 goto invalid;
-            current_array[0][i] = av_int2double(avio_rb64(ioc));
+            d = av_int2double(avio_rb64(ioc));
+            if (isnan(d) || d < INT64_MIN || d > INT64_MAX)
+                goto invalid;
+            current_array[0][i] = d;
         }
         if (times && filepositions) {
             // All done, exiting at a position allowing amf_parse_object
@@ -840,10 +844,10 @@ static void clear_index_entries(AVFormatContext *s, int64_t pos)
         AVStream *st = s->streams[i];
         /* Remove all index entries that point to >= pos */
         out = 0;
-        for (j = 0; j < st->internal->nb_index_entries; j++)
-            if (st->internal->index_entries[j].pos < pos)
-                st->internal->index_entries[out++] = st->internal->index_entries[j];
-        st->internal->nb_index_entries = out;
+        for (j = 0; j < st->nb_index_entries; j++)
+            if (st->index_entries[j].pos < pos)
+                st->index_entries[out++] = st->index_entries[j];
+        st->nb_index_entries = out;
     }
 }
 
@@ -871,6 +875,8 @@ static int amf_skip_tag(AVIOContext *pb, AMFDataType type, int depth)
         parse_name = 0;
     case AMF_DATA_TYPE_MIXEDARRAY:
         nb = avio_rb32(pb);
+        if (nb < 0)
+            return AVERROR_INVALIDDATA;
     case AMF_DATA_TYPE_OBJECT:
         while(!pb->eof_reached && (nb-- > 0 || type != AMF_DATA_TYPE_ARRAY)) {
             if (parse_name) {

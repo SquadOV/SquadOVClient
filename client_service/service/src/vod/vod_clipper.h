@@ -11,6 +11,8 @@ struct VodClipRequest {
     std::string source;
     int64_t start;
     int64_t end;
+    bool fullCopy = false;
+    std::string inputFormat = "mp4";
 
     static VodClipRequest fromJson(const nlohmann::json& obj);
 };
