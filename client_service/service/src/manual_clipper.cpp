@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     req.start = vm["start"].as<double>();
     req.end = vm["end"].as<double>();
     req.source = vm["input"].as<std::string>();
-    req.fullCopy = true;
+    req.fullCopy = false;
     req.inputFormat = "mp4";
     service::vod::vodClip(req);
     return 0;
