@@ -31,6 +31,7 @@ SET(SRCS
     shared/url.cpp
     shared/system/keys.cpp
     shared/system/win32/process.cpp
+    shared/system/win32/registry.cpp
     shared/system/install.cpp
     shared/image/ico/ico.cpp
     shared/memory/byte_writer.cpp
@@ -73,6 +74,7 @@ SET(HEADERS
     shared/audio/timing.h
     shared/system/win32/hwnd_utils.h
     shared/system/win32/interfaces/win32_system_process_interface.h
+    shared/system/win32/registry.h
     shared/system/interfaces/system_process_interface.h
     shared/system/install.h
     shared/url.h

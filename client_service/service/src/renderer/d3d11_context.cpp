@@ -4,6 +4,7 @@
 #ifdef _WIN32
 #pragma comment(lib, "dxgi")
 #include <VersionHelpers.h>
+#include <wil/com.h>
 namespace service::renderer {
 
 D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::recursive_mutex>&& guard, ID3D11DeviceContext* context):
@@ -193,6 +194,29 @@ D3d11SharedContext::~D3d11SharedContext() {
         _device1->Release();
         _device1 = nullptr;
     }
+}
+
+std::wstring D3d11SharedContext::adapterName() const {
+    if (!_device) {
+        return L"";
+    }
+
+    wil::com_ptr<IDXGIDevice> dxgiDevice;
+    HRESULT hr = _device->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice);
+    if (hr != S_OK) {
+        return L"";
+    }
+
+    wil::com_ptr<IDXGIAdapter> adapter = nullptr;
+    hr = dxgiDevice->GetAdapter(&adapter);
+    if (hr != S_OK) {
+        return L"";
+    }
+
+    DXGI_ADAPTER_DESC desc;
+    adapter->GetDesc(&desc);
+
+    return std::wstring(desc.Description);
 }
 
 D3d11ImmediateContextGuard D3d11SharedContext::immediateContext() {

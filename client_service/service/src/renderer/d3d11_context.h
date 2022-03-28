@@ -49,8 +49,11 @@ public:
     ID3D11DeviceContext* deferredContext();
     D3d11Device deviceClass() const { return _deviceClass; }
 
+    std::wstring adapterName() const;
+
     void execute(ID3D11DeviceContext* deferredContext);
     void execute(ID3D11CommandList* list);
+
 private:
     ID3D11Device* _device = nullptr;
     ID3D11Device1* _device1 = nullptr;

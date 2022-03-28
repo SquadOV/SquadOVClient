@@ -28,6 +28,7 @@
 #include "recorder/audio/portaudio_audio_recorder.h"
 #include "recorder/audio/win32/wasapi_interface.h"
 #include "recorder/pipe/cloud_storage_piper.h"
+#include "renderer/d3d11_context.h"
 #include "system/settings.h"
 #include "system/win32/message_loop.h"
 #include "api/local_api.h"
@@ -37,6 +38,7 @@
 #include "shared/system/keys.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "shared/system/win32/process.h"
+#include "shared/system/win32/registry.h"
 #include "shared/squadov/vod.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
@@ -69,6 +71,7 @@ extern "C" {
 
 #ifdef _WIN32
 #include <Windows.h>
+#include <VersionHelpers.h>
 #endif
 
 namespace fs = std::filesystem;
@@ -126,7 +129,83 @@ void portaudioLogCallback(const char* log) {
     }
 }
 
+struct MonitorDxgiCheckStatus {
+    HMONITOR monitor;
+    MONITORINFOEX info;
+    std::string adapter;
+    bool ok = false;
+};
+
+BOOL monitorDxgiCheck(HMONITOR monitor, HDC hdc, LPRECT unk1, LPARAM rdata) {
+    auto output = (std::vector<MonitorDxgiCheckStatus>*)rdata;
+
+    MonitorDxgiCheckStatus status;
+    status.monitor = monitor;
+    status.info.cbSize = sizeof(MONITORINFOEX);
+
+    if (!GetMonitorInfo(monitor, &status.info)) {
+        LOG_WARNING("...Failed to get monitor info?? " << shared::errors::getWin32ErrorAsString() << std::endl);
+        return TRUE;
+    }
+
+    try {
+        service::renderer::D3d11SharedContext context(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, monitor);
+        status.adapter = shared::strings::wcsToUtf8(context.adapterName());
+        status.ok = true;
+    } catch (std::exception& ex) {
+        LOG_WARNING("...Failed to verify DXGI output status for window: " << ex.what() << std::endl);
+        status.ok = false;
+    }
+    
+    output->push_back(status);
+    return TRUE;
+}
+
 void defaultMain() {
+    LOG_INFO("Checking DXGI compatability for integrated GPU/laptop..." << std::endl);
+    {
+        std::vector<MonitorDxgiCheckStatus> checkStatus;
+        EnumDisplayMonitors(NULL, NULL, monitorDxgiCheck, (LPARAM)&checkStatus);
+        
+        for (const auto& st : checkStatus) {
+            const bool isPrimary = st.info.dwFlags & MONITORINFOF_PRIMARY;
+            LOG_INFO(
+                "Checking DXGI Status for: " << st.info.szDevice << " [" <<  st.info.rcMonitor.right-st.info.rcMonitor.left << "x" << st.info.rcMonitor.bottom-st.info.rcMonitor.top << "]" << std::endl
+                << "\tAdapter: " << st.adapter << std::endl
+                << "\tPrimary: " << isPrimary << std::endl
+                << "\tOK: " << st.ok << std::endl
+            );
+
+            if (isPrimary && !st.ok) {
+                const auto igpuChangeLockFname = shared::filesystem::getSquadOvFolder() / fs::path(".igpu");
+                if (IsWindows10OrGreater() && !fs::exists(igpuChangeLockFname)) {
+                    LOG_WARNING("Failed to verify DXGI desktop duplication for the primary monitor - setting registry to force onto integrated GPU." << std::endl);
+
+                    // Make sure we remember that we did this so we don't get into some infinite loop of trying to do this infinitely.
+                    std::ofstream lock(igpuChangeLockFname);
+                    lock.close();
+
+                    // Set the registry key.
+                    shared::system::win32::setRegistryKey(
+                        HKEY_CURRENT_USER,
+                        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                        shared::filesystem::pathUtf8(fs::absolute(shared::filesystem::getCurrentExeFolder() / fs::path("squadov_client_service.exe"))),
+                        "GpuPreference=1;"
+                    );
+
+                    std::exit(1);
+                } else {
+                    DISPLAY_NOTIFICATION(
+                        service::system::NotificationSeverity::Error,
+                        service::system::NotificationDisplayType::NativeNotification,
+                        "SquadOV :: System Configuration",
+                        "We've detected a laptop/integrated GPU. You will need to follow the steps for running SquadOV on a laptop from https://support.squadov.gg."
+                    );
+                }
+            }
+        }
+    }
+
     const auto flags = service::api::getGlobalApi()->getSessionFeatures();
 
     auto valorant = std::make_unique<service::valorant::ValorantProcessHandler>();
