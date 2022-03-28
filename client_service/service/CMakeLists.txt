@@ -175,6 +175,7 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${CMAKE_SOURCE_DIR}/deps/sentry-native/include
         ${CMAKE_SOURCE_DIR}/deps/rapidxml
         ${CMAKE_SOURCE_DIR}/deps/half/include
+        ${CMAKE_SOURCE_DIR}/deps/libpng
         ${OPENSSL_INCLUDE_DIR}
         ${CARES_INCLUDE_DIR}
         ${FFMPEG_INCLUDE_DIR}
@@ -298,6 +299,7 @@ if(WIN32)
         ${CMAKE_SOURCE_DIR}/deps/date/include
         ${CMAKE_SOURCE_DIR}/deps/json/single_include
         ${CMAKE_SOURCE_DIR}/deps/half/include
+        ${CMAKE_SOURCE_DIR}/deps/libpng
     )
 
     target_link_libraries(libwgc

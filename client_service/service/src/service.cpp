@@ -150,8 +150,12 @@ BOOL monitorDxgiCheck(HMONITOR monitor, HDC hdc, LPRECT unk1, LPARAM rdata) {
 
     try {
         service::renderer::D3d11SharedContext context(service::renderer::CONTEXT_FLAG_USE_D3D11_1 | service::renderer::CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT, monitor);
-        status.adapter = shared::strings::wcsToUtf8(context.adapterName());
-        status.ok = true;
+        if (context.device()) {
+            status.adapter = shared::strings::wcsToUtf8(context.adapterName());
+            status.ok = true;
+        } else {
+            status.ok = false;
+        }
     } catch (std::exception& ex) {
         LOG_WARNING("...Failed to verify DXGI output status for window: " << ex.what() << std::endl);
         status.ok = false;

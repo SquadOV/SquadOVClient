@@ -106,6 +106,10 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
             } else {
                 LOG_INFO("...No monitor found." << std::endl);
             }
+
+            if (!adapter) {
+                THROW_ERROR("No more adapters available.");
+            }
         }
         
         try {
@@ -140,8 +144,9 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
                 _device1 = nullptr;
             }
 
+            const auto doVerify = flags & CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT;
             if (dxgiOutput) {
-                if (flags & CONTEXT_FLAG_VERIFY_DUPLICATE_OUTPUT) {
+                if (doVerify) {
                     IDXGIOutput1* output1 = nullptr;
                     hr = dxgiOutput->QueryInterface(__uuidof(IDXGIOutput1), (void**)&output1);
                     if (hr != S_OK) {
@@ -158,6 +163,8 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
                     dupl->Release();
                 }
                 dxgiOutput->Release();
+            } else if (doVerify) {
+                THROW_ERROR("No DXGI Output found when verification requested.");
             }
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to create D3D11 device or verify its use: " << ex.what() << std::endl);

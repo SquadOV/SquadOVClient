@@ -30,6 +30,10 @@ DnsManager::DnsManager() {
 }
 
 DnsManager::~DnsManager() {
+    _checkingSupport = false;
+    if (_eventLoop.joinable()) {
+        _eventLoop.join();
+    }
     ares_library_cleanup();
 }
 
