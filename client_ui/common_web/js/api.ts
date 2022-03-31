@@ -109,6 +109,7 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { AutoShareConnection, AutoShareSettings, LinkShareData, MatchVideoShareConnection, MatchVideoSharePermissions, ShareAccessTokenResponse, ShareToProfileData } from '@client/js/squadov/share'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { uploadLocalFileToCloud } from '@client/js/cloud'
+import { Bookmark, cleanBookmarkFromJson } from '@client/js/squadov/bookmarks'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -1728,6 +1729,31 @@ class ApiClient {
         return axios.post(`v1/users/me/analytics/vod/${videoUuid}`, {
             start,
             end,
+        }, this.createWebAxiosConfig())
+    }
+
+    getMatchAccessibleBookmarks(matchUuid: string): Promise<ApiData<Bookmark[]>> {
+        return axios.get(`v1/match/${matchUuid}/events`, this.createWebAxiosConfig()).then((resp: ApiData<Bookmark[]>) => {
+            resp.data.forEach(cleanBookmarkFromJson)
+            return resp
+        })
+    }
+
+    createNewBookmark(matchUuid: string, tm: Date): Promise<void> {
+        return axios.post(`v1/users/me/events`, {
+            matchUuid,
+            tm,
+        }, this.createWebAxiosConfig())
+    }
+
+    deleteBookmark(eventId: number): Promise<void> {
+        return axios.delete(`v1/events/${eventId}`, this.createWebAxiosConfig())
+    }
+
+    editBookmark(eventId: number, label: string, tm: Date): Promise<void> {
+        return axios.put(`v1/events/${eventId}`, {
+            label,
+            tm,
         }, this.createWebAxiosConfig())
     }
 

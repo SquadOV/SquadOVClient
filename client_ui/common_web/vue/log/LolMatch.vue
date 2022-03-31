@@ -64,16 +64,26 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <lol-event-manager
-                            :match="currentMatch.match"
-                            :timeline="currentMatch.timeline"
-                            :current-participant-id="currentParticipantId"
-                            :display-events.sync="displayEvents"
-                            :has-vod="!!vod && vodReady"
+                        <generic-match-sidebar
+                            :match-uuid="matchUuid"
                             :style="eventsStyle"
-                            @go-to-timestamp="goToTimestamp(arguments[0], true)"
+                            :current-tm="vodTime"
+                            v-if="!!currentMatch"
+                            :start-tm="currentMatch.gameStartTime"
+                            @go-to-time="goToVodTime(arguments[0], false)"
                         >
-                        </lol-event-manager>
+                            <template v-slot:events>
+                                <lol-event-manager
+                                    :match="currentMatch.match"
+                                    :timeline="currentMatch.timeline"
+                                    :current-participant-id="currentParticipantId"
+                                    :display-events.sync="displayEvents"
+                                    :has-vod="!!vod && vodReady"
+                                    @go-to-timestamp="goToTimestamp(arguments[0], true)"
+                                >
+                                </lol-event-manager>
+                            </template>
+                        </generic-match-sidebar>
                     </v-col>
                 </v-row>
 
@@ -179,6 +189,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -194,6 +205,7 @@ import CommonComponent from '@client/vue/CommonComponent'
         GenericMatchTimeline,
         MatchShareButton,
         MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
@@ -231,6 +243,15 @@ export default class LolMatch extends mixins(CommonComponent, MatchShareBase) {
 
         // Assume t is number of milliseconds since the game started.
         let diffMs = (this.currentMatch.gameStartTime.getTime() - this.vod.startTime.getTime()) + t
+        this.$refs.player.goToTimeMs(diffMs, useOffset)
+    }
+
+    goToVodTime(tm : Date, useOffset: boolean) {
+        if (!this.vod) {
+            return
+        }
+
+        let diffMs = tm.getTime() - this.vod!.startTime.getTime()
         this.$refs.player.goToTimeMs(diffMs, useOffset)
     }
 

@@ -28,36 +28,53 @@
                     </match-share-button>
                 </div>
 
-                <v-row>
-                    <video-player
-                        class="mb-4"
-                        :vod="vod"
-                        id="task-vod"
-                        disable-theater
-                        :current-time.sync="vodTime"
-                        :enable-draw="enableDraw"
-                        :current-ts.sync="timestamp"
-                        :match-uuid="matchUuid"
-                        :game="SquadOvGames.TeamfightTactics"
-                        :permissions="matchPermissions"
-                        :full-path="$route.fullPath"
-                        :timestamp="timestamp"
-                        :user-id="userId"
-                        :is-local="!!vod ? vod.isLocal : false"
-                    >
-                    </video-player>
+                <v-row no-gutters>
+                    <v-col :cols="theaterMode ? 12 : 8">
+                        <video-player
+                            ref="player"
+                            class="mb-4"
+                            :vod="vod"
+                            id="task-vod"
+                            @toggle-theater-mode="theaterMode = !theaterMode"
+                            :current-time.sync="vodTime"
+                            :enable-draw="enableDraw"
+                            :current-ts.sync="timestamp"
+                            :match-uuid="matchUuid"
+                            :game="SquadOvGames.TeamfightTactics"
+                            :permissions="matchPermissions"
+                            :full-path="$route.fullPath"
+                            :timestamp="timestamp"
+                            :user-id="userId"
+                            :is-local="!!vod ? vod.isLocal : false"
+                            :player-height.sync="currentPlayerHeight"
+                        >
+                        </video-player>
 
-                    <tft-vod-picker
-                        class="full-width"
-                        :match-uuid="matchUuid"
-                        :puuid="puuid"
-                        :vod.sync="vod"
-                        :match="currentMatch"
-                        :timestamp="vodTime"
-                        disable-favorite
-                        :enable-draw.sync="enableDraw"
-                    >
-                    </tft-vod-picker>
+                        <tft-vod-picker
+                            class="full-width"
+                            :match-uuid="matchUuid"
+                            :puuid="puuid"
+                            :vod.sync="vod"
+                            :match="currentMatch"
+                            :timestamp="vodTime"
+                            disable-favorite
+                            :enable-draw.sync="enableDraw"
+                        >
+                        </tft-vod-picker>
+                    </v-col>
+
+                    <v-col v-if="!theaterMode" cols="4">
+                        <generic-match-sidebar
+                            :match-uuid="matchUuid"
+                            hide-events
+                            :style="eventsStyle"
+                            :current-tm="vodTime"
+                            v-if="!!currentMatch"
+                            :start-tm="currentMatch.data.info.gameDatetime"
+                            @go-to-time="goToVodTime(arguments[0])"
+                        >
+                        </generic-match-sidebar>
+                    </v-col>
                 </v-row>
 
                 <v-row>
@@ -92,6 +109,7 @@ import TftVodPicker from '@client/vue/utility/tft/TftVodPicker.vue'
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -102,6 +120,7 @@ import MatchShareBase from '@client/vue/log/MatchShareBase'
         TftVodPicker,
         MatchShareButton,
         MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class TftMatch extends mixins(MatchShareBase) {
@@ -119,6 +138,12 @@ export default class TftMatch extends mixins(MatchShareBase) {
     currentMatch: WrappedTftMatch | null = null
     vodTime: Date | null = null
     enableDraw: boolean = false
+    theaterMode: boolean = false
+    currentPlayerHeight : number = 0
+
+    $refs!: {
+        player: VideoPlayer
+    }
 
     get participantMap(): Map<string, TftParticipant> {
         let ret = new Map()
@@ -177,6 +202,21 @@ export default class TftMatch extends mixins(MatchShareBase) {
 
     mounted() {
         this.refreshData()
+    }
+
+    get eventsStyle() : any {
+        return {
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
+        }
+    }
+
+    goToVodTime(tm : Date) {
+        if (!this.vod) {
+            return
+        }
+        
+        let diffMs = tm.getTime() - this.vod.startTime.getTime()
+        this.$refs.player.goToTimeMs(diffMs, false)
     }
 }
 

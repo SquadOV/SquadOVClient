@@ -29,38 +29,57 @@
                     </match-share-button>
                 </div>
 
-                <template v-if="!!vod">
-                    <video-player
-                        class="mb-1"
-                        :vod="vod"
-                        id="task-vod"
-                        disable-theater
-                        :current-time.sync="vodTime"
-                        :enable-draw="enableDraw"
-                        :current-ts.sync="timestamp"
-                        :match-uuid="taskId"
-                        :game="SquadOvGames.AimLab"
-                        :graphql-stats="statPermissions"
-                        :permissions="matchPermissions"
-                        :full-path="$route.fullPath"
-                        :timestamp="timestamp"
-                        :user-id="userId"
-                        :is-local="!!vod ? vod.isLocal : false"
-                    >
-                    </video-player>
+                <v-row no-gutters>
+                    <v-col :cols="theaterMode ? 12 : 8">
+                        <template v-if="!!vod">
+                            <video-player
+                                ref="player"
+                                class="mb-1"
+                                :vod="vod"
+                                id="task-vod"
+                                :current-time.sync="vodTime"
+                                :enable-draw="enableDraw"
+                                :current-ts.sync="timestamp"
+                                :match-uuid="taskId"
+                                :game="SquadOvGames.AimLab"
+                                :graphql-stats="statPermissions"
+                                :permissions="matchPermissions"
+                                :full-path="$route.fullPath"
+                                :timestamp="timestamp"
+                                :user-id="userId"
+                                :is-local="!!vod ? vod.isLocal : false"
+                                @toggle-theater-mode="theaterMode = !theaterMode"
+                                :player-height.sync="currentPlayerHeight"
+                            >
+                            </video-player>
 
-                    <aimlab-vod-picker
-                        v-if="!!data"
-                        class="mb-2"
-                        :task-id="taskId"
-                        :task-name="data.taskName"
-                        :vod="vod"
-                        :timestamp="vodTime"
-                        disable-favorite
-                        :enable-draw.sync="enableDraw"
-                    >
-                    </aimlab-vod-picker>
-                </template>
+                            <aimlab-vod-picker
+                                v-if="!!data"
+                                class="mb-2"
+                                :task-id="taskId"
+                                :task-name="data.taskName"
+                                :vod="vod"
+                                :timestamp="vodTime"
+                                disable-favorite
+                                :enable-draw.sync="enableDraw"
+                            >
+                            </aimlab-vod-picker>
+                        </template>
+                    </v-col>
+
+                    <v-col v-if="!theaterMode" cols="4">
+                        <generic-match-sidebar
+                            v-if="!!vod"
+                            :match-uuid="taskId"
+                            hide-events
+                            :style="eventsStyle"
+                            :current-tm="vodTime"
+                            :start-tm="vod.startTime"
+                            @go-to-time="goToVodTime(arguments[0])"
+                        >
+                        </generic-match-sidebar>
+                    </v-col>
+                </v-row>
 
                 <aimlab-task-performance-history
                     :task="data"
@@ -92,6 +111,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -101,7 +121,8 @@ import CommonComponent from '@client/vue/CommonComponent'
         LoadingContainer,
         VideoPlayer,
         MatchShareButton,
-        MatchFavoriteButton
+        MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase) {
@@ -117,6 +138,12 @@ export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase)
     vodTime: Date | null = null
     enableDraw: boolean = false
     statPermissions: StatPermission[] = []
+    theaterMode: boolean = false
+    currentPlayerHeight : number = 0
+
+    $refs!: {
+        player: VideoPlayer
+    }
 
     @Watch('taskId')
     refreshTask() {
@@ -130,6 +157,21 @@ export default class AimlabMatch extends mixins(CommonComponent, MatchShareBase)
 
     mounted() {
         this.refreshTask()
+    }
+
+    get eventsStyle() : any {
+        return {
+            'height': `${this.currentPlayerHeight + this.vodPickerHeight}px`,
+        }
+    }
+
+    goToVodTime(tm : Date) {
+        if (!this.vod) {
+            return
+        }
+        
+        let diffMs = tm.getTime() - this.vod.startTime.getTime()
+        this.$refs.player.goToTimeMs(diffMs, false)
     }
 }
 

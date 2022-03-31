@@ -65,14 +65,24 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <csgo-event-round-display
-                            :match="matchData"
-                            :match-user-id="selectedMatchUserId"
-                            :current-round="currentRound"
+                        <generic-match-sidebar
+                            :match-uuid="matchUuid"
                             :style="roundEventsStyle"
-                            @go-to-event="goToVodTime(arguments[0])"
+                            :current-tm="vodTime"
+                            v-if="!!match"
+                            :start-tm="match.summary.matchStartTime"
+                            @go-to-time="goToVodTime(arguments[0])"
                         >
-                        </csgo-event-round-display>
+                            <template v-slot:events>
+                                <csgo-event-round-display
+                                    :match="matchData"
+                                    :match-user-id="selectedMatchUserId"
+                                    :current-round="currentRound"
+                                    @go-to-event="goToVodTime(arguments[0])"
+                                >
+                                </csgo-event-round-display>
+                            </template>
+                        </generic-match-sidebar>
                     </v-col>
                 </v-row>
 
@@ -157,6 +167,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -171,6 +182,7 @@ import CommonComponent from '@client/vue/CommonComponent'
         CsgoPlayerMatchCard,
         MatchShareButton,
         MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class CsgoMatch extends mixins(CommonComponent, MatchShareBase) {

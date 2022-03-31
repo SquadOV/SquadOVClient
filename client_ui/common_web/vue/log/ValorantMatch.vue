@@ -64,16 +64,26 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <valorant-round-events
-                            :match="matchWrapper"
-                            :round="currentRound"
-                            :force-disable-go-to-event="!hasMatchTiming || !vodReady"
+                        <generic-match-sidebar
+                            :match-uuid="matchUuid"
                             :style="roundEventsStyle"
-                            :current-player="currentPlayer"
-                            :metadata="playerMetadata"
-                            @go-to-event="goToVodTime(arguments[0], true)"
+                            :current-tm="vodTime"
+                            v-if="!!currentMatch"
+                            :start-tm="currentMatch.data.matchInfo.serverStartTimeUtc"
+                            @go-to-time="goToVodTime(arguments[0], false)"
                         >
-                        </valorant-round-events>
+                            <template v-slot:events>
+                                <valorant-round-events
+                                    :match="matchWrapper"
+                                    :round="currentRound"
+                                    :force-disable-go-to-event="!hasMatchTiming || !vodReady"
+                                    :current-player="currentPlayer"
+                                    :metadata="playerMetadata"
+                                    @go-to-event="goToVodTime(arguments[0], true)"
+                                >
+                                </valorant-round-events>
+                            </template>
+                        </generic-match-sidebar>
                     </v-col>
                 </v-row>
 
@@ -162,6 +172,7 @@ import ValorantVodPovPicker from '@client/vue/utility/valorant/ValorantVodPovPic
 import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 import CommonComponent from '@client/vue/CommonComponent'
 
 @Component({
@@ -177,6 +188,7 @@ import CommonComponent from '@client/vue/CommonComponent'
         ValorantVodPovPicker,
         MatchShareButton,
         MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class ValorantMatch extends mixins(CommonComponent, MatchShareBase) {

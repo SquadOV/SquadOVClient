@@ -69,54 +69,64 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <v-tabs grow v-model="eventSectionTab">
-                            <v-tab>
-                                Events
-                            </v-tab>
+                        <generic-match-sidebar
+                            :match-uuid="matchId"
+                            :style="roundEventsStyle"
+                            :current-tm="vodTime"
+                            v-if="!!currentMatch"
+                            :start-tm="currentMatch.metadata.matchTime"
+                            @go-to-time="goToVodTime(arguments[0], false)"
+                        >
+                            <template v-slot:events>
+                                <v-tabs grow v-model="eventSectionTab">
+                                    <v-tab>
+                                        Events
+                                    </v-tab>
 
-                            <v-tab-item>
-                                <hearthstone-turn-events-display
-                                    :current-match="matchWrapper"
-                                    :turn="currentTurn"
-                                    :style="roundEventsStyle"
-                                    @go-to-event="goToVodTime(arguments[0], true)"
-                                    :has-vod="hasVod && vodReady"
-                                >
-                                </hearthstone-turn-events-display>
-                            </v-tab-item>
+                                    <v-tab-item>
+                                        <hearthstone-turn-events-display
+                                            :current-match="matchWrapper"
+                                            :turn="currentTurn"
+                                            @go-to-event="goToVodTime(arguments[0], true)"
+                                            :has-vod="hasVod && vodReady"
+                                        >
+                                        </hearthstone-turn-events-display>
+                                    </v-tab-item>
 
-                            <template v-if="matchWrapper.isBattlegrounds && !!$store.state.currentUser">
-                                <!-- This show the current deck STATE (e.g. hand, graveyard, in play, etc.) -->
-                                <v-tab>
-                                    Tavern
-                                </v-tab>
+                                    <template v-if="matchWrapper.isBattlegrounds && !!$store.state.currentUser">
+                                        <!-- This show the current deck STATE (e.g. hand, graveyard, in play, etc.) -->
+                                        <v-tab>
+                                            Tavern
+                                        </v-tab>
 
-                                <v-tab-item>
-                                    <hearthstone-battleground-tavern-summary
-                                        :height="currentPlayerHeight - 48 + 68"
-                                    >
-                                    </hearthstone-battleground-tavern-summary>    
-                                </v-tab-item>
+                                        <v-tab-item>
+                                            <hearthstone-battleground-tavern-summary
+                                                :height="currentPlayerHeight - 48 + 68"
+                                            >
+                                            </hearthstone-battleground-tavern-summary>    
+                                        </v-tab-item>
+                                    </template>
+
+                                    <template v-else-if="!matchWrapper.isBattlegrounds">
+                                        <!-- This show the current deck state for the start of the given round (e.g. hand, graveyard, in play, etc.) -->
+                                        <v-tab>
+                                            Deck
+                                        </v-tab>
+
+                                        <v-tab-item>
+                                            <hearthstone-current-deck-state
+                                                :deck="matchWrapper.currentPlayerDeck"
+                                                :current-match="matchWrapper"
+                                                :turn="currentTurn"
+                                                :player-id="matchWrapper.currentPlayerId"
+                                                :style="deckStateStyle"
+                                            >
+                                            </hearthstone-current-deck-state>
+                                        </v-tab-item>
+                                    </template>
+                                </v-tabs>
                             </template>
-
-                            <template v-else-if="!matchWrapper.isBattlegrounds">
-                                <!-- This show the current deck state for the start of the given round (e.g. hand, graveyard, in play, etc.) -->
-                                <v-tab>
-                                    Deck
-                                </v-tab>
-
-                                <v-tab-item>
-                                    <hearthstone-current-deck-state
-                                        :deck="matchWrapper.currentPlayerDeck"
-                                        :current-match="matchWrapper"
-                                        :turn="currentTurn"
-                                        :player-id="matchWrapper.currentPlayerId"
-                                        :style="deckStateStyle"
-                                    >
-                                    </hearthstone-current-deck-state>
-                                </v-tab-item>
-                            </template>
-                        </v-tabs>
+                        </generic-match-sidebar>
                     </v-col>
                 </v-row>
 
@@ -203,6 +213,7 @@ import MatchShareButton from '@client/vue/utility/squadov/MatchShareButton.vue'
 import MatchFavoriteButton from '@client/vue/utility/squadov/MatchFavoriteButton.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -217,7 +228,8 @@ import CommonComponent from '@client/vue/CommonComponent'
         HearthstoneVodPovPicker,
         VideoPlayer,
         MatchShareButton,
-        MatchFavoriteButton
+        MatchFavoriteButton,
+        GenericMatchSidebar,
     }
 })
 export default class HearthstoneMatch extends mixins(CommonComponent, MatchShareBase) {

@@ -98,21 +98,31 @@
                     </v-col>
 
                     <v-col v-if="!theaterMode" cols="4">
-                        <wow-match-events
-                            :events="events"
+                        <generic-match-sidebar
+                            :match-uuid="matchUuid"
                             :style="roundEventsStyle"
-                            :has-vod="!!vod && vodReady"
-                            :current-character="currentCharacter"
-                            :start-time="startTime"
-                            :sync-unified-events.sync="filteredEvents"
-                            :match-characters="matchCharacters"
-                            :selected-encounter.sync="selectedEncounter"
-                            :is-arena="!!currentMatch.arena"
-                            :use-teams="!!currentMatch.arena"
-                            :friendly-team="friendlyTeam"
-                            @go-to-event="goToVodTime"
+                            :current-tm="vodTime"
+                            v-if="!!currentMatch"
+                            :start-tm="startTime"
+                            @go-to-time="goToVodTime(arguments[0], false)"
                         >
-                        </wow-match-events>
+                            <template v-slot:events>
+                                <wow-match-events
+                                    :events="events"
+                                    :has-vod="!!vod && vodReady"
+                                    :current-character="currentCharacter"
+                                    :start-time="startTime"
+                                    :sync-unified-events.sync="filteredEvents"
+                                    :match-characters="matchCharacters"
+                                    :selected-encounter.sync="selectedEncounter"
+                                    :is-arena="!!currentMatch.arena"
+                                    :use-teams="!!currentMatch.arena"
+                                    :friendly-team="friendlyTeam"
+                                    @go-to-event="goToVodTime"
+                                >
+                                </wow-match-events>
+                            </template>
+                        </generic-match-sidebar>
                     </v-col>
                 </v-row>
 
@@ -253,6 +263,7 @@ import WowPlayersAnalysis from '@client/vue/utility/wow/WowPlayersAnalysis.vue'
 import WowMatchStatSummary from '@client/vue/utility/wow/WowMatchStatSummary.vue'
 import MatchShareBase from '@client/vue/log/MatchShareBase'
 import CommonComponent from '@client/vue/CommonComponent'
+import GenericMatchSidebar from '@client/vue/utility/GenericMatchSidebar.vue'
 
 @Component({
     components: {
@@ -271,6 +282,7 @@ import CommonComponent from '@client/vue/CommonComponent'
         WowDeathRecapAnalysis,
         WowPlayersAnalysis,
         WowMatchStatSummary,
+        GenericMatchSidebar,
     }
 })
 export default class WowMatch extends mixins(CommonComponent, MatchShareBase) {
