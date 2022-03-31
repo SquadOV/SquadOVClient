@@ -117,7 +117,7 @@
 
                 <v-tooltip bottom>
                     <template v-slot:activator="{on, attrs}">
-                        <v-btn color="primary" icon @click="openClipWindowForMatch" :disabled="!hasFastify" v-on="on" v-bind="attrs">
+                        <v-btn color="primary" icon @click="openClipWindowForMatch" :disabled="!hasFastify && !hasLocal" v-on="on" v-bind="attrs">
                             <v-icon>
                                 mdi-filmstrip
                             </v-icon>
