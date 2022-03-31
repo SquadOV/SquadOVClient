@@ -131,8 +131,9 @@ private:
     std::mutex _ainMutex;
     bool _streamsInit = false;
 
-    std::optional<int64_t> _pttEnableCb = 0;
-    std::optional<int64_t> _pttDisableCb = 0;
+    std::optional<int64_t> _pttEnableCb = std::nullopt;
+    std::optional<int64_t> _pttDisableCb = std::nullopt;
+    std::optional<int64_t> _bookmarkCb = std::nullopt;
 
     // Locked Settings. We need the video settings between the DVR recording
     // and the final video to stay the same so cache the results here.

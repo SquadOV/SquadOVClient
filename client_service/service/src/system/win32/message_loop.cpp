@@ -169,6 +169,15 @@ void Win32MessageLoop::onChangeKeycodeState() {
         _lastPttEnabledState = false;
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
     }
+
+    const auto bookmarkActive = checkKeybindActive(keybinds.bookmark);
+    if (bookmarkActive && _canBookmark) {
+        LOG_INFO("User Requested Bookmark via Keybinds." << std::endl);
+        notifySquadOvAction(service::system::EAction::Bookmark);
+        _canBookmark = false;
+    } else if (!bookmarkActive) {
+        _canBookmark = true;
+    }
 }
 
 bool Win32MessageLoop::checkKeybindActive(const std::vector<int>& keybind) {

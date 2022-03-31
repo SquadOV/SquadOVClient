@@ -74,6 +74,7 @@ struct RecordingSettings {
 struct KeybindSettings {
     std::vector<int> pushToTalk;
     std::vector<int> pushToTalk2;
+    std::vector<int> bookmark;
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 

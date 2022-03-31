@@ -103,6 +103,7 @@ export interface SquadOvRecordingSettings {
 export interface SquadOvKeybindSettings {
     pushToTalk: number[]
     pushToTalk2: number[]
+    bookmark: number[]
 }
 
 export interface SquadOvVideoPlaybackSettings {
@@ -471,7 +472,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         record,
         keybinds: {
             pushToTalk: [],
-            pushToTalk2: []
+            pushToTalk2: [],
+            bookmark: [120],
         },
         playback: {
             smallStepSize: 5000,
@@ -540,7 +542,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         },
         keybinds: {
             pushToTalk: [],
-            pushToTalk2: []
+            pushToTalk2: [],
+            bookmark: [120],
         },
         playback: {
             smallStepSize: 5000,
@@ -645,7 +648,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.keybinds === undefined) {
             parsedData.keybinds = {
                 pushToTalk: [],
-                pushToTalk2: []
+                pushToTalk2: [],
+                bookmark: [120],
             }
         }
 
@@ -744,6 +748,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         
         if (parsedData.keybinds.pushToTalk2 === undefined) {
             parsedData.keybinds.pushToTalk2 = []
+        }
+
+        if (parsedData.keybinds.bookmark === undefined) {
+            parsedData.keybinds.bookmark = [120]
         }
     
         if (parsedData.record.useWASAPIRecording2 === undefined) {

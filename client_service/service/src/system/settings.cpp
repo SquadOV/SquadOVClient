@@ -107,6 +107,12 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     for (const auto& ele: obj["pushToTalk2"]) {
         settings.pushToTalk2.push_back(ele.get<int>());
     }
+
+    if (obj.find("bookmark") != obj.end() && obj.count("bookmark") > 0) {
+        for (const auto& ele: obj["bookmark"]) {
+            settings.bookmark.push_back(ele.get<int>());
+        }
+    }
     return settings;
 }
 

@@ -724,6 +724,14 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         }
     }
 
+    LOG_INFO("Hooking bookmark keybind..." << std::endl);
+    {
+        const auto bookmarkId = _currentId->videoUuid;
+        _bookmarkCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::Bookmark, [this, bookmarkId](){
+            service::api::getGlobalApi()->createBookmark(bookmarkId, shared::nowUtc());
+        });
+    }
+
     LOG_INFO("Creating encoder..." << std::endl);
     if (_forcedOutputUrl) {
         _encoder = createEncoder(_forcedOutputUrl.value());
@@ -889,6 +897,15 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
 
     LOG_INFO("Stop Inputs..." << std::endl);
     stopInputs();
+
+    
+    if (_bookmarkCb.has_value()) {
+        LOG_INFO("...Removing bookmark hook..." << std::endl);
+        shared::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::Bookmark, _bookmarkCb.value());
+        LOG_INFO("\tOK" << std::endl);
+        _bookmarkCb.reset();
+    }
+
     if (_dvrEncoder.hasEncoder()) {
         LOG_INFO("Stop DVR session..." << std::endl);
         const auto session = stopDvrSession();

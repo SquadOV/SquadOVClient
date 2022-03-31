@@ -34,6 +34,7 @@ private:
     std::unordered_map<service::system::EAction, std::vector<ActionCallbackData>> _actionCallbacks;
     int64_t _actionCbCounter = 0;
     bool _lastPttEnabledState = false;
+    bool _canBookmark = true;
     std::array<bool, 256> _virtualKeycodeState;
 };
 

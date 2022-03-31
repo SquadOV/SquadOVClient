@@ -139,7 +139,17 @@
                 </div>
 
                 <sharing-settings-item></sharing-settings-item>
-                
+            </v-tab-item>
+
+            <v-tab>
+                <v-icon left>
+                    mdi-monitor
+                </v-icon>
+                In-Game
+            </v-tab>
+
+            <v-tab-item>
+                <in-game-settings-item></in-game-settings-item>
             </v-tab-item>
         </v-tabs>
     </v-container>
@@ -157,6 +167,7 @@ import SharingSettingsItem from '@client/vue/utility/squadov/settings/SharingSet
 import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/LinkedAccountsSettingsItem.vue'
 import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSettingsItem.vue'
 import OverlaySettingsItem from '@client/vue/utility/squadov/settings/OverlaySettingsItem.vue'
+import InGameSettingsItem from '@client/vue/utility/squadov/settings/InGameSettingsItem.vue'
 
 @Component({
     components: {
@@ -166,7 +177,8 @@ import OverlaySettingsItem from '@client/vue/utility/squadov/settings/OverlaySet
         SharingSettingsItem,
         LinkedAccountsSettingsItem,
         PerGameSettingsItem,
-        OverlaySettingsItem
+        OverlaySettingsItem,
+        InGameSettingsItem,
     }
 })
 export default class AppSettingsPage extends Vue {

@@ -557,6 +557,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif            
         },
+        changeBookmarkKeybind(state: RootState, v: number[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.keybinds.bookmark = [...v]
+            saveLocalSettings(state.settings)
+/// #endif         
+        }
     },
     actions: {
         async reloadLocalSettings(context) {

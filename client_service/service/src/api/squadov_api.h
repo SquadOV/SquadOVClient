@@ -61,6 +61,7 @@ public:
     shared::squadov::SquadOVUser getCurrentUserApi() const;
     shared::squadov::SquadOVUser getCurrentUserCached() const;
     void syncHardware(const service::hardware::Hardware& data) const;
+    void createBookmark(const std::string& videoUuid, const shared::TimePoint& tm) const;
 
     // Valorant
     std::string uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const;

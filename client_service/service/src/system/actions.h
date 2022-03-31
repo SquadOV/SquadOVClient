@@ -5,7 +5,8 @@ namespace service::system {
 
 enum class EAction {
     PushToTalkEnable,
-    PushToTalkDisable
+    PushToTalkDisable,
+    Bookmark
 };
 
 using ActionCallback = std::function<void()>;

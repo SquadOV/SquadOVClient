@@ -121,6 +121,21 @@ void SquadovApi::syncHardware(const service::hardware::Hardware& data) const {
     }
 }
 
+void SquadovApi::createBookmark(const std::string& videoUuid, const shared::TimePoint& tm) const {
+    std::ostringstream path;
+    path << "/v1/users/me/events";
+
+    nlohmann::json body = {
+        { "videoUuid", videoUuid },
+        { "tm", shared::timeToIso(tm) }
+    };
+    const auto result = _webClient->post(path.str(), body);
+    if (result->status != 204) {
+        THROW_ERROR("Failed to get create bookmark: " << result->status);
+        return;
+    }
+}
+
 void SquadovApi::retrieveSessionFeatureFlags() {
     std::ostringstream path;
     path << "/v1/users/" << getSessionUserId() << "/features";
