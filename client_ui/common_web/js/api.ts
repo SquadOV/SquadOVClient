@@ -164,6 +164,11 @@ interface ChangeForgottenPasswordInput {
     password: string
 }
 
+export interface StagedClipStatusResponse {
+    url: string
+    uuid: string
+}
+
 import { storeSessionCookie, getSessionId } from '@client/js/session'
 import { WowDeathRecap, cleanWowDeathRecapFromJson } from '@client/js/wow/deaths'
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
@@ -1251,6 +1256,26 @@ class ApiClient {
             },
             ...this.createWebAxiosConfig()
         })
+    }
+
+    requestServerSideClipping(videoUuid: string, start: number, end: number): Promise<ApiData<number>> {
+        return axios.post(`v1/vod/${videoUuid}/stage`, {
+            start,
+            end,
+            execute: true,
+        }, this.createWebAxiosConfig())
+    }
+
+    // If not complete, null. If complete, returns the ().
+    checkServerSideClippingStatus(stageId: number): Promise<ApiData<StagedClipStatusResponse | null>> {
+        return axios.get(`v1/stage/${stageId}/status`, this.createWebAxiosConfig())
+    }
+
+    publishClip(clipUuid: string, title: string, description: string): Promise<void> {
+        return axios.post(`v1/clip/${clipUuid}/admin/publish`, {
+            title,
+            description
+        }, this.createWebAxiosConfig())
     }
 
     createClip(parentVodUuid: string, clipPath: string, association: VodAssociation, metadata: VodMetadata, title: string, description: string, game: SquadOvGames) : Promise<ApiData<string>> {

@@ -60,6 +60,16 @@
         <div class="d-flex align-center mb-1 mx-2">
             <v-checkbox
                 class="mx-1"
+                v-model="useServerSideClipping"
+                label="Server-Side Clipping"
+                hide-details
+                dense
+                :disabled="!canDoServerSideClipping"
+            >
+            </v-checkbox>
+
+            <v-checkbox
+                class="mx-1"
                 v-model="syncTimestamp"
                 label="Sync Timestamp"
                 hide-details
@@ -286,7 +296,7 @@ import GenericMatchTimeline from '@client/vue/utility/GenericMatchTimeline.vue'
 import fs from 'fs'
 import { ipcRenderer } from 'electron'
 ///#endif
-import { apiClient, ApiData } from '@client/js/api'
+import { apiClient, ApiData, StagedClipStatusResponse } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
 
@@ -340,11 +350,17 @@ export default class VodEditor extends mixins(CommonComponent) {
     saveInProgress: boolean = false
 
     clipUuid: string | null = null
+    stagedClipUuid: string | null = null
     badClipState: boolean = false
+    useServerSideClipping: boolean = true
 
     $refs!: {
         player: VideoPlayer
         urlInput: any
+    }
+
+    get canDoServerSideClipping(): boolean {
+        return !!this.vod && !this.vod.isLocal
     }
 
     get videoDurationMs(): number {
@@ -566,32 +582,46 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.localClipPath = null
         this.metadata = null
         this.clipUuid = null
+        this.stagedClipUuid = null
     }
 
     saveClip() {
-        if (!this.localClipPath || !this.metadata || !this.vod) {
+        if (!this.localClipPath || (!this.useServerSideClipping && (!this.metadata || !this.vod))) {
             return
         }
 
         this.saveInProgress = true
         this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.SaveClip, '', this.clipEnd - this.clipStart)
-        apiClient.createClip(this.videoUuid, this.localClipPath, {
-            matchUuid: this.vod.matchUuid,
-            userUuid: this.$store.state.currentUser.uuid,
-            videoUuid: '',
-            startTime: new Date(this.vod.startTime.getTime() + this.clipStart),
-            endTime: new Date(this.vod.startTime.getTime() + this.clipEnd),
-            rawContainerFormat: 'mp4',
-            isClip: true,
-            isLocal: false,
-        }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
-            this.clipUuid = resp.data
-        }).catch((err: any) => {
-            this.clipError = true
-            console.error('Failed to create clip: ', err)
-        }).finally(() => {
-            this.saveInProgress = false
-        })
+
+        if (this.useServerSideClipping) {
+            // At this point we just need to publish the clip and use the user's title and description.
+            apiClient.publishClip(this.stagedClipUuid!, this.clipTitle, this.clipDescription).then(() => {
+                this.clipUuid = this.stagedClipUuid
+            }).catch((err: any) => {
+                this.clipError = true
+                console.error('Failed to publish clip: ', err)
+            }).finally(() => {
+                this.saveInProgress = false
+            })
+        } else if (!!this.vod && !!this.metadata) {
+            apiClient.createClip(this.videoUuid, this.localClipPath, {
+                matchUuid: this.vod.matchUuid,
+                userUuid: this.$store.state.currentUser.uuid,
+                videoUuid: '',
+                startTime: new Date(this.vod.startTime.getTime() + this.clipStart),
+                endTime: new Date(this.vod.startTime.getTime() + this.clipEnd),
+                rawContainerFormat: 'mp4',
+                isClip: true,
+                isLocal: false,
+            }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
+                this.clipUuid = resp.data
+            }).catch((err: any) => {
+                this.clipError = true
+                console.error('Failed to create clip: ', err)
+            }).finally(() => {
+                this.saveInProgress = false
+            })
+        }
     }
 
     goToClip() {
@@ -629,8 +659,8 @@ export default class VodEditor extends mixins(CommonComponent) {
         }
 
         
-        let clipStart = this.clipStart
-        let clipEnd = this.clipEnd + 1000
+        let clipStart = Math.round(this.clipStart)
+        let clipEnd = Math.round(this.clipEnd + 1000)
 
         if (clipStart === null || clipEnd === null) {
             console.log(`Encountered a bad clip state [Start: ${clipStart} to End: ${clipEnd}]`)
@@ -644,24 +674,60 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.clipInProgress = true
         this.showHideClipDialog = true
 
-        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', this.clipEnd - this.clipStart)
-        // Add a second to the end of the video to ensure that we capture that last second completely.
-        requestVodClip(videoUri, clipStart, clipEnd).then((resp: {
-            path: string,
-            metadata: VodMetadata,
-        }) => {
-            let normalPath = resp.path.replace(/\\/g, '/')
-            this.clipInProgress = false
-            this.clipKey += 1
-            this.localClipPath = `file:///${normalPath}`
-            this.clipPathsInSession.push(normalPath)
-            this.metadata = resp.metadata
-        }).catch((err: any) => {
-            console.error('Failed to clip: ', err)
-            this.clipError = true
-            this.showHideClipDialog = false
-            this.clipInProgress = false
-        })
+        this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', clipEnd - clipStart)
+        if (this.useServerSideClipping) {
+            // Request server side clipping. Then wait until the clipping is completed by our servers.
+            // This creates an un-published clip which we should publish in the next step.
+            apiClient.requestServerSideClipping(this.videoUuid, clipStart, clipEnd).then((resp: ApiData<number>) => {
+                let stagedId = resp.data
+                new Promise<StagedClipStatusResponse>(async (resolve, reject) => {
+                    try {
+                        while (true) {
+                            let status = (await apiClient.checkServerSideClippingStatus(stagedId)).data
+                            if (!!status) {
+                                resolve(status)
+                                break
+                            }
+
+                            await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
+                        }
+                    } catch (ex) {
+                        reject(ex)
+                    }
+                }).then((clipStatus: StagedClipStatusResponse) => {
+                    this.localClipPath = clipStatus.url
+                    this.stagedClipUuid = clipStatus.uuid
+                }).catch((err: any) => {
+                    console.error('Failed to clip [pending ssc]: ', err)
+                    this.clipError = true
+                    this.showHideClipDialog = false
+                }).finally(() => {
+                    this.clipInProgress = false
+                })
+            }).catch((err: any) => {
+                console.error('Failed to clip [request ssc]: ', err)
+                this.clipError = true
+                this.showHideClipDialog = false
+                this.clipInProgress = false
+            })
+        } else {
+            requestVodClip(videoUri, clipStart, clipEnd).then((resp: {
+                path: string,
+                metadata: VodMetadata,
+            }) => {
+                let normalPath = resp.path.replace(/\\/g, '/')
+                this.clipInProgress = false
+                this.clipKey += 1
+                this.localClipPath = `file:///${normalPath}`
+                this.clipPathsInSession.push(normalPath)
+                this.metadata = resp.metadata
+            }).catch((err: any) => {
+                console.error('Failed to clip: ', err)
+                this.clipError = true
+                this.showHideClipDialog = false
+                this.clipInProgress = false
+            })
+        }
     }
 }
 
