@@ -523,7 +523,19 @@ std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {
 }
 
 void SquadovApi::createStagedClip(const std::string& videoUuid, int64_t start, int64_t end) const {
+    std::ostringstream path;
+    path << "/v1/vod/" << videoUuid << "/stage";
 
+    const nlohmann::json body = {
+        { "start", start},
+        { "end", end },
+        { "execute", false }
+    };
+    const auto result = _webClient->post(path.str(), body);
+
+    if (result->status != 200) {
+        THROW_ERROR("Failed to stage clip: " << result->status);
+    }
 }
 
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {

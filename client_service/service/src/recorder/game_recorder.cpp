@@ -744,7 +744,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
             } else {
                 // If this VOD is automatically uploaded, create a staged clip.
                 const auto end = shared::timeToUnixMs(shared::nowUtc()) - shared::timeToUnixMs(_vodStartTime);
-                const auto start = std::max(end - _cachedInstantClipLengthSeconds, static_cast<int64_t>(0));
+                const auto start = std::max(end - _cachedInstantClipLengthSeconds * 1000, static_cast<int64_t>(0));
                 service::api::getGlobalApi()->createStagedClip(clipId, start, end);
             }
         });
