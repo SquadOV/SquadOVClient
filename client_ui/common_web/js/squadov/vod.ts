@@ -34,6 +34,7 @@ export interface VodClip {
     isWatchlist: boolean
     accessToken: string | null
     tags: VodTag[]
+    published: boolean
 }
 
 export interface VodFavoriteResponse {

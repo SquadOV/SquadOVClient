@@ -87,6 +87,78 @@
                             </vod-watchlist-button>
                         </template>
 
+                        <template v-if="!!clip && clip.clip.userUuid === $store.state.currentUser.uuid">
+                            <v-dialog v-model="showHideEdit" persistent max-width="80%">
+                                <template v-slot:activator="{ on, attrs }">
+                                    <v-btn
+                                        icon
+                                        color="success"
+                                        class="mr-1"
+                                        v-bind="attrs"
+                                        v-on="on"
+                                    >
+                                        <v-icon>
+                                            mdi-pencil
+                                        </v-icon>
+                                    </v-btn>
+                                </template>
+
+                                <v-card>
+                                    <v-card-title>
+                                        Edit Clip
+                                    </v-card-title>
+                                    <v-divider></v-divider>
+
+                                    <v-form v-model="editValid">
+                                        <v-text-field
+                                            v-model="editTitle"
+                                            label="Title"
+                                            filled
+                                            :rules="titleRules"
+                                        >
+                                        </v-text-field>
+
+                                        <v-textarea
+                                            filled
+                                            label="Description"
+                                            v-model="editDescription"
+                                            hide-details
+                                        >
+                                        </v-textarea>
+                                    </v-form>
+
+                                    <v-card-actions>
+                                        <v-btn
+                                            color="error"
+                                            @click="showHideEdit = false"
+                                        >
+                                            Cancel
+                                        </v-btn>
+
+                                        <v-spacer></v-spacer>
+
+                                        <v-btn
+                                            color="success"
+                                            :disabled="!editValid"
+                                            @click="doClipEdit"
+                                            :loading="publishInProgress"
+                                        >
+                                            Save
+                                        </v-btn>
+                                    </v-card-actions>
+                                </v-card>
+                            </v-dialog>
+                            <v-btn
+                                v-if="!clip.published"
+                                color="primary"
+                                class="mr-1"
+                                @click="doPublish"
+                                :loading="publishInProgress"
+                            >
+                                Publish
+                            </v-btn>
+                        </template>
+
                         <match-share-button
                             v-if="!!clip && hasFastify"
                             :clip-uuid="clipUuid"
@@ -319,6 +391,51 @@ export default class ClipView extends mixins(CommonComponent) {
 
     permissions: MatchVideoSharePermissions | null = null
     vodProfileHandle: UserProfileHandle | null = null
+
+    showHideEdit: boolean = false
+    editValid: boolean = false
+    editInProgress: boolean = false
+    editTitle: string = ''
+    editDescription: string = ''
+    publishInProgress: boolean = false
+    publishError: boolean = false
+
+    doPublish() {
+        this.publishInProgress = true
+        apiClient.publishClip(this.clipUuid, null, null).then(() => {
+            if (!!this.clip) {
+                this.clip.published = true
+            }
+        }).catch((err: any) => {
+            console.error('Failed to publish clip: ', err)
+            this.publishError = true
+        }).finally(() => {
+            this.publishInProgress = false
+        })
+    }
+
+    doClipEdit() {
+        this.publishInProgress = true
+        apiClient.publishClip(this.clipUuid, this.editTitle, this.editDescription).then(() => {
+            if (!!this.clip) {
+                this.clip.published = true
+                this.clip.title = this.editTitle
+                this.clip.description = this.editDescription
+            }
+            this.showHideEdit = false
+        }).catch((err: any) => {
+            console.error('Failed to edit clip: ', err)
+            this.publishError = true
+        }).finally(() => {
+            this.publishInProgress = false
+        })
+    }
+
+    get titleRules() : any[] {
+        return [
+            (value : any) => (!!value && value.length > 0) || 'Required.',
+        ]
+    }
 
     get isClipOwner(): boolean {
         return !!this.$store.state.currentUser &&

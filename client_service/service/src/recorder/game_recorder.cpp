@@ -336,6 +336,7 @@ void GameRecorder::loadCachedInfo() {
     // Just in case the user changed settings in the UI already, just sync up via the file.
     service::system::getCurrentSettings()->reloadSettingsFromFile();
 
+    _cachedInstantClipLengthSeconds = service::system::getCurrentSettings()->instantClipLengthSeconds();
     if (!_cachedRecordingSettings) {
         LOG_INFO("Load cache info: Settings" << std::endl);
         _cachedRecordingSettings = std::make_unique<service::system::RecordingSettings>(service::system::getCurrentSettings()->recording());
@@ -732,6 +733,23 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         });
     }
 
+    LOG_INFO("Hooking clipping keybind..." << std::endl);
+    {
+        const auto clipId = _currentId->videoUuid;
+        _clipCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::Clip, [this, clipId](){
+            LOG_INFO("Creating clip of length " << _cachedInstantClipLengthSeconds << " seconds..." << std::endl);
+            if (_cachedRecordingSettings->useLocalRecording) {
+                // If this VOD is locally recorded, keep track of the clipping requests and handle them after the game is finished.
+                LOG_WARNING("...Currently unsupported when using local recording." << std::endl);
+            } else {
+                // If this VOD is automatically uploaded, create a staged clip.
+                const auto end = shared::timeToUnixMs(shared::nowUtc()) - shared::timeToUnixMs(_vodStartTime);
+                const auto start = std::max(end - _cachedInstantClipLengthSeconds, static_cast<int64_t>(0));
+                service::api::getGlobalApi()->createStagedClip(clipId, start, end);
+            }
+        });
+    }
+
     LOG_INFO("Creating encoder..." << std::endl);
     if (_forcedOutputUrl) {
         _encoder = createEncoder(_forcedOutputUrl.value());
@@ -895,16 +913,22 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         end = modifiedEnd;
     }
 
-    LOG_INFO("Stop Inputs..." << std::endl);
-    stopInputs();
-
-    
     if (_bookmarkCb.has_value()) {
         LOG_INFO("...Removing bookmark hook..." << std::endl);
         shared::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::Bookmark, _bookmarkCb.value());
         LOG_INFO("\tOK" << std::endl);
         _bookmarkCb.reset();
     }
+
+    if (_clipCb.has_value()) {
+        LOG_INFO("...Removing clip hook..." << std::endl);
+        shared::system::win32::Win32MessageLoop::singleton()->removeActionCallback(service::system::EAction::Clip, _clipCb.value());
+        LOG_INFO("\tOK" << std::endl);
+        _clipCb.reset();
+    }
+
+    LOG_INFO("Stop Inputs..." << std::endl);
+    stopInputs();
 
     if (_dvrEncoder.hasEncoder()) {
         LOG_INFO("Stop DVR session..." << std::endl);

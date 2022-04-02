@@ -124,6 +124,8 @@ public:
     std::string getVodUri(const std::string& videoUuid) const;
     std::string getVodMd5Checksum(const std::string& videoUuid) const;
 
+    void createStagedClip(const std::string& videoUuid, int64_t start, int64_t end) const;
+
     // Speed Check
     service::uploader::UploadDestination SquadovApi::getSpeedCheckUri(const std::string& speedCheckUuid) const;
     void postSpeedCheck(const double speedMbps, const std::string& speedCheckUuid) const;

@@ -104,6 +104,7 @@ export interface SquadOvKeybindSettings {
     pushToTalk: number[]
     pushToTalk2: number[]
     bookmark: number[]
+    clip: number[]
 }
 
 export interface SquadOvVideoPlaybackSettings {
@@ -267,6 +268,7 @@ export interface SquadOvLocalSettings {
     disabledGames: SquadOvGames[]
     games: PerGameSettings
     useHwAccel: boolean
+    instantClipLengthSeconds: number
 }
 
 function getSettingsFname() : string {
@@ -474,6 +476,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             pushToTalk: [],
             pushToTalk2: [],
             bookmark: [120],
+            clip: [119],
         },
         playback: {
             smallStepSize: 5000,
@@ -491,6 +494,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         disabledGames: [],
         games: createEmptyPerGameSettings(),
         useHwAccel: true,
+        instantClipLengthSeconds: 15,
     }
 /// #else
     return {
@@ -544,6 +548,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             pushToTalk: [],
             pushToTalk2: [],
             bookmark: [120],
+            clip: [119],
         },
         playback: {
             smallStepSize: 5000,
@@ -561,6 +566,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         disabledGames: [],
         games: createEmptyPerGameSettings(),
         useHwAccel: true,
+        instantClipLengthSeconds: 15,
     }
 /// #endif
 }
@@ -650,6 +656,7 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
                 pushToTalk: [],
                 pushToTalk2: [],
                 bookmark: [120],
+                clip: [119],
             }
         }
 
@@ -753,6 +760,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
         if (parsedData.keybinds.bookmark === undefined) {
             parsedData.keybinds.bookmark = [120]
         }
+
+        if (parsedData.keybinds.clip === undefined) {
+            parsedData.keybinds.clip = [119]
+        }
     
         if (parsedData.record.useWASAPIRecording2 === undefined) {
             parsedData.record.useWASAPIRecording2 = false
@@ -800,6 +811,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.useHwAccel === undefined) {
             parsedData.useHwAccel = true
+        }
+
+        if (parsedData.instantClipLengthSeconds === undefined) {
+            parsedData.instantClipLengthSeconds = 15
         }
 
         if (parsedData.games.wow.showAddonWarnings === undefined) {

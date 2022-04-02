@@ -113,6 +113,12 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
             settings.bookmark.push_back(ele.get<int>());
         }
     }
+
+    if (obj.find("clip") != obj.end() && obj.count("clip") > 0) {
+        for (const auto& ele: obj["clip"]) {
+            settings.clip.push_back(ele.get<int>());
+        }
+    }
     return settings;
 }
 
@@ -178,6 +184,7 @@ LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     }
 
     settings.speedCheckResultMbps = obj.value("speedCheckResultMbps", 0.0);
+    settings.instantClipLengthSeconds = obj.value("instantClipLengthSeconds", 15);
     return settings;
 }
 
@@ -228,6 +235,11 @@ bool Settings::isGameEnabled(shared::EGame game) const {
 double Settings::speedCheckResultMbps() const {
     std::shared_lock lock(_mutex);
     return _settings.speedCheckResultMbps;
+}
+
+int64_t Settings::instantClipLengthSeconds() const {
+    std::shared_lock lock(_mutex);
+    return _settings.instantClipLengthSeconds;
 }
 
 }

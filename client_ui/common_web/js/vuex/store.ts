@@ -565,6 +565,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.keybinds.bookmark = [...v]
             saveLocalSettings(state.settings)
 /// #endif         
+        },
+        changeClipKeybind(state: RootState, v: number[]) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.keybinds.clip = [...v]
+            saveLocalSettings(state.settings)
+/// #endif         
+        },
+        changeInstantClipLength(state: RootState, v: number) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.instantClipLengthSeconds = v
+            saveLocalSettings(state.settings)
+/// #endif         
         }
     },
     actions: {

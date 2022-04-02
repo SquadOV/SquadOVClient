@@ -172,11 +172,20 @@ void Win32MessageLoop::onChangeKeycodeState() {
 
     const auto bookmarkActive = checkKeybindActive(keybinds.bookmark);
     if (bookmarkActive && _canBookmark) {
-        LOG_INFO("User Requested Bookmark via Keybinds." << std::endl);
+        LOG_INFO("User Requested [Bookmark] via Keybinds." << std::endl);
         notifySquadOvAction(service::system::EAction::Bookmark);
         _canBookmark = false;
     } else if (!bookmarkActive) {
         _canBookmark = true;
+    }
+
+    const auto clipActive = checkKeybindActive(keybinds.clip);
+    if (clipActive && _canClip) {
+        LOG_INFO("User Requested [Clip] via Keybinds." << std::endl);
+        notifySquadOvAction(service::system::EAction::Clip);
+        _canClip = false;
+    } else if (!clipActive) {
+        _canClip = true;
     }
 }
 

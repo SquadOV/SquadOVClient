@@ -1271,7 +1271,7 @@ class ApiClient {
         return axios.get(`v1/stage/${stageId}/status`, this.createWebAxiosConfig())
     }
 
-    publishClip(clipUuid: string, title: string, description: string): Promise<void> {
+    publishClip(clipUuid: string, title: string | null, description: string | null): Promise<void> {
         return axios.post(`v1/clip/${clipUuid}/admin/publish`, {
             title,
             description

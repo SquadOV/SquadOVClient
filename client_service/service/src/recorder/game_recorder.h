@@ -134,11 +134,13 @@ private:
     std::optional<int64_t> _pttEnableCb = std::nullopt;
     std::optional<int64_t> _pttDisableCb = std::nullopt;
     std::optional<int64_t> _bookmarkCb = std::nullopt;
+    std::optional<int64_t> _clipCb = std::nullopt;
 
     // Locked Settings. We need the video settings between the DVR recording
     // and the final video to stay the same so cache the results here.
     std::unique_ptr<video::VideoWindowInfo> _cachedWindowInfo;
     std::unique_ptr<service::system::RecordingSettings> _cachedRecordingSettings;
+    int64_t _cachedInstantClipLengthSeconds = 15;    
     void clearCachedInfo();
 
     // Manual Video File Controls

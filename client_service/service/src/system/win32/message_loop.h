@@ -35,6 +35,7 @@ private:
     int64_t _actionCbCounter = 0;
     bool _lastPttEnabledState = false;
     bool _canBookmark = true;
+    bool _canClip = true;
     std::array<bool, 256> _virtualKeycodeState;
 };
 

@@ -65,6 +65,7 @@
                 hide-details
                 dense
                 :disabled="!canDoServerSideClipping"
+                v-if="canDoServerSideClipping"
             >
             </v-checkbox>
 

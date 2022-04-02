@@ -75,6 +75,7 @@ struct KeybindSettings {
     std::vector<int> pushToTalk;
     std::vector<int> pushToTalk2;
     std::vector<int> bookmark;
+    std::vector<int> clip;
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 
@@ -128,6 +129,7 @@ struct LocalSettings {
     PerGameSettings games;
     double speedCheckResultMbps = 0.0;
     std::unordered_set<shared::EGame> disabledGames;
+    int64_t instantClipLengthSeconds = 15;
 
     static LocalSettings fromJson(const nlohmann::json& obj);
 };
@@ -139,6 +141,7 @@ public:
     void reloadSettingsFromFile();
 
     double speedCheckResultMbps() const;
+    int64_t instantClipLengthSeconds() const;
 
     RecordingSettings recording() const;
     KeybindSettings keybinds() const;

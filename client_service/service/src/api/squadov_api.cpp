@@ -522,6 +522,10 @@ std::string SquadovApi::getVodMd5Checksum(const std::string& videoUuid) const {
     return parsedJson.get<std::string>();
 }
 
+void SquadovApi::createStagedClip(const std::string& videoUuid, int64_t start, int64_t end) const {
+
+}
+
 std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {
     std::ostringstream path;
     path << "/v1/wow/combatlog";
