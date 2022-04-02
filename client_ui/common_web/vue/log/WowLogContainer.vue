@@ -28,7 +28,7 @@
                             <span v-if="isLocalUser">
                                 Run SquadOV while running a dungeon or raid in WoW and SquadOV will automatically detect your characters.
                                 Be sure to be running an auto-combat log enabler.
-                                We recommend using the <a href="#" @click="goToScl">Simple Combat Logger</a> addon.
+                                Check our <a href="#" @click="goToSupport">support site</a> on how to properly setup a combat log addon.
                             </span>
 
                             <span v-else>
@@ -83,8 +83,8 @@ export default class WowLogContainer extends mixins(CommonComponent) {
         return !!this.selectedCharacter
     }
     
-    goToScl() {
-        const url = 'https://www.curseforge.com/wow/addons/simplecombatlogger'
+    goToSupport() {
+        const url = this.release == WowGameRelease.Retail ? 'https://squadov.zendesk.com/hc/en-us/articles/4505562514715-WoW-Retail-Combat-Log-Addon-Setup' : 'https://squadov.zendesk.com/hc/en-us/articles/4505605365787-WoW-Classic-Combat-Log-Addon-Setup'
         openUrlInBrowser(url)
     }
 
