@@ -121,9 +121,9 @@ export default class InGameSettingsItem extends Vue {
     }
 
     @Watch('clipRecord', {deep: true})
-    @Watch('$store.state.settings.keybinds.clip')
+    @Watch('$store.state.settings.keybinds.clip2')
     refreshClipKeybindStrings() {
-        KbManager.keybindToString(!!this.clipRecord ? this.clipRecord.keybind : this.$store.state.settings.keybinds.clip).then((resp: string) => {
+        KbManager.keybindToString(!!this.clipRecord ? this.clipRecord.keybind : this.$store.state.settings.keybinds.clip2).then((resp: string) => {
             this.clipKeybindStr = resp
         })
     }

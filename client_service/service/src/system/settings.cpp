@@ -114,8 +114,8 @@ KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
         }
     }
 
-    if (obj.find("clip") != obj.end() && obj.count("clip") > 0) {
-        for (const auto& ele: obj["clip"]) {
+    if (obj.find("clip2") != obj.end() && obj.count("clip2") > 0) {
+        for (const auto& ele: obj["clip2"]) {
             settings.clip.push_back(ele.get<int>());
         }
     }

@@ -730,6 +730,12 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         const auto bookmarkId = _currentId->videoUuid;
         _bookmarkCb = shared::system::win32::Win32MessageLoop::singleton()->addActionCallback(service::system::EAction::Bookmark, [this, bookmarkId](){
             service::api::getGlobalApi()->createBookmark(bookmarkId, shared::nowUtc());
+            DISPLAY_NOTIFICATION(
+                service::system::NotificationSeverity::Warning,
+                service::system::NotificationDisplayType::NativeNotification,
+                "SquadOV :: Bookmark Created",
+                "You'll be able to find this moment later."
+            );
         });
     }
 
@@ -746,6 +752,12 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
                 const auto end = shared::timeToUnixMs(shared::nowUtc()) - shared::timeToUnixMs(_vodStartTime);
                 const auto start = std::max(end - _cachedInstantClipLengthSeconds * 1000, static_cast<int64_t>(0));
                 service::api::getGlobalApi()->createStagedClip(clipId, start, end);
+                DISPLAY_NOTIFICATION(
+                    service::system::NotificationSeverity::Warning,
+                    service::system::NotificationDisplayType::NativeNotification,
+                    "SquadOV :: Clip Created",
+                    "You'll be able to find this clip in your Clip Library after the game!"
+                );
             }
         });
     }

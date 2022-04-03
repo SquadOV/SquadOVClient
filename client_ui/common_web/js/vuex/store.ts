@@ -571,7 +571,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (!state.settings) {
                 return
             }
-            state.settings.keybinds.clip = [...v]
+            state.settings.keybinds.clip2 = [...v]
             saveLocalSettings(state.settings)
 /// #endif         
         },
