@@ -12,6 +12,8 @@ win:
   target: "nsis"
   icon: "nsis/icon.ico"
   certificateSubjectName: "GRCHive, Inc."
+  timeStampServer: "http://timestamp.sectigo.com"
+  rfc3161TimeStampServer: "http://timestamp.sectigo.com"
   publish: 
     - provider: generic
       url: https://us-central1.content.squadov.gg/builds
