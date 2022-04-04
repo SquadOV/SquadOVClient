@@ -87,7 +87,7 @@
                             </vod-watchlist-button>
                         </template>
 
-                        <template v-if="!!clip && clip.clip.userUuid === $store.state.currentUser.uuid">
+                        <template v-if="!!clip && isClipOwner">
                             <v-dialog v-model="showHideEdit" persistent max-width="80%">
                                 <template v-slot:activator="{ on, attrs }">
                                     <v-btn
