@@ -594,7 +594,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.saveInProgress = true
         this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.SaveClip, '', this.clipEnd - this.clipStart)
 
-        if (this.useServerSideClipping) {
+        if (this.useServerSideClipping && this.canDoServerSideClipping) {
             // At this point we just need to publish the clip and use the user's title and description.
             apiClient.publishClip(this.stagedClipUuid!, this.clipTitle, this.clipDescription).then(() => {
                 this.clipUuid = this.stagedClipUuid
@@ -676,7 +676,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.showHideClipDialog = true
 
         this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.CreateClip, '', clipEnd - clipStart)
-        if (this.useServerSideClipping) {
+        if (this.useServerSideClipping && this.canDoServerSideClipping) {
             // Request server side clipping. Then wait until the clipping is completed by our servers.
             // This creates an un-published clip which we should publish in the next step.
             apiClient.requestServerSideClipping(this.videoUuid, clipStart, clipEnd).then((resp: ApiData<number>) => {
