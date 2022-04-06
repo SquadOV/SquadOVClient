@@ -1221,24 +1221,62 @@ class ApiServer {
         }
 
         const query = `
+            WITH active_users(id) AS (
+                SELECT DISTINCT(dae.user_id)
+                FROM squadov.daily_active_endpoint AS dae 
+            ), wow_users(id) AS (
+                SELECT DISTINCT(user_id)
+                FROM squadov.wow_match_view
+                WHERE match_uuid IS NOT NULL
+            ), user_vods(id) AS (
+                SELECT u.id
+                FROM (
+                    SELECT u.id, COUNT(v.video_uuid)
+                    FROM squadov.vods AS v
+                    INNER JOIN squadov.users AS u
+                        ON u.uuid = v.user_uuid
+                    WHERE v.match_uuid IS NOT NULL
+                        AND v.end_time IS NOT NULL
+                        AND v.is_clip
+                    GROUP BY u.id
+                ) AS u(id, count)
+                WHERE u.count > 10
+            ), user_shares(id) AS (
+                SELECT u.id
+                FROM (
+                    SELECT st.user_id, COUNT(st.id)
+                    FROM squadov.share_tokens AS st
+                    WHERE st.clip_uuid IS NOT NULL
+                    GROUP BY st.user_id
+                ) AS u(id, count)
+                WHERE u.count > 10
+            ), valid_users AS (
+                SELECT u.id, u.registration_time
+                FROM squadov.users AS u
+                INNER JOIN active_users AS au
+                    ON au.id = u.id
+                INNER JOIN user_shares AS us
+                    ON us.id = u.id
+                WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
+            )
             SELECT
                 DATE_TRUNC('${pgInterval}', u.registration_time) AS "cohort_key",
-                coh.cohort_period,
-                SUM(1) AS "count"
-            FROM squadov.users AS u
+                (EXTRACT(EPOCH FROM gs.tm - u.registration_time) / EXTRACT(EPOCH FROM INTERVAL '1 ${pgPeriod}'))::INTEGER AS "cohort_period",
+                COUNT(DISTINCT u.id) AS "count"
+            FROM valid_users AS u
             CROSS JOIN LATERAL (
-                SELECT DISTINCT ON (gs.tm) gs.tm, (EXTRACT(EPOCH FROM gs.tm - u.registration_time) / EXTRACT(EPOCH FROM INTERVAL '1 ${pgPeriod}'))::INTEGER
+                SELECT *
                 FROM generate_series(
                     u.registration_time,
                     u.registration_time + INTERVAL '${length} ${pgPeriod}',
                     INTERVAL '1 ${pgPeriod}'
                 ) AS gs(tm)
-                INNER JOIN squadov.daily_active_endpoint AS das
-                    ON das.tm >= DATE_TRUNC('day', gs.tm) AND das.tm < DATE_TRUNC('day', gs.tm) + INTERVAL '${length} ${pgPeriod}'
-                        AND das.user_id = u.id
-            ) AS coh(tm, cohort_period)
-            WHERE u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ) + INTERVAL '1 ${pgInterval}'
-            GROUP BY cohort_key, coh.cohort_period
+                WHERE gs.tm < NOW()
+            ) AS gs(tm)
+            INNER JOIN squadov.daily_active_endpoint AS dae
+                ON dae.user_id = u.id
+                    AND dae.tm >= gs.tm AND dae.tm < gs.tm + INTERVAL '1 ${pgPeriod}'
+            GROUP BY cohort_key, cohort_period
         `
 
         const { rows } = await this.pool.query(
@@ -1246,25 +1284,23 @@ class ApiServer {
             [start, end]
         )
 
-        let cohortSizes = await this.getCohortSize(interval, start, end, true)
         let cohortData = new Map()
-        for (let [key, size] of cohortSizes) {
-            cohortData.set(key, {
-                tm: key,
-                data: new Array(length).fill(0),
-                size: size,
-            })
-        }
-
         rows.forEach((r) => {
             let key = r.cohort_key.toISOString()
-            let obj = cohortData.get(key)
-            if (!obj) {
-                return
+            if (!cohortData.has(key)) {
+                cohortData.set(key, {
+                    tm: key,
+                    data: new Array(length).fill(0),
+                    size: 0,
+                })
             }
-
+            let obj = cohortData.get(key)
             if (r.cohort_period >= 0 && r.cohort_period < length) {
                 obj.data[r.cohort_period] = r.count
+            }
+
+            if (r.cohort_period == 0) {
+                obj.size = r.count
             }
 
             cohortData.set(key, obj)
