@@ -616,9 +616,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
 
         for (const auto& exe: finalExesToRecord) {
             auto recorder = std::make_unique<audio::WasapiProgramRecorder>(exe.first, exe.second);
-            if (recorder->exists()) {
-                recorder->startRecording();
-                _aoutRecorder.emplace_back(std::move(recorder));
+
+            try {
+                if (recorder->exists()) {
+                    recorder->startRecording();
+                    _aoutRecorder.emplace_back(std::move(recorder));
+                }
+            } catch (std::exception& ex) {
+                LOG_ERROR("Failed to record specified program: " << ex.what() << std::endl);
             }
         }
     } else {
@@ -629,10 +634,15 @@ bool GameRecorder::initializeInputStreams(int flags) {
             } else {
                 recorder = std::make_unique<audio::PortaudioAudioRecorder>();
             }
-            recorder->loadDevice(audio::EAudioDeviceDirection::Output, output, deviceSet);
-            if (recorder->exists()) {
-                recorder->startRecording();
-                _aoutRecorder.emplace_back(std::move(recorder));
+
+            try {
+                recorder->loadDevice(audio::EAudioDeviceDirection::Output, output, deviceSet);
+                if (recorder->exists()) {
+                    recorder->startRecording();
+                    _aoutRecorder.emplace_back(std::move(recorder));
+                }
+            } catch (std::exception& ex) {
+                LOG_ERROR("Failed to record output audio device: " << ex.what() << std::endl);
             }
         }
     }
@@ -645,14 +655,19 @@ bool GameRecorder::initializeInputStreams(int flags) {
         } else {
             recorder = std::make_unique<audio::PortaudioAudioRecorder>();
         }
-        recorder->loadDevice(audio::EAudioDeviceDirection::Input, input, deviceSet);
-        if (recorder->exists()) {
-            if (input.voice) {
-                recorder->markVoice();
-            }
 
-            recorder->startRecording();
-            _ainRecorder.emplace_back(std::move(recorder));
+        try {
+            recorder->loadDevice(audio::EAudioDeviceDirection::Input, input, deviceSet);
+            if (recorder->exists()) {
+                if (input.voice) {
+                    recorder->markVoice();
+                }
+
+                recorder->startRecording();
+                _ainRecorder.emplace_back(std::move(recorder));
+            }
+        } catch (std::exception& ex) {
+            LOG_ERROR("Failed to record input audio device: " << ex.what() << std::endl);
         }
     }
 
