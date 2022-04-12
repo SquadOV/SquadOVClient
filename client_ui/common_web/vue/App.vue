@@ -1,6 +1,6 @@
 <template>
     <div id="rootApp">
-        <template v-if="hasValidSession && showNav && shouldShowNav && !$store.state.forceHideNav">
+        <template v-if="showNav && shouldShowNav">
             <app-nav
                 class="flex-grow-0"
             ></app-nav>
@@ -84,7 +84,8 @@ export default class App extends mixins(TopLevelComponent) {
 
     get shouldShowNav(): boolean {
         // We need this because the route prop (showNav) won't be populated for the App component.
-        return !this.$route.query.nonav || parseInt(<string>this.$route.query.nonav) === 0
+        console.log(this.$route.query.nonav, this.$store.state.forceHideNav, this.showNav)
+        return (!this.$route.query.nonav || parseInt(<string>this.$route.query.nonav) === 0) && !this.$store.state.forceHideNav
     }
 
     @Watch('$store.state.redirectUrl')

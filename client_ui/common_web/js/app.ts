@@ -892,6 +892,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
                 next()
             }
         }, () => {
+            store.commit('attemptUserLoad', true)
             if (!mustBeInvalid && !isTmpSession && !isPublic) {
                 next({
                     name: pi.LoginPageId,
