@@ -489,13 +489,8 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
             _vcodecContext->time_base = AVRational{1, static_cast<int>(settings.fps)};
             _vcodecContext->framerate = AVRational{static_cast<int>(settings.fps), 1};
 
-            // I think we get better video quality with a larger GOP size? Not sure tbh. I saw some flickering in certain formats
-            // if the GOP size is too small.
-            if (strcmp(_avformat->name, "hls") == 0) {
-                _vcodecContext->gop_size = static_cast<int>(settings.fps * 1);
-            } else {
-                _vcodecContext->gop_size = static_cast<int>(settings.fps * 5);
-            }
+            // A smaller gop size results in better quality (most likely) and makes it easier for vides to be cut fast for server side clipping more accurately.
+            _vcodecContext->gop_size = static_cast<int>(settings.fps * 1);
 
             if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
                 _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
