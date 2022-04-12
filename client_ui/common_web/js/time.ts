@@ -63,7 +63,7 @@ export function timeStringToSeconds(ts: string | undefined | null): number {
         return 0
     }
 
-    ts = ts.replace('h', ':').replace('m', ':').replace('s', ':')
+    ts = ts.replace('h', ':').replace('m', ':').replace('s', '')
     let components = ts.split(':')
     if (components.length == 1) {
         // Just seconds
