@@ -259,7 +259,6 @@ export interface SquadOvLocalSettings {
     minimizeToTray: boolean
     minimizeOnClose: boolean
     runOnStartup: boolean
-    setupWizardRun: boolean
     ranSpeedCheck: boolean
     speedCheckResultMbps: number
     anonymousAnalytics: boolean
@@ -485,7 +484,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
-        setupWizardRun: false,
         ranSpeedCheck: false,
         speedCheckResultMbps: 0,
         anonymousAnalytics: true,
@@ -557,7 +555,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         minimizeToTray: true,
         minimizeOnClose: true,
         runOnStartup: true,
-        setupWizardRun: false,
         ranSpeedCheck: false,
         speedCheckResultMbps: 0,
         anonymousAnalytics: true,
@@ -609,10 +606,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.useHwEncoder === undefined) {
             parsedData.record.useHwEncoder = true
-        }
-
-        if (parsedData.setupWizardRun === undefined) {
-            parsedData.setupWizardRun = false
         }
 
         if (parsedData.ranSpeedCheck === undefined) {

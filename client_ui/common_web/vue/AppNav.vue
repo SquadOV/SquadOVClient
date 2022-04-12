@@ -291,12 +291,6 @@ export default class AppNav extends mixins(CommonComponent) {
                         link: true,
                     },
                     {
-                        name: 'Setup Wizard',
-                        to: {
-                            name: pi.SetupWizardPageId
-                        }
-                    },
-                    {
                         name: 'Discord',
                         to: 'https://discord.gg/6Rj5jCVDeC',
                         link: true,

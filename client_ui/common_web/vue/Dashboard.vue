@@ -343,7 +343,7 @@ export default class Dashboard extends mixins(CommonComponent) {
     }
 
     mounted() {
-        this.redirectToSetupWizardOnFirstTime()
+        this.redirectToDownloadOnFirstTime()
         this.refreshSquads()
     }
 
@@ -353,11 +353,12 @@ export default class Dashboard extends mixins(CommonComponent) {
         this.refreshSquads()
     }
 
-    redirectToSetupWizardOnFirstTime() {
+    redirectToDownloadOnFirstTime() {
 ///#if !DESKTOP
         if (!localStorage.getItem('squadovSetup')) {
+            localStorage.setItem('squadovSetup', 'yes')
             this.$router.push({
-                name: pi.SetupWizardPageId
+                name: pi.DownloadThanksPageId
             })
         }
 ///#endif

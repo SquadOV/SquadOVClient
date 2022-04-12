@@ -3,7 +3,6 @@ export const UserProfileSlugPageId = 'profileSlug'
 export const UserProfileIdPageId = 'profileId'
 export const UserSquadsPageId = 'squads'
 export const SingleSquadPageId = 'singleSquad'
-export const SetupWizardPageId = 'setupWizard'
 
 export const LogPageId = 'logs'
 export const ValorantLogPageId = 'valorantLogs'

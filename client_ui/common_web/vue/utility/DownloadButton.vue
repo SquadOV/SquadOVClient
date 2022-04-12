@@ -16,15 +16,9 @@ export default class DownloadButton extends CommonComponent {
     @Prop({type: Boolean, default: false})
     large!: boolean
 
-    @Prop({type: Boolean, default: false})
-    setupWizard!: boolean
-
     get to(): any {
         return {
             name: DownloadThanksPageId,
-            query: {
-                wizard: this.setupWizard ? '1': '0'
-            }
         }
     }
 }

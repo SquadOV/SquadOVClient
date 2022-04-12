@@ -4,7 +4,11 @@
             Thanks for downloading SquadOV!
         </div>
 
-        <div class="mt-1">
+        <div class="text-h6 mt-1">
+            You're on your way to using the best program for recording and watching you and your friends' recorded gameplay! Pog.
+        </div>
+
+        <div class="mt-2">
             If you're having trouble downloading the installer, try clicking <a :href="altDownloadLink" target="_blank">here</a>.
         </div>
 
@@ -39,9 +43,6 @@ import { AnalyticsAction, AnalyticsCategory } from '@client/js/analytics/events'
 
 @Component
 export default class DownloadThanks extends CommonComponent {
-    @Prop({type: Boolean, default: false})
-    wizard!: boolean
-
     get downloadLink(): string {
         return 'https://us-central1.content.squadov.gg/builds/SquadOV.exe'
     }
@@ -78,10 +79,6 @@ export default class DownloadThanks extends CommonComponent {
                 }).catch((err: any) => {
                     console.error('Failed to mark user download: ', err)
                 })
-            }
-
-            if (this.wizard) {
-                this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupDoDownload, '', 0)
             }
         }
     }
