@@ -214,12 +214,18 @@ void DxgiDesktopRecorder::startRecording() {
 
             // Check if the window somehow drifted to another monitor in which case we should reinitialize.
             HMONITOR testMonitor = MonitorFromWindow(_window, MONITOR_DEFAULTTONULL);
-            if (testMonitor != _refMonitor) {
+            if (testMonitor && testMonitor != _refMonitor) {
                 LOG_WARNING("Detected monitor drift..." << std::endl);
-                initialize(true);
+                try {
+                    initialize(true);
 
-                if (_recording) {
-                    createDefaultTexture();
+                    if (_recording) {
+                        createDefaultTexture();
+                    }
+                } catch (std::exception& ex) {
+                    LOG_ERROR("Failed to reinitialize DXGI due to monitor drift: " << ex.what() << std::endl);
+                    _dupl.reset();
+                    reuseOldFrame = true;
                 }
             }
 
