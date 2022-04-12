@@ -81,7 +81,7 @@ export interface SquadOvRecordingSettings {
     outputDevices: AudioDeviceSettings[]
     inputDevices: AudioDeviceSettings[]
     usePushToTalk: boolean
-    useWASAPIRecording2: boolean
+    useWASAPIRecording3: boolean
     usePerProcessRecording: boolean
     perProcessRecordingOsCheck: boolean
     recordGameAudio: boolean
@@ -356,7 +356,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording2: false,
+                useWASAPIRecording3: true,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -403,7 +403,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording2: false,
+                useWASAPIRecording3: true,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -450,7 +450,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                     }
                 ],
                 usePushToTalk: false,
-                useWASAPIRecording2: false,
+                useWASAPIRecording3: true,
                 usePerProcessRecording: false,
                 perProcessRecordingOsCheck: false,
                 recordGameAudio: false,
@@ -526,7 +526,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 }
             ],
             usePushToTalk: false,
-            useWASAPIRecording2: false,
+            useWASAPIRecording3: true,
             usePerProcessRecording: false,
             perProcessRecordingOsCheck: false,
             recordGameAudio: false,
@@ -765,8 +765,8 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.keybinds.clip2 = [18, 83]
         }
     
-        if (parsedData.record.useWASAPIRecording2 === undefined) {
-            parsedData.record.useWASAPIRecording2 = false
+        if (parsedData.record.useWASAPIRecording3 === undefined) {
+            parsedData.record.useWASAPIRecording3 = true
         }
 
         if (parsedData.record.usePerProcessRecording === undefined) {

@@ -586,14 +586,14 @@ bool GameRecorder::initializeInputStreams(int flags) {
     _syncClockTime = service::recorder::encoder::AVSyncClock::now();
     initializeCompositor(*_cachedWindowInfo, flags);
     
-    if (!_cachedRecordingSettings->useWASAPIRecording2) {
+    if (!_cachedRecordingSettings->useWASAPIRecording3) {
         std::lock_guard guard(_paInitMutex);
         _paInit.reset(new audio::PortaudioInitRAII);
     }
 
     service::recorder::audio::AudioDeviceSet deviceSet;
     
-    if (_cachedRecordingSettings->useWASAPIRecording2 && _cachedRecordingSettings->usePerProcessRecording) {
+    if (_cachedRecordingSettings->useWASAPIRecording3 && _cachedRecordingSettings->usePerProcessRecording) {
         using RecordPair = std::pair<OSPID, double>;
         std::unordered_set<RecordPair, boost::hash<RecordPair>> finalExesToRecord;
 
@@ -624,7 +624,7 @@ bool GameRecorder::initializeInputStreams(int flags) {
     } else {
         for (const auto& output : _cachedRecordingSettings->outputDevices) {
             std::unique_ptr<audio::AudioRecorder> recorder;
-            if (_cachedRecordingSettings->useWASAPIRecording2) {
+            if (_cachedRecordingSettings->useWASAPIRecording3) {
                 recorder = std::make_unique<audio::WasapiAudioRecorder>();
             } else {
                 recorder = std::make_unique<audio::PortaudioAudioRecorder>();
@@ -640,7 +640,7 @@ bool GameRecorder::initializeInputStreams(int flags) {
     std::lock_guard guard(_ainMutex);
     for (const auto& input : _cachedRecordingSettings->inputDevices) {
         std::unique_ptr<audio::AudioRecorder> recorder;
-        if (_cachedRecordingSettings->useWASAPIRecording2) {
+        if (_cachedRecordingSettings->useWASAPIRecording3) {
             recorder = std::make_unique<audio::WasapiAudioRecorder>();
         } else {
             recorder = std::make_unique<audio::PortaudioAudioRecorder>();
