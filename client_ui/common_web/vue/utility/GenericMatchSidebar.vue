@@ -15,7 +15,9 @@
                 </v-tab>
 
                 <v-tab-item>
-                    <slot name="events"></slot>
+                    <div id="event-container">
+                        <slot name="events"></slot>
+                    </div>
                 </v-tab-item>
             </template>
 
@@ -331,6 +333,12 @@ export default class GenericMatchSidebar extends Vue {
 </script>
 
 <style scoped>
+
+#event-container {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+}
 
 #bookmark-container {
     height: calc(100% - 36px);
