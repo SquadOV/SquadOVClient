@@ -1758,7 +1758,7 @@ class ApiClient {
     }
 
     getMatchAccessibleBookmarks(matchUuid: string): Promise<ApiData<Bookmark[]>> {
-        return axios.get(`v1/match/${matchUuid}/events`, this.createWebAxiosConfig()).then((resp: ApiData<Bookmark[]>) => {
+        return axios.get(`v1/match/${matchUuid}/events`, this.createWebAxiosConfig(true)).then((resp: ApiData<Bookmark[]>) => {
             resp.data.forEach(cleanBookmarkFromJson)
             return resp
         })

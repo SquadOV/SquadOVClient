@@ -43,7 +43,7 @@
                         >
                             <template v-if="!editBookmark || editBookmark.eventId !== bm.eventId">
                                 <div class="d-flex align-center">
-                                    <div v-if="bm.userId === $store.state.currentUser.id" class="mr-2">
+                                    <div v-if="!!$store.state.currentUser && bm.userId === $store.state.currentUser.id" class="mr-2">
                                         <v-menu
                                             offset-y
                                         >
@@ -251,7 +251,7 @@ export default class GenericMatchSidebar extends Vue {
     @Watch('matchUuid')
     refreshData() {
         this.bookmarks = null
-        apiClient.getMatchAccessibleBookmarks(this.matchUuid).then((resp: ApiData<Bookmark[]>) => {
+        apiClient.accessToken().getMatchAccessibleBookmarks(this.matchUuid).then((resp: ApiData<Bookmark[]>) => {
             this.bookmarks = resp.data
         }).catch((err: any) => {
             console.warn('Failed to load bookmarks: ', err)
