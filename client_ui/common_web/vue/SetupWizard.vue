@@ -296,13 +296,13 @@ export default class SetupWizard extends CommonComponent {
 
     @Watch('step')
     onChangeSteps() {
-        if (this.step == 1) {
-            this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartSelectGames, '', 0)
-        } else if (this.step === this.totalSteps) {
+        if (this.step === this.totalSteps) {
             this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartDownloadDiscord, '', 0)
 ///#if !DESKTOP
             localStorage.setItem('squadovSetup', 'yes')
 ///#endif
+        } else if (this.step == 1) {
+            this.analytics?.event(this.$route, AnalyticsCategory.SetupWizard, AnalyticsAction.SetupStartSelectGames, '', 0)
         } else {
             let idx = this.step - 2
             if (idx < this.gameSteps.length) {

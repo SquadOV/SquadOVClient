@@ -61,3 +61,5 @@ export const CommunityPageId = 'communityPage'
 export const FavoritesPageId = 'favorites'
 export const WatchlistPageId = 'watchlist'
 export const PostGameReportPageId = 'postgame'
+
+export const DownloadThanksPageId = 'tydownload'

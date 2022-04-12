@@ -99,6 +99,7 @@ const AppSettingsPage = () => import('@client/vue/utility/squadov/AppSettingsPag
 const ClipLibrary = () => import('@client/vue/utility/vods/ClipLibrary.vue')
 const ClipView = () => import('@client/vue/utility/vods/ClipView.vue')
 const SetupWizard = () => import('@client/vue/SetupWizard.vue')
+const DownloadThanks = () => import('@client/vue/DownloadThanks.vue')
 const Player = () => import('@client/vue/Player.vue')
 const LocalStorageManager = () => import ('@client/vue/LocalStorageManager.vue')
 
@@ -154,6 +155,14 @@ const baseRoutes : any[] = [
         path: '/setupwizard',
         name: pi.SetupWizardPageId,
         component: SetupWizard,
+    },
+    {
+        path: '/tydownload',
+        name: pi.DownloadThanksPageId,
+        component: DownloadThanks,
+        props: (route: any) => ({
+            wizard: !!route.query.wizard && parseInt(route.query.wizard) === 1
+        })
     },
     {
         path: '/',
@@ -848,6 +857,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         // Link response page should be public and we should let the component itself handle any necessary redirects.
         // This way we are able to query more information and grab the proper referral link to use.
         || to.name === pi.LinkResponsePageId
+        || to.name === pi.DownloadThanksPageId
 
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')
