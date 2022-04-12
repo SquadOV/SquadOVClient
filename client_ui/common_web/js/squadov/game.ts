@@ -23,7 +23,7 @@ export let allGames = [
     // these two are client side only
     SquadOvGames.WowVanilla,
     SquadOvGames.WowTbc,
-    SquadOvGames.Ff14,
+    //SquadOvGames.Ff14,
 ]
 
 export let allServerSideGames = [
@@ -34,7 +34,7 @@ export let allServerSideGames = [
     SquadOvGames.Valorant,
     SquadOvGames.WorldOfWarcraft,
     SquadOvGames.Csgo,
-    SquadOvGames.Ff14,
+    //SquadOvGames.Ff14,
 ]
 
 export function gameToRect(game: SquadOvGames): string {
