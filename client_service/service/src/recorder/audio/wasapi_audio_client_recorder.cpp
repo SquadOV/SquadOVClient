@@ -147,7 +147,7 @@ WasapiAudioClientRecorder::WasapiAudioClientRecorder(wil::com_ptr<IAudioClient> 
     }
 
     _exists = true;
-    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _pwfx.nSamplesPerSec << " (Samples/Sec) -- " << _pwfx.nChannels << " (Channels)" << std::endl);
+    LOG_INFO("Success Loading WASAPI [" << context << "]: " << _pwfx.nSamplesPerSec << " (Device Samples/Sec) -- " << _pwfx.nChannels << " (Device Channels)" << std::endl);
 
     // We set the props that we want here. The only thing we want to keep consistent
     // is the sample rate so we don't have to resample ourselves. Number of channels we keep
@@ -217,7 +217,7 @@ void WasapiAudioClientRecorder::handleData(const SyncTime& tm, const BYTE* data,
 
         if (props.forceMono && props.numChannels > 1) {
             auto monoProps = props;
-            props.numChannels = 1;
+            monoProps.numChannels = 1;
 
             // Don't apply volume here - that'll get applied when we actually go to encode.
             FAudioPacketView view(packet.buffer(), packet.props(), 1.0);
