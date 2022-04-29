@@ -87,26 +87,39 @@ void SquadovApi::removeSessionIdUpdateCallback(int64_t idx) {
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
 
-    const auto user = getCurrentUserApi();
+    std::optional<shared::squadov::SquadOVUser> newUser;
+    for (int i = 0; i < 5; ++i) {
+        try {
+            newUser = getCurrentUserApi();
+            break;
+        } catch (std::exception& ex) {
+            LOG_WARNING("...Failed to get current user from API on try : " << i << std::endl);
+            newUser = std::nullopt;
+        }
+    }
 
     std::unique_lock<std::shared_mutex> guard(_sessionMutex);
     _session.sessionId = key;
-    _session.user = user;
+    _session.user = newUser;
+
+    if (!_session.user) {
+        THROW_ERROR("Failed to get current user from session ID.");
+    }
 }
 
 int64_t SquadovApi::getSessionUserId() const {
     std::shared_lock<std::shared_mutex> guard(_sessionMutex);
-    return _session.user.id;
+    return _session.user.value().id;
 }
 
 std::string SquadovApi::getSessionUserUuid() const {
     std::shared_lock<std::shared_mutex> guard(_sessionMutex);
-    return _session.user.uuid;
+    return _session.user.value().uuid;
 }
 
 std::string SquadovApi::getSessionUsername() const {
     std::shared_lock<std::shared_mutex> guard(_sessionMutex);
-    return _session.user.username;
+    return _session.user.value().username;
 }
 
 void SquadovApi::syncHardware(const service::hardware::Hardware& data) const {
@@ -184,7 +197,7 @@ shared::squadov::SquadOVUser SquadovApi::getCurrentUserApi() const {
 
 shared::squadov::SquadOVUser SquadovApi::getCurrentUserCached() const {
     std::shared_lock guard(_sessionMutex);
-    return _session.user;
+    return _session.user.value();
 }
 
 std::string SquadovApi::uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const {
