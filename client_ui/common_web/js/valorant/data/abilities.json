@@ -106,5 +106,11 @@
         "Ability1": "Relay Bolt",
         "Ability2": "High Gear",
         "Ultimate": "Overdrive"
+    },
+    "Fade": {
+        "GrenadeAbility": "Prowler",
+        "Ability1": "Seize",
+        "Ability2": "Haunt",
+        "Ultimate": "Nightfall"
     }
 }
