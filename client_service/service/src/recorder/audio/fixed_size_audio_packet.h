@@ -53,6 +53,10 @@ public:
         }
     }
 
+    void fillZero() {
+        _buffer.fill(T(0.0));
+    }
+
 private:
     std::array<T, N> _buffer;
     SyncTime _tm;

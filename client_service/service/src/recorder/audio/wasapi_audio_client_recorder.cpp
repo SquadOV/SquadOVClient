@@ -190,29 +190,33 @@ void WasapiAudioClientRecorder::handleData(const SyncTime& tm, const BYTE* data,
         //  2) If the desired data is supposed to be mono, then we create a separate audio packet and use the packet from #1 as a view.
         AudioPacket packet(props, tm);
 
-        const auto indexStart = framesRead * _pwfx.nChannels * _pwfx.wBitsPerSample/8;
-        const BYTE* subData = &data[indexStart];
-        size_t outIndex = 0;
-        for (auto i = 0; i < props.numSamples; ++i) {
-            for (auto c = 0; c < props.numChannels; ++c) {
-                const auto sampleIndex = (i * props.numChannels + c) * _pwfx.wBitsPerSample/8;
-                const BYTE* sampleData = &subData[sampleIndex];
+        if (data) {
+            const auto indexStart = framesRead * _pwfx.nChannels * _pwfx.wBitsPerSample/8;
+            const BYTE* subData = &data[indexStart];
+            size_t outIndex = 0;
+            for (auto i = 0; i < props.numSamples; ++i) {
+                for (auto c = 0; c < props.numChannels; ++c) {
+                    const auto sampleIndex = (i * props.numChannels + c) * _pwfx.wBitsPerSample/8;
+                    const BYTE* sampleData = &subData[sampleIndex];
 
-                if (isPcm()) {
-                    if (_pwfx.wBitsPerSample == 8) {
-                        writeAudioSampleToBuffer<int8_t>(sampleData, packet.buffer()[outIndex]);
-                    } else if (_pwfx.wBitsPerSample == 16) {
-                        writeAudioSampleToBuffer<int16_t>(sampleData, packet.buffer()[outIndex]);
+                    if (isPcm()) {
+                        if (_pwfx.wBitsPerSample == 8) {
+                            writeAudioSampleToBuffer<int8_t>(sampleData, packet.buffer()[outIndex]);
+                        } else if (_pwfx.wBitsPerSample == 16) {
+                            writeAudioSampleToBuffer<int16_t>(sampleData, packet.buffer()[outIndex]);
+                        }
+                    } else if (isFloat()) {
+                        if (_pwfx.wBitsPerSample == 32) {
+                            writeAudioSampleToBuffer<float>(sampleData, packet.buffer()[outIndex]);
+                        } else if (_pwfx.wBitsPerSample == 64) {
+                            writeAudioSampleToBuffer<double>(sampleData, packet.buffer()[outIndex]);
+                        }
                     }
-                } else if (isFloat()) {
-                    if (_pwfx.wBitsPerSample == 32) {
-                        writeAudioSampleToBuffer<float>(sampleData, packet.buffer()[outIndex]);
-                    } else if (_pwfx.wBitsPerSample == 64) {
-                        writeAudioSampleToBuffer<double>(sampleData, packet.buffer()[outIndex]);
-                    }
+                    outIndex++;
                 }
-                outIndex++;
             }
+        } else {
+            packet.fillZero();
         }
 
         if (props.forceMono && props.numChannels > 1) {
