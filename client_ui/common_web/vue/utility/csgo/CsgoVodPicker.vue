@@ -110,19 +110,15 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
             return []
         }
 
-        let steamIds = this.match.friendlySteamIds(this.currentSteamId)
-        return <VodAssociation[]>steamIds.map((id: number) => {
-            let userUuid = this.steamIdToUserUuid.get(id)
-            if (!userUuid) {
-                return null
-            }
+        if (!this.availableVods) {
+            return []
+        }
 
-            let vod = this.uuidToVod.get(userUuid)
-            if (!vod) {
-                return null
-            }
-            return vod
-        }).filter((ele: VodAssociation | null) => !!ele)
+        let steamIds =  new Set(this.match.friendlySteamIds(this.currentSteamId))
+        return this.availableVods.vods.filter((e: VodAssociation) => {
+            let sid = this.availableVods!.userMapping[e.userUuid]
+            return !!sid && steamIds.has(sid)
+        })
     }
 
     get friendlyPovSet(): Set<string> {
@@ -134,19 +130,15 @@ export default class CsgoVodPicker extends mixins(CommonComponent) {
             return []
         }
 
-        let steamIds = this.match.enemySteamIds(this.currentSteamId)
-        return <VodAssociation[]>steamIds.map((id: number) => {
-            let userUuid = this.steamIdToUserUuid.get(id)
-            if (!userUuid) {
-                return null
-            }
+        if (!this.availableVods) {
+            return []
+        }
 
-            let vod = this.uuidToVod.get(userUuid)
-            if (!vod) {
-                return null
-            }
-            return vod
-        }).filter((ele: VodAssociation | null) => !!ele)
+        let steamIds =  new Set(this.match.friendlySteamIds(this.currentSteamId))
+        return this.availableVods.vods.filter((e: VodAssociation) => {
+            let sid = this.availableVods!.userMapping[e.userUuid]
+            return !!sid && !steamIds.has(sid)
+        })
     }
 
     @Watch('matchUuid')
