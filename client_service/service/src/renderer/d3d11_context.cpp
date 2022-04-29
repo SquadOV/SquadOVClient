@@ -7,10 +7,9 @@
 #include <wil/com.h>
 namespace service::renderer {
 
-D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::recursive_mutex>&& guard, ID3D11DeviceContext* context):
+D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(std::unique_lock<std::recursive_mutex>&& guard, const wil::com_ptr<ID3D11DeviceContext>& context):
     _guard(std::move(guard)),
     _context(context) {
-    _context->AddRef();
 }
 
 D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(D3d11ImmediateContextGuard&& o):
@@ -20,10 +19,6 @@ D3d11ImmediateContextGuard::D3d11ImmediateContextGuard(D3d11ImmediateContextGuar
 }
 
 D3d11ImmediateContextGuard::~D3d11ImmediateContextGuard() {
-    if (_context) {
-        _context->Release();
-        _context = nullptr;
-    }
 }
 
 D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Device device):
@@ -155,7 +150,7 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
                     }
 
                     IDXGIOutputDuplication* dupl = nullptr;
-                    hr = output1->DuplicateOutput(_device, &dupl);
+                    hr = output1->DuplicateOutput(_device.get(), &dupl);
                     output1->Release();
                     if (hr != S_OK) {
                         THROW_ERROR("Duplicate output failure: " << hr);
@@ -168,15 +163,6 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
             }
         } catch (std::exception& ex) {
             LOG_WARNING("Failed to create D3D11 device or verify its use: " << ex.what() << std::endl);
-            if (_device) {
-                _device->Release();
-                _device = nullptr;
-            }
-
-            if (_device1) {
-                _device1->Release();
-                _device1 = nullptr;
-            }
             continue;
         }
     }
@@ -187,20 +173,6 @@ D3d11SharedContext::D3d11SharedContext(size_t flags, HMONITOR monitor, D3d11Devi
 }
 
 D3d11SharedContext::~D3d11SharedContext() {
-    if (_context) {
-        _context->Release();
-        _context = nullptr;    
-    }
-
-    if (_device) {
-        _device->Release();
-        _device = nullptr;
-    }
-
-    if (_device1) {
-        _device1->Release();
-        _device1 = nullptr;
-    }
 }
 
 std::wstring D3d11SharedContext::adapterName() const {

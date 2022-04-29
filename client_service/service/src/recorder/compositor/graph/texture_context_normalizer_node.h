@@ -9,13 +9,13 @@ namespace service::recorder::compositor::graph {
 
 class TextureContextNormalizerNode: public CompositorNode {
 public:
-    explicit TextureContextNormalizerNode(service::renderer::D3d11SharedContext* context);
+    explicit TextureContextNormalizerNode(const service::renderer::D3d11SharedContextPtr& context);
 
 protected:
     void receiveTexture(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames, DXGI_MODE_ROTATION rotation) override;
     
 private:
-    service::renderer::D3d11SharedContext* _context;
+    service::renderer::D3d11SharedContextPtr _context;
     service::recorder::image::D3dImagePtr _newImage;
     service::recorder::image::ImagePtr _tmpImage;
 };

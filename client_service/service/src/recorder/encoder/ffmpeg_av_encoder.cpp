@@ -98,7 +98,7 @@ public:
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
-    void initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height);
+    void initializeVideoStream(const service::renderer::D3d11SharedContextPtr& d3d, const service::system::RecordingSettings& settings, size_t width, size_t height);
     VideoStreamContext getVideoStreamContext() const { return _videoStreamContext; }
     AVSyncClock::time_point getSyncStartTime() const;
 
@@ -210,7 +210,7 @@ private:
     bool _canStart = true;
 
     bool _doPostVideoFlush = true;
-    service::renderer::D3d11SharedContext* _d3d = nullptr;
+    service::renderer::D3d11SharedContextPtr _d3d;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -377,7 +377,7 @@ void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
     height = _videoSwapChain->frameHeight();
 }
 
-void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
+void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11SharedContextPtr& d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
     // Try to use hardware encoding first. If not fall back on mpeg4.
     struct EncoderChoice {
         std::string name;
@@ -393,7 +393,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
     };
 
     LOG_INFO("Check can use GPU..." << std::endl);
-    const auto canUseGpu = (d3d->deviceClass() == service::renderer::D3d11Device::GPU) && FfmpegGPUVideoSwapChain::isSupported(d3d, width, height);
+    const auto canUseGpu = (d3d->deviceClass() == service::renderer::D3d11Device::GPU) && FfmpegGPUVideoSwapChain::isSupported(d3d.get(), width, height);
     LOG_INFO("..." << canUseGpu << std::endl);
     auto immediate = d3d->immediateContext();
 
@@ -577,7 +577,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(service::renderer::D3d11SharedCo
         LOG_INFO("Using FFmpeg CPU Video Swap Chain" << std::endl);
         _videoSwapChain.reset(new FfmpegCPUVideoSwapChain);
     }
-    _videoSwapChain->initializeGpuSupport(d3d);
+    _videoSwapChain->initializeGpuSupport(d3d.get());
     _videoSwapChain->initialize(_vcodecContext, _vcodecContext->hw_frames_ctx);
     _fps = settings.fps;
     _useVfr4 = settings.useVfr4;
@@ -1054,7 +1054,7 @@ void FfmpegAvEncoderImpl::stop() {
 
     // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
     // because something is wrong there......
-    if (_doPostVideoFlush) {
+    if (_doPostVideoFlush && _d3d) {
         auto immediate = _d3d->immediateContext();
 
         encode(_vcodecContext, nullptr, _vstream);
@@ -1115,7 +1115,7 @@ void FfmpegAvEncoder::addVideoFrame(ID3D11Texture2D* image, size_t numFrames) {
 }
 #endif
 
-void FfmpegAvEncoder::initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
+void FfmpegAvEncoder::initializeVideoStream(const service::renderer::D3d11SharedContextPtr& d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) {
     _impl->initializeVideoStream(d3d, settings, width, height);
 }
 

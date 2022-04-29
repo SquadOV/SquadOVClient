@@ -34,7 +34,7 @@ class Compositor {
 public:
     explicit Compositor(const service::renderer::D3d11Device device);
 
-    service::renderer::D3d11SharedContext* context() const { return _d3dContext.get(); }
+    const service::renderer::D3d11SharedContextPtr& context() const { return _d3dContext; }
 
     layers::ClockLayerPtr createClockLayer();
     void addLayer(const layers::CompositorLayerPtr& layer);

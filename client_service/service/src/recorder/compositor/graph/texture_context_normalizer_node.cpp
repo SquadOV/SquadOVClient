@@ -3,10 +3,10 @@
 
 namespace service::recorder::compositor::graph {
 
-TextureContextNormalizerNode::TextureContextNormalizerNode(service::renderer::D3d11SharedContext* context):
+TextureContextNormalizerNode::TextureContextNormalizerNode(const service::renderer::D3d11SharedContextPtr& context):
     _context(context)
 {
-    _newImage = std::make_unique<service::recorder::image::D3dImage>(_context);
+    _newImage = std::make_unique<service::recorder::image::D3dImage>(_context.get());
     _tmpImage = std::make_unique<service::recorder::image::Image>();
 }
 
@@ -45,7 +45,7 @@ void TextureContextNormalizerNode::receiveTexture(service::renderer::D3d11Shared
         return;
     }
 
-    flowToNext(_context, _newImage->rawTexture(), numFrames, DXGI_MODE_ROTATION_IDENTITY);
+    flowToNext(_context.get(), _newImage->rawTexture(), numFrames, DXGI_MODE_ROTATION_IDENTITY);
 }
 
 }

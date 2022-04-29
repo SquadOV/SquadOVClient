@@ -32,7 +32,7 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
     if (!_clockLayer) {
         return;
     }
-    assert(imageContext == context());
+    assert(imageContext == context().get());
     HRESULT hr = S_OK;
     // The output image needs to be the same resolution as the clock layer. Note
     // that the image we want to send will *always* come from a D3D11 texture (since we'll

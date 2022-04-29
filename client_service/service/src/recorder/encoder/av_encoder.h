@@ -38,7 +38,7 @@ public:
     virtual ~AvEncoder() {}
 
     virtual const std::string& streamUrl() const = 0;
-    virtual void initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) = 0;
+    virtual void initializeVideoStream(const service::renderer::D3d11SharedContextPtr& d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) = 0;
     virtual VideoStreamContext getVideoStreamContext() const = 0;
     virtual AVSyncClock::time_point getSyncStartTime() const = 0;
     

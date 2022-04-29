@@ -11,7 +11,7 @@ public:
     ~FfmpegAvEncoder();
 
     const std::string& streamUrl() const override;
-    void initializeVideoStream(service::renderer::D3d11SharedContext* d3d, const service::system::RecordingSettings& settings, size_t width, size_t height) override;
+    void initializeVideoStream(const service::renderer::D3d11SharedContextPtr&, const service::system::RecordingSettings& settings, size_t width, size_t height) override;
     VideoStreamContext getVideoStreamContext() const override;
     AVSyncClock::time_point getSyncStartTime() const override;
 
