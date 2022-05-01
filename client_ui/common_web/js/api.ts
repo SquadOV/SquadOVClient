@@ -43,7 +43,7 @@ import { HearthstoneDuelRun, cleanHearthstoneDuelRunFromJson } from '@client/js/
 import { HearthstoneGameAction, cleanHearthstoneGameActionFromJson } from '@client/js/hearthstone/hearthstone_actions'
 import {
     Squad, cleanSquadFromJson,
-    SquadMembership, cleanSquadMembershipFromJson
+    SquadMembership, cleanSquadMembershipFromJson,
     SquadInvite, cleanSquadInviteFromJson, SquadInviteLink, cleanSquadInviteLinkFromJson, SquadInviteLinkData, SquadSharingSettings
 } from '@client/js/squadov/squad'
 import {
@@ -138,6 +138,10 @@ export interface GraphqlApiData<T> {
 interface LoginInput {
     username: string
     password: string
+}
+
+interface GoogleLoginInput{
+    loginToken: string
 }
 
 export interface LoginOutput {
@@ -375,6 +379,10 @@ class ApiClient {
     //
     login(inp : LoginInput) : Promise<ApiData<LoginOutput>> {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
+    }
+
+    loginGoogle(inp: GoogleLoginInput) : Promise<ApiData<LoginOutput>> {
+        return axios.post('auth/login/google', inp, this.createWebAxiosConfig())
     }
 
     finishMfaLogin(mfaId: string, code: string): Promise<ApiData<LoginOutput>> {
