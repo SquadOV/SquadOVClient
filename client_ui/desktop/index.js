@@ -157,8 +157,19 @@ const singleLock = app.requestSingleInstanceLock()
 if (!singleLock) {
     app.exit(1)
 } else {
-    app.on('second-instance', () => {
+    app.on('second-instance', async (e, argv) => {
         restore()
+        if(!!argv && argv.length > 0){
+            const access_token = argv[argv.length - 1].split('#')[1]
+            log.log('Start Login Flow...')
+            try {
+                await loginFlow(win, access_token)
+            } catch (ex) {
+                log.log('User chose not to login...good bye: ', ex)
+                quit()
+                return
+            }
+        }
     })
 }
 
@@ -323,6 +334,22 @@ let backendReady = new Promise((resolve, reject) => {
     })
 })
 
+//set the path in this line manually for development builds if using the Google OAuth: 
+//app.setAsDefaultProtocolClient('sqdov', "C:\\Users\\leeja\\AppData\\Local\\Programs\\squadov_client_ui\\SquadOV.exe", [path.resolve(process.argv[1])])
+//will not work with unpackaged app
+if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('sqdov', process.execPath, [path.resolve(process.argv[1])])
+    }
+  } else {
+    app.setAsDefaultProtocolClient('sqdov')
+}
+
+ipcMain.on('shell:open', () => {
+    const pageDirectory = __dirname.replace('app.asar', 'app.asar.unpacked')
+    const pagePath = path.join('file://', pageDirectory, 'index.html')
+    shell.openExternal(pagePath)
+})
 
 // This is the initial session obtainment from logging in. Loading it from storage will
 // directly call loadSession(). This event ONLY happens in the Login UI.
