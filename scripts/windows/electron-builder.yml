@@ -3,6 +3,11 @@ productName: "SquadOV"
 copyright: "Copyright © 2020-2021 GRCHive, Inc."
 generateUpdatesFilesForAllChannels: true
 
+protocols: 
+  - name: "SquadOV"
+    schemes:
+      - sqdov
+   
 directories:
   app: "."
   output: "package/${os}/${arch}/${version}"
