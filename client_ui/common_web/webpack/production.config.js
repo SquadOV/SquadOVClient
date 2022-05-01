@@ -13,9 +13,10 @@ module.exports = (env, argv) => {
             minimizer: [new TerserPlugin({
                 parallel: true,
             })],
-        },  
+        },
         plugins: [
             new webpack.DefinePlugin({
+                SQUADOV_WEB_URL: "'https://squadov.gg'",
                 SQUADOV_API_URL: "'https://api.squadov.gg'",
                 SQUADOV_SEGMENT_KEY: "'9CbNGTfu0j4UK0VwZvtb8jvyF3pz1wsk'",
             })
