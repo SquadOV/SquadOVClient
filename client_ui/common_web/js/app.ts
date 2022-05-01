@@ -89,6 +89,7 @@ const ForgotPassword = () => import('@client/vue/auth/ForgotPassword.vue')
 const RsoOauthHandler = () => import('@client/vue/auth/oauth/RsoOauthHandler.vue')
 const TwitchOauthHandler = () => import('@client/vue/auth/oauth/TwitchOauthHandler.vue')
 const DiscordOauthHandler = () => import('@client/vue/auth/oauth/DiscordOauthHandler.vue')
+const GoogleOauthHandler = () => import('@client/vue/auth/oauth/GoogleOauthHandler.vue')
 
 const SquadInviteResponsePage = () => import('@client/vue/squads/SquadInviteResponsePage.vue')
 const SquadLinkResponsePage = () => import('@client/vue/squads/SquadLinkResponsePage.vue')
@@ -617,6 +618,15 @@ const baseRoutes : any[] = [
                 }),
             },
             {
+                path: 'google/oauth-start',
+                component: GoogleOauthHandler,
+                name: pi.GoogleOauthPageId,
+                props: (route : any) => ({
+                    code: route.query.code,
+                    state: route.query.state,
+                }),
+            },
+            {
                 path: 'invite/:inviteUuid/:action',
                 component: SquadInviteResponsePage,
                 name: pi.InviteResponsePageId,
@@ -848,6 +858,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         // Link response page should be public and we should let the component itself handle any necessary redirects.
         // This way we are able to query more information and grab the proper referral link to use.
         || to.name === pi.LinkResponsePageId
+        || to.name === pi.GoogleOauthPageId
 
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')

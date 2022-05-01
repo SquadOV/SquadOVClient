@@ -43,6 +43,8 @@ export const VerifyEmailPageId = 'verifyEmail'
 export const DiscordOauthPageId = 'discordOauth'
 export const TwitchOauthPageId = 'twitchOauth'
 export const RsoOauthPageId = 'rso'
+export const GoogleOauthPageId = 'googleOauth'
+
 export const InviteResponsePageId = 'inviteResponse'
 export const LinkResponsePageId = 'linkResponse'
 export const ShareRedirectPageId = 'share'
