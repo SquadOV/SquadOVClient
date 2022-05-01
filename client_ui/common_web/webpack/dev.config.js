@@ -10,7 +10,6 @@ module.exports = (env, argv) => {
         devtool: "source-map",
         plugins: [
             new webpack.DefinePlugin({
-                SQUADOV_WEB_URL: "'http://localhost:3000'",
                 SQUADOV_API_URL: "'http://127.0.0.1:8080'",
                 SQUADOV_SEGMENT_KEY: "'IgCsglx2jaMD2JctrgioQ7tQLMWjXw8I'",
             })

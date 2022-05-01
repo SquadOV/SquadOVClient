@@ -16,7 +16,6 @@ module.exports = (env, argv) => {
         },  
         plugins: [
             new webpack.DefinePlugin({
-                SQUADOV_WEB_URL: "'https://staging.squadov.gg'",
                 SQUADOV_API_URL: "'https://api.staging.squadov.gg'",
                 SQUADOV_SEGMENT_KEY: "'IgCsglx2jaMD2JctrgioQ7tQLMWjXw8I'",
             })
