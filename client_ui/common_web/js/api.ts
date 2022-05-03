@@ -148,6 +148,10 @@ export interface LoginOutput {
     twoFactor: string | null
 }
 
+export interface ChangePasswordOutput {
+    needsMfa: boolean | undefined
+}
+
 interface RegisterInput {
     username: string
     password: string
@@ -162,6 +166,8 @@ export interface CheckVerificationOutput {
 interface ChangeForgottenPasswordInput {
     changePasswordId: string
     password: string
+    userId: string
+    mfaCode: string | undefined
 }
 
 export interface StagedClipStatusResponse {
@@ -436,7 +442,7 @@ class ApiClient {
         }, this.createWebAxiosConfig())
     }
 
-    changeForgottenPassword(input: ChangeForgottenPasswordInput) : Promise<void> {
+    changeForgottenPassword(input: ChangeForgottenPasswordInput) : Promise<ApiData<ChangePasswordOutput>> {
         return axios.post('auth/forgotpw/change', input, this.createWebAxiosConfig())
     }
 

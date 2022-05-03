@@ -207,7 +207,8 @@ const baseRoutes : any[] = [
                 name: pi.ForgotPasswordPageId,
                 component: ForgotPassword,
                 props: (route : any) => ({
-                    changePasswordId: route.params.changePasswordId
+                    changePasswordId: route.params.changePasswordId,
+                    userId: route.query.user,
                 })
             },
             { 

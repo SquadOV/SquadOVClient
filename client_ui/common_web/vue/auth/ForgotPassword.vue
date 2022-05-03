@@ -71,12 +71,14 @@
                 color="success"
                 :disabled="!formValid"
                 :loading="inProgress"
-                @click="reset"
+                @click="reset(undefined)"
                 block
             >
                 Reset Password
             </v-btn>
         </div>
+
+        <mfa-auth-dialog ref="mfa"></mfa-auth-dialog>
     </div>
 </template>
 
@@ -85,13 +87,21 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { apiClient } from '@client/js/api'
+import { apiClient, ApiData, ChangePasswordOutput } from '@client/js/api'
+import MfaAuthDialog from '@client/vue/utility/auth/MfaAuthDialog.vue'
 import * as pi from '@client/js/pages'
 
-@Component
+@Component({
+    components: {
+        MfaAuthDialog
+    }
+})
 export default class ForgotPassword extends Vue {
     @Prop({required: true})
     changePasswordId!: string
+
+    @Prop({required: true})
+    userId!: string
 
     formValid: boolean = false
     password: string = ''
@@ -101,6 +111,10 @@ export default class ForgotPassword extends Vue {
     success: boolean | null = null
     redirectSeconds: number = 5
     itvl: number = 0
+
+    $refs!: {
+        mfa: MfaAuthDialog
+    }
 
     get passwordRules() : any[] {
         return [
@@ -123,20 +137,28 @@ export default class ForgotPassword extends Vue {
         })
     }
 
-    reset() {
+    reset(mfaCode: string | undefined) {
         this.inProgress = true
         this.redirectSeconds = 5
         apiClient.changeForgottenPassword({
             changePasswordId: this.changePasswordId,
             password: this.password,
-        }).then(() => {
-            this.success = true
-            this.itvl = window.setInterval(() => {
-                this.redirectSeconds -= 1
-                if (this.redirectSeconds <= 0) {
-                    this.redirect()
-                }
-            }, 1000)
+            userId: this.userId,
+            mfaCode,
+        }).then((resp: ApiData<ChangePasswordOutput>) => {
+            if (!!resp.data.needsMfa) {
+                this.$refs.mfa.open((code: string) => {
+                    this.reset(code)
+                })
+            } else {
+                this.success = true
+                this.itvl = window.setInterval(() => {
+                    this.redirectSeconds -= 1
+                    if (this.redirectSeconds <= 0) {
+                        this.redirect()
+                    }
+                }, 1000)
+            }
         }).catch((err : any) => {
             this.success = false
         }).finally(() => {
