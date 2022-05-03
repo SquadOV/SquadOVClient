@@ -1,6 +1,8 @@
 #pragma once
 
 #include "system/actions.h"
+#include "system/keybinds.h"
+#include "shared/time.h"
 #include <Windows.h>
 #include <array>
 #include <memory>
@@ -22,7 +24,7 @@ public:
 
 private:
     void onChangeKeycodeState();
-    bool checkKeybindActive(const std::vector<int>& keybind);
+    bool checkKeybindActive(service::system::EKeybindId id, const service::system::Keybind& keybind, double deltaT);
 
     void notifySquadOvAction(service::system::EAction action);
 
@@ -32,6 +34,8 @@ private:
     };
     std::mutex _cbMutex;
     std::unordered_map<service::system::EAction, std::vector<ActionCallbackData>> _actionCallbacks;
+    std::unordered_map<service::system::EKeybindId, double> _kbHoldSeconds;
+    shared::TimePoint _lastCheckKeycode;
     int64_t _actionCbCounter = 0;
     bool _lastPttEnabledState = false;
     bool _canBookmark = true;

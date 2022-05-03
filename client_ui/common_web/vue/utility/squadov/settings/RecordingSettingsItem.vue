@@ -353,7 +353,7 @@
                             <v-checkbox
                                 class="ma-0"
                                 :input-value="usePushToTalk"
-                                @change="changePushToTalk(arguments[0], pushToTalkKeybind)"
+                                @change="changePushToTalk(arguments[0], $store.state.settings.keybinds2.pushToTalk.keys, $store.state.settings.keybinds2.pushToTalk2.keys)"
                                 hide-details
                                 label="Use Push-to-Talk"
                             >
@@ -370,49 +370,19 @@
                                 </template>
                             </v-checkbox>
 
-                            <v-text-field
-                                v-if="usePushToTalk"
-                                :value="pttKeybindStr"
-                                @keydown="addKeyToPushToTalk"
-                                class="ml-8 flex-grow-0"
-                                solo
-                                single-line
-                                hide-details
-                                readonly
-                                style="width: 500px;"
-                            >
-                                <template v-slot:append>
-                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk(false)">
-                                        Edit Keybind
-                                    </v-btn>
+                            <template v-if="usePushToTalk">
+                                <keybind-settings-item
+                                    :value="$store.state.settings.keybinds2.pushToTalk"
+                                    @input="changePushToTalk(usePushToTalk, arguments[0].keys, $store.state.settings.keybinds2.pushToTalk2.keys)"
+                                >
+                                </keybind-settings-item>
 
-                                    <v-btn class="error" @click="stopRecordPushToTalk" v-else>
-                                        Stop Recording
-                                    </v-btn>
-                                </template>
-                            </v-text-field>
-
-                            <v-text-field
-                                v-if="usePushToTalk"
-                                :value="pttAltKeybindStr"
-                                @keydown="addKeyToPushToTalk"
-                                class="ml-8 flex-grow-0"
-                                solo
-                                single-line
-                                hide-details
-                                readonly
-                                style="width: 500px;"
-                            >
-                                <template v-slot:append>
-                                    <v-btn class="primary" v-if="!pttRecord" @click="startRecordPushToTalk(true)">
-                                        Edit Keybind (Alt)
-                                    </v-btn>
-
-                                    <v-btn class="error" @click="stopRecordPushToTalk" v-else>
-                                        Stop Recording
-                                    </v-btn>
-                                </template>
-                            </v-text-field>
+                                <keybind-settings-item
+                                    :value="$store.state.settings.keybinds2.pushToTalk2"
+                                    @input="changePushToTalk(usePushToTalk, $store.state.settings.keybinds2.pushToTalk.keys, arguments[0].keys)"
+                                >
+                                </keybind-settings-item>
+                            </template>
                         </div>
 
                         <div class="d-flex align-center">
@@ -707,6 +677,7 @@ import { ipcRenderer } from 'electron'
 import { AudioDeviceSettings, changeLocalRecordingSettings } from '@client/js/system/settings'
 import { IpcResponse } from '@client/js/system/ipc'
 import { LocalStoragePageId } from '@client/js/pages'
+import KeybindSettingsItem from '@client/vue/utility/squadov/settings/KeybindSettingsItem.vue'
 
 @Component({
     components: {
@@ -714,6 +685,7 @@ import { LocalStoragePageId } from '@client/js/pages'
         LocalDiskSpaceUsageDisplay,
         MultipleAudioDeviceSettings,
         ProcessSelectorSettings,
+        KeybindSettingsItem,
     }
 })
 export default class RecordingSettingsItem extends Vue {
@@ -889,124 +861,6 @@ export default class RecordingSettingsItem extends Vue {
         return this.$store.state.settings.record.usePushToTalk
     }
 
-    get pushToTalkKeybind(): number[] {
-        return this.$store.state.settings.keybinds.pushToTalk
-    }
-
-    get pushToTalkAltKeybind(): number[] {
-        return this.$store.state.settings.keybinds.pushToTalk2
-    }
-
-    pttRecord: boolean = false
-    pttIsAltRecord: boolean = false
-    pttKeybindStr: string = ''
-    pttAltKeybindStr: string = ''
-    keybindCache: Map<number, string> = new Map()
-
-    get pttKeySet(): Set<number> {
-        return new Set(this.pushToTalkKeybind)
-    }
-
-    get pttAltKeySet(): Set<number> {
-        return new Set(this.pushToTalkKeybind)
-    }
-
-    @Watch('pushToTalkKeybind')
-    @Watch('pushToTalkAltKeybind')
-    async resyncPushToTalkStr() {
-///#if DESKTOP
-        let uncachedCodes = [
-            ...this.pushToTalkKeybind.filter((ele: number) => !this.keybindCache.has(ele)),
-            ...this.pushToTalkAltKeybind.filter((ele: number) => !this.keybindCache.has(ele))
-        ]
-        for (let code of uncachedCodes) {
-            try {
-                let k: IpcResponse<string> = await ipcRenderer.invoke('request-key-code-char', code)
-                if (k.success) {
-                    this.keybindCache.set(code, k.data)
-                } else {
-                    throw 'Bad keycode?'
-                }
-            } catch (ex) {
-                console.warn('Failed to request key code: ', code, ex)
-                this.keybindCache.set(code, '<ERROR>')
-            }
-        }
-
-        this.pttKeybindStr = this.pushToTalkKeybind.map((ele: number) => this.keybindCache.get(ele)!).join(' + ')
-        this.pttAltKeybindStr = this.pushToTalkAltKeybind.map((ele: number) => this.keybindCache.get(ele)!).join(' + ')
-///#endif
-    }
-
-    mousePttBind: any = null
-
-    startRecordPushToTalk(alt: boolean) {
-        this.pttRecord = true
-        this.pttIsAltRecord = alt
-        this.changePushToTalk(true, alt ? this.pushToTalkKeybind : [], alt ? [] : this.pushToTalkAltKeybind)
-
-        this.mousePttBind = this.addMouseToPushToTalk.bind(this)
-        window.addEventListener('mouseup', this.mousePttBind)
-    }
-
-    stopRecordPushToTalk() {
-        this.pttRecord = false
-        this.pttIsAltRecord = false
-        window.removeEventListener('mouseup', this.mousePttBind)
-    }
-
-    addVirtualKeyCodeToPushToTalk(code: number) {
-        if (this.pttKeySet.has(code)) {
-            return
-        }
-
-        this.changePushToTalk(
-            this.usePushToTalk,
-            this.pttIsAltRecord ? this.pushToTalkKeybind: [...this.pushToTalkKeybind, code] ,
-            this.pttIsAltRecord ? [...this.pushToTalkAltKeybind, code] : this.pushToTalkAltKeybind
-        )
-    }
-
-    addKeyToPushToTalk(k: KeyboardEvent) {
-        if (!this.pttRecord) {
-            return
-        }
-
-        this.addVirtualKeyCodeToPushToTalk(k.which)
-    }
-
-    addMouseToPushToTalk(m: MouseEvent) {
-        if (!this.pttRecord) {
-            return
-        }
-
-        // This is all windows specific atm.
-        switch (m.button) {
-            // Mouse wheel -> VK_MBUTTON (0x04)
-            case 1:
-                this.addVirtualKeyCodeToPushToTalk(0x04)
-                break
-            // Right click -> VK_RBUTTON (0x02)
-            case 2:
-                this.addVirtualKeyCodeToPushToTalk(0x02)
-                break
-            // Browser back button -> VK_XBUTTON1 (0x05)
-            case 3:
-                this.addVirtualKeyCodeToPushToTalk(0x05)
-                break
-            // Browser forward button -> VK_XBUTTON2 (0x06)
-            case 4:
-                this.addVirtualKeyCodeToPushToTalk(0x06)
-                break
-            // Ignore left click because otherwise it'd capture the end recording button click.
-            // Also ignore other buttons as I'm unsure how they're mapped to virtual key codes.
-            default:
-                return
-        }
-
-        m.preventDefault()
-    }
-
     changePushToTalk(use: boolean, keys: number[], alt: number[]) {
         this.$store.commit('changePushToTalk', {
             enable: use,
@@ -1021,7 +875,6 @@ export default class RecordingSettingsItem extends Vue {
 
     mounted() {
 ///#if DESKTOP
-        this.resyncPushToTalkStr()
         this.refreshFeatureFlags()
 ///#endif
     }

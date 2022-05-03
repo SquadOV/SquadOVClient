@@ -100,25 +100,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
 
 KeybindSettings KeybindSettings::fromJson(const nlohmann::json& obj) {
     KeybindSettings settings;
-    for (const auto& ele: obj["pushToTalk"]) {
-        settings.pushToTalk.push_back(ele.get<int>());
-    }
-
-    for (const auto& ele: obj["pushToTalk2"]) {
-        settings.pushToTalk2.push_back(ele.get<int>());
-    }
-
-    if (obj.find("bookmark") != obj.end() && obj.count("bookmark") > 0) {
-        for (const auto& ele: obj["bookmark"]) {
-            settings.bookmark.push_back(ele.get<int>());
-        }
-    }
-
-    if (obj.find("clip2") != obj.end() && obj.count("clip2") > 0) {
-        for (const auto& ele: obj["clip2"]) {
-            settings.clip.push_back(ele.get<int>());
-        }
-    }
+    settings.pushToTalk = Keybind::fromJson(obj["pushToTalk"]);
+    settings.pushToTalk2 = Keybind::fromJson(obj["pushToTalk2"]);
+    settings.bookmark = Keybind::fromJson(obj["bookmark"]);
+    settings.clip = Keybind::fromJson(obj["clip2"]);
     return settings;
 }
 
@@ -174,7 +159,7 @@ PerGameSettings PerGameSettings::fromJson(const nlohmann::json& obj) {
 LocalSettings LocalSettings::fromJson(const nlohmann::json& obj) {
     LocalSettings settings;
     settings.record = RecordingSettings::fromJson(obj["record"]);
-    settings.keybinds = KeybindSettings::fromJson(obj["keybinds"]);
+    settings.keybinds = KeybindSettings::fromJson(obj["keybinds2"]);
     settings.games = PerGameSettings::fromJson(obj["games"]);
 
     if (obj.count("disabledGames") > 0) {

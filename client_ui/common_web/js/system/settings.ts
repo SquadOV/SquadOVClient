@@ -6,6 +6,7 @@ import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 import { allGames, SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
 import { apiClient } from '@client/js/api'
+import { Keybind } from '@client/js/system/keybinds'
 /// #endif
 
 export interface SquadOvOverlay {
@@ -101,10 +102,10 @@ export interface SquadOvRecordingSettings {
 }
 
 export interface SquadOvKeybindSettings {
-    pushToTalk: number[]
-    pushToTalk2: number[]
-    bookmark: number[]
-    clip2: number[]
+    pushToTalk: Keybind
+    pushToTalk2: Keybind
+    bookmark: Keybind
+    clip2: Keybind
 }
 
 export interface SquadOvVideoPlaybackSettings {
@@ -254,7 +255,7 @@ function createEmptyPerGameSettings(): PerGameSettings {
 
 export interface SquadOvLocalSettings {
     record: SquadOvRecordingSettings
-    keybinds: SquadOvKeybindSettings
+    keybinds2: SquadOvKeybindSettings
     playback: SquadOvVideoPlaybackSettings
     minimizeToTray: boolean
     minimizeOnClose: boolean
@@ -471,11 +472,27 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
 
     return {
         record,
-        keybinds: {
-            pushToTalk: [],
-            pushToTalk2: [],
-            bookmark: [120],
-            clip2: [18, 83],
+        keybinds2: {
+            pushToTalk: {
+                keys: [],
+                mustHold: false,
+                holdSeconds: 0,
+            },
+            pushToTalk2: {
+                keys: [],
+                mustHold: false,
+                holdSeconds: 0,
+            },
+            bookmark: {
+                keys: [120],
+                mustHold: true,
+                holdSeconds: 1,
+            },
+            clip2: {
+                keys: [18, 83],
+                mustHold: true,
+                holdSeconds: 1,
+            },
         },
         playback: {
             smallStepSize: 5000,
@@ -542,11 +559,27 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             needConfirmManualStop: true,
             useCbr: false,
         },
-        keybinds: {
-            pushToTalk: [],
-            pushToTalk2: [],
-            bookmark: [120],
-            clip2: [18, 83],
+        keybinds2: {
+            pushToTalk: {
+                keys: [],
+                mustHold: false,
+                holdSeconds: 0,
+            },
+            pushToTalk2: {
+                keys: [],
+                mustHold: false,
+                holdSeconds: 0,
+            },
+            bookmark: {
+                keys: [120],
+                mustHold: true,
+                holdSeconds: 1,
+            },
+            clip2: {
+                keys: [18, 83],
+                mustHold: true,
+                holdSeconds: 1,
+            },
         },
         playback: {
             smallStepSize: 5000,
@@ -644,12 +677,32 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
             parsedData.record.usePushToTalk = false   
         }
 
-        if (parsedData.keybinds === undefined) {
-            parsedData.keybinds = {
-                pushToTalk: [],
-                pushToTalk2: [],
-                bookmark: [120],
-                clip2: [18, 83],
+        if (parsedData.keybinds2 === undefined) {
+            parsedData.keybinds2 = {
+                pushToTalk: {
+                    //@ts-ignore
+                    keys: parsedData.keybinds?.pushToTalk || [],
+                    mustHold: false,
+                    holdSeconds: 0,
+                },
+                pushToTalk2: {
+                    //@ts-ignore
+                    keys: parsedData.keybinds?.pushToTalk2 || [],
+                    mustHold: false,
+                    holdSeconds: 0,
+                },
+                bookmark: {
+                    //@ts-ignore
+                    keys: parsedData.keybinds?.bookmark || [120],
+                    mustHold: true,
+                    holdSeconds: 1,
+                },
+                clip2: {
+                    //@ts-ignore
+                    keys: parsedData.keybinds?.clip2 || [18, 83],
+                    mustHold: true,
+                    holdSeconds: 1,
+                },
             }
         }
 
@@ -744,18 +797,6 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.games.wow.doNotRecordInstances === undefined) {
             parsedData.games.wow.doNotRecordInstances = []
-        }
-        
-        if (parsedData.keybinds.pushToTalk2 === undefined) {
-            parsedData.keybinds.pushToTalk2 = []
-        }
-
-        if (parsedData.keybinds.bookmark === undefined) {
-            parsedData.keybinds.bookmark = [120]
-        }
-
-        if (parsedData.keybinds.clip2 === undefined) {
-            parsedData.keybinds.clip2 = [18, 83]
         }
     
         if (parsedData.record.useWASAPIRecording3 === undefined) {

@@ -1,6 +1,13 @@
 ///#if DESKTOP
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
+
+export interface Keybind {
+    keys: number[]
+    mustHold: boolean
+    holdSeconds: number
+}
+
 ///#endif 
 class KeybindsManager {
     _keybindCache: Map<number, string> = new Map()

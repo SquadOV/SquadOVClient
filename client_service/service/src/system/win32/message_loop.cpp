@@ -70,6 +70,7 @@ void Win32MessageLoop::start() {
     }
 
     int errCount = 0;
+    _lastCheckKeycode = shared::nowUtc();
     while (true) {
         if (GetMessage(&msg, NULL, 0, 0) == -1) {
             LOG_ERROR("Failed to retrieve Win32 Message: " << shared::errors::getWin32ErrorAsString() << std::endl);
@@ -156,10 +157,13 @@ void Win32MessageLoop::onChangeKeycodeState() {
     if (!service::system::getCurrentSettings()->loaded()) {
         return;
     }
+    const auto now = shared::nowUtc();
+    const double deltaT = static_cast<double>(shared::timeToUnixMs(now) - shared::timeToUnixMs(_lastCheckKeycode)) / 1000.0;
+    _lastCheckKeycode = now;
 
     // Translate keypress into actions using the settings.
     const auto keybinds = service::system::getCurrentSettings()->keybinds();
-    const auto pttActive = checkKeybindActive(keybinds.pushToTalk) || checkKeybindActive(keybinds.pushToTalk2);
+    const auto pttActive = checkKeybindActive(service::system::EKeybindId::Ptt1, keybinds.pushToTalk, deltaT) || checkKeybindActive(service::system::EKeybindId::Ptt2, keybinds.pushToTalk2, deltaT);
     if (pttActive && !_lastPttEnabledState) {
         LOG_INFO("Toggling PTT [ON]" << std::endl);
         _lastPttEnabledState = true;
@@ -170,7 +174,7 @@ void Win32MessageLoop::onChangeKeycodeState() {
         notifySquadOvAction(service::system::EAction::PushToTalkDisable);
     }
 
-    const auto bookmarkActive = checkKeybindActive(keybinds.bookmark);
+    const auto bookmarkActive = checkKeybindActive(service::system::EKeybindId::Bookmark, keybinds.bookmark, deltaT);
     if (bookmarkActive && _canBookmark) {
         LOG_INFO("User Requested [Bookmark] via Keybinds." << std::endl);
         notifySquadOvAction(service::system::EAction::Bookmark);
@@ -179,7 +183,7 @@ void Win32MessageLoop::onChangeKeycodeState() {
         _canBookmark = true;
     }
 
-    const auto clipActive = checkKeybindActive(keybinds.clip);
+    const auto clipActive = checkKeybindActive(service::system::EKeybindId::Clip, keybinds.clip, deltaT);
     if (clipActive && _canClip) {
         LOG_INFO("User Requested [Clip] via Keybinds." << std::endl);
         notifySquadOvAction(service::system::EAction::Clip);
@@ -189,16 +193,27 @@ void Win32MessageLoop::onChangeKeycodeState() {
     }
 }
 
-bool Win32MessageLoop::checkKeybindActive(const std::vector<int>& keybind) {
-    if (keybind.empty()) {
+bool Win32MessageLoop::checkKeybindActive(service::system::EKeybindId id, const service::system::Keybind& keybind, double deltaT) {
+    if (keybind.keys.empty()) {
         return false;
     }
 
     bool active = true;
-    for (const auto& key: keybind) {
+    for (const auto& key: keybind.keys) {
         active &= _virtualKeycodeState[key];
     }
-    return active;
+
+    if (!active) {
+        _kbHoldSeconds[id] = 0.0;
+        return false;
+    }
+
+    if (!keybind.mustHold) {
+        return true;
+    }
+
+    _kbHoldSeconds[id] += deltaT;
+    return _kbHoldSeconds[id] >= static_cast<double>(keybind.holdSeconds);
 }
 
 int64_t Win32MessageLoop::addActionCallback(service::system::EAction a, const service::system::ActionCallback& cb) {

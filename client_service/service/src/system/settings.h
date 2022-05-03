@@ -12,6 +12,7 @@
 #include "recorder/compositor/layers/overlay_layers.h"
 #include "process_watcher/process/process.h"
 #include "shared/json.h"
+#include "system/keybinds.h"
 
 namespace service::system {
 
@@ -72,10 +73,10 @@ struct RecordingSettings {
 };
 
 struct KeybindSettings {
-    std::vector<int> pushToTalk;
-    std::vector<int> pushToTalk2;
-    std::vector<int> bookmark;
-    std::vector<int> clip;
+    service::system::Keybind pushToTalk;
+    service::system::Keybind pushToTalk2;
+    service::system::Keybind bookmark;
+    service::system::Keybind clip;
     static KeybindSettings fromJson(const nlohmann::json& obj);
 };
 

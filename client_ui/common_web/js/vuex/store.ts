@@ -9,6 +9,7 @@ import { RootState } from '@client/js/vuex/state'
 import { TrackedUserStatus } from '@client/js/squadov/status'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { computeFileFolderSizeGb } from '@client/js/system/settings'
+import { Keybind } from '@client/js/system/keybinds'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     // Absolutely do not use strict here. We do a lot of mutations (particularly for user state)
@@ -289,8 +290,8 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 return
             }
             state.settings.record.usePushToTalk = params.enable
-            state.settings.keybinds.pushToTalk = [...params.ptt]
-            state.settings.keybinds.pushToTalk2 = [...params.altPtt]
+            state.settings.keybinds2.pushToTalk.keys = [...params.ptt]
+            state.settings.keybinds2.pushToTalk2.keys = [...params.altPtt]
             saveLocalSettings(state.settings)
 /// #endif
         },
@@ -548,21 +549,21 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif            
         },
-        changeBookmarkKeybind(state: RootState, v: number[]) {
+        changeBookmarkKeybind(state: RootState, v: Keybind) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.keybinds.bookmark = [...v]
+            state.settings.keybinds2.bookmark = JSON.parse(JSON.stringify(v))
             saveLocalSettings(state.settings)
 /// #endif         
         },
-        changeClipKeybind(state: RootState, v: number[]) {
+        changeClipKeybind(state: RootState, v: Keybind) {
 /// #if DESKTOP
             if (!state.settings) {
                 return
             }
-            state.settings.keybinds.clip2 = [...v]
+            state.settings.keybinds2.clip2 = JSON.parse(JSON.stringify(v))
             saveLocalSettings(state.settings)
 /// #endif         
         },
