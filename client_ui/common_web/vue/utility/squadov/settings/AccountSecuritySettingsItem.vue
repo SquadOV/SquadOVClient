@@ -38,7 +38,7 @@
             </v-form>
 
             <div class="d-flex align-center">
-                <v-btn color="warning" :loading="passwordChanging" @click="changePassword" :disabled="!passwordValid">
+                <v-btn color="warning" :loading="passwordChanging" @click="changePassword(undefined)" :disabled="!passwordValid">
                     Change Password
                 </v-btn>
 
@@ -118,7 +118,7 @@ import PasswordAuthDialog from '@client/vue/utility/auth/PasswordAuthDialog.vue'
 import EnableMfaDialog from '@client/vue/utility/auth/EnableMfaDialog.vue'
 import MfaAuthDialog from '@client/vue/utility/auth/MfaAuthDialog.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { apiClient, ApiData } from '@client/js/api'
+import { apiClient, ApiData, ChangePasswordOutput } from '@client/js/api'
 import { MfaData } from '@client/js/squadov/mfa'
 
 @Component({
@@ -178,16 +178,22 @@ export default class AccountSecuritySettingsItems extends Vue {
         ]
     }
     
-    changePassword() {
+    changePassword(code: string | undefined) {
         this.passwordChanging = true
-        apiClient.changePassword(this.currentPassword, this.newPassword).then(() => {
-            this.currentPassword = ''
-            this.newPassword = ''
-            this.passwordConfirm = ''
-            this.passwordSuccess = true
-            setTimeout(() => {
-                this.passwordSuccess = false
-            }, 5000)
+        apiClient.changePassword(this.currentPassword, this.newPassword, code).then((resp: ApiData<ChangePasswordOutput>) => {
+            if (!!resp.data.needsMfa) {
+                this.$refs.mfaAuth.open((code: string) => {
+                    this.changePassword(code)
+                })
+            } else {
+                this.currentPassword = ''
+                this.newPassword = ''
+                this.passwordConfirm = ''
+                this.passwordSuccess = true
+                setTimeout(() => {
+                    this.passwordSuccess = false
+                }, 5000)
+            }
         }).catch((err: any) => {
             console.error('Failed to change user password.')
             this.passwordFail = true
