@@ -499,7 +499,7 @@ export default class RecentRecordedMatches extends Vue {
         }
 
         this.deleteInProgress = true
-        apiClient.deleteVods(this.selected).then(() => {
+        apiClient.deleteVods(this.selected, false).then(() => {
             this.refreshData()
             this.showHideDelete = false
         }).catch((err: any) => {

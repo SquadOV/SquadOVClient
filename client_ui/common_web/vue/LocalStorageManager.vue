@@ -296,6 +296,8 @@ export default class LocalStorageManager extends Vue {
                     if (!!this.localVods) {
                         this.localVods = this.localVods.filter((ele: string) => !selectedSet.has(ele))
                     }
+
+                    apiClient.deleteVods(this.selected, true).catch((err: any) => console.warn('Failed to delete VODs server side: ', err))
                     
                     this.selected = []
                     this.showDeleteConfirm = false

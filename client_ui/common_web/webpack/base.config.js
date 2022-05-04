@@ -181,7 +181,7 @@ module.exports = (env, argv, subfolder) => {
                 minify: false,
             }),
             new DefinePlugin({
-                SQUADOV_PLATFORM: isDesktop ? 'DESKTOP' : 'WEB',
+                SQUADOV_PLATFORM: isDesktop ? "'DESKTOP'" : "'WEB'",
             }),
             ...plugins
         ],

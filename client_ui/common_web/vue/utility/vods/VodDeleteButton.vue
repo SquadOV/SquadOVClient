@@ -121,7 +121,7 @@ export default class VodDeleteButton extends mixins(CommonComponent) {
         this.loadingLocalDelete = withLocal
         this.sendAnalyticsEvent(this.AnalyticsCategory.MatchVod, this.AnalyticsAction.DeleteVod, '', 0)
 
-        apiClient.deleteVod(this.vod.videoUuid).then(() => {
+        apiClient.deleteVod(this.vod.videoUuid, false).then(() => {
             if (!this.loadingLocalDelete) {
                 this.onDeleteFinish(this.vod!.videoUuid)
             }

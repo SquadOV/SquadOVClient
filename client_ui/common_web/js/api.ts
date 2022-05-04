@@ -220,7 +220,7 @@ class ApiClient {
 
     setSessionId(s : string) {
         this._sessionId = s
-        this.markUserAnalyticsEvent('session_heartbeat', SQUADOV_PLATFORM)
+        this.markUserAnalyticsEvent('session_heartbeat', SQUADOV_PLATFORM).catch((err: any) => console.warn('Failed to mark session heartbeat event: ', err))
     }
 
     setTempSessionId(s: string | null, uid: string | null) {
@@ -1255,7 +1255,7 @@ class ApiClient {
         return axios.post(`v1/users/${userId}/accounts/riot/generic/${puuid}`, {}, this.createWebAxiosConfig())
     }
 
-    deleteVod(vodUuid: string): Promise<ApiData<void>> {
+    deleteVod(vodUuid: string, localOnly: boolean): Promise<ApiData<void>> {
         return axios.delete(`v1/vod/${vodUuid}`, this.createWebAxiosConfig())
     }
 
@@ -1356,9 +1356,10 @@ class ApiClient {
         })
     }
 
-    deleteVods(uuid: string[]): Promise<void> {
+    deleteVods(uuid: string[], localOnly: boolean): Promise<void> {
         return axios.post(`v1/vod/bulkDelete`, {
             vods: uuid,
+            localOnly,
         }, this.createWebAxiosConfig())
     }
 
