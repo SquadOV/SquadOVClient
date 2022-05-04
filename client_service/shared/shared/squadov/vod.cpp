@@ -25,7 +25,13 @@ struct InputVideoFile {
 }
 
 InputVideoFile::InputVideoFile(const std::filesystem::path& fname) {
-    const auto fnameUtf8 = shared::filesystem::pathUtf8(fname);
+    auto fnameUtf8 = shared::filesystem::pathUtf8(fname);
+
+    const std::string filePrefix = "file:///";
+    const auto it = fnameUtf8.find(filePrefix);
+    if (it != std::string::npos) {
+        fnameUtf8.replace(it, it + filePrefix.size(), "");
+    }
 
     // Do a quick open using FFmpeg to get all this data we need.
     AVDictionary* options = nullptr;
@@ -36,7 +42,7 @@ InputVideoFile::InputVideoFile(const std::filesystem::path& fname) {
     
     if (avformat_open_input(&formatContext, fnameUtf8.c_str(), nullptr, nullptr) < 0) {
         av_dict_free(&options);
-        THROW_ERROR("Failed to open input video file.");
+        THROW_ERROR("Failed to open input video file: " << fnameUtf8);
         return;
     }
 
