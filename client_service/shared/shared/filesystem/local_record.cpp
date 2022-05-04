@@ -34,6 +34,59 @@ PROPERTYKEY getSquadOvVideoPropertyKey() {
 
 constexpr auto BUFFER_NUM_BYTES = 16384;
 
+std::optional<std::string> getVideoUuidFromPath(const fs::path& path) {
+    if (path.empty() || !path.has_stem() || path.root_path() == path) {
+        return std::nullopt;
+    }
+
+    const auto checkPath = shared::filesystem::pathUtf8(path.stem());
+    if (!shared::isValidUuid(checkPath)) {
+        if (path.has_parent_path()) {
+            return getVideoUuidFromPath(path.parent_path());
+        } else {
+            return std::nullopt;
+        }
+    }
+
+    return checkPath;
+}
+
+std::optional<std::string> getVideoUuidFromMetadata(const fs::path& path) {
+    wil::com_ptr<IPropertyStore> props = nullptr;
+    HRESULT hr = SHGetPropertyStoreFromParsingName(
+        path.native().c_str(),
+        nullptr,
+        GPS_DEFAULT,
+        IID_PPV_ARGS(&props)
+    );
+
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get prop store [build] for: " << path << std::endl);
+        return std::nullopt;
+    }
+
+    PROPERTYKEY key = getSquadOvVideoPropertyKey();
+    PROPVARIANT value = { 0 };
+    hr = props->GetValue(key, &value);
+    if (hr != S_OK) {
+        LOG_WARNING("Failed to get prop value for: " << path << std::endl);
+        return std::nullopt;
+    }
+
+    if (!IsPropVariantString(value)) {
+        LOG_WARNING("Found file with invalid prop variant:" << path << std::endl);
+        return std::nullopt;
+    }
+
+    std::wstring videoUuid(value.pwszVal);
+    std::string utf8VideoUuid = shared::strings::wcsToUtf8(videoUuid);
+    if (!shared::isValidUuid(utf8VideoUuid)) {
+        LOG_WARNING("Found Invalid UUID: " << path << "\t" << utf8VideoUuid << std::endl);
+        return std::nullopt;
+    }
+    return utf8VideoUuid;
+}
+
 }
 
 std::filesystem::path LocalRecordingIndexEntry::fullPath() const {
@@ -181,6 +234,7 @@ void LocalRecordingIndexDb::rebuildDatabase() {
             continue;
         }
 
+        LOG_INFO("...Adding entry: " << dbEntry->fullPath() << " [" << dbEntry->uuid << "]" << std::endl);
         addEntryToDatabase(dbEntry.value());
     }
 
@@ -316,41 +370,18 @@ void LocalRecordingIndexDb::removeEntryFromDatabase(const LocalRecordingIndexEnt
 
 std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::buildEntryFromFile(const std::filesystem::path& path) const {
     const auto absPath = fs::absolute(path);
-    wil::com_ptr<IPropertyStore> props = nullptr;
-    HRESULT hr = SHGetPropertyStoreFromParsingName(
-        absPath.native().c_str(),
-        nullptr,
-        GPS_DEFAULT,
-        IID_PPV_ARGS(&props)
-    );
-
-    if (hr != S_OK) {
-        LOG_WARNING("Failed to get prop store [build] for: " << absPath << std::endl);
-        return std::nullopt;
+    auto videoUuid = getVideoUuidFromPath(absPath);
+    if (!videoUuid) {
+        videoUuid = getVideoUuidFromMetadata(absPath);
     }
 
-    PROPERTYKEY key = getSquadOvVideoPropertyKey();
-    PROPVARIANT value = { 0 };
-    hr = props->GetValue(key, &value);
-    if (hr != S_OK) {
-        LOG_WARNING("Failed to get prop value for: " << absPath << std::endl);
-        return std::nullopt;
-    }
-
-    if (!IsPropVariantString(value)) {
-        LOG_WARNING("Found file with invalid prop variant:" << absPath << std::endl);
-        return std::nullopt;
-    }
-
-    std::wstring videoUuid(value.pwszVal);
-    std::string utf8VideoUuid = shared::strings::wcsToUtf8(videoUuid);
-    if (!shared::isValidUuid(utf8VideoUuid)) {
-        LOG_WARNING("Found Invalid UUID: " << absPath << "\t" << utf8VideoUuid << std::endl);
+    if (!videoUuid) {
+        LOG_WARNING("...Failed to find valid video uuid: " << absPath << std::endl);
         return std::nullopt;
     }
 
     LocalRecordingIndexEntry ret;
-    ret.uuid = utf8VideoUuid;
+    ret.uuid = videoUuid.value();
     ret.root = _initFolder.value();
     ret.relative = fs::relative(absPath, _initFolder.value());
     ret.diskBytes = fs::file_size(absPath);
