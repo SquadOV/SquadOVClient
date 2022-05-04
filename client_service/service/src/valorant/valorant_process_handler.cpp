@@ -69,6 +69,9 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::MatchEnd), std::bind(&ValorantProcessHandlerInstance::onValorantMatchEnd, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::RoundBuyStart), std::bind(&ValorantProcessHandlerInstance::onValorantBuyStart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EValorantLogEvents::RoundPlayStart), std::bind(&ValorantProcessHandlerInstance::onValorantRoundStart, this, std::placeholders::_1, std::placeholders::_2));
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_valorant");
 }
 
 ValorantProcessHandlerInstance::~ValorantProcessHandlerInstance() {

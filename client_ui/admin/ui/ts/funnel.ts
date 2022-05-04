@@ -1,9 +1,12 @@
 export interface FunnelData {
     view: number
     reg: number
-    login: number
-    download: number
-    install: number
+    loginweb: number
+    logindesktop: number
+    hwsync: number
+    readyrecord: number
+    launchgame: number
+    startrecord: number
     record: number
     active: number
 }

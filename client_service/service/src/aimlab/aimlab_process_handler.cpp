@@ -51,6 +51,8 @@ AimlabProcessHandlerInstance::AimlabProcessHandlerInstance(const process_watcher
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EAimlabLogEvents::RestartTask), std::bind(&AimlabProcessHandlerInstance::onAimlabTaskRestart, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EAimlabLogEvents::FinishTask), std::bind(&AimlabProcessHandlerInstance::onAimlabTaskFinish, this, std::placeholders::_1, std::placeholders::_2));
 
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_aimlab");
     backfill();
 }
 

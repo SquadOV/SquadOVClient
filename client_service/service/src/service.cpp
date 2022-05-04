@@ -244,6 +244,8 @@ void defaultMain() {
     watcher.beginWatchingGame(shared::EGame::LeagueOfLegends, std::move(league));
     watcher.beginWatchingGame(shared::EGame::CSGO, std::move(csgo));
     //watcher.beginWatchingGame(shared::EGame::Ff14, std::move(ff14));
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("ready_to_record");
     watcher.start();
 }
 

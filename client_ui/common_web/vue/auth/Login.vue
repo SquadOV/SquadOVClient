@@ -206,11 +206,12 @@ export default class Login extends Vue {
         apiClient.login({
             username: this.username.trim(),
             password: this.password.trim(),
+            platform: SQUADOV_PLATFORM,
         }).then((resp : ApiData<LoginOutput>) => {
             if (!!resp.data.twoFactor) {
                 // Ask for two factor code before passing that back to the server to finish the user login.
                 this.$refs.mfa.open((code: string) => {
-                    apiClient.finishMfaLogin(resp.data.twoFactor!, code).then((r2: ApiData<LoginOutput>) => {
+                    apiClient.finishMfaLogin(resp.data.twoFactor!, code, SQUADOV_PLATFORM).then((r2: ApiData<LoginOutput>) => {
                         this.handleSuccessfulLogin(r2.data)
                     }).catch((err: any) => {
                         console.warn('MFA Login Failure')

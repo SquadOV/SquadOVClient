@@ -20,3 +20,4 @@ declare module 'check-disk-space'
 
 declare var SQUADOV_API_URL: string
 declare var SQUADOV_SEGMENT_KEY: string
+declare var SQUADOV_PLATFORM: string

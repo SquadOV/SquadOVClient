@@ -139,6 +139,7 @@ export interface GraphqlApiData<T> {
 interface LoginInput {
     username: string
     password: string
+    platform: string
 }
 
 export interface LoginOutput {
@@ -219,6 +220,7 @@ class ApiClient {
 
     setSessionId(s : string) {
         this._sessionId = s
+        this.markUserAnalyticsEvent('session_heartbeat', SQUADOV_PLATFORM)
     }
 
     setTempSessionId(s: string | null, uid: string | null) {
@@ -389,10 +391,11 @@ class ApiClient {
         return axios.post('auth/login', inp, this.createWebAxiosConfig())
     }
 
-    finishMfaLogin(mfaId: string, code: string): Promise<ApiData<LoginOutput>> {
+    finishMfaLogin(mfaId: string, code: string, platform: string): Promise<ApiData<LoginOutput>> {
         return axios.post('auth/login/mfa', {
             id: mfaId,
             code,
+            platform,
         }, this.createWebAxiosConfig())
     }
 
@@ -1786,6 +1789,13 @@ class ApiClient {
         return axios.put(`v1/events/${eventId}`, {
             label,
             tm,
+        }, this.createWebAxiosConfig())
+    }
+
+    markUserAnalyticsEvent(eventId: string, platform: string): Promise<void> {
+        return axios.post(`v1/users/me/analytics/event`, {
+            eventId,
+            platform,
         }, this.createWebAxiosConfig())
     }
 

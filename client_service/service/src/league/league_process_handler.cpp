@@ -95,6 +95,9 @@ LeagueProcessHandlerInstance::LeagueProcessHandlerInstance(const process_watcher
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ELeagueLogEvents::CommandLineCfg), std::bind(&LeagueProcessHandlerInstance::onLeagueConfig, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ELeagueLogEvents::LocalPlayer), std::bind(&LeagueProcessHandlerInstance::onLeagueLocalPlayer, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_league");
 }
 
 LeagueProcessHandlerInstance::~LeagueProcessHandlerInstance() {

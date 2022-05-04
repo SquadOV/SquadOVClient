@@ -78,6 +78,9 @@ CsgoProcessHandlerInstance::CsgoProcessHandlerInstance(const process_watcher::pr
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoLogEvents::Connect), std::bind(&CsgoProcessHandlerInstance::onLogConnect, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::ECsgoLogEvents::Disconnect), std::bind(&CsgoProcessHandlerInstance::onLogDisconnect, this, std::placeholders::_1, std::placeholders::_2));
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_csgo");
 }
 
 CsgoProcessHandlerInstance::~CsgoProcessHandlerInstance() {

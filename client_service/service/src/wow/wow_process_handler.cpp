@@ -206,6 +206,9 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
     } else {
         LOG_WARNING("Empty process. May or may not be an error?" << std::endl);
     }
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_wow");
 }
 
 WoWProcessHandlerInstance::~WoWProcessHandlerInstance() {

@@ -9,6 +9,7 @@
 #include "system/notification_hub.h"
 #include "game_event_watcher/ff14/ff14_log_watcher.h"
 #include "api/combat_log_client.h"
+#include "api/squadov_api.h"
 
 #include <boost/algorithm/string.hpp>
 #include <rapidxml.hpp>
@@ -59,6 +60,9 @@ Ff14ProcessHandlerInstance::Ff14ProcessHandlerInstance(const process_watcher::pr
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::AddCombatant), std::bind(&Ff14ProcessHandlerInstance::onAddCombatant, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EFf14LogLineType::CombatLogLine), std::bind(&Ff14ProcessHandlerInstance::onCombatLogLine, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromParentFolder(_networkLogDir);
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_ff14");
 }
 
 Ff14ProcessHandlerInstance::~Ff14ProcessHandlerInstance() {

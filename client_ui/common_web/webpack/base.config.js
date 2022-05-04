@@ -4,7 +4,7 @@ const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const VuetifyLoaderPlugin = require('vuetify-loader/lib/plugin')
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const { ProvidePlugin } = require('webpack');
+const { ProvidePlugin, DefinePlugin } = require('webpack');
 
 const cssLoaders = [
     {
@@ -179,6 +179,9 @@ module.exports = (env, argv, subfolder) => {
                 inject: false,
                 template: path.join(__dirname, 'js.template.ejs'),
                 minify: false,
+            }),
+            new DefinePlugin({
+                SQUADOV_PLATFORM: isDesktop ? 'DESKTOP' : 'WEB',
             }),
             ...plugins
         ],

@@ -70,6 +70,9 @@ HearthstoneProcessHandlerInstance::HearthstoneProcessHandlerInstance(const proce
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::ArenaFinishDraft), std::bind(&HearthstoneProcessHandlerInstance::onArenaDraftFinish, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EHearthstoneLogEvents::ArenaDraftChoice), std::bind(&HearthstoneProcessHandlerInstance::onArenaDraftChoice, this, std::placeholders::_1, std::placeholders::_2));
     _logWatcher->loadFromExecutable(p.path());
+
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_game");
+    service::api::getGlobalApi()->markUserAnalyticsEvent("launch_hearthstone");
 }
 
 HearthstoneProcessHandlerInstance::~HearthstoneProcessHandlerInstance() {

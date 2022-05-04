@@ -149,6 +149,21 @@ void SquadovApi::createBookmark(const std::string& videoUuid, const shared::Time
     }
 }
 
+void SquadovApi::markUserAnalyticsEvent(const std::string& eventId) const {
+    std::ostringstream path;
+    path << "/v1/users/me/analytics/event";
+
+    nlohmann::json body = {
+        { "eventId", eventId },
+        { "platform", "DESKTOP" }
+    };
+    const auto result = _webClient->post(path.str(), body);
+    // THIS SHOULD NEVER BE A FAILURE. We don't care about analytics THAT much.
+    if (result->status != 204) {
+        LOG_WARNING("Failed to get mark user analytics event: " << result->status);
+    }
+}
+
 void SquadovApi::retrieveSessionFeatureFlags() {
     std::ostringstream path;
     path << "/v1/users/" << getSessionUserId() << "/features";

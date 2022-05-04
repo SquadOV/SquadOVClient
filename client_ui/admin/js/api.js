@@ -1446,34 +1446,84 @@ class ApiServer {
                     ON rc.id = rcu.code_id
                 INNER JOIN squadov.users AS u
                     ON u.email = rcu.email
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND (uer.event_name = 'login' OR uer.event_name = 'session_heartbeat')
+                        AND uer.platform = 'WEB'
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND (NOT $4::BOOLEAN OR u.verified)
-            ) AS "login", (
-                SELECT COUNT(DISTINCT ud.user_id)
+            ) AS "loginweb", (
+                SELECT COUNT(DISTINCT u.id)
                 FROM squadov.user_referral_code_usage AS rcu
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rcu.code_id
                 INNER JOIN squadov.users AS u
                     ON u.email = rcu.email
-                INNER JOIN squadov.user_downloads AS ud
-                    ON ud.user_id = u.id
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND (uer.event_name = 'login' OR uer.event_name = 'session_heartbeat')
+                        AND uer.platform = 'DESKTOP'
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND (NOT $4::BOOLEAN OR u.verified)
-            ) AS "download", (
+            ) AS "logindesktop", (
                 SELECT COUNT(DISTINCT uhs.user_id)
                 FROM squadov.user_referral_code_usage AS rcu
                 INNER JOIN squadov.referral_codes AS rc
                     ON rc.id = rcu.code_id
                 INNER JOIN squadov.users AS u
                     ON u.email = rcu.email
-                INNER JOIN squadov.user_hardware_specs AS uhs
-                    ON uhs.user_id = u.id
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'hw_sync'
+                        AND uer.platform = 'DESKTOP'
                 WHERE rc.code = ANY($3)
                     AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND (NOT $4::BOOLEAN OR u.verified)
-            ) AS "install", (
+            ) AS "hwsync", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'ready_to_record'
+                        AND uer.platform = 'DESKTOP'
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "readyrecord", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'launch_game'
+                        AND uer.platform = 'DESKTOP'
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "launchgame", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.user_referral_code_usage AS rcu
+                INNER JOIN squadov.referral_codes AS rc
+                    ON rc.id = rcu.code_id
+                INNER JOIN squadov.users AS u
+                    ON u.email = rcu.email
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'start_record'
+                        AND uer.platform = 'DESKTOP'
+                WHERE rc.code = ANY($3)
+                    AND rcu.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND rcu.tm < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "startrecord", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.user_referral_code_usage AS rcu
                 INNER JOIN squadov.referral_codes AS rc
@@ -1523,22 +1573,76 @@ class ApiServer {
             ) AS "reg", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND (uer.event_name = 'login' OR uer.event_name = 'session_heartbeat')
+                        AND uer.platform = 'WEB'
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND (NOT $4::BOOLEAN OR u.verified)
-            ) AS "login", (
+            ) AS "loginweb", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
-                INNER JOIN squadov.user_hardware_specs AS uhs
-                    ON uhs.user_id = u.id
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND (uer.event_name = 'login' OR uer.event_name = 'session_heartbeat')
+                        AND uer.platform = 'DESKTOP'
                 LEFT JOIN squadov.user_referral_code_usage AS rcu
                     ON rcu.email = u.email
                 WHERE (NOT $3 OR rcu.code_id IS NULL)
                     AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
                     AND (NOT $4::BOOLEAN OR u.verified)
-            ) AS "install", (
+            ) AS "logindesktop", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'hw_sync'
+                        AND uer.platform = 'DESKTOP'
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "hwsync", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'ready_to_record'
+                        AND uer.platform = 'DESKTOP'
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "readyrecord", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'launch_game'
+                        AND uer.platform = 'DESKTOP'
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "launchgame", (
+                SELECT COUNT(DISTINCT u.id)
+                FROM squadov.users AS u
+                INNER JOIN squadov.user_event_record AS uer
+                    ON uer.user_id = u.id
+                        AND uer.event_name = 'start_record'
+                        AND uer.platform = 'DESKTOP'
+                LEFT JOIN squadov.user_referral_code_usage AS rcu
+                    ON rcu.email = u.email
+                WHERE (NOT $3 OR rcu.code_id IS NULL)
+                    AND u.registration_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $2::TIMESTAMPTZ)
+                    AND (NOT $4::BOOLEAN OR u.verified)
+            ) AS "startrecord", (
                 SELECT COUNT(DISTINCT u.id)
                 FROM squadov.users AS u
                 INNER JOIN squadov.vods AS v

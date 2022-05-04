@@ -711,6 +711,7 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
     }
 
     LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << " - " << flags << std::endl);
+    service::api::getGlobalApi()->markUserAnalyticsEvent("start_record");
 
     _currentId = createNewVodIdentifier();
     loadCachedInfo();
