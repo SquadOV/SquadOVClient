@@ -68,6 +68,7 @@ struct RecordingSettings {
     bool useVoiceSpeechNoiseReduction = false;
     
     bool useCbr = false;
+    bool useNativeAspectRatio = false;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

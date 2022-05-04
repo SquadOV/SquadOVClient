@@ -549,6 +549,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif            
         },
+        changeUseNativeAspectRatio(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useNativeAspectRatio = v
+            saveLocalSettings(state.settings)
+/// #endif            
+        },
         changeBookmarkKeybind(state: RootState, v: Keybind) {
 /// #if DESKTOP
             if (!state.settings) {

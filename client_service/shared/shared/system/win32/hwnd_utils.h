@@ -5,6 +5,7 @@
 #include <chrono>
 #include <Windows.h>
 #include <ostream>
+#include <optional>
 
 namespace shared::system::win32 {
 
@@ -13,6 +14,9 @@ bool isWindowTopmost(HWND wnd);
 bool isFullscreen(HWND wnd, HMONITOR monitor, int margin);
 bool isProcessForeground(DWORD pid);
 bool isHDREnabledForMonitor(HMONITOR monitor);
+std::optional<double> getNativeMonitorAspectRatio(HMONITOR monitor);
+std::optional<double> getNativeMonitorAspectRatioFromDeviceIdAndClassGuid(const std::string& deviceId, GUID guid);
+std::optional<double> getNativeMonitorAspectRatioFromEDID(HKEY regKey);
 
 }
 

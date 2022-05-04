@@ -83,6 +83,7 @@ int main(int argc, char** argv) {
     }
 
     const auto outputFname = vm["output"].as<std::string>();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
     // Doesn't really matter what game we stick in here yolo.
     service::recorder::GameRecorder recorder(allProcesses[0], shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
@@ -99,14 +100,14 @@ int main(int argc, char** argv) {
     const auto width = vm["width"].as<size_t>();
     const auto height = vm["height"].as<size_t>();
     const auto loop = vm["loop"].as<int>();
-    recorder.overrideResolution(width, height);
+    //recorder.overrideResolution(width, height);
 
     std::thread workerThread;
     if (mode == "NORMAL") {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);

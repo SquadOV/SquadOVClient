@@ -118,6 +118,29 @@
 
                         <v-checkbox
                             class="ma-0"
+                            :input-value="$store.state.settings.record.useNativeAspectRatio"
+                            @change="$store.commit('changeUseNativeAspectRatio', arguments[0])"
+                            hide-details
+                            label="Use Native Aspect Ratio"
+                        >
+                            <template v-slot:append>
+                                <v-tooltip bottom max-width="450px">
+                                    <template v-slot:activator="{on, attrs}">
+                                        <v-icon v-on="on" v-bind="attrs">
+                                            mdi-help-circle
+                                        </v-icon>
+                                    </template>
+
+                                    If you play on a stretched resolution, use this to force SquadOV to record a video with your native aspect ratio rather than the one specified in the game.
+                                    It is not recommend you turn this option on if you do not play with a stretched resolution.
+                                </v-tooltip>
+                            </template>
+                        </v-checkbox>
+                    </v-col>
+
+                    <v-col cols-sm="12" cols-md="3" v-if="!mini">
+                        <v-checkbox
+                            class="ma-0"
                             :input-value="$store.state.settings.record.useVfr4"
                             @change="$store.commit('changeUseVfr', arguments[0])"
                             hide-details
@@ -133,27 +156,6 @@
 
                                     Whether to allow the creation of a video file with variable frame rate.
                                     This may help your videos be smoother if your computer is unable to handle the load of recording at your specified resolution and FPS.
-                                </v-tooltip>
-                            </template>
-                        </v-checkbox>
-
-                        <v-checkbox
-                            class="ma-0"
-                            :input-value="$store.state.settings.record.useWGC2"
-                            @change="$store.commit('changeuseWGC2', arguments[0])"
-                            hide-details
-                            label="Use Windows Graphics Capture"
-                        >
-                            <template v-slot:append>
-                                <v-tooltip bottom max-width="450px">
-                                    <template v-slot:activator="{on, attrs}">
-                                        <v-icon v-on="on" v-bind="attrs">
-                                            mdi-help-circle
-                                        </v-icon>
-                                    </template>
-                                    Whether to use WGC for recording.
-                                    When disabled, the default is GDI which may produce lower quality videoes. WGC might cause additional lag and produce a yellow border in the recording.
-                                    GDI is currently not supported for: Hearthstone, League of Legends, WoW, AimLab.
                                 </v-tooltip>
                             </template>
                         </v-checkbox>

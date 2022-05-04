@@ -403,6 +403,7 @@ void GameRecorder::loadCachedInfo() {
                             break;
                         }
 
+                        ret.monitor = refMonitor;
                         ret.width = windowRes.right - windowRes.left;
                         ret.height = windowRes.bottom - windowRes.top;
                         ret.init = true;
@@ -439,7 +440,15 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
 
-    const auto aspectRatio = static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
+    // Use native monitor resolution if the user desires it instead of the game aspect ratio (useful for users who do stretched res).
+    const auto nativeAspectRatio = shared::system::win32::getNativeMonitorAspectRatio(_cachedWindowInfo->monitor);
+    
+    // We only want to use the native aspect ratio if 1) the user wants it, 2) we computed it properly, and 3) the user is playing in full screen.
+    // In the case of windowed mode gaming, we should keep the window size since this is mainly for when the user is playing in a different aspect ratio
+    // than their monitor (e.g. stretched resolution for CSGO/Valorant).
+    const auto aspectRatio = (_cachedRecordingSettings->useNativeAspectRatio && nativeAspectRatio && !_cachedWindowInfo->isWindowed) ?
+        nativeAspectRatio.value():
+        static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
     const auto desiredHeight = shared::math::forceEven(_overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY))));
     const auto desiredWidth = shared::math::forceEven(_overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio)));
 

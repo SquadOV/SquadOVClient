@@ -2,6 +2,7 @@
 
 #ifdef _WIN32
 
+#include <atlbase.h>
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <dxgi1_6.h>
@@ -9,16 +10,32 @@
 #include <iostream>
 #include <VersionHelpers.h>
 #include <wil/com.h>
+#include <SetupAPI.h>
 
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
 
 #pragma comment(lib, "dxgi")
+#pragma comment(lib, "setupapi.lib")
 
 namespace shared::system::win32 {
 namespace {
 
 constexpr int MINIMUM_WINDOW_RESOLUTION_XY = 100;
+
+const GUID GUID_CLASS_MONITOR = {
+    0x4d36e96e,
+    0xe325,
+    0x11ce,
+    0xbf,
+    0xc1,
+    0x08,
+    0x00,
+    0x2b,
+    0xe1,
+    0x03,
+    0x18
+};
 
 struct EnumData {
     DWORD pid;
@@ -150,6 +167,10 @@ bool isFullscreen(HWND wnd, HMONITOR monitor, int margin) {
     const auto monitorWidth = info.rcMonitor.right - info.rcMonitor.left;
     const auto monitorHeight = info.rcMonitor.bottom - info.rcMonitor.top;
 
+    LOG_INFO("Check Full screen: " << std::endl
+        << "\tMonitor: " << monitorWidth << "x" << monitorHeight << std::endl
+        << "\tWindow: " << wndWidth << "x" << wndHeight << std::endl
+    );
     return (std::abs(wndWidth - monitorWidth) <= margin) &&
         (std::abs(wndHeight - monitorHeight) <= margin);
 }
@@ -210,6 +231,131 @@ bool isHDREnabledForMonitor(HMONITOR monitor) {
     }
 
     return false;
+}
+
+std::optional<double> getNativeMonitorAspectRatio(HMONITOR monitor) {
+    // First get the monitor device name.
+    MONITORINFOEX info = { 0 };
+    info.cbSize = sizeof(MONITORINFOEX);
+
+    if (!GetMonitorInfo(monitor, &info)) {
+        return std::nullopt;
+    }
+
+    const std::string refDeviceName(info.szDevice);
+
+    // Then iterate through display devices and find the display device with the equivalent device name.
+    DISPLAY_DEVICE dd = { 0 };
+    dd.cb = sizeof(DISPLAY_DEVICE);
+    if (!EnumDisplayDevices(refDeviceName.c_str(), 0, &dd, 0)) {
+        return std::nullopt;
+    }
+
+    // The DeviceID field of DISPLAY_DEVICE will be something like MONITOR\\{{DEVICE ID}}\\{CLASS GUID}\\{{INSTANCE ID}}.
+    // We want to extract BLAH which will be the get the actual DeviceID that we can use to search the registry
+    // for the information we want.
+    const std::string fullDeviceId(dd.DeviceID);
+    const auto idSep = fullDeviceId.find("\\");
+    const auto idSepNext = fullDeviceId.find("\\", idSep + 1);
+    if (idSep == std::string::npos || idSepNext == std::string::npos) {
+        return std::nullopt;
+    }
+
+    const auto guidSep = fullDeviceId.find("{");
+    const auto guidSepNext = fullDeviceId.find("}", guidSep + 1);
+    if (guidSep == std::string::npos || guidSepNext == std::string::npos) {
+        return std::nullopt;
+    }
+
+    const std::string guidStr = fullDeviceId.substr(guidSep, guidSepNext - guidSep + 1);
+    GUID guid;
+    if (CLSIDFromString(CComBSTR(guidStr.c_str()), (LPCLSID)&guid) != S_OK) {
+        return std::nullopt;
+    }
+    const std::string deviceId = fullDeviceId.substr(idSep + 1, idSepNext - idSep - 1);
+    return getNativeMonitorAspectRatioFromDeviceIdAndClassGuid(deviceId, guid);
+}
+
+std::optional<double> getNativeMonitorAspectRatioFromDeviceIdAndClassGuid(const std::string& deviceId, GUID guid) {
+    HDEVINFO devInfo = SetupDiGetClassDevsEx(
+        &GUID_CLASS_MONITOR,
+        NULL,
+        NULL,
+        DIGCF_ALLCLASSES | DIGCF_PRESENT,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if (!devInfo) {
+        return std::nullopt;
+    }
+
+    // Iterate through the device information set and open up each setup api registry key
+    // to scrape the resolution from it.
+    DWORD index = 0;
+    SP_DEVINFO_DATA data = { 0 };
+    data.cbSize = sizeof(SP_DEVINFO_DATA);
+
+    std::optional<double> aspectRatio;
+    while (!aspectRatio && SetupDiEnumDeviceInfo(devInfo, index++, &data)) {
+        // If the class GUID isn't equal then we can ignore.
+        if (!IsEqualGUID(guid, data.ClassGuid)) {
+            continue;
+        }
+
+        // Get the device instance ID.
+        char testDeviceId[2048];
+        if (!SetupDiGetDeviceInstanceId(devInfo, &data, testDeviceId, sizeof(testDeviceId), nullptr)) {
+            continue;
+        }
+
+        // The device instance ID is slightly different from the device instance ID from DISPLAY_DEVICe structure.
+        // But there's a common 7 letter identifier for the monitor which is what we pass in via deviceId.
+        if (std::string(testDeviceId).find(deviceId) == std::string::npos) {
+            continue;
+        }
+
+        // Open the registry key for the device.
+        HKEY key = SetupDiOpenDevRegKey(devInfo, &data, DICS_FLAG_GLOBAL, 0, DIREG_DEV, KEY_READ);
+        if (!key || key == INVALID_HANDLE_VALUE) {
+            continue;
+        }
+
+        aspectRatio = getNativeMonitorAspectRatioFromEDID(key);
+        RegCloseKey(key);
+    }
+
+    SetupDiDestroyDeviceInfoList(devInfo);
+    return aspectRatio;
+}
+
+std::optional<double> getNativeMonitorAspectRatioFromEDID(HKEY regKey) {
+    // Iterate through the all the registry key and values to find the one that's the EDID.
+    // Parse the EDID to get the width and height of the monitor and use that to compute the aspect ratio.
+    DWORD index = 0;
+
+    char keyName[16384];
+    DWORD keyLength = 16383;
+
+    BYTE edid[1024];
+    DWORD edidLength = 1024;
+    while (RegEnumValue(regKey, index++, keyName, &keyLength, NULL, NULL, edid, &edidLength) == ERROR_SUCCESS) {
+        const std::string keyNameStr(keyName);
+        if (keyNameStr != "EDID") {
+            continue;
+        }
+
+        // 66: horizontal image size (mm, 8 least significant bits)
+        // 67: vertical image size (mm, 8 least signiicant bits)
+        // 68:
+        //     - bits 7-4: horizontal image size (mm, 4 most significant bits)
+        //     - bits 3-0: vertical image size (mm, 4 most significant bits)
+        const auto width = ((edid[68] & 0xF0) << 4) + edid[66];
+        const auto height = ((edid[68] & 0x0F) << 8) + edid[67];
+        return static_cast<double>(width) / height;
+    }
+    return std::nullopt;
 }
 
 }

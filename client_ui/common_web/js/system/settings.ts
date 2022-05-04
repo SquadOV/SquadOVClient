@@ -99,6 +99,7 @@ export interface SquadOvRecordingSettings {
     useVoiceSpeechNoiseReduction: boolean
     needConfirmManualStop: boolean
     useCbr: boolean
+    useNativeAspectRatio: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -373,6 +374,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
                 useCbr: false,
+                useNativeAspectRatio: false,
             }
         case BaselineLevel.Medium:
             record = {
@@ -420,6 +422,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
                 useCbr: false,
+                useNativeAspectRatio: false,
             }
         case BaselineLevel.High:
             record = {
@@ -467,6 +470,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 useVoiceSpeechNoiseReduction: false,
                 needConfirmManualStop: true,
                 useCbr: false,
+                useNativeAspectRatio: false,
             }
     }
 
@@ -558,6 +562,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             useVoiceSpeechNoiseReduction: false,
             needConfirmManualStop: true,
             useCbr: false,
+            useNativeAspectRatio: false,
         },
         keybinds2: {
             pushToTalk: {
@@ -857,6 +862,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.useCbr === undefined) {
             parsedData.record.useCbr = false
+        }
+
+        if (parsedData.record.useNativeAspectRatio === undefined) {
+            parsedData.record.useNativeAspectRatio = false
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
