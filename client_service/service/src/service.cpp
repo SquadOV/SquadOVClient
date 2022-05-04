@@ -378,6 +378,9 @@ int main(int argc, char** argv) {
     });
     zeroMqServerClient.start();
 
+    LOG_INFO("Initializing local recording database..." << std::endl);
+    shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(service::system::getCurrentSettings()->recording().localRecordingLocation);
+
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
         // Note that setSessionId also does an API call to pull the current user.
