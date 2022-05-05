@@ -733,11 +733,19 @@ export default class RecordingSettingsItem extends Vue {
     get qualityItems(): any[] {
         return [
             {
-                text: 'Ultra-High (9000 kbps)',
+                text: 'Ultra-High (16000 kbps)',
+                value: 16000,
+            },
+            {
+                text: 'High (12000 kbps)',
+                value: 12000,
+            },
+            {
+                text: 'Medium-High (9000 kbps)',
                 value: 9000,
             },
             {
-                text: 'High (6000 kbps)',
+                text: 'Standard (6000 kbps)',
                 value: 6000,
             },
             {
