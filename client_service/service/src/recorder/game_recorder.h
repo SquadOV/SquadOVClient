@@ -78,6 +78,8 @@ public:
     void loadCachedInfo();
     void setNewProcess(const process_watcher::process::Process& process) { _process = process; }
 
+    void addManualGameAudioProcess(const std::string& pName) { _auxGameProcessesForAudio.push_back(pName); }
+
 private:
     struct EncoderDatum {
         encoder::AvEncoderPtr encoder;
@@ -181,6 +183,9 @@ private:
     // Various layers and nodes of the compositor that we need control of.
     std::vector<service::recorder::compositor::layers::CompositorLayerPtr> _overlayLayers;
     service::recorder::compositor::graph::FpsLimiterNodePtr _fpsLimiter;
+
+    // Certain games have other processes that spit out audio - capture that here.
+    std::vector<std::string> _auxGameProcessesForAudio;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

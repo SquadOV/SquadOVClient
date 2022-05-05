@@ -52,6 +52,7 @@ ValorantProcessHandlerInstance::ValorantProcessHandlerInstance(const process_wat
 
     // Initialize recorder to pull from the game window (but don't start recording until a game starts).
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, shared::EGame::Valorant);
+    _recorder->addManualGameAudioProcess("RiotClientServices.exe");
 
     // Initialize Valorant data. Pull in account information and populate
     // match history/account data in the database as needed.

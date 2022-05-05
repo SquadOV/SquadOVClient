@@ -71,11 +71,12 @@ WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid, double volume):
     process_watcher::process::ProcessRunningState processState(itf);
     processState.update();
 
-    _process = processState.getProcesssRunningByPid(_pid, true);
+    _process = processState.getProcesssRunningByPid(_pid, false);
     if (_process) {
         LOG_INFO("Trying to record audio from process: " << _process.value().name() << std::endl);
     } else {
         LOG_WARNING("...No process detected for audio recording for PID: " << _pid << std::endl);
+        return;
     }
 
     // Need to do all this on construction because the internal object being constructed is a major part of success

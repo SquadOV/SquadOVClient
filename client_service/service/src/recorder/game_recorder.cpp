@@ -614,6 +614,13 @@ bool GameRecorder::initializeInputStreams(int flags) {
         process_watcher::process::ProcessRunningState processState(itf);
         processState.update();
 
+        for (const auto& pName: _auxGameProcessesForAudio) {
+            const auto auxProcesses = processState.getProcesssRunningByName(shared::strings::utf8ToWcs(pName), false);
+            for (const auto& pp: auxProcesses) {
+                finalExesToRecord.insert(std::make_pair(pp.pid(), _cachedRecordingSettings->gameAudioVolume));
+            }
+        }
+
         for (const auto& p: _cachedRecordingSettings->processesToRecord) {
             // Need to find the EXE with a valid window - there could be multiple processes that satisfy this condition.
             // That's fine! We'll just record all of them to be safe. Yolo.

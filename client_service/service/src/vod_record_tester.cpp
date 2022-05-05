@@ -87,6 +87,7 @@ int main(int argc, char** argv) {
     // Doesn't really matter what game we stick in here yolo.
     service::recorder::GameRecorder recorder(allProcesses[0], shared::EGame::Hearthstone);
     recorder.loadCachedInfo();
+    recorder.addManualGameAudioProcess("RiotClientServices.exe");
 
     service::uploader::UploadDestination destination;
     destination.loc = service::uploader::UploadManagerType::FileSystem;
@@ -107,7 +108,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);
