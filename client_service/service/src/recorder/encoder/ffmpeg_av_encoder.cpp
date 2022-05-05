@@ -423,8 +423,16 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
             canUseHwAccel = (enc.ctx == VideoStreamContext::GPU) && canUseGpu && settings.useVideoHw2;
             _vcodecContext->pix_fmt = canUseHwAccel ? AV_PIX_FMT_D3D11 : AV_PIX_FMT_YUV420P;
             _vcodecContext->bit_rate = static_cast<int64_t>(settings.bitrateKbps) * 1000;
-            _vcodecContext->rc_max_rate = _vcodecContext->bit_rate * 1.5;
-            _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 4;
+
+            if (settings.useCbr) {
+                _vcodecContext->rc_min_rate = _vcodecContext->bit_rate;
+                _vcodecContext->rc_max_rate = _vcodecContext->bit_rate;
+                _vcodecContext->rc_buffer_size = _vcodecContext->bit_rate;
+            } else {
+                _vcodecContext->rc_min_rate = _vcodecContext->bit_rate * 0.5;
+                _vcodecContext->rc_max_rate = _vcodecContext->bit_rate * 1.5;
+                _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 4;
+            }
             _vcodecContext->thread_count = 0;
 
             if (enc.name == "h264_amf") {
@@ -500,8 +508,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
             AVDictionary *options = nullptr;
 
             if (_vcodecContext->codec_id == AV_CODEC_ID_H264) {
-                av_dict_set(&options, "preset", "medium", 0);
-
                 // H264 Profile
                 if (enc.name == "h264_mf") {
                     _vcodecContext->profile = FF_PROFILE_H264_HIGH;
@@ -509,6 +515,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                     av_dict_set(&options, "profile", "high", 0);
                 }
 
+                // CBR vs VBR
                 if (!settings.useCbr) {
                     LOG_INFO("...Using VBR." << std::endl);
                     // Per-encoder settings. Mainly for VBR.
@@ -531,15 +538,21 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                         // FFmpeg uses the bitrate as the mean bit rate to use.
                         av_dict_set(&options, "rate_control", "cbr", 0);
                     } else if (enc.name == "h264_nvenc") {
-                        // bit_rate => averageBitRate
-                        // rc_max_rate => maxBitRate
-                        // rc_buffer_size => vbvBufferSize
                         av_dict_set(&options, "rc", "cbr", 0);
                     } else if (enc.name == "h264_amf") {
                         av_dict_set(&options, "rc", "cbr", 0);
                     } else if (enc.name == "libopenh264") {
-                        av_dict_set(&options, "rc_mode", "bitrate", 0);
+                        av_dict_set(&options, "rc_mode", "timestamp", 0);
                     }
+                }
+
+                // Additional quality options
+                if (enc.name == "h264_nvenc") {
+                    av_dict_set(&options, "preset", "hq", 0);
+                    av_dict_set(&options, "spatial-aq", "1", 0);
+                    av_dict_set(&options, "temporal-aq", "1", 0);
+                } else if (enc.name == "h264_amf") {
+                    av_dict_set(&options, "quality", "quality", 0);
                 }
             }
 
