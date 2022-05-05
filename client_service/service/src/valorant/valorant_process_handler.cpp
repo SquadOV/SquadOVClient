@@ -155,7 +155,8 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
 
     // When the match starts, we de facto start the first buy round too.
     onValorantBuyStart(eventTime, nullptr);
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->start();
+    _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {

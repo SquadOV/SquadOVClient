@@ -54,13 +54,18 @@ public:
     );
     ~GameRecorder();
 
-    void startDvrSession(int flags = FLAG_UNKNOWN, bool autoTick = true);
-    void startNewDvrSegment();
-    void start(const shared::TimePoint& start, RecordingMode mode, int flags = FLAG_UNKNOWN);
+    // Starts the process of sending audio/video data to the encoder and generating encoded packets.
+    // Those packets only get sent to an output if initializeDvrOutput and/or initializeVideoOutput
+    // gets called.
+    void start(int flags = FLAG_UNKNOWN);
+
+    // This is a request to initialize and/or increase the DVR storage size in memory.
+    void initializeDvrOutput(double sizeSeconds);
+    void initializeVideoOutput(const shared::TimePoint& start, RecordingMode mode);
+
     void stop(std::optional<GameRecordEnd> end, bool keepLocal = false);
     void stopInputs();
-    std::string stopDvrSession();
-    void cleanDvrSession(const std::string& id);
+
     void forceUrl(const std::string& url) { _forcedOutputUrl = url; }
     void enableOverlay(bool enable);
 
@@ -103,7 +108,7 @@ private:
     bool initializeInputStreams(int flags);
     bool initializeCompositor(const video::VideoWindowInfo& info, int flags);
 
-    EncoderDatum createEncoder(const std::string& outputFname);
+    EncoderDatum createEncoder();
 
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;
@@ -138,8 +143,9 @@ private:
     std::optional<int64_t> _bookmarkCb = std::nullopt;
     std::optional<int64_t> _clipCb = std::nullopt;
 
-    // Locked Settings. We need the video settings between the DVR recording
-    // and the final video to stay the same so cache the results here.
+    // Locked Settings. We used to need the video settings between the DVR recording
+    // and the final video to stay the same so we cached the results here. Not sure how
+    // necessary this is now.
     std::unique_ptr<video::VideoWindowInfo> _cachedWindowInfo;
     std::unique_ptr<service::system::RecordingSettings> _cachedRecordingSettings;
     int64_t _cachedInstantClipLengthSeconds = 15;    
@@ -149,32 +155,6 @@ private:
     std::filesystem::path _manualVodPath;
     shared::TimePoint _manualVodTimeStart;
     shared::TimePoint _manualVodRecordStart;
-
-    // DVR Recording. Each time the user calls startDvrSession we create a new
-    // DVR session UUID. This session UUID is able to give us a unique location
-    // on the filesystem where we store the temporary videos. At a given interval
-    // (e.g. 10 seconds), we create a new video file on disk by switching the recording
-    // to a new encoder and flushing the old encoder to disk. When the user finally
-    // wants to start recording for real starting at a certain time, we look through
-    // all the DVR video file segments that we have stored and find the ones that
-    // accurately represents the start time the user desires and prepend those to
-    // the final encoder that'll send the video to GCS/VOD storage.
-    std::string _dvrSessionId;
-    bool _dvrRunning = false;
-    std::thread _dvrThread;
-    EncoderDatum _dvrEncoder;
-    size_t _dvrId = 0;
-
-    struct DvrSegment {
-        std::filesystem::path outputPath;
-        shared::TimePoint startTime;
-        shared::TimePoint endTime;
-
-        void cleanup() const;
-    };
-    std::deque<DvrSegment> _dvrSegments;
-    void startNewDvrSegment(const std::filesystem::path& dir);
-    size_t findDvrSegmentForVodStartTime(const shared::TimePoint& tm) const;
 
     // Debug Variables if we ever feel like overriding the width and height.
     std::optional<size_t> _overrideWidth;

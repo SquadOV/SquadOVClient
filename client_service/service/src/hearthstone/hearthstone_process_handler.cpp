@@ -189,7 +189,8 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
 
     // We need to start recording now because the game start event comes much later so if we don't start recording now then we
     // might miss parts of the mulligan.
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->start();
+    _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
 
     if (_inGame) {
         onGameStart(eventTime, nullptr);

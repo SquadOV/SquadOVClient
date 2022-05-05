@@ -21,6 +21,11 @@
 #define TEST_DUMP 0
 
 namespace service::wow {
+namespace {
+
+constexpr double WOW_DVR_SIZE_SECONDS = 120.0;
+
+}
 
 class WoWProcessHandlerInstance {
 public:
@@ -43,6 +48,8 @@ public:
 private:
     process_watcher::process::Process  _process;
     game_event_watcher::WoWLogWatcherPtr _logWatcher;
+
+    void restartRecorder();
 
     bool hasValidCombatLog() const;
     bool inChallenge() const { return !_currentChallenge.challengeName.empty(); }
@@ -146,7 +153,7 @@ WoWProcessHandlerInstance::WoWProcessHandlerInstance(const process_watcher::proc
 
     _recorder = std::make_unique<service::recorder::GameRecorder>(_process, _finalGame);
     if (!_process.empty()) {
-        _recorder->startDvrSession();
+        restartRecorder();
     }
 
     _logWatcher->notifyOnEvent(static_cast<int>(game_event_watcher::EWoWLogEvents::CombatLogStart), std::bind(&WoWProcessHandlerInstance::onCombatLogStart, this, std::placeholders::_1, std::placeholders::_2));
@@ -300,6 +307,13 @@ void WoWProcessHandlerInstance::waitForLogWatcher() {
     _logWatcher->wait();
 }
 
+void WoWProcessHandlerInstance::restartRecorder() {
+    if (_recorder) {
+        _recorder->start();
+        _recorder->initializeDvrOutput(WOW_DVR_SIZE_SECONDS);
+    }
+}
+
 void WoWProcessHandlerInstance::cleanup() {
     // Move the current combat log to backup so that it doesn't get too big.
     // This assumes that this is being called on WoW process stop so this should be safe to do.
@@ -334,7 +348,7 @@ void WoWProcessHandlerInstance::onProcessChange(const process_watcher::process::
         _recorder->stop({}, false);
 
         // Restart DVR!
-        _recorder->startDvrSession();
+        restartRecorder();
     }
 }
 
@@ -853,7 +867,7 @@ void WoWProcessHandlerInstance::genericMatchStart(const shared::TimePoint& tm) {
 
     // Start recording first just in case the API takes a long time to respond.
     if (!_process.empty()) {
-        _recorder->start(tm, service::recorder::RecordingMode::DVR);
+        _recorder->initializeVideoOutput(tm, service::recorder::RecordingMode::DVR);
     } else {
         _recorder->startFromSource(_manualVodPath, _manualVodStartTime, tm);
     }
@@ -910,7 +924,7 @@ void WoWProcessHandlerInstance::genericMatchEnd(const std::string& matchUuid, co
                 _recorder->stop({});
             }
 
-            _recorder->startDvrSession();
+            restartRecorder();
         } else {
             service::recorder::GameRecordEnd end;
             end.matchUuid = matchUuid;

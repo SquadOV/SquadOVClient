@@ -105,7 +105,8 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
         << "\tMap: " << state->taskMap << std::endl
         << "\tVersion: " << state->gameVersion << std::endl);
 
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->start();
+    _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {

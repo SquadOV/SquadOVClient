@@ -46,32 +46,6 @@ namespace fs = std::filesystem;
 using namespace std::chrono_literals;
 
 namespace service::recorder {
-namespace {
-
-constexpr int DVR_SEGMENT_LENGTH_SECONDS = 30;
-constexpr int MAX_DVR_SEGMENTS = 6;
-
-}
-
-void GameRecorder::DvrSegment::cleanup() const {
-    // There's no particular reason the cleanup neesd to happen immediately so start off
-    // a new thread to do it. We're not guaranteed that this will succeed immediately anyway
-    // so this is for the best.
-    fs::path copyOutputPath = outputPath;
-    std::thread t([copyOutputPath](){
-        if (fs::exists(copyOutputPath)) {
-            for (auto i = 0; i < 30; ++i) {
-                try {
-                    fs::remove(copyOutputPath);
-                    break;
-                } catch (...) {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(150));
-                }
-            }
-        }
-    });
-    t.detach();
-}
 
 GameRecorder::GameRecorder(
     const process_watcher::process::Process& process,
@@ -184,154 +158,6 @@ void GameRecorder::switchToNewActiveEncoder(const EncoderDatum& data) {
     }
 }
 
-void GameRecorder::startNewDvrSegment() {
-    if (!_dvrRunning) {
-        return;
-    }
-
-    const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
-    startNewDvrSegment(dir);
-}
-
-void GameRecorder::startNewDvrSegment(const fs::path& dir) {
-    std::ostringstream segmentFname;
-    segmentFname << "segment_" << _dvrId++ << ".ts";
-    LOG_INFO("Create New DVR Segment: " << segmentFname.str() << std::endl);
-
-    // At the given interval, create a new DVR segment.
-    DvrSegment segment;
-    segment.outputPath = dir / fs::path(segmentFname.str());
-    segment.startTime = shared::nowUtc();
-    segment.endTime = shared::zeroTime();
-
-    // Create a new DVR encoder. This encoder is responsible for outputting the video to the specified location on disk.
-    EncoderDatum data = createEncoder(shared::filesystem::pathUtf8(segment.outputPath));
-
-    // Switch the active encoder to this new encoder before flushing out the old encoder (if there is one).
-    // We want this order to ensure that there's minimal loss of data between the two video files.
-    LOG_INFO("\tSwitch inputs to new segment encoder..." << std::endl);
-    switchToNewActiveEncoder(data);
-
-    if (_dvrEncoder.hasEncoder()) {
-        _dvrEncoder.encoder->stop();
-    }
-
-    _dvrEncoder = std::move(data);
-    if (!_dvrSegments.empty()) {
-        _dvrSegments.back().endTime = segment.startTime;
-    }
-    _dvrSegments.emplace_back(std::move(segment));
-
-    if (_dvrSegments.size() > MAX_DVR_SEGMENTS) {
-        _dvrSegments.front().cleanup();
-        _dvrSegments.pop_front();
-    }
-
-    LOG_INFO("...Finishing creating DVR segment :: " << segmentFname.str() << std::endl);
-}
-
-void GameRecorder::startDvrSession(int flags, bool autoTick) {
-    if (flags == FLAG_UNKNOWN) {
-        flags = service::recorder::getDefaultRecordingFlagsForGame(_game);
-    }
-
-    if (_encoder.hasEncoder()) {
-        LOG_WARNING("Can not start DVR session while a VOD encoder is active." << std::endl);
-        return;
-    }
-
-    loadCachedInfo();
-    if (!isGameEnabled()) {
-        LOG_WARNING("Ignoring DVR session start since game is disabled: " << shared::gameToString(_game) << std::endl);
-        _currentId.reset(nullptr);
-        return;
-    }
-
-    if (!areInputStreamsInitialized()) {
-        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
-        if (!successFut.get()) {
-            LOG_WARNING("Failed to start DVR session." << std::endl);
-            return;
-        }
-    }
-
-    _dvrSessionId = shared::generateUuidv4();
-    _dvrRunning = true;
-    _dvrId = 0;
-
-    // Do initial setup here so that we don't return from this function until we actually start DVR recording.
-    const auto threshold = std::chrono::milliseconds(DVR_SEGMENT_LENGTH_SECONDS * 1000);
-    const auto step = std::chrono::milliseconds(100);
-
-    const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
-    if (!fs::exists(dir)) {
-        fs::create_directories(dir);
-    }
-    startNewDvrSegment(dir);
-
-    _dvrThread = std::thread([this, threshold, step, dir, autoTick](){
-        auto timeSinceLastDvrSegment = std::chrono::milliseconds(0);
-        while (_dvrRunning) {
-            if (autoTick && timeSinceLastDvrSegment >= threshold) {
-                timeSinceLastDvrSegment = std::chrono::milliseconds(0);
-                startNewDvrSegment(dir);
-            }
-
-            std::this_thread::sleep_for(step);
-            timeSinceLastDvrSegment += step;
-        }
-        
-        LOG_INFO("On DVR Thread Finish Start..." << std::endl);
-        if (_dvrEncoder.hasEncoder()) {
-            _dvrEncoder.encoder->stop();
-        }
-        LOG_INFO("...Finish DVR Thread." << std::endl);
-    });
-}
-
-std::string GameRecorder::stopDvrSession() {
-    _dvrRunning = false;
-    LOG_INFO("...Joining DVR Thread." << std::endl);
-    if (_dvrThread.joinable()) {
-        _dvrThread.join();
-        _dvrThread = {};
-    }
-
-    LOG_INFO("...Found DVR Segments: " << _dvrSegments.size() << std::endl);
-    if (!_dvrSegments.empty()) {
-        _dvrSegments.back().endTime = shared::nowUtc();
-    }
-
-    const auto id = _dvrSessionId;
-    LOG_INFO("...Found DVR Session Id: " << id << std::endl);
-    _dvrSessionId.clear();
-    return id;
-}
-
-void GameRecorder::cleanDvrSession(const std::string& id) {
-    if (id.empty()) {
-        return;
-    }
-
-    const auto dir = shared::filesystem::getSquadOvDvrSessionFolder() / fs::path(_dvrSessionId);
-    _dvrSegments.clear();
-
-    std::thread t([dir](){
-        if (!fs::exists(dir)) {
-            return;
-        }
-        for (int i = 0; i < 30; ++i) {
-            try {
-                fs::remove_all(dir);
-                break;
-            } catch(...) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(150));
-            }
-        }
-    });
-    t.detach();
-}
-
 void GameRecorder::loadCachedInfo() {
     // Just in case the user changed settings in the UI already, just sync up via the file.
     service::system::getCurrentSettings()->reloadSettingsFromFile();
@@ -434,11 +260,14 @@ void GameRecorder::clearCachedInfo() {
     _cachedWindowInfo.reset(nullptr);
 }
 
-GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& outputFname) {
+GameRecorder::EncoderDatum GameRecorder::createEncoder() {
     EncoderDatum data;
 
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
-    data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(outputFname);
+
+    // We don't really need to pass in an stream URL (for now) this is primarily for determining what format the file output should be in.
+    // By default, that should be MPEG-TS so no need to do anything fancy here unless some override has been given.
+    data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(_forcedOutputUrl ? _forcedOutputUrl.value() : "");
 
     // Use native monitor resolution if the user desires it instead of the game aspect ratio (useful for users who do stretched res).
     const auto nativeAspectRatio = shared::system::win32::getNativeMonitorAspectRatio(_cachedWindowInfo->monitor);
@@ -493,8 +322,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(const std::string& output
         }
     }
 
-    LOG_INFO("Open encoder..." << std::endl);
-    data.encoder->open();
+    data.encoder->finalizeStreams();
     return data;
 }
 
@@ -717,8 +545,8 @@ bool GameRecorder::isGameEnabled() const {
     return service::system::getCurrentSettings()->isGameEnabled(_game);
 }
 
-void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int flags) {
-    if (!!_currentId) {
+void GameRecorder::start(int flags) {
+    if (_encoder.hasEncoder()) {
         return;
     }
 
@@ -726,23 +554,10 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         flags = service::recorder::getDefaultRecordingFlagsForGame(_game);
     }
 
-    LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << " - " << flags << std::endl);
-    service::api::getGlobalApi()->markUserAnalyticsEvent("start_record");
-
-    _currentId = createNewVodIdentifier();
     loadCachedInfo();
 
     if (!isGameEnabled()) {
         LOG_WARNING("Ignoring VOD start since game is disabled: " << shared::gameToString(_game) << std::endl);
-        _currentId.reset(nullptr);
-        return;
-    }
-
-    try {
-        initializeFileOutputPiper();
-    } catch (std::exception& ex) {
-        _currentId.reset(nullptr);
-        LOG_ERROR("Failed to initialize output piper...ignoring start recording command: " << ex.what() << std::endl);
         return;
     }
 
@@ -755,6 +570,43 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
             _outputPiper->stop();
             return;
         }
+    }
+
+    LOG_INFO("Creating encoder..." << std::endl);
+    _encoder = createEncoder();
+
+    if (!service::system::getCurrentSettings()->keybinds().clip.keys.empty() && _cachedInstantClipLengthSeconds > 0) {
+        LOG_INFO("Initializing initial DVR storage: " << _cachedInstantClipLengthSeconds << std::endl);
+        initializeDvrOutput(static_cast<double>(_cachedInstantClipLengthSeconds));
+    }
+
+    LOG_INFO("Switch to new active encoder..." << std::endl);
+    switchToNewActiveEncoder(_encoder);
+}
+
+void GameRecorder::initializeDvrOutput(double sizeSeconds) {
+    if (!_encoder.hasEncoder()) {
+        LOG_WARNING("Trying to initialize DVR output when there's no encoder." << std::endl);
+        return;
+    }
+
+    _encoder.encoder->resizeDvrBuffer(sizeSeconds);
+}
+void GameRecorder::initializeVideoOutput(const shared::TimePoint& start, RecordingMode mode) {
+    if (!!_currentId) {
+        return;
+    }
+
+    LOG_INFO("Request VOD Record Start: " << shared::timeToStr(start) << " - Mode: " << static_cast<int>(mode) << std::endl);
+    service::api::getGlobalApi()->markUserAnalyticsEvent("start_record");
+
+    _currentId = createNewVodIdentifier();
+    try {
+        initializeFileOutputPiper();
+    } catch (std::exception& ex) {
+        _currentId.reset(nullptr);
+        LOG_ERROR("Failed to initialize output piper...ignoring start recording command: " << ex.what() << std::endl);
+        return;
     }
 
     LOG_INFO("Hooking bookmark keybind..." << std::endl);
@@ -794,94 +646,28 @@ void GameRecorder::start(const shared::TimePoint& start, RecordingMode mode, int
         });
     }
 
-    LOG_INFO("Creating encoder..." << std::endl);
-    if (_forcedOutputUrl) {
-        _encoder = createEncoder(_forcedOutputUrl.value());
-    } else if (_outputPiper) {
-        _encoder = createEncoder(_outputPiper->filePath());
-    } else {
-        THROW_ERROR("No valid URL to output video to.");
-    }
-
-    // So there's two scenarios we can encounter here: 1) a DVR session is active AND we want to use it
-    // or 2) no DVR session is active OR we don't particularly care for it. In the case where we want and can
-    // use DVR, we use the input start time to look through our existing DVR recordings to find the segments
-    // that best represent the start of the video. We also need to tell the encoder to hold off on encoding
-    // the data it gets from the recorders until the DVR processing is finished.
-    const auto useDvr = (mode == RecordingMode::DVR && _dvrRunning);
-
-    // Note that we must pause the input recorder processing beforing switching the inputs to use the new encoder.
-    // Otherwise the first frames may be of what's currently recording instead of what's recorded in the DVR.
-    if (useDvr && _outputPiper) {
-        _outputPiper->pauseProcessingFromPipe(true);
-    }
-    
-    // Needs to be after the pause or else we'll wait indefinitely for the pause lock when asking for a pause
-    // as it'll wait on the named pipe.
     if (_outputPiper) {
         LOG_INFO("Start output piper..." << std::endl);
         _outputPiper->start();
     }
 
-    LOG_INFO("Switch to new active encoder..." << std::endl);
-    switchToNewActiveEncoder(_encoder);
+    LOG_INFO("Determining DVR session start..." << std::endl);
+    std::optional<shared::TimePoint> dvrStart;
+    if (mode == RecordingMode::DVR) {
+        dvrStart = start;
+    }
 
-    if (useDvr && _outputPiper) {
-        LOG_INFO("Stop DVR session..." << std::endl);
-        // We can stop this DVR session at this point. It'll be up to the caller to re-start another DVR
-        // session when/if this recording ends.
-        const auto sessionId = stopDvrSession();
-        
-        // This should be here because we don't want to destruct it too soon or else we won't have switched to the new
-        // active encoder and we'll thus risk sending info to an invalid pointer.
-        LOG_INFO("Destroying DVR Encoder..." << std::endl);
-        _dvrEncoder = {};
-        LOG_INFO("DVR Backfill Session: " << sessionId << std::endl);
-
-        // Now that we know all the recorder data is being buffered, we can safely do DVR processing. Loop through
-        // the segments to find the segment with a start time before the input start time. If we can't, do a best effort.
-        // At this point we know that the 1) DVR is no longer running and 2) all new video/audio packets are being buffered
-        // in the new encoder.
-        std::chrono::milliseconds totalBackFillTime(0);
-        const auto startIndex = findDvrSegmentForVodStartTime(start);
-        LOG_INFO("Choosing backfill index: " << startIndex + 1 << " out of " << _dvrSegments.size() << std::endl);
-        for (auto i = startIndex; i < _dvrSegments.size(); ++i) {
-            LOG_INFO("\tUse Backfill Video from [" << i << "]: " << shared::timeToStr(_dvrSegments[i].startTime) << " to " << shared::timeToStr(_dvrSegments[i].endTime) << std::endl);
-            // We can directly append to the output pipe because of the fact that we're using MPEG-TS which is file-level concat-able.
-            // This does result in a file that's not really default playable by most video players; however, we'll assume that the user
-            // won't be able to view the video until it's processed by the server after which case the VOD should be normal.
-            _outputPiper->appendFromFile(_dvrSegments[i].outputPath);
-            totalBackFillTime += std::chrono::duration_cast<std::chrono::milliseconds>(_dvrSegments[i].endTime - _dvrSegments[i].startTime);
-        }
-        
-        _outputPiper->pauseProcessingFromPipe(false);
-        _vodStartTime = _dvrSegments[startIndex].startTime;
-        if (totalBackFillTime > std::chrono::milliseconds(30 * 1000)) {
-            LOG_WARNING("Backfilling more than 30 seconds of footage from DVR!!! [" << totalBackFillTime.count() / 1000.0 << "s]" << std::endl);
-        }
-        LOG_INFO("Finish DVR backfill." << std::endl);
-        cleanDvrSession(sessionId);
-
-        // This is a bit of a hack. For some reason sometimes the previous call to
-        // switchToNewActiveEncoder will cause the DVR segment's switchToNewActiveEncoder
-        // to become unstuck...which would then cause the segment's active encoder to be the
-        // new "active encoder" while the actual active encoder is no longer receiving data.
-        switchToNewActiveEncoder(_encoder);
+    LOG_INFO("Open file for encoder output..." << std::endl);
+    if (_forcedOutputUrl) {
+        _vodStartTime = _encoder.encoder->open(_forcedOutputUrl.value(), dvrStart);
+    } else if (_outputPiper) {
+        _vodStartTime =_encoder.encoder->open(_outputPiper->filePath(), dvrStart);
     } else {
-        _vodStartTime = shared::nowUtc();
+        THROW_ERROR("No valid URL to output video to.");
     }
 
     LOG_INFO("Final VOD Start Time: " << shared::timeToStr(_vodStartTime) << std::endl);
     system::getGlobalState()->markGameRecording(_game, true);
-}
-
-size_t GameRecorder::findDvrSegmentForVodStartTime(const shared::TimePoint& tm) const {
-    for (auto i = 0; i < _dvrSegments.size(); ++i) {
-        if (_dvrSegments[i].startTime <= tm && (_dvrSegments[i].endTime == shared::zeroTime() || _dvrSegments[i].endTime >= tm)) {
-            return i;
-        }
-    }
-    return _dvrSegments.size() - 1;
 }
 
 void GameRecorder::stopInputs() {
@@ -973,13 +759,6 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
 
     LOG_INFO("Stop Inputs..." << std::endl);
     stopInputs();
-
-    if (_dvrEncoder.hasEncoder()) {
-        LOG_INFO("Stop DVR session..." << std::endl);
-        const auto session = stopDvrSession();
-        cleanDvrSession(session);
-        _dvrEncoder = {};
-    }
 
     if (!_cachedRecordingSettings) {
         LOG_INFO("...Cached recording settings already cleared - ignoring recording stop." << std::endl);

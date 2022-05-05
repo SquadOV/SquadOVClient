@@ -214,7 +214,8 @@ void LeagueProcessHandlerInstance::onLeagueAvailable(const shared::TimePoint& ev
         }
 
         if (_ownsAccount) {
-            _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+            _recorder->start();
+            _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
         }
 
         requestMatchCreation();

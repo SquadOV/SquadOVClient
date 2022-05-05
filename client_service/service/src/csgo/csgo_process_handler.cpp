@@ -227,7 +227,8 @@ void CsgoProcessHandlerInstance::onSquadOvMatchStart(const shared::TimePoint& ev
     // time of day should be sufficient to uniquely identify the match. We need to wait
     // for the GSI match start anyway to collect aux information that we'll use to
     // further identify the match.
-    _recorder->start(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->start();
+    _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
 }
 
 void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {

@@ -108,20 +108,11 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::Normal, service::recorder::FLAG_DXGI_RECORDING);
+            recorder.start(service::recorder::FLAG_WGC_RECORDING);
+            recorder.initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);
-        });
-    } else if (mode == "DVR") {
-        const auto duration = vm["duration"].as<int>();
-        workerThread = std::thread([&recorder, duration](){
-            LOG_INFO("START DVR" << std::endl);
-            recorder.startDvrSession();
-            std::this_thread::sleep_for(std::chrono::seconds(duration));
-            LOG_INFO("STOP DVR" << std::endl);
-            recorder.stopDvrSession();
-            recorder.stopInputs();
         });
     } else if (mode == "DVRJOIN") {
         const auto duration = vm["duration"].as<int>();
@@ -130,10 +121,11 @@ int main(int argc, char** argv) {
         workerThread = std::thread([&recorder, duration, delay, offset, loop, destination](){
             for (auto i = 0; i < loop; ++i) {
                 LOG_INFO("START DVR" << std::endl);
-                recorder.startDvrSession();
+                recorder.start(service::recorder::FLAG_DXGI_RECORDING);
+                recorder.initializeDvrOutput(120.0);
                 std::this_thread::sleep_for(std::chrono::seconds(delay));
                 LOG_INFO("DO JOIN" << std::endl);
-                recorder.start(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR, service::recorder::FLAG_DXGI_RECORDING);
+                recorder.initializeVideoOutput(shared::nowUtc() - std::chrono::seconds(offset), service::recorder::RecordingMode::DVR);
                 std::this_thread::sleep_for(std::chrono::seconds(duration));
                 LOG_INFO("STOP RECORDING" << std::endl);
                 recorder.stop({}, true);
@@ -143,54 +135,6 @@ int main(int argc, char** argv) {
                 recorder.setFileOutputFromDestination(str.str(), destination);
             }
         });
-    } else if (mode == "DVRRACE") {
-        std::mutex mutex;
-        std::condition_variable cv;
-        bool trigger = false;
-
-        std::mutex mutex2;
-        std::condition_variable cv2;
-        bool trigger2 = false;
-
-        recorder.startDvrSession(service::recorder::FLAG_ALL_RECORDING, false);
-
-        std::thread t1 = std::thread([&mutex, &cv, &trigger, &mutex2, &cv2, &trigger2, &recorder](){
-            std::unique_lock<std::mutex> lk(mutex);
-            cv.wait(lk, [&trigger]{return trigger;});
-
-            {
-                std::lock_guard<std::mutex> lk(mutex2);
-                trigger2 = true;
-            }
-            cv2.notify_all();
-            recorder.start(shared::nowUtc(), service::recorder::RecordingMode::DVR);
-        });
-
-        std::thread t2 = std::thread([&mutex, &cv, &trigger, &mutex2, &cv2, &trigger2, &recorder](){
-            std::unique_lock<std::mutex> lk(mutex2);
-            cv2.wait(lk, [&trigger2]{return trigger2;});
-            
-            recorder.startNewDvrSegment();
-            recorder.startNewDvrSegment();
-        });
-
-        const auto duration = vm["duration"].as<int>();
-        std::this_thread::sleep_for(std::chrono::seconds(duration));
-        {
-            std::lock_guard<std::mutex> lk(mutex);
-            trigger = true;
-        }
-        cv.notify_all();
-
-        if (t1.joinable()) {
-            t1.join();
-        }
-
-        if (t2.joinable()) {
-            t2.join();
-        }
-
-        recorder.stop({});
     }
 
     std::cout << "Output VOD to: " << outputFname << std::endl;

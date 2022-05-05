@@ -106,13 +106,15 @@ public:
     void addVideoFrame(ID3D11Texture2D* image, size_t numFrames);
 #endif
 
+    void finalizeStreams();
+    void resizeDvrBuffer(double timeSeconds);
     void getVideoDimensions(size_t& width, size_t& height);
 
     void initializeAudioStream();
     size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm);
 
-    void open();
+    shared::TimePoint open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime);
     void start();
     void stop();
     shared::squadov::VodMetadata getMetadata() const;
@@ -123,6 +125,9 @@ private:
     bool hasAudioFrameAvailable() const;
 
     std::string _streamUrl;
+
+    std::atomic_bool _fileOutputReady = false;
+    std::atomic_bool _dvrBufferReady = false;
 
     // AV Output
     VideoStreamContext _videoStreamContext = VideoStreamContext::CPU;
@@ -139,7 +144,7 @@ private:
     AVStream* _vstream = nullptr;
     const AVCodec* _vcodec = nullptr;
     AVCodecContext* _vcodecContext = nullptr;
-    int64_t _vFrameNum = 0;
+    std::atomic<int64_t> _vFrameNum = 0;
     void videoEncodeFrame(AVFrame* frame, size_t numFrames);
 
     // Audio Output
@@ -147,7 +152,7 @@ private:
     AVCodecContext* _acodecContext = nullptr;
     AVStream* _astream = nullptr;
     AVFrame* _aframe = nullptr;
-    int64_t _aFrameNum = 0;
+    std::atomic<int64_t> _aFrameNum = 0;
 
     struct AudioStreamData {
         // *Output* packet queue. Once we process the input
@@ -211,6 +216,16 @@ private:
 
     bool _doPostVideoFlush = true;
     service::renderer::D3d11SharedContextPtr _d3d;
+
+    void addPacketToFileOutput(AVPacket& packet);
+    // DVR Buffer.
+    mutable std::shared_mutex _dvrMutex;
+    // One per stream.
+    std::vector<int64_t> _streamPtsOffset;
+    std::vector<std::deque<AVPacket>> _dvrBuffer;
+    std::atomic<double> _maxDvrBufferTimeSeconds = 0.0;
+    void addPacketToDvrBuffer(const AVPacket& packet);
+    bool isDvrBufferLongerThanMaxSeconds(const std::deque<AVPacket>& buffer, int streamIndex) const;
 };
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
@@ -370,6 +385,21 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
         }
     }
     _encodeCv.notify_all();
+}
+
+void FfmpegAvEncoderImpl::finalizeStreams() {
+    if (!_avcontext) {
+        return;
+    }
+    const auto numStreams = _avcontext->nb_streams;
+    LOG_INFO("Number of Streams: " << numStreams << std::endl);
+    _streamPtsOffset.resize(numStreams);
+    _dvrBuffer.resize(numStreams);
+}
+
+void FfmpegAvEncoderImpl::resizeDvrBuffer(double timeSeconds) {
+    _maxDvrBufferTimeSeconds = timeSeconds;
+    _dvrBufferReady = true;
 }
 
 void FfmpegAvEncoderImpl::getVideoDimensions(size_t& width, size_t& height) {
@@ -921,7 +951,8 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     }
 }
 
-void FfmpegAvEncoderImpl::open() {
+shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime) {
+    _streamUrl = outputUrl;
     // This is what actually gets us to write to a file.
     if (!(_avcontext->oformat->flags & AVFMT_NOFILE)) {
         if (avio_open2(&_avcontext->pb, _streamUrl.c_str(), AVIO_FLAG_WRITE, nullptr, nullptr) < 0) {
@@ -945,6 +976,58 @@ void FfmpegAvEncoderImpl::open() {
     }
     av_dict_free(&headerOptions);
     av_dump_format(_avcontext, 0, _streamUrl.c_str(), 1);
+
+    shared::TimePoint retVodStartTime;
+    if (dvrFillInStartTime && _avcontext) {
+        std::shared_lock guard(_dvrMutex);
+
+        // At this point we need to determine which packets to copy into the newly created stream.
+        // We also need to determine what number we're going to subtract off of all future pts/dts for
+        // each stream.
+        //
+        // We're going to assume pts = 0 happens at _syncStartTime. So we just need to compute the offset
+        // from that moment in time to the passed in dvrFillInStartTime, convert that to each stream's time base
+        // and that'll be each stream's offset.
+        //
+        // Hacky but works hopefully?
+        const auto avFillInStartTime = shared::convertClockTime<shared::TimePoint, AVSyncClock::time_point>(dvrFillInStartTime.value());
+        const auto diffMs = shared::timeToUnixMs(avFillInStartTime) - shared::timeToUnixMs(_syncStartTime);
+        assert(_avcontext->nb_streams >= 1);
+
+        // One tricky thing is we want to modify the actual offset a little bit so that the video starts exactly
+        // when the first video stream comes in. So we first need to figure out the first packet in the video stream
+        // that is past the threshold and then strip away audio packets that are earlier than the 1st video packet's PTS.
+        const auto minDiffPts = av_rescale_q(diffMs, AVRational{1, 1000}, _avcontext->streams[0]->time_base);
+
+        auto videoOffsetPts = minDiffPts;
+        for (const auto& p: _dvrBuffer[0]) {
+            if (p.pts < minDiffPts) {
+                continue;
+            }
+
+            videoOffsetPts = p.pts;
+            break;
+        }
+
+        // Now, we can convert the video PTS offset to the appropriate audio PTS offset.
+        // Then we need to copy packets from DVR into the file output. Any packet with a PTS less than the stream offset is gucci.
+        _streamPtsOffset[0] = videoOffsetPts;
+        for (auto i = 0; i < _avcontext->nb_streams; ++i) {
+            if (i > 0) {
+                _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _avcontext->streams[0]->time_base, _avcontext->streams[i]->time_base);
+            }
+
+            for (auto& p: _dvrBuffer[i]) {
+                if (p.pts >= _streamPtsOffset[i]) {
+                    addPacketToFileOutput(p);
+                }
+            }
+        }
+    } else {
+        retVodStartTime = shared::nowUtc();
+    }
+    _fileOutputReady = true;
+    return retVodStartTime;
 }
 
 void FfmpegAvEncoderImpl::start() {
@@ -1002,19 +1085,79 @@ void FfmpegAvEncoderImpl::start() {
 }
 
 void FfmpegAvEncoderImpl::flushPacketQueue() {
-    int ret = 0;
-    while (!_packetQueue.empty()) {
+    while ((_fileOutputReady || _dvrBufferReady) && !_packetQueue.empty()) {
         AVPacket packet = _packetQueue.front();
         _packetQueue.pop_front();
 
-        if ((ret = av_interleaved_write_frame(_avcontext, &packet)) < 0) {
-            char errBuff[2048];
-            av_make_error_string(errBuff, 2048, ret);
-            LOG_ERROR("Failed to write packet: " << errBuff);
-            continue;
+        if (_fileOutputReady) {
+            addPacketToFileOutput(packet);
+        }
+
+        if (_dvrBufferReady) {
+            addPacketToDvrBuffer(packet);
         }
         av_packet_unref(&packet);
     }
+}
+
+void FfmpegAvEncoderImpl::addPacketToFileOutput(AVPacket& packet) {
+    int ret = 0;
+
+    const auto offset = _streamPtsOffset[packet.stream_index];
+    // We do the PTS/DTS fuckery caused by the DVR buffer here and not in the encoding.
+    // Because we know to a certain degree that this particular code won't get called until
+    // the proper pts offset is set and we won't have a weird random spike in the PTS.
+    packet.pts -= offset;
+    packet.dts -= offset;
+
+    if ((ret = av_interleaved_write_frame(_avcontext, &packet)) < 0) {
+        char errBuff[2048];
+        av_make_error_string(errBuff, 2048, ret);
+        LOG_ERROR("Failed to write packet: " << errBuff << std::endl);
+    }
+}
+
+void FfmpegAvEncoderImpl::addPacketToDvrBuffer(const AVPacket& packet) {
+    std::lock_guard guard(_dvrMutex);
+
+    AVPacket* dvrPacket = av_packet_clone(&packet);
+    if (!dvrPacket) {
+        return;
+    }
+
+    auto& buffer = _dvrBuffer[dvrPacket->stream_index];
+    buffer.push_back(*dvrPacket);
+
+    // Check to see if the amount of time that elapsed between the latest packet
+    // and the first packet is larger than the max. If so, keep popping off until it's not.
+    while (isDvrBufferLongerThanMaxSeconds(buffer, packet.stream_index)) {
+        AVPacket front = buffer.front();
+        buffer.pop_front();
+        av_packet_unref(&front);
+    }
+}
+
+bool FfmpegAvEncoderImpl::isDvrBufferLongerThanMaxSeconds(const std::deque<AVPacket>& buffer, int streamIndex) const {
+    if (buffer.empty()) {
+        return false;
+    }
+
+    const auto ptsDiff = buffer.back().pts - buffer.front().pts;
+
+    // Need to convert the PTS difference to seconds since it'll depend on the stream's framerate.
+    if (streamIndex < 0 || static_cast<unsigned int>(streamIndex) >= _avcontext->nb_streams) {
+        return false;
+    }
+
+    const auto* st = _avcontext->streams[streamIndex];
+    if (!st) {
+        return false;
+    }
+
+    // Convert the time first into milliseconds so we get some more precision before doing the comparison
+    // in the double space for seconds.
+    const auto diffMs = av_rescale_q(ptsDiff, st->time_base, AVRational{1, 1000});
+    return ((diffMs / 1000.0) > _maxDvrBufferTimeSeconds);
 }
 
 bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
@@ -1047,6 +1190,9 @@ void FfmpegAvEncoderImpl::stop() {
         _packetThread.join();
     }
 
+    _fileOutputReady = false;
+    _dvrBufferReady = false;
+
     LOG_INFO("SquadOV FFMpeg Encoder Stats: " << std::endl
         << "\tVideo Frames: [Receive: " << _receivedVideoFrames  << "] [Process: " << _processedVideoFrames << "]" << std::endl
     );
@@ -1063,7 +1209,6 @@ void FfmpegAvEncoderImpl::stop() {
             << ":: Encoded - " << _astreams[s]->encodedSamples
         << std::endl);
     }
-
 
     // Flush packets from encoder. Don't do this for AMD's encoder when GPU encoding
     // because something is wrong there......
@@ -1136,8 +1281,8 @@ VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
     return _impl->getVideoStreamContext();
 }
 
-void FfmpegAvEncoder::open() {
-    _impl->open();
+shared::TimePoint FfmpegAvEncoder::open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime) {
+    return _impl->open(outputUrl, dvrFillInStartTime);
 }
 
 void FfmpegAvEncoder::start() {
@@ -1150,6 +1295,14 @@ void FfmpegAvEncoder::stop() {
 
 shared::squadov::VodMetadata FfmpegAvEncoder::getMetadata() const {
     return _impl->getMetadata();
+}
+
+void FfmpegAvEncoder::finalizeStreams() {
+    _impl->finalizeStreams();
+}
+
+void FfmpegAvEncoder::resizeDvrBuffer(double timeSeconds) {
+    _impl->resizeDvrBuffer(timeSeconds);
 }
 
 void FfmpegAvEncoder::getVideoDimensions(size_t& width, size_t& height) const {
