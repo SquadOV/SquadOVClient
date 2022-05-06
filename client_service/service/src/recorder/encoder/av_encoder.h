@@ -55,7 +55,7 @@ public:
     virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) = 0;
     virtual void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) = 0;
 
-    virtual shared::TimePoint open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime) = 0;
+    virtual shared::TimePoint open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) = 0;
     virtual void start() = 0;
     virtual void stop() = 0;
     virtual shared::squadov::VodMetadata getMetadata() const = 0;

@@ -120,8 +120,12 @@ int main(int argc, char** argv) {
         const auto offset = vm["offset"].as<int>();
         workerThread = std::thread([&recorder, duration, delay, offset, loop, destination](){
             for (auto i = 0; i < loop; ++i) {
+                std::stringstream str;
+                str << "bobbothebuilder" << i;
+                recorder.setFileOutputFromDestination(str.str(), destination);
+                
                 LOG_INFO("START DVR" << std::endl);
-                recorder.start(service::recorder::FLAG_DXGI_RECORDING);
+                recorder.start(service::recorder::FLAG_WGC_RECORDING);
                 recorder.initializeDvrOutput(120.0);
                 std::this_thread::sleep_for(std::chrono::seconds(delay));
                 LOG_INFO("DO JOIN" << std::endl);
@@ -129,10 +133,6 @@ int main(int argc, char** argv) {
                 std::this_thread::sleep_for(std::chrono::seconds(duration));
                 LOG_INFO("STOP RECORDING" << std::endl);
                 recorder.stop({}, true);
-
-                std::stringstream str;
-                str << "bobbothebuilder" << i;
-                recorder.setFileOutputFromDestination(str.str(), destination);
             }
         });
     }

@@ -590,6 +590,7 @@ void GameRecorder::initializeDvrOutput(double sizeSeconds) {
         return;
     }
 
+    LOG_INFO("Initialize DVR Output: " << sizeSeconds << std::endl);
     _encoder.encoder->resizeDvrBuffer(sizeSeconds);
 }
 void GameRecorder::initializeVideoOutput(const shared::TimePoint& start, RecordingMode mode) {
@@ -652,9 +653,9 @@ void GameRecorder::initializeVideoOutput(const shared::TimePoint& start, Recordi
     }
 
     LOG_INFO("Determining DVR session start..." << std::endl);
-    std::optional<shared::TimePoint> dvrStart;
+    std::optional<service::recorder::encoder::AVSyncClock::time_point> dvrStart;
     if (mode == RecordingMode::DVR) {
-        dvrStart = start;
+        dvrStart = shared::convertClockTime<shared::TimePoint, service::recorder::encoder::AVSyncClock::time_point>(start);
     }
 
     LOG_INFO("Open file for encoder output..." << std::endl);

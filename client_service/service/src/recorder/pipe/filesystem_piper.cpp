@@ -20,6 +20,10 @@ FilesystemPiper::~FilesystemPiper() {
     _output.close();
 }
 
+void FilesystemPiper::flush() {
+    _output.flush();
+}
+
 bool FilesystemPiper::handleBuffer(const char* buffer, size_t numBytes) {
     _output.write(buffer, numBytes);
     return true;

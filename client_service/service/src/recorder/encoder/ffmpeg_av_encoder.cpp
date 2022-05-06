@@ -114,7 +114,7 @@ public:
     size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm);
 
-    shared::TimePoint open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime);
+    shared::TimePoint open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime);
     void start();
     void stop();
     shared::squadov::VodMetadata getMetadata() const;
@@ -948,7 +948,7 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     }
 }
 
-shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime) {
+shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) {
     _streamUrl = outputUrl;
     // This is what actually gets us to write to a file.
     if (!(_avcontext->oformat->flags & AVFMT_NOFILE)) {
@@ -987,8 +987,7 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
         // and that'll be each stream's offset.
         //
         // Hacky but works hopefully?
-        const auto avFillInStartTime = shared::convertClockTime<shared::TimePoint, AVSyncClock::time_point>(dvrFillInStartTime.value());
-        const auto diffMs = shared::timeToUnixMs(avFillInStartTime) - shared::timeToUnixMs(_syncStartTime);
+        const auto diffMs = std::max(std::chrono::duration_cast<std::chrono::milliseconds>(dvrFillInStartTime.value() - _syncStartTime).count(), int64_t(0));
         assert(_avcontext->nb_streams >= 1);
 
         // One tricky thing is we want to modify the actual offset a little bit so that the video starts exactly
@@ -1014,12 +1013,21 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
                 _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _avcontext->streams[0]->time_base, _avcontext->streams[i]->time_base);
             }
 
-            for (auto& p: _dvrBuffer[i]) {
+            for (const auto& p: _dvrBuffer[i]) {
                 if (p.pts >= _streamPtsOffset[i]) {
-                    addPacketToFileOutput(p);
+                    AVPacket* dupPacket = av_packet_clone(&p);
+                    if (!dupPacket) {
+                        continue;
+                    }
+
+                    //addPacketToFileOutput(*dupPacket);
+                    av_packet_unref(dupPacket);
                 }
             }
         }
+
+        const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(videoOffsetPts, _avcontext->streams[0]->time_base, AVRational{1, 1000}));
+        retVodStartTime = shared::convertClockTime<service::recorder::encoder::AVSyncClock::time_point, shared::TimePoint>(realStartTimeUnixTime);
     } else {
         retVodStartTime = shared::nowUtc();
     }
@@ -1086,13 +1094,14 @@ void FfmpegAvEncoderImpl::flushPacketQueue() {
         AVPacket packet = _packetQueue.front();
         _packetQueue.pop_front();
 
+        if (_dvrBufferReady) {
+            addPacketToDvrBuffer(packet);
+        }
+
         if (_fileOutputReady) {
             addPacketToFileOutput(packet);
         }
 
-        if (_dvrBufferReady) {
-            addPacketToDvrBuffer(packet);
-        }
         av_packet_unref(&packet);
     }
 }
@@ -1187,9 +1196,6 @@ void FfmpegAvEncoderImpl::stop() {
         _packetThread.join();
     }
 
-    _fileOutputReady = false;
-    _dvrBufferReady = false;
-
     LOG_INFO("SquadOV FFMpeg Encoder Stats: " << std::endl
         << "\tVideo Frames: [Receive: " << _receivedVideoFrames  << "] [Process: " << _processedVideoFrames << "]" << std::endl
     );
@@ -1211,7 +1217,6 @@ void FfmpegAvEncoderImpl::stop() {
     // because something is wrong there......
     if (_doPostVideoFlush && _d3d) {
         auto immediate = _d3d->immediateContext();
-
         encode(_vcodecContext, nullptr, _vstream);
     }
 
@@ -1220,6 +1225,10 @@ void FfmpegAvEncoderImpl::stop() {
     }
 
     flushPacketQueue();
+
+    _fileOutputReady = false;
+    _dvrBufferReady = false;
+    
     av_write_trailer(_avcontext);
     LOG_INFO("Finish FFMpeg write: " << _streamUrl << std::endl);
 }
@@ -1278,7 +1287,7 @@ VideoStreamContext FfmpegAvEncoder::getVideoStreamContext() const {
     return _impl->getVideoStreamContext();
 }
 
-shared::TimePoint FfmpegAvEncoder::open(const std::string& outputUrl, std::optional<shared::TimePoint> dvrFillInStartTime) {
+shared::TimePoint FfmpegAvEncoder::open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) {
     return _impl->open(outputUrl, dvrFillInStartTime);
 }
 
