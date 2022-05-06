@@ -463,6 +463,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                 _vcodecContext->rc_max_rate = _vcodecContext->bit_rate * 1.5;
                 _vcodecContext->rc_buffer_size = _vcodecContext->rc_max_rate * 4;
             }
+
             _vcodecContext->thread_count = 0;
 
             if (enc.name == "h264_amf") {
@@ -538,6 +539,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
             AVDictionary *options = nullptr;
 
             if (_vcodecContext->codec_id == AV_CODEC_ID_H264) {
+                // TODO: Change this to a higher quality preset. HOWEVER
+                // before we do that we'll need a better way of computing the pts
+                // for each video/audio frame that comes in.
+                av_dict_set(&options, "preset", "medium", 0);
+
                 // H264 Profile
                 if (enc.name == "h264_mf") {
                     _vcodecContext->profile = FF_PROFILE_H264_HIGH;
@@ -574,15 +580,6 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                     } else if (enc.name == "libopenh264") {
                         av_dict_set(&options, "rc_mode", "timestamp", 0);
                     }
-                }
-
-                // Additional quality options
-                if (enc.name == "h264_nvenc") {
-                    av_dict_set(&options, "preset", "hq", 0);
-                    av_dict_set(&options, "spatial-aq", "1", 0);
-                    av_dict_set(&options, "temporal-aq", "1", 0);
-                } else if (enc.name == "h264_amf") {
-                    av_dict_set(&options, "quality", "quality", 0);
                 }
             }
 
