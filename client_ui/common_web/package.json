@@ -36,6 +36,7 @@
     "@types/node": "^15.12.2",
     "@types/universal-analytics": "^0.4.4",
     "@types/video.js": "^7.3.19",
+    "@vue/runtime-dom": "^3.2.33",
     "analytics-node": "^5.0.0",
     "assert": "^2.0.0",
     "babel-loader": "^8.1.0",

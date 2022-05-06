@@ -78,7 +78,7 @@ function handleSquirrel() {
 const {app, BrowserWindow, Menu, Tray, ipcMain, Notification} = require('electron')
 const path = require('path')
 const fs = require('fs')
-const {spawn, exec} = require('child_process');
+const {spawn, exec, execFile} = require('child_process');
 const log = require('./log.js')
 const { dialog } = require('electron')
 const { loginFlow } = require('./login.js')
@@ -859,7 +859,7 @@ app.on('ready', async () => {
         },
         frame: false,
         resizable: false,
-        movable: false,
+        movable: true,
         icon: iconPath,
         show: false,
     })
@@ -873,6 +873,13 @@ app.on('ready', async () => {
 
     log.log('Starting Setup Flow...')
     try {
+        ipcMain.once('setup-resize-window', () => {
+            if (!setupWindow.isDestroyed()) {
+                setupWindow.setSize(1280, 720)
+                setupWindow.center()
+            }
+        })
+
         // Note that the setup flow has to request the start of the heartbeat since there's certain parts of it that
         // rely on having a valid session ID.
         ipcMain.once('start-heartbeat', () => {
@@ -1148,37 +1155,14 @@ ipcMain.on('force-stop-recording', () => {
     zeromqServer.forceStopRecording()
 })
 
-ipcMain.on('user-upload-speed-check', () => {
-    let exePath = getClientExePath()
-
-    // Run a custom mode in the client service executable to do the speed check.
-    // This currently seems to stall it for 10 seconds before it proceeds to open the actual application... Not a big fan of that.
-    let sanityExe = path.join(path.dirname(exePath), 'speed_check.exe')
-    if (fs.existsSync(sanityExe)) {
-        exec(`"${sanityExe}"`, {
-            cwd: path.dirname(sanityExe)
-        }, (error, stdout, stderr) => {
-            console.log(error, stdout, stderr)
-            if (!!setupWindow) {
-                setupWindow.webContents.send('finish-user-upload-speed-check')
-            }
-        })
-    } else {
-        log.warn('Failed to find upload speed check exe: ', sanityExe)
-        if (!!setupWindow) {
-            setupWindow.webContents.send('finish-user-upload-speed-check')
-        }
-    }
-})
-
-ipcMain.on('request-automated-game-setup', () => {
+ipcMain.on('request-automated-game-setup', (_, output) => {
     let exePath = getClientExePath()
 
     // Run a custom mode in the client service executable to do the speed check.
     // This currently seems to stall it for 10 seconds before it proceeds to open the actual application... Not a big fan of that.
     let sanityExe = path.join(path.dirname(exePath), 'automated_game_setup.exe')
     if (fs.existsSync(sanityExe)) {
-        exec(`"${sanityExe}"`, {
+        execFile(sanityExe, ['--output', output], {
             cwd: path.dirname(sanityExe)
         }, (error, stdout, stderr) => {
             console.log(error, stdout, stderr)

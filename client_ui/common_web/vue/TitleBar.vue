@@ -1,18 +1,18 @@
 <template>
     <div class="d-flex align-center title-bar">
-        <v-btn small icon @click="navBack">
+        <v-btn small icon @click="navBack" v-if="!noNav">
             <v-icon>
                 mdi-chevron-left
             </v-icon>
         </v-btn>
 
-        <v-btn small icon @click="navForward">
+        <v-btn small icon @click="navForward" v-if="!noNav">
             <v-icon>
                 mdi-chevron-right
             </v-icon>
         </v-btn>
 
-        <v-btn small icon @click="navRefresh">
+        <v-btn small icon @click="navRefresh" v-if="!noNav">
             <v-icon>
                 mdi-refresh
             </v-icon>
@@ -20,6 +20,7 @@
 
         <div id="dragRegion">
             <v-img
+                v-if="!noNav"
                 class="mx-2"
                 :width="24"
                 :height="24"
@@ -31,19 +32,19 @@
             </v-img>
         </div>
 
-        <v-btn small icon class="mx-1" @click="minimize">
+        <v-btn small icon class="mx-1" @click="minimize" v-if="!noNav">
             <v-icon>
                 mdi-window-minimize
             </v-icon>
         </v-btn>
 
-        <v-btn small icon class="mx-1" @click="toggleMaximize">
+        <v-btn small icon class="mx-1" @click="toggleMaximize" v-if="!noNav">
             <v-icon>
                 mdi-window-maximize
             </v-icon>
         </v-btn>
 
-        <v-btn small icon class="mx-1" @click="closeWindow">
+        <v-btn small icon class="mx-1" @click="closeWindow" v-if="!noNav">
             <v-icon>
                 mdi-window-close
             </v-icon>
@@ -55,6 +56,7 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import { Prop } from 'vue-property-decorator'
 
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
@@ -62,6 +64,9 @@ import { ipcRenderer } from 'electron'
 
 @Component
 export default class TitleBar extends Vue {
+    @Prop({type: Boolean, default: false})
+    noNav!: boolean
+
     navBack() {
         this.$router.back()
     }
