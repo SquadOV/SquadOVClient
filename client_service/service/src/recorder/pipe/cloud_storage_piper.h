@@ -59,6 +59,7 @@ public:
     std::chrono::milliseconds getMillisecondsSpentUploading() { return std::chrono::duration_cast<std::chrono::milliseconds>(_lastUploadTime-_timeStart); };
     void skipFlush() { _skipFlush = true; };
     void flush() override;
+    void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
     
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;

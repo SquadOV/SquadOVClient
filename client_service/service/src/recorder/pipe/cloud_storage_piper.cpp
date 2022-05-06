@@ -249,4 +249,10 @@ void CloudStoragePiper::flush() {
 #endif
 }
 
+void CloudStoragePiper::setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {
+    if (bytesPerSec) {
+        _client->setMaxUploadSpeed(bytesPerSec.value());
+    }
+}
+
 }

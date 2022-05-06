@@ -370,6 +370,10 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
         req->setTimeout(_timeoutSeconds.value());
     }
 
+    if (_maxUploadSpeed) {
+        req->setUploadSpeed(_maxUploadSpeed.value());
+    }
+
     for (const auto& cb: _downloadUploadProgressCallbacks) {
         req->addProgressCallbacks(cb);
     }

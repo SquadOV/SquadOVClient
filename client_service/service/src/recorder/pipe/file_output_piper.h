@@ -33,6 +33,7 @@ public:
     virtual std::optional<std::filesystem::path> localFile() const { return {}; }
     virtual const std::vector<std::string>& segmentIds() const = 0;
     virtual void flush() = 0;
+    virtual void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {}
     
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;

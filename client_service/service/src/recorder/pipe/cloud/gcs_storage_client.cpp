@@ -74,4 +74,8 @@ std::pair<std::string, size_t> GCSStorageClient::uploadBytes(const char* buffer,
     return std::make_pair("", 0);
 }
 
+void GCSStorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
+    _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
+}
+
 }

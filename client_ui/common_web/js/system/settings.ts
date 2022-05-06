@@ -74,6 +74,8 @@ export interface SquadOvRecordingSettings {
     resY: number
     fps: number
     bitrateKbps: number
+    // Multiplied by 100 to get a round integer
+    bandwidthLimiterMultiple: number | null
     useVideoHw2: boolean
     useHwEncoder: boolean
     useVfr4: boolean
@@ -333,6 +335,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 720,
                 fps: 30,
                 bitrateKbps: 6000,
+                bandwidthLimiterMultiple: 200,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -381,6 +384,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 720,
                 fps: 60,
                 bitrateKbps: 6000,
+                bandwidthLimiterMultiple: 200,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -429,6 +433,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 resY: 1080,
                 fps: 60,
                 bitrateKbps: 6000,
+                bandwidthLimiterMultiple: 200,
                 useVideoHw2: true,
                 useHwEncoder: true,
                 useVfr4: true,
@@ -521,6 +526,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             resY: 1080,
             fps: 60,
             bitrateKbps: 6000,
+            bandwidthLimiterMultiple: 200,
             useVideoHw2: true,
             useHwEncoder: true,
             useVfr4: true,
@@ -866,6 +872,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.useNativeAspectRatio === undefined) {
             parsedData.record.useNativeAspectRatio = false
+        }
+
+        if (parsedData.record.bandwidthLimiterMultiple === undefined) {
+            parsedData.record.bandwidthLimiterMultiple = 200
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

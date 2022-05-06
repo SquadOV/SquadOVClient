@@ -574,6 +574,29 @@
                             Manage
                         </v-btn>
                     </div>
+
+                    <div class="d-flex align-center" v-if="!useLocalRecording && $store.state.features.allowRecordUpload">
+                        <span class="text-overline font-weight-bold mr-4">Bandwidth Limiter:</span>
+                        <v-select
+                            dense
+                            :value="$store.state.settings.record.bandwidthLimiterMultiple"
+                            @input="$store.commit('changeBandwidthLimiterMultiple', arguments[0])"
+                            :items="bandwidthLimiterItems"
+                            hide-details=""
+                            outlined
+                        >
+                        </v-select>
+
+                        <v-tooltip bottom max-width="450px">
+                            <template v-slot:activator="{on, attrs}">
+                                <v-icon v-on="on" v-bind="attrs">
+                                    mdi-help-circle
+                                </v-icon>
+                            </template>
+
+                            This number multiplied by your bitrate is the max amount of bandwidth SquadOV will use when uploading your videos while playing.
+                        </v-tooltip>
+                    </div>
                 </template>
 
                 <template v-if="!mini && showLocalRecordingSettings">
@@ -797,6 +820,31 @@ export default class RecordingSettingsItem extends Vue {
         return [
             30,
             60
+        ]
+    }
+
+    get bandwidthLimiterItems(): any[] {
+        return [
+            {
+                text: 'None',
+                value: null
+            },
+            {
+                text: '1x',
+                value: 100
+            },
+            {
+                text: '1.5x',
+                value: 150
+            },
+            {
+                text: '2.0x',
+                value: 200
+            },
+            {
+                text: '3.0x',
+                value: 300
+            }
         ]
     }
 

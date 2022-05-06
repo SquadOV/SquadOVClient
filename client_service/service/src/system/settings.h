@@ -69,6 +69,7 @@ struct RecordingSettings {
     
     bool useCbr = false;
     bool useNativeAspectRatio = false;
+    std::optional<int32_t> bandwidthLimiterMultiple;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

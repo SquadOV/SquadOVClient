@@ -96,6 +96,12 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     settings.useVoiceSpeechNoiseReduction = obj.value("useVoiceSpeechNoiseReduction", false);
     settings.useCbr = obj.value("useCbr", false);
     settings.useNativeAspectRatio = obj.value("useNativeAspectRatio", false);
+
+    if (obj.find("bandwidthLimiterMultiple") != obj.end()) {
+        if (!obj["bandwidthLimiterMultiple"].is_null()) {
+            settings.bandwidthLimiterMultiple = obj.value("bandwidthLimiterMultiple", 200);
+        }
+    }
     return settings;
 }
 

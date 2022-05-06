@@ -79,4 +79,8 @@ std::pair<std::string, size_t> S3StorageClient::uploadBytes(const char* buffer, 
     }
 }
 
+void S3StorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
+    _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
+}
+
 }

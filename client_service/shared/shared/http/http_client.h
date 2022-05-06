@@ -53,6 +53,8 @@ public:
     void setTimeout(long v) { _timeoutSeconds = v; }
     void clearTimeout() { _timeoutSeconds = {}; }
 
+    void setMaxUploadBytesPerSec(size_t bytesPerSec) { _maxUploadSpeed = bytesPerSec; };
+
     HttpResponsePtr download(const std::string& path, const std::filesystem::path& output) const;
     HttpResponsePtr get(const std::string& path) const;
     HttpResponsePtr post(const std::string& path, const nlohmann::json& body, bool forceGzip = false) const;
@@ -84,6 +86,9 @@ private:
     // Intercepts. Let users modify the response/request as necessary.
     std::vector<ResponseInterceptor> _responseInterceptors;
     std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
+
+    std::optional<size_t> _maxUploadSpeed;
+
 };
 
 bool downloadFileToLocation(const std::string& uri, const std::filesystem::path& dlPath, const DownloadUploadProgressFn& progressFn);

@@ -245,6 +245,17 @@ int main(int argc, char** argv) {
         if (report.speedCheck) {
             report.needsAttention = true;
             touchFile(speedCheckFile);
+
+            // This is legacy but some parts of the app depends on it.
+            rawData["ranSpeedCheck"] = shared::json::JsonConverter<bool>::to(true);
+            rawData["speedCheckResultMbps"] = shared::json::JsonConverter<int>::to(report.speedCheck.value().standardUploadMbps);
+
+            const auto fpath = shared::filesystem::getSquadOvUserSettingsFile();
+            const auto tmpPath = fpath.parent_path() / fs::path("settings.json.tmp");
+            std::ofstream ofs(tmpPath);
+            ofs << std::setw(4) << rawData;
+            ofs.close();
+            fs::rename(tmpPath, fpath);
         }
     }
 

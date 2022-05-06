@@ -13,6 +13,7 @@ public:
     void setProgressCallback(const shared::http::DownloadUploadProgressFn& progressFn) override;
     void startNewSegment() override;
     std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) override;
+    void setMaxUploadSpeed(size_t bytesPerSec) override;
 private:
     service::uploader::UploadDestination _destination;
     shared::http::HttpClientPtr _httpClient;

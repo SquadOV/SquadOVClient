@@ -974,6 +974,12 @@ void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, co
     LOG_INFO("Output Destination: " << destination << std::endl);
     _outputDestination = destination;
     _outputPiper = pipe::createFileOutputPiper(videoUuid, destination);
+
+    if (_cachedRecordingSettings->bandwidthLimiterMultiple) {
+        const auto bytesPerSec = static_cast<size_t>(_cachedRecordingSettings->bitrateKbps * (_cachedRecordingSettings->bandwidthLimiterMultiple.value() / 100.0) * 1000 / 8.0);
+        LOG_INFO("...Using Bandwidth Limiter: " << bytesPerSec << " bytes per second" << std::endl);
+        _outputPiper->setMaxUploadSpeed(bytesPerSec);
+    }
 }
 
 shared::squadov::VodMetadata GameRecorder::getMetadata() const {
