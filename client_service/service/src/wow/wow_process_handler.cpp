@@ -23,7 +23,7 @@
 namespace service::wow {
 namespace {
 
-constexpr double WOW_DVR_SIZE_SECONDS = 120.0;
+constexpr double WOW_DVR_SIZE_SECONDS = 240.0;
 
 }
 
