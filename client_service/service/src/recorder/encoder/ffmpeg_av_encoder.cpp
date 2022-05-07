@@ -1228,6 +1228,14 @@ void FfmpegAvEncoderImpl::stop() {
 
     _fileOutputReady = false;
     _dvrBufferReady = false;
+
+    for (auto& buffer: _dvrBuffer) {
+        for (auto& p: buffer) {
+            av_packet_unref(&p);
+        }
+    }
+    _dvrBuffer.clear();
+    _streamPtsOffset.clear();
     
     av_write_trailer(_avcontext);
     LOG_INFO("Finish FFMpeg write: " << _streamUrl << std::endl);

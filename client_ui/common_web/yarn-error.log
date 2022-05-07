@@ -1,8 +1,8 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add --dev @bitdisaster/exe-icon-extractor
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js install --check-files
 
 PATH: 
-  C:\Program Files\PowerShell\7;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\Scripts\;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\libnvvp;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\ZeroTier\One\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files\CMake\bin;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PowerShell\7\;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\TortoiseHg\;C:\Program Files (x86)\Streamlink\bin;C:\Program Files\NVIDIA Corporation\Nsight Compute 2019.5.0\;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64;;C:\Program Files\Mullvad VPN\resources;C:\Program Files\nodejs\;C:\Program Files\Go\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Users\Michael Bao\.cargo\bin;C:\Ruby26-x64\bin;C:\Users\Michael Bao\AppData\Local\Microsoft\WindowsApps;C:\Users\Michael Bao\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Michael Bao\AppData\Local\Yarn\bin;C:\Program Files (x86)\mitmproxy\bin;A:\Git\SquadOVApiServer\deps\flyway;C:\Program Files\GPAC;C:\Users\Michael Bao\.dotnet\tools;C:\Users\Michael Bao\AppData\Roaming\npm;C:\Users\Michael Bao\go\bin
+  C:\Program Files\PowerShell\7;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\Scripts\;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\libnvvp;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\ZeroTier\One\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PowerShell\7\;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\TortoiseHg\;C:\Program Files (x86)\Streamlink\bin;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64;;C:\Program Files\Mullvad VPN\resources;C:\Program Files\nodejs\;C:\Program Files\Go\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\NVIDIA Corporation\Nsight Compute 2021.3.1\;C:\Users\Michael Bao\.cargo\bin;C:\Ruby26-x64\bin;C:\Users\Michael Bao\AppData\Local\Microsoft\WindowsApps;C:\Users\Michael Bao\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Michael Bao\AppData\Local\Yarn\bin;C:\Program Files (x86)\mitmproxy\bin;A:\Git\SquadOVApiServer\deps\flyway;C:\Program Files\GPAC;C:\Users\Michael Bao\.dotnet\tools;C:\Users\Michael Bao\AppData\Roaming\npm;C:\Users\Michael Bao\go\bin;C:\Program Files\CMake\bin
 
 Yarn version: 
   1.22.5
@@ -19,7 +19,7 @@ Trace:
 npm manifest: 
   {
     "name": "squadov_common_web_ui",
-    "version": "0.10.8",
+    "version": "0.12.0",
     "description": "Common Web UI for SquadOV",
     "main": "index.js",
     "scripts": {
@@ -55,6 +55,7 @@ npm manifest:
       "@types/node": "^15.12.2",
       "@types/universal-analytics": "^0.4.4",
       "@types/video.js": "^7.3.19",
+      "@vue/runtime-dom": "^3.2.33",
       "analytics-node": "^5.0.0",
       "assert": "^2.0.0",
       "babel-loader": "^8.1.0",
@@ -72,7 +73,6 @@ npm manifest:
       "file-loader": "^6.1.0",
       "fontfaceobserver": "^2.1.0",
       "fork-ts-checker-webpack-plugin": "^6.2.10",
-      "funnies": "^2.1.0",
       "https-browserify": "^1.0.0",
       "mini-css-extract-plugin": "^1.6.0",
       "mixpanel-browser": "^2.41.0",
@@ -118,6 +118,7 @@ npm manifest:
       "axios-cookiejar-support": "^1.0.0",
       "axios-retry": "^3.2.3",
       "binary-search": "^1.3.6",
+      "check-disk-space": "^3.3.0",
       "dompurify": "^2.2.9",
       "echarts": "^5.1.2",
       "electron-log": "^4.3.5",
@@ -140,7 +141,7 @@ npm manifest:
       "utf8": "^3.0.0",
       "uuid": "^8.3.2",
       "vue-meta": "^2.4.0",
-      "vuetify": "^2.5.3",
+      "vuetify": "^2.6.1",
       "vuex": "^3.6.2",
       "zeromq": "^6.0.0-beta.6"
     }
@@ -1080,13 +1081,6 @@ Lockfile:
     dependencies:
       regenerator-runtime "^0.13.4"
   
-  "@babel/runtime@^7.1.2":
-    version "7.16.3"
-    resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.16.3.tgz#b86f0db02a04187a3c17caa77de69840165d42d5"
-    integrity sha512-WBwekcqacdY2e9AF/Q7WLFUWmdJGJTkbjqTjoMDgXkVZ3ZRUvOPsLb5KdwISoQVsbP+DQzVZW4Zhci0DvpbNTQ==
-    dependencies:
-      regenerator-runtime "^0.13.4"
-  
   "@babel/runtime@^7.15.4":
     version "7.15.4"
     resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.15.4.tgz#fd17d16bfdf878e6dd02d19753a39fa8a8d9c84a"
@@ -1149,11 +1143,6 @@ Lockfile:
     dependencies:
       "@babel/helper-validator-identifier" "^7.14.5"
       to-fast-properties "^2.0.0"
-  
-  "@bitdisaster/exe-icon-extractor@^1.0.10":
-    version "1.0.10"
-    resolved "https://registry.yarnpkg.com/@bitdisaster/exe-icon-extractor/-/exe-icon-extractor-1.0.10.tgz#3f5107864254c351db1db5c5922452d9d4154e8f"
-    integrity sha512-iTZ8cVGZ5dglNRyFdSj8U60mHIrC8XNIuOHN/NkM5/dQP4nsmpyqeQTAADLLQgoFCNJD+DiwQCv8dR2cCeWP4g==
   
   "@develar/schema-utils@~2.6.5":
     version "2.6.5"
@@ -1966,6 +1955,35 @@ Lockfile:
       vue-template-es2015-compiler "^1.9.0"
     optionalDependencies:
       prettier "^1.18.2"
+  
+  "@vue/reactivity@3.2.33":
+    version "3.2.33"
+    resolved "https://registry.yarnpkg.com/@vue/reactivity/-/reactivity-3.2.33.tgz#c84eedb5225138dbfc2472864c151d3efbb4b673"
+    integrity sha512-62Sq0mp9/0bLmDuxuLD5CIaMG2susFAGARLuZ/5jkU1FCf9EDbwUuF+BO8Ub3Rbodx0ziIecM/NsmyjardBxfQ==
+    dependencies:
+      "@vue/shared" "3.2.33"
+  
+  "@vue/runtime-core@3.2.33":
+    version "3.2.33"
+    resolved "https://registry.yarnpkg.com/@vue/runtime-core/-/runtime-core-3.2.33.tgz#2df8907c85c37c3419fbd1bdf1a2df097fa40df2"
+    integrity sha512-N2D2vfaXsBPhzCV3JsXQa2NECjxP3eXgZlFqKh4tgakp3iX6LCGv76DLlc+IfFZq+TW10Y8QUfeihXOupJ1dGw==
+    dependencies:
+      "@vue/reactivity" "3.2.33"
+      "@vue/shared" "3.2.33"
+  
+  "@vue/runtime-dom@^3.2.33":
+    version "3.2.33"
+    resolved "https://registry.yarnpkg.com/@vue/runtime-dom/-/runtime-dom-3.2.33.tgz#123b8969247029ea0d9c1983676d4706a962d848"
+    integrity sha512-LSrJ6W7CZTSUygX5s8aFkraDWlO6K4geOwA3quFF2O+hC3QuAMZt/0Xb7JKE3C4JD4pFwCSO7oCrZmZ0BIJUnw==
+    dependencies:
+      "@vue/runtime-core" "3.2.33"
+      "@vue/shared" "3.2.33"
+      csstype "^2.6.8"
+  
+  "@vue/shared@3.2.33":
+    version "3.2.33"
+    resolved "https://registry.yarnpkg.com/@vue/shared/-/shared-3.2.33.tgz#69a8c99ceb37c1b031d5cc4aec2ff1dc77e1161e"
+    integrity sha512-UBc1Pg1T3yZ97vsA2ueER0F6GbJebLHYlEi4ou1H5YL4KWvMOOWwpYo9/QpWq93wxKG6Wo13IY74Hcn/f7c7Bg==
   
   "@webassemblyjs/ast@1.11.0":
     version "1.11.0"
@@ -2974,9 +2992,9 @@ Lockfile:
     integrity sha512-c7wVvbw3f37nuobQNtgsgG9POC9qMbNuMQmTCqZv23b6MIz0fcYpBiOlv9gEN/hdLdnZTDQhg6e9Dq5M1vKvfg==
   
   caniuse-lite@^1.0.30001219:
-    version "1.0.30001237"
-    resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001237.tgz#4b7783661515b8e7151fc6376cfd97f0e427b9e5"
-    integrity sha512-pDHgRndit6p1NR2GhzMbQ6CkRrp4VKuSsqbcLeOQppYPKOYkKT/6ZvZDvKJUqcmtyWIAHuZq3SVS2vc1egCZzw==
+    version "1.0.30001286"
+    resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001286.tgz"
+    integrity sha512-zaEMRH6xg8ESMi2eQ3R4eZ5qw/hJiVsO/HlLwniIwErij0JDr9P+8V4dtx1l+kLq6j3yy8l8W4fst1lBnat5wQ==
   
   canvas@^2.6.1:
     version "2.8.0"
@@ -2991,11 +3009,6 @@ Lockfile:
     version "0.12.0"
     resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
     integrity sha1-G2gcIf+EAzyCZUMJBolCDRhxUdw=
-  
-  chain-function@^1.0.0:
-    version "1.0.1"
-    resolved "https://registry.yarnpkg.com/chain-function/-/chain-function-1.0.1.tgz#c63045e5b4b663fb86f1c6e186adaf1de402a1cc"
-    integrity sha512-SxltgMwL9uCko5/ZCLiyG2B7R9fY4pDZUw7hJ4MhirdjBLosoDqkWABi3XMucddHdLiFJMb7PD2MZifZriuMTg==
   
   chalk@^1.1.1:
     version "1.1.3"
@@ -3029,6 +3042,11 @@ Lockfile:
     version "0.0.2"
     resolved "https://registry.yarnpkg.com/charenc/-/charenc-0.0.2.tgz#c0a1d2f3a7092e03774bfa83f14c0fc5790a8667"
     integrity sha1-wKHS86cJLgN3S/qD8UwPxXkKhmc=
+  
+  check-disk-space@^3.3.0:
+    version "3.3.0"
+    resolved "https://registry.yarnpkg.com/check-disk-space/-/check-disk-space-3.3.0.tgz#2a8f4c9542ed71a70878fc28fda7e265d40942ec"
+    integrity sha512-Hvr+Nr01xSSvuCpXvJ8oZ2iXjIu4XT3uHbw3g7F/Uiw6O5xk8c/Ot7ZGFDaTRDf2Bz8AdWA4DvpAgCJVKt8arw==
   
   "chokidar@>=3.0.0 <4.0.0", chokidar@^3.4.2:
     version "3.5.1"
@@ -3488,6 +3506,11 @@ Lockfile:
     dependencies:
       cssom "~0.3.6"
   
+  csstype@^2.6.8:
+    version "2.6.20"
+    resolved "https://registry.yarnpkg.com/csstype/-/csstype-2.6.20.tgz#9229c65ea0b260cf4d3d997cb06288e36a8d6dda"
+    integrity sha512-/WwNkdXfckNgw6S5R125rrW8ez139lBHWouiBvX8dfMFtcn6V81REDqnH7+CRpRipfYlyU1CmOnOxrmGcFOjeA==
+  
   currently-unhandled@^0.4.1:
     version "0.4.1"
     resolved "https://registry.yarnpkg.com/currently-unhandled/-/currently-unhandled-0.4.1.tgz#988df33feab191ef799a61369dd76c17adf957ea"
@@ -3704,13 +3727,6 @@ Lockfile:
     integrity sha512-gd3ypIPfOMr9h5jIKq8E3sHOTCjeirnl0WK5ZdS1AW0Odt0b1PaWaHdJ4Qk4klv+YB9aJBS7mESXjFoDQPu6DA==
     dependencies:
       utila "~0.4"
-  
-  dom-helpers@^3.2.0:
-    version "3.4.0"
-    resolved "https://registry.yarnpkg.com/dom-helpers/-/dom-helpers-3.4.0.tgz#e9b369700f959f62ecde5a6babde4bccd9169af8"
-    integrity sha512-LnuPJ+dwqKDIyotW1VzmOZ5TONUN7CwkCR5hrgawTUbkBGYdeoNLZo6nNfGkCrjtE1nXXaj7iMMpDa8/d9WoIA==
-    dependencies:
-      "@babel/runtime" "^7.1.2"
   
   dom-serializer@^1.0.1:
     version "1.3.2"
@@ -4462,14 +4478,6 @@ Lockfile:
     version "1.1.1"
     resolved "https://registry.yarnpkg.com/function-bind/-/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
     integrity sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==
-  
-  funnies@^2.1.0:
-    version "2.1.0"
-    resolved "https://registry.yarnpkg.com/funnies/-/funnies-2.1.0.tgz#0462269591b2e59b55b50e1ea4f2f176fd38b7a1"
-    integrity sha512-40m1dOp6r2cbjym34XjF2hHXx918Byy6MvA0mO4hunckzUei1a3KDPKCbQsGhbRxmKaxmWksx5pFb6zfw2hXpg==
-    dependencies:
-      lodash "^4.13.1"
-      react-transition-group "1.2.0"
   
   gauge@~2.7.3:
     version "2.7.4"
@@ -5652,7 +5660,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/lodash.sortby/-/lodash.sortby-4.7.0.tgz#edd14c824e2cc9c1e0b0a1b42bb5210516a42438"
     integrity sha1-7dFMgk4sycHgsKG0K7UhBRakJDg=
   
-  lodash@4.17.21, lodash@^4.0.0, lodash@^4.13.1, lodash@^4.17.10, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@~4.17.10:
+  lodash@4.17.21, lodash@^4.0.0, lodash@^4.17.10, lodash@^4.17.15, lodash@^4.17.19, lodash@^4.17.20, lodash@^4.17.21, lodash@~4.17.10:
     version "4.17.21"
     resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.21.tgz#679591c564c3bffaae8454cf0b3df370c3d6911c"
     integrity sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==
@@ -5662,7 +5670,7 @@ Lockfile:
     resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
     integrity sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==
   
-  loose-envify@^1.0.0, loose-envify@^1.3.1, loose-envify@^1.4.0:
+  loose-envify@^1.0.0, loose-envify@^1.4.0:
     version "1.4.0"
     resolved "https://registry.yarnpkg.com/loose-envify/-/loose-envify-1.4.0.tgz#71ee51fa7be4caec1a63839f7e682d8132d30caf"
     integrity sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==
@@ -6607,7 +6615,7 @@ Lockfile:
     dependencies:
       asap "~2.0.3"
   
-  prop-types@^15.5.6, prop-types@^15.7.2:
+  prop-types@^15.7.2:
     version "15.7.2"
     resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
     integrity sha512-8QQikdH7//R2vurIJSutZ1smHYTcLpRWEOlHnzcWHmBYrOGUysKwSsrC89BCiFj3CbrfJ/nXFdJepOVrY1GCHQ==
@@ -6787,17 +6795,6 @@ Lockfile:
     version "16.13.1"
     resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
     integrity sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==
-  
-  react-transition-group@1.2.0:
-    version "1.2.0"
-    resolved "https://registry.yarnpkg.com/react-transition-group/-/react-transition-group-1.2.0.tgz#b51fc921b0c3835a7ef7c571c79fc82c73e9204f"
-    integrity sha1-tR/JIbDDg1p+98Vxx5/ILHPpIE8=
-    dependencies:
-      chain-function "^1.0.0"
-      dom-helpers "^3.2.0"
-      loose-envify "^1.3.1"
-      prop-types "^15.5.6"
-      warning "^3.0.0"
   
   read-config-file@6.2.0:
     version "6.2.0"
@@ -8282,10 +8279,10 @@ Lockfile:
       file-loader "^6.2.0"
       loader-utils "^2.0.0"
   
-  vuetify@^2.5.3:
-    version "2.5.3"
-    resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.5.3.tgz#9d703414a736879673c94550035adc177a6ca394"
-    integrity sha512-c0oX063PzWrIV29Mi7Pyi63OcF0FlCDJcgMvu0woTt4GL4yVmNQMh5hyKS5NEwlsS66HcjKJERMoY0JJc1bYGA==
+  vuetify@^2.6.1:
+    version "2.6.1"
+    resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-2.6.1.tgz#5cdd26c51980618b0b92625a2829cd4956813eaa"
+    integrity sha512-WtqarqEIJlhiwl1TShtkq58xtfbHpn4BjkuQtsL7mAs2eHCo7QjA3tUm7Dx/NmDc4wa2ghUUth36jTdG+CCWRg==
   
   vuex@^3.6.2:
     version "3.6.2"
@@ -8307,13 +8304,6 @@ Lockfile:
       domexception "^1.0.1"
       webidl-conversions "^4.0.2"
       xml-name-validator "^3.0.0"
-  
-  warning@^3.0.0:
-    version "3.0.0"
-    resolved "https://registry.yarnpkg.com/warning/-/warning-3.0.0.tgz#32e5377cb572de4ab04753bdf8821c01ed605b7c"
-    integrity sha1-MuU3fLVy3kqwR1O9+IIcAe1gW3w=
-    dependencies:
-      loose-envify "^1.0.0"
   
   watchpack@^2.2.0:
     version "2.2.0"
