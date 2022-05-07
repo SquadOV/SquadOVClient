@@ -62,6 +62,7 @@ public:
     // This is a request to initialize and/or increase the DVR storage size in memory.
     void initializeDvrOutput(double sizeSeconds);
     void initializeVideoOutput(const shared::TimePoint& start, RecordingMode mode);
+    void connectInputs();
 
     void stop(std::optional<GameRecordEnd> end, bool keepLocal = false);
     void stopInputs();

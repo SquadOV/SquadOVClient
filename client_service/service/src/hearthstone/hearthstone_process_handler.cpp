@@ -191,6 +191,7 @@ void HearthstoneProcessHandlerInstance::onGameConnect(const shared::TimePoint& e
     // might miss parts of the mulligan.
     _recorder->start();
     _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
 
     if (_inGame) {
         onGameStart(eventTime, nullptr);

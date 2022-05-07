@@ -157,6 +157,7 @@ void ValorantProcessHandlerInstance::onValorantMatchStart(const shared::TimePoin
     onValorantBuyStart(eventTime, nullptr);
     _recorder->start();
     _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
 }
 
 void ValorantProcessHandlerInstance::onValorantMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {

@@ -579,7 +579,9 @@ void GameRecorder::start(int flags) {
         LOG_INFO("Initializing initial DVR storage: " << _cachedInstantClipLengthSeconds << std::endl);
         initializeDvrOutput(static_cast<double>(_cachedInstantClipLengthSeconds));
     }
+}
 
+void GameRecorder::connectInputs() {
     LOG_INFO("Switch to new active encoder..." << std::endl);
     switchToNewActiveEncoder(_encoder);
 }
@@ -975,7 +977,7 @@ void GameRecorder::setFileOutputFromDestination(const std::string& videoUuid, co
     _outputDestination = destination;
     _outputPiper = pipe::createFileOutputPiper(videoUuid, destination);
 
-    if (_cachedRecordingSettings->bandwidthLimiterMultiple) {
+    if (_cachedRecordingSettings && _cachedRecordingSettings->bandwidthLimiterMultiple) {
         const auto bytesPerSec = static_cast<size_t>(_cachedRecordingSettings->bitrateKbps * (_cachedRecordingSettings->bandwidthLimiterMultiple.value() / 100.0) * 1000 / 8.0);
         LOG_INFO("...Using Bandwidth Limiter: " << bytesPerSec << " bytes per second" << std::endl);
         _outputPiper->setMaxUploadSpeed(bytesPerSec);

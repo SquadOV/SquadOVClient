@@ -107,6 +107,7 @@ void AimlabProcessHandlerInstance::onAimlabTaskStart(const shared::TimePoint& ev
 
     _recorder->start();
     _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
 }
 
 void AimlabProcessHandlerInstance::onAimlabTaskKill(const shared::TimePoint& eventTime, const void* rawData) {

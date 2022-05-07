@@ -229,6 +229,7 @@ void CsgoProcessHandlerInstance::onSquadOvMatchStart(const shared::TimePoint& ev
     // further identify the match.
     _recorder->start();
     _recorder->initializeVideoOutput(eventTime, service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
 }
 
 void CsgoProcessHandlerInstance::onGsiMatchEnd(const shared::TimePoint& eventTime, const void* rawData) {

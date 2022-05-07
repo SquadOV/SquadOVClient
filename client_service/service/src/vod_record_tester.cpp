@@ -110,6 +110,8 @@ int main(int argc, char** argv) {
             LOG_INFO("START RECORDING" << std::endl);
             recorder.start(service::recorder::FLAG_WGC_RECORDING);
             recorder.initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
+            recorder.connectInputs();
+            
             std::this_thread::sleep_for(std::chrono::seconds(duration));
             LOG_INFO("STOP RECORDING" << std::endl);
             recorder.stop({}, true);

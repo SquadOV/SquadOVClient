@@ -311,6 +311,7 @@ void WoWProcessHandlerInstance::restartRecorder() {
     if (_recorder) {
         _recorder->start();
         _recorder->initializeDvrOutput(WOW_DVR_SIZE_SECONDS);
+        _recorder->connectInputs();
     }
 }
 
