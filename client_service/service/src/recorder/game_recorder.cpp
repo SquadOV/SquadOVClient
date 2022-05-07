@@ -996,7 +996,7 @@ shared::squadov::VodMetadata GameRecorder::getMetadata() const {
 
     if (_encoder.encoder) {
         auto metadata = _encoder.encoder->getMetadata();
-        metadata.videoUuid = _currentId->videoUuid;
+        metadata.videoUuid = _currentId ? _currentId->videoUuid : "";
         metadata.bucket = bucket;
         metadata.sessionId = session;
         return metadata;
