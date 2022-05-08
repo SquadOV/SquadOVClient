@@ -371,7 +371,6 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
             THROW_ERROR("Failed to receive video packet.");
         }
 
-        av_packet_rescale_ts(&packet, cctx->time_base, st->time_base);
         packet.stream_index = st->index;
 
         if (packet.dts > packet.pts) {
@@ -987,17 +986,21 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
         // and that'll be each stream's offset.
         //
         // Hacky but works hopefully?
-        const auto diffMs = std::max(std::chrono::duration_cast<std::chrono::milliseconds>(dvrFillInStartTime.value() - _syncStartTime).count(), int64_t(0));
+        //
+        // Another thing to note in this block of code is that the AVStream time base is not necessarily the
+        // time base of the packet. The time base of the packet should be the codec context. The AVStream time base
+        // will be the timebase that we output in.
+        const auto diffMs = std::chrono::duration_cast<std::chrono::milliseconds>(dvrFillInStartTime.value() - _syncStartTime).count();
         assert(_avcontext->nb_streams >= 1);
 
         // One tricky thing is we want to modify the actual offset a little bit so that the video starts exactly
         // when the first video stream comes in. So we first need to figure out the first packet in the video stream
         // that is past the threshold and then strip away audio packets that are earlier than the 1st video packet's PTS.
-        const auto minDiffPts = av_rescale_q(diffMs, AVRational{1, 1000}, _avcontext->streams[0]->time_base);
+        const auto minDiffPts = av_rescale_q(diffMs, AVRational{1, 1000}, _vcodecContext->time_base);
 
-        auto videoOffsetPts = minDiffPts;
+        int64_t videoOffsetPts = minDiffPts;
         for (const auto& p: _dvrBuffer[0]) {
-            if (p.pts < minDiffPts) {
+            if (p.pts < minDiffPts || !(p.flags & AV_PKT_FLAG_KEY)) {
                 continue;
             }
 
@@ -1008,12 +1011,34 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
         // Now, we can convert the video PTS offset to the appropriate audio PTS offset.
         // Then we need to copy packets from DVR into the file output. Any packet with a PTS less than the stream offset is gucci.
         _streamPtsOffset[0] = videoOffsetPts;
+        LOG_INFO("Diagnostic DVR PTS [Diff PTS: " << minDiffPts << " - Diff MS: " << diffMs << "]" << std::endl);
         for (auto i = 0; i < _avcontext->nb_streams; ++i) {
+            AVRational codecTimebase;
             if (i > 0) {
-                _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _avcontext->streams[0]->time_base, _avcontext->streams[i]->time_base);
+                _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _vcodecContext->time_base, _acodecContext->time_base);
+                codecTimebase = _acodecContext->time_base;
+            } else {
+                codecTimebase = _vcodecContext->time_base;
             }
+            LOG_INFO("Stream DVR Offset [" << i << "]: " << _streamPtsOffset[i] << std::endl);
+            if (_dvrBuffer[i].empty()) {
+                LOG_INFO("...No DVR packets." << std::endl);
+            } else {
+                LOG_INFO("\tOldest DVR Packet: " << _dvrBuffer[i].front().pts << std::endl);
+                LOG_INFO("\tNewest DVR Packet: " << _dvrBuffer[i].back().pts << std::endl);
+                LOG_INFO("\tTime Base: " << codecTimebase.num << "/" << codecTimebase.den << std::endl);
+                LOG_INFO("\tDVR Buffer Time (ms): " << av_rescale_q(_dvrBuffer[i].back().pts - _dvrBuffer[i].front().pts, codecTimebase, AVRational{1, 1000}) << std::endl);
+            }
+            LOG_INFO("\tDVR Buffer Count: " << _dvrBuffer[i].size() << std::endl);
 
+            bool foundKeyframe = false;
             for (const auto& p: _dvrBuffer[i]) {
+                const bool isKeyframe = (p.flags & AV_PKT_FLAG_KEY);
+                if (!foundKeyframe && !isKeyframe) {
+                    continue;
+                }
+                foundKeyframe = true;
+
                 if (p.pts >= _streamPtsOffset[i]) {
                     AVPacket* dupPacket = av_packet_clone(&p);
                     if (!dupPacket) {
@@ -1026,7 +1051,7 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
             }
         }
 
-        const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(videoOffsetPts, _avcontext->streams[0]->time_base, AVRational{1, 1000}));
+        const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(_streamPtsOffset[0], _avcontext->streams[0]->time_base, AVRational{1, 1000}));
         retVodStartTime = shared::convertClockTime<service::recorder::encoder::AVSyncClock::time_point, shared::TimePoint>(realStartTimeUnixTime);
     } else {
         retVodStartTime = shared::nowUtc();
@@ -1115,6 +1140,18 @@ void FfmpegAvEncoderImpl::addPacketToFileOutput(AVPacket& packet) {
     // the proper pts offset is set and we won't have a weird random spike in the PTS.
     packet.pts -= offset;
     packet.dts -= offset;
+
+    // Furthermore, we assume packets come in in the timebase of the codec. We need to conver that
+    // to the time base of the stream before we write the frame.
+    AVRational codecTimebase;
+    AVRational streamTimebase = _avcontext->streams[packet.stream_index]->time_base;
+    if (packet.stream_index == 0) {
+        codecTimebase = _vcodecContext->time_base;
+    } else {
+        codecTimebase = _acodecContext->time_base;
+    }
+
+    av_packet_rescale_ts(&packet, codecTimebase, streamTimebase);
 
     if ((ret = av_interleaved_write_frame(_avcontext, &packet)) < 0) {
         char errBuff[2048];
