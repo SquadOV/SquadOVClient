@@ -53,6 +53,9 @@ public:
     void setTimeout(long v) { _timeoutSeconds = v; }
     void clearTimeout() { _timeoutSeconds = {}; }
 
+    void setMaxRetries(size_t retries) { _maxRetries = retries; }
+    void setMaxTimeout(size_t timeoutSeconds) { _maxTimeoutSeconds = timeoutSeconds; }
+
     void setMaxUploadBytesPerSec(size_t bytesPerSec) { _maxUploadSpeed = bytesPerSec; };
 
     HttpResponsePtr download(const std::string& path, const std::filesystem::path& output) const;
@@ -88,6 +91,8 @@ private:
     std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
 
     std::optional<size_t> _maxUploadSpeed;
+    std::optional<size_t> _maxRetries;
+    std::optional<size_t> _maxTimeoutSeconds; 
 
 };
 

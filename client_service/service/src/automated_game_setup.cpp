@@ -119,10 +119,13 @@ std::optional<SpeedCheckReport> generateSpeedCheckReport() {
         auto speedCheckDestination = service::api::getGlobalApi()->getSpeedCheckUri(uuidFileName);
         auto pipe = std::make_unique<service::recorder::pipe::Pipe>(uuidFileName);
         auto piper = std::make_unique<service::recorder::pipe::CloudStoragePiper>(uuidFileName, speedCheckDestination, std::move(pipe), false);
+        piper->setMaxRetries(1);
+        piper->setMaxTimeout(10);
+        piper->noThrow();
         service::recorder::pipe::PipeClient pipeClient(uuidFileName);
 
-        // 160MB buffer. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 
-        std::vector<char> writeBuffer(1024 * 1024 * 160, 'A');
+        // Buffer to send to our servers. writeBuffer is divisible by the cloud_storage_piper's CLOUD_BUFFER_SIZE_BYTES. 
+        std::vector<char> writeBuffer(1024 * 1024 * 30, 'A');
         int lastUl = 0;
 
         // This continues running after the piper and pipeClient stop. LastUl continues changing

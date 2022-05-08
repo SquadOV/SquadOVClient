@@ -113,48 +113,55 @@ void CloudStoragePiper::tickUploadThread() {
     std::vector<char> internalBuffer;
     internalBuffer.reserve(CLOUD_BUFFER_SIZE_BYTES);
 
-    while (!_finished) { 
+    try {
+        while (!_finished) { 
 #if LOG_TIME
-        const auto taskNow = std::chrono::high_resolution_clock::now();
-        const auto oldBufferSize = internalBuffer.size();
+            const auto taskNow = std::chrono::high_resolution_clock::now();
+            const auto oldBufferSize = internalBuffer.size();
 #endif
-        // If the write buffer (_cloudBuffer) is non empty, copy the data
-        // into the internalBuffer. The reason we do this is to ensure that
-        // handleBuffer can keep running and pulling data from wherever it's
-        // getting data from without having to wait on the upload HTTP request to finish
-        // (even when we have to do backoff to retry a request).
+            // If the write buffer (_cloudBuffer) is non empty, copy the data
+            // into the internalBuffer. The reason we do this is to ensure that
+            // handleBuffer can keep running and pulling data from wherever it's
+            // getting data from without having to wait on the upload HTTP request to finish
+            // (even when we have to do backoff to retry a request).
+            copyDataIntoInternalBuffer(internalBuffer);
+
+#if LOG_TIME
+            const auto bufferSize = internalBuffer.size();
+            {
+                const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
+                const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+                LOG_INFO("Cloud Copy Buffer: " << numMs << "ms [" << (bufferSize - oldBufferSize) << " bytes]" << std::endl);
+            }
+#endif
+
+            if (internalBuffer.size() >= CLOUD_BUFFER_SIZE_BYTES) {
+                sendDataFromBufferWithBackoff(internalBuffer, CLOUD_BUFFER_SIZE_BYTES, false);
+            }
+
+#if LOG_TIME
+            {
+                const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
+                const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
+                LOG_INFO("Cloud Copy+Send Buffer: " << numMs << "ms [" << bufferSize << " bytes]" << std::endl);
+            }
+#endif
+            std::this_thread::sleep_for(std::chrono::milliseconds(16));
+        }
+
+        // Need to do one last upload to let the cloud storage know that we're finished.
         copyDataIntoInternalBuffer(internalBuffer);
 
-#if LOG_TIME
-        const auto bufferSize = internalBuffer.size();
-        {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Cloud Copy Buffer: " << numMs << "ms [" << (bufferSize - oldBufferSize) << " bytes]" << std::endl);
+        bool first = true;
+        while ((first || !internalBuffer.empty()) && !_skipFlush) {
+            sendDataFromBufferWithBackoff(internalBuffer, 0, true);
+            first = false;
         }
-#endif
-
-        if (internalBuffer.size() >= CLOUD_BUFFER_SIZE_BYTES) {
-            sendDataFromBufferWithBackoff(internalBuffer, CLOUD_BUFFER_SIZE_BYTES, false);
+    } catch (std::exception& ex) {
+        LOG_ERROR("Failed to finish upload: " << ex.what() << std::endl);
+        if (_throwOnError) {
+            throw ex;
         }
-
-#if LOG_TIME
-        {
-            const auto elapsedTime = std::chrono::high_resolution_clock::now() - taskNow;
-            const auto numMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsedTime).count();
-            LOG_INFO("Cloud Copy+Send Buffer: " << numMs << "ms [" << bufferSize << " bytes]" << std::endl);
-        }
-#endif
-        std::this_thread::sleep_for(std::chrono::milliseconds(16));
-    }
-
-    // Need to do one last upload to let the cloud storage know that we're finished.
-    copyDataIntoInternalBuffer(internalBuffer);
-
-    bool first = true;
-    while ((first || !internalBuffer.empty()) && !_skipFlush) {
-        sendDataFromBufferWithBackoff(internalBuffer, 0, true);
-        first = false;
     }
 }
 
@@ -167,7 +174,8 @@ void CloudStoragePiper::tickUploadThread() {
 void CloudStoragePiper::sendDataFromBufferWithBackoff(std::vector<char>& buffer, size_t maxBytes, bool isLast) {
     static std::uniform_int_distribution<> backoffDist(0, 3000);
     const auto requestedBytes = (maxBytes == 0) ? buffer.size() : std::min(maxBytes, buffer.size());
-    for (auto i = 0; i < CLOUD_MAX_RETRIES; ++i) {
+    const int totalRetries = _maxRetries ? std::min(static_cast<int>(_maxRetries.value()), CLOUD_MAX_RETRIES) : CLOUD_MAX_RETRIES;
+    for (auto i = 0; i < totalRetries; ++i) {
         try {
             const auto data = _client->uploadBytes(buffer.data(), requestedBytes, isLast, _uploadedBytes);
             const auto bytesSent = data.second;
@@ -253,6 +261,15 @@ void CloudStoragePiper::setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {
     if (bytesPerSec) {
         _client->setMaxUploadSpeed(bytesPerSec.value());
     }
+}
+
+void CloudStoragePiper::setMaxRetries(size_t retries) {
+    _maxRetries = retries;
+    _client->setMaxRetries(retries);
+}
+
+void CloudStoragePiper::setMaxTimeout(size_t timeoutSeconds) {
+    _client->setMaxTimeout(timeoutSeconds);
 }
 
 }

@@ -34,7 +34,9 @@ public:
     virtual const std::vector<std::string>& segmentIds() const = 0;
     virtual void flush() = 0;
     virtual void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) {}
-    
+    virtual void setMaxRetries(size_t retries) {}
+    virtual void setMaxTimeout(size_t timeoutSeconds) {}
+
 protected:
     virtual bool handleBuffer(const char* buffer, size_t numBytes) = 0;
 

@@ -45,6 +45,7 @@ public:
     HttpRequest(const std::string& uri, const Headers& headers, bool allowSelfSigned, bool quiet);
     ~HttpRequest();
 
+    void setMaxRetries(size_t retries) { _maxRetries = retries; }
     void setTimeout(long timeoutSeconds);
     void setUploadSpeed(size_t bytesPerSec);
     void addProgressCallbacks(const DownloadUploadProgressFn& fn) { _downloadUploadProgressCallbacks.push_back(fn); }
@@ -70,6 +71,7 @@ private:
     char _errBuffer[CURL_ERROR_SIZE];
     std::vector<DownloadUploadProgressFn> _downloadUploadProgressCallbacks;
     std::optional<fs::path> _outputFile;
+    std::optional<size_t> _maxRetries;
 };
 
 size_t curlReadCallback(char* buffer, size_t size, size_t nitems, void* userdata) {
@@ -192,7 +194,8 @@ HttpResponsePtr HttpRequest::execute() {
     _errBuffer[0] = 0;
     curl_easy_setopt(_curl, CURLOPT_ERRORBUFFER, _errBuffer);
 
-    for (int i = 0; i < MAX_RETRY; ++i) {
+    const auto totalRetries = std::min(MAX_RETRY, static_cast<int>(_maxRetries.value_or(MAX_RETRY)));
+    for (int i = 0; i < totalRetries; ++i) {
         resp->curlError = curl_easy_perform(_curl);
         if (resp->curlError == CURLE_OK) {
             curl_easy_getinfo(_curl, CURLINFO_RESPONSE_CODE, &resp->status);
@@ -202,7 +205,7 @@ HttpResponsePtr HttpRequest::execute() {
             resp->body = std::string(_errBuffer);
             LOG_WARNING("Generic CURL failure: " << resp->body << std::endl);
 
-            if (i < MAX_RETRY - 1) {
+            if (i < totalRetries - 1) {
                 // Exponential backoff with jitter algorithm.
                 // See: https://cloud.google.com/iot/docs/how-tos/exponential-backoff
                 // Some notable changes are that we have a base minimum of a 100ms backoff.
@@ -366,8 +369,16 @@ HttpResponsePtr HttpClient::sendRequest(const std::string& path, const MethodReq
         req.reset(new HttpRequest(fullPath.str(), _headers, _allowSelfSigned, _quiet));
     }
 
+    if (_maxRetries) {
+        req->setMaxRetries(_maxRetries.value());
+    }
+
     if (_timeoutSeconds.has_value()) {
-        req->setTimeout(_timeoutSeconds.value());
+        if (_maxTimeoutSeconds) {
+            req->setTimeout(std::min(_timeoutSeconds.value(), static_cast<long>(_maxTimeoutSeconds.value())));
+        } else {
+            req->setTimeout(_timeoutSeconds.value());
+        }
     }
 
     if (_maxUploadSpeed) {

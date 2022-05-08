@@ -14,6 +14,8 @@ public:
     void startNewSegment() override;
     std::pair<std::string, size_t> uploadBytes(const char* buffer, size_t numBytes, bool isLast, size_t uploadedBytes) override;
     void setMaxUploadSpeed(size_t bytesPerSec) override;
+    void setMaxRetries(size_t retries) override;
+    void setMaxTimeout(size_t timeoutSeconds) override;
 private:
     std::string _videoUuid;
     service::uploader::UploadDestination _destination;

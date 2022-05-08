@@ -78,4 +78,12 @@ void GCSStorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
     _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
 }
 
+void GCSStorageClient::setMaxRetries(size_t retries) {
+    _httpClient->setMaxRetries(retries);
+}
+
+void GCSStorageClient::setMaxTimeout(size_t timeoutSeconds) {
+    _httpClient->setMaxTimeout(timeoutSeconds);
+}
+
 }

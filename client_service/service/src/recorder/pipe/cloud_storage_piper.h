@@ -60,6 +60,9 @@ public:
     void skipFlush() { _skipFlush = true; };
     void flush() override;
     void setMaxUploadSpeed(std::optional<size_t> bytesPerSec) override;
+    void setMaxRetries(size_t retries) override;
+    void setMaxTimeout(size_t timeoutSeconds) override;
+    void noThrow() { _throwOnError = false; }
     
 protected:
     bool handleBuffer(const char* buffer, size_t numBytes) override;
@@ -73,6 +76,7 @@ private:
     std::string _videoUuid;
     service::uploader::UploadDestination _destination;
     size_t _uploadedBytes = 0;
+    std::optional<size_t> _maxRetries = 0;
 
     cloud::CloudStorageClientPtr _client;
     std::mutex _cloudMutex;
@@ -81,6 +85,7 @@ private:
     std::vector<std::string> _allSegmentsIds;
     bool _finished = false;
     bool _skipFlush = false;
+    bool _throwOnError = true;
     shared::TimePoint _timeStart;
     shared::TimePoint _lastUploadTime;
 

@@ -83,4 +83,12 @@ void S3StorageClient::setMaxUploadSpeed(size_t bytesPerSec) {
     _httpClient->setMaxUploadBytesPerSec(bytesPerSec);
 }
 
+void S3StorageClient::setMaxRetries(size_t retries) {
+    _httpClient->setMaxRetries(retries);
+}
+
+void S3StorageClient::setMaxTimeout(size_t timeoutSeconds) {
+    _httpClient->setMaxTimeout(timeoutSeconds);
+}
+
 }
