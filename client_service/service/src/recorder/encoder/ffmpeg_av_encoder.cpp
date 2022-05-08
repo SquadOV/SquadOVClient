@@ -1020,7 +1020,7 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
                         continue;
                     }
 
-                    //addPacketToFileOutput(*dupPacket);
+                    addPacketToFileOutput(*dupPacket);
                     av_packet_unref(dupPacket);
                 }
             }
