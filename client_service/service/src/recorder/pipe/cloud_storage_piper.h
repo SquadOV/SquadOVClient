@@ -76,7 +76,7 @@ private:
     std::string _videoUuid;
     service::uploader::UploadDestination _destination;
     size_t _uploadedBytes = 0;
-    std::optional<size_t> _maxRetries = 0;
+    std::optional<size_t> _maxRetries;
 
     cloud::CloudStorageClientPtr _client;
     std::mutex _cloudMutex;
