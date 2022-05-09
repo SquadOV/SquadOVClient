@@ -529,11 +529,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
 
             // A smaller gop size results in better quality (most likely) and makes it easier for vides to be cut fast for server side clipping more accurately.
             _vcodecContext->gop_size = static_cast<int>(settings.fps * 1);
-
-            if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
-                _vcodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-            }
-            
+           
             // Actually initialize the codec context.
             AVDictionary *options = nullptr;
 
@@ -548,6 +544,10 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                     _vcodecContext->profile = FF_PROFILE_H264_HIGH;
                 } else {
                     av_dict_set(&options, "profile", "high", 0);
+                }
+
+                if (enc.name == "h264_amf") {
+                    av_dict_set_int(&options, "header_spacing", _vcodecContext->gop_size, 0);
                 }
 
                 // CBR vs VBR
