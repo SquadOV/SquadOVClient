@@ -1010,6 +1010,10 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
 
         // Now, we can convert the video PTS offset to the appropriate audio PTS offset.
         // Then we need to copy packets from DVR into the file output. Any packet with a PTS less than the stream offset is gucci.
+        // We also want to keep track of which packet index in each buffer is the first packet we want to start copying.
+        // We'll need this info afterwards in the copy step.
+        std::vector<size_t> currentDvrPointers(_avcontext->nb_streams);
+
         _streamPtsOffset[0] = videoOffsetPts;
         LOG_INFO("Diagnostic DVR PTS [Diff PTS: " << minDiffPts << " - Diff MS: " << diffMs << "]" << std::endl);
         for (auto i = 0; i < _avcontext->nb_streams; ++i) {
@@ -1031,24 +1035,54 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
             }
             LOG_INFO("\tDVR Buffer Count: " << _dvrBuffer[i].size() << std::endl);
 
-            bool foundKeyframe = false;
-            for (const auto& p: _dvrBuffer[i]) {
+            for (currentDvrPointers[i] = 0; currentDvrPointers[i] < _dvrBuffer[i].size(); ++currentDvrPointers[i]) {
+                const auto& p = _dvrBuffer[i][currentDvrPointers[i]];
                 const bool isKeyframe = (p.flags & AV_PKT_FLAG_KEY);
-                if (!foundKeyframe && !isKeyframe) {
+
+                if (p.pts < _streamPtsOffset[i] || !isKeyframe) {
                     continue;
                 }
-                foundKeyframe = true;
 
-                if (p.pts >= _streamPtsOffset[i]) {
-                    AVPacket* dupPacket = av_packet_clone(&p);
-                    if (!dupPacket) {
-                        continue;
-                    }
+                break;
+            }
+        }
 
-                    addPacketToFileOutput(*dupPacket);
-                    av_packet_unref(dupPacket);
+        // Now we need to do a thing where we insert packets in an interleaved fashion. We should not dump all the video data first followed by all
+        // the audio data as that'll cause issues in processing. Instead, we should write the earliest packet at any given time until we run out of packets.
+        while (true) {
+            bool hasDvrPacketsLeft = false;
+
+            int64_t smallestMs = std::numeric_limits<int64_t>::max();
+            unsigned int selectedStream = _avcontext->nb_streams;
+            for (auto i = 0; i < _avcontext->nb_streams; ++i) {
+                const auto& buffer = _dvrBuffer[i];
+                const auto ptr = currentDvrPointers[i];
+
+                if (ptr >= buffer.size()) {
+                    continue;
+                }
+
+                hasDvrPacketsLeft = true;
+                const auto packetMs = av_rescale_q(buffer[ptr].pts, (i == 0) ? _vcodecContext->time_base : _acodecContext->time_base, AVRational{1, 1000});
+                if (packetMs < smallestMs) {
+                    smallestMs = packetMs;
+                    selectedStream = i;
                 }
             }
+
+            if (!hasDvrPacketsLeft || selectedStream == _avcontext->nb_streams) {
+                break;
+            }
+
+            // Copy the selected packet (as indicated by the pointer) from the selected stream.
+            const auto& p = _dvrBuffer[selectedStream][currentDvrPointers[selectedStream]++];
+            AVPacket* dupPacket = av_packet_clone(&p);
+            if (!dupPacket) {
+                continue;
+            }
+
+            addPacketToFileOutput(*dupPacket);
+            av_packet_unref(dupPacket);
         }
 
         const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(_streamPtsOffset[0], _vcodecContext->time_base, AVRational{1, 1000}));
