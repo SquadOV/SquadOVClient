@@ -1051,7 +1051,7 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
             }
         }
 
-        const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(_streamPtsOffset[0], _avcontext->streams[0]->time_base, AVRational{1, 1000}));
+        const auto realStartTimeUnixTime = _syncStartTime + std::chrono::milliseconds(av_rescale_q(_streamPtsOffset[0], _vcodecContext->time_base, AVRational{1, 1000}));
         retVodStartTime = shared::convertClockTime<service::recorder::encoder::AVSyncClock::time_point, shared::TimePoint>(realStartTimeUnixTime);
     } else {
         retVodStartTime = shared::nowUtc();
@@ -1192,14 +1192,11 @@ bool FfmpegAvEncoderImpl::isDvrBufferLongerThanMaxSeconds(const std::deque<AVPac
         return false;
     }
 
-    const auto* st = _avcontext->streams[streamIndex];
-    if (!st) {
-        return false;
-    }
+    AVRational timeBase = (streamIndex == 0) ? _vcodecContext->time_base : _acodecContext->time_base;
 
     // Convert the time first into milliseconds so we get some more precision before doing the comparison
     // in the double space for seconds.
-    const auto diffMs = av_rescale_q(ptsDiff, st->time_base, AVRational{1, 1000});
+    const auto diffMs = av_rescale_q(ptsDiff, timeBase, AVRational{1, 1000});
     return ((diffMs / 1000.0) > _maxDvrBufferTimeSeconds);
 }
 
