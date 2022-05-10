@@ -18,6 +18,7 @@ module.exports = (env, argv) => {
             new webpack.DefinePlugin({
                 SQUADOV_API_URL: "'https://api.staging.squadov.gg'",
                 SQUADOV_SEGMENT_KEY: "'IgCsglx2jaMD2JctrgioQ7tQLMWjXw8I'",
+                SQUADOV_GOOGLE_CLIENT_ID: "'989563532134-99nrfg2shd496mnma0g47ba37pondkb2.apps.googleusercontent.com'" //change to your own google app id
             })
         ],
     })

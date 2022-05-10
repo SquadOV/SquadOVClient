@@ -16,9 +16,9 @@ module.exports = (env, argv) => {
         },
         plugins: [
             new webpack.DefinePlugin({
-                //SQUADOV_API_URL: "'https://api.squadov.gg'",
-                SQUADOV_API_URL: "'http://127.0.0.1:8080'",
+                SQUADOV_API_URL: "'https://api.squadov.gg'",
                 SQUADOV_SEGMENT_KEY: "'9CbNGTfu0j4UK0VwZvtb8jvyF3pz1wsk'",
+                SQUADOV_GOOGLE_CLIENT_ID: "'989563532134-99nrfg2shd496mnma0g47ba37pondkb2.apps.googleusercontent.com'" //change to your own google app id
             })
         ],
     })
