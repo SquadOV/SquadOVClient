@@ -47,6 +47,7 @@ We will assume all commands are run in Powershell, hence the availability of UNI
 
 ## SquadOV Common Web UI
 
+* In $SRC\client_ui\common_web\webpack\dev.config.js, add your SquadOV Google Cloud App Client ID
 * `cd $SRC\client_ui\common_web`
 * `yarn install`
 
@@ -77,6 +78,7 @@ Finally, start the UI by running: `yarn start`.
 * `cd $SRC\client_ui\common_web`
 * `yarn build-web`
 * `cd $SRC\client_ui\web`
+* `yarn build`
 
 You will now want to create a `config\config.json` file from the `config\config.json.tmpl` template.
 You will want to set:
