@@ -47,7 +47,11 @@
                         </v-btn>
                     </div>
                 </v-form>
-
+                <div class="mb-6">
+                    <div class="g-signin2" ref="googleLoginBtn" id="googleBtn" style="cursor: pointer">
+                        <img src="assets\social_icons\btn_google_signin_light_normal_web.png" @click="openWebLogin"/>
+                    </div>
+                </div>
                 <div class="d-flex">
                     <a href="#"  @click="forgotPassword" v-if="!forgotInProgress">
                         Forgot your password?
@@ -94,18 +98,23 @@
 </template>
 
 <script lang="ts">
+declare var google: any;
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch, Prop } from 'vue-property-decorator'
 import * as pi from '@client/js/pages'
-
 /// #if DESKTOP
 import { ipcRenderer } from 'electron'
 /// #endif
 
 import { apiClient, ApiData, LoginOutput } from '@client/js/api'
 import MfaAuthDialog from '@client/vue/utility/auth/MfaAuthDialog.vue'
+import { openUrlInBrowser } from '@client/js/external'
+
+interface GoogleTokenResponse {
+    credential: string | ""
+}
 
 @Component({
     components: {
@@ -125,6 +134,9 @@ export default class Login extends Vue {
 
     @Prop()
     referral!: string | undefined
+
+    @Prop({default:undefined})
+    googleToken!: string | undefined
 
     showRegistrationBanner: boolean = false
     showHideGenericError: boolean = false
@@ -147,9 +159,11 @@ export default class Login extends Vue {
     username: string = ''
     password: string = ''
     forcedUsernameMessages : string[] = []
+    clientId = process.env.SQUADOV_GOOGLE_CLIENT_ID
 
     $refs!: {
         mfa: MfaAuthDialog
+        googleLoginBtn: any
     }
 
     get usernameRules() : any[] {
@@ -173,11 +187,70 @@ export default class Login extends Vue {
             }
         }
     }
-
     mounted() {
         this.onSyncReg()
+        /// #if DESKTOP
+            const tokenCheck = window.location.search.split("?googleToken=");
+            if(tokenCheck.length > 1 && tokenCheck[1]!=""){
+                const accessToken:GoogleTokenResponse = {
+                    credential:tokenCheck[1]
+                }
+                this.onSignIn(accessToken);
+            }
+        /// #else
+        let googleSignInAPI = document.createElement('script')
+        googleSignInAPI.setAttribute('src', 'https://accounts.google.com/gsi/client')
+        document.head.appendChild(googleSignInAPI)
+        googleSignInAPI.onload = this.InitGoogleButton
+        /// #endif
     }
-    
+
+    InitGoogleButton(){
+        const cID = this.clientId;
+        const credFunc = this.onSignIn
+        window.onload = function () {
+          google.accounts.id.initialize({
+            client_id: cID,
+            callback: credFunc
+          });
+          google.accounts.id.renderButton(
+            document.getElementById("googleBtn"),
+            { theme: "outline", size: "large" } 
+          );
+        }
+    }
+    openWebLogin(){
+        openUrlInBrowser(`https://www.squadov.gg/google/oauth-start`)
+    }
+    onSignIn(response: GoogleTokenResponse) {
+        apiClient.loginGoogle({loginToken: response.credential}).then((resp : ApiData<LoginOutput>) => {
+            if (!!resp.data.twoFactor) {
+                // Ask for two factor code before passing that back to the server to finish the user login.
+                this.$refs.mfa.open((code: string) => {
+                    apiClient.finishMfaLogin(resp.data.twoFactor!, code).then((r2: ApiData<LoginOutput>) => {
+                        this.handleSuccessfulLogin(r2.data)
+                    }).catch((err: any) => {
+                        console.warn('MFA Login Failure')
+                        this.showHideAuthError = true
+                    })
+                })
+            } else {
+                this.handleSuccessfulLogin(resp.data)
+            }
+        }).catch((err : any) => {
+            if (!!err.response && err.response.status === 401) {
+                this.showHideAuthError = true
+            } else {
+                console.warn('Login failure')
+                this.showHideGenericError = true
+            }
+        }).finally(() => {
+            this.inProgress = false
+        })
+    }
+    onFail(error: any){
+
+    }
     handleSuccessfulLogin(data: LoginOutput) {
         // Successful login - store the session ID.
 /// #if DESKTOP
@@ -186,7 +259,6 @@ export default class Login extends Vue {
         // Forcefully set session ID on the Api client just in case
         // we're going to the email verification check page.
         apiClient.setSessionFull(data.sessionId, data.userId)
-
         // We can close out the login app now.
 /// #if DESKTOP
         ipcRenderer.send('finish-login')
