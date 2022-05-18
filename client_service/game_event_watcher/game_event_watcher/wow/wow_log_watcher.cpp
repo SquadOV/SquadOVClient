@@ -13,51 +13,6 @@ namespace fs = std::filesystem;
 namespace game_event_watcher {
 namespace {
 
-bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const fs::path& logPath) {
-    // General Format:
-    // DATE TIME TOKENS
-    std::vector<std::string> parts;
-    boost::split(parts, line, boost::is_any_of(" "));
-    if (parts.size() < 3) {
-        return false;
-    }
-
-    // We need to account for the double adjust here. timeOfLastFileWrite will ALREADY call nowUtc() (which uses the NTP client).
-    // Thus, the year will be adjusted already. We shouldn't ever be doing multi year adjustments but it's a possibility to look out for just in case.
-    // We need the NON-adjusted year.
-    const auto currentLocal = date::make_zoned(
-        date::current_zone(),
-        shared::time::NTPClient::singleton()->revertTime(shared::filesystem::timeOfLastFileWrite(logPath))
-    ).get_local_time();
-    std::ostringstream datetime;
-    datetime << parts[0] << "/" << date::year_month_day{date::floor<date::days>(currentLocal)}.year() << " " << parts[1];
-
-    const auto t = date::make_zoned(
-        date::current_zone(),
-        shared::strToLocalTime(datetime.str(), "%m/%d/%Y %T")
-    );
-    log.timestamp = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
-
-    // Need to combine everything from the 3rd part onwards back
-    // into one string since there could be spaces in the tokens
-    // that aren't relevant to the initial DATE TIME TOKEN split.
-    parts.erase(parts.begin(), parts.begin() + 2);
-    const auto tokenPart = boost::join_if(parts, " ", [](const std::string& p) {
-        return !boost::trim_copy(p).empty();
-    });
-    log.rawLog = tokenPart;
-
-    try {
-        boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);
-        std::copy(tok.begin(), tok.end(), std::back_inserter(log.log));
-    } catch (std::exception& ex) {
-        // This is generally fine - we'll fail for like "EMOTE" but I mean whatever.
-        LOG_WARNING("Failed to tokenize WoW combat log line: " << ex.what() << std::endl << "\t" << line << std::endl);
-        return false;
-    }
-    return true;
-}
-
 bool parseCombatLogStart(const RawWoWCombatLog& log, WoWCombatLogState& state) {
     if (log.log[0] != "COMBAT_LOG_VERSION") {
         return false;
@@ -180,6 +135,51 @@ bool parseSpellCastSuccess(const RawWoWCombatLog& log, WowSpellCastSuccess& cast
 
 constexpr auto maxLogsToKeep = 10;
 
+}
+
+bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const fs::path& logPath) {
+    // General Format:
+    // DATE TIME TOKENS
+    std::vector<std::string> parts;
+    boost::split(parts, line, boost::is_any_of(" "));
+    if (parts.size() < 3) {
+        return false;
+    }
+
+    // We need to account for the double adjust here. timeOfLastFileWrite will ALREADY call nowUtc() (which uses the NTP client).
+    // Thus, the year will be adjusted already. We shouldn't ever be doing multi year adjustments but it's a possibility to look out for just in case.
+    // We need the NON-adjusted year.
+    const auto currentLocal = date::make_zoned(
+        date::current_zone(),
+        shared::time::NTPClient::singleton()->revertTime(shared::filesystem::timeOfLastFileWrite(logPath))
+    ).get_local_time();
+    std::ostringstream datetime;
+    datetime << parts[0] << "/" << date::year_month_day{date::floor<date::days>(currentLocal)}.year() << " " << parts[1];
+
+    const auto t = date::make_zoned(
+        date::current_zone(),
+        shared::strToLocalTime(datetime.str(), "%m/%d/%Y %T")
+    );
+    log.timestamp = shared::time::NTPClient::singleton()->adjustTime(t.get_sys_time());
+
+    // Need to combine everything from the 3rd part onwards back
+    // into one string since there could be spaces in the tokens
+    // that aren't relevant to the initial DATE TIME TOKEN split.
+    parts.erase(parts.begin(), parts.begin() + 2);
+    const auto tokenPart = boost::join_if(parts, " ", [](const std::string& p) {
+        return !boost::trim_copy(p).empty();
+    });
+    log.rawLog = tokenPart;
+
+    try {
+        boost::tokenizer<boost::escaped_list_separator<char>> tok(tokenPart);
+        std::copy(tok.begin(), tok.end(), std::back_inserter(log.log));
+    } catch (std::exception& ex) {
+        // This is generally fine - we'll fail for like "EMOTE" but I mean whatever.
+        LOG_WARNING("Failed to tokenize WoW combat log line: " << ex.what() << std::endl << "\t" << line << std::endl);
+        return false;
+    }
+    return true;
 }
 
 WoWLogWatcher::WoWLogWatcher(bool useTimeChecks, const shared::TimePoint& timeThreshold):

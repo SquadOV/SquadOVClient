@@ -26,6 +26,8 @@ std::string combatLogEndpointToPath(CombatLogEndpoint ep) {
     switch (ep) {
         case CombatLogEndpoint::Ff14:
             return "/ff14";
+        case CombatLogEndpoint::Wow:
+            return "/wow";
     }
     return "";
 }
@@ -61,10 +63,12 @@ void CombatLogClient::setMetadata(const std::string& key, const std::string& val
     _metadata[key] = value;
 }
 
-void CombatLogClient::setPartitionId(const std::string& id) {
+void CombatLogClient::setPartitionId(const std::string& id, const shared::TimePoint& tm) {
     std::lock_guard guard(_mutex);
     _partitionId = id;
     _sequenceId = 0;
+    _startTime = tm;
+    service::api::getGlobalApi()->createCombatLog(_partitionId, _startTime, _clState);
 }
 
 void CombatLogClient::addLine(const std::string& line) {

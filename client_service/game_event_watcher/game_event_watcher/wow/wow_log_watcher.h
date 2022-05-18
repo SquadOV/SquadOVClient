@@ -148,6 +148,7 @@ private:
 };
 
 using WoWLogWatcherPtr = std::unique_ptr<WoWLogWatcher>;
+bool parseRawCombatLogLine(const std::string& line, RawWoWCombatLog& log, const std::filesystem::path& logPath);
 
 std::ostream& operator<<(std::ostream& os, const WoWEncounterStart& e);
 std::ostream& operator<<(std::ostream& os, const WoWChallengeModeStart& e);

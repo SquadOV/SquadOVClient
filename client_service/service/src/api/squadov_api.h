@@ -7,7 +7,6 @@
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
-#include "api/kafka_api.h"
 #include "api/aws_api.h"
 #include "uploader/uploader.h"
 #include "hardware/hardware.h"
@@ -51,9 +50,6 @@ public:
     }
     void retrieveSessionFeatureFlags();
 
-    // Kafka
-    KafkaInfo getKafkaInfo() const;
-
     // Sentry
     std::string getSentryDsn() const;
 
@@ -87,7 +83,6 @@ public:
     void uploadHearthstoneArenaDeck(const process_watcher::memory::games::hearthstone::types::CollectionDeckMapper& deck, const std::string& arenaUuid) const;
 
     // WoW
-    std::string obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const;
     std::string createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId);
     std::string finishWoWChallengeMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeEnd& encounter, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
     std::string createWoWEncounterMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWEncounterStart& encounter, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId);
@@ -98,6 +93,7 @@ public:
     std::string finishWowInstanceMatch(const std::string& matchUuid, const shared::TimePoint& timestamp, const std::vector<game_event_watcher::WoWCombatantInfo>& combatants);
 
     void convertWowInstanceViewToKeystone(const std::string& viewUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& keystone, const game_event_watcher::WoWCombatLogState& cl);
+    void connectWowMatchViewToCombatLog(const std::string& viewUuid, const std::string& combatLogId);
 
     // League of Legends
     std::string createNewLeagueOfLegendsMatch(const std::string& platform, int64_t matchId, const shared::TimePoint& gameStartTime) const;
@@ -136,6 +132,7 @@ public:
 
     // Combat Log
     std::string getCombatLogApiConfiguration() const;
+    void createCombatLog(const std::string& partitionId, const shared::TimePoint& startTm, const nlohmann::json& clState) const;
 
     std::chrono::milliseconds generateRandomBackoff(int64_t base, size_t tryCount) const;
 private:

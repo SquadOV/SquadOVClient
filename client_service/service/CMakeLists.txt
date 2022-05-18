@@ -1,5 +1,4 @@
 SET(SRCS
-    src/api/kafka_api.cpp
     src/api/squadov_api.cpp
     src/api/league_ingame_api.cpp
     src/api/local_api.cpp
@@ -72,7 +71,6 @@ SET(SRCS
 
 SET(HEADERS
     src/api/squadov_api.h
-    src/api/kafka_api.h
     src/api/league_ingame_api.h
     src/api/local_api.h
     src/api/aws_api.h

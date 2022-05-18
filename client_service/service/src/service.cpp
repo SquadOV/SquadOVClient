@@ -19,7 +19,6 @@
 #include "shared/log/log.h"
 #include "shared/strings/strings.h"
 #include "api/squadov_api.h"
-#include "api/kafka_api.h"
 #include "game_event_watcher/hearthstone/hearthstone_log_watcher.h"
 #include "game_event_watcher/csgo/csgo_log_watcher.h"
 #include "game_event_watcher/csgo/csgo_gsi_listener.h"
@@ -251,8 +250,10 @@ void defaultMain() {
 
 // Not too big a fan of making this a gigantic executable that does everything..hmm..
 void wowTest(const std::string& log, const std::string& vod, const std::string& vodTime) {
+#ifndef NDEBUG
     service::wow::WoWProcessHandler handler;
     handler.manualStartLogWatching(std::filesystem::path(log), std::filesystem::path(vod), shared::strToTime(vodTime));
+#endif
 }
 
 int main(int argc, char** argv) {
@@ -413,10 +414,8 @@ int main(int argc, char** argv) {
 
     service::api::getGlobalApi()->retrieveSessionFeatureFlags();
 
-    /* NOT NEEDED UNTIL FF14
     LOG_INFO("Initializing AWS API..." << std::endl);
     service::api::getAwsApi();
-    */
 
 #ifdef NDEBUG
     const auto features = service::api::getGlobalApi()->getSessionFeatures();

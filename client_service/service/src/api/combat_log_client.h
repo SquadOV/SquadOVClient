@@ -17,7 +17,8 @@
 namespace service::api {
 
 enum class CombatLogEndpoint {
-    Ff14
+    Ff14,
+    Wow
 };
 
 std::string combatLogEndpointToPath(CombatLogEndpoint ep);
@@ -34,7 +35,8 @@ public:
     // Any additional data that must be sent along with each batch of combat logs
     // (e.g. the match uuid, etc.) should be set as metadata.
     void setMetadata(const std::string& key, const std::string& value);
-    void setPartitionId(const std::string& id);
+    void setPartitionId(const std::string& id, const shared::TimePoint& tm);
+    void setCombatLogState(const nlohmann::json& state) { _clState = state; }
 
     void addLine(const std::string& line);
     void start();
@@ -71,6 +73,9 @@ private:
 
     int64_t _sequenceId = 0;
     std::string _partitionId;
+    shared::TimePoint _startTime;
+
+    nlohmann::json _clState;
 };
 
 using CombatLogClientPtr = std::unique_ptr<CombatLogClient>;

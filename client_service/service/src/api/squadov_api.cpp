@@ -39,26 +39,6 @@ std::chrono::milliseconds SquadovApi::generateRandomBackoff(int64_t base, size_t
     return std::chrono::milliseconds(static_cast<int64_t>(base + std::pow(2, tryCount) + _rdDist(_rdGen) * 1000));
 }
 
-KafkaInfo SquadovApi::getKafkaInfo() const {
-    const std::string path = "/v1/kafka/info";
-
-    const auto result = _webClient->get(path);
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to get SquadOV Kafka info: " << result->status);
-        return KafkaInfo{};
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-
-    KafkaInfo ret;
-    ret.servers = parsedJson["servers"].get<std::string>();
-    ret.key = parsedJson["key"].get<std::string>();
-    ret.secret = parsedJson["secret"].get<std::string>();
-    ret.wowTopic = parsedJson["wowTopic"].get<std::string>();
-    return ret;
-}
-
 std::string SquadovApi::getSentryDsn() const {
     const std::string path = "/v1/sentry/desktop";
 
@@ -566,20 +546,6 @@ void SquadovApi::createStagedClip(const std::string& videoUuid, int64_t start, i
     }
 }
 
-std::string SquadovApi::obtainNewWoWCombatLogUuid(const game_event_watcher::WoWCombatLogState& log) const {
-    std::ostringstream path;
-    path << "/v1/wow/combatlog";
-    const auto result = _webClient->post(path.str(), log.toJson());
-
-    if (result->status != 200) {
-        THROW_ERROR("Failed to create WoW combat log: " << result->status);
-        return "";
-    }
-
-    const auto parsedJson = nlohmann::json::parse(result->body);
-    return parsedJson.get<std::string>();
-}
-
 std::string SquadovApi::createWoWChallengeMatch(const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& encounter, const game_event_watcher::WoWCombatLogState& cl, const std::string& sessionId) {
     const nlohmann::json body = {
         { "timestamp", shared::timeToIso(timestamp)},
@@ -797,6 +763,17 @@ std::string SquadovApi::finishWowInstanceMatch(const std::string& matchUuid, con
 
     THROW_ERROR("Failed to finish WoW instance: " << lastStatus);
     return "";
+}
+
+void SquadovApi::connectWowMatchViewToCombatLog(const std::string& viewUuid, const std::string& combatLogId) {
+    std::ostringstream path;
+    path << "/v1/wow/view/" << viewUuid << "/cl/" << combatLogId;
+    const auto result = _webClient->post(path.str(), nlohmann::json{});
+
+    if (result->status != 204) {
+        THROW_ERROR("Failed to link wow match view to combat log: " << result->status);
+        return;
+    }
 }
 
 void SquadovApi::convertWowInstanceViewToKeystone(const std::string& viewUuid, const shared::TimePoint& timestamp, const game_event_watcher::WoWChallengeModeStart& keystone, const game_event_watcher::WoWCombatLogState& cl) {
@@ -1073,6 +1050,21 @@ std::string SquadovApi::getCombatLogApiConfiguration() const {
 
     const auto parsedJson = nlohmann::json::parse(result->body);
     return parsedJson.get<std::string>();
+}
+
+void SquadovApi::createCombatLog(const std::string& partitionId, const shared::TimePoint& startTm, const nlohmann::json& clState) const {
+    std::ostringstream path;
+    path << "/v1/cl/partition/" << partitionId;
+
+    const nlohmann::json data = {
+        { "startTime", shared::timeToIso(startTm) },
+        { "clState", clState }
+    };
+    
+    const auto result = _webClient->post(path.str(), data);
+    if (result->status != 204) {
+        THROW_ERROR("Failed to create combat log: " << result->status);
+    }
 }
 
 SquadovApi* getGlobalApi() {
