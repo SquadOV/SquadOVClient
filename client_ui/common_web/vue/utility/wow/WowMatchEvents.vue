@@ -395,6 +395,10 @@ export default class WowMatchEvents extends mixins(CommonComponent) {
         this.$emit('update:syncUnifiedEvents', this.unifiedEvents)
     }
 
+    mounted() {
+        this.propagateUnifiedEvents()
+    }
+
     checkFilterPass(ele: WowUserTarget): boolean {
         if (!wowc.objectHasType(ele.flags)) {
             return false
