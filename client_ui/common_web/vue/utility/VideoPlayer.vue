@@ -621,6 +621,20 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             }
         })
 
+        this.player.on('volumechange', () => {
+            if (!this.player) {
+                return
+            }
+
+            let volume = this.player.muted() ? 0 : this.player.volume()
+            window.sessionStorage.setItem('squadOvVideoPlayerVolume', JSON.stringify(volume))
+        })
+
+        let savedVolume = window.sessionStorage.getItem('squadOvVideoPlayerVolume')
+        if (!!savedVolume) {
+            this.player.volume(JSON.parse(savedVolume))
+        }
+
         let controlBar = this.player.getChild('controlBar')!
         let button = videojs.getComponent('Button')
         if (!this.disableTheater) {
