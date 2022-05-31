@@ -590,6 +590,10 @@ function startAutoupdater() {
             console.log(`SquadOV Found Update to Version  ${resp.updateInfo.version} vs ${app.getVersion()}`)
             if (resp.updateInfo.version != app.getVersion()) {
                 win.webContents.send('main-update-downloaded', resp.updateInfo.version)
+                new Notification({
+                    title: `SquadOV Update Available: ${resp.updateInfo.version}`,
+                    body: 'Please update SquadOV ASAP by restarting it to ensure your VODs continue to be recorded.',
+                }).show()
             }
         })
     }, 1 * 60 * 1000)
