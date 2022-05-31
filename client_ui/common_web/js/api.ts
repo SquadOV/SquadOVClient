@@ -194,6 +194,12 @@ import { cleanUser2UserSubscriptionFromJson, User2UserSubscription } from './squ
 import { LinkedAccounts, TwitchAccount } from './squadov/accounts'
 import { VodDestination } from './vods/destination'
 import { WowGameRelease } from './staticData'
+import { v4 as uuidv4 } from 'uuid';
+
+///#if DESKTOP
+import fs from 'fs'
+import path from 'path'
+///#endif
 
 interface WebsocketAuthenticationResponse {
     success: boolean
@@ -204,6 +210,7 @@ class ApiClient {
     _tempSessionId: string | null
     _tempUserId: number | null
     _accessToken: string | null
+    _machineId: string | null
     _useAccessToken: boolean
     _localApiPort: number | null
     _useTransferAccel: boolean
@@ -214,6 +221,7 @@ class ApiClient {
         this._tempUserId = null
         this._localApiPort = null
         this._accessToken = null
+        this._machineId = null
         this._useAccessToken = false
         this._useTransferAccel = false
     }
@@ -281,6 +289,21 @@ class ApiClient {
 
     setSessionFull(s: string, userId: number) {
        this.setSessionId(s)
+       
+///#if DESKTOP
+        const idFname = path.join(process.env.SQUADOV_USER_APP_FOLDER!, '.machineId')
+        if (fs.existsSync(idFname)) {
+            this._machineId = fs.readFileSync(idFname, 'utf-8')
+        }
+///#else
+        let id = window.localStorage.getItem('squadOvMachineId')
+        if (!id) {
+            id = `${userId}_${uuidv4()}`;
+            window.localStorage.setItem('squadOvMachineId', id!)
+        }
+
+        this._machineId = id
+///#endif
 
        // This call should be used on the desktop to store this info
        // in cookies (as an alternative for storing it on the local system)
@@ -300,6 +323,10 @@ class ApiClient {
             ret.headers['x-squadov-share-id'] = this._tempSessionId
         } else if (!!this._sessionId) {
             ret.headers['x-squadov-session-id'] = this._sessionId
+        }
+
+        if (!!this._machineId) {
+            ret.headers['x-squadov-machine-id'] = this._machineId
         }
 
         if (!useCache) {

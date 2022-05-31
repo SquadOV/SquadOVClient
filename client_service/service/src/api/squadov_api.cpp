@@ -4,16 +4,20 @@
 #include "shared/errors/error.h"
 #include "shared/url.h"
 #include "shared/json.h"
+#include "shared/filesystem/common_paths.h"
 
 #include <nlohmann/json.hpp>
 #include <sstream>
+#include <filesystem>
 
 #define DEBUG_REQUEST_BODY_TO_DISK 0
 
+namespace fs = std::filesystem;
 namespace service::api {
 namespace {
 
 const std::string WEB_SESSION_HEADER_KEY = "x-squadov-session-id";
+const std::string WEB_MACHINE_ID_KEY = "x-squadov-machine-id";
 constexpr int MAX_WOW_MATCH_FINISH_RETRY = 3;
 
 }
@@ -66,6 +70,16 @@ void SquadovApi::removeSessionIdUpdateCallback(int64_t idx) {
 
 void SquadovApi::setSessionId(const std::string& key) {
     _webClient->setHeaderKeyValue(WEB_SESSION_HEADER_KEY, key);
+
+    const auto machineIdFname = shared::filesystem::getSquadOvUserFolder() / fs::path(".machineId");
+    if (fs::exists(machineIdFname)) {
+        std::ifstream f(machineIdFname);
+        std::string id;
+        f >> id;
+        LOG_INFO("Got Machine ID: " << id << std::endl);
+        _webClient->setHeaderKeyValue(WEB_MACHINE_ID_KEY, id);
+    }
+
 
     std::optional<shared::squadov::SquadOVUser> newUser;
     for (int i = 0; i < 5; ++i) {
@@ -1064,6 +1078,41 @@ void SquadovApi::createCombatLog(const std::string& partitionId, const shared::T
     const auto result = _webClient->post(path.str(), data);
     if (result->status != 204) {
         THROW_ERROR("Failed to create combat log: " << result->status);
+    }
+}
+
+void SquadovApi::syncLocalStorage(const std::vector<std::string>& videoUuids) {
+    std::ostringstream path;
+    path << "/v1/users/me/vod/local/sync";
+
+    nlohmann::json arr = nlohmann::json::array();
+    for (const auto& k : videoUuids) {
+        arr.push_back(k);
+    }
+
+    const auto result = _webClient->post(path.str(), arr);
+    if (result->status != 204) {
+        THROW_ERROR("Failed to sync local storage: " << result->status);
+    }
+}
+
+void SquadovApi::addLocalStorage(const std::string& videoUuid) {
+    std::ostringstream path;
+    path << "/v1/users/me/vod/local/" << videoUuid;
+
+    const auto result = _webClient->post(path.str(), nlohmann::json{});
+    if (result->status != 204) {
+        THROW_ERROR("Failed to add to local storage: " << result->status);
+    }
+}
+
+void SquadovApi::removeLocalStorage(const std::string& videoUuid) {
+    std::ostringstream path;
+    path << "/v1/users/me/vod/local/" << videoUuid;
+
+    const auto result = _webClient->del(path.str());
+    if (result->status != 204) {
+        THROW_ERROR("Failed to remove from local storage: " << result->status);
     }
 }
 

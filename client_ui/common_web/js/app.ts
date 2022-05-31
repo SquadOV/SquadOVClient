@@ -947,7 +947,7 @@ ipcRenderer.invoke('request-session').then((session : {
     sessionId: string,
     userId: string
 }) => {
-    apiClient.setSessionId(session.sessionId)
+    apiClient.setSessionFull(session.sessionId, parseInt(session.userId))
     getSquadOVUser(parseInt(session.userId)).then((resp : ApiData<SquadOVUser>) => {
         store.commit('attemptUserLoad', true)
         initializeSentry(resp.data)

@@ -35,6 +35,8 @@ struct LocalRecordingIndexEntry {
     std::filesystem::path fullPath() const;
 };
 
+using LocalChangeCb = std::function<void(const std::string&)>;
+
 class LocalRecordingIndexDb {
 public:
     static LocalRecordingIndexDb* singleton();
@@ -53,6 +55,9 @@ public:
     std::vector<LocalRecordingIndexEntry> getAllLocalEntries() const;
     std::optional<LocalRecordingIndexEntry> getOldestLocalEntry() const;
     std::optional<LocalRecordingIndexEntry> getEntryForUuid(const std::string& uuid) const;
+
+    void setAddCb(const LocalChangeCb& cb) { _addCb = cb; }
+    void setRemoveCb(const LocalChangeCb& cb) { _removeCb = cb; }
 
 private:
     void migrateToV2() const;
@@ -73,6 +78,10 @@ private:
     // Incremental database updates
     std::thread _watchThread;
     bool _watchRunning = false;
+
+    // Callbacks
+    LocalChangeCb _addCb;
+    LocalChangeCb _removeCb;
 };
 using LocalRecordingIndexDbPtr = std::unique_ptr<LocalRecordingIndexDb>;
 

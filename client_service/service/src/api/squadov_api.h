@@ -60,6 +60,11 @@ public:
     void createBookmark(const std::string& videoUuid, const shared::TimePoint& tm) const;
     void markUserAnalyticsEvent(const std::string& eventId) const;
 
+    // Local storage
+    void syncLocalStorage(const std::vector<std::string>& videoUuids);
+    void addLocalStorage(const std::string& videoUuid);
+    void removeLocalStorage(const std::string& videoUuid);
+
     // Valorant
     std::string uploadValorantMatch(const std::string& matchId, const std::string& puuid, const nlohmann::json& playerData) const;
     void requestValorantMatchBackfill(const std::string& puuid) const;

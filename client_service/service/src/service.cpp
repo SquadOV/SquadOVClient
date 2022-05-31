@@ -382,7 +382,12 @@ int main(int argc, char** argv) {
     zeroMqServerClient.start();
 
     LOG_INFO("Initializing local recording database..." << std::endl);
-    shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(service::system::getCurrentSettings()->recording().localRecordingLocation);
+    try {
+        shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(service::system::getCurrentSettings()->recording().localRecordingLocation);
+    } catch (std::exception& ex) {
+        THROW_ERROR("Failed to initialize local recording folder: " << ex.what() << " @ " << service::system::getCurrentSettings()->recording().localRecordingLocation);
+        return 1;
+    }
 
     LOG_INFO("Retrieve Session ID from ENV" << std::endl);
     try {
@@ -399,6 +404,42 @@ int main(int argc, char** argv) {
         std::exit(1);
     }
 
+    {
+        const auto localEntries = shared::filesystem::LocalRecordingIndexDb::singleton()->getAllLocalEntries();
+        
+        std::vector<std::string> localEntryUuids;
+        localEntryUuids.reserve(localEntries.size());
+
+        for (const auto& e: localEntries) {
+            localEntryUuids.push_back(e.uuid);
+        }
+
+        LOG_INFO("Sync local storage: " << localEntryUuids.size());
+        try {
+            service::api::getGlobalApi()->syncLocalStorage(localEntryUuids);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to sync local storage: " << ex.what() << std::endl);
+        }
+    }
+
+    LOG_INFO("Hook local storage callbacks..." << std::endl);
+    shared::filesystem::LocalRecordingIndexDb::singleton()->setAddCb([](const std::string& v) {
+        try {
+            service::api::getGlobalApi()->addLocalStorage(v);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to add to local storage: " << ex.what() << std::endl);
+        }
+    });
+
+    shared::filesystem::LocalRecordingIndexDb::singleton()->setRemoveCb([](const std::string& v) {
+        try {
+            service::api::getGlobalApi()->removeLocalStorage(v);
+        } catch (std::exception& ex) {
+            LOG_WARNING("Failed to remove from local storage: " << ex.what() << std::endl);
+        }
+    });
+
+    LOG_INFO("Sync hardware..." << std::endl);
     try {
         service::api::getGlobalApi()->syncHardware(sysHw);
     } catch (std::exception& ex) {

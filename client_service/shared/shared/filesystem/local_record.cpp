@@ -318,6 +318,9 @@ void LocalRecordingIndexDb::addEntryToDatabase(const LocalRecordingIndexEntry& e
     std::lock_guard guard(_dbMutex);
     _uuidDatabase[entry.uuid] = entry;
     _pathDatabase[shared::filesystem::pathUtf8(entry.relative)] = entry;
+    if (_addCb) {
+        _addCb(entry.uuid);
+    }
 }
 
 void LocalRecordingIndexDb::removeVideoFromDatabase(const std::string& uuid) {
@@ -365,6 +368,10 @@ void LocalRecordingIndexDb::removeEntryFromDatabase(const LocalRecordingIndexEnt
 
     if (fs::exists(entry.fullPath())) {
         fs::remove_all(entry.fullPath());
+    }
+
+    if (_removeCb) {
+        _removeCb(entry.uuid);
     }
 }
 

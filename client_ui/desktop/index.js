@@ -234,6 +234,7 @@ ipcMain.on('request-app-folder', (event) => {
 // Start a local ZeroMQ server that'll be used for IPC between the electron client
 // and the underlying local client service.
 const { ZeroMQServerClient } = require('./zeromq')
+const { v4: uuidv4 } = require('uuid');
 let zeromqServer = new ZeroMQServerClient()
 
 async function quit() {
@@ -248,6 +249,15 @@ function setAppDataFolderFromEnv() {
     if (!fs.existsSync(process.env.SQUADOV_USER_APP_FOLDER)) {
         fs.mkdirSync(process.env.SQUADOV_USER_APP_FOLDER, {
             recursive: true
+        })
+    }
+
+    // Initialize the machine ID that we'll use to identify the user's machine later on.
+    let machineIdFname = path.join(process.env.SQUADOV_USER_APP_FOLDER, '.machineId')
+    if (!fs.existsSync(machineIdFname)) {
+        let id = `${process.env.SQUADOV_USER_ID}_${uuidv4()}`
+        fs.writeFileSync(machineIdFname, id, {
+            encoding: 'utf-8',
         })
     }
 
