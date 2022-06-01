@@ -80,7 +80,6 @@ void SquadovApi::setSessionId(const std::string& key) {
         _webClient->setHeaderKeyValue(WEB_MACHINE_ID_KEY, id);
     }
 
-
     std::optional<shared::squadov::SquadOVUser> newUser;
     for (int i = 0; i < 5; ++i) {
         try {
@@ -92,12 +91,21 @@ void SquadovApi::setSessionId(const std::string& key) {
         }
     }
 
-    std::unique_lock<std::shared_mutex> guard(_sessionMutex);
-    _session.sessionId = key;
-    _session.user = newUser;
+    {
+        std::unique_lock<std::shared_mutex> guard(_sessionMutex);
+        _session.sessionId = key;
+        _session.user = newUser;
 
-    if (!_session.user) {
-        THROW_ERROR("Failed to get current user from session ID.");
+        if (!_session.user) {
+            THROW_ERROR("Failed to get current user from session ID.");
+        }
+    }
+
+    {
+        std::lock_guard guard(_sessionUpdateMutex);
+        for (const auto& kvp: _sessionUpdateCallback) {
+            kvp.second(key);
+        }
     }
 }
 
