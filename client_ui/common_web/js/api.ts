@@ -291,9 +291,11 @@ class ApiClient {
        this.setSessionId(s)
        
 ///#if DESKTOP
-        const idFname = path.join(process.env.SQUADOV_USER_APP_FOLDER!, '.machineId')
-        if (fs.existsSync(idFname)) {
-            this._machineId = fs.readFileSync(idFname, 'utf-8')
+        if (!!process.env.SQUADOV_USER_APP_FOLDER) {
+            const idFname = path.join(process.env.SQUADOV_USER_APP_FOLDER!, '.machineId')
+            if (fs.existsSync(idFname)) {
+                this._machineId = fs.readFileSync(idFname, 'utf-8')
+            }
         }
 ///#else
         let id = window.localStorage.getItem('squadOvMachineId')
