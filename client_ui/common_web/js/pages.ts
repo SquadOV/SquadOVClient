@@ -62,3 +62,4 @@ export const WatchlistPageId = 'watchlist'
 export const PostGameReportPageId = 'postgame'
 
 export const DownloadThanksPageId = 'tydownload'
+export const PricingPageId = 'pricing'

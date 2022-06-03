@@ -18,13 +18,9 @@ Vue.use(VueMeta)
 import App from '@client/vue/App.vue'
 
 /// #if DESKTOP
-
 import PrimaryApp from '@client/vue/PrimaryApp.vue'
-
 /// #else
-
 import WebApp from '@client/vue/WebApp.vue'
-
 /// #endif
 
 const Dashboard = () => import('@client/vue/Dashboard.vue')
@@ -111,6 +107,8 @@ const UserFavoritesPage = () => import('@client/vue/profile/UserFavoritesPage.vu
 const UserWatchlistPage = () => import('@client/vue/profile/UserWatchlistPage.vue')
 const PostGameReport = () => import ('@client/vue/PostGameReport.vue')
 
+const Pricing = () => import('@client/vue/Pricing.vue')
+
 import * as pi from '@client/js/pages'
 
 /// #if DESKTOP
@@ -154,6 +152,11 @@ const baseRoutes : any[] = [
         path: '/tydownload',
         name: pi.DownloadThanksPageId,
         component: DownloadThanks,
+    },
+    {
+        path: '/pricing',
+        name: pi.PricingPageId,
+        component: Pricing,
     },
     {
         path: '/',
@@ -849,6 +852,7 @@ router.beforeEach((to : Route, from : Route, next : any) => {
         // This way we are able to query more information and grab the proper referral link to use.
         || to.name === pi.LinkResponsePageId
         || to.name === pi.DownloadThanksPageId
+        || to.name === pi.PricingPageId
 
     // the domain here doesn't matter as we don't use it.
     let nextUrl = new URL(to.fullPath, 'http://localhost')

@@ -88,6 +88,14 @@
 
         <v-spacer></v-spacer>
 
+        <v-btn
+            exact
+            :to="pricingTo"
+            color="success"
+        >
+            &#10024; Go Pro &#10024;
+        </v-btn>
+
         <download-button v-if="!isDesktop" class="mr-2"></download-button>
 
         <template v-if="isLoggedIn">
@@ -178,6 +186,12 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 })
 export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
+
+    get pricingTo(): any {
+        return {
+            name: pi.PricingPageId
+        }
+    }
 
     get isDesktop(): boolean {
 /// #if DESKTOP
