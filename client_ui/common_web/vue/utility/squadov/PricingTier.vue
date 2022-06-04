@@ -1,5 +1,12 @@
 <template>
-    <div>
+    <div class="d-flex flex-column align-center">
+        <div
+            class="recommended-highlight font-weight-bold text-uppercase"
+            v-if="highlight"
+        >
+            🎉<span class="mx-2">Recommended</span> 🎉
+        </div>
+
         <v-sheet
             rounded
             :elevation="highlight ? 10: 2"
@@ -9,8 +16,9 @@
                 {{ priceTier }}
             </div>
 
-            <div>
-                ${{ pricePerMonth }} USD per month
+            <div class="my-4 d-flex flex-column justify-center align-center">
+                <div><span class="text-h4 font-weight-bold">${{ pricePerMonth }}</span></div>
+                <div>USD per month</div>
             </div>
         
             <v-divider class="mt-4" style="width: 80%"></v-divider>
@@ -40,7 +48,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, FullPricingInfo, computePricePerMonth } from '@client/js/squadov/pricing'
 
 @Component
 export default class PricingTier extends Vue {
@@ -50,18 +58,12 @@ export default class PricingTier extends Vue {
     @Prop({type: Boolean, default: false})
     highlight!: boolean
 
+    @Prop({required: true})
+    pricing!: FullPricingInfo
+
     get pricePerMonth(): string {
-        switch (this.tier) {
-            case EPricingTier.Basic:
-                return '0'
-            case EPricingTier.Silver:
-                return '5'
-            case EPricingTier.Gold:
-                return '10'
-            case EPricingTier.Diamond:
-                return '15'
-        }
-        return ''
+        let price = computePricePerMonth(this.pricing, this.tier)
+        return price.toFixed(2)
     }
 
     get priceTier(): string {
@@ -98,7 +100,7 @@ export default class PricingTier extends Vue {
                 return [
                     'Everything in Silver',
                     '1440p 60fps Recordings',
-                    'Unlimited Squad Sizes',
+                    'Unlimited Squad Members',
                     'Priority Support',
                     'Early Access'
                 ]
@@ -117,6 +119,14 @@ export default class PricingTier extends Vue {
 </script>
 
 <style scoped>
+
+.recommended-highlight {
+    color: white;
+    background-color: #4caf50;
+    width: 80%;
+    text-align: center;
+    border-radius: 5px 5px 0 0;
+}
 
 .highlight-pricing {
     border: 2px #4caf50 solid;

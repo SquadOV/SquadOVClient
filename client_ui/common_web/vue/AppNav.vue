@@ -92,6 +92,7 @@
             exact
             :to="pricingTo"
             color="success"
+            class="mr-2"
         >
             &#10024; Go Pro &#10024;
         </v-btn>

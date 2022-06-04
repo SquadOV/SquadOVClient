@@ -199,6 +199,7 @@ import { v4 as uuidv4 } from 'uuid';
 ///#if DESKTOP
 import fs from 'fs'
 import path from 'path'
+import { FullPricingInfo } from './squadov/pricing'
 ///#endif
 
 interface WebsocketAuthenticationResponse {
@@ -351,6 +352,15 @@ class ApiClient {
                     'x-squadov-api-key': process.env.SQUADOV_API_KEY
                 }
             })
+        })
+    }
+
+    getPricingGrid(annual: boolean): Promise<ApiData<FullPricingInfo>> {
+        return axios.get('public/subscription/pricing', {
+            params: {
+                annual,
+            },
+            ...this.createWebAxiosConfig(),
         })
     }
 
