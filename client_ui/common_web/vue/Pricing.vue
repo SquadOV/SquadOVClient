@@ -432,28 +432,28 @@
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Basic) }}</span></div>
+                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Basic).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
                                                 </div>
                                             </td>
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Silver) }}</span></div>
+                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Silver).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
                                                 </div>
                                             </td>
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Gold) }}</span></div>
+                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Gold).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
                                                 </div>
                                             </td>
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Diamond) }}</span></div>
+                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Diamond).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
                                                 </div>
                                             </td>
