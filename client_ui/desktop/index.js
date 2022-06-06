@@ -426,6 +426,8 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
                 editorWin = null
             }
         })
+
+        addSquadOVRedirectToBrowserWindow(editorWin)
     }
 
     editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}`)
@@ -467,6 +469,7 @@ ipcMain.on('open-path-window', (event, path) => {
     pathWin.setMenu(null)
     pathWin.setMenuBarVisibility(false)
     pathWin.loadURL(`file://${__dirname}/index.html${path}`)
+    addSquadOVRedirectToBrowserWindow(pathWin)
     pathWin.show()
 })
 
@@ -823,6 +826,7 @@ app.on('ready', async () => {
     win.setMenu(null)
     win.setMenuBarVisibility(false)
     win.hide()
+    addSquadOVRedirectToBrowserWindow(win)
 
     if (app.isPackaged) {
         await startAutoupdater()
@@ -1207,3 +1211,14 @@ zeromqServer.on('squadov-notify-error', (r) => {
         }).show()
     }
 })
+
+function addSquadOVRedirectToBrowserWindow(w) {
+    w.webContents.on('will-navigate', (event, url) => {
+        if (url.startsWith(config['APP_URL'])) {
+            event.preventDefault()
+
+            let uri = new URL(url)
+            w.loadURL(`file://${__dirname}/index.html#${(uri.pathname + uri.search).substring(1)}`)
+        }
+    })
+}

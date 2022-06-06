@@ -18,7 +18,7 @@
             </v-col>
         </v-row>
 
-        <loading-container :is-loading="!pricingGrid">
+        <loading-container :is-loading="!finalPricingGrid">
             <template v-slot:default="{ loading }">
                 <template v-if="!loading">
                     <v-row justify="center" align="center" class="mt-8">
@@ -44,15 +44,12 @@
                                 </div>
                             </div>
 
-                            <div class="d-flex justify-center align-center my-4" v-if="!$store.state.currentUser">
-                                <router-link :to="loginTo">Login</router-link>&nbsp;to your SquadOV account to see if you qualify for additional discounts!
-                            </div>
-
                             <v-row class="mt-8" justify="space-around" align="center">
                                 <v-col cols="3">
                                     <pricing-tier
                                         :tier="EPricingTier.Basic"
                                         :pricing="finalPricingGrid"
+                                        :annual="annually"
                                     >
                                     </pricing-tier>
                                 </v-col>
@@ -61,6 +58,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Silver"
                                         :pricing="finalPricingGrid"
+                                        :annual="annually"
                                     >
                                     </pricing-tier>
                                 </v-col>
@@ -69,6 +67,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Gold"
                                         :pricing="finalPricingGrid"
+                                        :annual="annually"
                                         highlight
                                     >
                                     </pricing-tier>
@@ -78,6 +77,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Diamond"
                                         :pricing="finalPricingGrid"
+                                        :annual="annually"
                                     >
                                     </pricing-tier>
                                 </v-col>
@@ -91,7 +91,7 @@
                                 Professionals and Teams
                             </div>
 
-                            <div class="text-h6 mt-2 text-center" style="width: 70%;">
+                            <div class="text-h6 mt-2 text-center" style="width: 60%;">
                                 Content creator? Professional eSports team? Or just otherwise wanting to use SquadOV for non-individual purposes? Reach out and let us help!
                             </div>
 
@@ -434,6 +434,11 @@
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
                                                     <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Basic).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
+                                                    <sign-up-pricing-button
+                                                        :tier="EPricingTier.Basic"
+                                                        :annual="annually"
+                                                    >
+                                                    </sign-up-pricing-button>
                                                 </div>
                                             </td>
 
@@ -441,6 +446,11 @@
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
                                                     <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Silver).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
+                                                    <sign-up-pricing-button
+                                                        :tier="EPricingTier.Silver"
+                                                        :annual="annually"
+                                                    >
+                                                    </sign-up-pricing-button>
                                                 </div>
                                             </td>
 
@@ -448,6 +458,12 @@
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
                                                     <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Gold).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
+                                                    <sign-up-pricing-button
+                                                        :tier="EPricingTier.Gold"
+                                                        highlight
+                                                        :annual="annually"
+                                                    >
+                                                    </sign-up-pricing-button>
                                                 </div>
                                             </td>
 
@@ -455,6 +471,12 @@
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
                                                     <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Diamond).toFixed(2) }}</span></div>
                                                     <div>USD per month</div>
+                                                    <sign-up-pricing-button
+                                                        class="mt-4"
+                                                        :tier="EPricingTier.Diamond"
+                                                        :annual="annually"
+                                                    >
+                                                    </sign-up-pricing-button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -475,6 +497,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Watch } from 'vue-property-decorator'
 import PricingTier from '@client/vue/utility/squadov/PricingTier.vue'
+import SignUpPricingButton from '@client/vue/utility/squadov/SignUpPricingButton.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import { EPricingTier, FullPricingInfo, computePricePerMonth } from '@client/js/squadov/pricing'
 import { openUrlInBrowser } from '@client/js/external'
@@ -484,27 +507,36 @@ import { apiClient, ApiData } from '@client/js/api'
     components: {
         PricingTier,
         LoadingContainer,
+        SignUpPricingButton,
     }
 })
 export default class Pricing extends Vue {
     EPricingTier = EPricingTier
     annually: boolean = false
-    pricingGrid: FullPricingInfo | null = null
+    monthlyPricingGrid: FullPricingInfo | null = null
+    yearlyPricingGrid: FullPricingInfo | null = null
     refreshInProgress: boolean = false
 
     computePricePerMonth = computePricePerMonth
 
     get finalPricingGrid(): FullPricingInfo | null {
-        return this.pricingGrid
+        if (this.annually) {
+            return this.yearlyPricingGrid
+        }
+        return this.monthlyPricingGrid
     }
 
     @Watch('annually')
     refreshPricing() {
         this.refreshInProgress = true
-        apiClient.getPricingGrid(this.annually).then((resp: ApiData<FullPricingInfo>) => {
-            this.pricingGrid = resp.data
+        apiClient.getPricingGrid(false).then((resp: ApiData<FullPricingInfo>) => {
+            this.monthlyPricingGrid = resp.data
         }).finally(() => {
             this.refreshInProgress = false
+        })
+
+        apiClient.getPricingGrid(true).then((resp: ApiData<FullPricingInfo>) => {
+            this.yearlyPricingGrid = resp.data
         })
     }
 
@@ -514,15 +546,6 @@ export default class Pricing extends Vue {
 
     contactUs() {
         openUrlInBrowser('mailto:support@squadov.gg')
-    }
-
-    get loginTo() : any {
-        return {
-            name: 'login',
-            query: {
-                redirect: this.$route.fullPath,
-            }
-        }
     }
 }
 

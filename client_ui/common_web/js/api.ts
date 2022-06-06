@@ -199,7 +199,7 @@ import { v4 as uuidv4 } from 'uuid';
 ///#if DESKTOP
 import fs from 'fs'
 import path from 'path'
-import { FullPricingInfo } from './squadov/pricing'
+import { EPricingTier, FullPricingInfo } from './squadov/pricing'
 ///#endif
 
 interface WebsocketAuthenticationResponse {
@@ -1837,6 +1837,16 @@ class ApiClient {
             eventId,
             platform,
         }, this.createWebAxiosConfig())
+    }
+
+    startSubscription(tier: EPricingTier, annual: boolean): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/subscription/checkout`, {
+            params: {
+                tier,
+                annual,
+            },
+            ...this.createWebAxiosConfig()
+        })
     }
 
     // Local API

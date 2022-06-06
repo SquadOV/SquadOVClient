@@ -108,6 +108,7 @@ const UserWatchlistPage = () => import('@client/vue/profile/UserWatchlistPage.vu
 const PostGameReport = () => import ('@client/vue/PostGameReport.vue')
 
 const Pricing = () => import('@client/vue/Pricing.vue')
+const SubscriptionWorkflow = () => import('@client/vue/SubscriptionWorkflow.vue')
 
 import * as pi from '@client/js/pages'
 
@@ -157,6 +158,16 @@ const baseRoutes : any[] = [
         path: '/pricing',
         name: pi.PricingPageId,
         component: Pricing,
+    },
+    {
+        path: '/subscription',
+        name: pi.SubscriptionPageId,
+        component: SubscriptionWorkflow,
+        props: (route: any) => ({
+            tier: route.query.tier,
+            annual: parseInt(route.query.annual) === 1,
+            success: !!route.query.success ? parseInt(route.query.success) === 1 : undefined,
+        })
     },
     {
         path: '/',

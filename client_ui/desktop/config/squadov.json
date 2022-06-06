@@ -1,3 +1,4 @@
 {
-    "API_URL": "https://api.squadov.gg"
+    "API_URL": "https://api.squadov.gg",
+    "APP_URL": "https://app.squadov.gg"
 }

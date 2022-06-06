@@ -39,6 +39,14 @@
                     </v-list-item-content>
                 </v-list-item>
             </v-list>
+
+            <sign-up-pricing-button
+                class="my-4"
+                :tier="tier"
+                :annual="annual"
+                :highlight="highlight"
+            >
+            </sign-up-pricing-button>
         </v-sheet>
     </div>
 </template>
@@ -47,10 +55,15 @@
 
 import Vue from 'vue'
 import Component from 'vue-class-component'
+import SignUpPricingButton from '@client/vue/utility/squadov/SignUpPricingButton.vue'
 import { Prop } from 'vue-property-decorator'
 import { EPricingTier, FullPricingInfo, computePricePerMonth } from '@client/js/squadov/pricing'
 
-@Component
+@Component({
+    components: {
+        SignUpPricingButton,
+    }
+})
 export default class PricingTier extends Vue {
     @Prop({required: true})
     tier!: EPricingTier
@@ -60,6 +73,9 @@ export default class PricingTier extends Vue {
 
     @Prop({required: true})
     pricing!: FullPricingInfo
+
+    @Prop({type: Boolean, default: false})
+    annual!: boolean
 
     get pricePerMonth(): string {
         let price = computePricePerMonth(this.pricing, this.tier)

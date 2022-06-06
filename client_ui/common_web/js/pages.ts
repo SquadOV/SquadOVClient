@@ -63,3 +63,4 @@ export const PostGameReportPageId = 'postgame'
 
 export const DownloadThanksPageId = 'tydownload'
 export const PricingPageId = 'pricing'
+export const SubscriptionPageId = 'subscription'

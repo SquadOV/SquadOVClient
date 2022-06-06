@@ -1,25 +1,35 @@
 Arguments: 
-  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js install --check-files
+  C:\Program Files\nodejs\node.exe C:\Program Files (x86)\Yarn\bin\yarn.js add --dev @types/react:stubs/types__react
 
 PATH: 
-  C:\Program Files\PowerShell\7;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\Scripts\;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\libnvvp;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\ZeroTier\One\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PowerShell\7\;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\TortoiseHg\;C:\Program Files (x86)\Streamlink\bin;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64;;C:\Program Files\Mullvad VPN\resources;C:\Program Files\nodejs\;C:\Program Files\Go\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\NVIDIA Corporation\Nsight Compute 2021.3.1\;C:\Users\Michael Bao\.cargo\bin;C:\Ruby26-x64\bin;C:\Users\Michael Bao\AppData\Local\Microsoft\WindowsApps;C:\Users\Michael Bao\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Michael Bao\AppData\Local\Yarn\bin;C:\Program Files (x86)\mitmproxy\bin;A:\Git\SquadOVApiServer\deps\flyway;C:\Program Files\GPAC;C:\Users\Michael Bao\.dotnet\tools;C:\Users\Michael Bao\AppData\Roaming\npm;C:\Users\Michael Bao\go\bin;C:\Program Files\CMake\bin
+  C:\Program Files\PowerShell\7;C:\Program Files\Common Files\Oracle\Java\javapath;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\Scripts\;C:\Users\Michael Bao\AppData\Local\Programs\Python\Python39\;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.2\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v10.0\libnvvp;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\bin;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.1\libnvvp;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\NVIDIA Corporation\NVIDIA NvDLISR;C:\Program Files (x86)\NVIDIA Corporation\PhysX\Common;C:\Program Files (x86)\ZeroTier\One\;C:\ProgramData\chocolatey\bin;C:\Program Files\Git\cmd;C:\Program Files (x86)\Windows Kits\10\Windows Performance Toolkit\;C:\Program Files\PowerShell\7\;C:\Program Files (x86)\Yarn\bin\;C:\Program Files\TortoiseHg\;C:\Program Files (x86)\Streamlink\bin;C:\Program Files\dotnet\;C:\Program Files\Microsoft SQL Server\130\Tools\Binn\;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\170\Tools\Binn\;C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\WINDOWS\System32\WindowsPowerShell\v1.0\;C:\WINDOWS\System32\OpenSSH\;C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64;C:\Program Files\Mullvad VPN\resources;C:\Program Files\Go\bin;C:\Program Files\Docker\Docker\resources\bin;C:\ProgramData\DockerDesktop\version-bin;C:\Program Files\NVIDIA Corporation\Nsight Compute 2021.3.1\;C:\Users\Michael Bao\AppData\Roaming\nvm;C:\Program Files\nodejs;C:\Users\Michael Bao\.cargo\bin;C:\Ruby26-x64\bin;C:\Users\Michael Bao\AppData\Local\Microsoft\WindowsApps;C:\Users\Michael Bao\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\Michael Bao\AppData\Local\Yarn\bin;C:\Program Files (x86)\mitmproxy\bin;A:\Git\SquadOVApiServer\deps\flyway;C:\Program Files\GPAC;C:\Users\Michael Bao\.dotnet\tools;C:\Users\Michael Bao\go\bin;C:\Program Files\CMake\bin;C:\Users\Michael Bao\AppData\Roaming\nvm;C:\Program Files\nodejs;A:\Git\flutter\bin
 
 Yarn version: 
   1.22.5
 
 Node version: 
-  14.16.0
+  16.15.1
 
 Platform: 
   win32 x64
 
 Trace: 
-  Error: EBUSY: resource busy or locked, unlink 'A:\Git\SquadOVClient\client_ui\common_web\node_modules\electron\dist\resources\default_app.asar'
+  Error: https://registry.yarnpkg.com/@types%2freact:stubs/types__react: Request "https://registry.yarnpkg.com/@types%2freact:stubs/types__react" returned a 405
+      at Request.params.callback [as _callback] (C:\Program Files (x86)\Yarn\lib\cli.js:66106:18)
+      at Request.self.callback (C:\Program Files (x86)\Yarn\lib\cli.js:140749:22)
+      at Request.emit (node:events:527:28)
+      at Request.<anonymous> (C:\Program Files (x86)\Yarn\lib\cli.js:141721:10)
+      at Request.emit (node:events:527:28)
+      at IncomingMessage.<anonymous> (C:\Program Files (x86)\Yarn\lib\cli.js:141643:12)
+      at Object.onceWrapper (node:events:641:28)
+      at IncomingMessage.emit (node:events:539:35)
+      at endReadableNT (node:internal/streams/readable:1345:12)
+      at processTicksAndRejections (node:internal/process/task_queues:83:21)
 
 npm manifest: 
   {
     "name": "squadov_common_web_ui",
-    "version": "0.12.0",
+    "version": "0.13.3",
     "description": "Common Web UI for SquadOV",
     "main": "index.js",
     "scripts": {
