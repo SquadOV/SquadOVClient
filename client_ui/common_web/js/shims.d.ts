@@ -17,6 +17,7 @@ declare module 'qrcode'
 declare module 'mixpanel-browser'
 declare module 'funnies'
 declare module 'check-disk-space'
+declare module 'canvas-confetti'
 
 declare var SQUADOV_API_URL: string
 declare var SQUADOV_SEGMENT_KEY: string
