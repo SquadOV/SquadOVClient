@@ -2197,37 +2197,31 @@ class ApiServer {
         })
     }
 
-    async getPowerUserCurve(start, end, mode) {
-        let query
-        if (mode === 0) {
-            query = `
-                SELECT sub.days_active AS "x", COUNT(sub.user_id) AS "count"
-                FROM (
-                    SELECT dae.user_id AS "user_id", COUNT(DISTINCT dae.tm) AS "days_active"
-                    FROM squadov.daily_active_endpoint AS dae
-                    WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
-                    GROUP BY dae.user_id
-                ) sub
-                GROUP BY sub.days_active
-            `
-        } else if (mode === 1) {
-            query = `
-                SELECT sub.days_active AS "x", COUNT(sub.user_id) AS "count"
-                FROM (
-                    SELECT v.user_uuid AS "user_id", COUNT(DISTINCT DATE_TRUNC('day', v.end_time)) AS "days_active"
-                    FROM squadov.vods AS v
-                    WHERE v.end_time >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND v.end_time < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
-                        AND NOT v.is_clip
-                        AND v.match_uuid IS NOT NULL
-                    GROUP BY v.user_uuid
-                ) sub
-                GROUP BY sub.days_active
-            `
+    async getPowerUserCurve(start, end, cohortStart, cohortEnd, mode) {
+        let secondsPerInterval
+        if (mode == 0) {
+            secondsPerInterval = 86400
+        } else {
+            secondsPerInterval = 604800
         }
+
+        let query = `
+            SELECT sub.days_active AS "x", COUNT(sub.user_id) AS "count"
+            FROM (
+                SELECT dae.user_id AS "user_id", COUNT(DISTINCT (EXTRACT(EPOCH FROM (DATE_TRUNC('day', dae.tm) - DATE_TRUNC('day', $1::TIMESTAMPTZ))) / ${secondsPerInterval})::INTEGER) AS "days_active"
+                FROM squadov.daily_active_endpoint AS dae
+                INNER JOIN squadov.users AS u
+                    ON u.id = dae.user_id
+                WHERE dae.tm >= DATE_TRUNC('day', $1::TIMESTAMPTZ) AND dae.tm < (DATE_TRUNC('day', $2::TIMESTAMPTZ))
+                    AND u.registration_time >= DATE_TRUNC('day', $3::TIMESTAMPTZ) AND u.registration_time < DATE_TRUNC('day', $4::TIMESTAMPTZ)
+                GROUP BY dae.user_id
+            ) sub
+            GROUP BY sub.days_active
+        `
 
         const { rows } = await this.pool.query(
             query,
-            [start, end]
+            [start, end, cohortStart, cohortEnd]
         )
 
         if (rows.length === 0) {

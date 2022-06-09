@@ -10,6 +10,15 @@
             >
             </date-range-picker>
 
+            <div class="mx-1">
+                Cohort:
+            </div>
+            <date-range-picker
+                :start-date.sync="cohortStartDate"
+                :end-date.sync="cohortEndDate"
+            >
+            </date-range-picker>
+
             <v-btn icon @click="downloadData">
                 <v-icon>
                     mdi-download
@@ -54,6 +63,9 @@ import 'echarts/lib/component/tooltip'
 export default class PowerUserCurve extends Vue {
     startDate: Date = new Date()
     endDate: Date = new Date()
+
+    cohortStartDate: Date = new Date()
+    cohortEndDate: Date = new Date()
     mode: number = 0
 
     data: number[] = []
@@ -66,11 +78,11 @@ export default class PowerUserCurve extends Vue {
     get modeItems(): any[] {
         return [
             {
-                text: 'Active',
+                text: 'Daily',
                 value: 0,
             },
             {
-                text: 'Record',
+                text: 'Weekly',
                 value: 1,
             },
         ]
@@ -78,11 +90,13 @@ export default class PowerUserCurve extends Vue {
 
     @Watch('startDate')
     @Watch('endDate')
+    @Watch('cohortStartDate')
+    @Watch('cohortEndDate')
     @Watch('mode')
     refreshData() {
         this.data = []
         
-        getPowerUserCurve(this.startDate, this.endDate, this.mode).then((resp: number[]) => {
+        getPowerUserCurve(this.startDate, this.endDate, this.cohortStartDate, this.cohortEndDate, this.mode).then((resp: number[]) => {
             this.data = resp
         }).catch((err: any) => {
             console.error('Failed to get power user curve: ', err)

@@ -582,11 +582,18 @@ void GameRecorder::start(int flags) {
 }
 
 void GameRecorder::connectInputs() {
+    if (!isGameEnabled()) {
+        return;
+    }
     LOG_INFO("Switch to new active encoder..." << std::endl);
     switchToNewActiveEncoder(_encoder);
 }
 
 void GameRecorder::initializeDvrOutput(double sizeSeconds) {
+    if (!isGameEnabled()) {
+        return;
+    }
+
     if (!_encoder.hasEncoder()) {
         LOG_WARNING("Trying to initialize DVR output when there's no encoder." << std::endl);
         return;
@@ -596,7 +603,11 @@ void GameRecorder::initializeDvrOutput(double sizeSeconds) {
     _encoder.encoder->resizeDvrBuffer(sizeSeconds);
 }
 void GameRecorder::initializeVideoOutput(const shared::TimePoint& start, RecordingMode mode) {
-    if (!!_currentId) {
+    if (!isGameEnabled()) {
+        return;
+    }
+
+    if (_currentId) {
         return;
     }
 
