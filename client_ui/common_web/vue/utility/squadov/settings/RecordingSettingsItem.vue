@@ -30,19 +30,55 @@
                         </div>
 
                         <div class="d-flex align-center mt-4">
-                            <span class="text-overline font-weight-bold mr-4">Quality:</span>
+                            <span class="text-overline font-weight-bold mr-4">FPS:</span>
+
                             <v-select
                                 dense
-                                :value="quality"
-                                @input="changeQuality"
-                                :items="qualityItems"
+                                :value="fps"
+                                @input="changeFps"
+                                :items="fpsItems"
                                 hide-details
                                 outlined
                             >
+                                <template v-slot:item="{item}">
+                                    <pricing-notifier-wrapper
+                                        :tier="item.tier"
+                                    >
+                                        {{ item.text }}
+                                    </pricing-notifier-wrapper>
+                                </template>
                             </v-select>
+                        </div>
+
+                        <div class="d-flex align-center mt-4">
+                            <span class="text-overline font-weight-bold mr-4">Quality:</span>
+
+                            <v-slider
+                                class="flex-grow-1"
+                                :value="quality"
+                                @change="changeQuality"
+                                :min="1000"
+                                :max="$store.state.features.maxBitrateKbps"
+                                :step="1000"
+                                thumb-label
+                                hide-details
+                            >
+                                <template v-slot:append>
+                                    {{ quality }} kbps
+                                </template>
+                            </v-slider>
+                        </div>
+
+                        <div class="d-flex align-center mt-1">
+                            <pricing-notifier-wrapper
+                                v-if="!!nextTier"
+                                :tier="nextTier"
+                            >
+                                <span class="text-overline">Want more bits?</span>
+                            </pricing-notifier-wrapper>
 
                             <v-checkbox
-                                class="ma-0"
+                                class="ma-0 flex-grow-1"
                                 :input-value="$store.state.settings.record.useCbr"
                                 @change="$store.commit('changeUseCbr', arguments[0])"
                                 hide-details
@@ -61,22 +97,6 @@
                                     </v-tooltip>
                                 </template>
                             </v-checkbox>
-                        </div>
-                    </v-col>
-
-                    <v-col cols-sm="12" cols-md="3">
-                        <div class="d-flex align-center">
-                            <span class="text-overline font-weight-bold mr-4">FPS:</span>
-                            <v-btn-toggle :value="fps" @change="changeFps" mandatory rounded dense>
-                                <v-btn
-                                    v-for="fps in fpsItems"
-                                    :key="`fps-${fps}`"
-                                    :value="fps"
-                                    :disabled="fps > $store.state.features.maxRecordFps"
-                                >
-                                    {{ fps }}
-                                </v-btn>
-                            </v-btn-toggle>
                         </div>
                     </v-col>
 
@@ -710,7 +730,7 @@ import { IpcResponse } from '@client/js/system/ipc'
 import { LocalStoragePageId } from '@client/js/pages'
 import KeybindSettingsItem from '@client/vue/utility/squadov/settings/KeybindSettingsItem.vue'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
-import { EPricingTier, PRICING_ORDER } from '@client/js/squadov/pricing'
+import { EPricingTier, getNextHighestTier } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -741,6 +761,10 @@ export default class RecordingSettingsItem extends Vue {
         return `${(v * 100.0).toFixed(0)}%`
     }
 
+    get nextTier(): EPricingTier | null {
+        return getNextHighestTier(this.$store.state.tier)
+    }
+
     get localManageTo(): any {
         return {
             name: LocalStoragePageId
@@ -760,44 +784,6 @@ export default class RecordingSettingsItem extends Vue {
 
     changeQuality(val: number) {
         this.$store.commit('changeRecordSettingQuality', val)
-    }
-
-    get qualityItems(): any[] {
-        return [
-            {
-                text: 'Ultra-High (16000 kbps)',
-                value: 16000,
-            },
-            {
-                text: 'High (12000 kbps)',
-                value: 12000,
-            },
-            {
-                text: 'Medium-High (9000 kbps)',
-                value: 9000,
-            },
-            {
-                text: 'Standard (6000 kbps)',
-                value: 6000,
-            },
-            {
-                text: 'Medium (4000 kbps)',
-                value: 4000,
-            },
-            {
-                text: 'Low (2000 kbps)',
-                value: 2000,
-            },
-            {
-                text: 'Very Low (1000 kbps)',
-                value: 1000,
-            },
-        ].map((ele) => {
-            return {
-                disabled: (ele.value > this.$store.state.features.maxBitrateKbps),
-                ...ele
-            }
-        })
     }
 
     get resY(): number {
@@ -857,10 +843,26 @@ export default class RecordingSettingsItem extends Vue {
         this.$store.commit('changeRecordSettingFps', val)
     }
 
-    get fpsItems(): number[] {
+    get fpsItems(): any[] {
         return [
-            30,
-            60
+            {
+                value: 30,
+                text: '30',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 60,
+                text: '60',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 144,
+                text: '144',
+                tier: EPricingTier.Diamond,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Diamond),
+            },
         ]
     }
 

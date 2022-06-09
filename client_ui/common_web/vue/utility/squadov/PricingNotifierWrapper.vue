@@ -5,7 +5,7 @@
         </div>
 
         <div v-if="disabled">
-            <v-tooltip bottom :open-delay="250">
+            <v-tooltip bottom max-width="400px" :open-delay="250">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
                         icon

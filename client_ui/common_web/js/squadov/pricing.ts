@@ -34,3 +34,20 @@ export function computePricePerMonth(grid: FullPricingInfo, tier: EPricingTier):
     }
     return basePrice * (1.0 - totalDiscount)
 }
+
+export function getNextHighestTier(tier: EPricingTier | null): EPricingTier | null {
+    if (!tier) {
+        return null
+    }
+
+    switch (tier) {
+        case EPricingTier.Basic:
+            return EPricingTier.Silver
+        case EPricingTier.Silver:
+            return EPricingTier.Gold
+        case EPricingTier.Gold:
+            return EPricingTier.Diamond
+        case EPricingTier.Diamond:
+            return null
+    }
+}
