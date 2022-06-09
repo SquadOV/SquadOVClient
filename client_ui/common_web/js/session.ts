@@ -10,6 +10,7 @@ export function checkHasSessionCookie() : boolean {
 export function clearSessionCookie(store: any) {
     ls.remove('squadov-session')
     store.commit('setUser' , null)
+    store.commit('setUserTier', null)
     apiClient.clearSession()
 }
 
@@ -57,6 +58,7 @@ export function loadInitialSessionFromCookies(store: any, onValid: () => void, o
 
     apiClient.sessionHeartbeat(cookie.sessionId).then((sresp: ApiData<SquadOvHeartbeatResponse>) => {
         apiClient.setSessionFull(sresp.data.sessionId, parseInt(cookie.userId))
+        store.dispatch('loadUserTier')
         getSquadOVUser(parseInt(cookie.userId)).then((uresp : ApiData<SquadOVUser>) => {
             store.commit('setUser' , uresp.data)
             startSessionHeartbeat(store, sresp.data)

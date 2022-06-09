@@ -1849,6 +1849,10 @@ class ApiClient {
         })
     }
 
+    getUserTier(): Promise<ApiData<EPricingTier>> {
+        return axios.get(`v1/users/me/subscription/tier`, this.createWebAxiosConfig())
+    }
+
     // Local API
     async listLocalVods(start: number, end: number): Promise<ApiData<LocalVodsDto>> {
         return axios.get('api/vods', {

@@ -3,9 +3,11 @@ import { SquadOvLocalSettings } from '@client/js/system/settings'
 import { TrackedUserStatusContainer } from '@client/js/squadov/status'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { SquadOVUser } from '@client/js/squadov/user'
+import { EPricingTier } from '@client/js/squadov/pricing'
 
 export interface RootState {
     currentUser: SquadOVUser | null
+    tier: EPricingTier | null
     redirectUrl: string | null
     hasValidSession: boolean
     attemptUserLoad: boolean

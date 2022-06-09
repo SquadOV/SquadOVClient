@@ -5,6 +5,13 @@ export enum EPricingTier {
     Diamond = 'DIAMOND'
 }
 
+export const PRICING_ORDER = {
+    [EPricingTier.Basic]: 1,
+    [EPricingTier.Silver]: 2,
+    [EPricingTier.Gold]: 3,
+    [EPricingTier.Diamond]: 4,
+}
+
 type PricingGrid = {
     [tier in EPricingTier]: number
 }

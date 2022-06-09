@@ -10,6 +10,7 @@ import { TrackedUserStatus } from '@client/js/squadov/status'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { computeFileFolderSizeGb } from '@client/js/system/settings'
 import { Keybind } from '@client/js/system/keybinds'
+import { EPricingTier, PRICING_ORDER } from '../squadov/pricing'
 
 export const RootStoreOptions : StoreOptions<RootState> = {
     // Absolutely do not use strict here. We do a lot of mutations (particularly for user state)
@@ -17,6 +18,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
     strict: false,
     state: {
         currentUser: null,
+        tier: null,
         attemptUserLoad: false,
         redirectUrl: null,
         hasValidSession: true,
@@ -65,6 +67,9 @@ export const RootStoreOptions : StoreOptions<RootState> = {
         },
         setUser(state : RootState, user : SquadOVUser) {
             state.currentUser = user
+        },
+        setUserTier(state: RootState, tier: EPricingTier) {
+            state.tier = tier
         },
         setRedirectUrl(state: RootState, url: string) {
             state.redirectUrl = url
@@ -624,6 +629,21 @@ export const RootStoreOptions : StoreOptions<RootState> = {
                 .catch((err: any) => {
                     console.error('Failed to get local disk space record usage: ', err)
                 })
+        },
+        async loadUserTier(context) {
+            apiClient.getUserTier().then((resp: ApiData<EPricingTier>) => {
+                context.commit('setUserTier', resp.data)
+            }).catch((err: any) => {
+                console.error('Failed to load user tier: ', err)
+            })
+        },
+    },
+    getters: {
+        isUserInTier: (state) => (tier: EPricingTier) => {
+            if (!state.tier) {
+                return false
+            }
+            return PRICING_ORDER[tier] <= PRICING_ORDER[state.tier]
         }
     }
 }

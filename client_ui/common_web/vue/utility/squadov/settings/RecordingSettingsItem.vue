@@ -11,16 +11,22 @@
                     <v-col cols-sm="12" cols-md="6">
                         <div class="d-flex align-center">
                             <span class="text-overline font-weight-bold mr-4">Resolution:</span>
-                            <v-btn-toggle :value="resY" @change="changeResY" mandatory rounded dense>
-                                <v-btn
-                                    v-for="res in resolutionItems"
-                                    :key="`res-${res}`"
-                                    :value="res"
-                                    :disabled="res > $store.state.features.maxRecordPixelY"
-                                >
-                                    {{ res }}p
-                                </v-btn>
-                            </v-btn-toggle>
+                            <v-select
+                                dense
+                                :value="resY"
+                                @input="changeResY"
+                                :items="resolutionItems"
+                                hide-details
+                                outlined
+                            >
+                                <template v-slot:item="{item}">
+                                    <pricing-notifier-wrapper
+                                        :tier="item.tier"
+                                    >
+                                        {{ item.text }}
+                                    </pricing-notifier-wrapper>
+                                </template>
+                            </v-select>
                         </div>
 
                         <div class="d-flex align-center mt-4">
@@ -30,7 +36,7 @@
                                 :value="quality"
                                 @input="changeQuality"
                                 :items="qualityItems"
-                                hide-details=""
+                                hide-details
                                 outlined
                             >
                             </v-select>
@@ -703,6 +709,8 @@ import { AudioDeviceSettings, changeLocalRecordingSettings } from '@client/js/sy
 import { IpcResponse } from '@client/js/system/ipc'
 import { LocalStoragePageId } from '@client/js/pages'
 import KeybindSettingsItem from '@client/vue/utility/squadov/settings/KeybindSettingsItem.vue'
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
+import { EPricingTier, PRICING_ORDER } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -711,6 +719,7 @@ import KeybindSettingsItem from '@client/vue/utility/squadov/settings/KeybindSet
         MultipleAudioDeviceSettings,
         ProcessSelectorSettings,
         KeybindSettingsItem,
+        PricingNotifierWrapper,
     }
 })
 export default class RecordingSettingsItem extends Vue {
@@ -799,12 +808,44 @@ export default class RecordingSettingsItem extends Vue {
         this.$store.commit('changeRecordSettingRes', val)
     }
 
-    get resolutionItems(): number[] {
+    get resolutionItems(): any[] {
         return [
-            360,
-            480,
-            720,
-            1080
+            {
+                value: 360,
+                text: '360p',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 480,
+                text: '480p',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 720,
+                text: '720p',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 1080,
+                text: '1080p',
+                tier: EPricingTier.Silver,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Silver),
+            },
+            {
+                value: 1440,
+                text: '1440p',
+                tier: EPricingTier.Gold,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Gold),
+            },
+            {
+                value: null,
+                text: 'Native',
+                tier: EPricingTier.Diamond,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Diamond),
+            }
         ]
     }    
 
