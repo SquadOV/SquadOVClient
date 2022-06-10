@@ -1,6 +1,33 @@
 <template>
     <v-card>
-        <template v-if="!hasCheckedKb">
+        <template v-if="!$store.state.currentUser.verified">
+            <div class="thankyou d-flex justify-center align-center flex-column">
+                <div class="text-h5">
+                    You have not verified your email address.
+                </div>
+
+                <div class="mt-2 mx-8">
+                    Without a verified email address, we can not respond to your bug report. Please verify your email address before submitting this report.
+                </div>
+
+                <v-btn
+                    class="mt-4"
+                    color="primary"
+                    :to="verifyEmailTo"
+                >
+                    Verify Email Address
+                </v-btn>
+
+                <v-btn
+                    class="mt-4"
+                    @click="cancel"
+                >
+                    Nevermind.
+                </v-btn>
+            </div>
+        </template>
+
+        <template v-else-if="!hasCheckedKb">
             <div class="thankyou d-flex justify-center align-center flex-column">
                 <div class="text-h5">
                     Have you checked the SquadOV help center?
@@ -28,7 +55,7 @@
                 </v-btn>
 
                 <v-btn
-                    class="mt-1"
+                    class="mt-4"
                     @click="cancel"
                 >
                     Nevermind.
@@ -38,7 +65,23 @@
 
         <template v-else-if="!submitted">
             <v-card-title>
-                Tell us more!
+                <div>
+                    Tell us more!
+                </div>
+
+                <v-spacer></v-spacer>
+
+                <div class="d-flex flex-column justify-center align-end">
+                    <div>Priority: {{ $store.state.currentUser.supportPriority }}</div>
+
+                    <pricing-notifier-wrapper
+                        v-if="!this.$store.getters.isUserInTier(EPricingTier.Gold)"
+                        :tier="EPricingTier.Gold"
+                        shrink
+                    >
+                        <span class="text-overline">Want priority support? Upgrade to SquadOV Pro.</span>
+                    </pricing-notifier-wrapper>
+                </div>
             </v-card-title>
 
             <v-divider class="my-2"></v-divider>
@@ -134,10 +177,16 @@ import path from 'path'
 import process from 'process'
 import glob from 'glob'
 import { openUrlInBrowser } from '@client/js/external'
-
+import { SettingsPageId } from '@client/js/pages'
+import { EPricingTier } from '@client/js/squadov/pricing'
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
 const MAX_DUMPS_TO_SEND = 5
 
-@Component
+@Component({
+    components: {
+        PricingNotifierWrapper
+    }
+})
 export default class BugReporter extends Vue {
     hasCheckedKb: boolean = false
     formValid: boolean = false
@@ -146,11 +195,21 @@ export default class BugReporter extends Vue {
     submitted: boolean = false
     inProgress: boolean = false
     showHideError: boolean = false
+    EPricingTier = EPricingTier
 
     get titleRules() : any[] {
         return [
             (value : any) => !!value || 'Required.',
         ]
+    }
+
+    get verifyEmailTo(): any {
+        return {
+            name: SettingsPageId,
+            query: {
+                inputTab: 2,
+            }
+        }
     }
 
     cancel() {

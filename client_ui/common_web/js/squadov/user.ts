@@ -7,6 +7,7 @@ export interface SquadOVUser {
     email: string
     verified: boolean
     uuid: string
+    supportPriority: string
 }
 
 export interface SquadOVUserHandle {
