@@ -63,6 +63,9 @@ void D3d11Renderer::refreshRasterizerState() {
 }
 
 void D3d11Renderer::initializeRenderer(size_t width, size_t height) {
+    _width = width;
+    _height = height;
+    
     _viewport.TopLeftX = 0.f;
     _viewport.TopLeftY = 0.f;
     _viewport.Width = static_cast<float>(width);

@@ -5,6 +5,8 @@ export interface FeatureFlags {
     allowWowCombatLogUpload: boolean
     enableUserProfiles: boolean
     maxBitrateKbps: number
+    mandatoryWatermark: boolean
+    watermarkMinSize: number
 }
 
 export interface GlobalFlags {

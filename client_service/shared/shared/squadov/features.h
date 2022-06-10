@@ -11,6 +11,8 @@ struct FeatureFlags {
     bool allowRecordUpload = false;
     bool allowWowCombatLogUpload = false;
     bool disableSentry = false;
+    bool mandatoryWatermark = false;
+    double watermarkMinSize;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
@@ -19,7 +21,10 @@ inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
         ", Max Bitrate (kbps): " << flags.maxBitrateKbps <<
         ", Allow VOD Upload: " << flags.allowRecordUpload <<
         ", Allow WoW Combat Log Upload: " << flags.allowWowCombatLogUpload <<
-        ", Disable Sentry: " << flags.disableSentry << "}";
+        ", Disable Sentry: " << flags.disableSentry <<
+        ", Mandatory Watermark: " << flags.mandatoryWatermark <<
+        ", Watermark Min Size: " << flags.watermarkMinSize <<
+    "}";
     return out;
 }
 

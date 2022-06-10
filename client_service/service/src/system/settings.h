@@ -34,6 +34,28 @@ struct ProcessAudioRecordSettings {
     static ProcessAudioRecordSettings fromJson(const nlohmann::json& obj);
 };
 
+
+enum class SquadOvPositionX {
+    Left,
+    Center,
+    Right,
+};
+
+enum class SquadOvPositionY {
+    Top,
+    Center,
+    Bottom,
+};
+
+struct WatermarkSettings {
+    bool enabled;
+    double size;
+    SquadOvPositionX xPos;
+    SquadOvPositionY yPos;
+
+    static WatermarkSettings fromJson(const nlohmann::json& obj);
+};
+
 struct RecordingSettings {
     int32_t resY = 0;
     int32_t fps = 0;
@@ -70,6 +92,7 @@ struct RecordingSettings {
     bool useCbr = false;
     bool useNativeAspectRatio = false;
     std::optional<int32_t> bandwidthLimiterMultiple;
+    WatermarkSettings watermark;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

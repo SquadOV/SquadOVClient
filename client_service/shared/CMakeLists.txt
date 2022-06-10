@@ -28,6 +28,7 @@ SET(SRCS
     shared/audio/timing.cpp
     shared/system/win32/hwnd_utils.cpp
     shared/system/win32/interfaces/win32_system_process_interface.cpp
+    shared/system/win32/gdi.cpp
     shared/url.cpp
     shared/system/keys.cpp
     shared/system/win32/process.cpp
@@ -75,6 +76,7 @@ SET(HEADERS
     shared/system/win32/hwnd_utils.h
     shared/system/win32/interfaces/win32_system_process_interface.h
     shared/system/win32/registry.h
+    shared/system/win32/gdi.h
     shared/system/interfaces/system_process_interface.h
     shared/system/install.h
     shared/url.h

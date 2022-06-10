@@ -29,6 +29,9 @@ public:
     bool renderSceneToRenderTarget(ID3D11RenderTargetView* target);
     void noClear() { _clearBeforeRender = false; }
 
+    size_t width() const { return _width; }
+    size_t height() const { return _height; }
+
 private:
     bool renderScene();
 
@@ -46,6 +49,8 @@ private:
     D3d11ShaderPtr _shader;
 
     bool _clearBeforeRender = true;
+    size_t _width = 0;
+    size_t _height = 0;
 };
 
 using D3d11RendererPtr = std::unique_ptr<D3d11Renderer>;

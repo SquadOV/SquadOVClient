@@ -19,6 +19,7 @@
 #include "recorder/compositor/graph/sink_node.h"
 #include "recorder/compositor/layers/mouse_cursor_layer.h"
 #include "recorder/compositor/layers/overlay_layers.h"
+#include "recorder/compositor/layers/watermark_layer.h"
 #include "renderer/d3d11_renderer.h"
 #include "shared/system/win32/hwnd_utils.h"
 #include "system/state.h"
@@ -179,6 +180,8 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings->fps = std::min(_cachedRecordingSettings->fps, features.maxRecordFps);
         _cachedRecordingSettings->bitrateKbps = std::min(_cachedRecordingSettings->bitrateKbps, features.maxBitrateKbps);
         _cachedRecordingSettings->useLocalRecording = _cachedRecordingSettings->useLocalRecording || !features.allowRecordUpload;
+        _cachedRecordingSettings->watermark.enabled |= features.mandatoryWatermark;
+        _cachedRecordingSettings->watermark.size = std::max(features.watermarkMinSize, _cachedRecordingSettings->watermark.size);
 
         if (_cachedRecordingSettings->useLocalRecording) {
 #ifdef _WIN32
@@ -397,6 +400,13 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
                 _compositor->addLayer(nl);
             }
         }
+    }
+
+    if (_cachedRecordingSettings->watermark.enabled) {
+        LOG_INFO("...Adding watermark layer." << std::endl);
+        _compositor->addLayer(
+            std::make_shared<service::recorder::compositor::layers::WatermarkLayer>(_cachedRecordingSettings->watermark)
+        );
     }
 
     // Mouse cursor layer should be last since it makes more sense that it should be rendered

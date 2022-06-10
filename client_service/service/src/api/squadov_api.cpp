@@ -185,6 +185,8 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     flags.allowRecordUpload = parsedJson["allowRecordUpload"].get<bool>();
     flags.allowWowCombatLogUpload = parsedJson["allowWowCombatLogUpload"].get<bool>();
     flags.disableSentry = parsedJson.value("disableSentry", true);
+    flags.mandatoryWatermark = parsedJson.value("mandatoryWatermark", true);
+    flags.watermarkMinSize = parsedJson.value("watermarkMinSize", 0.1);
     LOG_INFO("Obtain feature flags: " << flags << std::endl);
     
     std::lock_guard guard(_featureMutex);

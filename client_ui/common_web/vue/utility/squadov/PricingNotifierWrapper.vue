@@ -1,10 +1,10 @@
 <template>
     <div class="d-flex align-center full-width">
-        <div class="flex-grow-1">
+        <div :class="shrink ? 'flex-grow-0' : 'flex-grow-1'">
             <slot v-bind:disabled="disabled"></slot>
         </div>
 
-        <div v-if="disabled">
+        <div class="ml-2" v-if="disabled">
             <v-tooltip bottom max-width="400px" :open-delay="250">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
@@ -40,6 +40,9 @@ import { PricingPageId } from '@client/js/pages'
 export default class PricingNotifierWrapper extends Vue {
     @Prop({required: true})
     tier!: EPricingTier
+
+    @Prop({type: Boolean, default: false})
+    shrink!: boolean
 
     get disabled(): boolean {
         return !this.$store.getters.isUserInTier(this.tier)

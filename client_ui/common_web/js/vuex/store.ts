@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import { StoreOptions } from 'vuex'
 import { SquadOVUser } from '@client/js/squadov/user'
-import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings, ProcessAudioRecordSettings, WowDisabledInstance} from '@client/js/system/settings'
+import { SquadOvLocalSettings, loadLocalSettings, saveLocalSettings, SquadOvOverlay, AudioDeviceSettings, ProcessAudioRecordSettings, WowDisabledInstance, SquadOvPositionX, SquadOvPositionY} from '@client/js/system/settings'
 import { createDefaultState } from '@client/js/system/state'
 import { FeatureFlags } from '@client/js/squadov/features'
 import { apiClient, ApiData } from '@client/js/api'
@@ -29,6 +29,8 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             allowWowCombatLogUpload: false,
             enableUserProfiles: false,
             maxBitrateKbps: 0,
+            mandatoryWatermark: true,
+            watermarkMinSize: 0.01,
         },
 /// #if DESKTOP
         settings: null,
@@ -597,7 +599,31 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }
             state.settings.instantClipLengthSeconds = v
             saveLocalSettings(state.settings)
-/// #endif         
+/// #endif
+        },
+        changeWatermarkSettings(state: RootState, params: {enabled?: boolean, size?: number, x?: SquadOvPositionX, y?: SquadOvPositionY}) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+
+            if (params.enabled !== undefined) {
+                state.settings.record.watermark.enabled = params.enabled
+            }
+
+            if (params.size !== undefined) {
+                state.settings.record.watermark.size = params.size
+            }
+
+            if (params.x !== undefined) {
+                state.settings.record.watermark.xPos = params.x
+            }
+
+            if (params.y !== undefined) {
+                state.settings.record.watermark.yPos = params.y
+            }
+            saveLocalSettings(state.settings)
+/// #endif
         }
     },
     actions: {

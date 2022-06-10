@@ -42,6 +42,15 @@ ProcessAudioRecordSettings ProcessAudioRecordSettings::fromJson(const nlohmann::
     return settings;
 }
 
+WatermarkSettings WatermarkSettings::fromJson(const nlohmann::json& obj) {
+    WatermarkSettings settings;
+    settings.enabled = obj.value("enabled", false);
+    settings.size = obj.value("size", 0.1);
+    settings.xPos = static_cast<SquadOvPositionX>(obj.value("xPos", static_cast<int>(SquadOvPositionX::Left)));
+    settings.yPos = static_cast<SquadOvPositionY>(obj.value("yPos", static_cast<int>(SquadOvPositionY::Bottom)));
+    return settings;
+}
+
 RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     RecordingSettings settings;
     settings.resY = obj["resY"].get<int32_t>();
@@ -101,6 +110,10 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
         if (!obj["bandwidthLimiterMultiple"].is_null()) {
             settings.bandwidthLimiterMultiple = obj.value("bandwidthLimiterMultiple", 200);
         }
+    }
+
+    if (obj.find("watermark") != obj.end()) {
+        settings.watermark = WatermarkSettings::fromJson(obj["watermark"]);
     }
     return settings;
 }

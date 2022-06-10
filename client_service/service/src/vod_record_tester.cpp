@@ -19,6 +19,7 @@ extern "C" {
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "shared/system/win32/process.h"
 #include "vod/process.h"
+#include "shared/system/win32/gdi.h"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -40,6 +41,7 @@ int main(int argc, char** argv) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    shared::system::win32::gdi::GdiInitializer gdiInit;
 #endif
 
     shared::system::win32::elevateProcessPriority(ABOVE_NORMAL_PRIORITY_CLASS);

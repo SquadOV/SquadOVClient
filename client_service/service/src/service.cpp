@@ -42,6 +42,7 @@
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
 #include "system/notification_hub.h"
+#include "shared/system/win32/gdi.h"
 
 #include <algorithm>
 #include <boost/program_options.hpp>
@@ -260,6 +261,7 @@ int main(int argc, char** argv) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
+    shared::system::win32::gdi::GdiInitializer gdiInit;
 #endif
     shared::log::Log::initializeGlobalLogger("squadov.log");
 

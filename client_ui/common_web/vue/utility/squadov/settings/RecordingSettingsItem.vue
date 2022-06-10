@@ -8,7 +8,7 @@
                 <v-divider v-if="!mini"></v-divider>
 
                 <v-row>
-                    <v-col cols-sm="12" cols-md="6">
+                    <v-col cols="12" md="6">
                         <div class="d-flex align-center">
                             <span class="text-overline font-weight-bold mr-4">Resolution:</span>
                             <v-select
@@ -100,7 +100,7 @@
                         </div>
                     </v-col>
 
-                    <v-col cols-sm="12" cols-md="3" v-if="!mini">
+                    <v-col cols="12" md="3" v-if="!mini">
                         <v-checkbox
                             class="ma-0"
                             :input-value="$store.state.settings.record.useVideoHw2"
@@ -164,7 +164,7 @@
                         </v-checkbox>
                     </v-col>
 
-                    <v-col cols-sm="12" cols-md="3" v-if="!mini">
+                    <v-col cols="12" md="3" v-if="!mini">
                         <v-checkbox
                             class="ma-0"
                             :input-value="$store.state.settings.record.useVfr4"

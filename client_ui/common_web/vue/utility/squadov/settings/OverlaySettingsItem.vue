@@ -1,6 +1,69 @@
 <template>
     <div>
         <div class="d-flex align-center mt-4">
+            <div class="font-weight-bold text-h6">Watermark</div>
+            <v-spacer></v-spacer>
+
+            <pricing-notifier-wrapper
+                :tier="EPricingTier.Silver"
+                shrink
+            >
+                <v-checkbox
+                    class="mt-0 ml-4"
+                    label="Enabled"
+                    hide-details
+                    :input-value="$store.state.settings.record.watermark.enabled"
+                    @change="$store.commit('changeWatermarkSettings', { enabled: arguments[0]})"
+                    :disabled="!canDisableWatermark"
+                    shrink
+                >
+                </v-checkbox>
+            </pricing-notifier-wrapper>
+        </div>
+        <v-divider class="my-4"></v-divider>
+
+        <v-row>
+            <v-col cols="4">
+                <v-select
+                    label="Size"
+                    :value="$store.state.settings.record.watermark.size"
+                    @input="$store.commit('changeWatermarkSettings', { size: arguments[0]})"
+                    :items="watermarkSizeOptions"
+                    hide-details
+                    outlined
+                    dense
+                >
+                </v-select>
+            </v-col>
+
+            <v-col cols="4">
+                <v-select
+                    label="Horizontal"
+                    :value="$store.state.settings.record.watermark.xPos"
+                    @input="$store.commit('changeWatermarkSettings', { x: arguments[0]})"
+                    :items="watermarkXPositionOptions"
+                    hide-details
+                    outlined
+                    dense
+                >
+                </v-select>
+            </v-col>
+
+            <v-col cols="4">
+                <v-select
+                    label="Vertical"
+                    :value="$store.state.settings.record.watermark.yPos"
+                    @input="$store.commit('changeWatermarkSettings', { y: arguments[0]})"
+                    :items="watermarkYPositionOptions"
+                    hide-details
+                    outlined
+                    dense
+                >
+                </v-select>
+            </v-col>
+        </v-row>
+
+        <div class="d-flex align-center mt-4">
             <div class="font-weight-bold text-h6">Overlays (Experimental)</div>
             <v-spacer></v-spacer>
             <v-btn
@@ -319,7 +382,9 @@ import { ipcRenderer } from 'electron'
 /// #endif
 
 import { allGames, gameToName, SquadOvGames } from '@client/js/squadov/game'
-import { createEmptyOverlay, SquadOvOverlay } from '@client/js/system/settings'
+import { createEmptyOverlay, SquadOvOverlay, SquadOvPositionX, SquadOvPositionY } from '@client/js/system/settings'
+import { EPricingTier } from '@client/js/squadov/pricing'
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
 
 enum PreviewTask {
     Start,
@@ -341,11 +406,18 @@ interface PreviewStatus {
     components: {
         VideoDrawOverlay,
         GameFilterUi,
+        PricingNotifierWrapper,
     }
 })
 export default class OverlaySettingsItem extends Vue {
+    EPricingTier = EPricingTier
+
     get startZIndex(): number {
         return 30 + this.editableLayers.length * 4
+    }
+
+    get canDisableWatermark(): boolean {
+        return this.$store.getters.isUserInTier(EPricingTier.Silver)
     }
 
     previewStarted: boolean = false
@@ -615,6 +687,57 @@ export default class OverlaySettingsItem extends Vue {
             ipcRenderer.removeListener('preview-stream-status', this._previewStatusBind)
         }
 ///#endif
+    }
+
+    get watermarkSizeOptions(): any[] {
+        return [
+            {
+                text: 'Small',
+                value: 0.05
+            },
+            {
+                text: 'Medium',
+                value: 0.1
+            },
+            {
+                text: 'Large',
+                value: 0.15
+            }
+        ]
+    }
+
+    get watermarkXPositionOptions(): any[] {
+        return [
+            {
+                text: 'Left',
+                value: SquadOvPositionX.Left,
+            },
+            {
+                text: 'Center',
+                value: SquadOvPositionX.Center,
+            },
+            {
+                text: 'Right',
+                value: SquadOvPositionX.Right,
+            }
+        ]
+    }
+
+    get watermarkYPositionOptions(): any[] {
+        return [
+            {
+                text: 'Top',
+                value: SquadOvPositionY.Top,
+            },
+            {
+                text: 'Center',
+                value: SquadOvPositionY.Center,
+            },
+            {
+                text: 'Bottom',
+                value: SquadOvPositionY.Bottom,
+            }
+        ]
     }
 }
 

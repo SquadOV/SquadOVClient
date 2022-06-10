@@ -18,6 +18,34 @@ export interface SquadOvOverlay {
     height: number
 }
 
+export enum SquadOvPositionX {
+    Left,
+    Center,
+    Right,
+}
+
+export enum SquadOvPositionY {
+    Top,
+    Center,
+    Bottom,
+}
+
+export interface SquadOvWatermark {
+    enabled: boolean
+    size: number,
+    xPos: SquadOvPositionX,
+    yPos: SquadOvPositionY,
+}
+
+export function createDefaultWatermark(): SquadOvWatermark {
+    return {
+        enabled: true,
+        size: 0.1,
+        xPos: SquadOvPositionX.Left,
+        yPos: SquadOvPositionY.Bottom,
+    }
+}
+
 export function createEmptyOverlay(name: string): SquadOvOverlay {
     return {
         enabled: true,
@@ -102,6 +130,7 @@ export interface SquadOvRecordingSettings {
     needConfirmManualStop: boolean
     useCbr: boolean
     useNativeAspectRatio: boolean
+    watermark: SquadOvWatermark
 }
 
 export interface SquadOvKeybindSettings {
@@ -378,6 +407,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 needConfirmManualStop: true,
                 useCbr: false,
                 useNativeAspectRatio: false,
+                watermark: createDefaultWatermark(),
             }
         case BaselineLevel.Medium:
             record = {
@@ -427,6 +457,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 needConfirmManualStop: true,
                 useCbr: false,
                 useNativeAspectRatio: false,
+                watermark: createDefaultWatermark(),
             }
         case BaselineLevel.High:
             record = {
@@ -476,6 +507,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
                 needConfirmManualStop: true,
                 useCbr: false,
                 useNativeAspectRatio: false,
+                watermark: createDefaultWatermark(),
             }
     }
 
@@ -569,6 +601,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
             needConfirmManualStop: true,
             useCbr: false,
             useNativeAspectRatio: false,
+            watermark: createDefaultWatermark(),
         },
         keybinds2: {
             pushToTalk: {
@@ -876,6 +909,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.bandwidthLimiterMultiple === undefined) {
             parsedData.record.bandwidthLimiterMultiple = 200
+        }
+
+        if (parsedData.record.watermark === undefined) {
+            parsedData.record.watermark = createDefaultWatermark()
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)
