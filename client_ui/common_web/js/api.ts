@@ -1849,6 +1849,10 @@ class ApiClient {
         })
     }
 
+    manageSubscription(): Promise<ApiData<string>> {
+        return axios.get(`v1/users/me/subscription/manage`, this.createWebAxiosConfig())
+    }
+
     getUserTier(): Promise<ApiData<EPricingTier>> {
         return axios.get(`v1/users/me/subscription/tier`, this.createWebAxiosConfig())
     }

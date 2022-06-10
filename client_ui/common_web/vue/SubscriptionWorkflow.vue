@@ -27,7 +27,7 @@
             :timeout="5000"
             color="error"
         >
-            Failed to redirect you to the checkout page. Oops? Try again later (please).
+            Failed to redirect you to the right location. Oops? Try again later (please).
         </v-snackbar>
     </div>
 </template>

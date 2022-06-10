@@ -151,6 +151,30 @@
             <v-tab-item>
                 <in-game-settings-item></in-game-settings-item>
             </v-tab-item>
+
+            <v-tab @click="goToSubManagement" ripple>
+                <v-icon left>
+                    mdi-currency-usd
+                </v-icon>
+                Subscription
+            </v-tab>
+
+            <v-tab-item class="full-tab-height">
+                <div class="d-flex justify-center flex-column align-center full-width full-parent-height">
+                    <v-progress-circular indeterminate size="64" v-if="manageInProgress"></v-progress-circular>
+                    <template v-else-if="manageFail">
+                        <div class="text-h4 font-weight-bold">Oops, either you are not subscribed or you have never subscribed in the past.</div>
+                        <v-btn
+                            exact
+                            :to="pricingTo"
+                            color="success"
+                            class="mt-4"
+                        >
+                            Check out SquadOV Pro
+                        </v-btn>
+                    </template>
+                </div>
+            </v-tab-item>
         </v-tabs>
     </v-container>
 </template>
@@ -168,6 +192,8 @@ import LinkedAccountsSettingsItem from '@client/vue/utility/squadov/settings/Lin
 import PerGameSettingsItem from '@client/vue/utility/squadov/settings/PerGameSettingsItem.vue'
 import OverlaySettingsItem from '@client/vue/utility/squadov/settings/OverlaySettingsItem.vue'
 import InGameSettingsItem from '@client/vue/utility/squadov/settings/InGameSettingsItem.vue'
+import { apiClient, ApiData } from '@client/js/api'
+import { PricingPageId } from '@client/js/pages'
 
 @Component({
     components: {
@@ -186,6 +212,14 @@ export default class AppSettingsPage extends Vue {
     inputTab!: number | undefined
 
     tab: number = 0
+    manageFail: boolean = false
+    manageInProgress: boolean = false
+
+    get pricingTo(): any {
+        return {
+            name: PricingPageId
+        }
+    }
 
     @Watch('inputTab')
     syncFromInput() {
@@ -196,6 +230,18 @@ export default class AppSettingsPage extends Vue {
 
     mounted() {
         this.syncFromInput()
+    }
+
+    goToSubManagement() {
+        this.manageInProgress = true
+        apiClient.manageSubscription().then((resp: ApiData<string>) => {
+            window.location.href = resp.data
+        }).catch((err: any) => {
+            console.log('Failed to manage subscription: ', err)
+            this.manageFail = true
+        }).finally(() => {
+            this.manageInProgress = false
+        })
     }
 
     get useRecordingSettings(): boolean{
@@ -240,3 +286,15 @@ export default class AppSettingsPage extends Vue {
 }
 
 </script>
+
+<style scoped>
+
+>>>.v-window__container {
+    height: 100%;
+}
+
+>>>.full-tab-height {
+    height: 100%;
+}
+
+</style>
