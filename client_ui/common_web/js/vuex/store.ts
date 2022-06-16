@@ -31,6 +31,10 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             maxBitrateKbps: 0,
             mandatoryWatermark: true,
             watermarkMinSize: 0.01,
+            vodPriority: 5,
+            earlyAccess: false,
+            vodRetention: 608400,
+            maxSquadSize: 20,
         },
 /// #if DESKTOP
         settings: null,
@@ -624,6 +628,21 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }
             saveLocalSettings(state.settings)
 /// #endif
+        },
+        sanityCheckSettings(state: RootState) {
+            if (!state.settings) {
+                return
+            }
+
+            console.log('Doing Settings Sanity Check')
+            state.settings.record.resY = Math.min(state.settings.record.resY, state.features.maxRecordPixelY)
+            state.settings.record.fps = Math.min(state.settings.record.fps, state.features.maxRecordFps)
+            state.settings.record.bitrateKbps = Math.min(state.settings.record.bitrateKbps, state.features.maxBitrateKbps)
+            console.log("new bitrate: ", state.settings.record.bitrateKbps, state.features.maxBitrateKbps)
+
+            state.settings.record.watermark.enabled = state.settings.record.watermark.enabled || state.features.mandatoryWatermark
+            state.settings.record.watermark.size = Math.max(state.settings.record.watermark.size, state.features.watermarkMinSize)
+            saveLocalSettings(state.settings)
         }
     },
     actions: {
@@ -639,6 +658,10 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             }
             apiClient.getFeatureFlags(context.state.currentUser.id).then((resp: ApiData<FeatureFlags>) => {
                 context.commit('setFeatureFlags', resp.data)
+
+                // Make sure our settings conform to the feature flags.
+                context.commit('sanityCheckSettings')
+
             }).catch((err: any) => {
                 console.error('Failed to load feature flags: ', err)
             })

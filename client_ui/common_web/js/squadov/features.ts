@@ -7,6 +7,10 @@ export interface FeatureFlags {
     maxBitrateKbps: number
     mandatoryWatermark: boolean
     watermarkMinSize: number
+    vodPriority: number
+    earlyAccess: boolean
+    vodRetention: number | null
+    maxSquadSize: number | null
 }
 
 export interface GlobalFlags {
