@@ -95,6 +95,16 @@
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
+
+                    <div>
+                        <pricing-notifier-wrapper
+                            v-if="localMembership.squad.maxMembers !== null"
+                            :tier="EPricingTier.Gold"
+                            shrink
+                        >
+                            Max Members: {{ localMembership.squad.maxMembers }}
+                        </pricing-notifier-wrapper>
+                    </div>
                 </div>
                 <v-divider class="my-4"></v-divider>
 
@@ -260,6 +270,7 @@ import {
     SquadInvite,
     SquadRole
 } from '@client/js/squadov/squad'
+import { EPricingTier } from '@client/js/squadov/pricing'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
@@ -267,6 +278,7 @@ import SquadInviteCreateCard from '@client/vue/utility/squads/SquadInviteCreateC
 import SquadSharingSettingsDisplay from '@client/vue/utility/squads/SquadSharingSettingsDisplay.vue'
 import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 import ClipLibrary from '@client/vue/utility/vods/ClipLibrary.vue'
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
 import * as pi from '@client/js/pages'
 
 @Component({
@@ -278,9 +290,12 @@ import * as pi from '@client/js/pages'
         SquadSharingSettingsDisplay,
         RecentRecordedMatches,
         ClipLibrary,
+        PricingNotifierWrapper,
     }
 })
 export default class SingleSquadPage extends Vue {
+    EPricingTier = EPricingTier
+
     @Prop({required: true})
     squadId!: number
     tab: number = 0

@@ -4,7 +4,7 @@
             <slot v-bind:disabled="disabled"></slot>
         </div>
 
-        <div class="ml-2" v-if="disabled">
+        <div class="ml-2" v-if="disabled || forceShow">
             <v-tooltip bottom max-width="400px" :open-delay="250">
                 <template v-slot:activator="{ on, attrs }">
                     <v-btn
@@ -22,7 +22,7 @@
                     </v-btn>
                 </template>
 
-                This feature requires a {{ tier }} tier subscription to SquadOV. Check out SquadOV Pro today!
+                <span v-if="!forceShow">This feature requires a {{ tier }} tier subscription to SquadOV.</span> Check out SquadOV Pro today!
             </v-tooltip>
         </div>
     </div>
@@ -43,6 +43,9 @@ export default class PricingNotifierWrapper extends Vue {
 
     @Prop({type: Boolean, default: false})
     shrink!: boolean
+
+    @Prop({type: Boolean, default: false})
+    forceShow!: boolean
 
     get disabled(): boolean {
         return !this.$store.getters.isUserInTier(this.tier)

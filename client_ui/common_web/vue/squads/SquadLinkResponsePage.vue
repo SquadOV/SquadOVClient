@@ -43,7 +43,7 @@
             :timeout="5000"
             color="error"
         >
-            Failed to join the squad. You may be using an expired invite link. Double check and try again.
+            Failed to join the squad. You may be using an expired invite link or the squad may be full. Double check and try again.
         </v-snackbar>
     </div>
 </template>

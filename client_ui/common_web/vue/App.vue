@@ -12,7 +12,7 @@
             ></app-pop-ups>
         </template>
         
-        <keep-alive :max="3">
+        <keep-alive :max="3" :exclude="['Pricing', 'SubscriptionWorkflow']">
             <router-view :key="key"></router-view>
         </keep-alive>
         <!-- Manual URL display dialog -->

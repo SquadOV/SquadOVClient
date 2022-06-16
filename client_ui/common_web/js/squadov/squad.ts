@@ -7,6 +7,7 @@ export interface Squad {
     creationTime: Date
     memberCount: number
     pendingInviteCount: number
+    maxMembers: number | null
 }
 
 export function cleanSquadFromJson(s : Squad) : Squad {

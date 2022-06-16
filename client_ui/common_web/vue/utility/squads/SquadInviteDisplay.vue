@@ -33,6 +33,14 @@
                         </div>
                     </div>
                 </div>
+
+                 <v-snackbar
+                    v-model="error"
+                    :timeout="5000"
+                    color="error"
+                >
+                    Failed to join the squad - the squad may be full. Double check and try again.
+                </v-snackbar>
             </v-card>
         </template>
     </loading-container>
@@ -58,6 +66,7 @@ export default class SquadInviteDisplay extends Vue {
 
     relevantSquad: Squad | null = null
     pending: boolean = false
+    error: boolean = false
 
     @Watch('invite')
     refreshData() {
@@ -78,6 +87,7 @@ export default class SquadInviteDisplay extends Vue {
             this.$emit('clear-invite')
         }).catch((err: any) => {
             console.error('Failed to accept invite: ', err)
+            this.error = true
         }).finally(() => {
             this.pending = false
         })

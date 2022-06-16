@@ -14,7 +14,7 @@
             :timeout="5000"
             color="error"
         >
-            Something went wrong responding to this squad invite. If you are currently logged in, double check to ensure that you are logged in on the correct account. Otherwise, please submit a bug report and try refreshing the page!
+            Something went wrong responding to this squad invite. If you are currently logged in, double check to ensure that you are logged in on the correct account. Otherwise, the squad you're trying to join may be full.
         </v-snackbar>
     </div>
 </template>
