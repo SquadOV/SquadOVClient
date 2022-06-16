@@ -953,7 +953,7 @@ export default class RecordingSettingsItem extends Vue {
 
     get vodDelayRules(): any[] {
         return [
-            (value: string) => !!value || 'Required.',
+            (value: string | number) => !!value || value === 0 || 'Required.',
             (value: string) => !isNaN(parseInt(value)) || 'Must be a number',
         ]
     }
