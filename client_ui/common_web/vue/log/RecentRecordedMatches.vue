@@ -294,7 +294,7 @@ export default class RecentRecordedMatches extends Vue {
         }).filter((ele: RecentMatch) => {
             if (this.inSelectMode) {
                 return ele.povs.some((ele: RecentMatchPov) => {
-                    return ele.userId === this.$store.state.currentUser.id
+                    return ele.userId === this.$store.state.currentUser?.id
                 })
             } else {
                 return true
@@ -469,7 +469,7 @@ export default class RecentRecordedMatches extends Vue {
     forcePovSelectionToSelfIfPossible(data: RecentMatch[]) {
         for (let d of data) {
             let pov = d.povs.find((ele: RecentMatchPov) => {
-                return ele.userId === this.$store.state.currentUser.id
+                return ele.userId === this.$store.state.currentUser?.id
             })
 
             if (!pov) {
