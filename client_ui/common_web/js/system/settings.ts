@@ -1,7 +1,6 @@
 /// #if DESKTOP
 import fs from 'fs'
 import path, { parse } from 'path'
-import { detectComputerBaselineLevel, BaselineLevel, baselineToString } from '@client/js/system/baseline'
 import { ipcRenderer } from 'electron'
 import { IpcResponse } from '@client/js/system/ipc'
 import { allGames, SquadOvGames, SquadOvWowRelease } from '@client/js/squadov/game'
@@ -352,163 +351,56 @@ export function saveLocalSettings(s: SquadOvLocalSettings, immediate: boolean = 
 }
 
 export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
-/// #if DESKTOP
     console.log('Generating Default Settings...')
-    let baseline = await detectComputerBaselineLevel()
-    console.log('Detect Baseline: ', baselineToString(baseline))
 
-    let record: SquadOvRecordingSettings
-    switch (baseline) {
-        case BaselineLevel.Low:
-            record = {
-                resY: 720,
-                fps: 30,
-                bitrateKbps: 6000,
-                bandwidthLimiterMultiple: 200,
-                useVideoHw2: true,
-                useHwEncoder: true,
-                useVfr4: true,
-                useWGC2: true,
-                recordMouse2: false,
-                outputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: false,
-                    }
-                ],
-                inputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: true,
-                    }
-                ],
-                usePushToTalk: false,
-                useWASAPIRecording3: true,
-                usePerProcessRecording: false,
-                perProcessRecordingOsCheck: false,
-                recordGameAudio: false,
-                gameAudioVolume: 1.0,
-                processesToRecord: [],
-                useLocalRecording: false,
-                localRecordingLocation: getDefaultRecordingLocation(),
-                maxLocalRecordingSizeGb: 100,
-                vodEndDelaySeconds: 0,
-                overlays: createDefaultOverlaySettings(),
-                useAudioDriftCompensation: true,
-                useVoiceBasicNoiseFilter: false,
-                voiceFilterThresholdDb: -60,
-                useVoiceSpeechNoiseReduction: false,
-                needConfirmManualStop: true,
-                useCbr: false,
-                useNativeAspectRatio: false,
-                watermark: createDefaultWatermark(),
+    let record: SquadOvRecordingSettings = {
+        resY: 720,
+        fps: 60,
+        bitrateKbps: 6000,
+        bandwidthLimiterMultiple: 200,
+        useVideoHw2: true,
+        useHwEncoder: true,
+        useVfr4: true,
+        useWGC2: true,
+        recordMouse2: false,
+        outputDevices: [
+            {
+                device: 'Default Device',
+                id: '',
+                volume: 1.0,
+                mono: false,
+                voice: false,
             }
-        case BaselineLevel.Medium:
-            record = {
-                resY: 720,
-                fps: 60,
-                bitrateKbps: 6000,
-                bandwidthLimiterMultiple: 200,
-                useVideoHw2: true,
-                useHwEncoder: true,
-                useVfr4: true,
-                useWGC2: true,
-                recordMouse2: false,
-                outputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: false,
-                    }
-                ],
-                inputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: true,
-                    }
-                ],
-                usePushToTalk: false,
-                useWASAPIRecording3: true,
-                usePerProcessRecording: false,
-                perProcessRecordingOsCheck: false,
-                recordGameAudio: false,
-                gameAudioVolume: 1.0,
-                processesToRecord: [],
-                useLocalRecording: false,
-                localRecordingLocation: getDefaultRecordingLocation(),
-                maxLocalRecordingSizeGb: 100,
-                vodEndDelaySeconds: 0,
-                overlays: createDefaultOverlaySettings(),
-                useAudioDriftCompensation: true,
-                useVoiceBasicNoiseFilter: false,
-                voiceFilterThresholdDb: -60,
-                useVoiceSpeechNoiseReduction: false,
-                needConfirmManualStop: true,
-                useCbr: false,
-                useNativeAspectRatio: false,
-                watermark: createDefaultWatermark(),
+        ],
+        inputDevices: [
+            {
+                device: 'Default Device',
+                id: '',
+                volume: 1.0,
+                mono: false,
+                voice: true,
             }
-        case BaselineLevel.High:
-            record = {
-                resY: 1080,
-                fps: 60,
-                bitrateKbps: 6000,
-                bandwidthLimiterMultiple: 200,
-                useVideoHw2: true,
-                useHwEncoder: true,
-                useVfr4: true,
-                useWGC2: true,
-                recordMouse2: false,
-                outputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: false,
-                    }
-                ],
-                inputDevices: [
-                    {
-                        device: 'Default Device',
-                        id: '',
-                        volume: 1.0,
-                        mono: false,
-                        voice: true,
-                    }
-                ],
-                usePushToTalk: false,
-                useWASAPIRecording3: true,
-                usePerProcessRecording: false,
-                perProcessRecordingOsCheck: false,
-                recordGameAudio: false,
-                gameAudioVolume: 1.0,
-                processesToRecord: [],
-                useLocalRecording: false,
-                localRecordingLocation: getDefaultRecordingLocation(),
-                maxLocalRecordingSizeGb: 100,
-                vodEndDelaySeconds: 0,
-                overlays: createDefaultOverlaySettings(),
-                useAudioDriftCompensation: true,
-                useVoiceBasicNoiseFilter: false,
-                voiceFilterThresholdDb: -60,
-                useVoiceSpeechNoiseReduction: false,
-                needConfirmManualStop: true,
-                useCbr: false,
-                useNativeAspectRatio: false,
-                watermark: createDefaultWatermark(),
-            }
+        ],
+        usePushToTalk: false,
+        useWASAPIRecording3: true,
+        usePerProcessRecording: false,
+        perProcessRecordingOsCheck: false,
+        recordGameAudio: false,
+        gameAudioVolume: 1.0,
+        processesToRecord: [],
+        useLocalRecording: false,
+        localRecordingLocation: getDefaultRecordingLocation(),
+        maxLocalRecordingSizeGb: 100,
+        vodEndDelaySeconds: 0,
+        overlays: createDefaultOverlaySettings(),
+        useAudioDriftCompensation: true,
+        useVoiceBasicNoiseFilter: false,
+        voiceFilterThresholdDb: -60,
+        useVoiceSpeechNoiseReduction: false,
+        needConfirmManualStop: true,
+        useCbr: false,
+        useNativeAspectRatio: false,
+        watermark: createDefaultWatermark(),
     }
 
     return {
@@ -552,97 +444,6 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         useHwAccel: true,
         instantClipLengthSeconds: 15,
     }
-/// #else
-    return {
-        record: {
-            resY: 1080,
-            fps: 60,
-            bitrateKbps: 6000,
-            bandwidthLimiterMultiple: 200,
-            useVideoHw2: true,
-            useHwEncoder: true,
-            useVfr4: true,
-            useWGC2: true,
-            recordMouse2: false,
-            outputDevices: [
-                {
-                    device: 'Default Device',
-                    id: '',
-                    volume: 1.0,
-                    mono: false,
-                    voice: false,
-                }
-            ],
-            inputDevices: [
-                {
-                    device: 'Default Device',
-                    id: '',
-                    volume: 1.0,
-                    mono: false,
-                    voice: true,
-                }
-            ],
-            usePushToTalk: false,
-            useWASAPIRecording3: true,
-            usePerProcessRecording: false,
-            perProcessRecordingOsCheck: false,
-            recordGameAudio: false,
-            gameAudioVolume: 1.0,
-            processesToRecord: [],
-            useLocalRecording: false,
-            localRecordingLocation: getDefaultRecordingLocation(),
-            maxLocalRecordingSizeGb: 100,
-            vodEndDelaySeconds: 0,
-            overlays: createDefaultOverlaySettings(),
-            useAudioDriftCompensation: true,
-            useVoiceBasicNoiseFilter: false,
-            voiceFilterThresholdDb: -60,
-            useVoiceSpeechNoiseReduction: false,
-            needConfirmManualStop: true,
-            useCbr: false,
-            useNativeAspectRatio: false,
-            watermark: createDefaultWatermark(),
-        },
-        keybinds2: {
-            pushToTalk: {
-                keys: [],
-                mustHold: false,
-                holdSeconds: 0,
-            },
-            pushToTalk2: {
-                keys: [],
-                mustHold: false,
-                holdSeconds: 0,
-            },
-            bookmark: {
-                keys: [120],
-                mustHold: true,
-                holdSeconds: 1,
-            },
-            clip2: {
-                keys: [18, 83],
-                mustHold: true,
-                holdSeconds: 1,
-            },
-        },
-        playback: {
-            smallStepSize: 5000,
-            largeStepSize: 10000,
-        },
-        minimizeToTray: true,
-        minimizeOnClose: true,
-        runOnStartup: true,
-        ranSpeedCheck: false,
-        speedCheckResultMbps: 0,
-        anonymousAnalytics: true,
-        hidePostGamePopupUntil: null,
-        disablePostGamePopup: false,
-        disabledGames: [],
-        games: createEmptyPerGameSettings(),
-        useHwAccel: true,
-        instantClipLengthSeconds: 15,
-    }
-/// #endif
 }
 
 export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {

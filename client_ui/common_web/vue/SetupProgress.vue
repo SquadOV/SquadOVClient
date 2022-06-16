@@ -404,13 +404,15 @@ export default class SetupProgress extends Vue {
             this.$on('next-report-step', () => {
                 if (this.hwPreference == 0) {
                     // In-game Performance
+                    this.$store.commit('changeUseHwEncoder', false)
                     this.$store.commit('changeUseVideoHw', false)
                     this.$store.commit('changeRecordSettingRes', 720)
                     this.$store.commit('changeRecordSettingFps', 30)
                 } else if (this.hwPreference == 1) {
                     // Video-quality
+                    this.$store.commit('changeUseHwEncoder', true)
                     this.$store.commit('changeUseVideoHw', true)
-                    this.$store.commit('changeRecordSettingRes', 1080)
+                    this.$store.commit('changeRecordSettingRes', 720)
                     this.$store.commit('changeRecordSettingFps', 60)
                 }
                 this.currentStepNum += 1
