@@ -8,6 +8,23 @@ export interface SquadOVUser {
     verified: boolean
     uuid: string
     supportPriority: string
+    lastTrialUsage: Date | null
+}
+
+export function canUserTrial(u: SquadOVUser): boolean {
+    if (!u.lastTrialUsage) {
+        return true
+    }
+
+    let diff = new Date().getTime() - u.lastTrialUsage.getTime()
+    return ((diff / 86400) >= 365)
+}
+
+export function cleanSquadOVUserFromJson(u: SquadOVUser): SquadOVUser {
+    if (!!u.lastTrialUsage) {
+        u.lastTrialUsage = new Date(u.lastTrialUsage)
+    }
+    return u
 }
 
 export interface SquadOVUserHandle {
@@ -27,7 +44,10 @@ export function cleanSquadOvHeartbeatResponse(s: SquadOvHeartbeatResponse) : Squ
 }
 
 export function getSquadOVUser(id : number) : Promise<ApiData<SquadOVUser>> {
-    return axios.get(`v1/users/${id}/profile`, apiClient.createWebAxiosConfig())
+    return axios.get(`v1/users/${id}/profile`, apiClient.createWebAxiosConfig()).then((resp: ApiData<SquadOVUser>) => {
+        cleanSquadOVUserFromJson(resp.data)
+        return resp
+    })
 }
 
 export interface UserProfileBasic {

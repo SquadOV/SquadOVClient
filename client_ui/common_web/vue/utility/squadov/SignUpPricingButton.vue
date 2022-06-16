@@ -3,7 +3,7 @@
         :color="highlight ? 'success' : 'primary'"
         :to="redirectTo"
     >
-        Sign Up
+        {{ text }}
     </v-btn>
 </template>
 
@@ -14,6 +14,7 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { EPricingTier } from '@client/js/squadov/pricing'
 import { RegisterPageId, SubscriptionPageId } from '@client/js/pages'
+import { canUserTrial } from '@client/js/squadov/user'
 
 
 @Component
@@ -26,6 +27,16 @@ export default class SignUpPricingButton extends Vue {
 
     @Prop({type: Boolean, default: false})
     annual!: boolean
+
+    get text(): string {
+        if (this.tier == EPricingTier.Basic) {
+            return 'Register'
+        } else if (!!this.$store.state.currentUser && canUserTrial(this.$store.state.currentUser)) {
+            return 'Free Trial'
+        } else {
+            return 'Sign Up'
+        }
+    }
 
     get redirectTo() : any {
         let subTo = {
