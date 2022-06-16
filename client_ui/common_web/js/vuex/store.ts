@@ -638,7 +638,6 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.record.resY = Math.min(state.settings.record.resY, state.features.maxRecordPixelY)
             state.settings.record.fps = Math.min(state.settings.record.fps, state.features.maxRecordFps)
             state.settings.record.bitrateKbps = Math.min(state.settings.record.bitrateKbps, state.features.maxBitrateKbps)
-            console.log("new bitrate: ", state.settings.record.bitrateKbps, state.features.maxBitrateKbps)
 
             state.settings.record.watermark.enabled = state.settings.record.watermark.enabled || state.features.mandatoryWatermark
             state.settings.record.watermark.size = Math.max(state.settings.record.watermark.size, state.features.watermarkMinSize)
