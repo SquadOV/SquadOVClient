@@ -639,8 +639,13 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             state.settings.record.fps = Math.min(state.settings.record.fps, state.features.maxRecordFps)
             state.settings.record.bitrateKbps = Math.min(state.settings.record.bitrateKbps, state.features.maxBitrateKbps)
 
-            state.settings.record.watermark.enabled = state.settings.record.watermark.enabled || state.features.mandatoryWatermark
-            state.settings.record.watermark.size = Math.max(state.settings.record.watermark.size, state.features.watermarkMinSize)
+            if (state.features.mandatoryWatermark !== undefined) {
+                state.settings.record.watermark.enabled = state.settings.record.watermark.enabled || state.features.mandatoryWatermark
+            }
+            
+            if (state.features.watermarkMinSize !== undefined) {
+                state.settings.record.watermark.size = Math.max(state.settings.record.watermark.size, state.features.watermarkMinSize)
+            }
             saveLocalSettings(state.settings)
         }
     },
