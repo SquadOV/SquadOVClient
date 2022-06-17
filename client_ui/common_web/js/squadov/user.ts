@@ -17,7 +17,7 @@ export function canUserTrial(u: SquadOVUser): boolean {
     }
 
     let diff = new Date().getTime() - u.lastTrialUsage.getTime()
-    return ((diff / 86400) >= 365)
+    return ((diff / 86400000) >= 365)
 }
 
 export function cleanSquadOVUserFromJson(u: SquadOVUser): SquadOVUser {
