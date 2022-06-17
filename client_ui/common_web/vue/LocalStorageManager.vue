@@ -326,7 +326,6 @@ export default class LocalStorageManager extends Vue {
             return
         }
 
-        console.log('Sync match: ', this.localVods)
         for (let vod of this.localVods) {
             if (vod in this.vodToMatch) {
                 continue

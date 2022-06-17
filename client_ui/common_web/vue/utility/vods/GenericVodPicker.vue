@@ -60,7 +60,7 @@
                     <!-- upload button -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{on, attrs}">
-                            <v-btn color="primary" icon v-if="canUpload" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
+                            <v-btn color="primary" icon v-if="canUpload" :disabled="isVodExpired" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
                                 <v-icon>
                                     mdi-upload
                                 </v-icon>
@@ -176,7 +176,17 @@
             </v-snackbar>
         </div>
 
-        <div class="d-flex align-center">
+        <div class="d-flex align-center text-subtitle-2 font-weight-bold ml-1" v-if="!!value.expirationTime">
+            <pricing-notifier-wrapper
+                :tier="EPricingTier.Silver"
+                shrink
+            >
+                <span v-if="isVodExpired">This VOD is past SquadOV's cloud retention date: {{ standardFormatTime(value.expirationTime) }}.</span>
+                <span v-else>Max VOD Cloud Retention Date: {{ standardFormatTime(value.expirationTime) }}.</span>
+            </pricing-notifier-wrapper>
+        </div>
+
+        <div class="d-flex align-center mt-2">
             <v-btn
                 v-if="!!vodProfileHandle"
                 color="primary"
@@ -226,6 +236,10 @@ import { IpcResponse } from '@client/js/system/ipc'
 import { UserProfileHandle } from '@client/js/squadov/user'
 /// #endif
 
+import { standardFormatTime } from '@client/js/time'
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
+import { EPricingTier } from '@client/js/squadov/pricing'
+
 @Component({
     components: {
         VodFavoriteButton,
@@ -233,9 +247,13 @@ import { UserProfileHandle } from '@client/js/squadov/user'
         VodDownloadButton,
         VodDeleteButton,
         BulkTagDisplay,
+        PricingNotifierWrapper,
     }
 })
 export default class GenericVodPicker extends mixins(CommonComponent) {
+    standardFormatTime = standardFormatTime
+    EPricingTier = EPricingTier
+
     @Prop({required: true})
     value!: VodAssociation | null
 
@@ -274,6 +292,18 @@ export default class GenericVodPicker extends mixins(CommonComponent) {
                 profileSlug: this.vodProfileHandle?.slug
             }
         }
+    }
+
+    get isVodExpired(): boolean {
+        if (!this.value) {
+            return true
+        }
+
+        if (!this.value.expirationTime) {
+            return false
+        }
+
+        return new Date() > this.value.expirationTime
     }
 
     @Watch('value')

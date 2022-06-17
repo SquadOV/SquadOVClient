@@ -9,6 +9,7 @@ export interface VodAssociation {
     rawContainerFormat: string
     isClip: boolean
     isLocal: boolean
+    expirationTime: Date | null
 }
 
 export interface VodTag {
@@ -133,6 +134,10 @@ export function getVideoQualityTrack(v : VodManifest, quality : string) : VodTra
 export function cleanVodAssocationData(v : VodAssociation) : VodAssociation {
     v.startTime = new Date(v.startTime)
     v.endTime = new Date(v.endTime)
+
+    if (!!v.expirationTime) {
+        v.expirationTime = new Date(v.expirationTime)
+    }
     return v
 }
 

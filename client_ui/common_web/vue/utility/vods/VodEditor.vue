@@ -614,6 +614,7 @@ export default class VodEditor extends mixins(CommonComponent) {
                 rawContainerFormat: 'mp4',
                 isClip: true,
                 isLocal: false,
+                expirationTime: null,
             }, this.metadata, this.clipTitle, this.clipDescription, this.game).then((resp: ApiData<string>) => {
                 this.clipUuid = resp.data
             }).catch((err: any) => {
