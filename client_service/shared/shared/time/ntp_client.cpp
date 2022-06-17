@@ -91,9 +91,10 @@ NTPClient::~NTPClient() {
     }
 }
 
-void NTPClient::initialize() {
-    LOG_INFO("Initializing NTP client..." << std::endl);
+void NTPClient::initialize(int64_t initialOffset) {
+    LOG_INFO("Initializing NTP client...: " << initialOffset << std::endl);
     _running = true;
+    _offsetMs = initialOffset;
     // Start a thread that refreshes the offset every once in awhile.
     _tickThread = std::thread([this](){
         const auto interval = std::chrono::seconds(NTP_TICK_INTERVAL_SECONDS);

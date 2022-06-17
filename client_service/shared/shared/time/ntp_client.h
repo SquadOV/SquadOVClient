@@ -13,7 +13,7 @@ public:
     static NTPClient* singleton();
     ~NTPClient();
 
-    void initialize();
+    void initialize(int64_t initialOffset);
     void enable(bool enabled, bool doTick = false);
 
     shared::TimePoint now() const;

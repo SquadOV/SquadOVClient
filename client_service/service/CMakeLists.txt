@@ -203,9 +203,6 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         civetweb-cpp
         ZLIB::ZLIB
         WIL::WIL
-        aws-cpp-sdk-core
-        aws-cpp-sdk-cognito-identity
-        aws-cpp-sdk-identity-management
         Microsoft::DirectXMath
         Microsoft::DirectXTK
         Microsoft::DirectXTex
@@ -221,12 +218,17 @@ MACRO(CREATE_SERVICE_EXECUTABLE EXE_NAME CPP_NAME MANIFEST_FILE)
         ${FFMPEG_LIBRARIES}
         ${OPENH264_LIBRARIES}
         ${CARES_LIBRARY}
+        aws-cpp-sdk-core
+        aws-cpp-sdk-cognito-identity
+        aws-cpp-sdk-identity-management
     )
 
     if(WIN32)
         add_dependencies(${EXE_NAME} libwgc)
 
-        file(GLOB PREBUILT_DLLS "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll")
+        file(GLOB PREBUILT_DLLS
+            "${CMAKE_SOURCE_DIR}/prebuilt/*/bin/*.dll"
+        )
         add_custom_command(
             TARGET ${EXE_NAME}
             POST_BUILD

@@ -193,6 +193,21 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     _features = flags;
 }
 
+shared::TimePoint SquadovApi::getServerTime() const {
+    std::ostringstream path;
+    path << "/v1/util/time";
+
+    const auto result = _webClient->get(path.str());
+
+    if (result->status != 200) {
+        LOG_ERROR("Failed to get SquadOV server time: " << result->status);
+        return shared::nowUtc();
+    }
+
+    const auto parsedJson = nlohmann::json::parse(result->body);
+    return shared::unixMsToTime(parsedJson.get<int64_t>());
+}
+
 shared::squadov::SquadOVUser SquadovApi::getCurrentUserApi() const {
     const std::string path = "/v1/users/me/profile";
 

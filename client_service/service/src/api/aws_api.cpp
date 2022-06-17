@@ -112,6 +112,7 @@ void ManualCognitoIdentityProvider::PersistLogins(const Aws::Map<Aws::String, Aw
 
 AwsAuthenticatedApi* getAwsApi() {
     static auto singleton = std::make_unique<AwsAuthenticatedApi>();
+    Aws::Utils::DateTime::SetProvider(std::make_shared<AwsTimeProvider>());
     return singleton.get();
 }
 

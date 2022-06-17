@@ -277,10 +277,6 @@ int main(int argc, char** argv) {
         LOG_WARNING("...Failed to setup date library timezones [THINGS MAY BREAK ELSEWHERE???]: " << ex.what() << std::endl);
     }
 
-    // NTP can't be init before the logger since we log stuff inside the NTP client.
-    shared::time::NTPClient::singleton()->enable(true);
-    shared::time::NTPClient::singleton()->initialize();
-
     LOG_INFO("EXE PATH: " << shared::filesystem::getCurrentExeFolder() << std::endl);
 
     po::options_description desc("Options");
@@ -350,23 +346,6 @@ int main(int argc, char** argv) {
     LOG_INFO("Port Audio Set Debug Logging..." << std::endl);
     PaUtil_SetDebugPrintFunction(portaudioLogCallback);
 
-    // Sanity check the timezone in the logs...
-    {
-        const auto gmt = shared::nowUtc();
-        const auto local = date::make_zoned(date::current_zone(), gmt);
-        const auto checkGmt = date::make_zoned(
-            date::current_zone(),
-            shared::strToLocalTime(
-                shared::localTimeToString(local.get_local_time()),
-                "%Y-%m-%d %T"
-            )
-        ).get_sys_time();
-        LOG_INFO("Current TimeZone: " << date::current_zone()->name() << std::endl);
-        LOG_INFO("\tGMT: " << shared::timeToStr(gmt) << std::endl);
-        LOG_INFO("\tLocal: " << shared::localTimeToString(local.get_local_time()) << std::endl);
-        LOG_INFO("\tCheck GMT: " << shared::timeToStr(checkGmt) << std::endl);
-    }
-
     LOG_INFO("Set Locale..." << std::endl);
     std::setlocale(LC_ALL, "en_US.utf8");
 
@@ -404,6 +383,31 @@ int main(int argc, char** argv) {
         // Maybe use a specific failure message?
         zeroMqServerClient.sendMessage(service::zeromq::ZEROMQ_READY_TOPIC, "");
         std::exit(1);
+    }
+
+    // Initialize NTP client based on a time we pull from the API server.
+    // This way, we can recover from situations where the user's clock is WTF wrong.
+    const auto serverNow = service::api::getGlobalApi()->getServerTime();
+    const auto clientNow = shared::nowUtc();
+
+    shared::time::NTPClient::singleton()->initialize(std::chrono::duration_cast<std::chrono::milliseconds>(serverNow - clientNow).count());
+    shared::time::NTPClient::singleton()->enable(true);
+    
+    // Sanity check the timezone in the logs...
+    {
+        const auto gmt = shared::nowUtc();
+        const auto local = date::make_zoned(date::current_zone(), gmt);
+        const auto checkGmt = date::make_zoned(
+            date::current_zone(),
+            shared::strToLocalTime(
+                shared::localTimeToString(local.get_local_time()),
+                "%Y-%m-%d %T"
+            )
+        ).get_sys_time();
+        LOG_INFO("Current TimeZone: " << date::current_zone()->name() << std::endl);
+        LOG_INFO("\tGMT: " << shared::timeToStr(gmt) << std::endl);
+        LOG_INFO("\tLocal: " << shared::localTimeToString(local.get_local_time()) << std::endl);
+        LOG_INFO("\tCheck GMT: " << shared::timeToStr(checkGmt) << std::endl);
     }
 
     {

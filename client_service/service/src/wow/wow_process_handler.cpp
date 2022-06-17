@@ -678,7 +678,7 @@ void WoWProcessHandlerInstance::onZoneChange(const shared::TimePoint& tm, const 
 
     // We shouldn't ever need the final WoW condition unless the detect WoW game from process function failed at construction.
     if (game() == shared::EGame::WoW) {
-        path << "9.2.0";
+        path << "9.2.5";
     } else if (game() == shared::EGame::WowVanilla) {
         path << "1.13.7";
     } else if (game() == shared::EGame::WowTbc) {

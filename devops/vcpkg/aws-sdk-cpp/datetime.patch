@@ -1,0 +1,60 @@
+diff --git a/aws-cpp-sdk-core/include/aws/core/utils/DateTime.h b/aws-cpp-sdk-core/include/aws/core/utils/DateTime.h
+index a410279011..9c0a1f5805 100644
+--- a/aws-cpp-sdk-core/include/aws/core/utils/DateTime.h
++++ b/aws-cpp-sdk-core/include/aws/core/utils/DateTime.h
+@@ -48,6 +48,12 @@ namespace Aws
+             Saturday
+         };
+ 
++        class AWS_CORE_API TimeProvider
++        {
++        public:
++            virtual std::chrono::system_clock::time_point Now();
++        };
++
+         /**
+          * Wrapper for all the weird crap we need to do with timestamps.
+          */
+@@ -235,8 +241,11 @@ namespace Aws
+              */
+             static std::chrono::milliseconds Diff(const DateTime& a, const DateTime& b);
+ 
++            static void SetProvider(std::shared_ptr<TimeProvider> p) { s_provider = p; }
++
+             std::chrono::milliseconds operator - (const DateTime& other) const;
+         private:
++            static std::shared_ptr<TimeProvider> s_provider;
+             std::chrono::system_clock::time_point m_time;
+             bool m_valid;
+ 
+diff --git a/aws-cpp-sdk-core/source/utils/DateTimeCommon.cpp b/aws-cpp-sdk-core/source/utils/DateTimeCommon.cpp
+index b690c90c2d..8028752804 100644
+--- a/aws-cpp-sdk-core/source/utils/DateTimeCommon.cpp
++++ b/aws-cpp-sdk-core/source/utils/DateTimeCommon.cpp
+@@ -1108,6 +1108,13 @@ private:
+     
+ } // namespace 
+ 
++std::chrono::system_clock::time_point TimeProvider::Now()
++{
++    return std::chrono::system_clock::now();
++}
++
++std::shared_ptr<TimeProvider> DateTime::s_provider = std::make_shared<TimeProvider>();
++
+ DateTime::DateTime(const std::chrono::system_clock::time_point& timepointToAssign) : m_time(timepointToAssign), m_valid(true)
+ {
+ }
+@@ -1322,7 +1329,11 @@ bool DateTime::IsDST(bool localTime) const
+ DateTime DateTime::Now()
+ {
+     DateTime dateTime;
+-    dateTime.m_time = std::chrono::system_clock::now();
++    if (s_provider) {
++        dateTime.m_time = s_provider->Now();
++    } else {
++        dateTime.m_time = std::chrono::system_clock::now();
++    }
+     return dateTime;
+ }
+ 

@@ -7,6 +7,7 @@
 #include "shared/aimlab/aimlab.h"
 #include "shared/hearthstone/hearthstone_ratings.h"
 #include "shared/wow/instances.h"
+#include "shared/time.h"
 #include "api/aws_api.h"
 #include "uploader/uploader.h"
 #include "hardware/hardware.h"
@@ -49,6 +50,7 @@ public:
         return _features;
     }
     void retrieveSessionFeatureFlags();
+    shared::TimePoint getServerTime() const;
 
     // Sentry
     std::string getSentryDsn() const;

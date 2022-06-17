@@ -8,10 +8,12 @@
 #include <aws/core/Aws.h>
 #include <aws/core/auth/AWSAuthSigner.h>
 #include <aws/core/http/HttpClient.h>
+#include <aws/core/utils/DateTime.h>
 #include <aws/identity-management/auth/CognitoCachingCredentialsProvider.h>
 #include <aws/identity-management/auth/PersistentCognitoIdentityProvider.h>
 
 #include "shared/json.h"
+#include "shared/time.h"
 
 namespace service::api {
 
@@ -62,6 +64,13 @@ private:
     AwsCognitoCredentials _lastCredentials;
     std::shared_ptr<ManualCognitoIdentityProvider> _identityProvider;
     std::shared_ptr<Aws::Auth::CognitoCachingAuthenticatedCredentialsProvider> _credentialProvider;
+};
+
+class AwsTimeProvider: public Aws::Utils::TimeProvider {
+public:
+    std::chrono::system_clock::time_point Now() override {
+        return shared::nowUtc();
+    }
 };
 
 AwsAuthenticatedApi* getAwsApi();
