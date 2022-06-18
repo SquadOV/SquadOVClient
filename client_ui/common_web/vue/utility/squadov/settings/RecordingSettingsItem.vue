@@ -827,7 +827,7 @@ export default class RecordingSettingsItem extends Vue {
                 disabled: !this.$store.getters.isUserInTier(EPricingTier.Gold),
             },
             {
-                value: null,
+                value: 9999,
                 text: 'Native',
                 tier: EPricingTier.Diamond,
                 disabled: !this.$store.getters.isUserInTier(EPricingTier.Diamond),
