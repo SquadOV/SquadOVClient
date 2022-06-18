@@ -248,7 +248,7 @@ int64_t NTPClient::offsetToServer(const std::string& server) const {
 
     const auto d1 = std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
     const auto d2 = std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t3).count();
-    const auto offset = std::abs((d1 + d2) / 2);
+    const auto offset = (d1 + d2) / 2;
     LOG_INFO("...Offset: " << offset << "ms" << std::endl);
     LOG_INFO("\tT0: " << shared::timeToStr(t0) << std::endl);
     LOG_INFO("\tT1: " << shared::timeToStr(t1) << std::endl);
