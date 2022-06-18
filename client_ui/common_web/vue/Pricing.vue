@@ -44,11 +44,19 @@
                                 </div>
                             </div>
 
+                            <div class="d-flex justify-center align-center mt-4">
+                                <currency-selector
+                                    v-model="selectedCurrency"
+                                >
+                                </currency-selector>
+                            </div>
+
                             <v-row class="mt-8" justify="space-around" align="center">
                                 <v-col cols="3">
                                     <pricing-tier
                                         :tier="EPricingTier.Basic"
                                         :pricing="finalPricingGrid"
+                                        :currency="selectedCurrency"
                                         :annual="annually"
                                     >
                                     </pricing-tier>
@@ -58,6 +66,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Silver"
                                         :pricing="finalPricingGrid"
+                                        :currency="selectedCurrency"
                                         :annual="annually"
                                     >
                                     </pricing-tier>
@@ -67,6 +76,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Gold"
                                         :pricing="finalPricingGrid"
+                                        :currency="selectedCurrency"
                                         :annual="annually"
                                         highlight
                                     >
@@ -77,6 +87,7 @@
                                     <pricing-tier
                                         :tier="EPricingTier.Diamond"
                                         :pricing="finalPricingGrid"
+                                        :currency="selectedCurrency"
                                         :annual="annually"
                                     >
                                     </pricing-tier>
@@ -432,11 +443,12 @@
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Basic).toFixed(2) }}</span></div>
-                                                    <div>USD per month</div>
+                                                    <div><span class="text-h4 font-weight-bold">{{ formatCurrency(computePricePerMonth(finalPricingGrid, EPricingTier.Basic), selectedCurrency) }}</span></div>
+                                                    <div>{{ selectedCurrency.toUpperCase() }} per month</div>
                                                     <sign-up-pricing-button
                                                         :tier="EPricingTier.Basic"
                                                         :annual="annually"
+                                                        :currency="selectedCurrency"
                                                     >
                                                     </sign-up-pricing-button>
                                                 </div>
@@ -444,11 +456,12 @@
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Silver).toFixed(2) }}</span></div>
-                                                    <div>USD per month</div>
+                                                    <div><span class="text-h4 font-weight-bold">{{ formatCurrency(computePricePerMonth(finalPricingGrid, EPricingTier.Silver), selectedCurrency) }}</span></div>
+                                                    <div>{{ selectedCurrency.toUpperCase() }} per month</div>
                                                     <sign-up-pricing-button
                                                         :tier="EPricingTier.Silver"
                                                         :annual="annually"
+                                                        :currency="selectedCurrency"
                                                     >
                                                     </sign-up-pricing-button>
                                                 </div>
@@ -456,12 +469,13 @@
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Gold).toFixed(2) }}</span></div>
-                                                    <div>USD per month</div>
+                                                    <div><span class="text-h4 font-weight-bold">{{ formatCurrency(computePricePerMonth(finalPricingGrid, EPricingTier.Gold), selectedCurrency) }}</span></div>
+                                                    <div>{{ selectedCurrency.toUpperCase() }} per month</div>
                                                     <sign-up-pricing-button
                                                         :tier="EPricingTier.Gold"
                                                         highlight
                                                         :annual="annually"
+                                                        :currency="selectedCurrency"
                                                     >
                                                     </sign-up-pricing-button>
                                                 </div>
@@ -469,12 +483,13 @@
 
                                             <td class="text-center">
                                                 <div class="my-4 d-flex flex-column justify-center align-center" v-if="!!finalPricingGrid">
-                                                    <div><span class="text-h4 font-weight-bold">${{ computePricePerMonth(finalPricingGrid, EPricingTier.Diamond).toFixed(2) }}</span></div>
-                                                    <div>USD per month</div>
+                                                    <div><span class="text-h4 font-weight-bold">{{ formatCurrency(computePricePerMonth(finalPricingGrid, EPricingTier.Diamond), selectedCurrency) }}</span></div>
+                                                    <div>{{ selectedCurrency.toUpperCase() }} per month</div>
                                                     <sign-up-pricing-button
                                                         class="mt-4"
                                                         :tier="EPricingTier.Diamond"
                                                         :annual="annually"
+                                                        :currency="selectedCurrency"
                                                     >
                                                     </sign-up-pricing-button>
                                                 </div>
@@ -499,7 +514,8 @@ import { Watch } from 'vue-property-decorator'
 import PricingTier from '@client/vue/utility/squadov/PricingTier.vue'
 import SignUpPricingButton from '@client/vue/utility/squadov/SignUpPricingButton.vue'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
-import { EPricingTier, FullPricingInfo, computePricePerMonth } from '@client/js/squadov/pricing'
+import CurrencySelector from '@client/vue/utility/pricing/CurrencySelector.vue'
+import { EPricingTier, FullPricingInfo, computePricePerMonth, Currency, formatCurrency } from '@client/js/squadov/pricing'
 import { openUrlInBrowser } from '@client/js/external'
 import { apiClient, ApiData } from '@client/js/api'
 
@@ -508,14 +524,17 @@ import { apiClient, ApiData } from '@client/js/api'
         PricingTier,
         LoadingContainer,
         SignUpPricingButton,
+        CurrencySelector,
     }
 })
 export default class Pricing extends Vue {
+    formatCurrency = formatCurrency
     EPricingTier = EPricingTier
     annually: boolean = false
     monthlyPricingGrid: FullPricingInfo | null = null
     yearlyPricingGrid: FullPricingInfo | null = null
     refreshInProgress: boolean = false
+    selectedCurrency: Currency = Currency.Usd
 
     computePricePerMonth = computePricePerMonth
 
@@ -526,16 +545,16 @@ export default class Pricing extends Vue {
         return this.monthlyPricingGrid
     }
 
-    @Watch('annually')
+    @Watch('selectedCurrency')
     refreshPricing() {
         this.refreshInProgress = true
-        apiClient.getPricingGrid(false).then((resp: ApiData<FullPricingInfo>) => {
+        apiClient.getPricingGrid(false, this.selectedCurrency).then((resp: ApiData<FullPricingInfo>) => {
             this.monthlyPricingGrid = resp.data
         }).finally(() => {
             this.refreshInProgress = false
         })
 
-        apiClient.getPricingGrid(true).then((resp: ApiData<FullPricingInfo>) => {
+        apiClient.getPricingGrid(true, this.selectedCurrency).then((resp: ApiData<FullPricingInfo>) => {
             this.yearlyPricingGrid = resp.data
         })
     }

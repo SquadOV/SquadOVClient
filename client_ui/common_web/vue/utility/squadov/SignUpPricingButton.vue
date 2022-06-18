@@ -12,7 +12,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { Currency, EPricingTier } from '@client/js/squadov/pricing'
 import { RegisterPageId, SubscriptionPageId } from '@client/js/pages'
 import { canUserTrial } from '@client/js/squadov/user'
 
@@ -27,6 +27,9 @@ export default class SignUpPricingButton extends Vue {
 
     @Prop({type: Boolean, default: false})
     annual!: boolean
+
+    @Prop({required: true})
+    currency!: Currency
 
     get text(): string {
         if (this.tier == EPricingTier.Basic) {
@@ -44,6 +47,7 @@ export default class SignUpPricingButton extends Vue {
             query: {
                 tier: this.tier,
                 annual: this.annual ? '1' : '0',
+                currency: this.currency,
             }
         }
 

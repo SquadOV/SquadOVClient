@@ -51,3 +51,26 @@ export function getNextHighestTier(tier: EPricingTier | null): EPricingTier | nu
             return null
     }
 }
+
+export enum Currency {
+    Usd = 'usd',
+    Euro = 'eur',
+}
+
+export function currencySymbol(c: Currency) : string {
+    switch (c) {
+        case Currency.Usd:
+            return '$'
+        case Currency.Euro:
+            return '€'
+    }
+}
+
+export function formatCurrency(amount: number, c: Currency) : string {
+    let s = currencySymbol(c)
+    switch (c) {
+        case Currency.Usd:
+        case Currency.Euro:
+            return `${s}${amount.toFixed(2)}`
+    }
+}

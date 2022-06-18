@@ -17,7 +17,7 @@
             </div>
 
             <div class="my-4 d-flex flex-column justify-center align-center">
-                <div><span class="text-h4 font-weight-bold">${{ pricePerMonth }}</span></div>
+                <div><span class="text-h4 font-weight-bold">{{ pricePerMonth }}</span></div>
                 <div>USD per month</div>
             </div>
         
@@ -45,6 +45,7 @@
                 :tier="tier"
                 :annual="annual"
                 :highlight="highlight"
+                :currency="currency"
             >
             </sign-up-pricing-button>
         </v-sheet>
@@ -57,7 +58,7 @@ import Vue from 'vue'
 import Component from 'vue-class-component'
 import SignUpPricingButton from '@client/vue/utility/squadov/SignUpPricingButton.vue'
 import { Prop } from 'vue-property-decorator'
-import { EPricingTier, FullPricingInfo, computePricePerMonth } from '@client/js/squadov/pricing'
+import { EPricingTier, FullPricingInfo, computePricePerMonth, Currency, formatCurrency } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -77,9 +78,12 @@ export default class PricingTier extends Vue {
     @Prop({type: Boolean, default: false})
     annual!: boolean
 
+    @Prop({required: true})
+    currency!: Currency
+
     get pricePerMonth(): string {
         let price = computePricePerMonth(this.pricing, this.tier)
-        return price.toFixed(2)
+        return formatCurrency(price, this.currency)
     }
 
     get priceTier(): string {

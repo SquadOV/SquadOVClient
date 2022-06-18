@@ -37,7 +37,7 @@
 import Vue from 'vue'
 import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { Currency, EPricingTier } from '@client/js/squadov/pricing'
 import { apiClient, ApiData } from '@client/js/api'
 import { DashboardPageId, PricingPageId } from '@client/js/pages'
 import confetti from 'canvas-confetti'
@@ -53,6 +53,9 @@ export default class SubscriptionWorkflow extends Vue {
 
     @Prop({type: Boolean})
     success!: boolean | undefined
+
+    @Prop({type: String})
+    currency!: Currency
 
     failStart: boolean = false
 
@@ -114,7 +117,7 @@ export default class SubscriptionWorkflow extends Vue {
         if (this.success === undefined) {
             // Make a call to our API server. Our API server will create a Stripe checkout session
             // that'll get sent back here. Once that happens, we'll redirect users back to the app (web or desktop).
-            apiClient.startSubscription(this.tier, this.annual).then((resp: ApiData<string>) => {
+            apiClient.startSubscription(this.tier, this.annual, this.currency).then((resp: ApiData<string>) => {
                 window.location.href = resp.data
             }).catch((err: any) => {
                 console.warn('Failed to start subscription workflow: ', err)

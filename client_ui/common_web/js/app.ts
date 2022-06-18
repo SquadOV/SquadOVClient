@@ -168,6 +168,7 @@ const baseRoutes : any[] = [
             annual: parseInt(route.query.annual) === 1,
             success: !!route.query.success ? parseInt(route.query.success) === 1 : undefined,
             management: !!route.query.management ? parseInt(route.query.management) === 1 : undefined,
+            currency: route.query.currency,
         })
     },
     {
