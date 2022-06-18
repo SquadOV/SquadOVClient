@@ -17,6 +17,12 @@
                 v-if="isDesktop"
             >
             </requires-restart-alert>
+
+            <pro-watermark-alert
+                width="100%"
+                v-if="isDesktop"
+            >
+            </pro-watermark-alert>
         </v-list>
     </div>
 </template>
@@ -28,6 +34,7 @@ import EmailVerificationAlert from '@client/vue/utility/squadov/alerts/EmailVeri
 import LocalDiskSpaceUsageAlert from '@client/vue/utility/squadov/alerts/LocalDiskSpaceUsageAlert.vue'
 import DisabledGamesAlert from '@client/vue/utility/squadov/alerts/DisabledGamesAlert.vue'
 import RequiresRestartAlert from '@client/vue/utility/squadov/alerts/RequiresRestartAlert.vue'
+import ProWatermarkAlert from '@client/vue/utility/squadov/alerts/ProWatermarkAlert.vue'
 
 @Component({
     components: {
@@ -35,6 +42,7 @@ import RequiresRestartAlert from '@client/vue/utility/squadov/alerts/RequiresRes
         LocalDiskSpaceUsageAlert,
         DisabledGamesAlert,
         RequiresRestartAlert,
+        ProWatermarkAlert,
     },
 })
 export default class AppAlerts extends Vue {
