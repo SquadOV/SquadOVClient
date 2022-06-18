@@ -35,6 +35,7 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             earlyAccess: false,
             vodRetention: 608400,
             maxSquadSize: 20,
+            maxClipSeconds: 120,
         },
 /// #if DESKTOP
         settings: null,

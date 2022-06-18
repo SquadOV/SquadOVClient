@@ -11,6 +11,7 @@ export interface FeatureFlags {
     earlyAccess: boolean
     vodRetention: number | null
     maxSquadSize: number | null
+    maxClipSeconds: number
 }
 
 export interface GlobalFlags {

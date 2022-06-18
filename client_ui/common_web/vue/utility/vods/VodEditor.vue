@@ -55,6 +55,15 @@
                     </template>
                 </generic-match-timeline>
             </div>
+
+            <div class="mt-2">
+                <pricing-notifier-wrapper
+                    :tier="EPricingTier.Gold"
+                    shrink
+                >
+                    Max Clip Length (seconds): {{ maxClipLengthMilliseconds / 1000 }}
+                </pricing-notifier-wrapper>
+            </div>
         </div>
 
         <div class="d-flex align-center mb-1 mx-2">
@@ -300,17 +309,19 @@ import { ipcRenderer } from 'electron'
 import { apiClient, ApiData, StagedClipStatusResponse } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
-
-const MAX_CLIP_LENGTH_MILLISECONDS = 180000
+import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
+import { EPricingTier } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
         VideoPlayer,
         GenericMatchTimeline,
+        PricingNotifierWrapper,
     }
 })
 export default class VodEditor extends mixins(CommonComponent) {
     secondsToTimeString = secondsToTimeString
+    EPricingTier = EPricingTier
 
     @Prop({required: true})
     videoUuid!: string
@@ -358,6 +369,10 @@ export default class VodEditor extends mixins(CommonComponent) {
     $refs!: {
         player: VideoPlayer
         urlInput: any
+    }
+
+    get maxClipLengthMilliseconds(): number {
+        return this.$store.state.features.maxClipSeconds * 1000
     }
 
     get canDoServerSideClipping(): boolean {
@@ -447,7 +462,7 @@ export default class VodEditor extends mixins(CommonComponent) {
 
         if (!this.initialSync) {
             this.setClipStart(this.currentTimestamp)
-            this.setClipEnd(this.currentTimestamp + MAX_CLIP_LENGTH_MILLISECONDS)
+            this.setClipEnd(this.currentTimestamp + this.maxClipLengthMilliseconds)
             this.$refs.player.setPinned(dt)
             this.initialSync = true
         }
@@ -471,7 +486,7 @@ export default class VodEditor extends mixins(CommonComponent) {
 
     resetClip() {
         this.clipStart = 0
-        this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_MILLISECONDS, this.end)
+        this.clipEnd = Math.min(this.clipStart + this.maxClipLengthMilliseconds, this.end)
     }
 
     @Watch('videoUuid')
@@ -539,8 +554,8 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.clipStart = Math.min(Math.max(s, this.start), this.end)
         if (this.clipDuration < 0) {
             this.clipEnd = Math.min(this.clipStart + oldDuration, this.end)
-        } else if (this.clipDuration > MAX_CLIP_LENGTH_MILLISECONDS) {
-            this.clipEnd = Math.min(this.clipStart + MAX_CLIP_LENGTH_MILLISECONDS, this.end)
+        } else if (this.clipDuration > this.maxClipLengthMilliseconds) {
+            this.clipEnd = Math.min(this.clipStart + this.maxClipLengthMilliseconds, this.end)
         }
         this.startKey += 1
     }
@@ -558,8 +573,8 @@ export default class VodEditor extends mixins(CommonComponent) {
         this.clipEnd = Math.min(Math.max(s, this.start), this.end)
         if (this.clipDuration < 0) {
             this.clipStart = Math.max(this.clipEnd - oldDuration, this.start)
-        } else if (this.clipDuration > MAX_CLIP_LENGTH_MILLISECONDS) {
-            this.clipStart = Math.max(this.clipEnd - MAX_CLIP_LENGTH_MILLISECONDS, this.start)
+        } else if (this.clipDuration > this.maxClipLengthMilliseconds) {
+            this.clipStart = Math.max(this.clipEnd - this.maxClipLengthMilliseconds, this.start)
         }
         this.endKey += 1
     }
