@@ -471,8 +471,13 @@ export default class SingleSquadPage extends Vue {
     removeVideoFromSquad(videoUuid: string) {
         this.vodRemovalProgress = true
         apiClient.removeVodFromSquad(this.squadId, videoUuid).then(() => {
-            this.$refs.vods.removeContent(videoUuid)
-            this.$refs.clips.removeContent(videoUuid)
+            if (!!this.$refs.vods) {
+                this.$refs.vods.removeContent(videoUuid)
+            }
+
+            if (!!this.$refs.clips) {
+                this.$refs.clips.removeContent(videoUuid)
+            }
         }).catch((err: any) => {
             console.error('Failed to remove vod from squad: ', err)
             this.showError('Failed to remove VOD/clip from the squad, please try again.')
