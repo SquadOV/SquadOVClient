@@ -68,6 +68,7 @@ import { openPathInNewWindow } from '@client/js/external'
 import { MatchVideoSharePermissions } from '@client/js/squadov/share'
 import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
+import { pl } from 'date-fns/locale'
 
 @Component({
     components: {
@@ -699,6 +700,28 @@ export default class VideoPlayer extends mixins(CommonComponent) {
                         // This needs to be here since the control bar will eat focus and prevent the handle keypress from working normally.
                         this.handleKeypress(e)
                     }
+                })
+            }
+
+            let playbackButton = cbar.getChild('playbackRateMenuButton')
+            if (!!playbackButton) {
+                // Custom functionality to decrease the playback rate.
+                playbackButton.on('contextmenu', (e: Event) => {
+                    if (!this.player || !playbackButton) {
+                        return
+                    }
+                    const currentRate = this.player.playbackRate()
+
+                    //@ts-ignore
+                    const rates = playbackButton.playbackRates()
+                    const currentIndex = rates.indexOf(currentRate)
+                    // this get the next rate and it will select first one if the last one currently selected
+                    let newIndex = currentIndex - 1
+                    if (newIndex < 0) {
+                        newIndex = rates.length - 1
+                    }
+                    this.player.playbackRate(rates[newIndex])
+                    e.preventDefault()
                 })
             }
         }
