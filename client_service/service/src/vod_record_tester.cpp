@@ -20,6 +20,7 @@ extern "C" {
 #include "shared/system/win32/process.h"
 #include "vod/process.h"
 #include "shared/system/win32/gdi.h"
+#include "shared/system/utils.h"
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
@@ -44,7 +45,9 @@ int main(int argc, char** argv) {
     shared::system::win32::gdi::GdiInitializer gdiInit;
 #endif
 
+    shared::system::utils::TimePrecisionInitializer tpi;
     shared::system::win32::elevateProcessPriority(ABOVE_NORMAL_PRIORITY_CLASS);
+    LOG_INFO("Priority Class: " << GetPriorityClass(GetCurrentProcess()) << std::endl);
 
     bool fastify = false;
     po::options_description desc("Options");
@@ -103,14 +106,14 @@ int main(int argc, char** argv) {
     const auto width = vm["width"].as<size_t>();
     const auto height = vm["height"].as<size_t>();
     const auto loop = vm["loop"].as<int>();
-    //recorder.overrideResolution(width, height);
+    recorder.overrideResolution(width, height);
 
     std::thread workerThread;
     if (mode == "NORMAL") {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(service::recorder::FLAG_DXGI_RECORDING);
             recorder.initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
             recorder.connectInputs();
             

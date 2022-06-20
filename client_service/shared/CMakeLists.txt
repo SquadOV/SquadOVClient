@@ -39,6 +39,7 @@ SET(SRCS
     shared/valve/vdf_file.cpp
     shared/wow/toc.cpp
     shared/wow/wtf.cpp
+    shared/system/win32/utils.cpp
 )
 
 SET(HEADERS
@@ -88,6 +89,7 @@ SET(HEADERS
     shared/image/ico/ico.h
     shared/memory/byte_writer.h
     shared/valve/vdf_file.h
+    shared/system/utils.h
 )
 
 add_library(squadov_shared

@@ -307,6 +307,8 @@ void DxgiDesktopRecorder::startRecording() {
             } else if (isAltTabbed && _defaultTexture) {
                 flowToNext(_self.get(), _defaultTexture.get(), 1, _rotation);
             } else {
+                // This effectively does nothing - but we need to call it to make sure we respect FPS limits.
+                flowToNext(_self.get(), nullptr, 1, _rotation);
                 ++numReused;
             }
 
@@ -315,6 +317,9 @@ void DxgiDesktopRecorder::startRecording() {
 
         LOG_INFO("DXGI Stats :: Count: " << count << " Reused: " << numReused << std::endl);
     });
+
+    // Make sure the recording thread is at a higher priority
+    SetThreadPriority(_recordingThread.native_handle(), THREAD_PRIORITY_ABOVE_NORMAL);
 }
 
 void DxgiDesktopRecorder::stopRecording() {

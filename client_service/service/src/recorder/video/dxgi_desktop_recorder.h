@@ -27,7 +27,7 @@ public:
     
 private:
     HWND _window;
-    bool _recording = false;    
+    bool _recording = false;
     std::thread _recordingThread;
     service::renderer::D3d11SharedContextPtr _self;
 

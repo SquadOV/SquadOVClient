@@ -38,6 +38,7 @@
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "shared/system/win32/process.h"
 #include "shared/system/win32/registry.h"
+#include "shared/system/utils.h"
 #include "shared/squadov/vod.h"
 #include "system/processes.h"
 #include "recorder/process_record_interface.h"
@@ -265,7 +266,9 @@ int main(int argc, char** argv) {
 #endif
     shared::log::Log::initializeGlobalLogger("squadov.log");
 
+    shared::system::utils::TimePrecisionInitializer tpi;
     shared::system::win32::elevateProcessPriority(ABOVE_NORMAL_PRIORITY_CLASS);
+    LOG_INFO("Priority Class: " << GetPriorityClass(GetCurrentProcess()) << std::endl);
 
     try {
         const auto tzDataFolder = shared::filesystem::getSquadOvTzDataFolder();

@@ -1,4 +1,6 @@
 #include "recorder/compositor/graph/fps_limiter_node.h"
+#include "shared/system/utils.h"
+#include "shared/log/log.h"
 
 namespace service::recorder::compositor::graph {
 
@@ -22,15 +24,29 @@ void FpsLimiterNode::receiveTexture(service::renderer::D3d11SharedContext* image
     // However, in reality this will give us a lower FPS video than desired since there's no guarantee that the frames
     // will come in from the input at exactly that interval.
     if (!_startFrameTime) {
+        // Sleeps 16ms - a reasonable amount of time.
+        shared::system::utils::preciseSleep(16 * 1000000);
         return;
     }
-    const auto now = service::recorder::encoder::AVSyncClock::now();
-    const auto refFrameTime = _startFrameTime.value() + std::chrono::nanoseconds(_nsPerFrame * _frameCounter);
-    
-    if (now >= refFrameTime) {
+
+    // Determine how many frames to write and pass it on to the next step.
+    {
+        const auto now = service::recorder::encoder::AVSyncClock::now();
+        const auto refFrameTime = _startFrameTime.value() + std::chrono::nanoseconds(_nsPerFrame * _frameCounter);
         const auto elapsedFrames = std::ceil(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count()) / _nsPerFrame.count());
-        flowToNext(imageContext, image, elapsedFrames, rotation);
+
+        if (image) {
+            flowToNext(imageContext, image, elapsedFrames, rotation);
+        }
+
         _frameCounter += elapsedFrames;
+    }
+
+    // Now we sleep the current thread until we have to move on as determined by the FPS limit.
+    {
+        const auto now = service::recorder::encoder::AVSyncClock::now();
+        const auto nextFrameTime = _startFrameTime.value() + std::chrono::nanoseconds(_nsPerFrame * _frameCounter);
+        shared::system::utils::preciseSleep(std::chrono::duration_cast<std::chrono::nanoseconds>(nextFrameTime - now).count());
     }
 }
 

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.15)
 enable_testing()
 
+set (CMAKE_SYSTEM_VERSION 10.0.22621.0)
+
 # set the project name
 project(SquadOVClient VERSION 0.0)
 

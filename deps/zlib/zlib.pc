@@ -1,8 +1,8 @@
-prefix=C:/Program Files (x86)/SquadOVClient
-exec_prefix=C:/Program Files (x86)/SquadOVClient
-libdir=C:/Program Files (x86)/SquadOVClient/lib
-sharedlibdir=C:/Program Files (x86)/SquadOVClient/lib
-includedir=C:/Program Files (x86)/SquadOVClient/include
+prefix=C:/Program Files/SquadOVClient
+exec_prefix=C:/Program Files/SquadOVClient
+libdir=C:/Program Files/SquadOVClient/lib
+sharedlibdir=C:/Program Files/SquadOVClient/lib
+includedir=C:/Program Files/SquadOVClient/include
 
 Name: zlib
 Description: zlib compression library
