@@ -224,6 +224,8 @@ private:
     std::vector<int64_t> _streamPtsOffset;
     std::vector<std::deque<AVPacket>> _dvrBuffer;
     std::atomic<double> _maxDvrBufferTimeSeconds = 0.0;
+
+    bool _isHlsStream = false;
     void addPacketToDvrBuffer(const AVPacket& packet);
     bool isDvrBufferLongerThanMaxSeconds(const std::deque<AVPacket>& buffer, int streamIndex) const;
 };
@@ -376,6 +378,10 @@ void FfmpegAvEncoderImpl::encode(AVCodecContext* cctx, AVFrame* frame, AVStream*
         if (packet.dts > packet.pts) {
             // Possible if there's a jump in the pts.
             packet.pts = packet.dts;
+        }
+
+        if (_isHlsStream) {
+            packet.duration = 1;
         }
 
         {
@@ -965,6 +971,8 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
         av_dict_set_int(&headerOptions, "hls_list_size", 12, 0);
         av_dict_set(&headerOptions, "hls_flags", "delete_segments", 0);
         av_dict_set(&headerOptions, "hls_segment_type", "mpegts", 0);
+
+        _isHlsStream = true;
     }
 
     if (avformat_write_header(_avcontext, &headerOptions) < 0) {

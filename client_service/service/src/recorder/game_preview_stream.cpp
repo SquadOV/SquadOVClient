@@ -128,6 +128,7 @@ void GamePreviewStream::internalStart(const std::string& url, shared::EGame game
     _recorder->forceUrl(url);
     _recorder->start();
     _recorder->initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
     _running = true;
     notifyCallbacks(GamePreviewTasksType::Start, true);
 }
@@ -148,6 +149,7 @@ void GamePreviewStream::internalReload() {
     _recorder->stop({});
     _recorder->start();
     _recorder->initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
+    _recorder->connectInputs();
 }
 
 void GamePreviewStream::internalEnableOverlay(bool enable) {

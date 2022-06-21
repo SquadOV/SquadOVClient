@@ -39,7 +39,7 @@ void ShapeLayer::updateAt(const service::recorder::encoder::AVSyncClock::time_po
     _model->setScale(_scale);
     _model->setOpacity(_opacity);
 
-    if (_sentTexture) {
+    if (_sentTexture || !_texture) {
         return;
     }
 
