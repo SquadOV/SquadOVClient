@@ -89,10 +89,10 @@ void D3d11Shader::initialize(ID3D11Device* device) {
     }
 
     D3D11_SAMPLER_DESC samplerDesc;
-    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    samplerDesc.Filter = D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
     samplerDesc.MipLODBias = 0.0f;
     samplerDesc.MaxAnisotropy = 1;
     samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
@@ -166,6 +166,10 @@ void D3d11Shader::setTexture(ID3D11DeviceContext* context, unsigned int texIndex
     context->PSSetShaderResources(texIndex, 1, &texture);
 }
 
+void D3d11Shader::setOutputDims(const DirectX::XMFLOAT2& dims) {
+    _outputDims = dims;
+}
+
 void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
     context->IASetInputLayout(_inputLayout);
     context->VSSetShader(_vertexShader, nullptr, 0);
@@ -178,13 +182,15 @@ void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
     context->VSSetConstantBuffers(0, 1, &_vsConstants);
 
     D3d11PSShaderConstants psConstants;
-    psConstants.mode = 0;
     psConstants.hasTexture = model->hasTexture();
 
-    if (model->hasTexture()) {
+    if (psConstants.hasTexture) {
         setTexture(context, 0, model->texture());
-        model->getTextureDims(psConstants.inWidth, psConstants.inHeight);
     }
+
+    psConstants.dims = _outputDims;
+    psConstants.invDims = DirectX::XMFLOAT2(1.f / _outputDims.x, 1.f / _outputDims.y);
+    psConstants.mode = 2;
 
     context->UpdateSubresource(_psConstants, 0, nullptr, &psConstants, 0, 0);
     context->PSSetConstantBuffers(0, 1, &_psConstants);

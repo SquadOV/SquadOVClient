@@ -15,10 +15,11 @@ struct D3d11VSShaderConstants {
 };
 
 struct D3d11PSShaderConstants {
-    float inWidth;
-    float inHeight;
+    DirectX::XMFLOAT2 dims;
+    DirectX::XMFLOAT2 invDims;
     unsigned int mode;
     unsigned int hasTexture;
+    char padding[8];
 };
 
 class D3d11Shader {
@@ -29,7 +30,10 @@ public:
     void initialize(ID3D11Device* device);
     void setTexture(ID3D11DeviceContext* context, unsigned int texIndex, ID3D11ShaderResourceView* texture);
     void render(ID3D11DeviceContext* context, D3d11Model* model);
+    void setOutputDims(const DirectX::XMFLOAT2& dims);
+
 private:
+    DirectX::XMFLOAT2 _outputDims;
     ID3D11VertexShader* _vertexShader = nullptr;
     ID3D11PixelShader* _pixelShader = nullptr;
     ID3D11SamplerState* _sampler = nullptr;

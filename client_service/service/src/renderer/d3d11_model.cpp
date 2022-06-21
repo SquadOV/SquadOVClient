@@ -97,19 +97,24 @@ void D3d11Model::getTextureDims(float& width, float& height) {
     height = static_cast<float>(shaderDesc.Height);
 }
 
-void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture) {
+void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture, bool noCopy) {
     bool needRecreate = false;
     D3D11_TEXTURE2D_DESC textureDesc;
     texture->GetDesc(&textureDesc);
 
-    if (_shaderTexture) {
-        D3D11_TEXTURE2D_DESC shaderDesc;
-        _shaderTexture->GetDesc(&shaderDesc);
+    if (_shaderTexture || noCopy) {
+        if (_shaderTexture) {
+            _shaderTexture->GetDesc(&_cachedShaderDesc);
+        }
 
         needRecreate = 
-            (textureDesc.Width != shaderDesc.Width) ||
-            (textureDesc.Height != shaderDesc.Height) ||
-            (textureDesc.Format != shaderDesc.Format);
+            (textureDesc.Width != _cachedShaderDesc.Width) ||
+            (textureDesc.Height != _cachedShaderDesc.Height) ||
+            (textureDesc.Format != _cachedShaderDesc.Format);
+        
+        if (noCopy) {
+            _cachedShaderDesc = textureDesc;
+        }
     } else {
         needRecreate = true;
     }
@@ -117,14 +122,16 @@ void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, 
     if (needRecreate) {
         freeShaderResource();
 
-        textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-        textureDesc.Usage = D3D11_USAGE_DEFAULT;
-        textureDesc.MiscFlags = 0;
-        textureDesc.CPUAccessFlags = 0;
+        if (!noCopy) {
+            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            textureDesc.Usage = D3D11_USAGE_DEFAULT;
+            textureDesc.MiscFlags = 0;
+            textureDesc.CPUAccessFlags = 0;
 
-        HRESULT hr = device->CreateTexture2D(&textureDesc, nullptr, &_shaderTexture);
-        if (hr != S_OK) {
-            THROW_ERROR("Failed to create shader texture.");
+            HRESULT hr = device->CreateTexture2D(&textureDesc, nullptr, &_shaderTexture);
+            if (hr != S_OK) {
+                THROW_ERROR("Failed to create shader texture.");
+            }
         }
 
         D3D11_SHADER_RESOURCE_VIEW_DESC desc;
@@ -133,12 +140,15 @@ void D3d11Model::setTexture(ID3D11Device* device, ID3D11DeviceContext* context, 
         desc.Texture2D.MostDetailedMip = 0;
         desc.Texture2D.MipLevels = 1;
 
-        hr = device->CreateShaderResourceView(_shaderTexture, &desc, &_shaderResource);
+        HRESULT hr = device->CreateShaderResourceView(noCopy ? texture : _shaderTexture, &desc, &_shaderResource);
         if (hr != S_OK) {
             THROW_ERROR("Failed to create shader resource view.");
         }
     }
-    context->CopyResource(_shaderTexture, texture);
+
+    if (!noCopy) {
+        context->CopyResource(_shaderTexture, texture);
+    }
 }
 
 void D3d11Model::clearXform() {

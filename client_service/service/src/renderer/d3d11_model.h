@@ -28,7 +28,7 @@ public:
     ~D3d11Model();
 
     void render(ID3D11DeviceContext* context);
-    void setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture);
+    void setTexture(ID3D11Device* device, ID3D11DeviceContext* context, ID3D11Texture2D* texture, bool noCopy = false);
     void getTextureDims(float& width, float& height);
 
     void clearXform();
@@ -60,6 +60,7 @@ private:
     // and that the data is fully copied. We do not own _srcTexture.
     ID3D11Texture2D* _shaderTexture = nullptr;
     ID3D11ShaderResourceView* _shaderResource = nullptr;
+    D3D11_TEXTURE2D_DESC _cachedShaderDesc;
 };
 
 using D3d11ModelPtr = std::shared_ptr<D3d11Model>;
