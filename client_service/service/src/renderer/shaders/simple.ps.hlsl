@@ -127,5 +127,5 @@ float4 computeColor(PS_INPUT input) {
 float4 main(PS_INPUT input) : SV_Target
 {
     float4 color = computeColor(input);
-    return float4(color.rgb, min(color.a, opacity));
+    return float4(color.rgb, color.a * opacity);
 }

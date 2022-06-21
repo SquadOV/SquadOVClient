@@ -68,7 +68,13 @@ void DxgiDesktopRecorder::createDefaultTexture() {
 
     uint8_t* dst = reinterpret_cast<uint8_t*>(mappedData.pData);
     for (size_t r = 0; r < _height; ++r) {
-        std::memset(dst, 0, mappedData.RowPitch);
+        for (size_t i = 0 ; i < mappedData.RowPitch; ++i) {
+            if (i % 4 == 3) {
+                dst[i] = 255;
+            } else {
+                dst[i] = 0;
+            }
+        }
         dst += mappedData.RowPitch;
     }
     immediate.context()->Unmap(tmpTexture.get(), 0);
