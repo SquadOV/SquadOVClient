@@ -8,6 +8,7 @@ cbuffer PsConstants : register(b0)
     float2 invDims;
     uint mode;
     uint hasTexture;
+    float opacity;
 }
 
 struct PS_INPUT
@@ -108,8 +109,7 @@ float4 bicubicInterpolation(float2 inUv) {
 
 }
 
-float4 main(PS_INPUT input) : SV_Target
-{
+float4 computeColor(PS_INPUT input) {
     if (hasTexture) {
         if (mode == 1) {
             return bicubicInterpolation(input.tex);
@@ -122,4 +122,10 @@ float4 main(PS_INPUT input) : SV_Target
     } else {
         return input.color;
     }
+}
+
+float4 main(PS_INPUT input) : SV_Target
+{
+    float4 color = computeColor(input);
+    return float4(color.rgb, min(color.a, opacity));
 }

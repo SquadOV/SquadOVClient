@@ -106,10 +106,10 @@ private:
     void initializeFileOutputPiper();
 
     bool areInputStreamsInitialized() const;
-    bool initializeInputStreams(int flags);
-    bool initializeCompositor(const video::VideoWindowInfo& info, int flags);
+    bool initializeInputStreams(int flags, size_t desiredWidth, size_t desiredHeight);
+    bool initializeCompositor(const video::VideoWindowInfo& info, int flags, size_t desiredWidth, size_t desiredHeight);
 
-    EncoderDatum createEncoder();
+    EncoderDatum createEncoder(size_t desiredWidth, size_t desiredHeight);
 
     process_watcher::process::Process _process;
     std::filesystem::path _outputFolder;

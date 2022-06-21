@@ -17,7 +17,7 @@ void ClockLayer::finalizeAssetsForRenderer(service::renderer::D3d11Renderer* ren
 
 }
 
-void ClockLayer::updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer) {
+void ClockLayer::updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer, ID3D11DeviceContext* context) {
 }
 
 }

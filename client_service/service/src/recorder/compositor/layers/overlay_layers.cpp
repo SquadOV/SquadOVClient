@@ -1,6 +1,6 @@
 #include "recorder/compositor/layers/overlay_layers.h"
+#include "recorder/compositor/layers/shape_layer.h"
 #include "shared/log/log.h"
-#include "recorder/compositor/layers/gdi_shape_layer.h"
 
 namespace service::recorder::compositor::layers {
 
@@ -69,25 +69,30 @@ std::vector<CompositorLayerPtr> createCompositorLayersForOverlayLayer(const Over
             const auto originX = data.value("originX", "left");
             const auto originY = data.value("originY", "top");
 
-            GdiBrushData brush;
-            brush.fillColor = shared::color::ColorRgba::parseCssRgba(fill);
+            // This is all computations done in the "layer" space.
+            // Regardless of origin, we want to change the rectangle into having an origin of "center" + "center"
+            // since that'll correspond to how we render things.
+            const auto layerWidth = width * scaleX;
+            const auto layerHeight = height * scaleY;
+            const auto layerX = left - ((originX == "left") ? 0.f : layerWidth) + layerWidth / 2.f;
+            const auto layerY = top - ((originY == "top") ? 0.f : layerHeight) + layerHeight / 2.f;
 
-            const auto unnormalizedWidth = width * scaleX;
-            const auto unnormalizedHeight = height * scaleY;
+            ShapeData shape;
+            shape.shape = Shape::Rectangle;
+            shape.fillColor = shared::color::ColorRgba::parseCssRgba(fill);
 
-            GdiRectangleData rect;
-            rect.left = (left - ((originX == "left") ? 0.f : unnormalizedWidth));
-            rect.top = (top - ((originY == "top") ? 0.f : unnormalizedHeight));
-            rect.right = rect.left + unnormalizedWidth;
-            rect.bottom = rect.top + unnormalizedHeight;
+            auto newLayer = std::make_shared<ShapeLayer>(shape);
 
-            rect.left /= layer.width;
-            rect.right /= layer.width;
+            // Change the previous "layer" space coordinates and normalize them into NDC.
+            const auto ndcWidthScale = layerWidth / layer.width;
+            const auto ndcHeightScale = layerHeight / layer.height;
+            newLayer->setScale(DirectX::XMFLOAT3(ndcWidthScale, ndcHeightScale, 1.f));
 
-            rect.top /= layer.height;
-            rect.bottom /= layer.height;
-
-            ret.push_back(std::make_shared<GdiShapeLayer>(rect, brush));
+            const auto ndcX = layerX / layer.width * 2.f - 1.f;;
+            const auto ndcY = layerY / layer.height * -2.f + 1.f;
+            newLayer->setTranslation(DirectX::XMFLOAT3(ndcX, ndcY, 0.f));
+            
+            ret.push_back(newLayer);
         } else {
             LOG_WARNING("Unsupported type for overlay: " << type << std::endl);
             continue;

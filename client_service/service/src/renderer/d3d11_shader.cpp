@@ -190,7 +190,8 @@ void D3d11Shader::render(ID3D11DeviceContext* context, D3d11Model* model) {
 
     psConstants.dims = _outputDims;
     psConstants.invDims = DirectX::XMFLOAT2(1.f / _outputDims.x, 1.f / _outputDims.y);
-    psConstants.mode = 2;
+    psConstants.mode = static_cast<unsigned int>(_resize);
+    psConstants.opacity = model->opacity();
 
     context->UpdateSubresource(_psConstants, 0, nullptr, &psConstants, 0, 0);
     context->PSSetConstantBuffers(0, 1, &_psConstants);

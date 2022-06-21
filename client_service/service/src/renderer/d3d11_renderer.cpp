@@ -148,6 +148,7 @@ bool D3d11Renderer::renderScene() {
         model->render(_context);
 
         // Setup shader
+        _shader->setResizeMode(model->resize());
         _shader->render(_context, model.get());
 
         // Render

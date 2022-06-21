@@ -793,7 +793,7 @@ void FfmpegAvEncoderImpl::addVideoFrame(ID3D11Texture2D* image, size_t numFrames
         ++_receivedVideoFrames;
     }
 
-    //videoEncodeFrame(_videoSwapChain->receiveGpuFrame(image), numFrames);
+    videoEncodeFrame(_videoSwapChain->receiveGpuFrame(image), numFrames);
 }
 
 

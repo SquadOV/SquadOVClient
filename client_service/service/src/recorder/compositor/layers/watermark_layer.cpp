@@ -17,6 +17,7 @@ std::optional<std::string> WatermarkLayer::_cachedWatermarkHash;
 WatermarkLayer::WatermarkLayer(const service::system::WatermarkSettings& watermark):
     _watermark(watermark)
 {
+    _imageLayer = std::make_shared<ShapeLayer>(ShapeData{Shape::Rectangle, shared::color::ColorRgba{0.f, 0.f, 0.f, 0.f}});
 }
 
 WatermarkLayer::~WatermarkLayer() {
@@ -42,28 +43,28 @@ void WatermarkLayer::initializeWatermark(service::renderer::D3d11Renderer* rende
         ++maxTryCounter;
     }
 
-    // Now we need to create the standard GdiImageLayer.
-    GdiImageData data;
-    data.image = std::shared_ptr<Gdiplus::Image>(Gdiplus::Image::FromFile(cachedImagePath.c_str(), false));
-    data.src = Gdiplus::RectF(0, 0, data.image->GetWidth(), data.image->GetHeight());
-    data.dst = Gdiplus::RectF(
-        (_watermark.xPos  == service::system::SquadOvPositionX::Left) ? 0.0 :
-            (_watermark.xPos  == service::system::SquadOvPositionX::Right) ? 1.0 :
-            0.5,
-        (_watermark.yPos  == service::system::SquadOvPositionY::Top) ? 0.0 :
-            (_watermark.yPos  == service::system::SquadOvPositionY::Bottom) ? 1.0 :
-            0.5,
-        _watermark.size * data.image->GetWidth() / data.image->GetHeight(),
-        _watermark.size
-    );
-    data.dstOffsetX = (_watermark.xPos  == service::system::SquadOvPositionX::Left) ? 0.0 :
-        (_watermark.xPos  == service::system::SquadOvPositionX::Right) ? -1.0 :
-        -0.5;
-    data.dstOffsetY = (_watermark.yPos  == service::system::SquadOvPositionY::Top) ? 0.0 :
-        (_watermark.yPos  == service::system::SquadOvPositionY::Bottom) ? -1.0 :
-        -0.5;
-    data.alpha = 0.3;
-    _imageLayer = std::make_unique<GdiImageLayer>(data);
+    _imageLayer->initializeImage(renderer, cachedImagePath);
+    _imageLayer->setOpacity(0.3f);
+
+    const float height = _watermark.size * 2.f;
+    const float heightPixels = height / 2.f * renderer->height();
+
+    // Note that we have to go into screen coordinates first to compute what the width should be in NDC.
+    // Doing a straight aspect ratio scale on the height in WDC doesn't really work since -1 to 1 in width
+    // means something entirely different in height.
+    const float widthPixels = heightPixels * _imageLayer->width() / _imageLayer->height();
+    const float width = widthPixels / renderer->width() * 2.f;
+    _imageLayer->setScale(DirectX::XMFLOAT3(width / 2.f, height / 2.f, 1.f));
+
+    // Note that the full screen squad has its anchor point in the center.
+    const float targetX = (_watermark.xPos  == service::system::SquadOvPositionX::Left) ? -1.0f + width / 2.f :
+        (_watermark.xPos  == service::system::SquadOvPositionX::Right) ? 1.0f - width / 2.f:
+        0.f;
+    const float targetY = (_watermark.yPos  == service::system::SquadOvPositionY::Top) ? 1.0f - width / 2.f :
+        (_watermark.yPos  == service::system::SquadOvPositionY::Bottom) ? -1.0f + height / 2.f:
+        0.f;
+    
+    _imageLayer->setTranslation(DirectX::XMFLOAT3(targetX, targetY, 0.f));
 }
 
 std::string WatermarkLayer::downloadWatermarkTo(const std::filesystem::path& fname) const {
@@ -94,11 +95,11 @@ std::string WatermarkLayer::computeHash(const std::filesystem::path& fname) cons
     return digest;
 }
 
-void WatermarkLayer::updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer) {
+void WatermarkLayer::updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer, ID3D11DeviceContext* context) {
     if (!_imageLayer) {
         return;
     }
-    _imageLayer->updateAt(tp, renderer);
+    _imageLayer->updateAt(tp, renderer, context);
 }
 
 void WatermarkLayer::finalizeAssetsForRenderer(service::renderer::D3d11Renderer* renderer) {
@@ -108,13 +109,6 @@ void WatermarkLayer::finalizeAssetsForRenderer(service::renderer::D3d11Renderer*
         return;
     }
     _imageLayer->finalizeAssetsForRenderer(renderer);
-}
-
-void WatermarkLayer::customRender(ID3D11Texture2D* output, IDXGISurface1* surface, HDC hdc) {
-    if (!_imageLayer) {
-        return;
-    }
-    _imageLayer->customRender(output, surface, hdc);
 }
 
 }

@@ -263,7 +263,7 @@ void GameRecorder::clearCachedInfo() {
     _cachedWindowInfo.reset(nullptr);
 }
 
-GameRecorder::EncoderDatum GameRecorder::createEncoder() {
+GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size_t desiredHeight) {
     EncoderDatum data;
 
     LOG_INFO("Create FFmpeg Encoder" << std::endl);
@@ -271,18 +271,6 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder() {
     // We don't really need to pass in an stream URL (for now) this is primarily for determining what format the file output should be in.
     // By default, that should be MPEG-TS so no need to do anything fancy here unless some override has been given.
     data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(_forcedOutputUrl ? _forcedOutputUrl.value() : "");
-
-    // Use native monitor resolution if the user desires it instead of the game aspect ratio (useful for users who do stretched res).
-    const auto nativeAspectRatio = shared::system::win32::getNativeMonitorAspectRatio(_cachedWindowInfo->monitor);
-    
-    // We only want to use the native aspect ratio if 1) the user wants it, 2) we computed it properly, and 3) the user is playing in full screen.
-    // In the case of windowed mode gaming, we should keep the window size since this is mainly for when the user is playing in a different aspect ratio
-    // than their monitor (e.g. stretched resolution for CSGO/Valorant).
-    const auto aspectRatio = (_cachedRecordingSettings->useNativeAspectRatio && nativeAspectRatio && !_cachedWindowInfo->isWindowed) ?
-        nativeAspectRatio.value():
-        static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
-    const auto desiredHeight = shared::math::forceEven(_overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY))));
-    const auto desiredWidth = shared::math::forceEven(_overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio)));
 
     // Assume that the input recorders have already been created before this point.
     // This is primarily for the audio inputs so we know how many inputs to expect.
@@ -333,9 +321,13 @@ bool GameRecorder::areInputStreamsInitialized() const {
     return _streamsInit;
 }
 
-bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags) {
+bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int flags, size_t desiredWidth, size_t desiredHeight) {
     LOG_INFO("Initialize compositor [Use GPU: " << _cachedRecordingSettings->useVideoHw2 << "]" << std::endl);
-    _compositor = std::make_unique<service::recorder::compositor::Compositor>(_cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU);
+    _compositor = std::make_unique<service::recorder::compositor::Compositor>(
+        _cachedRecordingSettings->useVideoHw2 ? service::renderer::D3d11Device::GPU : service::renderer::D3d11Device::CPU,
+        desiredWidth,
+        desiredHeight
+    );
 
     bool allowMouse = true;
     if (_compositor) {
@@ -424,14 +416,14 @@ bool GameRecorder::initializeCompositor(const video::VideoWindowInfo& info, int 
     return true;
 }
 
-bool GameRecorder::initializeInputStreams(int flags) {
+bool GameRecorder::initializeInputStreams(int flags, size_t desiredWidth, size_t desiredHeight) {
 #ifdef _WIN32
     // I think this is needed because we aren't generally calling startRecording on the same thread as Pa_Initialize?
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
 #endif
 
     _syncClockTime = service::recorder::encoder::AVSyncClock::now();
-    initializeCompositor(*_cachedWindowInfo, flags);
+    initializeCompositor(*_cachedWindowInfo, flags, desiredWidth, desiredHeight);
     
     if (!_cachedRecordingSettings->useWASAPIRecording3) {
         std::lock_guard guard(_paInitMutex);
@@ -571,9 +563,23 @@ void GameRecorder::start(int flags) {
         return;
     }
 
+    // Pulled the computation of desiredWidth and Height out to start since this info is needed by the compositor as well.
+    // Use native monitor resolution if the user desires it instead of the game aspect ratio (useful for users who do stretched res).
+    const auto nativeAspectRatio = shared::system::win32::getNativeMonitorAspectRatio(_cachedWindowInfo->monitor);
+    
+    // We only want to use the native aspect ratio if 1) the user wants it, 2) we computed it properly, and 3) the user is playing in full screen.
+    // In the case of windowed mode gaming, we should keep the window size since this is mainly for when the user is playing in a different aspect ratio
+    // than their monitor (e.g. stretched resolution for CSGO/Valorant).
+    const auto aspectRatio = (_cachedRecordingSettings->useNativeAspectRatio && nativeAspectRatio && !_cachedWindowInfo->isWindowed) ?
+        nativeAspectRatio.value():
+        static_cast<double>(_cachedWindowInfo->width) / _cachedWindowInfo->height;
+    const auto desiredHeight = shared::math::forceEven(_overrideHeight.value_or(std::min(_cachedWindowInfo->height, static_cast<size_t>(_cachedRecordingSettings->resY))));
+    const auto desiredWidth = shared::math::forceEven(_overrideWidth.value_or(static_cast<size_t>(desiredHeight * aspectRatio)));
+    LOG_INFO("Final Resolution: " << desiredWidth << "x" << desiredHeight << std::endl);
+
     if (!areInputStreamsInitialized()) {
         LOG_INFO("Initialize input streams..." << std::endl);
-        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags);
+        std::future<bool> successFut = std::async(std::launch::async, &GameRecorder::initializeInputStreams, this, flags, desiredWidth, desiredHeight);
         if (!successFut.get()) {
             LOG_WARNING("Failed to start game recording." << std::endl);
             _currentId = {};
@@ -583,7 +589,7 @@ void GameRecorder::start(int flags) {
     }
 
     LOG_INFO("Creating encoder..." << std::endl);
-    _encoder = createEncoder();
+    _encoder = createEncoder(desiredWidth, desiredHeight);
 
     if (!service::system::getCurrentSettings()->keybinds().clip.keys.empty() && _cachedInstantClipLengthSeconds > 0) {
         LOG_INFO("Initializing initial DVR storage: " << _cachedInstantClipLengthSeconds << std::endl);

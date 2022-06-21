@@ -5,6 +5,7 @@
 #include "recorder/encoder/av_encoder.h"
 #include "renderer/d3d11_context.h"
 #include "renderer/d3d11_renderer.h"
+#include "renderer/d3d11_model.h"
 
 #include <memory>
 #include <mutex>
@@ -32,7 +33,7 @@ namespace service::recorder::compositor {
 // then we can do an optimization and not do a render call.
 class Compositor {
 public:
-    explicit Compositor(const service::renderer::D3d11Device device);
+    explicit Compositor(const service::renderer::D3d11Device device, size_t width, size_t height);
 
     const service::renderer::D3d11SharedContextPtr& context() const { return _d3dContext; }
 
@@ -52,16 +53,25 @@ private:
     service::recorder::encoder::AvEncoder* _activeEncoder = nullptr;
     std::mutex _encoderMutex;
 
+    size_t _width = 0;
+    size_t _height = 0;
+
     // DirectX rendering state
     service::renderer::D3d11RendererPtr _renderer;
-    // The output texture that we will pass down the pipeline
+    service::renderer::D3d11ModelPtr _fsQuad;
+
+    // The output texture that will be rendered to by the renderer (this is the resize + layers step).
     wil::com_ptr<ID3D11Texture2D> _outputTexture;
-    wil::com_ptr<IDXGISurface1> _outputSurface;
     wil::com_ptr<ID3D11RenderTargetView> _outputRenderTarget;
+
+    // The output texture that will be rendered to by the tonemapper.
     std::unique_ptr<DirectX::ToneMapPostProcess> _tonemapper;
+    wil::com_ptr<ID3D11Texture2D> _tmTexture;
+    wil::com_ptr<ID3D11RenderTargetView> _tmRenderTarget;
 
     void tick(service::renderer::D3d11SharedContext* imageContext, ID3D11Texture2D* image, size_t numFrames);
-    void reinitOutputTexture(ID3D11Texture2D* input);
+    void reinitOutputTexture(ID3D11Texture2D* image, const D3D11_TEXTURE2D_DESC& inputDesc);
+    void reinitTonemapper(ID3D11Texture2D* image, const D3D11_TEXTURE2D_DESC& inputDesc);
 };
 
 using CompositorPtr = std::unique_ptr<Compositor>;

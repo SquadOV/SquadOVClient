@@ -44,9 +44,8 @@ SET(SRCS
     src/recorder/compositor/layers/clock_layer.cpp
     src/recorder/compositor/layers/mouse_cursor_layer.cpp
     src/recorder/compositor/layers/overlay_layers.cpp
-    src/recorder/compositor/layers/gdi_shape_layer.cpp
-    src/recorder/compositor/layers/gdi_image_layer.cpp
     src/recorder/compositor/layers/watermark_layer.cpp
+    src/recorder/compositor/layers/shape_layer.cpp
     src/recorder/compositor/compositor.cpp
     src/system/win32/message_loop.cpp
     src/system/settings.cpp
@@ -127,9 +126,8 @@ SET(HEADERS
     src/recorder/compositor/layers/compositor_layer.h
     src/recorder/compositor/layers/mouse_cursor_layer.h
     src/recorder/compositor/layers/overlay_layers.h
-    src/recorder/compositor/layers/gdi_shape_layer.h
-    src/recorder/compositor/layers/gdi_image_layer.h
     src/recorder/compositor/layers/watermark_layer.h
+    src/recorder/compositor/layers/shape_layer.h
     src/recorder/compositor/compositor.h
     src/system/win32/message_loop.h
     src/system/settings.h

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "recorder/compositor/layers/gdi_image_layer.h"
 #include "system/settings.h"
+#include "recorder/compositor/layers/shape_layer.h"
 #include <filesystem>
 #include <memory>
 #include <optional>
@@ -13,9 +13,8 @@ public:
     explicit WatermarkLayer(const service::system::WatermarkSettings& watermark);
     ~WatermarkLayer();
 
-    void updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer) override;
+    void updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer, ID3D11DeviceContext* context) override;
     void finalizeAssetsForRenderer(service::renderer::D3d11Renderer* renderer) override;
-    void customRender(ID3D11Texture2D* output, IDXGISurface1* surface, HDC hdc) override;
 
 private:
     static std::optional<std::string> _cachedWatermarkHash;
@@ -26,7 +25,7 @@ private:
     std::string computeHash(const std::filesystem::path& fname) const;
 
     service::system::WatermarkSettings _watermark;
-    std::unique_ptr<GdiImageLayer> _imageLayer;
+    ShapeLayerPtr _imageLayer;
 };
 
 }

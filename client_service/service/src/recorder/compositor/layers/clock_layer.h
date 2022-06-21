@@ -14,7 +14,7 @@ public:
     void setCallback(const ClockLayerCallback& cb) { _callback = cb; }
     void setSinkNode(const service::recorder::compositor::graph::SinkNodePtr& sink);
 
-    void updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer) override;
+    void updateAt(const service::recorder::encoder::AVSyncClock::time_point& tp, service::renderer::D3d11Renderer* renderer, ID3D11DeviceContext* context) override;
     void finalizeAssetsForRenderer(service::renderer::D3d11Renderer* renderer) override;
     
 private:

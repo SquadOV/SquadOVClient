@@ -12,6 +12,12 @@
 
 namespace service::renderer {
 
+enum class TextureResizeMode {
+    Naive,
+    Bicubic,
+    Multisample
+};
+
 struct D3d11Vertex {
     DirectX::XMFLOAT3 pos;
     DirectX::XMFLOAT2 tex;
@@ -45,10 +51,18 @@ public:
     void setVisibility(bool v) { _visible = v; }
     bool visible() const { return _visible; }
 
+    void setResizeMode(TextureResizeMode mode) { _resize = mode; };
+    TextureResizeMode resize() const { return _resize; }
+
+    void setOpacity(float v) { _opacity = v; }
+    float opacity() const { return _opacity; }
+
 private:
     size_t _numVertices = 0;
     size_t _numIndices = 0;
+    float _opacity = 1.f;
     DirectX::XMMATRIX _modelXform;
+    TextureResizeMode _resize = TextureResizeMode::Naive;
 
     ID3D11Buffer* _vertexBuffer = nullptr;
     ID3D11Buffer* _indexBuffer = nullptr;
