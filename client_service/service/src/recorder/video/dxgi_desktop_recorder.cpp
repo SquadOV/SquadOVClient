@@ -313,8 +313,6 @@ void DxgiDesktopRecorder::startRecording() {
             } else if (isAltTabbed && _defaultTexture) {
                 flowToNext(_self.get(), _defaultTexture.get(), 1, _rotation);
             } else {
-                // This effectively does nothing - but we need to call it to make sure we respect FPS limits.
-                flowToNext(_self.get(), nullptr, 1, _rotation);
                 ++numReused;
             }
 

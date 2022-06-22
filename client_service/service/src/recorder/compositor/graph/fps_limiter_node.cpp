@@ -24,7 +24,7 @@ void FpsLimiterNode::receiveTexture(service::renderer::D3d11SharedContext* image
     // However, in reality this will give us a lower FPS video than desired since there's no guarantee that the frames
     // will come in from the input at exactly that interval.
     if (!_startFrameTime) {
-        // Sleeps 16ms - a reasonable amount of time.
+        // Sleeps 16ms - a reasonable amount of time to wait for this initialization to happen.
         shared::system::utils::preciseSleep(16 * 1000000);
         return;
     }
@@ -35,7 +35,7 @@ void FpsLimiterNode::receiveTexture(service::renderer::D3d11SharedContext* image
         const auto refFrameTime = _startFrameTime.value() + std::chrono::nanoseconds(_nsPerFrame * _frameCounter);
         const auto elapsedFrames = std::ceil(static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(now - refFrameTime).count()) / _nsPerFrame.count());
 
-        if (image) {
+        if (image && elapsedFrames) {
             flowToNext(imageContext, image, elapsedFrames, rotation);
         }
 
