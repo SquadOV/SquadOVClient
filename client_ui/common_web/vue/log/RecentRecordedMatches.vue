@@ -351,6 +351,12 @@ export default class RecentRecordedMatches extends Vue {
         this.nextLink = null
         this.lastIndex = 0
 
+        if (!filters) {
+            // In this case, we're looking to refresh refresh starting from game 0.
+            // Which means we need to change the end date to be current so that we pull more recent games.
+            this.filters.timeEnd = new Date().getTime()
+        }
+
         // It takes a bit for the matches to load and loadMoreMatches will ignore requests
         // if something is already loading. What we want to do instead is to queue up requests
         // if something is already loading with the most recent filters.

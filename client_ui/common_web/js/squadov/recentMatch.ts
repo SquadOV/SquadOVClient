@@ -83,7 +83,7 @@ export function createEmptyRecentMatchFilters(): RecentMatchFilters {
         squads: undefined,
         users: undefined,
         timeStart: undefined,
-        timeEnd: undefined,
+        timeEnd: new Date().getTime(),
         onlyFavorite: false,
         onlyWatchlist: false,
         filters: {
