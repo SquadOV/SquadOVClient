@@ -138,6 +138,7 @@ const baseRoutes : any[] = [
         props: (route: any) => ({
             videoUuid: route.params.videoUuid,
             game: parseInt(route.query.game),
+            ts: !!route.query.ts ? new Date(parseInt(route.query.ts)) : undefined,
         })
     },
     {

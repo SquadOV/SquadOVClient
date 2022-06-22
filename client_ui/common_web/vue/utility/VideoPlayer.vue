@@ -519,6 +519,7 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             if (!!this.vod && !!this.player && this.player.readyState() >= 2) {
                 let setTime = false
                 if (!!this.pinnedTimeStamp) {
+                    console.log('go to pinned?: ', this.pinnedTimeStamp, this.vod.startTime)
                     this.goToTimeMs(this.pinnedTimeStamp.getTime() - this.vod.startTime.getTime(), false)
                     this.pinnedTimeStamp = null
                     setTime = true

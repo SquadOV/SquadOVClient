@@ -6,11 +6,12 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { ipcRenderer } from 'electron'
 /// #endif
 
-export function openVodEditingWindow(videoUuid: string, game: SquadOvGames) {
+export function openVodEditingWindow(videoUuid: string, game: SquadOvGames, ts: number | undefined) {
 /// #if DESKTOP
     ipcRenderer.send('open-vod-editor', {
         videoUuid,
-        game
+        game,
+        ts,
     })
 /// #else
     console.error('VOD Editing not yet supported on the web.')

@@ -291,6 +291,7 @@
 
 <script lang="ts">
 
+import Vue from 'vue'
 import Component, {mixins} from 'vue-class-component'
 import CommonComponent from '@client/vue/CommonComponent'
 import { Prop, Watch } from 'vue-property-decorator'
@@ -328,6 +329,9 @@ export default class VodEditor extends mixins(CommonComponent) {
 
     @Prop({type: Number, required: true})
     game!: SquadOvGames
+
+    @Prop({default: undefined})
+    ts!: Date | undefined
 
     context: VodEditorContext | undefined = undefined
     vod: VodAssociation | null = null
@@ -499,13 +503,19 @@ export default class VodEditor extends mixins(CommonComponent) {
             this.vod = v
             this.resetClip()
             this.context!.requestTimeSync()
+            Vue.nextTick(() => {
+                if (!!this.ts && !!this.vod) {
+                    this.$refs.player.goToTimeMs(this.ts.getTime() - this.vod.startTime.getTime(), false, false)
+                    this.$refs.player.setPinned(this.ts)
+                }
+            })
         }).catch((err: any) => {
             console.error('Failed to request VOD association: ', err)
         })
     }
     
     mounted() {
-        window.addEventListener('resize', this.adjustTickers);
+        window.addEventListener('resize', this.adjustTickers)
         this.refreshContext()
     }
 

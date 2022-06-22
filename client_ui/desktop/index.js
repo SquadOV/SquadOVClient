@@ -400,7 +400,7 @@ ipcMain.handle('request-cloud-upload', async (event, {task, file, destination}) 
     return await zeromqServer.performCloudUpload(task, file, destination)
 })
 
-ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
+ipcMain.on('open-vod-editor', (event, {videoUuid, game, ts}) => {
     if (!editorWin) {
         editorWin = new BrowserWindow({
             width: 1600,
@@ -430,7 +430,7 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game}) => {
         addSquadOVRedirectToBrowserWindow(editorWin)
     }
 
-    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}`)
+    editorWin.loadURL(`file://${__dirname}/index.html#editor/${videoUuid}?game=${game}${!!ts ? `&ts=${ts}` : ''}`)
     editorWin.show()
 })
 
