@@ -805,19 +805,19 @@ export default class VideoPlayer extends mixins(CommonComponent) {
             handled = true
         } else if (cmp == 'arrowleft') {
             // Jump back 5 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 - this.$store.state.settings.playback.smallStepSize, false)
+            this.goToTimeMs(this.player.currentTime() * 1000 - (!!this.$store.state.settings ? this.$store.state.settings.playback.smallStepSize : 5000), false)
             handled = true
         } else if (cmp == 'arrowright') {
             // Jump forward 5 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 + this.$store.state.settings.playback.smallStepSize, false)
+            this.goToTimeMs(this.player.currentTime() * 1000 + (!!this.$store.state.settings ? this.$store.state.settings.playback.smallStepSize : 5000), false)
             handled = true
         } else if (cmp == 'j') {
             // Jump back 10 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 - this.$store.state.settings.playback.largeStepSize, false)
+            this.goToTimeMs(this.player.currentTime() * 1000 - (!!this.$store.state.settings ? this.$store.state.settings.playback.largeStepSize : 10000), false)
             handled = true
         } else if (cmp == 'l') {
             // Jump forward 10 seconds
-            this.goToTimeMs(this.player.currentTime() * 1000 + this.$store.state.settings.playback.largeStepSize, false)
+            this.goToTimeMs(this.player.currentTime() * 1000 + (!!this.$store.state.settings ? this.$store.state.settings.playback.largeStepSize : 10000), false)
             handled = true
         } else if (cmp == 'arrowup') {
             // Volume up
