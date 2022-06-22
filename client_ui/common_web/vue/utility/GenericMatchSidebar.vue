@@ -220,6 +220,9 @@ export default class GenericMatchSidebar extends Vue {
     @Prop({required: true})
     matchUuid!: string
 
+    @Prop({required: true})
+    videoUuid!: string
+
     @Prop({type: Boolean, default: false})
     hideEvents!: boolean
 
@@ -265,7 +268,7 @@ export default class GenericMatchSidebar extends Vue {
         }
 
         this.newBookmarkInProgress = true
-        apiClient.createNewBookmark(this.matchUuid, this.currentTm).then(() => {
+        apiClient.createNewBookmark(this.matchUuid, this.videoUuid, this.currentTm).then(() => {
             this.refreshData()
         }).catch((err: any) => {
             console.warn('Failed to create new bookmark: ', err)

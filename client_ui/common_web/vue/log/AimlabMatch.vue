@@ -71,6 +71,7 @@
                         <generic-match-sidebar
                             v-if="!!vod"
                             :match-uuid="taskId"
+                            :video-uuid="vod.videoUuid"
                             hide-events
                             :style="eventsStyle"
                             :current-tm="vodTime"

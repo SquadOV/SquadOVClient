@@ -100,9 +100,10 @@
                     <v-col v-if="!theaterMode" cols="4">
                         <generic-match-sidebar
                             :match-uuid="matchUuid"
+                            :video-uuid="vod.videoUuid"
                             :style="roundEventsStyle"
                             :current-tm="vodTime"
-                            v-if="!!currentMatch"
+                            v-if="!!currentMatch && !!vod"
                             :start-tm="startTime"
                             @go-to-time="goToVodTime(arguments[0], false)"
                         >

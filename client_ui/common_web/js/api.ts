@@ -1815,9 +1815,10 @@ class ApiClient {
         })
     }
 
-    createNewBookmark(matchUuid: string, tm: Date): Promise<void> {
+    createNewBookmark(matchUuid: string, videoUuid: string, tm: Date): Promise<void> {
         return axios.post(`v1/users/me/events`, {
             matchUuid,
+            videoUuid,
             tm,
         }, this.createWebAxiosConfig())
     }

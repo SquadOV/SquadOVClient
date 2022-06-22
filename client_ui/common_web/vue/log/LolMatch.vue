@@ -66,9 +66,10 @@
                     <v-col v-if="!theaterMode" cols="4">
                         <generic-match-sidebar
                             :match-uuid="matchUuid"
+                            :video-uuid="vod.videoUuid"
                             :style="eventsStyle"
                             :current-tm="vodTime"
-                            v-if="!!currentMatch"
+                            v-if="!!currentMatch && !!vod"
                             :start-tm="currentMatch.gameStartTime"
                             @go-to-time="goToVodTime(arguments[0], false)"
                         >
