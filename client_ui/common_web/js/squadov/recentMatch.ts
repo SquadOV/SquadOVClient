@@ -8,6 +8,7 @@ import { ValorantPlayerMatchSummary, cleanValorantPlayerMatchSummary } from '@cl
 import { CsgoPlayerMatchSummary, cleanCsgoPlayerMatchSummaryFromJson } from '@client/js/csgo/summary'
 import { WowMatchFilters, createEmptyWowMatchFilters } from '@client/js/wow/filters'
 import { ValorantMatchFilters, createEmptyValorantMatchFilters } from '@client/js/valorant/filters'
+import { EPricingTier } from '@client/js/squadov/pricing'
 
 export interface RecentMatchPov {
     vod: VodManifest
@@ -19,6 +20,7 @@ export interface RecentMatchPov {
     isLocal: boolean
     tags: VodTag[]
     accessToken: string | null
+    tier: EPricingTier
 
     aimlabTask?: AimlabTaskData
     // We can skip hearthstone since the summary Vue component pulls the data itself

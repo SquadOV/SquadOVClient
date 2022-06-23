@@ -7,19 +7,12 @@
         <div class="ml-2" v-if="disabled || forceShow">
             <v-tooltip bottom max-width="400px" :open-delay="250">
                 <template v-slot:activator="{ on, attrs }">
-                    <v-btn
-                        icon
+                    <sub-icon
+                        :tier="tier"
                         v-on="on"
                         v-bind="attrs"
-                        :to="pricingTo"
-                        style="pointer-events: auto !important;"
                     >
-                        <v-icon
-                            :style="iconStyle"
-                        >
-                            mdi-star-circle
-                        </v-icon>
-                    </v-btn>
+                    </sub-icon>
                 </template>
 
                 <span v-if="!forceShow">This feature requires a {{ tier }} tier subscription to SquadOV.</span> Check out SquadOV Pro today!
@@ -35,8 +28,13 @@ import Component from 'vue-class-component'
 import { Prop } from 'vue-property-decorator'
 import { EPricingTier } from '@client/js/squadov/pricing'
 import { PricingPageId } from '@client/js/pages'
+import SubIcon from '@client/vue/utility/squadov/SubIcon.vue'
 
-@Component
+@Component({
+    components: {
+        SubIcon
+    }
+})
 export default class PricingNotifierWrapper extends Vue {
     @Prop({required: true})
     tier!: EPricingTier
@@ -49,19 +47,6 @@ export default class PricingNotifierWrapper extends Vue {
 
     get disabled(): boolean {
         return !this.$store.getters.isUserInTier(this.tier)
-    }
-
-    get iconStyle(): any {
-        return {
-            color: (this.tier == EPricingTier.Gold) ? '#FFFF00' :
-                (this.tier == EPricingTier.Diamond) ? '#E040FB' :  '#E0E0E0'
-        }
-    }
-
-    get pricingTo(): any {
-        return {
-            name: PricingPageId
-        }
     }
 }
 

@@ -17,6 +17,9 @@
                 <div class="text-center text-caption">
                     {{ pov.username }} played...
                 </div>
+
+                <sub-icon hide-basic :tier="pov.tier">
+                </sub-icon>
             </div>
 
             <v-spacer></v-spacer>
@@ -220,6 +223,7 @@ import CsgoPlayerMatchSummaryDisplay from '@client/vue/utility/csgo/CsgoPlayerMa
 import VideoPreviewPlayer from '@client/vue/utility/VideoPreviewPlayer.vue'
 import UploadProgressDisplay from '@client/vue/utility/squadov/UploadProgressDisplay.vue'
 import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
+import SubIcon from '@client/vue/utility/squadov/SubIcon.vue'
 
 @Component({
     components: {
@@ -236,6 +240,7 @@ import BulkTagDisplay from '@client/vue/utility/vods/BulkTagDisplay.vue'
         CsgoPlayerMatchSummaryDisplay,
         UploadProgressDisplay,
         BulkTagDisplay,
+        SubIcon,
     }
 })
 export default class RecentMatchDisplay extends Vue {
