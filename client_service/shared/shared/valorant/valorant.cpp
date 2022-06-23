@@ -18,6 +18,8 @@ EValorantMap mapIdToValorantMap(const std::string& id) {
         return EValorantMap::Breeze;
     } else if (id == "/Game/Maps/Canyon/Canyon") {
         return EValorantMap::Fracture;
+    } else if (id == "/Game/Maps/Pitt/Pitt") {
+        return EValorantMap::Pearl;
     }
     return EValorantMap::Unknown;
 }
@@ -43,6 +45,8 @@ EValorantMap codenameToValorantMap(const std::string& codename) {
         return EValorantMap::CharacterSelect;
     } else if (codename == "Canyon") {
         return EValorantMap::Fracture;
+    } else if (codename == "Pitt") {
+        return EValorantMap::Pearl;
     }
     return EValorantMap::Unknown;
 }
@@ -63,6 +67,8 @@ std::string mapToName(EValorantMap map) {
             return "Breeze";
         case EValorantMap::Fracture:
             return "Fracture";
+        case EValorantMap::Pearl:
+            return "Pearl";
         case EValorantMap::MainMenu:
             return "Main Menu";
         case EValorantMap::CharacterSelect:

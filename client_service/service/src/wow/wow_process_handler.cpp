@@ -787,7 +787,7 @@ void WoWProcessHandlerInstance::onInstanceEnd(const shared::TimePoint& tm) {
     // the user did in passing.
     const auto wowSettings = service::system::getCurrentSettings()->wowSettings();
     const auto totalMatchTime = std::chrono::duration_cast<std::chrono::milliseconds>(tm - _matchStartTime).count();
-    if (!_currentMatchViewUuid.empty() && ((totalMatchTime / 1000) > wowSettings.minimumTimeSecondsToRecord)) {
+    if (!_currentMatchViewUuid.empty() && ((totalMatchTime / 1000.f) > wowSettings.minimumTimeSecondsToRecord)) {
         std::vector<game_event_watcher::WoWCombatantInfo> combatants;
         combatants.reserve(_instancePlayers.size());
 
