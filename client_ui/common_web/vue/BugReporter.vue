@@ -103,6 +103,7 @@
                     label="Description (please explain what bug you encountered and what you were doing when you experienced the bug)"
                     v-model="description"
                     hide-details
+                    :rules="descriptionRules"
                 >
                 </v-textarea>
             </v-form>
@@ -198,6 +199,12 @@ export default class BugReporter extends Vue {
     EPricingTier = EPricingTier
 
     get titleRules() : any[] {
+        return [
+            (value : any) => !!value || 'Required.',
+        ]
+    }
+
+    get descriptionRules() : any[] {
         return [
             (value : any) => !!value || 'Required.',
         ]
