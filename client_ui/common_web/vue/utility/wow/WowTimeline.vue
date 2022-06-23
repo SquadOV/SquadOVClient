@@ -405,10 +405,6 @@ export default class WowTimeline extends mixins(CommonComponent) {
     get activeSeriesData(): StatXYSeriesData[] {
         let series: StatXYSeriesData[] = []
 
-        let markerEndpoint = this.showDps ? DPS_ENDPOINT :
-            this.showDrps ? DRPS_ENDPOINT :
-            this.showHps ? HPS_ENDPOINT : ''
-
         const validSymbols = ['circle', 'rect', 'triangle', 'diamond', 'pin', 'arrow']
         let guidToSymbol: Map<string, string> = new Map()
         let guidToLineStyle: Map<string, LineStyle> = new Map()
@@ -610,6 +606,17 @@ export default class WowTimeline extends mixins(CommonComponent) {
             }
         }
 
+        let eventData = new StatXYSeriesData(
+            [],
+            [],
+            'value',
+            'elapsedSeconds',
+            'Markers'
+        )
+        eventData.setAllGroups(true)
+
+        addTimeToSeries(eventData)
+
         for (let e of this.endpoints) {
             if (!(e in this.cachedStats)) {
                 continue
@@ -681,9 +688,8 @@ export default class WowTimeline extends mixins(CommonComponent) {
                 const hasTwoTeam = this.enemyCharacters.length > 0
 
                 let friendlyData = fn(this.friendlyCharacters, true, hasTwoTeam)
-                addTimeToSeries(friendlyData)
-                addEventsToSeries(friendlyData, undefined)
-                addBloodlustToSeries(friendlyData, undefined)
+                addEventsToSeries(eventData, undefined)
+                addBloodlustToSeries(eventData, undefined)
 
                 series.push(friendlyData)
                 if (hasTwoTeam) {
@@ -759,18 +765,18 @@ export default class WowTimeline extends mixins(CommonComponent) {
                         data.setStyle(guidToLineStyle.get(guid))
                     }
 
-                    if (e === markerEndpoint) {
-                        addTimeToSeries(data)
-                        addEventsToSeries(data, guid)
-                        addBloodlustToSeries(data, guid)
-                        addAurasAndSpellsToSeries(data, guid)
+                    if (e === DPS_ENDPOINT) {
+                        addEventsToSeries(eventData, guid)
+                        addBloodlustToSeries(eventData, guid)
+                        addAurasAndSpellsToSeries(eventData, guid)
                     }
 
                     series.push(data)
                 }
             }
         }
-
+        
+        series.push(eventData)
         series.sort((a: StatXYSeriesData, b: StatXYSeriesData) => {
             if (a._name < b._name) {
                 return -1

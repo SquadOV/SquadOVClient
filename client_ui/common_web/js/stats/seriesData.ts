@@ -18,6 +18,7 @@ export class StatXYSeriesData extends BaseGraphData {
 
     _style: LineStyle | undefined = undefined
     _symbol: string | undefined = undefined
+    _allGroups: boolean = false
 
     _overlayPeriods: StatTimePeriodData[] = []
 
@@ -71,6 +72,14 @@ export class StatXYSeriesData extends BaseGraphData {
 
     setSymbol(symbol: string | undefined) {
         this._symbol = symbol
+    }
+
+    setAllGroups(v: boolean) {
+        this._allGroups = v
+    }
+
+    get isForAllGroups(): boolean {
+        return this._allGroups
     }
 
     setXY(x: any[], y: any[]) {

@@ -98,6 +98,9 @@ export default class LineGraph extends Vue {
         if (this.separateGraphs) {
             // If we separate graphs then we create a new 'group' for each specified grouping.
             this.validSeriesData.forEach((g: StatXYSeriesData) => {
+                if (g._allGroups) {
+                    return
+                }
                 groupSet.add(g._group)
 
                 if (!!g._groupIcon) {
@@ -125,6 +128,9 @@ export default class LineGraph extends Vue {
         let groupSeriesAxis: Map<string, Map<string, number>> = new Map()
         let xAxis : any[] = []
         for (let i = 0; i < this.validSeriesData.length; ++i) {
+            if (this.validSeriesData[i]._allGroups) {
+                continue
+            }
             let type = this.validSeriesData[i]._type
             let group = this.separateGraphs ? this.validSeriesData[i]._group : 'Default'
             if (!groupSeriesAxis.has(group)) {
@@ -303,114 +309,114 @@ export default class LineGraph extends Vue {
             }]
         }
 
-        options.series = this.validSeriesData.map((series : StatXYSeriesData, seriesIdx: number) => {
-            let group = this.separateGraphs ? series._group : 'Default'
-            const grid = grids[groupToGrid.get(group)!]
-            let opts: any = {
-                data: series._x.map((x : number, idx : number) => {
-                    return [x, series._y[idx]]
-                }),
-                name: series._name,
-                type: 'line',
-                clip: true,
-                smooth: true,
-                //smoothMonotone: 'x',
-                sampling: 'average',
-                showSymbol: series.showSymbol,
-                symbol: series.showSymbol ? series._symbol : 'line',
-                symbolSize: 6,
-                width: 4,
-                xAxisIndex: groupSeriesAxis.get(group)!.get(series._type)!,
-                yAxisIndex: groupToGrid.get(group)!,
-                markLine: {
-                    label: {
-                        show: true,
-                        position: 'insideEndTop',
-                        fontSize: 16,
-                        formatter: (p: any) => {
-                            return p.name
-                        }
-                    },
-                    lineStyle: {
-                        type: 'solid',
-                        width: 3,
-                    },
-                    symbol: ['none', 'none'],
-                    data: series._xLines.map((ele: XLineMarker) => {
-                        return  [
-                            {
-                                xAxis: ele.x,
-                                y: grid.top + grid.height,
-                                name: ele.name,
-                                lineStyle: {
-                                    color: ele.colorOverride
+        options.series = []
+        let delayedSeries = []
+
+        for (let series of this.validSeriesData) {
+            let allGroups = !this.separateGraphs ? ['Default'] : series._allGroups ? groupArr : [series._group]
+            for (let group of allGroups) {
+                const grid = grids[groupToGrid.get(group)!]
+                let opts: any = {
+                    data: series._x.map((x : number, idx : number) => {
+                        return [x, series._y[idx]]
+                    }),
+                    name: series._name,
+                    type: 'line',
+                    clip: true,
+                    smooth: true,
+                    sampling: 'average',
+                    showSymbol: series.showSymbol,
+                    symbol: series.showSymbol ? series._symbol : 'line',
+                    symbolSize: 6,
+                    width: 4,
+                    xAxisIndex: groupSeriesAxis.get(group)!.get(series._type)!,
+                    yAxisIndex: groupToGrid.get(group)!,
+                    markLine: {
+                        label: {
+                            show: true,
+                            position: 'insideEndTop',
+                            fontSize: 16,
+                            formatter: (p: any) => {
+                                return p.name
+                            }
+                        },
+                        lineStyle: {
+                            type: 'solid',
+                            width: 3,
+                        },
+                        symbol: ['none', 'none'],
+                        data: series._xLines.map((ele: XLineMarker) => {
+                            return  [
+                                {
+                                    xAxis: ele.x,
+                                    y: grid.top + grid.height,
+                                    name: ele.name,
+                                    lineStyle: {
+                                        color: ele.colorOverride
+                                    }
+                                },
+                                {
+                                    xAxis: ele.x,
+                                    y: grid.top,
+                                    symbol: ele.symbol,
+                                    symbolSize: 24,
                                 }
-                            },
-                            {
-                                xAxis: ele.x,
-                                y: grid.top,
-                                symbol: ele.symbol,
-                                symbolSize: 24,
+                            ]
+                        })
+                    },
+                    markArea: {
+                        label: {
+                            show: true,
+                            position: 'inside',
+                            fontSize: 16,
+                            formatter: (p: any) => {
+                                return p.name
                             }
-                        ]
-                    })
-                },
-                markArea: {
-                    label: {
-                        show: true,
-                        position: 'inside',
-                        fontSize: 16,
-                        formatter: (p: any) => {
-                            return p.name
+                        },
+                        itemStyle: {
+                            color: 'rgba(255, 204, 203, 0.3)'
+                        },
+                        data: series._xAreas.map((ele: XAreaMarker) => {
+                            return [
+                                {
+                                    xAxis: ele.start,
+                                    y: grid.top + grid.height,
+                                    name: ele.name,
+                                },
+                                {
+                                    xAxis: ele.end,
+                                    y: grid.top,
+                                }
+                            ]
+                        })
+                    },
+                    tooltip: {
+                        formatter: (params: any) => {
+                            return `${params.marker} ${params.seriesName}: ${params.value[1]}@${params.value[0]} ${this.unit}`
                         }
-                    },
-                    itemStyle: {
-                        color: 'rgba(255, 204, 203, 0.3)'
-                    },
-                    data: series._xAreas.map((ele: XAreaMarker) => {
-                        return [
-                            {
-                                xAxis: ele.start,
-                                y: grid.top + grid.height,
-                                name: ele.name,
-                            },
-                            {
-                                xAxis: ele.end,
-                                y: grid.top,
-                            }
-                        ]
-                    })
-                },
-                tooltip: {
-                    formatter: (params: any) => {
-                        return `${params.marker} ${params.seriesName}: ${params.value[1]}@${params.value[0]} ${this.unit}`
                     }
                 }
-            }
 
-            if (series.hasStyle) {
-                opts.lineStyle = series.echartsLineStyle
-                opts.itemStyle = series.echartsItemStyle
-            }
-            return opts
-        })
-
-        this.validSeriesData.forEach((series : StatXYSeriesData) => {
-            let group = this.separateGraphs ? series._group : 'Default'
-            const grid = grids[groupToGrid.get(group)!]
-            
-            for (let o of series._overlayPeriods) {
-                let s = o.constructEchartsSeries(24, grid.top, this.unit)
-                s.itemStyle = {
-                    opacity: 0.7
+                if (series.hasStyle) {
+                    opts.lineStyle = series.echartsLineStyle
+                    opts.itemStyle = series.echartsItemStyle
                 }
-                s.zlevel = 1
-                s.xAxisIndex = groupSeriesAxis.get(group)!.get(series._type)!
-                s.yAxisIndex = groupToGrid.get(group)!
-                options.series.push(s)
+                options.series.push(opts)
+
+                for (let o of series._overlayPeriods) {
+                    let s = o.constructEchartsSeries(24, grid.top, this.unit)
+                    s.itemStyle = {
+                        opacity: 0.7
+                    }
+                    s.zlevel = 1
+                    s.xAxisIndex = groupSeriesAxis.get(group)!.get(series._type)!
+                    s.yAxisIndex = groupToGrid.get(group)!
+                    delayedSeries.push(s)
+                }
             }
-        })
-        
+        }
+
+        options.series.push(...delayedSeries)
         this.graph.setOption(options)
     }
 
