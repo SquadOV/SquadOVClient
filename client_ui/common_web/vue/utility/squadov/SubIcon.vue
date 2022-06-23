@@ -3,6 +3,7 @@
         icon
         :to="pricingTo"
         style="pointer-events: auto !important;"
+        v-if="visible"
     >
         <v-icon
             :style="iconStyle"

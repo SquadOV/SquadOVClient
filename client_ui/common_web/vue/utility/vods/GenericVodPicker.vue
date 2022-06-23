@@ -60,7 +60,7 @@
                     <!-- upload button -->
                     <v-tooltip bottom>
                         <template v-slot:activator="{on, attrs}">
-                            <v-btn color="primary" icon v-if="canUpload" :disabled="isVodExpired" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
+                            <v-btn color="primary" icon :disabled="isVodExpired || !canUpload" @click="uploadLocalVod" :loading="isUploading" v-on="on" v-bind="attrs">
                                 <v-icon>
                                     mdi-upload
                                 </v-icon>
