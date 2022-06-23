@@ -59,6 +59,7 @@
             <div class="mt-2">
                 <pricing-notifier-wrapper
                     :tier="EPricingTier.Gold"
+                    :feature="EProFeature.ClipLength"
                     shrink
                 >
                     Max Clip Length (seconds): {{ maxClipLengthMilliseconds / 1000 }}
@@ -311,7 +312,7 @@ import { apiClient, ApiData, StagedClipStatusResponse } from '@client/js/api'
 import { SquadOvGames } from '@client/js/squadov/game'
 import * as pi from '@client/js/pages'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, EProFeature } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -323,6 +324,7 @@ import { EPricingTier } from '@client/js/squadov/pricing'
 export default class VodEditor extends mixins(CommonComponent) {
     secondsToTimeString = secondsToTimeString
     EPricingTier = EPricingTier
+    EProFeature = EProFeature
 
     @Prop({required: true})
     videoUuid!: string

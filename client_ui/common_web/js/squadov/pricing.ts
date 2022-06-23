@@ -5,6 +5,18 @@ export enum EPricingTier {
     Diamond = 'DIAMOND'
 }
 
+export enum EProFeature {
+    Support,
+    SquadSize,
+    Watermark,
+    Resolution,
+    Fps,
+    Bitrate,
+    Codec,
+    VodRetention,
+    ClipLength,
+}
+
 export const PRICING_ORDER = {
     [EPricingTier.Basic]: 1,
     [EPricingTier.Silver]: 2,

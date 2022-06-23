@@ -22,6 +22,7 @@
                                 <template v-slot:item="{item}">
                                     <pricing-notifier-wrapper
                                         :tier="item.tier"
+                                        :feature="EProFeature.Resolution"
                                     >
                                         {{ item.text }}
                                     </pricing-notifier-wrapper>
@@ -43,6 +44,7 @@
                                 <template v-slot:item="{item}">
                                     <pricing-notifier-wrapper
                                         :tier="item.tier"
+                                        :feature="EProFeature.Fps"
                                     >
                                         {{ item.text }}
                                     </pricing-notifier-wrapper>
@@ -73,6 +75,7 @@
                             <pricing-notifier-wrapper
                                 v-if="!!nextTier"
                                 :tier="nextTier"
+                                :feature="EProFeature.Bitrate"
                             >
                                 <span class="text-overline">Want more bits?</span>
                             </pricing-notifier-wrapper>
@@ -113,6 +116,7 @@
                                 <template v-slot:item="{item}">
                                     <pricing-notifier-wrapper
                                         :tier="item.tier"
+                                        :feature="EProFeature.Codec"
                                     >
                                         {{ item.text }}
                                     </pricing-notifier-wrapper>
@@ -751,7 +755,7 @@ import { IpcResponse } from '@client/js/system/ipc'
 import { LocalStoragePageId } from '@client/js/pages'
 import KeybindSettingsItem from '@client/vue/utility/squadov/settings/KeybindSettingsItem.vue'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
-import { EPricingTier, getNextHighestTier } from '@client/js/squadov/pricing'
+import { EPricingTier, getNextHighestTier, EProFeature } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -764,6 +768,8 @@ import { EPricingTier, getNextHighestTier } from '@client/js/squadov/pricing'
     }
 })
 export default class RecordingSettingsItem extends Vue {
+    EProFeature = EProFeature
+
     @Prop({type: Boolean, default: false})
     mini!: boolean
 

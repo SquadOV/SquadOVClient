@@ -100,6 +100,7 @@
                         <pricing-notifier-wrapper
                             v-if="localMembership.squad.maxMembers !== null"
                             :tier="EPricingTier.Gold"
+                            :feature="EProFeature.SquadSize"
                             shrink
                         >
                             Max Members: {{ localMembership.squad.maxMembers }}
@@ -270,7 +271,7 @@ import {
     SquadInvite,
     SquadRole
 } from '@client/js/squadov/squad'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, EProFeature } from '@client/js/squadov/pricing'
 import LoadingContainer from '@client/vue/utility/LoadingContainer.vue'
 import SquadMemberTable from '@client/vue/utility/squads/SquadMemberTable.vue'
 import SquadInviteTable from '@client/vue/utility/squads/SquadInviteTable.vue'
@@ -295,6 +296,7 @@ import * as pi from '@client/js/pages'
 })
 export default class SingleSquadPage extends Vue {
     EPricingTier = EPricingTier
+    EProFeature = EProFeature
 
     @Prop({required: true})
     squadId!: number

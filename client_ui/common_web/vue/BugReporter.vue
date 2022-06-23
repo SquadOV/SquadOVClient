@@ -77,6 +77,7 @@
                     <pricing-notifier-wrapper
                         v-if="!this.$store.getters.isUserInTier(EPricingTier.Gold)"
                         :tier="EPricingTier.Gold"
+                        :feature="EProFeature.Support"
                         shrink
                     >
                         <span class="text-overline">Want priority support? Upgrade to SquadOV Pro.</span>
@@ -179,7 +180,7 @@ import process from 'process'
 import glob from 'glob'
 import { openUrlInBrowser } from '@client/js/external'
 import { SettingsPageId } from '@client/js/pages'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, EProFeature } from '@client/js/squadov/pricing'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
 const MAX_DUMPS_TO_SEND = 5
 
@@ -197,6 +198,7 @@ export default class BugReporter extends Vue {
     inProgress: boolean = false
     showHideError: boolean = false
     EPricingTier = EPricingTier
+    EProFeature = EProFeature
 
     get titleRules() : any[] {
         return [

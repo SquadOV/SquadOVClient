@@ -179,6 +179,7 @@
         <div class="d-flex align-center text-subtitle-2 font-weight-bold ml-1" v-if="!!value.expirationTime">
             <pricing-notifier-wrapper
                 :tier="EPricingTier.Silver"
+                :feature="EProFeature.VodRetention"
                 shrink
             >
                 <span v-if="isVodExpired">This VOD is past SquadOV's cloud retention date: {{ standardFormatTime(value.expirationTime) }}.</span>
@@ -238,7 +239,7 @@ import { UserProfileHandle } from '@client/js/squadov/user'
 
 import { standardFormatTime } from '@client/js/time'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, EProFeature } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -253,6 +254,7 @@ import { EPricingTier } from '@client/js/squadov/pricing'
 export default class GenericVodPicker extends mixins(CommonComponent) {
     standardFormatTime = standardFormatTime
     EPricingTier = EPricingTier
+    EProFeature = EProFeature
 
     @Prop({required: true})
     value!: VodAssociation | null

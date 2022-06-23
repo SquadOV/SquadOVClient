@@ -34,12 +34,17 @@
                             </v-btn>
                         </div>
 
-                        <pricing-notifier-wrapper
-                            :tier="$store.state.tier"
-                            force-show
-                        >
-                            You are on the {{ $store.state.tier }} SquadOV Pro plan.
-                        </pricing-notifier-wrapper>
+                        <div class="d-flex align-center">
+                            <div>
+                                You are on the {{ $store.state.tier }} SquadOV Pro plan.
+                            </div>
+
+                            <sub-icon
+                                :tier="$store.state.tier"
+                                hide-basic
+                            >
+                            </sub-icon>
+                        </div>
 
                         <v-divider class="mt-2 mb-4"></v-divider>
 
@@ -203,7 +208,7 @@ import TotalRecordedPlaytimeWidget from '@client/vue/utility/squadov/TotalRecord
 import RecentRecordedMatches from '@client/vue/log/RecentRecordedMatches.vue'
 import ReferralLink from '@client/vue/utility/squadov/ReferralLink.vue'
 import { compareString, compareUserStatus } from '@client/js/cmp'
-import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
+import SubIcon from '@client/vue/utility/squadov/SubIcon.vue'
 
 const LARGE_SQUAD_THRESHOLD: number = 50
 const USERS_PER_PAGE: number = 10
@@ -219,7 +224,7 @@ const USERS_PER_PAGE: number = 10
         TotalRecordedPlaytimeWidget,
         RecentRecordedMatches,
         ReferralLink,
-        PricingNotifierWrapper,
+        SubIcon,
     }
 })
 export default class Dashboard extends mixins(CommonComponent) {

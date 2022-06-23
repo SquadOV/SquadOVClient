@@ -6,6 +6,7 @@
 
             <pricing-notifier-wrapper
                 :tier="EPricingTier.Silver"
+                :feature="EProFeature.Watermark"
                 shrink
             >
                 <v-checkbox
@@ -383,7 +384,7 @@ import { ipcRenderer } from 'electron'
 
 import { allGames, gameToName, SquadOvGames } from '@client/js/squadov/game'
 import { createEmptyOverlay, SquadOvOverlay, SquadOvPositionX, SquadOvPositionY } from '@client/js/system/settings'
-import { EPricingTier } from '@client/js/squadov/pricing'
+import { EPricingTier, EProFeature } from '@client/js/squadov/pricing'
 import PricingNotifierWrapper from '@client/vue/utility/squadov/PricingNotifierWrapper.vue'
 
 enum PreviewTask {
@@ -411,6 +412,7 @@ interface PreviewStatus {
 })
 export default class OverlaySettingsItem extends Vue {
     EPricingTier = EPricingTier
+    EProFeature = EProFeature
 
     get startZIndex(): number {
         return 30 + this.editableLayers.length * 4
