@@ -94,7 +94,8 @@
             color="success"
             class="mr-2"
         >
-            &#10024; Go Pro &#10024;
+            <span v-if="$store.state.tier === EPricingTier.Basic">&#10024; Go Pro &#10024;</span>
+            <span v-else>SquadOV Pro Plans</span>
         </v-btn>
 
         <download-button v-if="!isDesktop" class="mr-2"></download-button>
@@ -178,6 +179,7 @@ import { ipcRenderer } from 'electron'
 /// #endif
 
 import { NotificationSummary } from '@client/js/squadov/notification'
+import { EPricingTier } from '@client/js/squadov/pricing'
 
 @Component({
     components: {
@@ -187,6 +189,7 @@ import { NotificationSummary } from '@client/js/squadov/notification'
 })
 export default class AppNav extends mixins(CommonComponent) {
     notifications: NotificationSummary | null = null
+    EPricingTier = EPricingTier
 
     get pricingTo(): any {
         return {
