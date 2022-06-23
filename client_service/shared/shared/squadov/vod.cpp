@@ -113,6 +113,14 @@ VodAssociation VodAssociation::fromJson(const nlohmann::json& j) {
     return v;
 }
 
+std::string VodAssociation::fastifyContainerFormat() const {
+    if (rawContainerFormat == "webm") {
+        return "webm";
+    } else {
+        return "mp4";
+    }
+}
+
 nlohmann::json VodMetadata::toJson() const {
     nlohmann::json body = {
         { "videoUuid", videoUuid },

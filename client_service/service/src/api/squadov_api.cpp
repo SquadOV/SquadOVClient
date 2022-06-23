@@ -508,9 +508,9 @@ shared::squadov::VodAssociation SquadovApi::getVod(const std::string& videoUuid)
     return shared::squadov::VodAssociation::fromJson(parsedJson);
 }
 
-std::string SquadovApi::getVodUri(const std::string& videoUuid) const {
+std::string SquadovApi::getVodUri(const std::string& videoUuid, const std::string& format) const {
     std::ostringstream path;
-    path << "/v1/vod/" << videoUuid << "/source/fastify.mp4";
+    path << "/v1/vod/" << videoUuid << "/source/fastify." << format;
 
     const auto result = _webClient->get(path.str());
 

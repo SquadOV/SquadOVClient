@@ -752,13 +752,13 @@ int main(int argc, char** argv) {
 
                 shared::filesystem::LocalRecordingIndexEntry entry;
                 entry.uuid = request.data;
-                entry.relative = entry.uuid + ".mp4";
+                entry.relative = entry.uuid + "." + vodAssoc.fastifyContainerFormat();
 
                 shared::filesystem::LocalRecordingIndexDb::singleton()->initializeFromFolder(settings->recording().localRecordingLocation);
                 
                 shared::TimePoint lastProgressTm = shared::nowUtc();
                 shared::filesystem::LocalRecordingIndexDb::singleton()->addLocalEntryFromUri(
-                    service::api::getGlobalApi()->getVodUri(request.data),
+                    service::api::getGlobalApi()->getVodUri(request.data, vodAssoc.fastifyContainerFormat()),
                     service::api::getGlobalApi()->getVodMd5Checksum(request.data),
                     entry,
                     [&zeroMqServerClient, &lastProgressTm, request](size_t dltotal, size_t dl, size_t ultotal, size_t ul) {

@@ -125,7 +125,7 @@ public:
     void associateVod(const shared::squadov::VodAssociation& association, const shared::squadov::VodMetadata& metadata, const std::string& sessionUri, const std::vector<std::string>& parts) const;
     void deleteVod(const std::string& videoUuid) const;
     shared::squadov::VodAssociation getVod(const std::string& videoUuid) const;
-    std::string getVodUri(const std::string& videoUuid) const;
+    std::string getVodUri(const std::string& videoUuid, const std::string& format) const;
     std::string getVodMd5Checksum(const std::string& videoUuid) const;
 
     void createStagedClip(const std::string& videoUuid, int64_t start, int64_t end) const;
