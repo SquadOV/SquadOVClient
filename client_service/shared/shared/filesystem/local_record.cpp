@@ -387,13 +387,18 @@ std::optional<LocalRecordingIndexEntry> LocalRecordingIndexDb::buildEntryFromFil
         return std::nullopt;
     }
 
-    LocalRecordingIndexEntry ret;
-    ret.uuid = videoUuid.value();
-    ret.root = _initFolder.value();
-    ret.relative = fs::relative(absPath, _initFolder.value());
-    ret.diskBytes = fs::file_size(absPath);
-    ret.lastWriteTime = shared::filesystem::timeOfLastFileWrite(absPath);
-    return ret;
+    try {
+        LocalRecordingIndexEntry ret;
+        ret.uuid = videoUuid.value();
+        ret.root = _initFolder.value();
+        ret.relative = fs::relative(absPath, _initFolder.value());
+        ret.diskBytes = fs::file_size(absPath);
+        ret.lastWriteTime = shared::filesystem::timeOfLastFileWrite(absPath);
+        return ret;
+    } catch (std::exception& ex) {
+        LOG_WARNING("Failed to build local entry from file: " << ex.what() << std::endl);
+        return std::nullopt;
+    }
 }
 
 bool LocalRecordingIndexDb::moveLocalFolderTo(const fs::path& to) {
