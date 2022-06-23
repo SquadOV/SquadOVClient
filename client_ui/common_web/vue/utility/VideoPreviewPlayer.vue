@@ -141,21 +141,19 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     @Watch('vodUuid')
     @Watch('$store.state.settings.useStaticThumbnails')
     refreshPreviewUri() {
-        if (!!this.$store.state.settings.useStaticThumbnails) {
+        if (!!this.$store.state.settings.useStaticThumbnails && !this.useLocalVod) {
             if (!!this.player) {
                 this.player.dispose()
                 this.player = null
             }
 
             let tbUri = this.vod.videoTracks[0]?.thumbnail
-            console.log('TB URI:' , tbUri)
             if (!tbUri) {
                 this.thumbnailUrl = null
                 return
             }
 
             apiClient.accessToken(this.accessToken).getVodSegment(tbUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
-                console.log('Get Thumbnail: ', resp.data.url)
                 this.thumbnailUrl = resp.data.url
                 if (!!resp.data.expiration) {
                     window.setTimeout(() => {
