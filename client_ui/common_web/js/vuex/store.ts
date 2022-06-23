@@ -561,6 +561,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif            
         },
+        changeVideoCodec(state: RootState, v: string) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.videoCodec = v
+            saveLocalSettings(state.settings)
+/// #endif            
+        },
         changeBandwidthLimiterMultiple(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {

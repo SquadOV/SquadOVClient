@@ -167,6 +167,9 @@ private:
 
     // Certain games have other processes that spit out audio - capture that here.
     std::vector<std::string> _auxGameProcessesForAudio;
+
+    std::string _currentContainerFormat = "";
+    std::string containerFormat() const;
 };
 using GameRecorderPtr = std::unique_ptr<GameRecorder>;
 

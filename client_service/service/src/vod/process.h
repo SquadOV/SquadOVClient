@@ -4,6 +4,6 @@
 
 namespace service::vod {
 
-void processRawLocalVod(const std::filesystem::path& from, const std::filesystem::path& to);
+void processRawLocalVod(const std::filesystem::path& from, const std::filesystem::path& to, const std::string& inputFormat);
 
 }

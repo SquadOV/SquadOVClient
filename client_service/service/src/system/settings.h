@@ -10,6 +10,7 @@
 
 #include "shared/games.h"
 #include "recorder/compositor/layers/overlay_layers.h"
+#include "recorder/video/video_recorder.h"
 #include "process_watcher/process/process.h"
 #include "shared/json.h"
 #include "system/keybinds.h"
@@ -93,6 +94,7 @@ struct RecordingSettings {
     bool useNativeAspectRatio = false;
     std::optional<int32_t> bandwidthLimiterMultiple;
     WatermarkSettings watermark;
+    service::recorder::video::VideoCodec videoCodec;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

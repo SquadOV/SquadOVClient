@@ -738,7 +738,10 @@ export default class VodEditor extends mixins(CommonComponent) {
                 this.clipInProgress = false
             })
         } else {
-            requestVodClip(videoUri, clipStart, clipEnd).then((resp: {
+            let uri = new URL(videoUri)
+            let extension = uri.pathname.split('.').slice(-1)[0]
+            console.log('Local Clip: ', videoUri, extension)
+            requestVodClip(videoUri, clipStart, clipEnd, (extension == 'ts') ? 'mpegts' : extension).then((resp: {
                 path: string,
                 metadata: VodMetadata,
             }) => {

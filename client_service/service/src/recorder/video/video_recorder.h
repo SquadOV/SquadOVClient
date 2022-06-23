@@ -10,6 +10,11 @@ class AvEncoder;
 
 namespace service::recorder::video {
 
+enum class VideoCodec {
+    H264,
+    VP9
+};
+
 struct VideoWindowInfo {
     HWND window;
     HMONITOR monitor;

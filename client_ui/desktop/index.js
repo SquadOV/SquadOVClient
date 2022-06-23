@@ -392,8 +392,8 @@ ipcMain.on('request-restart', () => {
     restart()
 })
 
-ipcMain.handle('request-vod-clip', async (event, {task, source, start, end}) => {
-    return await zeromqServer.performVodClip(task, source, start, end)
+ipcMain.handle('request-vod-clip', async (event, {task, source, start, end, inputFormat}) => {
+    return await zeromqServer.performVodClip(task, source, start, end, inputFormat)
 })
 
 ipcMain.handle('request-cloud-upload', async (event, {task, file, destination}) => {

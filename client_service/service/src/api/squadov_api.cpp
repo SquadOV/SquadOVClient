@@ -187,6 +187,7 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     flags.disableSentry = parsedJson.value("disableSentry", true);
     flags.mandatoryWatermark = parsedJson.value("mandatoryWatermark", true);
     flags.watermarkMinSize = parsedJson.value("watermarkMinSize", 0.1);
+    flags.allowVp9 = parsedJson.value("allowVp9", false);
     LOG_INFO("Obtain feature flags: " << flags << std::endl);
     
     std::lock_guard guard(_featureMutex);

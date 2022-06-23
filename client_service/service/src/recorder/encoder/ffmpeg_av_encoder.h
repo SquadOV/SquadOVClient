@@ -7,7 +7,7 @@ namespace service::recorder::encoder {
 class FfmpegAvEncoderImpl;
 class FfmpegAvEncoder : public AvEncoder {
 public:
-    explicit FfmpegAvEncoder(const std::string& streamUrl);
+    FfmpegAvEncoder(const std::string& streamUrl, const std::string& formatHint);
     ~FfmpegAvEncoder();
 
     const std::string& streamUrl() const override;

@@ -115,6 +115,14 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
     if (obj.find("watermark") != obj.end()) {
         settings.watermark = WatermarkSettings::fromJson(obj["watermark"]);
     }
+
+    const auto codec = obj.value("videoCodec", "h264");
+    if (codec == "vp9") {
+        settings.videoCodec = service::recorder::video::VideoCodec::VP9;
+    } else {
+        settings.videoCodec = service::recorder::video::VideoCodec::H264;
+    }
+
     return settings;
 }
 

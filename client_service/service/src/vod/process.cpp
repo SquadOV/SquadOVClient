@@ -17,7 +17,7 @@ namespace bp = boost::process;
 namespace service::vod {
 
 
-void processRawLocalVod(const fs::path& from, const fs::path& to) {
+void processRawLocalVod(const fs::path& from, const fs::path& to, const std::string& inputFormat) {
     if (!fs::exists(from)) {
         THROW_ERROR("Failed to find input file: " << from);
     }
@@ -36,7 +36,7 @@ void processRawLocalVod(const fs::path& from, const fs::path& to) {
     boost::asio::io_service ios;
     std::future<std::string> stdoutBuf;
     std::future<std::string> stderrBuf;
-    
+
     bp::child c(
         ffmpegPath.native(),
         "-y",
@@ -61,28 +61,6 @@ void processRawLocalVod(const fs::path& from, const fs::path& to) {
     LOG_INFO("FFMPEG STDOUT: " << stdoutStr << std::endl);
     LOG_INFO("FFMPEG STDERR: " << stderrStr << std::endl);
     LOG_INFO("Finished FFmpeg Command: " << c.exit_code() << " " << c.native_exit_code() << std::endl);
-
-    if (!fs::exists(to)) {
-        LOG_INFO("...Falling back to manual processing via FFMPEG C API." << std::endl);
-        try {
-            VodClipRequest req;
-            req.source = shared::filesystem::pathUtf8(from);
-            req.task = shared::generateUuidv4();
-            req.fullCopy = true;
-            req.inputFormat = "mpegts";
-
-            const auto resp = vodClip(req);
-            if (!fs::exists(fs::path(resp.path))) {
-                THROW_ERROR("Failed to generate processed VOD: " << resp.path);
-                return;
-            }
-
-            fs::copy(fs::path(resp.path), to);
-            fs::remove(fs::path(resp.path));
-        } catch (std::exception& ex) {
-            LOG_ERROR("Failed to process local VOD: " << ex.what() << std::endl);
-        }
-    }
 }
 
 }

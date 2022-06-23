@@ -13,6 +13,7 @@ struct FeatureFlags {
     bool disableSentry = false;
     bool mandatoryWatermark = false;
     double watermarkMinSize;
+    bool allowVp9 = false;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
@@ -24,6 +25,7 @@ inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
         ", Disable Sentry: " << flags.disableSentry <<
         ", Mandatory Watermark: " << flags.mandatoryWatermark <<
         ", Watermark Min Size: " << flags.watermarkMinSize <<
+        ", Allow VP9: " << flags.allowVp9 <<
     "}";
     return out;
 }

@@ -88,6 +88,8 @@ int main(int argc, char** argv) {
     }
 
     const auto outputFname = vm["output"].as<std::string>();
+    const auto format = vm["format"].as<std::string>();
+    
     std::this_thread::sleep_for(std::chrono::seconds(5));
     // Doesn't really matter what game we stick in here yolo.
     service::recorder::GameRecorder recorder(allProcesses[0], shared::EGame::Hearthstone);
@@ -154,8 +156,14 @@ int main(int argc, char** argv) {
     if (fastify) {
         const auto fromPath = fs::path(outputFname);
         auto toPath = fromPath;
-        toPath.replace_extension(fs::path("mp4"));
-        service::vod::processRawLocalVod(fromPath, toPath);
+
+        if (fromPath.extension() == L".ts") {
+            toPath.replace_extension(fs::path("mp4"));
+            service::vod::processRawLocalVod(fromPath, toPath, "mpegts");
+        } else {
+            toPath.replace_extension(fs::path("fs.webm"));
+            service::vod::processRawLocalVod(fromPath, toPath, "webm");
+        }
     }
 
     return 0;

@@ -98,6 +98,27 @@
                                 </template>
                             </v-checkbox>
                         </div>
+
+                        <div class="d-flex align-center mt-4" v-if="!mini">
+                            <span class="text-overline font-weight-bold mr-4">Video Codec:</span>
+
+                            <v-select
+                                dense
+                                :value="$store.state.settings.record.videoCodec"
+                                @input="$store.commit('changeVideoCodec', arguments[0])"
+                                :items="codecItems"
+                                hide-details
+                                outlined
+                            >
+                                <template v-slot:item="{item}">
+                                    <pricing-notifier-wrapper
+                                        :tier="item.tier"
+                                    >
+                                        {{ item.text }}
+                                    </pricing-notifier-wrapper>
+                                </template>
+                            </v-select>
+                        </div>
                     </v-col>
 
                     <v-col cols="12" md="3" v-if="!mini">
@@ -862,6 +883,23 @@ export default class RecordingSettingsItem extends Vue {
                 text: '144',
                 tier: EPricingTier.Diamond,
                 disabled: !this.$store.getters.isUserInTier(EPricingTier.Diamond),
+            },
+        ]
+    }
+
+    get codecItems(): any[] {
+        return [
+            {
+                value: 'h264',
+                text: 'H.264',
+                tier: EPricingTier.Basic,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Basic),
+            },
+            {
+                value: 'vp9',
+                text: 'VP9',
+                tier: EPricingTier.Gold,
+                disabled: !this.$store.getters.isUserInTier(EPricingTier.Gold),
             },
         ]
     }

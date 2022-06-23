@@ -130,6 +130,7 @@ export interface SquadOvRecordingSettings {
     useCbr: boolean
     useNativeAspectRatio: boolean
     watermark: SquadOvWatermark
+    videoCodec: string
 }
 
 export interface SquadOvKeybindSettings {
@@ -401,6 +402,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         useCbr: false,
         useNativeAspectRatio: false,
         watermark: createDefaultWatermark(),
+        videoCodec: 'h264',
     }
 
     return {
@@ -714,6 +716,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.watermark === undefined) {
             parsedData.record.watermark = createDefaultWatermark()
+        }
+
+        if (parsedData.record.videoCodec === undefined) {
+            parsedData.record.videoCodec = 'h264'
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

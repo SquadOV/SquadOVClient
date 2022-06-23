@@ -50,9 +50,11 @@ namespace service::recorder {
 
 GameRecorder::GameRecorder(
     const process_watcher::process::Process& process,
-    shared::EGame game):
+    shared::EGame game
+):
     _process(process),
-    _game(game) {
+    _game(game)
+{
 
     if (!isGameEnabled()) {
         DISPLAY_NOTIFICATION(
@@ -251,6 +253,8 @@ void GameRecorder::loadCachedInfo() {
         });
         _cachedWindowInfo = std::make_unique<video::VideoWindowInfo>(fut.get());
     }
+
+    _currentContainerFormat = containerFormat();
     LOG_INFO("Finish loading cache info." << std::endl);
 
     if (!_cachedRecordingSettings || (!_process.empty() && (!_cachedWindowInfo || !_cachedWindowInfo->init))) {
@@ -261,6 +265,7 @@ void GameRecorder::loadCachedInfo() {
 void GameRecorder::clearCachedInfo() {
     _cachedRecordingSettings.reset(nullptr);
     _cachedWindowInfo.reset(nullptr);
+    _currentContainerFormat = "";
 }
 
 GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size_t desiredHeight) {
@@ -270,7 +275,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size
 
     // We don't really need to pass in an stream URL (for now) this is primarily for determining what format the file output should be in.
     // By default, that should be MPEG-TS so no need to do anything fancy here unless some override has been given.
-    data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(_forcedOutputUrl ? _forcedOutputUrl.value() : "");
+    data.encoder = std::make_unique<encoder::FfmpegAvEncoder>(_forcedOutputUrl ? _forcedOutputUrl.value() : "", _currentContainerFormat);
 
     // Assume that the input recorders have already been created before this point.
     // This is primarily for the audio inputs so we know how many inputs to expect.
@@ -799,6 +804,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
     const auto wasLocal = _cachedRecordingSettings->useLocalRecording;
     const auto maxLocalSize = _cachedRecordingSettings->maxLocalRecordingSizeGb;
     const auto singleton = shared::filesystem::LocalRecordingIndexDb::singleton();
+    const auto wasFormat = _currentContainerFormat;
     singleton->initializeFromFolder(_cachedRecordingSettings->localRecordingLocation);
 
     LOG_INFO("Clear Cached Info..." << std::endl);
@@ -831,7 +837,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
         // so we don't get bottlenecked by any user's poor internet speeds.
         // We only do VOD association when the upload ends so we don't tell the
         // server to associate a VOD that doesn't actually exist.
-        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, singleton, keepLocal, maxLocalSize](){
+        std::thread uploadThread([this, vodId, metadata, sessionId, vodStartTime, end, wasLocal, wasFormat, singleton, keepLocal, maxLocalSize](){
             pipe::FileOutputPiperPtr outputPiper = std::move(_outputPiper);
             _outputPiper.reset(nullptr);
             outputPiper->wait();
@@ -843,15 +849,15 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
                 association.videoUuid = vodId.videoUuid;
                 association.startTime = vodStartTime;
                 association.endTime = end.value().endTime;
-                association.rawContainerFormat = wasLocal ? "mp4" : "mpegts";
+                association.rawContainerFormat = (wasFormat == "webm") ? "webm" : wasLocal ? "mp4" : "mpegts";
                 association.isLocal = wasLocal;
 
                 try {
                     service::api::getGlobalApi()->associateVod(association, metadata, sessionId, outputPiper->segmentIds());
                     if (wasLocal && outputPiper->localFile().has_value()) {
                         const auto rawPath = outputPiper->localFile().value();
-                        const auto processedPath = shared::filesystem::getSquadOvTempFolder() / fs::path(association.videoUuid) / fs::path("video.mp4");
-                        service::vod::processRawLocalVod(rawPath, processedPath);
+                        const auto processedPath = shared::filesystem::getSquadOvTempFolder() / fs::path(association.videoUuid) / ((wasFormat == "webm") ? fs::path("video.webm") : fs::path("video.mp4"));
+                        service::vod::processRawLocalVod(rawPath, processedPath, (wasFormat == "webm") ? "webm" : "mpegts");
 
                         if (!fs::exists(processedPath)) {
                             THROW_ERROR("Failed find locally processed video at: " << processedPath << std::endl);
@@ -860,7 +866,7 @@ void GameRecorder::stop(std::optional<GameRecordEnd> end, bool keepLocal) {
                         // We need to process this VOD locally (aka do the equivalent of the server side fastify).
                         shared::filesystem::LocalRecordingIndexEntry entry;
                         entry.uuid = association.videoUuid;
-                        entry.relative = entry.uuid + ".mp4";
+                        entry.relative = entry.uuid + ((wasFormat == "webm") ? ".webm" : ".mp4");
 
                         // After that's complete, we can finally add this file to the local index.
                         singleton->addLocalEntryFromFilesystem(processedPath, entry);
@@ -981,6 +987,19 @@ std::unique_ptr<VodIdentifier> GameRecorder::createNewVodIdentifier() const {
     return id;
 }
 
+std::string GameRecorder::containerFormat() const {
+    std::string formatHint = "mpegts";
+
+    if (service::api::getGlobalApi()->getSessionFeatures().allowVp9) {
+        switch (_cachedRecordingSettings->videoCodec) {
+            case service::recorder::video::VideoCodec::VP9:
+                formatHint = "webm";
+                break;
+        }
+    }
+    return formatHint;
+}
+
 void GameRecorder::initializeFileOutputPiper() {
     if (_outputPiper) {
         return;
@@ -993,8 +1012,8 @@ void GameRecorder::initializeFileOutputPiper() {
     // Create a pipe to the destination file. Could be a Google Cloud Storage signed URL
     // or even a filesystem. The API will tell us the right place to pipe to - we'll need to
     // create an output piper of the appropriate type based on the given URI.
-    const auto cloudDestination = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _cachedRecordingSettings->useLocalRecording ? "mp4" : "mpegts");
-    const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / fs::path("temp.ts");
+    const auto cloudDestination = service::api::getGlobalApi()->createVodDestinationUri(_currentId->videoUuid, _currentContainerFormat);
+    const auto localTmpRecord = shared::filesystem::getSquadOvTempFolder()  / fs::path(_currentId->videoUuid) / ((_currentContainerFormat == "webm") ? fs::path("temp.webm") : fs::path("temp.ts"));
     const auto finalDestination = _cachedRecordingSettings->useLocalRecording ? service::uploader::UploadDestination::local(localTmpRecord) : cloudDestination;
     setFileOutputFromDestination(_currentId->videoUuid, finalDestination);
 }

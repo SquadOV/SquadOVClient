@@ -94,7 +94,7 @@ const std::chrono::nanoseconds maxAudioDeviation = std::chrono::duration_cast<st
 
 class FfmpegAvEncoderImpl {
 public:
-    explicit FfmpegAvEncoderImpl(const std::string& streamUrl);
+    explicit FfmpegAvEncoderImpl(const std::string& streamUrl, const std::string& formatHint);
     ~FfmpegAvEncoderImpl();
 
     const std::string& streamUrl() const { return _streamUrl; }
@@ -125,6 +125,7 @@ private:
     bool hasAudioFrameAvailable() const;
 
     std::string _streamUrl;
+    std::string _formatHint;
 
     std::atomic_bool _fileOutputReady = false;
     std::atomic_bool _dvrBufferReady = false;
@@ -316,18 +317,20 @@ void FfmpegAvEncoderImpl::AudioStreamData::initializeSourceFrame(size_t numSampl
 }
 
 
-FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl):
-    _streamUrl(streamUrl) {
-
+FfmpegAvEncoderImpl::FfmpegAvEncoderImpl(const std::string& streamUrl, const std::string& formatHint):
+    _streamUrl(streamUrl),
+    _formatHint(formatHint)
+{
+    LOG_INFO("Searching for format based on Stream URL [" << streamUrl << "] and Format Hint [" << formatHint << "]" << std::endl);
     _avformat = av_guess_format(
         (streamUrl.find("rtmp://") != std::string::npos) ? "flv" :
-            (streamUrl.find(".m3u8") != std::string::npos) ? "hls" : "mpegts",
+            (streamUrl.find(".m3u8") != std::string::npos) ? "hls" : _formatHint.c_str(),
         nullptr,
         nullptr
     );
 
     if (!_avformat) {
-        THROW_ERROR("Failed to find the MPEG-TS format.");
+        THROW_ERROR("Failed to find the AV format.");
     }
 
     LOG_INFO("Using AV Format: " << _avformat->name << std::endl);
@@ -418,13 +421,16 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
         std::string name;
         VideoStreamContext ctx;
         bool isGpuEncoder;
+        std::string format;
     };
 
     const EncoderChoice encodersToUse[] = {
-        {"h264_nvenc", VideoStreamContext::GPU, true },
-        {"h264_amf", VideoStreamContext::GPU, true },
-        //{"h264_mf", VideoStreamContext::CPU, false },
-        {"libopenh264", VideoStreamContext::CPU, false }
+        {"libvpx-vp9", VideoStreamContext::CPU, false, "webm" },
+        {"h264_nvenc", VideoStreamContext::GPU, true, "" },
+        {"h264_nvenc", VideoStreamContext::GPU, true, "" },
+        {"h264_amf", VideoStreamContext::GPU, true, "" },
+        //{"h264_mf", VideoStreamContext::CPU, false, "" },
+        {"libopenh264", VideoStreamContext::CPU, false, "" }
     };
 
     LOG_INFO("Check can use GPU..." << std::endl);
@@ -436,6 +442,11 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
     bool canUseHwAccel = false;
     for (const auto& enc : encodersToUse) {
         LOG_INFO("Checking Encoder: " << enc.name << std::endl);
+        if (!enc.format.empty() && enc.format != _formatHint) {
+            LOG_INFO("...Skipping due to format mismatch: " << enc.format << std::endl);
+            continue;   
+        }
+
         try {
             if (enc.isGpuEncoder && !settings.useHwEncoder) {
                 LOG_INFO("Skipping " << enc.name << " since user has disabled GPU encoding." << std::endl);
@@ -586,6 +597,17 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
                         av_dict_set(&options, "rc_mode", "timestamp", 0);
                     }
                 }
+            } else if (_vcodecContext->codec_id == AV_CODEC_ID_VP9) {
+                av_dict_set(&options, "quality", "realtime", 0);
+                av_dict_set_int(&options, "speed", 6, 0);
+                av_dict_set_int(&options, "tile-columns", 4, 0);
+                av_dict_set_int(&options, "frame-parallel", 1, 0);
+                av_dict_set_int(&options, "static-thresh", 0, 0);
+                av_dict_set_int(&options, "max-intra-rate", 1, 0);
+                av_dict_set_int(&options, "row-mt", 1, 0);
+
+                _vcodecContext->qmin = 4;
+                _vcodecContext->qmax = 48;
             }
 
             const auto ret = avcodec_open2(_vcodecContext, _vcodec, &options);
@@ -632,7 +654,7 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
 }
 
 void FfmpegAvEncoderImpl::initializeAudioStream() {
-    _acodec = avcodec_find_encoder_by_name("aac");
+    _acodec = avcodec_find_encoder_by_name( (_formatHint == "webm") ? "libopus" : "aac");
     if (!_acodec) {
         THROW_ERROR("Failed to find the audio codec.");
     }
@@ -644,7 +666,7 @@ void FfmpegAvEncoderImpl::initializeAudioStream() {
 
     constexpr int sampleRate = 48000;
     _acodecContext->bit_rate = 128000; // probably good enough?
-    _acodecContext->sample_fmt = AV_SAMPLE_FMT_FLTP;
+    _acodecContext->sample_fmt = (_formatHint == "webm") ? AV_SAMPLE_FMT_FLT : AV_SAMPLE_FMT_FLTP;
     _acodecContext->sample_rate = sampleRate;
     _acodecContext->channels = static_cast<int>(audioNumChannels);
     _acodecContext->channel_layout = AV_CH_LAYOUT_STEREO;
@@ -918,22 +940,37 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
                 _astreams[s]->encodedSamples += frameSize;
 
                 // Copy from the sink frame into the encoding frame.
-                // We are very much assuming a planar output right now.
                 {
                     std::lock_guard guard(_astreams[s]->graphMutex);
 
                     auto* frame = _astreams[s]->sinkFrames.front();
                     _astreams[s]->sinkFrames.pop_front();
 
-                    for (auto c = 0; c < _acodecContext->channels; ++c) {
-                        const float* input = (const float*)frame->data[c];
-                        float* output = (float*)_aframe->data[c];
+                    if (_acodecContext->sample_fmt == AV_SAMPLE_FMT_FLTP) {
+                        for (auto c = 0; c < _acodecContext->channels; ++c) {
+                            const float* input = (const float*)frame->data[c];
+                            float* output = (float*)_aframe->data[c];
+
+                            for (auto i = 0; i < frameSize; ++i) {
+                                if (s == 0) {
+                                    output[i] = input[i];
+                                } else {
+                                    output[i] += input[i];
+                                }
+                            }
+                        }
+                    } else {
+                        const float* input = (const float*)frame->data[0];
+                        float* output = (float*)_aframe->data[0];
 
                         for (auto i = 0; i < frameSize; ++i) {
-                            if (s == 0) {
-                                output[i] = input[i];
-                            } else {
-                                output[i] += input[i];
+                            for (auto c = 0; c < _acodecContext->channels; ++c) {
+                                const auto idx = i * _acodecContext->channels + c;
+                                if (s == 0) {
+                                    output[idx] = input[idx];
+                                } else {
+                                    output[idx] += input[idx];
+                                }
                             }
                         }
                     }
@@ -1315,6 +1352,9 @@ void FfmpegAvEncoderImpl::stop() {
     
     av_write_trailer(_avcontext);
     LOG_INFO("Finish FFMpeg write: " << _streamUrl << std::endl);
+
+    const auto metadata = getMetadata();
+    LOG_INFO("Metadata: " << metadata.toJson().dump() << std::endl);
 }
 
 shared::squadov::VodMetadata FfmpegAvEncoderImpl::getMetadata() const {
@@ -1351,8 +1391,8 @@ shared::squadov::VodMetadata FfmpegAvEncoderImpl::getMetadata() const {
     return metadata;
 }
 
-FfmpegAvEncoder::FfmpegAvEncoder(const std::string& streamUrl):
-    _impl(new FfmpegAvEncoderImpl(streamUrl)) {  
+FfmpegAvEncoder::FfmpegAvEncoder(const std::string& streamUrl, const std::string& formatHint):
+    _impl(new FfmpegAvEncoderImpl(streamUrl, formatHint)) {  
 }
 
 FfmpegAvEncoder::~FfmpegAvEncoder() = default;

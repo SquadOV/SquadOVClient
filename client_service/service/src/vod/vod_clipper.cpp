@@ -524,7 +524,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
                 container->codecContext->sample_rate = icontainer.codecContext->sample_rate;
                 container->codecContext->channel_layout = icontainer.codecContext->channel_layout;
                 container->codecContext->channels = av_get_channel_layout_nb_channels(container->codecContext->channel_layout);
-                container->codecContext->sample_fmt = codec->sample_fmts[0];
+                container->codecContext->sample_fmt = AV_SAMPLE_FMT_FLTP;
                 container->codecContext->time_base = AVRational{1, container->codecContext->sample_rate};
             }
 
@@ -591,7 +591,7 @@ std::unique_ptr<OutputStreamContainer> VodClipper::createOutputStreamForInput(AV
             THROW_ERROR("Failed to create audio fifo");
         }
 
-        container->maxSamples = av_rescale_rnd(icontainer.codecContext->frame_size, container->codecContext->sample_rate, icontainer.codecContext->sample_rate, AV_ROUND_UP);
+        container->maxSamples = icontainer.codecContext->frame_size ? av_rescale_rnd(icontainer.codecContext->frame_size, container->codecContext->sample_rate, icontainer.codecContext->sample_rate, AV_ROUND_UP) : 48000;
         if (av_samples_alloc_array_and_samples(
             &container->samplesStorage,
             &container->sampleLineSize,
@@ -616,7 +616,7 @@ VodClipRequest VodClipRequest::fromJson(const nlohmann::json& obj) {
     clip.start = obj["start"].get<int64_t>();
     clip.end = obj["end"].get<int64_t>();
     clip.fullCopy = false;
-    clip.inputFormat = "mp4";
+    clip.inputFormat = obj.value("inputFormat", "mp4");
     return clip;
 }
 
