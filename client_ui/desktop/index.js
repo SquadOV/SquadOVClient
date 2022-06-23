@@ -1007,9 +1007,14 @@ ipcMain.handle('check-vod-local', async (event, uuid) => {
                 let tmHandle = setTimeout(() => {
                     reject('Timeout')
                 }, 2000)
-                let data = await zeromqServer.checkForLocalVod(uuid)
-                clearTimeout(tmHandle)
-                resolve(data)
+
+                try {
+                    let data = await zeromqServer.checkForLocalVod(uuid)
+                    clearTimeout(tmHandle)
+                    resolve(data)
+                } catch (ex) {
+                    reject('No Local VOD?')
+                }
             }) 
         }
     } catch(ex) {

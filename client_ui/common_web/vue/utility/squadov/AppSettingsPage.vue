@@ -53,6 +53,24 @@
                     label="Use Hardware Acceleration (UI Only)"
                 >
                 </v-checkbox>
+
+                <v-checkbox
+                    :input-value="$store.state.settings.hideRecommendedSquads"
+                    @change="$store.commit('changeHideRecommendedSquads', arguments[0])"
+                    dense
+                    hide-details
+                    label="Hide Recommended Squads"
+                >
+                </v-checkbox>
+
+                <v-checkbox
+                    :input-value="$store.state.settings.useStaticThumbnails"
+                    @change="$store.commit('changeUseStaticThumbnails', arguments[0])"
+                    dense
+                    hide-details
+                    label="Use Static Thumbnails"
+                >
+                </v-checkbox>
             </v-tab-item>
 
              <v-tab>

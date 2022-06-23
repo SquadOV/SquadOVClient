@@ -116,6 +116,7 @@ export interface VodTrack {
     metadata: VodMetadata
     segments: VodSegment[]
     preview: string | null
+    thumbnail: string | null
 }
 
 export interface VodManifest {

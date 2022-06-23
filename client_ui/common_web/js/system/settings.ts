@@ -301,6 +301,8 @@ export interface SquadOvLocalSettings {
     games: PerGameSettings
     useHwAccel: boolean
     instantClipLengthSeconds: number
+    useStaticThumbnails: boolean
+    hideRecommendedSquads: boolean
 }
 
 function getSettingsFname() : string {
@@ -445,6 +447,8 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         games: createEmptyPerGameSettings(),
         useHwAccel: true,
         instantClipLengthSeconds: 15,
+        useStaticThumbnails: false,
+        hideRecommendedSquads: false,
     }
 }
 
@@ -720,6 +724,14 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.record.videoCodec === undefined) {
             parsedData.record.videoCodec = 'h264'
+        }
+
+        if (parsedData.useStaticThumbnails === undefined) {
+            parsedData.useStaticThumbnails = false
+        }
+
+        if (parsedData.hideRecommendedSquads === undefined) {
+            parsedData.hideRecommendedSquads = false
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

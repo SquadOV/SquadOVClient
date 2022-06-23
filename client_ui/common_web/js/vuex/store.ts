@@ -639,6 +639,24 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif
         },
+        changeHideRecommendedSquads(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.hideRecommendedSquads = v
+            saveLocalSettings(state.settings)
+/// #endif         
+        },
+        changeUseStaticThumbnails(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.useStaticThumbnails = v
+            saveLocalSettings(state.settings)
+/// #endif         
+        },
         sanityCheckSettings(state: RootState) {
             if (!state.settings) {
                 return

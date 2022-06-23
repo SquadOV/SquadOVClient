@@ -115,7 +115,7 @@
                         <div
                             id="rec-squads"
                             class="my-2"
-                            v-if="!!recommendedSquads && recommendedSquads.length > 0"
+                            v-if="!!recommendedSquads && recommendedSquads.length > 0 && !$store.state.settings.hideRecommendedSquads"
                         >
                             <div class="ma-2 text-h6 font-weight-bold">Recommended Squads!</div>
                             <v-divider></v-divider>

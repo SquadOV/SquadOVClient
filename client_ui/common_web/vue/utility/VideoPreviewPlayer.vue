@@ -1,7 +1,10 @@
 <template>
     <div @mouseover="startPlay" @mouseout="pausePlay" :key="forceRedraw"> 
-        <video class="video-js vjs-fill" ref="video">
+        <video class="video-js vjs-fill" ref="video" v-if="!$store.state.settings.useStaticThumbnails">
         </video>
+
+        <v-img contain :src="thumbnailUrl" v-else-if="!!thumbnailUrl">
+        </v-img>
     </div>
 </template>
 
@@ -36,6 +39,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     vodUuid!: string | undefined
 
     videoUri: string | null = null
+    thumbnailUrl: string | null = null
     player: videojs.Player | null = null
     previousTime: number = 10000000000
     $refs!: {
@@ -135,37 +139,64 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
 
     @Watch('vod')
     @Watch('vodUuid')
+    @Watch('$store.state.settings.useStaticThumbnails')
     refreshPreviewUri() {
-        if (this.useLocalVod) {
-            ipcRenderer.invoke('check-vod-local', this.vodUuid || this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
-                this.videoUri = resp.data
-                Vue.nextTick(() => {
-                    this.onVideoUriChange()
-                })
-            }).catch((err: any) => {
-                console.error('Failed to get local VOD for preview: ', err)
-            })
-        } else {
-            let previewUri = this.vod.videoTracks[0]?.preview
-            if (!previewUri) {
-                this.videoUri = null
+        if (!!this.$store.state.settings.useStaticThumbnails) {
+            if (!!this.player) {
+                this.player.dispose()
+                this.player = null
+            }
+
+            let tbUri = this.vod.videoTracks[0]?.thumbnail
+            console.log('TB URI:' , tbUri)
+            if (!tbUri) {
+                this.thumbnailUrl = null
                 return
             }
 
-            apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
-                this.videoUri = resp.data.url
+            apiClient.accessToken(this.accessToken).getVodSegment(tbUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+                console.log('Get Thumbnail: ', resp.data.url)
+                this.thumbnailUrl = resp.data.url
                 if (!!resp.data.expiration) {
                     window.setTimeout(() => {
                         this.refreshPreviewUri()
                     }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
                 }
-
-                Vue.nextTick(() => {
-                    this.onVideoUriChange()
-                })
             }).catch((err : any) => {
-                console.error('Failed to get final URL for video preview: ', err)
+                console.error('Failed to get final URL for video thumbnail: ', err)
             })
+        } else {
+            if (this.useLocalVod) {
+                ipcRenderer.invoke('check-vod-local', this.vodUuid || this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
+                    this.videoUri = resp.data
+                    Vue.nextTick(() => {
+                        this.onVideoUriChange()
+                    })
+                }).catch((err: any) => {
+                    console.error('Failed to get local VOD for preview: ', err)
+                })
+            } else {
+                let previewUri = this.vod.videoTracks[0]?.preview
+                if (!previewUri) {
+                    this.videoUri = null
+                    return
+                }
+
+                apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+                    this.videoUri = resp.data.url
+                    if (!!resp.data.expiration) {
+                        window.setTimeout(() => {
+                            this.refreshPreviewUri()
+                        }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
+                    }
+
+                    Vue.nextTick(() => {
+                        this.onVideoUriChange()
+                    })
+                }).catch((err : any) => {
+                    console.error('Failed to get final URL for video preview: ', err)
+                })
+            }
         }
     }
 
