@@ -1,6 +1,6 @@
 <template>
     <div @mouseover="startPlay" @mouseout="pausePlay" :key="forceRedraw"> 
-        <video class="video-js vjs-fill" ref="video" v-if="!$store.state.settings.useStaticThumbnails">
+        <video class="video-js vjs-fill" ref="video" v-if="!$store.state.settings.useStaticThumbnails || this.useLocalVod">
         </video>
 
         <v-img contain :src="thumbnailUrl" v-else-if="!!thumbnailUrl">
