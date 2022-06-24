@@ -396,8 +396,8 @@ ipcMain.handle('request-vod-clip', async (event, {task, source, start, end, inpu
     return await zeromqServer.performVodClip(task, source, start, end, inputFormat)
 })
 
-ipcMain.handle('request-cloud-upload', async (event, {task, file, destination}) => {
-    return await zeromqServer.performCloudUpload(task, file, destination)
+ipcMain.handle('request-cloud-upload', async (event, {task, file, destination, checkMetadata}) => {
+    return await zeromqServer.performCloudUpload(task, file, destination, checkMetadata)
 })
 
 ipcMain.on('open-vod-editor', (event, {videoUuid, game, ts}) => {

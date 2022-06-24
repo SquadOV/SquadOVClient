@@ -11,14 +11,15 @@ export interface VodUploadData {
     metadata: VodMetadata
 }
 
-export function uploadLocalFileToCloud(localFile: string, destination: VodDestination, task: string): Promise<VodUploadData> {
+export function uploadLocalFileToCloud(localFile: string, destination: VodDestination, task: string, checkMetadata: boolean): Promise<VodUploadData> {
 /// #if DESKTOP
     // Dump this task to C++ since that functionality is already there. No need
     // to reinvent the wheel here.
     return ipcRenderer.invoke('request-cloud-upload', {
         task,
         file: localFile,
-        destination: destination
+        destination: destination,
+        checkMetadata,
     })
 ///#else
     return new Promise((resolve, reject) => {

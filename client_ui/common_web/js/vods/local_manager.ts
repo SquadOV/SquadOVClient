@@ -181,7 +181,7 @@ class LocalVodManager {
                 }
                 ipcRenderer.on('cloud-upload-progress', progressNotif)
 
-                const uploadData = await uploadLocalFileToCloud(localLoc, uploadDestination.data, vod.videoUuid)
+                const uploadData = await uploadLocalFileToCloud(localLoc, uploadDestination.data, vod.videoUuid, true)
                 let newAssociation: VodAssociation = cleanVodAssocationData(JSON.parse(JSON.stringify(vod)))
                 newAssociation.isLocal = false
 

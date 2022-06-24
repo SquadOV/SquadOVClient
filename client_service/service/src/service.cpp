@@ -608,8 +608,33 @@ int main(int argc, char** argv) {
             const auto json = nlohmann::json::parse(msg);
             const auto request = service::recorder::pipe::CloudUploadRequest::fromJson(json);
 
+            const auto someMetadata = shared::squadov::generateVodMetadataFromFile(fs::path(request.file));
+            const auto metadata = someMetadata ? someMetadata.value() : shared::squadov::VodMetadata{};
+            LOG_INFO("...Computed VOD Metadata: " << metadata.toJson() << std::endl);
+
+            bool allowUpload = true;
+            if (request.checkMetadata) {
+                const auto flags = service::api::getGlobalApi()->getSessionFeatures();
+                if (metadata.resY > flags.maxRecordPixelY) {
+                    LOG_WARNING("Preventing Upload [Res Y]: " << metadata.resY << " > " << flags.maxRecordPixelY << std::endl);
+                    allowUpload = false;
+                }
+
+                // 2 fps buffer just in case something went funky with the timing.
+                if (metadata.fps > (flags.maxRecordFps + 2)) {
+                    LOG_WARNING("Preventing Upload [FPS]: " << metadata.fps << " vs " << flags.maxRecordFps << std::endl);
+                    allowUpload = false;
+                }
+
+                // Use 90% of the average bitrate just in case the encoder wasn't super accurate.
+                if ((metadata.avgBitrate * 0.9) > flags.maxBitrateKbps) {
+                    LOG_WARNING("Preventing Upload [Bitrate]: " << metadata.avgBitrate << " vs " << flags.maxBitrateKbps << std::endl);
+                    allowUpload = false;
+                }
+            }
+
             shared::TimePoint lastProgressTm = shared::nowUtc();
-            const auto resp = service::recorder::pipe::uploadToCloud(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dltotal, size_t dl, size_t ultotal, size_t ul){
+            const auto resp = allowUpload ? service::recorder::pipe::uploadToCloud(request, [&zeroMqServerClient, request, &lastProgressTm](size_t dltotal, size_t dl, size_t ultotal, size_t ul){
                 const auto now = shared::nowUtc();
                 const auto threshold = lastProgressTm + std::chrono::seconds(1);
                 if (now > threshold) {
@@ -625,14 +650,10 @@ int main(int argc, char** argv) {
                     );
                     lastProgressTm = now;
                 }
-            });
+            }) : std::make_pair("", std::vector<std::string>{});
 
             const auto session = resp.first;
             const auto& parts = resp.second;
-
-            const auto someMetadata = shared::squadov::generateVodMetadataFromFile(fs::path(request.file));
-            const auto metadata = someMetadata ? someMetadata.value() : shared::squadov::VodMetadata{};
-            LOG_INFO("...Computed VOD Metadata: " << metadata.toJson() << std::endl);
 
             nlohmann::json retData;
             retData["task"] = request.task;

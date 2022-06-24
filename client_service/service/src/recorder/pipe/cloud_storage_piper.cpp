@@ -23,6 +23,7 @@ CloudUploadRequest CloudUploadRequest::fromJson(const nlohmann::json& json) {
     ret.file = json["file"].get<std::string>();
     ret.task = json["task"].get<std::string>();
     ret.destination = service::uploader::UploadDestination::fromJson(json["destination"]);
+    ret.checkMetadata = json.value("checkMetadata", false);
     return ret;
 }
 

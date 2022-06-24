@@ -1347,7 +1347,7 @@ class ApiClient {
             // Once we have the clip vod uuid we can upload the VOD to GCS. We can consider
             // doing a resumable upload here but I think the clip should be small enough to just upload it
             // all in one go.
-            let uploadData = await uploadLocalFileToCloud(clipPath, resp.data.destination, resp.data.uuid)
+            let uploadData = await uploadLocalFileToCloud(clipPath, resp.data.destination, resp.data.uuid, false)
 
             association.videoUuid = resp.data.uuid
             metadata.videoUuid = resp.data.uuid

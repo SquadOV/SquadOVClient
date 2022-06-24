@@ -26,6 +26,7 @@ struct CloudUploadRequest {
     std::string task;
     std::string file;
     service::uploader::UploadDestination destination;
+    bool checkMetadata = false;
 
     static CloudUploadRequest fromJson(const nlohmann::json& json);
 };

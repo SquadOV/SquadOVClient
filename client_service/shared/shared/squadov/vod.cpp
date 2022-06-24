@@ -73,7 +73,7 @@ VodMetadata InputVideoFile::metadata() const {
     data.resX = codecPar->width;
     data.resY = codecPar->height;
     data.fps = static_cast<double>(vstream->avg_frame_rate.num) / vstream->avg_frame_rate.den;
-    data.avgBitrate = codecPar->bit_rate;
+    data.avgBitrate = formatContext->bit_rate / 1000.0;
     data.minBitrate = data.avgBitrate;
     data.maxBitrate = data.avgBitrate;
 

@@ -133,7 +133,7 @@ class ZeroMQServerClient {
         })
     }
 
-    performCloudUpload(task, file, destination) {
+    performCloudUpload(task, file, destination, checkMetadata) {
         return new Promise(async (resolve, reject) => {
             let handlerId = this.on('respond-cloud-upload', (resp) => {
                 let parsedResp = JSON.parse(resp)
@@ -151,7 +151,7 @@ class ZeroMQServerClient {
                 }
             })
             
-            await this._pub.send(['request-cloud-upload', JSON.stringify({task, file, destination})])
+            await this._pub.send(['request-cloud-upload', JSON.stringify({task, file, destination, checkMetadata})])
         })
     }
 
