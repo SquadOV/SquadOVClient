@@ -252,6 +252,12 @@
                                         </tr>
 
                                         <tr>
+                                            <td>Video Codec</td>
+                                            <td colspan="2" class="text-center">H.264</td>
+                                            <td colspan="2" class="text-center">H.264, VP9</td>
+                                        </tr>
+
+                                        <tr>
                                             <td class="text-left font-weight-bold text-h5 my-4" colspan="5">
                                                 Video Storage
                                             </td>
@@ -283,6 +289,23 @@
                                             <td class="text-center" colspan="4">
                                                 Unlimited
                                             </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td colspan="5" class="text-left font-weight-bold text-h5 my-4">
+                                                Audio Quality
+                                            </td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>Bitrate (kbps)</td>
+                                            <td colspan="4" class="text-center">128</td>
+                                        </tr>
+
+                                        <tr>
+                                            <td>Audio Codec</td>
+                                            <td colspan="2" class="text-center">AAC</td>
+                                            <td colspan="2" class="text-center">AAC, Opus</td>
                                         </tr>
 
                                         <tr>
