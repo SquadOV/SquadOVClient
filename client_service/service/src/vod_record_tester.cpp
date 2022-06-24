@@ -88,7 +88,6 @@ int main(int argc, char** argv) {
     }
 
     const auto outputFname = vm["output"].as<std::string>();
-    const auto format = vm["format"].as<std::string>();
     
     std::this_thread::sleep_for(std::chrono::seconds(5));
     // Doesn't really matter what game we stick in here yolo.

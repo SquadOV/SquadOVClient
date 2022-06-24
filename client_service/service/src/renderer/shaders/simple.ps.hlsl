@@ -9,6 +9,7 @@ cbuffer PsConstants : register(b0)
     uint mode;
     uint hasTexture;
     float opacity;
+    uint useOpacity;
 }
 
 struct PS_INPUT
@@ -127,5 +128,5 @@ float4 computeColor(PS_INPUT input) {
 float4 main(PS_INPUT input) : SV_Target
 {
     float4 color = computeColor(input);
-    return float4(color.rgb, color.a * opacity);
+    return float4(color.rgb, useOpacity ? color.a * opacity :  1.f);
 }

@@ -20,7 +20,7 @@ struct D3d11PSShaderConstants {
     unsigned int mode;
     unsigned int hasTexture;
     float opacity;
-    char padding[4];
+    unsigned int useOpacity;
 };
 
 class D3d11Shader {

@@ -167,6 +167,11 @@ void D3d11Model::setZRotation(float degrees) {
     _modelXform = XMMatrixRotationZ(degrees * M_PI / 180.f) * _modelXform;
 }
 
+void D3d11Model::setOpacity(float v) {
+    _opacity = v;
+    _useOpacity = true;
+}
+
 D3d11ModelPtr createFullScreenQuad(ID3D11Device* device) {
     // Top left, top right, bottom left, bottom right
     const std::vector<D3d11Vertex> vertices = {

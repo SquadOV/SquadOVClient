@@ -54,13 +54,15 @@ public:
     void setResizeMode(TextureResizeMode mode) { _resize = mode; };
     TextureResizeMode resize() const { return _resize; }
 
-    void setOpacity(float v) { _opacity = v; }
+    void setOpacity(float v);
     float opacity() const { return _opacity; }
+    bool useOpacity() const { return _useOpacity; }
 
 private:
     size_t _numVertices = 0;
     size_t _numIndices = 0;
     float _opacity = 1.f;
+    bool _useOpacity = false;
     DirectX::XMMATRIX _modelXform;
     TextureResizeMode _resize = TextureResizeMode::Naive;
 
