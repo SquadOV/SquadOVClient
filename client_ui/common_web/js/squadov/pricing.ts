@@ -15,6 +15,7 @@ export enum EProFeature {
     Codec,
     VodRetention,
     ClipLength,
+    SeparateAudioTracks,
 }
 
 export const PRICING_ORDER = {

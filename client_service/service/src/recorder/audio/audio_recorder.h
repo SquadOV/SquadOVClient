@@ -45,6 +45,7 @@ public:
 
     virtual bool exists() const = 0;
     virtual const AudioPacketProperties& props() const = 0;
+    virtual const std::string& deviceName() const = 0;
 
 private:
     bool _isVoice = false;

@@ -62,6 +62,7 @@ public:
 
     bool exists() const { return _exists; }
     const AudioPacketProperties& props() { return _props; }
+    const std::string& deviceName() const { return _deviceName; }
 
     int portaudioCallback(const void* input, void* output, unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
 private:
@@ -87,6 +88,7 @@ private:
     bool _running = false;
     std::thread _packetThread;
     AudioPacketQueue _packetQueue;
+    std::string _deviceName;
     void addToPacketQueue(const FAudioPacketView& view, const service::recorder::encoder::AVSyncClock::time_point& tm);
 };
 
@@ -239,6 +241,7 @@ void PortaudioAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const ser
             _initialVolume = device.volume;
             _mono = device.mono;
 
+            _deviceName = selectedName;
             deviceSet.insert(selectedName);
         }
     }
@@ -371,6 +374,10 @@ bool PortaudioAudioRecorder::exists() const {
 
 void PortaudioAudioRecorder::loadDevice(EAudioDeviceDirection dir, const service::system::AudioDeviceSettings& device, AudioDeviceSet& deviceSet) {
     _impl->loadDevice(dir, device, deviceSet);
+}
+
+const std::string& PortaudioAudioRecorder::deviceName() const {
+    return _impl->deviceName();
 }
 
 double PortaudioAudioRecorder::initialVolume() const {

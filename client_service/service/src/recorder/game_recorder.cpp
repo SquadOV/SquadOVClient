@@ -184,6 +184,7 @@ void GameRecorder::loadCachedInfo() {
         _cachedRecordingSettings->useLocalRecording = _cachedRecordingSettings->useLocalRecording || !features.allowRecordUpload;
         _cachedRecordingSettings->watermark.enabled |= features.mandatoryWatermark;
         _cachedRecordingSettings->watermark.size = std::max(features.watermarkMinSize, _cachedRecordingSettings->watermark.size);
+        _cachedRecordingSettings->useSeparateAudioChannels = _cachedRecordingSettings->useSeparateAudioChannels && features.allowSeparateAudioChannels;
 
         if (_cachedRecordingSettings->useLocalRecording) {
 #ifdef _WIN32
@@ -288,7 +289,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
-    data.encoder->initializeAudioStream();
+    data.encoder->initializeAudioCodec();
     for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
         if (_aoutRecorder[i]->exists()) {
             LOG_INFO("Adding audio output..." << std::endl);
@@ -298,7 +299,7 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size
             settings.useNoiseThreshold = false;
             settings.useSpeechNoiseReduction = false;
 
-            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->props(), settings);
+            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->deviceName(), _aoutRecorder[i]->props(), settings);
             data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
         }
     }
@@ -313,11 +314,11 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size
             settings.noiseThresholDb = _cachedRecordingSettings->voiceFilterThresholdDb;
             settings.useSpeechNoiseReduction = _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceSpeechNoiseReduction : false;
 
-            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->props(), settings);
+            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->deviceName(), _ainRecorder[i]->props(), settings);
             data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
         }
     }
-
+    data.encoder->initializeAudioStreams(_cachedRecordingSettings->useSeparateAudioChannels);
     data.encoder->finalizeStreams();
     return data;
 }

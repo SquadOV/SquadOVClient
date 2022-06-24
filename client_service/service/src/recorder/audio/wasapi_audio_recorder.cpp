@@ -23,6 +23,7 @@ public:
 
     bool exists() const { return _internal && _internal->exists(); }
     const AudioPacketProperties& props() const { return _internal->props(); }
+    const std::string& deviceName() const { return _deviceName; }
 
 private:
     void printWarning(const std::string& msg, HRESULT hr) const;
@@ -33,6 +34,8 @@ private:
     // WASAPI recording
     wil::com_ptr<IMMDevice> _device;
     WasapiAudioClientRecorderPtr _internal;
+
+    std::string _deviceName;
 };
 
 WasapiAudioRecorderImpl::~WasapiAudioRecorderImpl() {
@@ -113,6 +116,7 @@ void WasapiAudioRecorderImpl::loadDevice(EAudioDeviceDirection dir, const servic
     if (_internal->exists()) {
         _initialVolume = device.volume;
         _internal->setVolume(_initialVolume); 
+        _deviceName = service::recorder::audio::win32::WASAPIInterface::getDeviceName(_device.get());
         deviceSet.insert(selectedDeviceId);
     } else if (!isDefault) {
         loadDevice(dir, device.createDefault(), deviceSet);
@@ -166,6 +170,10 @@ void WasapiAudioRecorder::setVolume(double volume) {
 
 bool WasapiAudioRecorder::exists() const {
     return _impl->exists();
+}
+
+const std::string& WasapiAudioRecorder::deviceName() const {
+    return _impl->deviceName();
 }
 
 const AudioPacketProperties& WasapiAudioRecorder::props() const {

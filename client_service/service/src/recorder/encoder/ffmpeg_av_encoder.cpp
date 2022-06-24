@@ -25,6 +25,7 @@
 #include <shared_mutex>
 #include <stdint.h>
 #include <vector>
+#include <unordered_map>
 
 extern "C" {
 #include <libavutil/audio_fifo.h>
@@ -110,8 +111,9 @@ public:
     void resizeDvrBuffer(double timeSeconds);
     void getVideoDimensions(size_t& width, size_t& height);
 
-    void initializeAudioStream();
-    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
+    void initializeAudioCodec();
+    void initializeAudioStreams(bool separateTracks);
+    size_t addAudioInput(const std::string& name, const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings);
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm);
 
     shared::TimePoint open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime);
@@ -121,7 +123,6 @@ public:
 private:
     void encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st);
 
-    AVFrame* createAudioFrame() const;
     bool hasAudioFrameAvailable() const;
 
     std::string _streamUrl;
@@ -150,12 +151,26 @@ private:
 
     // Audio Output
     const AVCodec* _acodec = nullptr;
-    AVCodecContext* _acodecContext = nullptr;
-    AVStream* _astream = nullptr;
-    AVFrame* _aframe = nullptr;
-    std::atomic<int64_t> _aFrameNum = 0;
+
+    struct OutputAudioStream {
+        AVCodecContext* context = nullptr;
+        AVStream* stream = nullptr;
+        AVFrame* frame = nullptr;
+        std::atomic<int64_t> frameNum = 0;
+
+        AVFrame* createAudioFrame() const;
+        void copyToFrame(AVFrame* inputFrame, bool initial);
+
+        ~OutputAudioStream();
+    };
+    using OutputAudioStreamPtr = std::shared_ptr<OutputAudioStream>;
+    std::vector<OutputAudioStreamPtr> _outputAudioTracks;
+    OutputAudioStreamPtr createOutputAudioStream(const std::string& name);
+    std::unordered_map<size_t, size_t> _inputAudioStreamToOutputTrack;
 
     struct AudioStreamData {
+        std::string name;
+
         // *Output* packet queue. Once we process the input
         // packet, we'll convert it into whatever format
         // is needed for output and store it in this queue.
@@ -230,6 +245,42 @@ private:
     void addPacketToDvrBuffer(const AVPacket& packet);
     bool isDvrBufferLongerThanMaxSeconds(const std::deque<AVPacket>& buffer, int streamIndex) const;
 };
+
+FfmpegAvEncoderImpl::OutputAudioStream::~OutputAudioStream() {
+    avcodec_free_context(&context);
+    av_frame_free(&frame);
+}
+
+void FfmpegAvEncoderImpl::OutputAudioStream::copyToFrame(AVFrame* inputFrame, bool initial) {
+    if (context->sample_fmt == AV_SAMPLE_FMT_FLTP) {
+        for (auto c = 0; c < context->channels; ++c) {
+            const float* input = (const float*)inputFrame->data[c];
+            float* output = (float*)frame->data[c];
+
+            for (auto i = 0; i < context->frame_size; ++i) {
+                if (initial) {
+                    output[i] = input[i];
+                } else {
+                    output[i] += input[i];
+                }
+            }
+        }
+    } else {
+        const float* input = (const float*)inputFrame->data[0];
+        float* output = (float*)frame->data[0];
+
+        for (auto i = 0; i < context->frame_size; ++i) {
+            for (auto c = 0; c < context->channels; ++c) {
+                const auto idx = i * context->channels + c;
+                if (initial) {
+                    output[idx] = input[idx];
+                } else {
+                    output[idx] += input[idx];
+                }
+            }
+        }
+    }
+}
 
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
     avfilter_graph_free(&filterGraph);
@@ -346,9 +397,8 @@ FfmpegAvEncoderImpl::~FfmpegAvEncoderImpl() {
     auto immediate = _d3d->immediateContext();
 
     avcodec_free_context(&_vcodecContext);
-    av_frame_free(&_aframe);
-    avcodec_free_context(&_acodecContext);
 
+    _outputAudioTracks.clear();
     if (_avcontext->pb) {
         avio_flush(_avcontext->pb);
         avio_closep(&_avcontext->pb);
@@ -653,51 +703,71 @@ void FfmpegAvEncoderImpl::initializeVideoStream(const service::renderer::D3d11Sh
     assert(_d3d);
 }
 
-void FfmpegAvEncoderImpl::initializeAudioStream() {
+void FfmpegAvEncoderImpl::initializeAudioCodec() {
     _acodec = avcodec_find_encoder_by_name( (_formatHint == "webm") ? "libopus" : "aac");
     if (!_acodec) {
         THROW_ERROR("Failed to find the audio codec.");
     }
 
-    _acodecContext = avcodec_alloc_context3(_acodec);
-    if (!_acodecContext) {
+    // We need a default audio stream that ALL audio gets mixed into.
+    // This can be created on initialization since the number of input
+    // audio streams won't change this.
+    const auto mainTrack = createOutputAudioStream("Primary");
+    if (!mainTrack) {
+        THROW_ERROR("Failed to create main audio track.");
+    }
+    _outputAudioTracks.push_back(mainTrack);
+}
+
+typename FfmpegAvEncoderImpl::OutputAudioStreamPtr FfmpegAvEncoderImpl::createOutputAudioStream(const std::string& name) {
+    OutputAudioStreamPtr track = std::make_shared<OutputAudioStream>();
+    if (!track) {
+        return nullptr;
+    }
+
+    track->context = avcodec_alloc_context3(_acodec);
+    if (!track->context) {
         THROW_ERROR("Failed to allocate audio codec context.");
     }
 
     constexpr int sampleRate = 48000;
-    _acodecContext->bit_rate = 128000; // probably good enough?
-    _acodecContext->sample_fmt = (_formatHint == "webm") ? AV_SAMPLE_FMT_FLT : AV_SAMPLE_FMT_FLTP;
-    _acodecContext->sample_rate = sampleRate;
-    _acodecContext->channels = static_cast<int>(audioNumChannels);
-    _acodecContext->channel_layout = AV_CH_LAYOUT_STEREO;
-    _acodecContext->time_base = AVRational{1, sampleRate};
-    _acodecContext->frame_size = audioSamplesPerFrame;
+    track->context->bit_rate = 128000; // probably good enough?
+    track->context->sample_fmt = (_formatHint == "webm") ? AV_SAMPLE_FMT_FLT : AV_SAMPLE_FMT_FLTP;
+    track->context->sample_rate = sampleRate;
+    track->context->channels = static_cast<int>(audioNumChannels);
+    track->context->channel_layout = AV_CH_LAYOUT_STEREO;
+    track->context->time_base = AVRational{1, sampleRate};
+    track->context->frame_size = audioSamplesPerFrame;
     if (_avcontext->oformat->flags & AVFMT_GLOBALHEADER) {
-        _acodecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+        track->context->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
-    if (avcodec_open2(_acodecContext, _acodec, nullptr) < 0) {
+    if (avcodec_open2(track->context, _acodec, nullptr) < 0) {
         THROW_ERROR("Failed to initialize audio context");
     }
 
-    _astream = avformat_new_stream(_avcontext, nullptr);
-    if (!_vstream) {
-        THROW_ERROR("Failed to create audio stream.");
+    track->stream = avformat_new_stream(_avcontext, nullptr);
+    if (!track->stream) {
+        LOG_ERROR("Failed to create audio stream." << std::endl);
+        return nullptr;
     }
-    _astream->id = _avcontext->nb_streams - 1;
-    _astream->time_base = _acodecContext->time_base;
-    avcodec_parameters_from_context(_astream->codecpar, _acodecContext);
+    track->stream->id = _avcontext->nb_streams - 1;
+    track->stream->time_base = track->context->time_base;
+    avcodec_parameters_from_context(track->stream->codecpar, track->context);
 
-    _aframe = createAudioFrame();
+    av_dict_set(&track->stream->metadata, "title", name.c_str(), 0);
+
+    track->frame = track->createAudioFrame();
+    return track;
 }
 
-AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
+AVFrame* FfmpegAvEncoderImpl::OutputAudioStream::createAudioFrame() const {
     AVFrame* frame = av_frame_alloc();
-    frame->nb_samples = _acodecContext->frame_size;
-    frame->format = _acodecContext->sample_fmt;
-    frame->channel_layout = _acodecContext->channel_layout;
-    frame->channels = _acodecContext->channels;
-    frame->sample_rate = _acodecContext->sample_rate;
+    frame->nb_samples = context->frame_size;
+    frame->format = context->sample_fmt;
+    frame->channel_layout = context->channel_layout;
+    frame->channels = context->channels;
+    frame->sample_rate = context->sample_rate;
     frame->pts = 0;
 
     if (av_frame_get_buffer(frame, 0) < 0) {
@@ -706,9 +776,27 @@ AVFrame* FfmpegAvEncoderImpl::createAudioFrame() const {
     return frame;
 }
 
-size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
+void FfmpegAvEncoderImpl::initializeAudioStreams(bool separateTracks) {
+    // All the other audio tracks will be separate (if requested).
+    // Each input audio stream will get sent into a different track.
+    if (separateTracks) {
+        for (size_t inputIdx = 0; inputIdx < _astreams.size(); ++inputIdx) {
+            const auto separateTrack = createOutputAudioStream(_astreams[inputIdx]->name);
+            if (!separateTrack) {
+                LOG_WARNING("Failed to create separate audio track: " << inputIdx << std::endl);
+                continue;
+            }
+
+            _outputAudioTracks.push_back(separateTrack);
+            _inputAudioStreamToOutputTrack[inputIdx] = _outputAudioTracks.size() - 1;
+        }
+    }
+}
+
+size_t FfmpegAvEncoderImpl::addAudioInput(const std::string& name, const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
     AudioStreamDataPtr streamDataPtr = std::make_unique<AudioStreamData>();
     AudioStreamData& streamData = *streamDataPtr;
+    streamData.name = name;
 
     // Setup audio filter graph. We need to setup a buffer and buffer sink programatically
     // to denote the start and end of the graph.
@@ -737,9 +825,10 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
             THROW_ERROR("Failed to create audio filter graph buffer sink.");
         }
 
-        const AVSampleFormat outSampleFormats[] = { _acodecContext->sample_fmt, static_cast<AVSampleFormat>(-1) };
-        const int64_t outChannelLayouts[] = { static_cast<int64_t>(_acodecContext->channel_layout), -1 };
-        const int outSampleRates[] = { _acodecContext->sample_rate, -1 };
+        // This works because there will always be a single audio track and every track will have the same properties.
+        const AVSampleFormat outSampleFormats[] = { _outputAudioTracks.front()->context->sample_fmt, static_cast<AVSampleFormat>(-1) };
+        const int64_t outChannelLayouts[] = { static_cast<int64_t>(_outputAudioTracks.front()->context->channel_layout), -1 };
+        const int outSampleRates[] = { _outputAudioTracks.front()->context->sample_rate, -1 };
 
         if (av_opt_set_int_list(streamData.sinkCtx, "sample_fmts", outSampleFormats, -1, AV_OPT_SEARCH_CHILDREN) < 0) {
             THROW_ERROR("Failed to set sink sample format.");
@@ -779,10 +868,10 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
     std::ostringstream graphDescription;
 
     // aresample
-    graphDescription << "aresample=" << _acodecContext->sample_rate;
+    graphDescription << "aresample=" << _outputAudioTracks.front()->context->sample_rate;
 
     // aformat
-    graphDescription << ",aformat=sample_fmts=" << av_get_sample_fmt_name(_acodecContext->sample_fmt) << ":channel_layouts=" << ffmpegChannelLayoutToAformatString(_acodecContext->channel_layout);
+    graphDescription << ",aformat=sample_fmts=" << av_get_sample_fmt_name(_outputAudioTracks.front()->context->sample_fmt) << ":channel_layouts=" << ffmpegChannelLayoutToAformatString(_outputAudioTracks.front()->context->channel_layout);
     
     // compand
     if (settings.useNoiseThreshold) {
@@ -803,7 +892,7 @@ size_t FfmpegAvEncoderImpl::addAudioInput(const service::recorder::audio::AudioP
     }
 
     streamData.useSilenceCompensation = settings.useSilenceCompensation;
-    av_buffersink_set_frame_size(streamData.sinkCtx, _acodecContext->frame_size);
+    av_buffersink_set_frame_size(streamData.sinkCtx, _outputAudioTracks.front()->context->frame_size);
 
     _astreams.emplace_back(std::move(streamDataPtr));
     avfilter_inout_free(&inputs);
@@ -933,11 +1022,9 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
     // The FIFO is protected by a shared mutex because each audio input stream is fed in from a
     // separate thread.
     if (encoderIdx == 0) {
-        const auto frameSize = _acodecContext->frame_size;
         while (hasAudioFrameAvailable()) {
             for (size_t s = 0; s < _astreams.size(); ++s) {
-                const auto numChannels = _acodecContext->channels;
-                _astreams[s]->encodedSamples += frameSize;
+                _astreams[s]->encodedSamples += _outputAudioTracks.front()->context->frame_size;
 
                 // Copy from the sink frame into the encoding frame.
                 {
@@ -946,46 +1033,28 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
                     auto* frame = _astreams[s]->sinkFrames.front();
                     _astreams[s]->sinkFrames.pop_front();
 
-                    if (_acodecContext->sample_fmt == AV_SAMPLE_FMT_FLTP) {
-                        for (auto c = 0; c < _acodecContext->channels; ++c) {
-                            const float* input = (const float*)frame->data[c];
-                            float* output = (float*)_aframe->data[c];
+                    // There's going to be two copies - one copy for the main audio track
+                    // and then one additional copy if there's a separate track per device.
+                    _outputAudioTracks.front()->copyToFrame(frame, s == 0);
 
-                            for (auto i = 0; i < frameSize; ++i) {
-                                if (s == 0) {
-                                    output[i] = input[i];
-                                } else {
-                                    output[i] += input[i];
-                                }
-                            }
-                        }
-                    } else {
-                        const float* input = (const float*)frame->data[0];
-                        float* output = (float*)_aframe->data[0];
-
-                        for (auto i = 0; i < frameSize; ++i) {
-                            for (auto c = 0; c < _acodecContext->channels; ++c) {
-                                const auto idx = i * _acodecContext->channels + c;
-                                if (s == 0) {
-                                    output[idx] = input[idx];
-                                } else {
-                                    output[idx] += input[idx];
-                                }
-                            }
-                        }
+                    const auto separateTrackIdx = _inputAudioStreamToOutputTrack.find(s);
+                    if (separateTrackIdx != _inputAudioStreamToOutputTrack.end()) {
+                        _outputAudioTracks[separateTrackIdx->second]->copyToFrame(frame, true);
                     }
 
                     av_frame_free(&frame);
                 }
             }
 
-            if (av_frame_make_writable(_aframe) < 0) {
-                THROW_ERROR("Failed to make frame writable.");
-            }
+            for (const auto& track: _outputAudioTracks) {
+                if (av_frame_make_writable(track->frame) < 0) {
+                    THROW_ERROR("Failed to make frame writable.");
+                }
 
-            _aframe->pts = _aFrameNum;
-            _aFrameNum += frameSize;
-            encode(_acodecContext, _aframe, _astream);
+                track->frame->pts = track->frameNum;
+                track->frameNum += track->context->frame_size;
+                encode(track->context, track->frame, track->stream);
+            }
         }
     }
 }
@@ -1064,8 +1133,8 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
         for (auto i = 0; i < _avcontext->nb_streams; ++i) {
             AVRational codecTimebase;
             if (i > 0) {
-                _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _vcodecContext->time_base, _acodecContext->time_base);
-                codecTimebase = _acodecContext->time_base;
+                _streamPtsOffset[i] = av_rescale_q(_streamPtsOffset[0], _vcodecContext->time_base, _outputAudioTracks[i-1]->context->time_base);
+                codecTimebase = _outputAudioTracks[i-1]->context->time_base;
             } else {
                 codecTimebase = _vcodecContext->time_base;
             }
@@ -1108,7 +1177,7 @@ shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::o
                 }
 
                 hasDvrPacketsLeft = true;
-                const auto packetMs = av_rescale_q(buffer[ptr].pts, (i == 0) ? _vcodecContext->time_base : _acodecContext->time_base, AVRational{1, 1000});
+                const auto packetMs = av_rescale_q(buffer[ptr].pts, (i == 0) ? _vcodecContext->time_base : _outputAudioTracks[i-1]->context->time_base, AVRational{1, 1000});
                 if (packetMs < smallestMs) {
                     smallestMs = packetMs;
                     selectedStream = i;
@@ -1227,7 +1296,7 @@ void FfmpegAvEncoderImpl::addPacketToFileOutput(AVPacket& packet) {
     if (packet.stream_index == 0) {
         codecTimebase = _vcodecContext->time_base;
     } else {
-        codecTimebase = _acodecContext->time_base;
+        codecTimebase = _outputAudioTracks[packet.stream_index-1]->context->time_base;
     }
 
     av_packet_rescale_ts(&packet, codecTimebase, streamTimebase);
@@ -1271,7 +1340,7 @@ bool FfmpegAvEncoderImpl::isDvrBufferLongerThanMaxSeconds(const std::deque<AVPac
         return false;
     }
 
-    AVRational timeBase = (streamIndex == 0) ? _vcodecContext->time_base : _acodecContext->time_base;
+    AVRational timeBase = (streamIndex == 0) ? _vcodecContext->time_base : _outputAudioTracks[streamIndex-1]->context->time_base;
 
     // Convert the time first into milliseconds so we get some more precision before doing the comparison
     // in the double space for seconds.
@@ -1333,8 +1402,11 @@ void FfmpegAvEncoderImpl::stop() {
         encode(_vcodecContext, nullptr, _vstream);
     }
 
-    if (!!_acodecContext) {
-        encode(_acodecContext, nullptr, _astream);
+    for (const auto& track : _outputAudioTracks) {
+        if (!track->context) {
+            continue;
+        }
+        encode(track->context, nullptr, track->stream);
     }
 
     flushPacketQueue();
@@ -1443,12 +1515,16 @@ const std::string& FfmpegAvEncoder::streamUrl() const {
     return _impl->streamUrl();
 }
 
-void FfmpegAvEncoder::initializeAudioStream() {
-    _impl->initializeAudioStream();
+void FfmpegAvEncoder::initializeAudioCodec() {
+    _impl->initializeAudioCodec();
 }
 
-size_t FfmpegAvEncoder::addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
-    return _impl->addAudioInput(inputProps, settings);
+void FfmpegAvEncoder::initializeAudioStreams(bool separateTracks) {
+    _impl->initializeAudioStreams(separateTracks);
+}
+
+size_t FfmpegAvEncoder::addAudioInput(const std::string& name, const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) {
+    return _impl->addAudioInput(name, inputProps, settings);
 }
 
 void FfmpegAvEncoder::addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) {

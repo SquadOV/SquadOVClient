@@ -51,8 +51,9 @@ public:
 
     virtual void getVideoDimensions(size_t& width, size_t& height) const = 0;
 
-    virtual void initializeAudioStream() = 0;
-    virtual size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) = 0;
+    virtual void initializeAudioCodec() = 0;
+    virtual void initializeAudioStreams(bool separateTracks) = 0;
+    virtual size_t addAudioInput(const std::string& name, const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) = 0;
     virtual void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) = 0;
 
     virtual shared::TimePoint open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) = 0;

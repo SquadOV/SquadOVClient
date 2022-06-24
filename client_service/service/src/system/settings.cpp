@@ -123,6 +123,8 @@ RecordingSettings RecordingSettings::fromJson(const nlohmann::json& obj) {
         settings.videoCodec = service::recorder::video::VideoCodec::H264;
     }
 
+    settings.useSeparateAudioChannels = obj.value("useSeparateAudioChannels", false);
+
     return settings;
 }
 

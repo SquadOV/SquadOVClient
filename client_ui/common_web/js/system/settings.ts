@@ -131,6 +131,7 @@ export interface SquadOvRecordingSettings {
     useNativeAspectRatio: boolean
     watermark: SquadOvWatermark
     videoCodec: string
+    useSeparateAudioChannels: boolean
 }
 
 export interface SquadOvKeybindSettings {
@@ -405,6 +406,7 @@ export async function generateDefaultSettings(): Promise<SquadOvLocalSettings> {
         useNativeAspectRatio: false,
         watermark: createDefaultWatermark(),
         videoCodec: 'h264',
+        useSeparateAudioChannels: false,
     }
 
     return {
@@ -732,6 +734,10 @@ export async function loadLocalSettings(): Promise<SquadOvLocalSettings> {
 
         if (parsedData.hideRecommendedSquads === undefined) {
             parsedData.hideRecommendedSquads = false
+        }
+
+        if (parsedData.record.useSeparateAudioChannels === undefined) {
+            parsedData.record.useSeparateAudioChannels = false
         }
     } catch (ex) {
         console.log('Failed to migrate config file...regenerating: ', ex)

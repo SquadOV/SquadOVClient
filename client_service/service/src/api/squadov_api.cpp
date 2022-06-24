@@ -188,6 +188,7 @@ void SquadovApi::retrieveSessionFeatureFlags() {
     flags.mandatoryWatermark = parsedJson.value("mandatoryWatermark", true);
     flags.watermarkMinSize = parsedJson.value("watermarkMinSize", 0.1);
     flags.allowVp9 = parsedJson.value("allowVp9", false);
+    flags.allowSeparateAudioChannels = parsedJson.value("allowSeparateAudioChannels", false);
     LOG_INFO("Obtain feature flags: " << flags << std::endl);
     
     std::lock_guard guard(_featureMutex);

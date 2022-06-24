@@ -95,6 +95,7 @@ struct RecordingSettings {
     std::optional<int32_t> bandwidthLimiterMultiple;
     WatermarkSettings watermark;
     service::recorder::video::VideoCodec videoCodec;
+    bool useSeparateAudioChannels = false;
 
     static RecordingSettings fromJson(const nlohmann::json& obj);
 };

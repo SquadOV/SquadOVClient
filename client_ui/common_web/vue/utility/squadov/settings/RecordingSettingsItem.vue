@@ -503,6 +503,35 @@
                                 </template>
                             </v-checkbox>
                         </div>
+
+                        <div class="d-flex align-center">
+                            <pricing-notifier-wrapper
+                                :tier="EPricingTier.Gold"
+                                :feature="EProFeature.SeparateAudioTracks"
+                                shrink
+                            >
+                                <v-checkbox
+                                    class="ma-0"
+                                    :input-value="$store.state.settings.record.useSeparateAudioChannels"
+                                    @change="$store.commit('changeUseSeparateAudioChannels', arguments[0])"
+                                    hide-details
+                                    label="Use Separate Audio Tracks"
+                                    :disabled="!$store.getters.isUserInTier(EPricingTier.Gold)"
+                                >
+                                    <template v-slot:append>
+                                        <v-tooltip bottom max-width="450px">
+                                            <template v-slot:activator="{on, attrs}">
+                                                <v-icon v-on="on" v-bind="attrs">
+                                                    mdi-help-circle
+                                                </v-icon>
+                                            </template>
+
+                                            Whether to have additional audio tracks each with the audio stream of a single device/process.
+                                        </v-tooltip>
+                                    </template>
+                                </v-checkbox>
+                            </pricing-notifier-wrapper>
+                        </div>
                     </v-col>
                 </v-row>
 
@@ -768,6 +797,7 @@ import { EPricingTier, getNextHighestTier, EProFeature } from '@client/js/squado
     }
 })
 export default class RecordingSettingsItem extends Vue {
+    EPricingTier = EPricingTier
     EProFeature = EProFeature
 
     @Prop({type: Boolean, default: false})

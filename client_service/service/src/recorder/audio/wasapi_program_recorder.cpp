@@ -5,6 +5,7 @@
 #include "shared/log/log.h"
 #include "shared/errors/error.h"
 #include "shared/system/win32/interfaces/win32_system_process_interface.h"
+#include "shared/strings/strings.h"
 #include "process_watcher/process/process.h"
 #include "recorder/audio/audio_packet_view.h"
 #include "recorder/audio/fixed_size_audio_packet.h"
@@ -52,6 +53,7 @@ public:
 
     bool exists() const { return _process.has_value() && _internal && _internal->exists(); }
     const AudioPacketProperties& props() const { return _internal->props(); }
+    const std::string& deviceName() const { return _deviceName; }
 
 private:
     void printWarning(const std::string& msg, HRESULT hr) const;
@@ -60,6 +62,7 @@ private:
     std::optional<process_watcher::process::Process> _process;
     double _initialVolume = 1.0;
     WasapiAudioClientRecorderPtr _internal;
+    std::string _deviceName;
 };
 
 WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid, double volume):
@@ -78,6 +81,7 @@ WasapiProgramRecorderImpl::WasapiProgramRecorderImpl(OSPID pid, double volume):
         LOG_WARNING("...No process detected for audio recording for PID: " << _pid << std::endl);
         return;
     }
+    _deviceName =  shared::strings::wcsToUtf8(_process->name());
 
     // Need to do all this on construction because the internal object being constructed is a major part of success
     // and is needed to determine whether or not we can actually record.
@@ -216,6 +220,10 @@ void WasapiProgramRecorder::setVolume(double volume) {
 
 bool WasapiProgramRecorder::exists() const {
     return _impl->exists();
+}
+
+const std::string& WasapiProgramRecorder::deviceName() const {
+    return _impl->deviceName();
 }
 
 const AudioPacketProperties& WasapiProgramRecorder::props() const {

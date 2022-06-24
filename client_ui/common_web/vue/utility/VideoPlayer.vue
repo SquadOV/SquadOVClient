@@ -70,6 +70,37 @@ import { SquadOvGames } from '@client/js/squadov/game'
 import { StatPermission } from '@client/js/stats/statPrimitives'
 import { pl } from 'date-fns/locale'
 
+const AudioTrackMenuItem = videojs.getComponent('AudioTrackMenuItem')
+const MenuItem = videojs.getComponent('MenuItem')
+
+// I'm not sure why this is needed - it didn't seem to work out of the box.
+// Maybe we're on an older version of VideoJS that's bugged?
+class CustomAudioTrackMenuItem extends AudioTrackMenuItem {
+    handleClick(event: any) {
+        //@ts-ignore
+        MenuItem.prototype.handleClick.call(this, event)
+
+        this.player_.trigger('preChangeAudioTrack')
+
+        //@ts-ignore
+        this.track.enabled = true
+        //@ts-ignore
+        const tracks = this.player_.audioTracks()
+
+        for (let i = 0; i < tracks.length; i++) {
+            const track = tracks[i]
+
+            //@ts-ignore
+            if (track === this.track) {
+                continue
+            }
+
+            //@ts-ignore
+            track.enabled = track === this.track
+        }
+    }
+}
+
 @Component({
     components: {
         VideoDrawOverlay,
@@ -182,6 +213,8 @@ export default class VideoPlayer extends mixins(CommonComponent) {
     currentWatchRangeSeconds: number | null = null
     showEndOverlay = false
     cumulativeWatchTime: number = 0
+
+    audioTrackCacheTime: number = 0
 
     closeOverlay() {
         this.showEndOverlay = false
@@ -690,7 +723,62 @@ export default class VideoPlayer extends mixins(CommonComponent) {
 ///#endif
 
         let cbar = this.player.getChild('controlBar')
+    
         if (!!cbar) {
+            // Remove the audio track control button since VideoJS's button doesn't really work.
+            let atButton = cbar.getChild('audioTrackButton')
+            if (!!atButton) {
+                cbar.removeChild(atButton)
+            }
+
+///#if DESKTOP
+            // Only add back our custom button on the desktop since we can't control whether or not
+            // the user is 1) in chrome and 2) has the experimental web features enabled.
+            //@ts-ignore
+            let AudioTrackButtonComponent = videojs.extend(videojs.getComponent('AudioTrackButton'), {
+                createItems: function(items: any[] = []) {
+                    this.hideThreshold_ = 1;
+
+                    const tracks = this.player_.audioTracks()
+
+                    for (let i = 0; i < tracks.length; i++) {
+                        const track = tracks[i]
+
+                        items.push(new CustomAudioTrackMenuItem(this.player_, {
+                            //@ts-ignore
+                            track,
+                            selectable: true,
+                            multiSelectable: false
+                        }))
+                    }
+
+                    return items;
+                }
+            })
+            videojs.registerComponent('audioTrackButtonALT', AudioTrackButtonComponent)
+            controlBar.addChild('audioTrackButtonALT', {}, 14)
+
+            this.player.on('preChangeAudioTrack', () => {
+                if (!this.player) {
+                    return
+                }
+
+                this.audioTrackCacheTime = this.player.currentTime()
+            })
+
+            this.player.tech().audioTracks().addEventListener('change', () => {
+                // Do a seek to the current time. For some reason when the audio track changes,
+                // the new audio track needs to play from the beginning until it hits the current time.
+                // It seems like we can bypass this behavior by doing a seek.
+                setTimeout(() => {
+                    if (!this.player) {
+                        return
+                    }
+                    this.player.currentTime(this.audioTrackCacheTime)
+                }, 1000)
+            })
+
+///#endif
             for (let ctrl of cbar.children()) {
                 ctrl.on('keydown', (e: KeyboardEvent) => {
                     if (e.key != 'Enter') {

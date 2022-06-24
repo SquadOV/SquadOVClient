@@ -36,6 +36,8 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             vodRetention: 608400,
             maxSquadSize: 20,
             maxClipSeconds: 120,
+            allowVp9: false,
+            allowSeparateAudioChannels: false,
         },
 /// #if DESKTOP
         settings: null,
@@ -570,6 +572,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             saveLocalSettings(state.settings)
 /// #endif            
         },
+        changeUseSeparateAudioChannels(state: RootState, v: boolean) {
+/// #if DESKTOP
+            if (!state.settings) {
+                return
+            }
+            state.settings.record.useSeparateAudioChannels = v
+            saveLocalSettings(state.settings)
+/// #endif            
+        },
         changeBandwidthLimiterMultiple(state: RootState, v: number) {
 /// #if DESKTOP
             if (!state.settings) {
@@ -674,6 +685,15 @@ export const RootStoreOptions : StoreOptions<RootState> = {
             if (state.features.watermarkMinSize !== undefined) {
                 state.settings.record.watermark.size = Math.max(state.settings.record.watermark.size, state.features.watermarkMinSize)
             }
+
+            if (state.features.allowVp9 !== undefined && !state.features.allowVp9) {
+                state.settings.record.videoCodec = 'h264'
+            }
+
+            if (state.features.allowSeparateAudioChannels !== undefined && !state.features.allowSeparateAudioChannels) {
+                state.settings.record.useSeparateAudioChannels = false
+            }
+
             saveLocalSettings(state.settings)
         }
     },

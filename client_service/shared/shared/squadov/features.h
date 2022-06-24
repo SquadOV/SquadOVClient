@@ -12,8 +12,9 @@ struct FeatureFlags {
     bool allowWowCombatLogUpload = false;
     bool disableSentry = false;
     bool mandatoryWatermark = false;
-    double watermarkMinSize;
+    double watermarkMinSize = 0.05;
     bool allowVp9 = false;
+    bool allowSeparateAudioChannels = false;
 };
 
 inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
@@ -26,6 +27,7 @@ inline std::ostream& operator<<(std::ostream& out, const FeatureFlags& flags) {
         ", Mandatory Watermark: " << flags.mandatoryWatermark <<
         ", Watermark Min Size: " << flags.watermarkMinSize <<
         ", Allow VP9: " << flags.allowVp9 <<
+        ", Allow Separate Audio Channels: " << flags.allowSeparateAudioChannels <<
     "}";
     return out;
 }

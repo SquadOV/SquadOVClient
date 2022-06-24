@@ -23,6 +23,7 @@ public:
 
     bool exists() const override;
     const AudioPacketProperties& props() const override;
+    const std::string& deviceName() const override;
 private:
     std::unique_ptr<WasapiAudioRecorderImpl> _impl;
 };

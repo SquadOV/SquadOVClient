@@ -75,6 +75,8 @@ export default class PricingNotifierWrapper extends Vue {
                 return 'SquadOV Pro users will have their videos stored on the cloud for longer.'
             case EProFeature.ClipLength:
                 return 'SquadOV Pro users can create clips that are longer.'
+            case EProFeature.SeparateAudioTracks:
+                return 'SquadOV Pro users can get each audio device/process into a separate tracks to make it easier to create content.'
         }
     }
 }

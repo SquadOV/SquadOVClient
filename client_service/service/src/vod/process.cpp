@@ -46,6 +46,7 @@ void processRawLocalVod(const fs::path& from, const fs::path& to, const std::str
         "-c:v", "copy",
         "-c:a", "copy",
         "-max_muxing_queue_size", "9999",
+        "-map", "0",
         "-movflags", "+faststart",
         to.native(),
         bp::std_out > stdoutBuf,

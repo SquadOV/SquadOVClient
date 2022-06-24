@@ -22,8 +22,9 @@ public:
     void addVideoFrame(ID3D11Texture2D* image, size_t numFrames) override;
 #endif
 
-    void initializeAudioStream() override;
-    size_t addAudioInput(const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) override;
+    void initializeAudioCodec() override;
+    void initializeAudioStreams(bool separateTracks) override;
+    size_t addAudioInput(const std::string& name, const service::recorder::audio::AudioPacketProperties& inputProps, const AudioInputSettings& settings) override;
     void addAudioFrame(const service::recorder::audio::FAudioPacketView& view, size_t encoderIdx, const AVSyncClock::time_point& tm) override;
 
     shared::TimePoint open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) override;

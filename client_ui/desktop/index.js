@@ -410,6 +410,7 @@ ipcMain.on('open-vod-editor', (event, {videoUuid, game, ts}) => {
                 nodeIntegration: true,
                 contextIsolation: false,
                 webSecurity: app.isPackaged,
+                experimentalFeatures: true,
             },
             icon: iconPath
         })
@@ -459,6 +460,7 @@ ipcMain.on('open-path-window', (event, path) => {
             nodeIntegration: true,
             contextIsolation: false,
             webSecurity: app.isPackaged,
+            experimentalFeatures: true,
         },
         icon: iconPath
     })
@@ -819,7 +821,8 @@ app.on('ready', async () => {
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: false,
-            webSecurity: app.isPackaged
+            webSecurity: app.isPackaged,
+            experimentalFeatures: true,
         },
         icon: iconPath
     })

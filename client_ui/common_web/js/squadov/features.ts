@@ -12,6 +12,8 @@ export interface FeatureFlags {
     vodRetention: number | null
     maxSquadSize: number | null
     maxClipSeconds: number
+    allowVp9: boolean
+    allowSeparateAudioChannels: boolean
 }
 
 export interface GlobalFlags {
