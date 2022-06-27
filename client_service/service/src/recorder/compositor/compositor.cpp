@@ -46,8 +46,8 @@ void Compositor::tick(service::renderer::D3d11SharedContext* imageContext, ID3D1
     D3D11_TEXTURE2D_DESC inputDesc;
     image->GetDesc(&inputDesc);
 
-    reinitOutputTexture(image, inputDesc);
     reinitTonemapper(image, inputDesc);
+    reinitOutputTexture(image, inputDesc);
 
     const float sx = static_cast<float>(_width) / inputDesc.Width;
     const float sy = static_cast<float>(_height) / inputDesc.Height;
@@ -133,20 +133,23 @@ void Compositor::reinitOutputTexture(ID3D11Texture2D* image, const D3D11_TEXTURE
         _outputTexture->GetDesc(&outputDesc);
     }
 
-    if (outputDesc.Format == inputDesc.Format) {
+    // We want to keep the input's format because we want the tonemapper to run on the lower resolution
+    // image whenever possible to save compute power (no sense running HDR tonemapping on an entire 4K image if
+    // the final image is going to be 720p ya feel). However, if no tonemapping is going to occur, this needs
+    // to dump into a B8G8R8A8 format for the rest of our pipeline.
+    const auto desiredFormat = _tonemapper ? inputDesc.Format : DXGI_FORMAT_B8G8R8A8_UNORM;
+
+    if (outputDesc.Format == desiredFormat) {
         return;
     }
 
     outputDesc.Width = _width;
     outputDesc.Height = _height;
     
-    // We want to keep the input's format because we want the tonemapper to run on the lower resolution
-    // image whenever possible to save compute power (no sense running HDR tonemapping on an entire 4K image if
-    // the final image is going to be 720p ya feel).
-    outputDesc.Format = inputDesc.Format;
+    outputDesc.Format = desiredFormat;
     // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
     // Everything else should stay default since you can't CPU read/stage a render target.
-    outputDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    outputDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
     outputDesc.Usage = D3D11_USAGE_DEFAULT;
     outputDesc.CPUAccessFlags = 0;
     outputDesc.MiscFlags = 0;
@@ -183,7 +186,7 @@ void Compositor::reinitTonemapper(ID3D11Texture2D* image, const D3D11_TEXTURE2D_
         tmDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
         // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
         // Everything else should stay default since you can't CPU read/stage a render target.
-        tmDesc.BindFlags = D3D11_BIND_RENDER_TARGET;
+        tmDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
         tmDesc.Usage = D3D11_USAGE_DEFAULT;
         tmDesc.CPUAccessFlags = 0;
         tmDesc.MiscFlags = 0;
