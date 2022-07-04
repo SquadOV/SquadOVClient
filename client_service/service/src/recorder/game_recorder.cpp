@@ -289,36 +289,42 @@ GameRecorder::EncoderDatum GameRecorder::createEncoder(size_t desiredWidth, size
     );
 
     LOG_INFO("Initialize audio stream..." << std::endl);
-    data.encoder->initializeAudioCodec();
-    for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
-        if (_aoutRecorder[i]->exists()) {
-            LOG_INFO("Adding audio output..." << std::endl);
+    const bool hasAudio = std::any_of(_aoutRecorder.begin(), _aoutRecorder.end(), [](const auto& r){ return r->exists(); })
+        || std::any_of(_ainRecorder.begin(), _ainRecorder.end(), [](const auto& r){ return r->exists(); });
 
-            service::recorder::encoder::AudioInputSettings settings;
-            settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
-            settings.useNoiseThreshold = false;
-            settings.useSpeechNoiseReduction = false;
+    if (hasAudio) {
+        data.encoder->initializeAudioCodec();
+        for (size_t i = 0; i < _aoutRecorder.size(); ++i) {
+            if (_aoutRecorder[i]->exists()) {
+                LOG_INFO("Adding audio output..." << std::endl);
 
-            const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->deviceName(), _aoutRecorder[i]->props(), settings);
-            data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
+                service::recorder::encoder::AudioInputSettings settings;
+                settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
+                settings.useNoiseThreshold = false;
+                settings.useSpeechNoiseReduction = false;
+
+                const auto encoderIndex = data.encoder->addAudioInput(_aoutRecorder[i]->deviceName(), _aoutRecorder[i]->props(), settings);
+                data.audioEncoderIndex[audio::EAudioDeviceDirection::Output][i] = encoderIndex;
+            }
         }
+
+        for (size_t i = 0; i < _ainRecorder.size(); ++i) {
+            if (_ainRecorder[i]->exists()) {
+                LOG_INFO("Adding audio input..." << std::endl);
+
+                service::recorder::encoder::AudioInputSettings settings;
+                settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
+                settings.useNoiseThreshold =  _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceBasicNoiseFilter : false;
+                settings.noiseThresholDb = _cachedRecordingSettings->voiceFilterThresholdDb;
+                settings.useSpeechNoiseReduction = _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceSpeechNoiseReduction : false;
+
+                const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->deviceName(), _ainRecorder[i]->props(), settings);
+                data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
+            }
+        }
+        data.encoder->initializeAudioStreams(_cachedRecordingSettings->useSeparateAudioChannels);
     }
 
-    for (size_t i = 0; i < _ainRecorder.size(); ++i) {
-        if (_ainRecorder[i]->exists()) {
-            LOG_INFO("Adding audio input..." << std::endl);
-
-            service::recorder::encoder::AudioInputSettings settings;
-            settings.useSilenceCompensation = _cachedRecordingSettings->useAudioDriftCompensation;
-            settings.useNoiseThreshold =  _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceBasicNoiseFilter : false;
-            settings.noiseThresholDb = _cachedRecordingSettings->voiceFilterThresholdDb;
-            settings.useSpeechNoiseReduction = _ainRecorder[i]->isVoice() ? _cachedRecordingSettings->useVoiceSpeechNoiseReduction : false;
-
-            const auto encoderIndex = data.encoder->addAudioInput(_ainRecorder[i]->deviceName(), _ainRecorder[i]->props(), settings);
-            data.audioEncoderIndex[audio::EAudioDeviceDirection::Input][i] = encoderIndex;
-        }
-    }
-    data.encoder->initializeAudioStreams(_cachedRecordingSettings->useSeparateAudioChannels);
     data.encoder->finalizeStreams();
     return data;
 }
