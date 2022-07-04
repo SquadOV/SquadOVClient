@@ -8,6 +8,7 @@
 #include "shared/filesystem/utility.h"
 #include "shared/filesystem/common_paths.h"
 #include "shared/audio/timing.h"
+#include "shared/system/utils.h"
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
 #include "recorder/encoder/ffmpeg_video_swap_chain.h"
@@ -150,6 +151,11 @@ private:
     void videoEncodeFrame(AVFrame* frame, size_t numFrames);
 
     // Audio Output
+    // We do audio *output* on a separate thread. This way we aren't beholden on receiving
+    // audio input from audio devices (which can be never for some devices) to output audio
+    // to the output stream.
+    void tickAudioThread();
+    std::thread _audioThread;
     const AVCodec* _acodec = nullptr;
 
     struct OutputAudioStream {
@@ -159,7 +165,8 @@ private:
         std::atomic<int64_t> frameNum = 0;
 
         AVFrame* createAudioFrame() const;
-        void copyToFrame(AVFrame* inputFrame, bool initial);
+        void copyToFrame(AVFrame* inputFrame);
+        void clearFrame();
 
         ~OutputAudioStream();
     };
@@ -251,18 +258,26 @@ FfmpegAvEncoderImpl::OutputAudioStream::~OutputAudioStream() {
     av_frame_free(&frame);
 }
 
-void FfmpegAvEncoderImpl::OutputAudioStream::copyToFrame(AVFrame* inputFrame, bool initial) {
+void FfmpegAvEncoderImpl::OutputAudioStream::clearFrame() {
+    if (context->sample_fmt == AV_SAMPLE_FMT_FLTP) {
+        for (auto c = 0; c < context->channels; ++c) {
+            float* output = (float*)frame->data[c];
+            memset(output, 0, sizeof(float) * context->frame_size);
+        }
+    } else {
+        float* output = (float*)frame->data[0];
+        memset(output, 0, sizeof(float) * context->frame_size * context->channels);
+    }
+}
+
+void FfmpegAvEncoderImpl::OutputAudioStream::copyToFrame(AVFrame* inputFrame) {
     if (context->sample_fmt == AV_SAMPLE_FMT_FLTP) {
         for (auto c = 0; c < context->channels; ++c) {
             const float* input = (const float*)inputFrame->data[c];
             float* output = (float*)frame->data[c];
 
             for (auto i = 0; i < context->frame_size; ++i) {
-                if (initial) {
-                    output[i] = input[i];
-                } else {
-                    output[i] += input[i];
-                }
+                output[i] += input[i];
             }
         }
     } else {
@@ -272,11 +287,7 @@ void FfmpegAvEncoderImpl::OutputAudioStream::copyToFrame(AVFrame* inputFrame, bo
         for (auto i = 0; i < context->frame_size; ++i) {
             for (auto c = 0; c < context->channels; ++c) {
                 const auto idx = i * context->channels + c;
-                if (initial) {
-                    output[idx] = input[idx];
-                } else {
-                    output[idx] += input[idx];
-                }
+                output[idx] += input[idx];
             }
         }
     }
@@ -1016,47 +1027,6 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
         streamData.nextPacketTime = tm;    
     }
     streamData.nextPacketTime += shared::audio::samplesToNsDiff(view.props().samplingRate, totalSamplesAdded);
-    
-    // I don't believe there's a need to do this on multiple encoder indexes...The only
-    // time this *might* screw up is if encoder index 0 receives 0 audio packets. Oh well?
-    // The FIFO is protected by a shared mutex because each audio input stream is fed in from a
-    // separate thread.
-    if (encoderIdx == 0) {
-        while (hasAudioFrameAvailable()) {
-            for (size_t s = 0; s < _astreams.size(); ++s) {
-                _astreams[s]->encodedSamples += _outputAudioTracks.front()->context->frame_size;
-
-                // Copy from the sink frame into the encoding frame.
-                {
-                    std::lock_guard guard(_astreams[s]->graphMutex);
-
-                    auto* frame = _astreams[s]->sinkFrames.front();
-                    _astreams[s]->sinkFrames.pop_front();
-
-                    // There's going to be two copies - one copy for the main audio track
-                    // and then one additional copy if there's a separate track per device.
-                    _outputAudioTracks.front()->copyToFrame(frame, s == 0);
-
-                    const auto separateTrackIdx = _inputAudioStreamToOutputTrack.find(s);
-                    if (separateTrackIdx != _inputAudioStreamToOutputTrack.end()) {
-                        _outputAudioTracks[separateTrackIdx->second]->copyToFrame(frame, true);
-                    }
-
-                    av_frame_free(&frame);
-                }
-            }
-
-            for (const auto& track: _outputAudioTracks) {
-                if (av_frame_make_writable(track->frame) < 0) {
-                    THROW_ERROR("Failed to make frame writable.");
-                }
-
-                track->frame->pts = track->frameNum;
-                track->frameNum += track->context->frame_size;
-                encode(track->context, track->frame, track->stream);
-            }
-        }
-    }
 }
 
 shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) {
@@ -1259,6 +1229,9 @@ void FfmpegAvEncoderImpl::start() {
         LOG_INFO("Finish packet thread." << std::endl);
     });
 
+    // The audio thread is responsible for actually sending audio to the output at set intervals
+    _audioThread = std::thread(std::bind(&FfmpegAvEncoderImpl::tickAudioThread, this));
+
     LOG_INFO("Finish start FFmpeg encoder." << std::endl);
 }
 
@@ -1372,6 +1345,12 @@ void FfmpegAvEncoderImpl::stop() {
         _running = false;
     }
 
+    LOG_INFO("Waiting for Audio thread to finish [" << _running << "]..." << std::endl);
+    if (_audioThread.joinable()) {
+        LOG_INFO("\tJoining audio thread..." << std::endl);
+        _audioThread.join();
+    }
+
     LOG_INFO("Waiting for IO thread to finish [" << _running << "]..." << std::endl);
     if (_packetThread.joinable()) {
         LOG_INFO("\tJoining packet thread..." << std::endl);
@@ -1427,6 +1406,59 @@ void FfmpegAvEncoderImpl::stop() {
 
     const auto metadata = getMetadata();
     LOG_INFO("Metadata: " << metadata.toJson().dump() << std::endl);
+}
+
+void FfmpegAvEncoderImpl::tickAudioThread() {
+    while (_running) {
+        // Each audio input has a "sinkFrames" deque that contains all the
+        // audio data that's ready to be sent to outputs from that device.
+        // If an audio input device hasn't already sent its frame then too bad.
+        // You snooze you lose.
+        for (const auto& track: _outputAudioTracks) {
+            track->clearFrame();
+        }
+
+        for (size_t s = 0; s < _astreams.size(); ++s) {
+            _astreams[s]->encodedSamples += _outputAudioTracks.front()->context->frame_size;
+
+            // This thread should be the only one dealing with the frames in the _outputAudioTracks
+            // vector so there shouldn't be a need for any locks there. The only locks we should need
+            // are those on the input audio devices.
+
+            std::lock_guard guard(_astreams[s]->graphMutex);
+            if (!_astreams[s]->sinkFrames.empty()) {
+                auto* frame = _astreams[s]->sinkFrames.front();
+                _astreams[s]->sinkFrames.pop_front();
+
+                // There's going to be two copies - one copy for the main audio track
+                // and then one additional copy if there's a separate track per device.
+                _outputAudioTracks.front()->copyToFrame(frame);
+
+                const auto separateTrackIdx = _inputAudioStreamToOutputTrack.find(s);
+                if (separateTrackIdx != _inputAudioStreamToOutputTrack.end()) {
+                    _outputAudioTracks[separateTrackIdx->second]->copyToFrame(frame);
+                }
+
+                av_frame_free(&frame);
+            }
+        }
+
+        for (const auto& track: _outputAudioTracks) {
+            if (av_frame_make_writable(track->frame) < 0) {
+                THROW_ERROR("Failed to make frame writable.");
+            }
+
+            track->frame->pts = track->frameNum;
+            track->frameNum += track->context->frame_size;
+            encode(track->context, track->frame, track->stream);
+        }
+
+        // We want to do this approximately when we'd expect 1 new frame to be ready so just
+        // sleep until when that should realistically happen.
+        shared::system::utils::preciseSleep(static_cast<double>(_outputAudioTracks.front()->context->frame_size) / _outputAudioTracks.front()->context->sample_rate * 1e9f);
+    }
+
+    LOG_INFO("Finish Audio Thread" << std::endl);
 }
 
 shared::squadov::VodMetadata FfmpegAvEncoderImpl::getMetadata() const {

@@ -275,11 +275,9 @@ void WasapiAudioClientRecorder::startRecording() {
 
         while (_running) {
             auto packetTime = service::recorder::encoder::AVSyncClock::now();
-            DWORD retval = WaitForSingleObject(_eventCallback, 2000);
-            if (retval != WAIT_OBJECT_0) {
-                printWarning("...Timed out in waiting for callback", E_FAIL);
-                continue;
-            }
+
+            // Fuck it - if we timeout - move on. Send an empty packet down the pipeline.
+            WaitForSingleObject(_eventCallback, 2000);
 
             uint32_t packetLength = 0;
             hr = _captureClient->GetNextPacketSize(&packetLength);

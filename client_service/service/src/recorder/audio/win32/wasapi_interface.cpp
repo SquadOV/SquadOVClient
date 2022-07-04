@@ -77,7 +77,7 @@ service::recorder::audio::AudioDeviceResponse WASAPIInterface::getDeviceListing(
 
     hr = audioEnum->GetDefaultAudioEndpoint(
         dataflow,
-        eConsole,
+        (dir == service::recorder::audio::EAudioDeviceDirection::Output) ? eConsole : eCommunications,
         &defaultDevice
     );
 
