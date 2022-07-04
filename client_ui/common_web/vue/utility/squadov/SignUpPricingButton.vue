@@ -1,5 +1,6 @@
 <template>
     <v-btn
+        v-if="visible"
         :color="highlight ? 'success' : 'primary'"
         :to="redirectTo"
     >
@@ -15,6 +16,7 @@ import { Prop } from 'vue-property-decorator'
 import { Currency, EPricingTier } from '@client/js/squadov/pricing'
 import { RegisterPageId, SubscriptionPageId } from '@client/js/pages'
 import { canUserTrial } from '@client/js/squadov/user'
+import Register from '@client/vue/auth/Register.vue'
 
 
 @Component
@@ -31,6 +33,10 @@ export default class SignUpPricingButton extends Vue {
     @Prop({required: true})
     currency!: Currency
 
+    get visible(): boolean {
+        return (this.tier !== EPricingTier.Basic) || !this.$store.state.currentUser
+    }
+
     get text(): string {
         if (this.tier == EPricingTier.Basic) {
             return 'Register'
@@ -42,6 +48,12 @@ export default class SignUpPricingButton extends Vue {
     }
 
     get redirectTo() : any {
+        if (this.tier == EPricingTier.Basic) {
+            return {
+                name: RegisterPageId,
+            }
+        }
+
         let subTo = {
             name: SubscriptionPageId,
             query: {
