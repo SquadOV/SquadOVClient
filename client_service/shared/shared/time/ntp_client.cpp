@@ -137,7 +137,7 @@ void NTPClient::tick() {
             const auto os = offsetToServer(NTP_SERVERS[i]);
 
             // Do a reasonableness check on the new offset.
-            if (os >= 0 && os <= NTP_ERROR_MS_THRESHOLD) {
+            if (std::abs(os) <= NTP_ERROR_MS_THRESHOLD) {
                 offsets.push_back(os);
             } else {
                 LOG_WARNING("Computed an NTP offset that's unreasonable...ignoring it: " << os << std::endl);
