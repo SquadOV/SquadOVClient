@@ -237,9 +237,10 @@
 
                                         <tr>
                                             <td>Max FPS</td>
-                                            <td class="text-center" colspan="3">
+                                            <td class="text-center" colspan="2">
                                                 60
                                             </td>
+                                            <td class="text-center">90</td>
                                             <td class="text-center">144</td>
                                         </tr>
 
