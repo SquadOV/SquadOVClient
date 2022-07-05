@@ -1,9 +1,9 @@
 <template>
-    <div @mouseover="startPlay" @mouseout="pausePlay" :key="forceRedraw"> 
-        <video class="video-js vjs-fill" ref="video" v-if="!$store.state.settings.useStaticThumbnails || this.useLocalVod">
+    <div style="position: relative;" @mouseover="startPlay" @mouseout="pausePlay" :key="forceRedraw">
+        <video class="video-js vjs-fill stack video" ref="video">
         </video>
 
-        <v-img contain :src="thumbnailUrl" v-else-if="!!thumbnailUrl">
+        <v-img class="stack thumbnail" :src="thumbnailUrl">
         </v-img>
     </div>
 </template>
@@ -66,9 +66,9 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
         }
     }
 
-    startPlay() {
+    transitionInVideoPlayer() {
         if (!!this.player) {
-            let el = <HTMLElement>this.player.tech(0).el();
+            let el = <HTMLElement>this.player.tech(0).el().parentElement;
             el.style.opacity = '1.0'
 
             this.canPause = false
@@ -83,10 +83,50 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
         }
     }
 
+    retrieveCloudVideoUri() {
+        // Load up the preview video URI first before we transition in.
+        let previewUri = this.vod.videoTracks[0]?.preview
+        if (!previewUri) {
+            this.videoUri = null
+            return
+        }
+
+        apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
+            this.videoUri = resp.data.url
+            this.onVideoUriChange()
+            if (!!resp.data.expiration) {
+                window.setTimeout(() => {
+                    this.retrieveCloudVideoUri()
+                }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
+            }
+
+            this.transitionInVideoPlayer()
+        }).catch((err : any) => {
+            console.error('Failed to get final URL for video preview: ', err)
+        })
+    }
+
+    startPlay() {
+        if (this.$store.state.settings.useStaticThumbnails) {
+            return
+        }
+
+        if (!this.useLocalVod && !this.videoUri) {
+            this.retrieveCloudVideoUri()
+        } else {
+            this.transitionInVideoPlayer()
+        }
+    }
+
     pausePlay() {
         if (!!this.player) {
-            let el = <HTMLElement>this.player.tech(0).el();
-            el.style.opacity = '1.0'
+            let el = <HTMLElement>this.player.tech(0).el().parentElement;
+
+            if (this.useLocalVod) {
+                el.style.opacity = '1.0'
+            } else {
+                el.style.opacity = '0.0'
+            }
 
             this.player.pause()
         }
@@ -114,7 +154,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
             ])
         }
 
-        let el = <HTMLElement>this.player.tech(0).el();
+        let el = <HTMLElement>this.player.tech(0).el().parentElement;
         el.style.opacity = '1.0'
         el.classList.add('preview-video')
 
@@ -141,12 +181,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
     @Watch('vodUuid')
     @Watch('$store.state.settings.useStaticThumbnails')
     refreshPreviewUri() {
-        if (!!this.$store.state.settings.useStaticThumbnails && !this.useLocalVod) {
-            if (!!this.player) {
-                this.player.dispose()
-                this.player = null
-            }
-
+        if (!this.useLocalVod) {
             let tbUri = this.vod.videoTracks[0]?.thumbnail
             if (!tbUri) {
                 this.thumbnailUrl = null
@@ -160,41 +195,22 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
                         this.refreshPreviewUri()
                     }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
                 }
+
+                // Create the video player and then pause it to hide it.
+                this.onVideoUriChange()
+                this.pausePlay()
             }).catch((err : any) => {
                 console.error('Failed to get final URL for video thumbnail: ', err)
             })
         } else {
-            if (this.useLocalVod) {
-                ipcRenderer.invoke('check-vod-local', this.vodUuid || this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
-                    this.videoUri = resp.data
-                    Vue.nextTick(() => {
-                        this.onVideoUriChange()
-                    })
-                }).catch((err: any) => {
-                    console.error('Failed to get local VOD for preview: ', err)
+            ipcRenderer.invoke('check-vod-local', this.vodUuid || this.vod.videoTracks[0].metadata.videoUuid).then((resp: IpcResponse<string>) => {
+                this.videoUri = resp.data
+                Vue.nextTick(() => {
+                    this.onVideoUriChange()
                 })
-            } else {
-                let previewUri = this.vod.videoTracks[0]?.preview
-                if (!previewUri) {
-                    this.videoUri = null
-                    return
-                }
-
-                apiClient.accessToken(this.accessToken).getVodSegment(previewUri).then((resp : ApiData<vod.VodSegmentUrl>) => {
-                    this.videoUri = resp.data.url
-                    if (!!resp.data.expiration) {
-                        window.setTimeout(() => {
-                            this.refreshPreviewUri()
-                        }, Math.max(resp.data.expiration.getTime() - new Date().getTime(), 100))
-                    }
-
-                    Vue.nextTick(() => {
-                        this.onVideoUriChange()
-                    })
-                }).catch((err : any) => {
-                    console.error('Failed to get final URL for video preview: ', err)
-                })
-            }
+            }).catch((err: any) => {
+                console.error('Failed to get local VOD for preview: ', err)
+            })
         }
     }
 
@@ -219,5 +235,19 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
 
 >>>.preview-video {
     transition: opacity 1s ease-out;
+}
+
+.stack {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.stack.video {
+    z-index: 3;
+}
+
+.stack.thumbnail {
+    z-index: 2;
 }
 </style>
