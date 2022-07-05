@@ -2,6 +2,7 @@ appId: "squadov.squadov.app"
 productName: "SquadOV"
 copyright: "Copyright © 2020-2021 GRCHive, Inc."
 generateUpdatesFilesForAllChannels: true
+asar: false
 
 directories:
   app: "."
@@ -19,7 +20,7 @@ win:
       url: https://us-central1.content.squadov.gg/builds
 
 nsis:
-  differentialPackage : false
+  differentialPackage : true
   oneClick: true
   include: nsis/installer.nsh
 
