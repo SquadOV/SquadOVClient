@@ -154,7 +154,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
             ])
         }
 
-        let el = <HTMLElement>this.player.tech(0).el().parentElement;
+        let el = <HTMLElement>this.player.tech(0).el().parentElement
         el.style.opacity = '1.0'
         el.classList.add('preview-video')
 
@@ -249,5 +249,7 @@ export default class VideoPreviewPlayer extends mixins(CommonComponent) {
 
 .stack.thumbnail {
     z-index: 2;
+    width: 100%;
+    height: 100%;
 }
 </style>
