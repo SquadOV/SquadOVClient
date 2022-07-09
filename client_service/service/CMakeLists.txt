@@ -29,6 +29,7 @@ SET(SRCS
     src/recorder/audio/wasapi_audio_client_recorder.cpp
     src/recorder/audio/device.cpp
     src/recorder/audio/win32/wasapi_interface.cpp
+    src/recorder/audio/ffmpeg_audio_buffer.cpp
     src/recorder/pipe/pipe.cpp
     src/recorder/pipe/pipe_client.cpp
     src/recorder/pipe/file_output_piper.cpp
@@ -108,6 +109,7 @@ SET(HEADERS
     src/recorder/audio/device.h
     src/recorder/audio/win32/wasapi_interface.h
     src/recorder/audio/wasapi_audio_client_recorder.h
+    src/recorder/audio/ffmpeg_audio_buffer.h
     src/recorder/pipe/pipe.h
     src/recorder/pipe/pipe_client.h
     src/recorder/pipe/file_output_piper.h

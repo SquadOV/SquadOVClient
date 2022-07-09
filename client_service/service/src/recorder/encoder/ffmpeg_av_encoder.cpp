@@ -12,6 +12,7 @@
 #include "recorder/image/d3d_image.h"
 #include "renderer/d3d11_renderer.h"
 #include "recorder/encoder/ffmpeg_video_swap_chain.h"
+#include "recorder/audio/ffmpeg_audio_buffer.h"
 
 #include <atomic>
 #include <boost/lockfree/spsc_queue.hpp>
@@ -29,7 +30,6 @@
 #include <unordered_map>
 
 extern "C" {
-#include <libavutil/audio_fifo.h>
 #include <libavcodec/avcodec.h>
 #include <libavfilter/buffersink.h>
 #include <libavfilter/buffersrc.h>
@@ -90,7 +90,6 @@ int packetPropsToFFmpegSampleRate(const service::recorder::audio::AudioPacketPro
 
 constexpr size_t audioNumChannels = 2;
 constexpr size_t audioSamplesPerFrame = 480;
-const std::chrono::nanoseconds maxAudioDeviation = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::milliseconds(80));
 
 }
 
@@ -124,8 +123,6 @@ public:
 private:
     void encode(AVCodecContext* cctx, AVFrame* frame, AVStream* st);
 
-    bool hasAudioFrameAvailable() const;
-
     std::string _streamUrl;
     std::string _formatHint;
 
@@ -155,6 +152,7 @@ private:
     // audio input from audio devices (which can be never for some devices) to output audio
     // to the output stream.
     void tickAudioThread();
+    void flushAllAudioTracks(const std::chrono::milliseconds& bufferLatency);
     std::thread _audioThread;
     const AVCodec* _acodec = nullptr;
 
@@ -164,8 +162,9 @@ private:
         AVFrame* frame = nullptr;
         std::atomic<int64_t> frameNum = 0;
 
+        service::recorder::audio::FfmpegAudioBufferPtr buffer;
+
         AVFrame* createAudioFrame() const;
-        void copyToFrame(AVFrame* inputFrame);
         void clearFrame();
 
         ~OutputAudioStream();
@@ -183,7 +182,6 @@ private:
         // is needed for output and store it in this queue.
         // Once the queue reaches the size of an actual frame,
         // we'll send that to the encoder to be written out.
-        AVSyncClock::time_point nextPacketTime;
         std::shared_mutex graphMutex;
 
         // Filter Graph
@@ -199,9 +197,6 @@ private:
 
         // Debug Info
         uint64_t receivedSamples = 0;
-        uint64_t processedSamples = 0;
-        uint64_t convertedSamples = 0;
-        uint64_t encodedSamples = 0;
 
         AudioStreamData() = default;
         AudioStreamData(const AudioStreamData&) = delete;
@@ -213,6 +208,7 @@ private:
     };
     using AudioStreamDataPtr = std::unique_ptr<AudioStreamData>;
     std::vector<AudioStreamDataPtr> _astreams;
+    void flushStreamDataToOutputTracks(size_t encoderIndex, const AVSyncClock::time_point& tm);
 
     // Front and back buffering to support constant frame rate videos.
     bool _running = false;
@@ -270,34 +266,11 @@ void FfmpegAvEncoderImpl::OutputAudioStream::clearFrame() {
     }
 }
 
-void FfmpegAvEncoderImpl::OutputAudioStream::copyToFrame(AVFrame* inputFrame) {
-    if (context->sample_fmt == AV_SAMPLE_FMT_FLTP) {
-        for (auto c = 0; c < context->channels; ++c) {
-            const float* input = (const float*)inputFrame->data[c];
-            float* output = (float*)frame->data[c];
-
-            for (auto i = 0; i < context->frame_size; ++i) {
-                output[i] += input[i];
-            }
-        }
-    } else {
-        const float* input = (const float*)inputFrame->data[0];
-        float* output = (float*)frame->data[0];
-
-        for (auto i = 0; i < context->frame_size; ++i) {
-            for (auto c = 0; c < context->channels; ++c) {
-                const auto idx = i * context->channels + c;
-                output[idx] += input[idx];
-            }
-        }
-    }
-}
-
 FfmpegAvEncoderImpl::AudioStreamData::~AudioStreamData() {
     avfilter_graph_free(&filterGraph);
     av_frame_free(&sourceFrame);
-    
-    for (auto& f : sinkFrames) {
+
+    for (auto* f: sinkFrames) {
         av_frame_free(&f);
     }
     sinkFrames.clear();
@@ -769,6 +742,11 @@ typename FfmpegAvEncoderImpl::OutputAudioStreamPtr FfmpegAvEncoderImpl::createOu
     av_dict_set(&track->stream->metadata, "title", name.c_str(), 0);
 
     track->frame = track->createAudioFrame();
+
+    // Now everything has been setup, we can create the audio buffer
+    // which will hold the ~10ms audio buffer (so should be around 480 samples).
+    track->buffer = std::make_shared<service::recorder::audio::FfmpegAudioBuffer>(track->context->sample_fmt, track->context->channels, track->context->sample_rate);
+
     return track;
 }
 
@@ -981,6 +959,11 @@ void FfmpegAvEncoderImpl::videoEncodeFrame(AVFrame* frame, size_t numFramesToEnc
         encode(_vcodecContext, frame, _vstream);
     }
 
+    // The first *video* frame is when we want to start accepting audio data as well.
+    for (const auto& t: _outputAudioTracks) {
+        t->buffer->startBuffer();
+    }
+
     // This is necessary when frameStepSize > 1. At the end, we want _vFrameNum to be equal to desiredFrameNum.
     // If frameStepSize > 1, then the last frame will be desiredFrameNum - 1 + frameStepSize instead.
     _vFrameNum = desiredFrameNum;
@@ -997,36 +980,41 @@ void FfmpegAvEncoderImpl::addAudioFrame(const service::recorder::audio::FAudioPa
         return;
     }
     
-    size_t numSilenceSamples = 0;
-
     auto& streamData = *_astreams[encoderIdx];
+    auto sampleTm = tm;
 
-    const auto diffTm = (tm >= streamData.nextPacketTime) ? tm - streamData.nextPacketTime : streamData.nextPacketTime - tm;
-    if (streamData.useSilenceCompensation && diffTm >= maxAudioDeviation) {
-        if (tm > streamData.nextPacketTime) {
-            // When the audio samples are coming further out into the future than we'd reasonably expect then we should
-            // insert a bunch of silence in to compensate.
-            numSilenceSamples = shared::audio::timeDiffToNumSamples(view.props().samplingRate, diffTm);
-            LOG_WARNING("Inserting " << numSilenceSamples << " samples to compensate for audio drift of " << diffTm.count() << "ns." << std::endl);
+    streamData.addAudioFrame(view, 0);
+    flushStreamDataToOutputTracks(encoderIdx, sampleTm);
+}
+
+void FfmpegAvEncoderImpl::flushStreamDataToOutputTracks(size_t encoderIndex, const AVSyncClock::time_point& tm) {
+    if (encoderIndex >= _astreams.size()) {
+        return;
+    }
+
+    if (_outputAudioTracks.empty()) {
+        return;
+    }
+
+    const auto separateIt = _inputAudioStreamToOutputTrack.find(encoderIndex);
+    auto& streamData = _astreams[encoderIndex];
+
+    AVSyncClock::time_point sampleTm = tm;
+    std::scoped_lock guard(streamData->graphMutex);
+    while (!streamData->sinkFrames.empty()) {
+        AVFrame* frame = streamData->sinkFrames.front();
+        streamData->sinkFrames.pop_front();
+
+        _outputAudioTracks.front()->buffer->addFrame(frame, encoderIndex, sampleTm);
+
+        if (separateIt != _inputAudioStreamToOutputTrack.end() && separateIt->second < _outputAudioTracks.size()) {
+            _outputAudioTracks[separateIt->second]->buffer->addFrame(frame, encoderIndex, sampleTm);
         }
-    }
 
-    if (numSilenceSamples > 0) {
-        // Create a fake packet with the appropriate number of samples containing just silence.
-        std::vector<float> silenceData(numSilenceSamples * view.props().numChannels, 0.f);
-
-        auto props = view.props();
-        props.numSamples = numSilenceSamples;
-
-        service::recorder::audio::FAudioPacketView silence(silenceData.data(), props, 0.0);
-        streamData.addAudioFrame(silence, 0);
-    }
-
-    const auto totalSamplesAdded = streamData.addAudioFrame(view, 0);
-    if (numSilenceSamples > 0) {
-        streamData.nextPacketTime = tm;    
-    }
-    streamData.nextPacketTime += shared::audio::samplesToNsDiff(view.props().samplingRate, totalSamplesAdded);
+        // Assume that all our audio tracks are uniform in their properties.
+        sampleTm += shared::audio::samplesToNsDiff(_outputAudioTracks.front()->context->sample_rate, frame->nb_samples);
+        av_frame_free(&frame);
+    }    
 }
 
 shared::TimePoint FfmpegAvEncoderImpl::open(const std::string& outputUrl, std::optional<AVSyncClock::time_point> dvrFillInStartTime) {
@@ -1193,9 +1181,6 @@ void FfmpegAvEncoderImpl::start() {
     // This must be set before _running is set to true as addVideo/AudioFrame will use this value and
     // use this time to sync the audio and video. This time is when our video and audio should start.
     _syncStartTime = AVSyncClock::now();
-    for (const auto& s : _astreams) {
-        s->nextPacketTime = _syncStartTime;
-    }
 
     // Start a thread to send frames and packets to the underlying encoder.
     // Some encoders (e.g. H264_NVENC) don't play nicely with variable framerate
@@ -1321,16 +1306,6 @@ bool FfmpegAvEncoderImpl::isDvrBufferLongerThanMaxSeconds(const std::deque<AVPac
     return ((diffMs / 1000.0) > _maxDvrBufferTimeSeconds);
 }
 
-bool FfmpegAvEncoderImpl::hasAudioFrameAvailable() const {
-    for (const auto& stream : _astreams) {
-        std::shared_lock<std::shared_mutex> guard(stream->graphMutex);
-        if (stream->sinkFrames.empty()) {
-            return false;
-        }
-    }
-    return true;
-}
-
 void FfmpegAvEncoderImpl::stop() {
     LOG_INFO("Requesting FFmpeg Encoder Stop: " << _running << std::endl);
     std::lock_guard<std::mutex> guard(_startMutex);
@@ -1366,11 +1341,14 @@ void FfmpegAvEncoderImpl::stop() {
     LOG_INFO("\tEstimated FPS: " << estimatedFps << std::endl);
 
     for (size_t s = 0; s < _astreams.size(); ++s) {
-        LOG_INFO("\tAudio Samples [" << s 
+        LOG_INFO("\tAudio Input [" << s 
             << "]: Receive - " << _astreams[s]->receivedSamples
-            << ":: Process - " << _astreams[s]->processedSamples
-            << ":: Converted - " << _astreams[s]->convertedSamples
-            << ":: Encoded - " << _astreams[s]->encodedSamples
+        << std::endl);
+    }
+
+    for (size_t s = 0; s < _outputAudioTracks.size(); ++s) {
+        LOG_INFO("\tAudio Output [" << s 
+            << "]: Written - " << _outputAudioTracks[s]->frameNum
         << std::endl);
     }
 
@@ -1409,56 +1387,37 @@ void FfmpegAvEncoderImpl::stop() {
 }
 
 void FfmpegAvEncoderImpl::tickAudioThread() {
-    while (_running) {
-        // Each audio input has a "sinkFrames" deque that contains all the
-        // audio data that's ready to be sent to outputs from that device.
-        // If an audio input device hasn't already sent its frame then too bad.
-        // You snooze you lose.
-        for (const auto& track: _outputAudioTracks) {
-            track->clearFrame();
-        }
+    while (_running && !_outputAudioTracks.empty()) {
+        // Note that this should be at the *beginning* of the loop to match up the first frame more properly.
+        // The primary concern here should be solving the: when will there be data? question.
+        // Thus, we must sleep enough so that there is data (so we don't waste CPU cycles) but we also
+        // want to make sure we accumulate an audio buffer to account for audio latency. Generally
+        // the maximum acceptable audio latency is 10ms so we can say that if we don't receive audio
+        // within 10ms, that audio packet can go fuck off. So what we're going to do here is to sleep
+        // for a fixed 1ms. This should give enough time for *some* data to accumulate (even when
+        // we get past the buffer threshold) but at the same time not allow for too much data
+        // to accumulate past that. Note that we use 100 milliseconds to allow for other stuff to happen
+        // (10ms is a little too strict).
+        shared::system::utils::preciseSleep(1e6);
+        flushAllAudioTracks(std::chrono::milliseconds(100));
+    }
 
-        for (size_t s = 0; s < _astreams.size(); ++s) {
-            _astreams[s]->encodedSamples += _outputAudioTracks.front()->context->frame_size;
+    // At the very end - flush everything regardless of how long it's been there
+    flushAllAudioTracks(std::chrono::milliseconds(0));
+    
+    LOG_INFO("Finish Audio Thread" << std::endl);
+}
 
-            // This thread should be the only one dealing with the frames in the _outputAudioTracks
-            // vector so there shouldn't be a need for any locks there. The only locks we should need
-            // are those on the input audio devices.
-
-            std::lock_guard guard(_astreams[s]->graphMutex);
-            if (!_astreams[s]->sinkFrames.empty()) {
-                auto* frame = _astreams[s]->sinkFrames.front();
-                _astreams[s]->sinkFrames.pop_front();
-
-                // There's going to be two copies - one copy for the main audio track
-                // and then one additional copy if there's a separate track per device.
-                _outputAudioTracks.front()->copyToFrame(frame);
-
-                const auto separateTrackIdx = _inputAudioStreamToOutputTrack.find(s);
-                if (separateTrackIdx != _inputAudioStreamToOutputTrack.end()) {
-                    _outputAudioTracks[separateTrackIdx->second]->copyToFrame(frame);
-                }
-
-                av_frame_free(&frame);
-            }
-        }
-
-        for (const auto& track: _outputAudioTracks) {
-            if (av_frame_make_writable(track->frame) < 0) {
-                THROW_ERROR("Failed to make frame writable.");
-            }
-
+void FfmpegAvEncoderImpl::flushAllAudioTracks(const std::chrono::milliseconds& bufferLatency) {
+    for (const auto& track: _outputAudioTracks) {
+        const auto numSamples = track->context->frame_size;
+        while (track->buffer->hasFrameOlderThanMs(numSamples, bufferLatency)) {
+            track->buffer->popFrameInto(track->frame);
             track->frame->pts = track->frameNum;
             track->frameNum += track->context->frame_size;
             encode(track->context, track->frame, track->stream);
         }
-
-        // We want to do this approximately when we'd expect 1 new frame to be ready so just
-        // sleep until when that should realistically happen.
-        shared::system::utils::preciseSleep(static_cast<double>(_outputAudioTracks.front()->context->frame_size) / _outputAudioTracks.front()->context->sample_rate * 1e9f);
     }
-
-    LOG_INFO("Finish Audio Thread" << std::endl);
 }
 
 shared::squadov::VodMetadata FfmpegAvEncoderImpl::getMetadata() const {

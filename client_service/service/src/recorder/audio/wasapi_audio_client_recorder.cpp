@@ -274,8 +274,6 @@ void WasapiAudioClientRecorder::startRecording() {
         }
 
         while (_running) {
-            auto packetTime = service::recorder::encoder::AVSyncClock::now();
-
             // Fuck it - if we timeout - move on. Send an empty packet down the pipeline.
             WaitForSingleObject(_eventCallback, 2000);
 
@@ -304,7 +302,7 @@ void WasapiAudioClientRecorder::startRecording() {
                 // Create a packet and send it to the packet queue.
                 // We don't want to send the packet directly to the encoder here since
                 // that may involve locks that we don't want in this inner loop.
-                handleData(packetTime, pData, numFramesAvailable);
+                handleData(service::recorder::encoder::AVSyncClock::now(), pData, numFramesAvailable);
 
                 hr = _captureClient->ReleaseBuffer(numFramesAvailable);
                 if (hr != S_OK) {
@@ -317,12 +315,6 @@ void WasapiAudioClientRecorder::startRecording() {
                     printWarning("...Failed to get next packet size", hr);
                     break;
                 }
-
-                // Need to increment the packet time by an appropriate amount.
-                // The default is to assume that we're getting data properly so N frames can be divided by the sample rate
-                // to get the number of elapsed seconds.
-                const auto elapsedNs = static_cast<double>(numFramesAvailable) / _props.samplingRate * 1e9;
-                packetTime += std::chrono::nanoseconds(static_cast<size_t>(elapsedNs));
             }
         }
     });
