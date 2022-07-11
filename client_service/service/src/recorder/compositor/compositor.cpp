@@ -172,38 +172,41 @@ void Compositor::reinitTonemapper(ID3D11Texture2D* image, const D3D11_TEXTURE2D_
     // This technically isn't super accurate but for the purposes of our use cases where we don't really
     // expect any formats aside from DXGI_FORMAT_B8G8R8A8_UNORM and DXGI_FORMAT_R16G16B16A16_FLOAT (where
     // the latter is only the case for HDR) this is fine.
-    if (inputDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM && !_tonemapper) {
-        _tonemapper = std::make_unique<DirectX::ToneMapPostProcess>(_d3dContext->device());
-        _tonemapper->SetOperator(DirectX::ToneMapPostProcess::Reinhard);
-        _tonemapper->SetTransferFunction(DirectX::ToneMapPostProcess::SRGB);
-        _tonemapper->SetExposure(-1.0f);
+    if (inputDesc.Format != DXGI_FORMAT_B8G8R8A8_UNORM) {
+        // Moving this if statement into the outer if statement will cause flickers as we will
+        // destroy the tonemapper every other frame. Woops.
+        if (!_tonemapper) {
+            _tonemapper = std::make_unique<DirectX::ToneMapPostProcess>(_d3dContext->device());
+            _tonemapper->SetOperator(DirectX::ToneMapPostProcess::Reinhard);
+            _tonemapper->SetTransferFunction(DirectX::ToneMapPostProcess::SRGB);
+            _tonemapper->SetExposure(-1.0f);
 
-        D3D11_TEXTURE2D_DESC tmDesc = { 0 };
-        tmDesc.Width = _width;
-        tmDesc.Height = _height;
-        
-        // The final tonemapped image must be DXGI_FORMAT_B8G8R8A8_UNORM.
-        tmDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
-        // Everything else should stay default since you can't CPU read/stage a render target.
-        tmDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-        tmDesc.Usage = D3D11_USAGE_DEFAULT;
-        tmDesc.CPUAccessFlags = 0;
-        tmDesc.MiscFlags = 0;
+            D3D11_TEXTURE2D_DESC tmDesc = { 0 };
+            tmDesc.Width = _width;
+            tmDesc.Height = _height;
+            
+            // The final tonemapped image must be DXGI_FORMAT_B8G8R8A8_UNORM.
+            tmDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+            // BindFlags should have D3D11_BIND_RENDER_TARGET because we will be rendering to it.
+            // Everything else should stay default since you can't CPU read/stage a render target.
+            tmDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+            tmDesc.Usage = D3D11_USAGE_DEFAULT;
+            tmDesc.CPUAccessFlags = 0;
+            tmDesc.MiscFlags = 0;
 
-        tmDesc.MipLevels = 1;
-        tmDesc.SampleDesc.Count = 1;
-        tmDesc.ArraySize = 1;
+            tmDesc.MipLevels = 1;
+            tmDesc.SampleDesc.Count = 1;
+            tmDesc.ArraySize = 1;
 
-        _tmTexture.attach(_renderer->createTexture2D(tmDesc));
+            _tmTexture.attach(_renderer->createTexture2D(tmDesc));
 
-        D3D11_RENDER_TARGET_VIEW_DESC targetDesc;
-        targetDesc.Format = tmDesc.Format;
-        targetDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-        targetDesc.Texture2D.MipSlice = 0;
+            D3D11_RENDER_TARGET_VIEW_DESC targetDesc;
+            targetDesc.Format = tmDesc.Format;
+            targetDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+            targetDesc.Texture2D.MipSlice = 0;
 
-        _tmRenderTarget.attach(_renderer->createRenderTarget(_tmTexture.get(), targetDesc));
-
+            _tmRenderTarget.attach(_renderer->createRenderTarget(_tmTexture.get(), targetDesc));
+        }
     } else {
         _tonemapper.reset();
         _tmTexture.reset();
