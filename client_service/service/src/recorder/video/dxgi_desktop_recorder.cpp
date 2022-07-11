@@ -7,6 +7,7 @@
 #include "shared/errors/error.h"
 #include "shared/log/log.h"
 #include "shared/system/win32/hwnd_utils.h"
+#include "shared/system/win32/interfaces/win32_system_process_interface.h"
 #include "system/settings.h"
 
 #include <iostream>
@@ -105,18 +106,17 @@ void DxgiDesktopRecorder::createDefaultTexture() {
 
 void DxgiDesktopRecorder::initialize(bool checkRunning) {
     LOG_INFO("Initialize DXGI..." << std::endl);
+    shared::system::win32::interfaces::Win32SystemProcessInterface win32;
 #if !DISABLE_ALT_TAB_PROTECTION
     // Wait for the window to become unminimized so that we can grab the correct monitor.
     while ((IsIconic(_window) || !shared::system::win32::isProcessForeground(_pid)) && (!checkRunning || _recording)) {
         LOG_INFO("...Window is iconic or process is not foreground." << std::endl);
 
-        TCHAR windowTitle[1024];
         const auto hwnd = GetForegroundWindow();
-        GetWindowTextA(hwnd, windowTitle, 1024);
 
         DWORD testPid = 0;
         GetWindowThreadProcessId(hwnd, &testPid);
-        LOG_INFO("...Foreground window is: " << windowTitle << " - PID: " << testPid << std::endl);
+        LOG_INFO("...Foreground window is: " << win32.getProcessName(testPid) << " - PID: " << testPid << std::endl);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500ms));
     }
