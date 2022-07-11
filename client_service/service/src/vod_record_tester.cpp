@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
         const auto duration = vm["duration"].as<int>();
         workerThread = std::thread([&recorder, duration](){
             LOG_INFO("START RECORDING" << std::endl);
-            recorder.start(service::recorder::FLAG_WGC_RECORDING);
+            recorder.start(service::recorder::FLAG_DXGI_RECORDING);
             recorder.initializeVideoOutput(shared::nowUtc(), service::recorder::RecordingMode::Normal);
             recorder.connectInputs();
             

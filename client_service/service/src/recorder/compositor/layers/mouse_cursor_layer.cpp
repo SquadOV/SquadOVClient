@@ -51,7 +51,7 @@ void MouseCursorLayer::updateAt(const service::recorder::encoder::AVSyncClock::t
     ICONINFO iconInfo = { 0 };
     GetIconInfo(info.hCursor, &iconInfo);
 
-    // Now we need to get the width/height of the icon by grabbing the bitmap..
+    // Now we need to get the width/height of the icon by grabbing the bitmap.
     D3D11_TEXTURE2D_DESC desc = { 0 };
     desc.Width = 0;
     desc.Height = 0;
@@ -165,6 +165,7 @@ void MouseCursorLayer::finalizeAssetsForRenderer(service::renderer::D3d11Rendere
     // will be set in updateAt prior to rendering.
     _model = service::renderer::createFullScreenQuad(renderer->device());
     _model->setVisibility(false);
+    _model->setOpacity(1.f);
     renderer->addModelToScene(_model);
 }
 
