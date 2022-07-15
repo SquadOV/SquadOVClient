@@ -2,7 +2,6 @@ appId: "squadov.squadov.app"
 productName: "SquadOV"
 copyright: "Copyright © 2020-2021 GRCHive, Inc."
 generateUpdatesFilesForAllChannels: true
-asar: false
 
 directories:
   app: "."
