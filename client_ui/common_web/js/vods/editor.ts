@@ -19,7 +19,7 @@ export function openVodEditingWindow(videoUuid: string, game: SquadOvGames, ts: 
 }
 
 // Returns a promise that returns the accessible file containing 
-export function requestVodClip(source: string, start: number, end: number, format: string): Promise<{path: string, metadata: VodMetadata}> {
+export function requestVodClip(source: string, start: number, end: number, format: string, audio: boolean): Promise<{path: string, metadata: VodMetadata}> {
     let taskId = uuidv4()
     return new Promise((resolve, reject) => {
 /// #if DESKTOP
@@ -29,6 +29,7 @@ export function requestVodClip(source: string, start: number, end: number, forma
             start,
             end,
             inputFormat: format,
+            audio,
         }).then(resolve).catch(reject)
 /// #else
         reject('VOD Editing not yet supported on the web.')

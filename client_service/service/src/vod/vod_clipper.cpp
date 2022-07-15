@@ -221,6 +221,10 @@ void VodClipper::openInputOutputCodecPairs() {
             continue;
         }
 
+        if (istream->codecpar->codec_type == AVMEDIA_TYPE_AUDIO && !_request.audio) {
+            continue;
+        }
+
         auto inputContainer = handleInputStream(istream);
         auto outputContainer = createOutputStreamForInput(istream, *inputContainer);
 
@@ -617,6 +621,7 @@ VodClipRequest VodClipRequest::fromJson(const nlohmann::json& obj) {
     clip.end = obj["end"].get<int64_t>();
     clip.fullCopy = false;
     clip.inputFormat = obj.value("inputFormat", "mp4");
+    clip.audio = obj.value("audio", true);
     return clip;
 }
 

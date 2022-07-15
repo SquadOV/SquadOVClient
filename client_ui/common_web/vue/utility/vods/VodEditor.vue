@@ -94,7 +94,6 @@
                 label="Enable Audio"
                 hide-details
                 dense
-                v-if="false"
             >
             </v-checkbox>
 
@@ -707,7 +706,7 @@ export default class VodEditor extends mixins(CommonComponent) {
         if (this.useServerSideClipping && this.canDoServerSideClipping) {
             // Request server side clipping. Then wait until the clipping is completed by our servers.
             // This creates an un-published clip which we should publish in the next step.
-            apiClient.requestServerSideClipping(this.videoUuid, clipStart, clipEnd).then((resp: ApiData<number>) => {
+            apiClient.requestServerSideClipping(this.videoUuid, clipStart, clipEnd, this.enableAudio).then((resp: ApiData<number>) => {
                 let stagedId = resp.data
                 new Promise<StagedClipStatusResponse>(async (resolve, reject) => {
                     try {
@@ -743,7 +742,7 @@ export default class VodEditor extends mixins(CommonComponent) {
             let uri = new URL(videoUri)
             let extension = uri.pathname.split('.').slice(-1)[0]
             console.log('Local Clip: ', videoUri, extension)
-            requestVodClip(videoUri, clipStart, clipEnd, (extension == 'ts') ? 'mpegts' : extension).then((resp: {
+            requestVodClip(videoUri, clipStart, clipEnd, (extension == 'ts') ? 'mpegts' : extension, this.enableAudio).then((resp: {
                 path: string,
                 metadata: VodMetadata,
             }) => {

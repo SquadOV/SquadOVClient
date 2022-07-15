@@ -1308,11 +1308,12 @@ class ApiClient {
         })
     }
 
-    requestServerSideClipping(videoUuid: string, start: number, end: number): Promise<ApiData<number>> {
+    requestServerSideClipping(videoUuid: string, start: number, end: number, audio: boolean): Promise<ApiData<number>> {
         return axios.post(`v1/vod/${videoUuid}/stage`, {
             start,
             end,
             execute: true,
+            audio,
         }, this.createWebAxiosConfig())
     }
 

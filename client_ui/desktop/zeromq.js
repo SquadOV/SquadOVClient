@@ -112,7 +112,7 @@ class ZeroMQServerClient {
         this._handlers[topic].splice(idx, 1)
     }
 
-    performVodClip(task, source, start, end, inputFormat) {
+    performVodClip(task, source, start, end, inputFormat, audio) {
         return new Promise(async (resolve, reject) => {
             let handlerId = this.on('respond-vod-clip', (resp) => {
                 let parsedResp = JSON.parse(resp)
@@ -129,7 +129,7 @@ class ZeroMQServerClient {
                 }
             })
             
-            await this._pub.send(['request-vod-clip', JSON.stringify({task, source, start, end, inputFormat})])
+            await this._pub.send(['request-vod-clip', JSON.stringify({task, source, start, end, inputFormat, audio})])
         })
     }
 

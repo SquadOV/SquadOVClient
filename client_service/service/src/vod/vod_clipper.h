@@ -13,6 +13,7 @@ struct VodClipRequest {
     int64_t end;
     bool fullCopy = false;
     std::string inputFormat = "mp4";
+    bool audio = true;
 
     static VodClipRequest fromJson(const nlohmann::json& obj);
 };
